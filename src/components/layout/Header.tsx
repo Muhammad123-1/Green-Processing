@@ -1,9 +1,10 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Bell, Search, Sun, Moon, Globe } from 'lucide-react'
+import { Bell, Search, Sun, Moon, Globe, Menu } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useSidebar } from '@/store/sidebar'
 
 const getPageInfo = (pathname: string, t: any) => {
   const map: Record<string, { title: string; subtitle: string }> = {
@@ -38,14 +39,23 @@ export default function Header() {
     day: 'numeric',
   })
 
+  const { toggle } = useSidebar()
+
   return (
-    <header className="h-16 border-b border-dark-700 bg-dark-900/80 backdrop-blur-sm flex items-center px-6 gap-4 flex-shrink-0">
-      <div className="flex-1">
-        <h2 className="font-bold text-white text-base leading-tight">{pageInfo.title}</h2>
-        <p className="text-xs text-slate-500">{pageInfo.subtitle}</p>
+    <header className="h-16 border-b border-dark-700 bg-dark-900/80 backdrop-blur-sm flex items-center px-4 md:px-6 gap-3 md:gap-4 flex-shrink-0">
+      <button 
+        onClick={toggle}
+        className="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-dark-700 transition-colors"
+      >
+        <Menu size={20} />
+      </button>
+
+      <div className="flex-1 min-w-0">
+        <h2 className="font-bold text-white text-base leading-tight truncate">{pageInfo.title}</h2>
+        <p className="text-xs text-slate-500 hidden md:block truncate">{pageInfo.subtitle}</p>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-slate-400">
+      <div className="hidden md:flex items-center gap-3 text-xs text-slate-400">
         <span>{dateStr}</span>
       </div>
 

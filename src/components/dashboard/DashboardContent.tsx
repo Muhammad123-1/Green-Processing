@@ -96,7 +96,7 @@ export default function DashboardContent() {
           <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/20" />
           <div className="absolute -bottom-10 -left-10 w-60 h-60 rounded-full bg-white/10" />
         </div>
-        <div className="relative flex items-center justify-between">
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white">{t('welcome')} 👋</h2>
             <p className="text-blue-200 mt-1 text-sm capitalize">{today}</p>
@@ -108,8 +108,8 @@ export default function DashboardContent() {
           </div>
           <Link
             href="/inspections/new"
-            className="flex items-center gap-2 bg-white text-blue-700 font-bold px-5 py-3 rounded-xl
-                       hover:bg-blue-50 transition-all duration-200 shadow-lg hover:shadow-white/20"
+            className="flex items-center justify-center gap-2 bg-white text-blue-700 font-bold px-5 py-3 rounded-xl
+                       hover:bg-blue-50 transition-all duration-200 shadow-lg hover:shadow-white/20 sm:w-auto w-full"
           >
             <Plus size={18} />
             {t('newInspection')}
@@ -118,7 +118,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<ClipboardList size={22} className="text-blue-400" />}
           label={t('totalInspections')}
@@ -146,7 +146,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="stat-card flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center">
             <Package size={22} className="text-purple-400" />
@@ -242,7 +242,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <QuickAction
           href="/inspections/new"
           icon={<ClipboardList size={20} />}

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useSidebar } from '@/store/sidebar'
 
 const navItems = [
   {
@@ -95,9 +96,20 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const { t, lang } = useLanguage()
+  const { isOpen, close } = useSidebar()
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-dark-900 border-r border-dark-700 flex flex-col h-full">
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm transition-opacity" 
+          onClick={close}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-900 border-r border-dark-700 flex flex-col h-full transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Logo */}
       <div className="px-5 py-6 border-b border-dark-700">
         <div className="flex items-center gap-3">
@@ -123,6 +135,7 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={close}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm
                            bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/30
                            transition-all duration-200 my-2"
@@ -137,6 +150,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={close}
               className={`sidebar-link ${isActive ? 'active' : ''}`}
             >
               <Icon size={18} />
@@ -166,6 +180,7 @@ export default function Sidebar() {
           <LogOut size={16} />
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
