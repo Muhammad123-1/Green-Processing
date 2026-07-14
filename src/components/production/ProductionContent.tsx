@@ -40,9 +40,13 @@ export default function ProductionContent() {
 
   // Confirm state
   const [confirmingOrderId, setConfirmingOrderId] = useState<number | null>(null)
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
   const [confirming, setConfirming] = useState(false)
+
+  // View Images state
+  const [viewingImages, setViewingImages] = useState<string[]>([])
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   useEffect(() => {
     fetchOrders()
@@ -96,7 +100,6 @@ export default function ProductionContent() {
     }
   }
 
-  // Handle simple rejection
   async function handleReject(id: number) {
     try {
       const res = await fetch(`/api/orders/${id}`, {
@@ -115,28 +118,32 @@ export default function ProductionContent() {
     }
   }
 
-  // Open confirm modal
   function openConfirmModal(id: number) {
     setConfirmingOrderId(id)
-    setUploadedImageUrl(null)
+    setUploadedImageUrls([])
     setIsConfirmModalOpen(true)
   }
 
-  // Handle image upload for confirmation
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files || e.target.files.length === 0) return
     setUploadingImage(true)
     try {
-      const formData = new FormData()
-      formData.append('file', e.target.files[0])
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
+      const files = Array.from(e.target.files)
+      const uploadPromises = files.map(async (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+        if (!res.ok) throw new Error('Upload failed')
+        const data = await res.json()
+        return data.url
       })
-      if (!res.ok) throw new Error('Upload failed')
-      const data = await res.json()
-      setUploadedImageUrl(data.url)
-      toast.success("Rasm yuklandi")
+      
+      const newUrls = await Promise.all(uploadPromises)
+      setUploadedImageUrls(prev => [...prev, ...newUrls])
+      toast.success(`${newUrls.length} ta rasm yuklandi`)
     } catch (err) {
       toast.error("Rasm yuklashda xatolik yuz berdi")
     } finally {
@@ -144,10 +151,9 @@ export default function ProductionContent() {
     }
   }
 
-  // Confirm order submission
   async function handleConfirmSubmit() {
     if (!confirmingOrderId) return
-    if (!uploadedImageUrl) {
+    if (uploadedImageUrls.length === 0) {
       toast.error("Iltimos, avval mahsulot rasmini yuklang!")
       return
     }
@@ -157,7 +163,10 @@ export default function ProductionContent() {
       const res = await fetch(`/api/orders/${confirmingOrderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'DELIVERED', imageUrl: uploadedImageUrl })
+        body: JSON.stringify({ 
+          status: 'DELIVERED', 
+          imageUrl: JSON.stringify(uploadedImageUrls) 
+        })
       })
       if (res.ok) {
         toast.success("Buyurtma qabul qilindi!")
@@ -171,6 +180,20 @@ export default function ProductionContent() {
     } finally {
       setConfirming(false)
     }
+  }
+
+  function removeImage(indexToRemove: number) {
+    setUploadedImageUrls(prev => prev.filter((_, idx) => idx !== indexToRemove))
+  }
+
+  function openImageViewer(imageUrlString: string) {
+    try {
+      const parsed = JSON.parse(imageUrlString)
+      setViewingImages(Array.isArray(parsed) ? parsed : [imageUrlString])
+    } catch {
+      setViewingImages([imageUrlString])
+    }
+    setIsViewModalOpen(true)
   }
 
   function getDaysLeft(expectedDate: string) {
@@ -279,58 +302,82 @@ export default function ProductionContent() {
                   </td>
                 </tr>
               ) : (
-                orders.map((order: any) => (
-                  <tr key={order.id} className="hover:bg-dark-800/50 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        {order.imageUrl ? (
-                          <div className="relative w-8 h-8 rounded overflow-hidden">
-                            <Image src={order.imageUrl} alt="img" fill className="object-cover" />
-                          </div>
-                        ) : (
-                          <Package size={16} className="text-slate-400" />
-                        )}
-                        <span className="font-medium text-white">{order.product?.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-slate-300">
-                      <span className="bg-dark-900 px-2 py-1 rounded border border-dark-600">
-                        {order.quantity} {order.unit || order.product?.unit}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-300">
-                      {new Date(order.expectedDate).toLocaleDateString()}
-                    </td>
-                    <td className="p-4">
-                      {order.status === 'PENDING' ? getDaysLeft(order.expectedDate) : <span className="text-slate-500">—</span>}
-                    </td>
-                    <td className="p-4">
-                      {order.status === 'PENDING' && <span className="badge-warning">Kutilmoqda</span>}
-                      {order.status === 'DELIVERED' && <span className="badge-success">Qabul qilindi</span>}
-                      {order.status === 'CANCELLED' && <span className="badge-danger">Rad etildi</span>}
-                    </td>
-                    <td className="p-4">
-                      {order.status === 'PENDING' && (
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => openConfirmModal(order.id)}
-                            className="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-md transition-colors"
-                            title="Qabul qilish"
-                          >
-                            <CheckCircle size={16} />
-                          </button>
-                          <button 
-                            onClick={() => handleReject(order.id)}
-                            className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
-                            title="Rad etish"
-                          >
-                            <XCircle size={16} />
-                          </button>
+                orders.map((order: any) => {
+                  let firstImage = null
+                  if (order.imageUrl) {
+                    try {
+                      const parsed = JSON.parse(order.imageUrl)
+                      if (Array.isArray(parsed) && parsed.length > 0) firstImage = parsed[0]
+                      else firstImage = order.imageUrl
+                    } catch {
+                      firstImage = order.imageUrl
+                    }
+                  }
+
+                  return (
+                    <tr key={order.id} className="hover:bg-dark-800/50 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          {firstImage ? (
+                            <div className="relative w-8 h-8 rounded overflow-hidden">
+                              {/* Using standard img to avoid next.js domain issues */}
+                              <img src={firstImage} alt="img" className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <Package size={16} className="text-slate-400" />
+                          )}
+                          <span className="font-medium text-white">{order.product?.name}</span>
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="p-4 text-slate-300">
+                        <span className="bg-dark-900 px-2 py-1 rounded border border-dark-600">
+                          {order.quantity} {order.unit || order.product?.unit}
+                        </span>
+                      </td>
+                      <td className="p-4 text-slate-300">
+                        {new Date(order.expectedDate).toLocaleDateString()}
+                      </td>
+                      <td className="p-4">
+                        {order.status === 'PENDING' ? getDaysLeft(order.expectedDate) : <span className="text-slate-500">—</span>}
+                      </td>
+                      <td className="p-4">
+                        {order.status === 'PENDING' && <span className="badge-warning">Kutilmoqda</span>}
+                        {order.status === 'DELIVERED' && <span className="badge-success">Qabul qilindi</span>}
+                        {order.status === 'CANCELLED' && <span className="badge-danger">Rad etildi</span>}
+                      </td>
+                      <td className="p-4">
+                        {order.status === 'PENDING' && (
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => openConfirmModal(order.id)}
+                              className="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-md transition-colors"
+                              title="Qabul qilish"
+                            >
+                              <CheckCircle size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleReject(order.id)}
+                              className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
+                              title="Rad etish"
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          </div>
+                        )}
+                        {order.status === 'DELIVERED' && order.imageUrl && (
+                          <button 
+                            onClick={() => openImageViewer(order.imageUrl)}
+                            className="p-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-md transition-colors flex items-center gap-1"
+                            title="Rasmlarni ko'rish"
+                          >
+                            <ImageIcon size={16} />
+                            <span className="text-xs font-medium pr-1">Rasmlar</span>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -417,11 +464,11 @@ export default function ProductionContent() {
         </div>
       )}
 
-      {/* Confirm Order Modal with Image Upload */}
+      {/* Confirm Order Modal with MULTI Image Upload */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-enter">
-            <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/50">
+          <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-enter max-h-[90vh] flex flex-col">
+            <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/50 shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <CheckCircle className="text-emerald-400" size={20} />
                 Qabul qilish
@@ -431,46 +478,52 @@ export default function ProductionContent() {
               </button>
             </div>
             
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto">
               <p className="text-sm text-slate-300">
-                Mahsulot qabul qilinganligini tasdiqlash uchun, uning <strong>haqiqiy rasmini</strong> yuklashingiz shart.
+                Mahsulot qabul qilinganligini tasdiqlash uchun, uning <strong>haqiqiy rasmlarini</strong> yuklashingiz shart. Bir nechta rasm yuklash mumkin.
               </p>
 
-              <div className="flex flex-col items-center justify-center border-2 border-dashed border-dark-600 rounded-xl p-6 bg-dark-900/30 hover:bg-dark-900 transition-colors relative">
-                {uploadedImageUrl ? (
-                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-dark-600">
-                    <Image src={uploadedImageUrl} alt="Uploaded" fill className="object-cover" />
-                    <button 
-                      onClick={() => setUploadedImageUrl(null)}
-                      className="absolute top-2 right-2 w-8 h-8 bg-red-500/90 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
+              <div className="flex flex-col gap-4">
+                {/* Upload Button */}
+                <div className="border-2 border-dashed border-dark-600 rounded-xl p-6 bg-dark-900/30 hover:bg-dark-900 transition-colors relative flex justify-center items-center">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    disabled={uploadingImage}
+                  />
+                  {uploadingImage ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 size={32} className="text-indigo-400 animate-spin" />
+                      <span className="text-sm text-slate-400">Yuklanmoqda...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 pointer-events-none">
+                      <div className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                        <Camera size={24} />
+                      </div>
+                      <span className="font-medium text-slate-300">Rasmlar yuklash uchun bosing</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Grid of uploaded images */}
+                {uploadedImageUrls.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {uploadedImageUrls.map((url, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-dark-600 group">
+                        <img src={url} alt={`Uploaded ${idx}`} className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => removeImage(idx)}
+                          className="absolute top-1 right-1 w-6 h-6 bg-red-500/90 opacity-0 group-hover:opacity-100 text-white rounded-full flex items-center justify-center transition-all"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <>
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      disabled={uploadingImage}
-                    />
-                    {uploadingImage ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <Loader2 size={32} className="text-indigo-400 animate-spin" />
-                        <span className="text-sm text-slate-400">Yuklanmoqda...</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 pointer-events-none">
-                        <div className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-                          <Camera size={24} />
-                        </div>
-                        <span className="font-medium text-slate-300">Rasm yuklash uchun bosing</span>
-                        <span className="text-xs text-slate-500">yoki rasmni shu yerga tashlang</span>
-                      </div>
-                    )}
-                  </>
                 )}
               </div>
 
@@ -485,7 +538,7 @@ export default function ProductionContent() {
                 <button 
                   type="button" 
                   onClick={handleConfirmSubmit}
-                  disabled={!uploadedImageUrl || confirming} 
+                  disabled={uploadedImageUrls.length === 0 || confirming} 
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {confirming ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
@@ -493,6 +546,23 @@ export default function ProductionContent() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Viewer Modal */}
+      {isViewModalOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col p-4 animate-enter">
+          <div className="flex justify-between items-center p-4">
+            <h3 className="text-white font-medium">Mahsulot rasmlari ({viewingImages.length} ta)</h3>
+            <button onClick={() => setIsViewModalOpen(false)} className="text-slate-400 hover:text-white transition-colors bg-dark-800 p-2 rounded-full">
+              <X size={24} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto pb-10 flex flex-col items-center gap-6">
+            {viewingImages.map((url, i) => (
+              <img key={i} src={url} alt="view" className="max-w-full lg:max-w-4xl rounded-lg shadow-2xl border border-dark-700" />
+            ))}
           </div>
         </div>
       )}
