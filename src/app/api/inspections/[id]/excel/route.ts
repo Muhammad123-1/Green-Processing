@@ -50,6 +50,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0]
 
     if (!worksheet) {
+      return generateSimpleExcel(inspection)
+    }
     const date = new Date(inspection.inspectionDate)
     const dateFormatted = date.toLocaleDateString('ru-RU', {
       day: '2-digit',
