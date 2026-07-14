@@ -1,0 +1,206 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  username  String   @unique
+  password  String
+  role      String   @default("OPERATOR") // ADMIN, OPERATOR, READONLY
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inspections Inspection[]
+  logs        Log[]
+}
+
+model Supplier {
+  id          Int      @id @default(autoincrement())
+  name        String
+  shortName   String?
+  address     String?
+  phone       String?
+  email       String?
+  certificate String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inspections Inspection[]
+}
+
+model Product {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  code               String?  @unique
+  category           String?
+  unit               String   @default("kg")
+  defaultTemperature String?
+  minTemperature     Float?
+  maxTemperature     Float?
+  defaultPackaging   String?
+  defaultConclusion  String?
+  storageCondition   String?
+  shelfLife          String?
+  gost               String?
+  description        String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  inspections Inspection[]
+  orders      Order[]
+  specifications Specification[]
+}
+
+model Inspection {
+  id               Int      @id @default(autoincrement())
+  actNumber        String   @unique
+  inspectionDate   DateTime
+  supplierId       Int
+  productId        Int
+  batchNumber      String
+  quantity         Float
+  quantityUnit     String   @default("kg")
+  temperature      Float?
+  temperatureUnit  String   @default("°C")
+  packaging        String?
+  color            String?
+  smell            String?
+  appearance       String?
+  conclusion       String   @default("Muvofiq")
+  status           String   @default("ACCEPTED") // ACCEPTED, REJECTED, CONDITIONAL
+  inspector        String?
+  inspectorId      Int?
+  supervisorId     Int?     // Nazoratchi (Supervisor jadvali bilan bog'liq)
+  vehicleNumber    String?
+  invoiceNumber    String?
+  notes            String?
+  customFields     String?  // JSON for dynamic product-specific fields
+  excelPath        String?
+  pdfPath          String?
+  sheetName        String?  // which Excel sheet template to use
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  releasedQuantity Float?
+  releasedDate     DateTime?
+  orderId          Int?
+
+  supplier   Supplier   @relation(fields: [supplierId], references: [id])
+  product    Product    @relation(fields: [productId], references: [id])
+  user       User?      @relation(fields: [inspectorId], references: [id])
+  supervisor Supervisor? @relation("InspectorSupervisor", fields: [supervisorId], references: [id])
+  order      Order?     @relation(fields: [orderId], references: [id])
+  images     ActImage[]
+
+  @@index([inspectionDate])
+  @@index([supplierId])
+  @@index([productId])
+  @@index([actNumber])
+}
+
+model Supervisor {
+  id          Int      @id @default(autoincrement())
+  name        String
+  position    String?  // Lavozimi: Nazoratchi, Katta nazoratchi
+  phone       String?
+  email       String?
+  department  String?  // Bo'lim
+  notes       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inspections Inspection[] @relation("InspectorSupervisor")
+}
+
+model Template {
+  id          Int      @id @default(autoincrement())
+  name        String
+  sheetName   String
+  filePath    String
+  description String?
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  category  String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Log {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  action    String
+  entity    String?
+  entityId  Int?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Backup {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  filePath  String
+  sizeBytes Int?
+  createdAt DateTime @default(now())
+  createdBy String?
+}
+
+model ActImage {
+  id         Int      @id @default(autoincrement())
+  actId      Int
+  url        String
+  type       String?  // 'defect', 'packaging', 'general'
+  uploadedAt DateTime @default(now())
+
+  inspection Inspection @relation(fields: [actId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  quantity     Float
+  expectedDate DateTime
+  status       String   @default("PENDING") // PENDING, DELIVERED, CANCELLED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  product     Product      @relation(fields: [productId], references: [id])
+  inspections Inspection[]
+}
+
+model Specification {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  fieldName   String
+  minVal      Float?
+  maxVal      Float?
+  unit        String?
+  required    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product     Product  @relation(fields: [productId], references: [id])
+}
