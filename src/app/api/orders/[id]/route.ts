@@ -10,7 +10,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const order = await prisma.order.update({
       where: { id: parseInt(id) },
       data: {
-        status: body.status
+        status: body.status,
+        ...(body.imageUrl && { imageUrl: body.imageUrl })
       }
     })
     return NextResponse.json(order)

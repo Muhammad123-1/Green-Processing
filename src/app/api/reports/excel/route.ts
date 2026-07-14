@@ -43,18 +43,52 @@ export async function GET() {
       // We won't delete rows because it breaks formatting, we'll just overwrite them
     });
 
-    // We need to keep track of current row for each sheet
+    // Helper to get or create sheet
+    function getOrCreateSheet(sheetName: string) {
+      let ws = workbook.getWorksheet(sheetName);
+      if (ws) return ws;
+      
+      const modelSheet = workbook.worksheets[0];
+      ws = workbook.addWorksheet(sheetName);
+      
+      // Clone columns
+      modelSheet.columns.forEach((col, i) => {
+        ws.getColumn(i + 1).width = col.width;
+      });
+
+      // Clone first 2 rows (headers)
+      for (let i = 1; i <= 2; i++) {
+        const srcRow = modelSheet.getRow(i);
+        const destRow = ws.getRow(i);
+        srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          const newCell = destRow.getCell(colNumber);
+          newCell.value = cell.value;
+          newCell.style = cell.style;
+        });
+        destRow.height = srcRow.height;
+      }
+      
+      // Attempt to clone merges (if any exist in top rows)
+      try {
+        if (modelSheet.hasMerges) {
+          // It's hard to iterate merges perfectly in exceljs, we skip to avoid breaking
+        }
+      } catch(e) {}
+      
+      return ws;
+    }
+
     const sheetRows: Record<string, number> = {}
 
     for (const act of inspections) {
-      const sheetName = act.sheetName || workbook.worksheets[0]?.name
-      if (!sheetName) continue
-      
-      const worksheet = workbook.getWorksheet(sheetName)
-      if (!worksheet) continue
+      // Use product name as sheetName if act.sheetName is missing or we want a dedicated sheet
+      let sheetName = act.product?.name || act.sheetName || 'Sheet1';
+      // Clean sheet name (Excel limits to 31 chars and no special chars)
+      sheetName = sheetName.substring(0, 31).replace(/[\[\]\*\/\\\?]/g, '');
+
+      const worksheet = getOrCreateSheet(sheetName);
 
       if (!sheetRows[sheetName]) {
-        // Find first empty row for this sheet
         let r = 3;
         while (worksheet.getCell(r, 2).value) r++;
         sheetRows[sheetName] = r;

@@ -45,27 +45,47 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const workbook = new ExcelJS.Workbook()
     await workbook.xlsx.readFile(templatePath)
 
-    // Determine which sheet to fill
-    const sheetName = inspection.sheetName || workbook.worksheets[0]?.name
-    const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0]
+    // Clean sheet name
+    let sheetNameStr = inspection.product?.name || inspection.sheetName || 'Sheet1';
+    sheetNameStr = sheetNameStr.substring(0, 31).replace(/[\[\]\*\/\\\?]/g, '');
 
+    let worksheet = workbook.getWorksheet(sheetNameStr);
+    
+    // If doesn't exist, create it from the first sheet
     if (!worksheet) {
-      return generateSimpleExcel(inspection)
-    }
-    const date = new Date(inspection.inspectionDate)
-    const dateFormatted = date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    })
+      const modelSheet = workbook.worksheets[0];
+      worksheet = workbook.addWorksheet(sheetNameStr);
+      
+      modelSheet.columns.forEach((col, i) => {
+        worksheet.getColumn(i + 1).width = col.width;
+      });
 
-    // Remove unused sheets
+      for (let i = 1; i <= 2; i++) {
+        const srcRow = modelSheet.getRow(i);
+        const destRow = worksheet.getRow(i);
+        srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          const newCell = destRow.getCell(colNumber);
+          newCell.value = cell.value;
+          newCell.style = cell.style;
+        });
+        destRow.height = srcRow.height;
+      }
+    }
+
+    // Keep ONLY this newly selected/created worksheet to keep the file clean
     const allWorksheets = workbook.worksheets;
     for (const ws of allWorksheets) {
       if (ws.id !== worksheet.id) {
         workbook.removeWorksheet(ws.id);
       }
     }
+
+    const date = new Date(inspection.inspectionDate);
+    const dateFormatted = date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
 
     // Find the first empty row
     let targetRow = 3;

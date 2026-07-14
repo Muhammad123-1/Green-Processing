@@ -1,21 +1,48 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Clock, CheckCircle, XCircle, Search, Package, Calendar } from 'lucide-react'
+import { Plus, Clock, CheckCircle, XCircle, Search, Package, Calendar, Camera, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import Image from 'next/image'
+
+const UNITS = [
+  'kg',
+  'gr',
+  'litr',
+  'ml',
+  'dona',
+  'karobka',
+  'qop',
+  'paqir',
+  'baklashka (0.5L)',
+  'baklashka (1L)',
+  'baklashka (1.5L)',
+  'baklashka (5L)'
+]
 
 export default function ProductionContent() {
   const [orders, setOrders] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
   
+  // Modals state
+  const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  
+  // Order Form state
   const [form, setForm] = useState({
     productId: '',
     quantity: '',
+    unit: 'kg',
     expectedDate: ''
   })
   const [saving, setSaving] = useState(false)
+
+  // Confirm state
+  const [confirmingOrderId, setConfirmingOrderId] = useState<number | null>(null)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
     fetchOrders()
@@ -40,9 +67,9 @@ export default function ProductionContent() {
     } catch {}
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleNewOrder(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.productId || !form.quantity || !form.expectedDate) {
+    if (!form.productId || !form.quantity || !form.unit || !form.expectedDate) {
       toast.error("Barcha maydonlarni to'ldiring")
       return
     }
@@ -56,8 +83,8 @@ export default function ProductionContent() {
       })
       if (res.ok) {
         toast.success("Buyurtma qo'shildi")
-        setIsModalOpen(false)
-        setForm({ productId: '', quantity: '', expectedDate: '' })
+        setIsNewOrderModalOpen(false)
+        setForm({ productId: '', quantity: '', unit: 'kg', expectedDate: '' })
         fetchOrders()
       } else {
         toast.error("Xatolik yuz berdi")
@@ -69,21 +96,80 @@ export default function ProductionContent() {
     }
   }
 
-  async function updateStatus(id: number, status: string) {
+  // Handle simple rejection
+  async function handleReject(id: number) {
     try {
       const res = await fetch(`/api/orders/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status: 'CANCELLED' })
       })
       if (res.ok) {
-        toast.success("Holat yangilandi")
+        toast.success("Buyurtma rad etildi")
         fetchOrders()
       } else {
         toast.error("Xatolik yuz berdi")
       }
     } catch {
       toast.error("Tarmoq xatosi")
+    }
+  }
+
+  // Open confirm modal
+  function openConfirmModal(id: number) {
+    setConfirmingOrderId(id)
+    setUploadedImageUrl(null)
+    setIsConfirmModalOpen(true)
+  }
+
+  // Handle image upload for confirmation
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files || e.target.files.length === 0) return
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', e.target.files[0])
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      if (!res.ok) throw new Error('Upload failed')
+      const data = await res.json()
+      setUploadedImageUrl(data.url)
+      toast.success("Rasm yuklandi")
+    } catch (err) {
+      toast.error("Rasm yuklashda xatolik yuz berdi")
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  // Confirm order submission
+  async function handleConfirmSubmit() {
+    if (!confirmingOrderId) return
+    if (!uploadedImageUrl) {
+      toast.error("Iltimos, avval mahsulot rasmini yuklang!")
+      return
+    }
+
+    setConfirming(true)
+    try {
+      const res = await fetch(`/api/orders/${confirmingOrderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'DELIVERED', imageUrl: uploadedImageUrl })
+      })
+      if (res.ok) {
+        toast.success("Buyurtma qabul qilindi!")
+        setIsConfirmModalOpen(false)
+        fetchOrders()
+      } else {
+        toast.error("Xatolik yuz berdi")
+      }
+    } catch {
+      toast.error("Tarmoq xatosi")
+    } finally {
+      setConfirming(false)
     }
   }
 
@@ -105,11 +191,11 @@ export default function ProductionContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h1 className="section-title">Oshxona (Ta'minot buyurtmalari)</h1>
-          <p className="section-subtitle">Xodimlar uchun ovqat pishirishga kutilayotgan mahsulotlar</p>
+          <h1 className="section-title">Xodimlar oshxonasi</h1>
+          <p className="section-subtitle">Xodimlar uchun ovqat pishirishga keladigan mahsulotlar</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => setIsNewOrderModalOpen(true)}
           className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-indigo-500/30 w-full sm:w-auto text-sm"
         >
           <Plus size={18} />
@@ -121,7 +207,7 @@ export default function ProductionContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
               <Clock size={16} />
             </div>
             <p className="text-sm font-medium text-slate-400">Kutilmoqda</p>
@@ -197,13 +283,19 @@ export default function ProductionContent() {
                   <tr key={order.id} className="hover:bg-dark-800/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <Package size={16} className="text-slate-400" />
+                        {order.imageUrl ? (
+                          <div className="relative w-8 h-8 rounded overflow-hidden">
+                            <Image src={order.imageUrl} alt="img" fill className="object-cover" />
+                          </div>
+                        ) : (
+                          <Package size={16} className="text-slate-400" />
+                        )}
                         <span className="font-medium text-white">{order.product?.name}</span>
                       </div>
                     </td>
                     <td className="p-4 text-slate-300">
                       <span className="bg-dark-900 px-2 py-1 rounded border border-dark-600">
-                        {order.quantity} {order.product?.unit}
+                        {order.quantity} {order.unit || order.product?.unit}
                       </span>
                     </td>
                     <td className="p-4 text-slate-300">
@@ -221,14 +313,14 @@ export default function ProductionContent() {
                       {order.status === 'PENDING' && (
                         <div className="flex gap-2">
                           <button 
-                            onClick={() => updateStatus(order.id, 'DELIVERED')}
+                            onClick={() => openConfirmModal(order.id)}
                             className="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-md transition-colors"
                             title="Qabul qilish"
                           >
                             <CheckCircle size={16} />
                           </button>
                           <button 
-                            onClick={() => updateStatus(order.id, 'CANCELLED')}
+                            onClick={() => handleReject(order.id)}
                             className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
                             title="Rad etish"
                           >
@@ -245,17 +337,17 @@ export default function ProductionContent() {
         </div>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
+      {/* New Order Modal */}
+      {isNewOrderModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-enter">
             <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/50">
-              <h2 className="text-lg font-bold text-white">Yangi buyurtma (Snabjenets)</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                <XCircle size={24} />
+              <h2 className="text-lg font-bold text-white">Yangi buyurtma qo'shish</h2>
+              <button onClick={() => setIsNewOrderModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <form onSubmit={handleNewOrder} className="p-5 space-y-4">
               <div>
                 <label className="label">Mahsulot *</label>
                 <select 
@@ -270,18 +362,35 @@ export default function ProductionContent() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="label">Miqdor *</label>
-                <input 
-                  type="number" 
-                  className="input-field" 
-                  placeholder="M: 100" 
-                  min="0" step="0.1"
-                  value={form.quantity}
-                  onChange={(e) => setForm({...form, quantity: e.target.value})}
-                  required
-                />
+              
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="label">Miqdor *</label>
+                  <input 
+                    type="number" 
+                    className="input-field" 
+                    placeholder="M: 100" 
+                    min="0" step="0.1"
+                    value={form.quantity}
+                    onChange={(e) => setForm({...form, quantity: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="w-1/2">
+                  <label className="label">O'lchov birligi *</label>
+                  <select 
+                    className="input-field" 
+                    value={form.unit}
+                    onChange={(e) => setForm({...form, unit: e.target.value})}
+                    required
+                  >
+                    {UNITS.map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
               <div>
                 <label className="label">
                   <span className="flex items-center gap-1.5"><Calendar size={13}/> Qachon kelishi kerak? *</span>
@@ -296,7 +405,7 @@ export default function ProductionContent() {
               </div>
               
               <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary flex-1">
+                <button type="button" onClick={() => setIsNewOrderModalOpen(false)} className="btn-secondary flex-1">
                   Bekor qilish
                 </button>
                 <button type="submit" disabled={saving} className="btn-primary flex-1">
@@ -304,6 +413,86 @@ export default function ProductionContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Order Modal with Image Upload */}
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-enter">
+            <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/50">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <CheckCircle className="text-emerald-400" size={20} />
+                Qabul qilish
+              </h2>
+              <button onClick={() => setIsConfirmModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-slate-300">
+                Mahsulot qabul qilinganligini tasdiqlash uchun, uning <strong>haqiqiy rasmini</strong> yuklashingiz shart.
+              </p>
+
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-dark-600 rounded-xl p-6 bg-dark-900/30 hover:bg-dark-900 transition-colors relative">
+                {uploadedImageUrl ? (
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-dark-600">
+                    <Image src={uploadedImageUrl} alt="Uploaded" fill className="object-cover" />
+                    <button 
+                      onClick={() => setUploadedImageUrl(null)}
+                      className="absolute top-2 right-2 w-8 h-8 bg-red-500/90 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      disabled={uploadingImage}
+                    />
+                    {uploadingImage ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 size={32} className="text-indigo-400 animate-spin" />
+                        <span className="text-sm text-slate-400">Yuklanmoqda...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 pointer-events-none">
+                        <div className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                          <Camera size={24} />
+                        </div>
+                        <span className="font-medium text-slate-300">Rasm yuklash uchun bosing</span>
+                        <span className="text-xs text-slate-500">yoki rasmni shu yerga tashlang</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setIsConfirmModalOpen(false)} 
+                  className="btn-secondary flex-1"
+                >
+                  Bekor qilish
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleConfirmSubmit}
+                  disabled={!uploadedImageUrl || confirming} 
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {confirming ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                  Tasdiqlash
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

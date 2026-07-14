@@ -182,8 +182,10 @@ model Order {
   id           Int      @id @default(autoincrement())
   productId    Int
   quantity     Float
+  unit         String?
   expectedDate DateTime
   status       String   @default("PENDING") // PENDING, DELIVERED, CANCELLED
+  imageUrl     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
