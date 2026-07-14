@@ -8,8 +8,7 @@ async function main() {
     supplier = await prisma.supplier.create({
       data: {
         name: "Oshxona Ta'minoti Bozori",
-        contractNumber: "OSH-001",
-        inn: "123456789",
+        address: "Mahalliy bozor",
         phone: "+998901234567"
       }
     })
