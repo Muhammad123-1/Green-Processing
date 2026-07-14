@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 
 export type Language = 'uz' | 'ru'
 
-const translations: any = {
+const translations = {
   uz: {
     dashboard: 'Bosh sahifa',
     inspections: 'Akt tarixi',
@@ -138,8 +138,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('language', newLang)
   }
 
-  const t = (key: string) => {
-    return translations[lang][key as TranslationKey] || key
+  const t = (key: TranslationKey | string): string => {
+    return (translations[lang] as Record<string, string>)[key as string] || (key as string)
   }
 
   return (
