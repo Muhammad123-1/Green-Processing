@@ -114,11 +114,15 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
   )
 
   const isEditing = !!initialData?.id
+  const [isOshxona, setIsOshxona] = useState(false)
 
   useEffect(() => {
     fetchProducts()
     fetchSuppliers()
     fetchSheets()
+    if (typeof window !== 'undefined') {
+      setIsOshxona(window.location.search.includes('oshxona=true'))
+    }
   }, [])
 
   useEffect(() => {
@@ -246,11 +250,20 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
     try {
       const url = isEditing ? `/api/inspections/${initialData?.id}` : '/api/inspections'
       const method = isEditing ? 'PUT' : 'POST'
+      
+      const isOshxona = typeof window !== 'undefined' && window.location.search.includes('oshxona=true')
+      const payload = {
+        ...form,
+        ...(isOshxona ? {
+          releasedQuantity: form.quantity,
+          releasedDate: new Date().toISOString()
+        } : {})
+      }
 
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
 
       if (res.ok) {
@@ -283,10 +296,19 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       const url = isEditing ? `/api/inspections/${initialData?.id}` : '/api/inspections'
       const method = isEditing ? 'PUT' : 'POST'
 
+      const isOshxona = typeof window !== 'undefined' && window.location.search.includes('oshxona=true')
+      const payload = {
+        ...form,
+        ...(isOshxona ? {
+          releasedQuantity: form.quantity,
+          releasedDate: new Date().toISOString()
+        } : {})
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
 
       if (res.ok) {
@@ -362,18 +384,20 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           </div>
 
           {/* Invoice Number */}
-          <div>
-            <label className="label">
-              <span className="flex items-center gap-1.5"><FileText size={13} />Faktura raqami</span>
-            </label>
-            <input
-              type="text"
-              className="input-field"
-              placeholder="Faktura №"
-              value={form.invoiceNumber}
-              onChange={(e) => handleChange('invoiceNumber', e.target.value)}
-            />
-          </div>
+          {!isOshxona && (
+            <div>
+              <label className="label">
+                <span className="flex items-center gap-1.5"><FileText size={13} />Faktura raqami</span>
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Faktura №"
+                value={form.invoiceNumber}
+                onChange={(e) => handleChange('invoiceNumber', e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Supplier */}
           <div>
@@ -395,18 +419,20 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           </div>
 
           {/* Vehicle */}
-          <div>
-            <label className="label">
-              <span className="flex items-center gap-1.5"><Car size={13} />Transport raqami</span>
-            </label>
-            <input
-              type="text"
-              className="input-field"
-              placeholder="01 A 123 AA"
-              value={form.vehicleNumber}
-              onChange={(e) => handleChange('vehicleNumber', e.target.value)}
-            />
-          </div>
+          {!isOshxona && (
+            <div>
+              <label className="label">
+                <span className="flex items-center gap-1.5"><Car size={13} />Transport raqami</span>
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="01 A 123 AA"
+                value={form.vehicleNumber}
+                onChange={(e) => handleChange('vehicleNumber', e.target.value)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -486,49 +512,53 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           </div>
 
           {/* Temperature */}
-          <div>
-            <label className="label">
-              <span className="flex items-center gap-1.5"><Thermometer size={13} />Harorat</span>
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                className="input-field flex-1"
-                placeholder="0"
-                step="0.1"
-                value={form.temperature}
-                onChange={(e) => handleChange('temperature', e.target.value)}
-              />
-              <select
-                className="input-field w-20"
-                value={form.temperatureUnit}
-                onChange={(e) => handleChange('temperatureUnit', e.target.value)}
-              >
-                <option value="°C">°C</option>
-                <option value="°F">°F</option>
-              </select>
+          {!isOshxona && (
+            <div>
+              <label className="label">
+                <span className="flex items-center gap-1.5"><Thermometer size={13} />Harorat</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  className="input-field flex-1"
+                  placeholder="0"
+                  step="0.1"
+                  value={form.temperature}
+                  onChange={(e) => handleChange('temperature', e.target.value)}
+                />
+                <select
+                  className="input-field w-20"
+                  value={form.temperatureUnit}
+                  onChange={(e) => handleChange('temperatureUnit', e.target.value)}
+                >
+                  <option value="°C">°C</option>
+                  <option value="°F">°F</option>
+                </select>
+              </div>
+              {selectedProduct && selectedProduct.minTemperature !== null && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Norma: {selectedProduct.minTemperature}°C — {selectedProduct.maxTemperature}°C
+                </p>
+              )}
             </div>
-            {selectedProduct && selectedProduct.minTemperature !== null && (
-              <p className="text-xs text-slate-500 mt-1">
-                Norma: {selectedProduct.minTemperature}°C — {selectedProduct.maxTemperature}°C
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Packaging */}
-          <div>
-            <label className="label">Qadoqlash holati</label>
-            <input
-              type="text"
-              className="input-field"
-              placeholder="Butun, yaxshi holat..."
-              value={form.packaging}
-              onChange={(e) => handleChange('packaging', e.target.value)}
-            />
-          </div>
+          {!isOshxona && (
+            <div>
+              <label className="label">Qadoqlash holati</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Butun, yaxshi holat..."
+                value={form.packaging}
+                onChange={(e) => handleChange('packaging', e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Excel Sheet */}
-          {sheets.length > 0 && (
+          {!isOshxona && sheets.length > 0 && (
             <div>
               <label className="label">
                 <span className="flex items-center gap-1.5"><FileSpreadsheet size={13} />Excel varaqi (shablon)</span>
@@ -549,6 +579,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       </div>
 
       {/* Section 3: Organoleptic / Custom Fields */}
+      {!isOshxona && (
       <div className="form-section">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
@@ -612,6 +643,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           </div>
         )}
       </div>
+      )}
 
       {/* Section 3.5: Images */}
       <div className="form-section">
@@ -654,6 +686,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       </div>
 
       {/* Section 4: Conclusion */}
+      {!isOshxona && (
       <div className="form-section">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center">
@@ -734,6 +767,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           </div>
         </div>
       </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 justify-end pb-6">
@@ -751,18 +785,20 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           Saqlash
         </button>
 
-        <button
-          onClick={handleSaveAndExcel}
-          disabled={saving || generating}
-          className="btn-success"
-        >
-          {(saving || generating) ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <FileSpreadsheet size={16} />
-          )}
-          Saqlash + Excel yuklab olish
-        </button>
+        {!isOshxona && (
+          <button
+            onClick={handleSaveAndExcel}
+            disabled={saving || generating}
+            className="btn-success"
+          >
+            {(saving || generating) ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <FileSpreadsheet size={16} />
+            )}
+            Saqlash + Excel yuklab olish
+          </button>
+        )}
       </div>
     </div>
   )

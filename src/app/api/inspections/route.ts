@@ -113,6 +113,8 @@ export async function POST(request: NextRequest) {
         notes: body.notes || null,
         sheetName: body.sheetName || null,
         customFields: body.customFields || null,
+        releasedQuantity: body.releasedQuantity !== undefined ? parseFloat(body.releasedQuantity) : null,
+        releasedDate: body.releasedDate ? new Date(body.releasedDate) : null,
         images: body.uploadedImages?.length > 0 ? {
           create: body.uploadedImages.map((url: string) => ({ url }))
         } : undefined,

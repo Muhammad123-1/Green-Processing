@@ -16,3 +16,23 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const order = await prisma.order.create({
+      data: {
+        productId: parseInt(body.productId),
+        quantity: parseFloat(body.quantity),
+        expectedDate: new Date(body.expectedDate),
+        status: body.status || 'PENDING',
+      },
+      include: {
+        product: true,
+      }
+    })
+    return NextResponse.json(order, { status: 201 })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
+  }
+}

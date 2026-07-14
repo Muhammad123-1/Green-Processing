@@ -54,6 +54,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
         notes: body.notes,
         sheetName: body.sheetName,
         customFields: body.customFields,
+        releasedQuantity: body.releasedQuantity !== undefined ? parseFloat(body.releasedQuantity) : undefined,
+        releasedDate: body.releasedDate ? new Date(body.releasedDate) : undefined,
         ...(body.uploadedImages?.length > 0 ? {
           images: {
             create: body.uploadedImages.map((url: string) => ({ url }))
