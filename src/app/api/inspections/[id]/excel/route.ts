@@ -54,15 +54,16 @@ export async function GET(_req: NextRequest, { params }: Params) {
     // If doesn't exist, create it from the first sheet
     if (!worksheet) {
       const modelSheet = workbook.worksheets[0];
-      worksheet = workbook.addWorksheet(sheetNameStr);
+      const newWs = workbook.addWorksheet(sheetNameStr);
+      worksheet = newWs;
       
       modelSheet.columns.forEach((col, i) => {
-        worksheet.getColumn(i + 1).width = col.width;
+        newWs.getColumn(i + 1).width = col.width;
       });
 
       for (let i = 1; i <= 2; i++) {
         const srcRow = modelSheet.getRow(i);
-        const destRow = worksheet.getRow(i);
+        const destRow = newWs.getRow(i);
         srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const newCell = destRow.getCell(colNumber);
           newCell.value = cell.value;

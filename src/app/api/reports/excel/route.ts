@@ -45,21 +45,21 @@ export async function GET() {
 
     // Helper to get or create sheet
     function getOrCreateSheet(sheetName: string) {
-      let ws = workbook.getWorksheet(sheetName);
-      if (ws) return ws;
+      const existingWs = workbook.getWorksheet(sheetName);
+      if (existingWs) return existingWs;
       
       const modelSheet = workbook.worksheets[0];
-      ws = workbook.addWorksheet(sheetName);
+      const newWs = workbook.addWorksheet(sheetName);
       
       // Clone columns
       modelSheet.columns.forEach((col, i) => {
-        ws.getColumn(i + 1).width = col.width;
+        newWs.getColumn(i + 1).width = col.width;
       });
 
       // Clone first 2 rows (headers)
       for (let i = 1; i <= 2; i++) {
         const srcRow = modelSheet.getRow(i);
-        const destRow = ws.getRow(i);
+        const destRow = newWs.getRow(i);
         srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const newCell = destRow.getCell(colNumber);
           newCell.value = cell.value;
@@ -75,7 +75,7 @@ export async function GET() {
         }
       } catch(e) {}
       
-      return ws;
+      return newWs;
     }
 
     const sheetRows: Record<string, number> = {}
