@@ -200,10 +200,19 @@ model Specification {
   fieldName   String
   minVal      Float?
   maxVal      Float?
-  unit        String?
-  required    Boolean  @default(true)
+  stringValue String?
+  isCritical  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   product     Product  @relation(fields: [productId], references: [id])
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  sender    String   // e.g. "Sifat Nazorati" or "Oshxona"
+  text      String?  @db.Text
+  imageUrl  String?  @db.Text
+  groupId   String   @default("general") // e.g. "general", "kitchen", "qa"
+  createdAt DateTime @default(now())
 }

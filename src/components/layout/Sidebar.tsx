@@ -19,6 +19,7 @@ import {
   LogOut,
   ShoppingCart,
   ChefHat,
+  MessageSquare,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -60,6 +61,11 @@ const navItems = [
     key: 'production',
     href: '/production',
     icon: ChefHat,
+  },
+  {
+    key: 'chat',
+    href: '/chat',
+    icon: MessageSquare,
   },
   {
     key: 'suppliers',

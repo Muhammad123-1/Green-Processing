@@ -55,7 +55,8 @@ const translations = {
     reportsSub: 'Statistika va tahlil ma\'lumotlari',
     usersSub: 'Tizim foydalanuvchilari va ruxsatlar',
     backupSub: 'Ma\'lumotlar bazasini zaxiralash',
-    settingsSub: 'Tizim va shablon sozlamalari'
+    settingsSub: 'Tizim va shablon sozlamalari',
+    chat: 'Xodimlar Chati'
   },
   ru: {
     dashboard: 'Главная',
@@ -108,7 +109,8 @@ const translations = {
     reportsSub: 'Статистика и аналитика',
     usersSub: 'Пользователи системы и права',
     backupSub: 'Резервное копирование базы данных',
-    settingsSub: 'Настройки системы и шаблонов'
+    settingsSub: 'Настройки системы и шаблонов',
+    chat: 'Чат сотрудников'
   }
 }
 
