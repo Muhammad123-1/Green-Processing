@@ -76,6 +76,7 @@ export default function ProductionContent() {
   function openNewOrderModal() {
     setEditingOrderId(null)
     setForm({ productId: '', quantity: '', unit: 'kg', expectedDate: '', price: '' })
+    setUploadedImageUrls([])
     setIsNewOrderModalOpen(true)
   }
 
@@ -88,6 +89,17 @@ export default function ProductionContent() {
       expectedDate: new Date(order.expectedDate).toISOString().split('T')[0],
       price: order.price ? order.price.toString() : ''
     })
+    
+    let imgs: string[] = []
+    if (order.imageUrl) {
+      try {
+        const parsed = JSON.parse(order.imageUrl)
+        imgs = Array.isArray(parsed) ? parsed : [order.imageUrl]
+      } catch {
+        imgs = [order.imageUrl]
+      }
+    }
+    setUploadedImageUrls(imgs)
     setIsNewOrderModalOpen(true)
   }
 
@@ -103,15 +115,21 @@ export default function ProductionContent() {
       const url = editingOrderId ? `/api/orders/${editingOrderId}` : '/api/orders'
       const method = editingOrderId ? 'PUT' : 'POST'
       
+      const payload = {
+        ...form,
+        imageUrl: uploadedImageUrls.length > 0 ? JSON.stringify(uploadedImageUrls) : null
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       })
       if (res.ok) {
         toast.success(editingOrderId ? "Buyurtma yangilandi / Заказ обновлен" : "Buyurtma qo'shildi / Заказ добавлен")
         setIsNewOrderModalOpen(false)
         setForm({ productId: '', quantity: '', unit: 'kg', expectedDate: '', price: '' })
+        setUploadedImageUrls([])
         fetchOrders()
       } else {
         toast.error("Xatolik yuz berdi / Произошла ошибка")
@@ -509,6 +527,55 @@ export default function ProductionContent() {
                   onChange={(e) => setForm({...form, price: e.target.value})}
                 />
               </div>
+
+              {/* Edit Image Section */}
+              {editingOrderId && (
+                <div className="pt-2">
+                  <label className="label">Rasmlar / Фотографии</label>
+                  <div className="flex flex-col gap-3">
+                    <div className="border-2 border-dashed border-dark-600 rounded-xl p-4 bg-dark-900/30 hover:bg-dark-900 transition-colors relative flex justify-center items-center">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <Loader2 size={24} className="text-indigo-400 animate-spin" />
+                          <span className="text-xs text-slate-400">Yuklanmoqda... / Загрузка...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 pointer-events-none">
+                          <div className="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                            <Camera size={20} />
+                          </div>
+                          <span className="text-sm font-medium text-slate-300">Yangi rasm qo'shish / Добавить фото</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {uploadedImageUrls.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {uploadedImageUrls.map((url, idx) => (
+                          <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-dark-600 group">
+                            <img src={url} alt={`Uploaded ${idx}`} className="w-full h-full object-cover" />
+                            <button 
+                              type="button"
+                              onClick={() => removeImage(idx)}
+                              className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 opacity-0 group-hover:opacity-100 text-white rounded-full flex items-center justify-center transition-all"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsNewOrderModalOpen(false)} className="btn-secondary flex-1">
