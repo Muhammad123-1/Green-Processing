@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Clock, CheckCircle, XCircle, Search, Package, Calendar, Camera, X, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { Plus, Clock, CheckCircle, XCircle, Search, Package, Calendar, Camera, X, Image as ImageIcon, Loader2, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
@@ -34,9 +34,11 @@ export default function ProductionContent() {
     productId: '',
     quantity: '',
     unit: 'kg',
-    expectedDate: ''
+    expectedDate: '',
+    price: '' // Nakladnoy narxi
   })
   const [saving, setSaving] = useState(false)
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null)
 
   // Confirm state
   const [confirmingOrderId, setConfirmingOrderId] = useState<number | null>(null)
@@ -58,7 +60,7 @@ export default function ProductionContent() {
       const res = await fetch('/api/orders')
       if (res.ok) setOrders(await res.json())
     } catch {
-      toast.error("Tarmoq xatosi")
+      toast.error("Tarmoq xatosi / Ошибка сети")
     } finally {
       setLoading(false)
     }
@@ -71,30 +73,51 @@ export default function ProductionContent() {
     } catch {}
   }
 
-  async function handleNewOrder(e: React.FormEvent) {
+  function openNewOrderModal() {
+    setEditingOrderId(null)
+    setForm({ productId: '', quantity: '', unit: 'kg', expectedDate: '', price: '' })
+    setIsNewOrderModalOpen(true)
+  }
+
+  function openEditModal(order: any) {
+    setEditingOrderId(order.id)
+    setForm({
+      productId: order.productId.toString(),
+      quantity: order.quantity.toString(),
+      unit: order.unit || 'kg',
+      expectedDate: new Date(order.expectedDate).toISOString().split('T')[0],
+      price: order.price ? order.price.toString() : ''
+    })
+    setIsNewOrderModalOpen(true)
+  }
+
+  async function handleSaveOrder(e: React.FormEvent) {
     e.preventDefault()
     if (!form.productId || !form.quantity || !form.unit || !form.expectedDate) {
-      toast.error("Barcha maydonlarni to'ldiring")
+      toast.error("Barcha maydonlarni to'ldiring / Заполните все поля")
       return
     }
 
     setSaving(true)
     try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
+      const url = editingOrderId ? `/api/orders/${editingOrderId}` : '/api/orders'
+      const method = editingOrderId ? 'PUT' : 'POST'
+      
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
       if (res.ok) {
-        toast.success("Buyurtma qo'shildi")
+        toast.success(editingOrderId ? "Buyurtma yangilandi / Заказ обновлен" : "Buyurtma qo'shildi / Заказ добавлен")
         setIsNewOrderModalOpen(false)
-        setForm({ productId: '', quantity: '', unit: 'kg', expectedDate: '' })
+        setForm({ productId: '', quantity: '', unit: 'kg', expectedDate: '', price: '' })
         fetchOrders()
       } else {
-        toast.error("Xatolik yuz berdi")
+        toast.error("Xatolik yuz berdi / Произошла ошибка")
       }
     } catch {
-      toast.error("Tarmoq xatosi")
+      toast.error("Tarmoq xatosi / Ошибка сети")
     } finally {
       setSaving(false)
     }
@@ -108,13 +131,13 @@ export default function ProductionContent() {
         body: JSON.stringify({ status: 'CANCELLED' })
       })
       if (res.ok) {
-        toast.success("Buyurtma rad etildi")
+        toast.success("Buyurtma rad etildi / Заказ отменен")
         fetchOrders()
       } else {
-        toast.error("Xatolik yuz berdi")
+        toast.error("Xatolik yuz berdi / Произошла ошибка")
       }
     } catch {
-      toast.error("Tarmoq xatosi")
+      toast.error("Tarmoq xatosi / Ошибка сети")
     }
   }
 
@@ -143,9 +166,9 @@ export default function ProductionContent() {
       
       const newUrls = await Promise.all(uploadPromises)
       setUploadedImageUrls(prev => [...prev, ...newUrls])
-      toast.success(`${newUrls.length} ta rasm yuklandi`)
+      toast.success(`${newUrls.length} ta rasm yuklandi / фото загружено`)
     } catch (err) {
-      toast.error("Rasm yuklashda xatolik yuz berdi")
+      toast.error("Rasm yuklashda xatolik yuz berdi / Ошибка при загрузке фото")
     } finally {
       setUploadingImage(false)
     }
@@ -154,7 +177,7 @@ export default function ProductionContent() {
   async function handleConfirmSubmit() {
     if (!confirmingOrderId) return
     if (uploadedImageUrls.length === 0) {
-      toast.error("Iltimos, avval mahsulot rasmini yuklang!")
+      toast.error("Iltimos, avval mahsulot rasmini yuklang! / Пожалуйста, сначала загрузите фото продукта!")
       return
     }
 
@@ -169,14 +192,14 @@ export default function ProductionContent() {
         })
       })
       if (res.ok) {
-        toast.success("Buyurtma qabul qilindi!")
+        toast.success("Buyurtma qabul qilindi! / Заказ принят!")
         setIsConfirmModalOpen(false)
         fetchOrders()
       } else {
-        toast.error("Xatolik yuz berdi")
+        toast.error("Xatolik yuz berdi / Произошла ошибка")
       }
     } catch {
-      toast.error("Tarmoq xatosi")
+      toast.error("Tarmoq xatosi / Ошибка сети")
     } finally {
       setConfirming(false)
     }
@@ -204,9 +227,9 @@ export default function ProductionContent() {
     const diffTime = target.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
-    if (diffDays > 0) return <span className="text-blue-400 font-medium">{diffDays} kun qoldi</span>
-    if (diffDays === 0) return <span className="text-amber-400 font-bold">Bugun kelishi kerak</span>
-    return <span className="text-red-400 font-medium">{Math.abs(diffDays)} kun kechikdi</span>
+    if (diffDays > 0) return <span className="text-blue-400 font-medium">{diffDays} kun qoldi / осталось дн.</span>
+    if (diffDays === 0) return <span className="text-amber-400 font-bold">Bugun / Сегодня</span>
+    return <span className="text-red-400 font-medium">{Math.abs(diffDays)} kun kechikdi / дн. задержки</span>
   }
 
   return (
@@ -214,15 +237,15 @@ export default function ProductionContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h1 className="section-title">Xodimlar oshxonasi</h1>
+          <h1 className="section-title">Xodimlar oshxonasi / Столовая для сотрудников</h1>
           <p className="section-subtitle">Xodimlar uchun ovqat pishirishga keladigan mahsulotlar</p>
         </div>
         <button 
-          onClick={() => setIsNewOrderModalOpen(true)}
+          onClick={openNewOrderModal}
           className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-indigo-500/30 w-full sm:w-auto text-sm"
         >
           <Plus size={18} />
-          Yangi buyurtma qo'shish
+          Yangi buyurtma / Новый заказ
         </button>
       </div>
 
@@ -233,7 +256,7 @@ export default function ProductionContent() {
             <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
               <Clock size={16} />
             </div>
-            <p className="text-sm font-medium text-slate-400">Kutilmoqda</p>
+            <p className="text-sm font-medium text-slate-400">Kutilmoqda / Ожидается</p>
           </div>
           <h3 className="text-2xl font-bold text-white">
             {orders.filter((o: any) => o.status === 'PENDING').length}
@@ -244,7 +267,7 @@ export default function ProductionContent() {
             <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
               <CheckCircle size={16} />
             </div>
-            <p className="text-sm font-medium text-slate-400">Qabul qilindi</p>
+            <p className="text-sm font-medium text-slate-400">Qabul qilindi / Принято</p>
           </div>
           <h3 className="text-2xl font-bold text-white">
             {orders.filter((o: any) => o.status === 'DELIVERED').length}
@@ -255,7 +278,7 @@ export default function ProductionContent() {
             <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center">
               <XCircle size={16} />
             </div>
-            <p className="text-sm font-medium text-slate-400">Rad etildi</p>
+            <p className="text-sm font-medium text-slate-400">Rad etildi / Отменено</p>
           </div>
           <h3 className="text-2xl font-bold text-white">
             {orders.filter((o: any) => o.status === 'CANCELLED').length}
@@ -280,25 +303,25 @@ export default function ProductionContent() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-dark-800/50 text-slate-400 border-b border-dark-700">
-                <th className="p-4 font-medium">Mahsulot</th>
-                <th className="p-4 font-medium">Miqdor</th>
-                <th className="p-4 font-medium">Kutilayotgan sana</th>
-                <th className="p-4 font-medium">Qolgan vaqt</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium">Amallar</th>
+                <th className="p-4 font-medium">Mahsulot / Продукт</th>
+                <th className="p-4 font-medium">Miqdor / Количество</th>
+                <th className="p-4 font-medium">Narxi / Цена</th>
+                <th className="p-4 font-medium">Kutilayotgan sana / Дата</th>
+                <th className="p-4 font-medium">Status / Статус</th>
+                <th className="p-4 font-medium">Amallar / Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-700">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-500">
-                    Yuklanmoqda...
+                    Yuklanmoqda... / Загрузка...
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-500">
-                    Hali buyurtmalar yo'q
+                    Hali buyurtmalar yo'q / Пока нет заказов
                   </td>
                 </tr>
               ) : (
@@ -335,10 +358,21 @@ export default function ProductionContent() {
                         </span>
                       </td>
                       <td className="p-4 text-slate-300">
-                        {new Date(order.expectedDate).toLocaleDateString()}
+                        {order.price ? (
+                          <span className="text-emerald-400 font-medium">
+                            {order.price.toLocaleString()} so'm
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
                       </td>
-                      <td className="p-4">
-                        {order.status === 'PENDING' ? getDaysLeft(order.expectedDate) : <span className="text-slate-500">—</span>}
+                      <td className="p-4 text-slate-300">
+                        <div className="flex flex-col gap-1">
+                          <span>{new Date(order.expectedDate).toLocaleDateString()}</span>
+                          <span className="text-xs">
+                            {order.status === 'PENDING' ? getDaysLeft(order.expectedDate) : ''}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-4">
                         {order.status === 'PENDING' && <span className="badge-warning">Kutilmoqda</span>}
@@ -346,34 +380,43 @@ export default function ProductionContent() {
                         {order.status === 'CANCELLED' && <span className="badge-danger">Rad etildi</span>}
                       </td>
                       <td className="p-4">
-                        {order.status === 'PENDING' && (
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => openConfirmModal(order.id)}
-                              className="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-md transition-colors"
-                              title="Qabul qilish"
-                            >
-                              <CheckCircle size={16} />
-                            </button>
-                            <button 
-                              onClick={() => handleReject(order.id)}
-                              className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
-                              title="Rad etish"
-                            >
-                              <XCircle size={16} />
-                            </button>
-                          </div>
-                        )}
-                        {order.status === 'DELIVERED' && order.imageUrl && (
+                        <div className="flex gap-2 flex-wrap">
                           <button 
-                            onClick={() => openImageViewer(order.imageUrl)}
-                            className="p-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-md transition-colors flex items-center gap-1"
-                            title="Rasmlarni ko'rish"
+                            onClick={() => openEditModal(order)}
+                            className="p-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-md transition-colors"
+                            title="Tahrirlash / Редактировать"
                           >
-                            <ImageIcon size={16} />
-                            <span className="text-xs font-medium pr-1">Rasmlar</span>
+                            <Pencil size={16} />
                           </button>
-                        )}
+                          
+                          {order.status === 'PENDING' && (
+                            <>
+                              <button 
+                                onClick={() => openConfirmModal(order.id)}
+                                className="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-md transition-colors"
+                                title="Qabul qilish / Принять"
+                              >
+                                <CheckCircle size={16} />
+                              </button>
+                              <button 
+                                onClick={() => handleReject(order.id)}
+                                className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
+                                title="Rad etish / Отменить"
+                              >
+                                <XCircle size={16} />
+                              </button>
+                            </>
+                          )}
+                          {order.status === 'DELIVERED' && order.imageUrl && (
+                            <button 
+                              onClick={() => openImageViewer(order.imageUrl)}
+                              className="p-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-md transition-colors flex items-center gap-1"
+                              title="Rasmlarni ko'rish / Смотреть фото"
+                            >
+                              <ImageIcon size={16} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -384,26 +427,28 @@ export default function ProductionContent() {
         </div>
       </div>
 
-      {/* New Order Modal */}
+      {/* New Order / Edit Order Modal */}
       {isNewOrderModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-enter">
-            <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/50">
-              <h2 className="text-lg font-bold text-white">Yangi buyurtma qo'shish</h2>
+          <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-enter max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/50 sticky top-0 z-10">
+              <h2 className="text-lg font-bold text-white">
+                {editingOrderId ? 'Buyurtmani tahrirlash / Изменить заказ' : "Yangi buyurtma / Новый заказ"}
+              </h2>
               <button onClick={() => setIsNewOrderModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleNewOrder} className="p-5 space-y-4">
+            <form onSubmit={handleSaveOrder} className="p-5 space-y-4">
               <div>
-                <label className="label">Mahsulot *</label>
+                <label className="label">Mahsulot / Продукт *</label>
                 <select 
                   className="input-field" 
                   value={form.productId}
                   onChange={(e) => setForm({...form, productId: e.target.value})}
                   required
                 >
-                  <option value="">— Tanlang —</option>
+                  <option value="">— Tanlang / Выберите —</option>
                   {products.map((p: any) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -412,7 +457,7 @@ export default function ProductionContent() {
               
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="label">Miqdor *</label>
+                  <label className="label">Miqdor / Кол-во *</label>
                   <input 
                     type="number" 
                     className="input-field" 
@@ -424,7 +469,7 @@ export default function ProductionContent() {
                   />
                 </div>
                 <div className="w-1/2">
-                  <label className="label">O'lchov birligi *</label>
+                  <label className="label">O'lchov / Ед. изм. *</label>
                   <select 
                     className="input-field" 
                     value={form.unit}
@@ -440,7 +485,7 @@ export default function ProductionContent() {
 
               <div>
                 <label className="label">
-                  <span className="flex items-center gap-1.5"><Calendar size={13}/> Qachon kelishi kerak? *</span>
+                  <span className="flex items-center gap-1.5"><Calendar size={13}/> Sana / Дата *</span>
                 </label>
                 <input 
                   type="date" 
@@ -450,13 +495,27 @@ export default function ProductionContent() {
                   required
                 />
               </div>
+
+              <div>
+                <label className="label">
+                  Narxi (Nakladnoy summasi) / Цена (Сумма накладной)
+                </label>
+                <input 
+                  type="number" 
+                  className="input-field" 
+                  placeholder="M: 150000" 
+                  min="0" step="1"
+                  value={form.price}
+                  onChange={(e) => setForm({...form, price: e.target.value})}
+                />
+              </div>
               
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsNewOrderModalOpen(false)} className="btn-secondary flex-1">
-                  Bekor qilish
+                  Bekor qilish / Отмена
                 </button>
                 <button type="submit" disabled={saving} className="btn-primary flex-1">
-                  {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+                  {saving ? 'Saqlanmoqda...' : 'Saqlash / Сохранить'}
                 </button>
               </div>
             </form>
@@ -471,7 +530,7 @@ export default function ProductionContent() {
             <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/50 shrink-0">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <CheckCircle className="text-emerald-400" size={20} />
-                Qabul qilish
+                Qabul qilish / Принять
               </h2>
               <button onClick={() => setIsConfirmModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
                 <X size={24} />
@@ -497,14 +556,14 @@ export default function ProductionContent() {
                   {uploadingImage ? (
                     <div className="flex flex-col items-center gap-2">
                       <Loader2 size={32} className="text-indigo-400 animate-spin" />
-                      <span className="text-sm text-slate-400">Yuklanmoqda...</span>
+                      <span className="text-sm text-slate-400">Yuklanmoqda... / Загрузка...</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 pointer-events-none">
                       <div className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
                         <Camera size={24} />
                       </div>
-                      <span className="font-medium text-slate-300">Rasmlar yuklash uchun bosing</span>
+                      <span className="font-medium text-slate-300 text-center">Rasmlar yuklash uchun bosing<br/><span className="text-xs text-slate-500">Нажмите чтобы загрузить фото</span></span>
                     </div>
                   )}
                 </div>
@@ -533,7 +592,7 @@ export default function ProductionContent() {
                   onClick={() => setIsConfirmModalOpen(false)} 
                   className="btn-secondary flex-1"
                 >
-                  Bekor qilish
+                  Bekor qilish / Отмена
                 </button>
                 <button 
                   type="button" 
@@ -542,7 +601,7 @@ export default function ProductionContent() {
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {confirming ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                  Tasdiqlash
+                  Tasdiqlash / Подтвердить
                 </button>
               </div>
             </div>
@@ -554,7 +613,7 @@ export default function ProductionContent() {
       {isViewModalOpen && (
         <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col p-4 animate-enter">
           <div className="flex justify-between items-center p-4">
-            <h3 className="text-white font-medium">Mahsulot rasmlari ({viewingImages.length} ta)</h3>
+            <h3 className="text-white font-medium">Mahsulot rasmlari / Фотографии продукта ({viewingImages.length} ta)</h3>
             <button onClick={() => setIsViewModalOpen(false)} className="text-slate-400 hover:text-white transition-colors bg-dark-800 p-2 rounded-full">
               <X size={24} />
             </button>

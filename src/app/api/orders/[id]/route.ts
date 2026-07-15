@@ -10,8 +10,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const order = await prisma.order.update({
       where: { id: parseInt(id) },
       data: {
-        status: body.status,
-        ...(body.imageUrl && { imageUrl: body.imageUrl })
+        ...(body.status !== undefined && { status: body.status }),
+        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl }),
+        ...(body.productId !== undefined && { productId: parseInt(body.productId) }),
+        ...(body.quantity !== undefined && { quantity: parseFloat(body.quantity) }),
+        ...(body.unit !== undefined && { unit: body.unit }),
+        ...(body.expectedDate !== undefined && { expectedDate: new Date(body.expectedDate) }),
+        ...(body.price !== undefined && { price: body.price ? parseFloat(body.price) : null }),
       }
     })
     return NextResponse.json(order)

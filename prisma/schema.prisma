@@ -186,6 +186,7 @@ model Order {
   expectedDate DateTime
   status       String   @default("PENDING") // PENDING, DELIVERED, CANCELLED
   imageUrl     String?
+  price        Float?   // Nakladnoy narxi
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
