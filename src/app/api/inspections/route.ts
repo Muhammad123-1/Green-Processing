@@ -127,6 +127,37 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // If accepted, create an InventoryBatch in the Warehouse WMS
+    if (inspection.status === 'ACCEPTED') {
+      // FEFO logic: Calculate expiration date if product has shelfLifeDays
+      let expirationDate = null;
+      if (inspection.product.shelfLifeDays) {
+        expirationDate = new Date(inspection.inspectionDate);
+        expirationDate.setDate(expirationDate.getDate() + inspection.product.shelfLifeDays);
+      }
+
+      await prisma.inventoryBatch.create({
+        data: {
+          productId: inspection.productId,
+          batchNumber: inspection.batchNumber,
+          quantity: inspection.quantity,
+          receivedAt: inspection.inspectionDate,
+          expirationDate: expirationDate,
+          qcStatus: 'APPROVED'
+        }
+      });
+      
+      // Log WMS addition
+      await prisma.log.create({
+        data: {
+          action: 'CREATE_INVENTORY_BATCH',
+          entity: 'InventoryBatch',
+          entityId: inspection.id, // using inspection id as reference
+          details: `Omborga yangi partiya qo'shildi: ${inspection.batchNumber}`,
+        },
+      })
+    }
+
     // Log action
     await prisma.log.create({
       data: {

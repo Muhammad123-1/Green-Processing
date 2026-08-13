@@ -16,8 +16,52 @@ interface Arrival {
   status: string
 }
 
+const tBase = {
+  uz: {
+    export: "Eksport",
+    search: "Qidirish: mahsulot, ta'minotchi...",
+    refresh: "Yangilash",
+    noData: "Ma'lumot topilmadi",
+    colDate: "Sana",
+    colProduct: "Nomenklatura (Mahsulot)",
+    colQty: "Miqdor",
+    colSupplier: "Ta'minotchi",
+    colBatch: "Partiyalar",
+    featureDev: "Funksiya ishlab chiqilmoqda"
+  },
+  ru: {
+    export: "Экспорт",
+    search: "Поиск: продукт, поставщик...",
+    refresh: "Обновить",
+    noData: "Нет данных",
+    colDate: "Дата",
+    colProduct: "Номенклатура",
+    colQty: "Количество",
+    colSupplier: "Поставщик",
+    colBatch: "Партии",
+    featureDev: "Функция в разработке"
+  },
+  en: {
+    export: "Export",
+    search: "Search: product, supplier...",
+    refresh: "Refresh",
+    noData: "No data found",
+    colDate: "Date",
+    colProduct: "Nomenclature",
+    colQty: "Quantity",
+    colSupplier: "Supplier",
+    colBatch: "Batches",
+    featureDev: "Feature in development"
+  }
+}
+
+type LangType = 'uz' | 'ru' | 'en'
+
 export default function ArrivalsContent() {
   const { t, lang } = useLanguage()
+  const currentLang = (lang || 'uz') as LangType
+  const l = tBase[currentLang]
+
   const [arrivals, setArrivals] = useState<Arrival[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -59,7 +103,7 @@ export default function ArrivalsContent() {
   const exportToExcel = () => {
     // Generate simple excel from the table data
     // In a real app we might call a backend endpoint for this
-    toast.success(lang === 'ru' ? 'Функция в разработке' : 'Funksiya ishlab chiqilmoqda')
+    toast.success(l.featureDev)
   }
 
   return (
@@ -73,7 +117,7 @@ export default function ArrivalsContent() {
         <div className="flex gap-3">
           <button onClick={exportToExcel} className="btn-secondary">
             <Download size={18} />
-            Экспорт
+            {l.export}
           </button>
         </div>
       </div>
@@ -85,7 +129,7 @@ export default function ArrivalsContent() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder={lang === 'ru' ? "Поиск: продукт, поставщик..." : "Qidirish: mahsulot, ta'minotchi..."}
+              placeholder={l.search}
               className="input-field pl-10"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
@@ -94,7 +138,7 @@ export default function ArrivalsContent() {
 
           <button onClick={fetchArrivals} className="btn-secondary gap-2">
             <RefreshCw size={15} />
-            {lang === 'ru' ? 'Обновить' : 'Yangilash'}
+            {l.refresh}
           </button>
         </div>
       </div>
@@ -108,18 +152,18 @@ export default function ArrivalsContent() {
         ) : arrivals.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <ArrowDownToLine size={48} className="mb-4 opacity-30" />
-            <p className="font-medium text-lg">{lang === 'ru' ? 'Нет данных' : "Ma'lumot topilmadi"}</p>
+            <p className="font-medium text-lg">{l.noData}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">Дата</th>
-                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">Номенклатура</th>
-                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none text-right">Количество</th>
-                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">Поставщик</th>
-                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">Партии</th>
+                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">{l.colDate}</th>
+                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">{l.colProduct}</th>
+                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none text-right">{l.colQty}</th>
+                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">{l.colSupplier}</th>
+                  <th style={{ backgroundColor: '#ed7d31', color: 'white' }} className="border-none">{l.colBatch}</th>
                 </tr>
               </thead>
               <tbody>

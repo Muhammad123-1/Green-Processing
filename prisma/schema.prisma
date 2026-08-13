@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -10,39 +10,221 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  username  String   @unique
-  password  String
-  role      String   @default("OPERATOR") // ADMIN, OPERATOR, READONLY
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// -----------------------------------------------------------------------------
+// FAZA 1: YADRO INFRATUZILMA (HR, Roles, Users)
+// -----------------------------------------------------------------------------
 
-  inspections Inspection[]
-  logs        Log[]
-}
-
-model Supplier {
+model Department {
   id          Int      @id @default(autoincrement())
   name        String
-  shortName   String?
-  address     String?
-  phone       String?
-  email       String?
-  certificate String?
-  isActive    Boolean  @default(true)
+  code        String   @unique
+  headUserId  Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  inspections Inspection[]
+  users       User[]
 }
+
+model Role {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  code           String   @unique // e.g. ADMIN, DIRECTOR, QC, KITCHEN
+  canExportExcel Boolean  @default(false)
+  permissions    String?  // JSON string for ABAC policies
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  users          User[]
+}
+
+model User {
+  id               Int      @id @default(autoincrement())
+  name             String
+  username         String   @unique
+  password         String
+  role             String   @default("OPERATOR") // Backwards compatibility
+  roleId           Int?
+  departmentId     Int?
+  medicalClearance Boolean  @default(true)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  roleRelation     Role?        @relation(fields: [roleId], references: [id])
+  department       Department?  @relation(fields: [departmentId], references: [id])
+  
+  inspections      Inspection[]
+  logs             Log[]
+  auditLogs        AuditLog[]
+  exportLogs       ExportLog[]
+  medicalRecords   MedicalRecord[]
+  ticketsReported  MaintenanceTicket[] @relation("ReportedTickets")
+  ticketsAssigned  MaintenanceTicket[] @relation("AssignedTickets")
+  degustations     DegustationLog[]
+}
+
+model MedicalRecord {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  validUntil  DateTime
+  documentUrl String?
+  isValid     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id              Int      @id @default(autoincrement())
+  tableName       String
+  operation       String   // INSERT, UPDATE, DELETE
+  oldValues       String?  // JSON string
+  newValues       String?  // JSON string
+  changedByUserId Int?
+  createdAt       DateTime @default(now())
+
+  user            User?    @relation(fields: [changedByUserId], references: [id])
+}
+
+model ExportLog {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  dataExported  String
+  exportedAt    DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// FAZA 2: OMBOR VA LOGISTIKA (WMS, FEFO, OCC)
+// -----------------------------------------------------------------------------
+
+model Warehouse {
+  id          Int      @id @default(autoincrement())
+  name        String
+  type        String   // RAW, FINISHED, COLD
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  zones       WarehouseZone[]
+  batches     InventoryBatch[]
+}
+
+model WarehouseZone {
+  id          Int      @id @default(autoincrement())
+  warehouseId Int
+  name        String   // e.g. A-qator, B-javon
+  
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  batches     InventoryBatch[]
+}
+
+model InventoryBatch {
+  id             Int      @id @default(autoincrement())
+  productId      Int
+  batchNumber    String   @unique
+  warehouseId    Int?
+  zoneId         Int?
+  quantity       Float
+  cost           Float?
+  receivedAt     DateTime @default(now())
+  expirationDate DateTime?
+  qcStatus       String   @default("PENDING") // PENDING, APPROVED, REJECTED, QUARANTINE
+  version        Int      @default(1) // For Optimistic Concurrency Control
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  product        Product         @relation(fields: [productId], references: [id])
+  warehouse      Warehouse?      @relation(fields: [warehouseId], references: [id])
+  zone           WarehouseZone?  @relation(fields: [zoneId], references: [id])
+  transactions   InventoryTransaction[]
+  degustations   DegustationLog[]
+}
+
+model InventoryTransaction {
+  id              Int      @id @default(autoincrement())
+  batchId         Int
+  transactionType String   // IN, OUT, SCRAP, TRANSFER
+  quantity        Float
+  userId          Int?
+  referenceDocId  String?
+  createdAt       DateTime @default(now())
+
+  batch           InventoryBatch @relation(fields: [batchId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// FAZA 3: ISHLAB CHIQARISH VA SIFAT NAZORATI (BOM, Recipe, QA)
+// -----------------------------------------------------------------------------
+
+model Recipe {
+  id              Int      @id @default(autoincrement())
+  outputProductId Int
+  version         Int      @default(1)
+  baseYieldQty    Float
+  technologistId  Int?
+  isApproved      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  outputProduct   Product            @relation(fields: [outputProductId], references: [id])
+  ingredients     RecipeIngredient[]
+  orders          ProductionOrder[]
+}
+
+model RecipeIngredient {
+  id               Int      @id @default(autoincrement())
+  recipeId         Int
+  inputProductId   Int
+  requiredQty      Float
+  tolerancePercent Float?   @default(0)
+  isSubstitutable  Boolean  @default(false)
+
+  recipe           Recipe   @relation(fields: [recipeId], references: [id])
+  inputProduct     Product  @relation("RecipeInputs", fields: [inputProductId], references: [id])
+}
+
+model ProductionOrder {
+  id            Int      @id @default(autoincrement())
+  recipeId      Int
+  plannedOutput Float
+  actualOutput  Float?
+  status        String   @default("PLANNED") // PLANNED, IN_PROGRESS, QC_CHECK, COMPLETED
+  startedAt     DateTime?
+  endedAt       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  recipe        Recipe   @relation(fields: [recipeId], references: [id])
+}
+
+model DegustationLog {
+  id             Int      @id @default(autoincrement())
+  batchId        Int?
+  vannaNo        Int
+  inspectionDate DateTime @default(now())
+  appearanceOk   Boolean
+  smellOk        Boolean
+  tasteOk        Boolean
+  moistureOk     Boolean
+  notes          String?
+  qcInspectorId  Int
+  createdAt      DateTime @default(now())
+
+  batch          InventoryBatch? @relation(fields: [batchId], references: [id])
+  qcInspector    User            @relation(fields: [qcInspectorId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// MAVJUD MODELLAR (Biroz kengaytirilgan holda)
+// -----------------------------------------------------------------------------
 
 model Product {
   id                 Int      @id @default(autoincrement())
   name               String
   code               String?  @unique
+  barcode            String?  @unique
   category           String?
   unit               String   @default("kg")
   defaultTemperature String?
@@ -52,15 +234,41 @@ model Product {
   defaultConclusion  String?
   storageCondition   String?
   shelfLife          String?
+  shelfLifeDays      Int?
   gost               String?
   description        String?
+  allergenInfo       String?
+  type               String   @default("RAW_MATERIAL") // RAW_MATERIAL, KITCHEN, FINISHED_GOOD
+  isPerishable       Boolean  @default(true)
+  minStockLevel      Float?   @default(0) // Svetofor tizimi uchun (Sariq/Qizil)
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  inspections Inspection[]
-  orders      Order[]
-  specifications Specification[]
+  inspections      Inspection[]
+  orders           Order[]
+  specifications   Specification[]
+  batches          InventoryBatch[]
+  recipesWhereOutput Recipe[]
+  recipesWhereInput  RecipeIngredient[] @relation("RecipeInputs")
+}
+
+model Supplier {
+  id             Int      @id @default(autoincrement())
+  name           String
+  shortName      String?
+  address        String?
+  phone          String?
+  email          String?
+  certificate    String?
+  qaRequirements String?  // e.g. "Tuproq va suv analizi shart"
+  auditSchedule  String?  // e.g. "Har yili 1 marta"
+  category       String   @default("GENERAL") // GENERAL, PRODUCTION, KITCHEN
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  inspections    Inspection[]
 }
 
 model Inspection {
@@ -80,16 +288,17 @@ model Inspection {
   appearance       String?
   conclusion       String   @default("Muvofiq")
   status           String   @default("ACCEPTED") // ACCEPTED, REJECTED, CONDITIONAL
+  rating           Int?     // Ta'minotchi reytingi (1-5)
   inspector        String?
   inspectorId      Int?
-  supervisorId     Int?     // Nazoratchi (Supervisor jadvali bilan bog'liq)
+  supervisorId     Int?     
   vehicleNumber    String?
   invoiceNumber    String?
   notes            String?
-  customFields     String?  // JSON for dynamic product-specific fields
+  customFields     String?  // JSON for dynamic fields
   excelPath        String?
   pdfPath          String?
-  sheetName        String?  // which Excel sheet template to use
+  sheetName        String?  
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   
@@ -110,13 +319,54 @@ model Inspection {
   @@index([actNumber])
 }
 
+model Order {
+  id                 Int      @id @default(autoincrement())
+  productId          Int
+  quantity           Float
+  unit               String?
+  expectedDate       DateTime
+  timeRange          String?  // e.g. "08:00 - 13:00"
+  actualDeliveryTime DateTime?
+  status             String   @default("PENDING") // PENDING, DELIVERED, CANCELLED
+  imageUrl           String?
+  price              Float?   
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  product     Product      @relation(fields: [productId], references: [id])
+  inspections Inspection[]
+}
+
+// -----------------------------------------------------------------------------
+// TEXNIK XIZMAT (Maintenance & Ticketing)
+// -----------------------------------------------------------------------------
+
+model MaintenanceTicket {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String?
+  status       String   @default("OPEN") // OPEN, IN_PROGRESS, WAITING_PARTS, RESOLVED
+  equipmentId  String?
+  reportedById Int
+  assignedToId Int?
+  createdAt    DateTime @default(now())
+  resolvedAt   DateTime?
+
+  reportedBy   User     @relation("ReportedTickets", fields: [reportedById], references: [id])
+  assignedTo   User?    @relation("AssignedTickets", fields: [assignedToId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// QOLGAN JADVALLAR
+// -----------------------------------------------------------------------------
+
 model Supervisor {
   id          Int      @id @default(autoincrement())
   name        String
-  position    String?  // Lavozimi: Nazoratchi, Katta nazoratchi
+  position    String?  
   phone       String?
   email       String?
-  department  String?  // Bo'lim
+  department  String?  
   notes       String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -172,26 +422,10 @@ model ActImage {
   id         Int      @id @default(autoincrement())
   actId      Int
   url        String
-  type       String?  // 'defect', 'packaging', 'general'
+  type       String?  
   uploadedAt DateTime @default(now())
 
   inspection Inspection @relation(fields: [actId], references: [id], onDelete: Cascade)
-}
-
-model Order {
-  id           Int      @id @default(autoincrement())
-  productId    Int
-  quantity     Float
-  unit         String?
-  expectedDate DateTime
-  status       String   @default("PENDING") // PENDING, DELIVERED, CANCELLED
-  imageUrl     String?
-  price        Float?   // Nakladnoy narxi
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  product     Product      @relation(fields: [productId], references: [id])
-  inspections Inspection[]
 }
 
 model Specification {
@@ -210,9 +444,10 @@ model Specification {
 
 model ChatMessage {
   id        Int      @id @default(autoincrement())
-  sender    String   // e.g. "Sifat Nazorati" or "Oshxona"
+  sender    String   
   text      String?  @db.Text
   imageUrl  String?  @db.Text
-  groupId   String   @default("general") // e.g. "general", "kitchen", "qa"
+  groupId   String   @default("general") 
+  readBy    String[] @default([]) // Kim ko'rganligini saqlash uchun
   createdAt DateTime @default(now())
 }

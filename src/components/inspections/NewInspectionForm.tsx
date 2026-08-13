@@ -458,7 +458,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
               onChange={(e) => handleChange('productId', e.target.value)}
             >
               <option value="">— Tanlang —</option>
-              {products.map((p) => (
+              {products.filter(p => !p.type || p.type === 'RAW_MATERIAL').map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} {p.category ? `(${p.category})` : ''}
                 </option>

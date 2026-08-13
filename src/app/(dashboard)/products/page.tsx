@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import {
-  Plus, Search, Edit, Trash2, Package, X, Save, Loader2, RefreshCw,
-} from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Package, X, Save, Loader2, RefreshCw } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface Product {
   id: number
@@ -17,6 +16,7 @@ interface Product {
   defaultPackaging: string | null
   defaultConclusion: string | null
   gost: string | null
+  type: string
   isActive: boolean
 }
 
@@ -33,11 +33,14 @@ const emptyForm = {
   shelfLife: '',
   gost: '',
   description: '',
+  type: 'RAW_MATERIAL',
 }
 
 export default function ProductsPage() {
+  const { t } = useLanguage()
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
+  const [activeTab, setActiveTab] = useState<'RAW_MATERIAL' | 'KITCHEN'>('RAW_MATERIAL')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
@@ -61,14 +64,15 @@ export default function ProductsPage() {
 
   const filtered = products.filter(
     (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.category?.toLowerCase().includes(search.toLowerCase()) ||
-      p.code?.toLowerCase().includes(search.toLowerCase())
+      (p.type === activeTab || (!p.type && activeTab === 'RAW_MATERIAL')) &&
+      (p.name.toLowerCase().includes(search.toLowerCase()) ||
+       p.category?.toLowerCase().includes(search.toLowerCase()) ||
+       p.code?.toLowerCase().includes(search.toLowerCase()))
   )
 
   function openNew() {
     setEditId(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm, type: activeTab })
     setShowModal(true)
   }
 
@@ -87,6 +91,7 @@ export default function ProductsPage() {
       shelfLife: '',
       gost: p.gost || '',
       description: '',
+      type: p.type || 'RAW_MATERIAL',
     })
     setShowModal(true)
   }
@@ -124,21 +129,35 @@ export default function ProductsPage() {
     <div className="space-y-5 animate-enter">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="section-title">Mahsulotlar</h1>
-          <p className="section-subtitle">Jami: {products.length} ta mahsulot</p>
+          <h1 className="section-title">{t('products')}</h1>
+          <p className="section-subtitle">{t('totalProducts')}: {products.length}</p>
         </div>
         <button onClick={openNew} className="btn-primary">
-          <Plus size={18} />Yangi mahsulot
+          <Plus size={18} />{t('newProduct')}
         </button>
       </div>
 
-      <div className="card p-4">
-        <div className="flex gap-3">
+      <div className="card p-0">
+        <div className="flex border-b border-dark-700">
+          <button 
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'RAW_MATERIAL' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/5' : 'text-slate-400 hover:text-slate-300 hover:bg-dark-800'}`}
+            onClick={() => setActiveTab('RAW_MATERIAL')}
+          >
+            {t('actProducts')}
+          </button>
+          <button 
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'KITCHEN' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/5' : 'text-slate-400 hover:text-slate-300 hover:bg-dark-800'}`}
+            onClick={() => setActiveTab('KITCHEN')}
+          >
+            {t('kitchenProducts')}
+          </button>
+        </div>
+        <div className="p-4 flex gap-3">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder="Qidirish..."
+              placeholder={t('search')}
               className="input-field pl-9"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -160,28 +179,30 @@ export default function ProductsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Nomi</th>
-                <th>Kod</th>
-                <th>Kategoriya</th>
-                <th>Birlik</th>
-                <th>Harorat norma</th>
-                <th>GOST</th>
-                <th className="text-right">Amallar</th>
+                <th>{t('name')}</th>
+                {activeTab === 'RAW_MATERIAL' && <th>{t('code')}</th>}
+                {activeTab === 'RAW_MATERIAL' && <th>{t('category')}</th>}
+                <th>{t('unit')}</th>
+                {activeTab === 'RAW_MATERIAL' && <th>{t('tempNorm')}</th>}
+                {activeTab === 'RAW_MATERIAL' && <th>{t('gost')}</th>}
+                <th className="text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} className="table-row">
                   <td className="font-medium text-slate-100">{p.name}</td>
-                  <td className="font-mono text-xs text-slate-400">{p.code || '—'}</td>
-                  <td className="text-slate-400">{p.category || '—'}</td>
+                  {activeTab === 'RAW_MATERIAL' && <td className="font-mono text-xs text-slate-400">{p.code || '—'}</td>}
+                  {activeTab === 'RAW_MATERIAL' && <td className="text-slate-400">{p.category || '—'}</td>}
                   <td className="text-slate-300">{p.unit}</td>
-                  <td className="text-slate-400 text-xs">
-                    {p.minTemperature != null && p.maxTemperature != null
-                      ? `${p.minTemperature}°C — ${p.maxTemperature}°C`
-                      : '—'}
-                  </td>
-                  <td className="text-slate-400 text-xs">{p.gost || '—'}</td>
+                  {activeTab === 'RAW_MATERIAL' && (
+                    <td className="text-slate-400 text-xs">
+                      {p.minTemperature != null && p.maxTemperature != null
+                        ? `${p.minTemperature}°C — ${p.maxTemperature}°C`
+                        : '—'}
+                    </td>
+                  )}
+                  {activeTab === 'RAW_MATERIAL' && <td className="text-slate-400 text-xs">{p.gost || '—'}</td>}
                   <td>
                     <div className="flex items-center justify-end gap-1">
                       <button
@@ -214,7 +235,7 @@ export default function ProductsPage() {
                onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-white text-lg">
-                {editId ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot'}
+                {editId ? t('editProduct') : t('newProduct')}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white transition-colors">
                 <X size={20} />
@@ -222,26 +243,49 @@ export default function ProductsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 flex gap-2 p-1 bg-dark-900 rounded-lg border border-dark-700">
+                <button
+                  type="button"
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${form.type === 'RAW_MATERIAL' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-300 hover:bg-dark-800'}`}
+                  onClick={() => setForm(f => ({ ...f, type: 'RAW_MATERIAL' }))}
+                >
+                  {t('actForRawMaterial')}
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${form.type === 'KITCHEN' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-300 hover:bg-dark-800'}`}
+                  onClick={() => setForm(f => ({ ...f, type: 'KITCHEN' }))}
+                >
+                  {t('forKitchen')}
+                </button>
+              </div>
+              
               <div className="col-span-2">
-                <label className="label">Nomi *</label>
+                <label className="label">{t('name')} *</label>
                 <input className="input-field" value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Mahsulot nomi" />
               </div>
-              <div>
-                <label className="label">Kod</label>
-                <input className="input-field" value={form.code}
-                  onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-                  placeholder="QND-001" />
-              </div>
-              <div>
-                <label className="label">Kategoriya</label>
-                <input className="input-field" value={form.category}
-                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  placeholder="Don mahsulotlari..." />
-              </div>
-              <div>
-                <label className="label">O'lchov birligi</label>
+              
+              {form.type === 'RAW_MATERIAL' && (
+                <>
+                  <div>
+                    <label className="label">{t('code')}</label>
+                    <input className="input-field" value={form.code}
+                      onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+                      placeholder="QND-001" />
+                  </div>
+                  <div>
+                    <label className="label">{t('category')}</label>
+                    <input className="input-field" value={form.category}
+                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                      placeholder="Don mahsulotlari..." />
+                  </div>
+                </>
+              )}
+
+              <div className={form.type === 'KITCHEN' ? 'col-span-2' : ''}>
+                <label className="label">{t('unit')}</label>
                 <select className="input-field" value={form.unit}
                   onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}>
                   <option value="kg">kg</option>
@@ -252,43 +296,47 @@ export default function ProductsPage() {
                   <option value="t">t</option>
                 </select>
               </div>
-              <div>
-                <label className="label">GOST</label>
-                <input className="input-field" value={form.gost}
-                  onChange={(e) => setForm((f) => ({ ...f, gost: e.target.value }))}
-                  placeholder="ГОСТ 21-94" />
-              </div>
-              <div>
-                <label className="label">Min harorat (°C)</label>
-                <input type="number" className="input-field" value={form.minTemperature}
-                  onChange={(e) => setForm((f) => ({ ...f, minTemperature: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Max harorat (°C)</label>
-                <input type="number" className="input-field" value={form.maxTemperature}
-                  onChange={(e) => setForm((f) => ({ ...f, maxTemperature: e.target.value }))} />
-              </div>
-              <div className="col-span-2">
-                <label className="label">Standart qadoqlash</label>
-                <input className="input-field" value={form.defaultPackaging}
-                  onChange={(e) => setForm((f) => ({ ...f, defaultPackaging: e.target.value }))}
-                  placeholder="Qop (50 kg)" />
-              </div>
-              <div className="col-span-2">
-                <label className="label">Standart xulosa</label>
-                <input className="input-field" value={form.defaultConclusion}
-                  onChange={(e) => setForm((f) => ({ ...f, defaultConclusion: e.target.value }))}
-                  placeholder="Мувофиқ / Muvofiq ГОСТ..." />
-              </div>
+
+              {form.type === 'RAW_MATERIAL' && (
+                <>
+                  <div>
+                    <label className="label">{t('gost')}</label>
+                    <input className="input-field" value={form.gost}
+                      onChange={(e) => setForm((f) => ({ ...f, gost: e.target.value }))}
+                      placeholder="ГОСТ 21-94" />
+                  </div>
+                  <div>
+                    <label className="label">{t('minTemp')}</label>
+                    <input type="number" className="input-field" value={form.minTemperature}
+                      onChange={(e) => setForm((f) => ({ ...f, minTemperature: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label">{t('maxTemp')}</label>
+                    <input type="number" className="input-field" value={form.maxTemperature}
+                      onChange={(e) => setForm((f) => ({ ...f, maxTemperature: e.target.value }))} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="label">{t('defaultPackaging')}</label>
+                    <input className="input-field" value={form.defaultPackaging}
+                      onChange={(e) => setForm((f) => ({ ...f, defaultPackaging: e.target.value }))}
+                      placeholder="Qop (50 kg)" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="label">{t('defaultConclusion')}</label>
+                    <input className="input-field" value={form.defaultConclusion}
+                      onChange={(e) => setForm((f) => ({ ...f, defaultConclusion: e.target.value }))}
+                      placeholder="Мувофиқ / Muvofiq ГОСТ..." />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)} className="btn-secondary flex-1 justify-center">
-                Bekor qilish
+              <button onClick={() => setShowModal(false)} className="btn-secondary flex-1">
+                {t('cancel')}
               </button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center">
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                Saqlash
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
+                {saving ? t('saving') : t('save')}
               </button>
             </div>
           </div>

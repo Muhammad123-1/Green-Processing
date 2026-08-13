@@ -9,11 +9,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const body = await request.json()
     const data: Record<string, unknown> = { name: body.name, role: body.role }
     if (body.password) data.password = body.password
+    if (body.medicalClearance !== undefined) data.medicalClearance = body.medicalClearance
 
     const user = await prisma.user.update({
       where: { id: parseInt(id) },
       data,
-      select: { id: true, name: true, username: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, name: true, username: true, role: true, medicalClearance: true, isActive: true, createdAt: true },
     })
     return NextResponse.json(user)
   } catch {

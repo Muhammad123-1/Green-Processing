@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
         quantity: parseFloat(body.quantity),
         unit: body.unit,
         expectedDate: new Date(body.expectedDate),
+        timeRange: body.timeRange || null,
         status: body.status || 'PENDING',
         price: body.price ? parseFloat(body.price) : null,
       },

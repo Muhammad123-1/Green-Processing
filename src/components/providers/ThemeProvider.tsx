@@ -3,36 +3,45 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
 type Theme = 'dark' | 'light'
+type FontSize = 'normal' | 'large' | 'xlarge'
 
 interface ThemeContextType {
   theme: Theme
   setTheme: (theme: Theme) => void
+  fontSize: FontSize
+  setFontSize: (size: FontSize) => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setThemeState] = useState<Theme>('dark')
+  const [fontSize, setFontSizeState] = useState<FontSize>('normal')
 
   useEffect(() => {
     // Check local storage or system preference
     const storedTheme = localStorage.getItem('theme') as Theme
     if (storedTheme) {
-      setTheme(storedTheme)
-      document.documentElement.classList.add(storedTheme)
+      setThemeState(storedTheme)
       if (storedTheme === 'light') {
         document.documentElement.classList.remove('dark')
       } else {
         document.documentElement.classList.add('dark')
       }
     } else {
-      setTheme('dark')
+      setThemeState('dark')
       document.documentElement.classList.add('dark')
+    }
+
+    const storedFontSize = localStorage.getItem('fontSize') as FontSize
+    if (storedFontSize) {
+      setFontSizeState(storedFontSize)
+      applyFontSize(storedFontSize)
     }
   }, [])
 
   const handleSetTheme = (newTheme: Theme) => {
-    setTheme(newTheme)
+    setThemeState(newTheme)
     localStorage.setItem('theme', newTheme)
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark')
@@ -43,8 +52,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const applyFontSize = (size: FontSize) => {
+    if (size === 'normal') document.documentElement.style.fontSize = '16px'
+    else if (size === 'large') document.documentElement.style.fontSize = '17.5px'
+    else if (size === 'xlarge') document.documentElement.style.fontSize = '19px'
+  }
+
+  const handleSetFontSize = (newSize: FontSize) => {
+    setFontSizeState(newSize)
+    localStorage.setItem('fontSize', newSize)
+    applyFontSize(newSize)
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, fontSize, setFontSize: handleSetFontSize }}>
       {children}
     </ThemeContext.Provider>
   )

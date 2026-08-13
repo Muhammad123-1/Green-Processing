@@ -1,5 +1,7 @@
 'use client'
 
+import React, { useMemo } from 'react'
+
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -20,86 +22,146 @@ import {
   ShoppingCart,
   ChefHat,
   MessageSquare,
+  ShieldAlert,
+  DollarSign,
+  Briefcase,
+  Utensils
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
 
-const navItems = [
+const allNavItems = [
   {
     key: 'dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
   },
   {
     key: 'newInspection',
     href: '/inspections/new',
     icon: ClipboardList,
     highlight: true,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
   },
   {
     key: 'inspections',
     href: '/inspections',
     icon: History,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
   },
   {
     key: 'products',
     href: '/products',
     icon: Package,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'],
   },
   {
     key: 'arrivals',
     href: '/arrivals',
     icon: ArrowDownToLine,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'],
   },
   {
     key: 'orders',
     href: '/orders',
     icon: ShoppingCart,
+    roles: ['ADMIN', 'DIRECTOR', 'SUPPLY'],
+  },
+  {
+    key: 'warehouse',
+    href: '/warehouse',
+    icon: Package,
+    roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'],
   },
   {
     key: 'production',
     href: '/production',
-    icon: ChefHat,
+    icon: ChefHat, // Or maybe a factory icon like Building/Factory if imported
+    roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'],
+  },
+  {
+    key: 'kitchen',
+    href: '/kitchen',
+    icon: Utensils,
+    roles: ['ADMIN', 'DIRECTOR', 'KITCHEN'],
   },
   {
     key: 'chat',
     href: '/chat',
     icon: MessageSquare,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR'],
   },
   {
     key: 'suppliers',
     href: '/suppliers',
     icon: Truck,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'],
   },
   {
     key: 'supervisors',
     href: '/supervisors',
     icon: UserCheck,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
   },
   {
     key: 'reports',
     href: '/reports',
     icon: BarChart3,
+    roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'],
   },
   {
     key: 'users',
     href: '/users',
     icon: Users,
+    roles: ['ADMIN', 'DIRECTOR', 'HR'],
+  },
+  {
+    key: 'director',
+    href: '/director',
+    icon: LayoutDashboard,
+    roles: ['ADMIN', 'DIRECTOR'],
+  },
+  {
+    key: 'hr',
+    href: '/hr',
+    icon: Briefcase,
+    roles: ['ADMIN', 'DIRECTOR', 'HR'],
+  },
+  {
+    key: 'logistics',
+    href: '/logistics',
+    icon: Truck,
+    roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'],
+  },
+  {
+    key: 'accounting',
+    href: '/accounting',
+    icon: DollarSign,
+    roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'],
+  },
+  {
+    key: 'security',
+    href: '/security',
+    icon: ShieldAlert,
+    roles: ['ADMIN', 'DIRECTOR', 'SECURITY'],
   },
   {
     key: 'backup',
     href: '/backup',
     icon: Database,
+    roles: ['ADMIN'],
   },
   {
     key: 'settings',
     href: '/settings',
     icon: Settings,
+    roles: ['ADMIN', 'DIRECTOR'],
   },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { userRole?: string, userName?: string }) {
   const pathname = usePathname()
   const { t, lang } = useLanguage()
   const { isOpen, close } = useSidebar()
@@ -124,14 +186,14 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="text-sm font-bold text-white leading-tight">Green Processing</h1>
-            <p className="text-xs text-slate-500 leading-tight">{lang === 'ru' ? 'Система контроля' : 'Nazorat Tizimi'}</p>
+            <p className="text-xs text-slate-500 leading-tight">{lang === 'ru' ? 'ERP Система' : lang === 'en' ? 'ERP System' : 'ERP Tizimi'}</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {allNavItems.filter(item => item.roles.includes(userRole) || userRole === 'ADMIN').map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || 
             (item.href !== '/dashboard' && pathname.startsWith(item.href))
@@ -174,8 +236,8 @@ export default function Sidebar() {
             <span className="text-xs font-bold text-blue-400">U</span>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-300">Foydalanuvchi</p>
-            <p className="text-[10px] text-slate-500">{t('active')}</p>
+            <p className="text-xs font-medium text-slate-300">{userName}</p>
+            <p className="text-[10px] text-slate-500">{userRole}</p>
           </div>
         </div>
         <button 

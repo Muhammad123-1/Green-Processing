@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
         shelfLife: body.shelfLife || null,
         gost: body.gost || null,
         description: body.description || null,
+        type: body.type || 'RAW_MATERIAL',
         isActive: true,
       },
     })

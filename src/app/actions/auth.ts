@@ -7,12 +7,14 @@ import { prisma } from '@/lib/prisma'
 const COOKIE_NAME = 'gp_session'
 
 export async function login(prevState: any, formData: FormData) {
-  const username = formData.get('username') as string
+  let username = formData.get('username') as string
   const password = formData.get('password') as string
 
   if (!username || !password) {
     return { error: 'Username va parolni kiriting' }
   }
+  
+  username = username.trim()
 
   // In a real app, you'd use bcrypt for passwords. 
   // We check plain text or simply match for now in this offline app.
@@ -46,6 +48,8 @@ export async function login(prevState: any, formData: FormData) {
     case 'QUALITY_CONTROL': redirectUrl = '/dashboard'; break;
     case 'TECHNOLOGY': redirectUrl = '/technology'; break;
     case 'PRODUCTION': redirectUrl = '/production'; break;
+    case 'KITCHEN': redirectUrl = '/kitchen'; break;
+    case 'LOGISTICS': redirectUrl = '/logistics'; break;
     case 'LOGISTICS': redirectUrl = '/logistics'; break;
     case 'WAREHOUSE': redirectUrl = '/warehouse'; break;
     case 'ACCOUNTING': redirectUrl = '/accounting'; break;

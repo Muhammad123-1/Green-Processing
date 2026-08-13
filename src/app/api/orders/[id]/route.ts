@@ -16,6 +16,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         ...(body.quantity !== undefined && { quantity: parseFloat(body.quantity) }),
         ...(body.unit !== undefined && { unit: body.unit }),
         ...(body.expectedDate !== undefined && { expectedDate: new Date(body.expectedDate) }),
+        ...(body.timeRange !== undefined && { timeRange: body.timeRange }),
         ...(body.price !== undefined && { price: body.price ? parseFloat(body.price) : null }),
       }
     })

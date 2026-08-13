@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, username: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, name: true, username: true, role: true, medicalClearance: true, isActive: true, createdAt: true },
       orderBy: { createdAt: 'asc' },
     })
     return NextResponse.json(users)
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         role: body.role || 'OPERATOR',
         isActive: true,
       },
-      select: { id: true, name: true, username: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, name: true, username: true, role: true, medicalClearance: true, isActive: true, createdAt: true },
     })
 
     return NextResponse.json(user, { status: 201 })

@@ -1,12 +1,13 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { Bell, Search, Sun, Moon, Globe, Menu } from 'lucide-react'
+import { Bell, Search, Sun, Moon, Globe, Menu, Type } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
 
-const getPageInfo = (pathname: string, t: any) => {
+const getPageInfo = (pathname: string, t: any, lang: string) => {
   const map: Record<string, { title: string; subtitle: string }> = {
     '/dashboard': { title: t('dashboard'), subtitle: t('dashboardSub') || 'Umumiy ko\'rinish va statistika' },
     '/inspections': { title: t('inspections'), subtitle: t('inspectionsSub') || 'Barcha kiruvchi xomashyo aktlari' },
@@ -17,18 +18,26 @@ const getPageInfo = (pathname: string, t: any) => {
     '/users': { title: t('users'), subtitle: t('usersSub') || 'Tizim foydalanuvchilari va ruxsatlar' },
     '/backup': { title: t('backup'), subtitle: t('backupSub') || 'Ma\'lumotlar bazasini zaxiralash' },
     '/settings': { title: t('settings'), subtitle: t('settingsSub') || 'Tizim va shablon sozlamalari' },
+    '/warehouse': { title: lang === 'ru' ? 'Склад (WMS)' : lang === 'en' ? 'Warehouse (WMS)' : 'Omborxona (WMS)', subtitle: lang === 'ru' ? 'Остатки и партии' : lang === 'en' ? 'Stock and batches' : 'Qoldiqlar va partiyalar' },
+    '/production': { title: lang === 'ru' ? 'Кухня (Для персонала)' : lang === 'en' ? 'Staff Kitchen' : 'Xodimlar Oshxonasi', subtitle: t('productionSub') || 'Oshxona jarayonlari' },
+    '/chat': { title: t('chat'), subtitle: lang === 'ru' ? 'Общайтесь с сотрудниками' : 'Xodimlar bilan suhbat' },
   }
   return map[pathname]
 }
 
 export default function Header() {
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme, fontSize, setFontSize } = useTheme()
   const { lang, setLang, t } = useLanguage()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
-  const pageInfo = getPageInfo(pathname, t) || { 
-    title: 'Green Processing', 
-    subtitle: lang === 'ru' ? 'Система контроля' : 'Xomashyo qabul tizimi' 
+  const pageInfo = getPageInfo(pathname, t, lang) || { 
+    title: 'Green Processing ERP', 
+    subtitle: lang === 'ru' ? 'Корпоративная система управления' : lang === 'en' ? 'Enterprise Management System' : 'Korporativ boshqaruv tizimi' 
   }
 
   const now = new Date()
@@ -56,12 +65,15 @@ export default function Header() {
       </div>
 
       <div className="hidden md:flex items-center gap-3 text-xs text-slate-400">
-        <span>{dateStr}</span>
+        <span>{mounted ? dateStr : ''}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <button 
-          onClick={() => setLang(lang === 'uz' ? 'ru' : 'uz')}
+          onClick={() => {
+            const nextLang = lang === 'uz' ? 'ru' : lang === 'ru' ? 'en' : 'uz'
+            setLang(nextLang)
+          }}
           className="h-9 px-3 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600 
                     flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 
                     transition-all duration-200 uppercase text-xs font-bold"
@@ -74,6 +86,21 @@ export default function Header() {
                           flex items-center justify-center text-slate-400 hover:text-slate-200 
                           transition-all duration-200">
           <Bell size={16} />
+        </button>
+        <button 
+          onClick={() => {
+            const nextSize = fontSize === 'normal' ? 'large' : fontSize === 'large' ? 'xlarge' : 'normal'
+            setFontSize(nextSize)
+          }}
+          className="h-9 px-2 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600 
+                    flex items-center justify-center text-slate-400 hover:text-indigo-400 
+                    transition-all duration-200 gap-1"
+          title="Shrift o'lchamini o'zgartirish"
+        >
+          <Type size={16} />
+          <span className="text-xs font-bold font-mono">
+            {fontSize === 'normal' ? 'Aa' : fontSize === 'large' ? 'A++' : 'A+++'}
+          </span>
         </button>
         <button 
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

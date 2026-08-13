@@ -34,6 +34,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         shelfLife: body.shelfLife || null,
         gost: body.gost || null,
         description: body.description || null,
+        ...(body.type && { type: body.type }),
       },
     })
     return NextResponse.json(product)

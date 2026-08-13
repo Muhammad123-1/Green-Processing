@@ -23,6 +23,7 @@ async function main() {
     { username: 'quality', name: 'Sifat Nazorati', role: 'QUALITY_CONTROL' },
     { username: 'tech', name: 'Texnolog', role: 'TECHNOLOGY' },
     { username: 'production', name: 'Ishlab Chiqarish', role: 'PRODUCTION' },
+    { username: 'kitchen', name: 'Oshxona', role: 'KITCHEN' },
     { username: 'logistics', name: 'Logistika', role: 'LOGISTICS' },
     { username: 'warehouse', name: 'Sklad', role: 'WAREHOUSE' },
     { username: 'accounting', name: 'Buxgalteriya', role: 'ACCOUNTING' },

@@ -1,0 +1,395 @@
+# 🏭 Green Processing — ERP Enterprise Transformatsiya Rejasi
+
+> **Loyiha:** Green Processing ERP  
+> **Sana:** 2026-yil 27-iyul  
+> **Maqsad:** MVP → Enterprise darajasiga ko'tarish (13+ bo'lim, 20+ lavozim)
+
+---
+
+## 📊 Hozirgi Holat Tahlili
+
+### ✅ Tayyor (Ishlayotgan) Modullar
+| # | Modul | Sahifa | API | Prisma Model |
+|---|-------|--------|-----|--------------|
+| 1 | **Dashboard** | `/dashboard` | ✅ | — |
+| 2 | **Mahsulotlar** | `/products` | ✅ | `Product` |
+| 3 | **Sifat Nazorati (Aktlar)** | `/inspections` | ✅ | `Inspection`, `ActImage` |
+| 4 | **Buyurtmalar (Snabjenets)** | `/orders` | ✅ | `Order` |
+| 5 | **Oshxona (Production)** | `/production` | ✅ | Order (KITCHEN filter) |
+| 6 | **Ta'minotchilar** | `/suppliers` | ✅ | `Supplier` |
+| 7 | **Supervayzerlar** | `/supervisors` | ✅ | `Supervisor` |
+| 8 | **Foydalanuvchilar** | `/users` | ✅ | `User` |
+| 9 | **Chat** | `/chat` | ✅ | `ChatMessage` |
+| 10 | **Hisobotlar** | `/reports` | ✅ | — |
+| 11 | **Backup** | `/backup` | ✅ | `Backup` |
+| 12 | **Sozlamalar** | `/settings` | ✅ | `Setting`, `Template` |
+| 13 | **Kirimlar (Arrivals)** | `/arrivals` | ✅ | Inspection filter |
+
+### 🚧 Placeholder (Bo'sh) Sahifalar
+| # | Sahifa | Holati |
+|---|--------|--------|
+| 1 | `/warehouse` (Omborxona) | ⬜ Placeholder |
+| 2 | `/hr` (Kadrlar) | ⬜ Placeholder |
+| 3 | `/logistics` (Logistika) | ⬜ Placeholder |
+| 4 | `/technology` (Texnologiya) | ⬜ Placeholder |
+| 5 | `/director` (Direktor) | ⬜ Placeholder |
+| 6 | `/accounting` (Buxgalteriya) | ⬜ Placeholder |
+| 7 | `/security` (Xavfsizlik) | ⬜ Placeholder |
+| 8 | `/supply` (Ta'minot) | ⬜ Placeholder |
+
+### 🗄️ Hozirgi Prisma Modellari (11 ta)
+`User` · `Supplier` · `Product` · `Inspection` · `Supervisor` · `Template` · `Setting` · `Log` · `Backup` · `ActImage` · `Order` · `Specification` · `ChatMessage`
+
+---
+
+## 🗺️ TRANSFORMATSIYA REJASI — 6 TA FAZA
+
+```mermaid
+gantt
+    title Green Processing ERP — Amalga Oshirish Jadvali
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %d
+
+    section Faza 1 — Yadro
+    Prisma Schema yangilash        :f1a, 2026-08-01, 3d
+    RBAC + ABAC middleware         :f1b, after f1a, 4d
+    Audit Trail (PG Triggers)      :f1c, after f1b, 3d
+
+    section Faza 2 — Ombor
+    InventoryBatch + FEFO          :f2a, after f1c, 5d
+    Ombor UI sahifasi              :f2b, after f2a, 4d
+    OCC (Optimistik qulflash)      :f2c, after f2b, 3d
+
+    section Faza 3 — Ishlab Chiqarish
+    BOM / Retseptura moduli        :f3a, after f2c, 5d
+    MRP hisoblash                  :f3b, after f3a, 4d
+    Texnologiya UI                 :f3c, after f3b, 3d
+
+    section Faza 4 — Kadrlar
+    HR + Medpunkt moduli           :f4a, after f3c, 5d
+    Tibbiy bloklash (CRON)         :f4b, after f4a, 3d
+    Xavfsizlik moduli              :f4c, after f4b, 3d
+
+    section Faza 5 — Moliya & Logistika
+    Buxgalteriya moduli            :f5a, after f4c, 5d
+    Logistika + GPS                :f5b, after f5a, 5d
+    Direktor paneli                :f5c, after f5b, 3d
+
+    section Faza 6 — PWA & Optimallashtirish
+    PWA + Offline rejim            :f6a, after f5c, 5d
+    Push-bildirishnomalar          :f6b, after f6a, 3d
+    Yakuniy test va deploy         :f6c, after f6b, 4d
+```
+
+---
+
+## FAZA 1 — YADRO INFRATUZILMA (≈10 kun)
+> **Maqsad:** Barcha keyingi modullar uchun poydevor: yangi jadvallar, ruxsatlar tizimi va audit
+
+### 1.1 Prisma Schema Yangilash
+**Qo'shiladigan yangi modellar:**
+
+| Model | Vazifasi | Asosiy ustunlar |
+|-------|----------|-----------------|
+| `Department` | Bo'limlar ro'yxati (13 ta) | `id`, `name`, `code`, `headUserId` |
+| `Employee` | Xodimlar profili (User bilan 1:1) | `userId`, `departmentId`, `position`, `shiftSchedule`, `hireDate` |
+| `Role` | Dinamik rollar | `id`, `name`, `permissions` (JSON) |
+| `UserRole` | User ↔ Role (M:M) | `userId`, `roleId` |
+| `MedicalRecord` | Tibbiy ko'rik yozuvlari | `employeeId`, `validUntil`, `documentUrl`, `isValid` |
+| `AuditLog` | O'zgarishlar tarixi | `tableName`, `operation`, `oldValues` (JSONB), `newValues` (JSONB), `changedByUserId` |
+
+**O'zgartirishlar:**
+- `User` modeliga `employeeId` va `departmentId` qo'shiladi
+- `User.role` string → `UserRole` M:M relyatsiyaga o'tkaziladi
+
+### 1.2 RBAC + ABAC Gibrid Middleware
+**RBAC (UI qatlami):**
+```
+DIRECTOR     → /director, barcha modullar (faqat o'qish)
+ADMIN        → /dashboard, /users, /settings, /backup
+QC           → /inspections, /products, /arrivals
+SUPPLY       → /orders, /suppliers, /supply
+WAREHOUSE    → /warehouse, /products (faqat o'qish)
+PRODUCTION   → /production, /technology
+HR           → /hr, /users
+ACCOUNTING   → /accounting, /reports
+LOGISTICS    → /logistics
+SECURITY     → /security
+```
+
+**ABAC (API qatlami) — Dinamik tekshiruvlar:**
+- `medical_clearance_valid` → Oshpaz/Operator retseptura o'zgartira olmasligi
+- `current_shift` → Xodim faqat o'z smenasida ishlashi
+- `document_expiry` → Muddati o'tgan sertifikat = bloklash
+
+### 1.3 Audit Trail (PostgreSQL Triggers)
+- `SET LOCAL app.current_user_id` orqali har bir tranzaksiyada kim qilganini bilish
+- Barcha muhim jadvallar uchun `BEFORE UPDATE/DELETE` trigger yozish
+- Eski va yangi qiymatlar `JSONB` formatda `AuditLog` jadvaliga yoziladi
+- `SECURITY DEFINER` — hatto DBA ham izni o'chira olmaydi
+
+---
+
+## FAZA 2 — OMBOR BOSHQARUVI (≈12 kun)
+> **Maqsad:** Partiya (Lot) tizimi, FEFO strategiyasi va xavfsiz qoldiq boshqaruvi
+
+### 2.1 Yangi Prisma Modellari
+
+| Model | Vazifasi |
+|-------|----------|
+| `Warehouse` | Omborlar ro'yxati (Asosiy, Sovuq kamera, Tayyor mahsulot) |
+| `WarehouseZone` | Ombor ichidagi zonalar (A-qator, B-qator) |
+| `InventoryBatch` | Har bir kelib tushgan partiya — **FEFO yadrosi** |
+| `InventoryTransaction` | Barcha kirim-chiqim operatsiyalari tarixi |
+
+**`InventoryBatch` asosiy ustunlari:**
+```
+id, productId, batchNumber, warehouseId, zoneId,
+quantity, receivedAt, expirationDate,
+qcStatus (PENDING/APPROVED/REJECTED),
+version (OCC uchun — @default(1))
+```
+
+### 2.2 FEFO Algoritmi
+```
+Mahsulot kerak → ORDER BY expirationDate ASC
+→ Yaroqlilik muddati eng yaqin partiyadan olish
+→ Muddati o'tganlar avtomatik QUARANTINE ga o'tadi
+```
+
+### 2.3 Optimistik Qulflash (OCC)
+```
+1-Yukchi: qoldiq=100, version=1 → 70 kg oladi → version=2 ✅
+2-Yukchi: qoldiq=100, version=1 → WHERE version=1 → topilmadi → 409 Conflict ❌
+→ "Qoldiq o'zgargan! Haqiqiy qoldiq: 30 kg" xabari chiqadi
+```
+
+### 2.4 Ombor UI (`/warehouse`)
+- **Umumiy ko'rinish:** Omborlar, zonalar va umumiy qoldiqlar
+- **Partiyalar jadvali:** Mahsulot, lot raqami, miqdor, yaroqlilik sanasi, QC holati
+- **Kirim/Chiqim:** Qabul qilish, Ishlab chiqarishga berish, Spisaniya (Brak)
+- **Ogohlantirish:** Yaroqlilik muddati 3 kunga yaqinlashgan partiyalar qizil rangda
+- **Terish ro'yxati (Pick List):** FEFO bo'yicha aniq ko'rsatma: "A-3 javondan, #1045 lot, 100kg"
+
+---
+
+## FAZA 3 — ISHLAB CHIQARISH VA RETSEPTURA (≈12 kun)
+> **Maqsad:** BOM (Bill of Materials), ishlab chiqarish buyurtmalari va MRP hisoblash
+
+### 3.1 Yangi Prisma Modellari
+
+| Model | Vazifasi |
+|-------|----------|
+| `Recipe` | Tayyor mahsulot formulasi (versiyalanadi) |
+| `RecipeIngredient` | Retsepturadagi xomashyolar ro'yxati |
+| `ProductionOrder` | Ishlab chiqarish buyurtmasi |
+| `ProductionOrderItem` | Buyurtmada ishlatilgan partiyalar |
+
+**`Recipe` ustunlari:** `id, outputProductId, version, baseYieldQty, technologistId, isApproved`  
+**`RecipeIngredient` ustunlari:** `recipeId, inputProductId, requiredQty, tolerancePercent, isSubstitutable`
+
+### 3.2 MRP (Material Requirement Planning)
+```
+ProductionOrder yaratildi (100 kg non tayyorlash)
+→ Recipe: 60kg un + 2kg tuz + 30L suv + 5kg xamirturush
+→ Ombordagi qoldiqni tekshir (FEFO bo'yicha)
+→ Yetarli → Avtomatik band qilish (Reserve)
+→ Yetarsiz → Ta'minot bo'limiga avtomatik xarid so'rovi
+```
+
+### 3.3 Texnologiya UI (`/technology`)
+- Retsepturalar ro'yxati va versiyalar tarixi
+- Yangi retseptura yaratish (ingredientlar va toleranslar)
+- Ishlab chiqarish buyurtmalarini monitoring qilish
+- Bosh Texnolog tasdiqlash jarayoni
+
+---
+
+## FAZA 4 — KADRLAR VA XAVFSIZLIK (≈11 kun)
+> **Maqsad:** HR, Medpunkt, tibbiy bloklash va jismoniy xavfsizlik
+
+### 4.1 Yangi Prisma Modellari
+
+| Model | Vazifasi |
+|-------|----------|
+| `Employee` | Xodim profili (bo'lim, lavozim, smena) |
+| `MedicalRecord` | Tibbiy ko'rik yozuvlari va ruxsatnomalar |
+| `Shift` | Smenalar jadvali |
+| `Attendance` | Davomat (keldi/ketdi vaqtlari) |
+| `MaintenanceTicket` | Texnik xizmat ko'rsatish chiptalari |
+
+### 4.2 Tibbiy Bloklash CRON Job
+```
+Har kuni 00:01 da ishga tushadi:
+→ MedicalRecord.validUntil < bugun → Employee.medicalClearance = false
+→ Chat orqali xodim + HR + Supervayzerga xabar yuboriladi
+→ ABAC: Bloklangan xodim ishlab chiqarish moduliga kira olmaydi
+```
+
+### 4.3 HR UI (`/hr`)
+- Xodimlar ro'yxati (bo'lim, lavozim, smena)
+- Tibbiy ko'rik holatlari (yashil/qizil indikator)
+- Davomat jurnali
+- Ishga qabul / bo'shatish jarayoni
+
+### 4.4 Xavfsizlik UI (`/security`)
+- Kunlik davomat monitoring
+- Kirish/Chiqish jurnali
+- Xodimlar uchun ruxsatnomalar holati
+
+### 4.5 Texnik Xizmat (Ticketing)
+- Nosozlik chiptasi yaratish (rasm bilan)
+- Avtomatik yo'naltirish (Mexanik/Elektrik/Energetik)
+- Profilaktik xizmat jadvali (MTBF asosida)
+- Holat kuzatuvi: `OPEN → IN_PROGRESS → WAITING_PARTS → RESOLVED`
+
+---
+
+## FAZA 5 — MOLIYA, LOGISTIKA VA DIREKTOR (≈13 kun)
+> **Maqsad:** Pul oqimi, yetkazib berish va rahbariyat uchun umumiy boshqaruv paneli
+
+### 5.1 Yangi Prisma Modellari
+
+| Model | Vazifasi |
+|-------|----------|
+| `Invoice` | Hisob-fakturalar (kirim/chiqim) |
+| `Payment` | To'lovlar tarixi |
+| `Shipment` | Jo'natmalar (logistika) |
+| `Vehicle` | Transport vositalari |
+
+### 5.2 Buxgalteriya UI (`/accounting`)
+- Kunlik kirim/chiqim jadvali
+- Ta'minotchilarga qarzlar ro'yxati
+- Nakladnoy → Hisob-faktura → To'lov zanjiri
+- Oylik/yillik hisobotlar
+
+### 5.3 Logistika UI (`/logistics`)
+- Jo'natmalar ro'yxati va holatlari
+- Haydovchilar va transport vositalari
+- Marshrut rejalashtirish
+- Yuklash/tushirish tasdiqlash (rasm bilan)
+
+### 5.4 Direktor Paneli (`/director`)
+- **Real-time KPI'lar:** Ombor qoldig'i, bugungi ishlab chiqarish, sifat nazorati natijalari
+- **Moliyaviy umumlashtirma:** Kunlik xarajat, oylik daromad
+- **Ogohlantishlar:** Muddati o'tayotgan mahsulotlar, tibbiy ruxsatnomalar, texnik nosozliklar
+- **Bo'limlar statistikasi:** Har bir bo'limning samaradorligi
+
+---
+
+## FAZA 6 — PWA, OFFLINE VA OPTIMALLASHTIRISH (≈12 kun)
+> **Maqsad:** Internet yo'q sharoitda ishlash, bildirishnomalar va yakuniy polish
+
+### 6.1 PWA (Progressive Web App)
+- `next-pwa` yordamida Service Worker o'rnatish
+- UI, jadvallar va ma'lumotnomalarni Cache Storage ga saqlash
+- Offline holatda "⚡ Offline rejim" indikatori ko'rsatish
+
+### 6.2 IndexedDB + Background Sync
+```
+Internet yo'q → Xodim rasmga oldi va "Saqlash" bosdi
+→ Ma'lumotlar IndexedDB ga yozildi (localForage)
+→ UI: "📱 Qurilmada saqlandi, sinxronizatsiya kutilmoqda"
+→ Internet qaytdi → Background Sync → Serverga jo'natildi ✅
+→ IndexedDB dan o'chirildi
+```
+
+### 6.3 Push-Bildirishnomalar
+- Web Push API + Service Worker
+- Yangi akt kiritilganda → Supervayzerga xabar
+- Buyurtma yetib kelganda → Snabjenetsga xabar
+- Tibbiy ruxsatnoma muddati yaqinlashganda → HR + Xodimga xabar
+- Texnik nosozlik → Tegishli mutaxassisga xabar
+
+### 6.4 Yakuniy Optimallashtirish
+- Barcha sahifalarni 3 tilda (UZ/RU/EN) tekshirish
+- Responsive dizaynni mobil qurilmalarda sinash
+- `prisma db push` — yangi jadvallarni bazaga kiritish
+- Load testing (yuk testi) — 50+ bir vaqtda foydalanuvchi
+- Git push va production deploy
+
+---
+
+## 📋 UMUMIY PRISMA MODELLARI XARITASI
+
+### Hozirgi (13 ta) + Yangi (16 ta) = **29 ta model**
+
+```mermaid
+graph TD
+    subgraph "✅ MAVJUD"
+        User
+        Product
+        Supplier
+        Inspection
+        Order
+        Supervisor
+        ChatMessage
+        ActImage
+        Template
+        Setting
+        Log
+        Backup
+        Specification
+    end
+
+    subgraph "🟡 FAZA 1 — Yadro"
+        Department
+        Role
+        UserRole
+        AuditLog
+    end
+
+    subgraph "🔵 FAZA 2 — Ombor"
+        Warehouse
+        WarehouseZone
+        InventoryBatch
+        InventoryTransaction
+    end
+
+    subgraph "🟢 FAZA 3 — Ishlab Chiqarish"
+        Recipe
+        RecipeIngredient
+        ProductionOrder
+        ProductionOrderItem
+    end
+
+    subgraph "🟠 FAZA 4 — Kadrlar"
+        Employee
+        MedicalRecord
+        Shift
+        Attendance
+        MaintenanceTicket
+    end
+
+    subgraph "🔴 FAZA 5 — Moliya"
+        Invoice
+        Payment
+        Shipment
+        Vehicle
+    end
+```
+
+---
+
+## ⚡ USTUVORLIK VA KETMA-KETLIK
+
+| Ustuvorlik | Faza | Sabab |
+|:---:|:---:|:------|
+| 🔴 KRITIK | **Faza 1** — Yadro | Barcha modullar bunga bog'liq (schema, ruxsatlar, audit) |
+| 🔴 KRITIK | **Faza 2** — Ombor | Oziq-ovqat xavfsizligi — FEFO va qoldiq nazorati |
+| 🟡 YUQORI | **Faza 3** — Ishlab Chiqarish | Retseptura va MRP — asosiy biznes jarayoni |
+| 🟡 YUQORI | **Faza 4** — Kadrlar | Tibbiy bloklash — qonuniy talab |
+| 🟢 O'RTA | **Faza 5** — Moliya & Logistika | Pul va transport nazorati |
+| 🔵 PAST | **Faza 6** — PWA & Offline | Optimallashtirish va qo'shimcha qulayliklar |
+
+---
+
+> [!IMPORTANT]
+> **Har bir faza yakunida:**
+> 1. `prisma db push` — bazani yangilash
+> 2. Brauzerda test qilish (UZ/RU/EN tillarda)
+> 3. Mijozga ko'rsatish va fikr olish
+> 4. Keyin keyingi fazaga o'tish
+
+> [!TIP]
+> **Boshlanish nuqtasi:** Faza 1 dan boshlaymiz — Prisma schema yangilash va RBAC/ABAC middleware yozish. Bu tayyor bo'lgach, barcha keyingi modullar shu poydevor ustiga quriladi.
