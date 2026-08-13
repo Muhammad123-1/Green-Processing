@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       data: {
         outputProductId: parseInt(outputProductId),
         baseYieldQty: parseFloat(baseYieldQty),
-        technologistId: session.userId,
+        technologistId: session.id,
         isApproved: true,
         ingredients: {
           create: ingredients.map((ing: any) => ({
