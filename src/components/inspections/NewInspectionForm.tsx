@@ -39,6 +39,7 @@ interface Product {
   defaultPackaging: string | null
   defaultConclusion: string | null
   category: string | null
+  type?: string | null
 }
 
 interface Supplier {
