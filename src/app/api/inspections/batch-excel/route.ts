@@ -26,16 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find template
-    const templatePaths = [
-      path.join(process.cwd(), 'templates', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx'),
-      path.join(process.cwd(), '..', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx'),
-      'C:\\Users\\yoqub\\OneDrive\\Desktop\\Exzel ovto\\ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx',
-    ]
-
-    let templatePath: string | null = null
-    for (const p of templatePaths) {
-      if (fs.existsSync(p)) { templatePath = p; break }
-    }
+    const templatePath = path.join(process.cwd(), 'templates', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx')
 
     const workbook = new ExcelJS.Workbook()
     if (templatePath) {

@@ -24,20 +24,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
     }
 
     // Template path - use the original Excel file
-    const templatePaths = [
-      path.join(process.cwd(), 'templates', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx'),
-      path.join(process.cwd(), '..', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx'),
-    ]
+    const templatePath = path.join(process.cwd(), 'templates', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx')
 
-    let templatePath: string | null = null
-    for (const p of templatePaths) {
-      if (fs.existsSync(p)) {
-        templatePath = p
-        break
-      }
-    }
-
-    if (!templatePath) {
+    if (!fs.existsSync(templatePath)) {
       return generateSimpleExcel(inspection)
     }
 

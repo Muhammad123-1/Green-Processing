@@ -5,21 +5,9 @@ import ExcelJS from 'exceljs'
 
 export async function GET() {
   try {
-    const templatePaths = [
-      path.join(process.cwd(), 'templates', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx'),
-      path.join(process.cwd(), '..', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx'),
-      'C:\\Users\\yoqub\\OneDrive\\Desktop\\Exzel ovto\\ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx',
-    ]
+    const templatePath = path.join(process.cwd(), 'templates', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx')
 
-    let templatePath: string | null = null
-    for (const p of templatePaths) {
-      if (fs.existsSync(p)) {
-        templatePath = p
-        break
-      }
-    }
-
-    if (!templatePath) {
+    if (!fs.existsSync(templatePath)) {
       return NextResponse.json({ sheets: [], templateFound: false })
     }
 

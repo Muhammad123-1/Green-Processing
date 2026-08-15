@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       where: { id: transferId },
       data: {
         receivedQuantity: recQty,
-        receivedById: session.id ? parseInt(session.id) : null,
+        receivedById: session.id ? Number(session.id) : null,
         receivedByName: session.name || 'Qabul qiluvchi mas\'ul',
         receivedAt: new Date(),
         discrepancy: discrepancy,

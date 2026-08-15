@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
           targetLocation: targetLocation.toUpperCase(),
           issuedQuantity: qty,
           issuedUnit: issuedUnit || 'kg',
-          issuedById: session.id ? parseInt(session.id) : null,
+          issuedById: session.id ? Number(session.id) : null,
           issuedByName: session.name || 'Sklad Mudiri',
           issuedAt: new Date(),
           status: 'IN_TRANSIT',
