@@ -206,5 +206,26 @@ export const SHEET_CONFIGS: Record<string, SheetConfig> = {
       { col: 10, key: 'data_izg', label: 'Дата изготовления', default: '-' },
       { col: 11, key: 'goden_do', label: 'Годен до', default: '-' }
     ]
+  },
+  'ЧЕК-ЛИСТ ПРОЦЕССА': {
+    standardFields: {
+      1: 'auto-number', 
+      2: 'date',
+      15: 'inspector'
+    },
+    customFields: [
+      { col: 3, key: 'temp_clean', label: 'Темп-ра Чистой зоны', default: '-' },
+      { col: 4, key: 'temp_dirty', label: 'Темп-ра Грязной зоны', default: '-' },
+      { col: 5, key: 'pf_cole_carrot', label: 'ПФ Коул-слоу Морковь № партии', default: '-' },
+      { col: 6, key: 'pf_cole_cabbage', label: 'ПФ Коул-слоу Капуста № партии', default: '-' },
+      { col: 7, key: 'pf_iceberg', label: 'ПФ Айсберг № партии', default: '-' },
+      { col: 8, key: 'pf_onion', label: 'ПФ Лук № партии', default: '-' },
+      { col: 9, key: 'pf_tomato', label: 'ПФ Томат № партии', default: '-' },
+      { col: 10, key: 'temp_fp_cole', label: 'Температура ГП Коул-слоу', default: '-' },
+      { col: 11, key: 'temp_fp_iceberg', label: 'Температура ГП Айсберг', default: '-' },
+      { col: 12, key: 'temp_fp_tomato', label: 'Температура ГП Томат', default: '-' },
+      { col: 13, key: 'temp_fp_onion', label: 'Температура ГП Лук', default: '-' },
+      { col: 14, key: 'corrective_actions', label: 'Корректирующие действия', default: 'нет' }
+    ]
   }
 }

@@ -3,5 +3,11 @@ import { getSession } from '@/app/actions/auth'
 
 export default async function ChatPage() {
   const session = await getSession()
-  return <ChatContent userRole={session?.role || 'Foydalanuvchi'} userName={session?.name || 'Anonim'} />
+  return (
+    <ChatContent
+      currentUserId={session?.id || 0}
+      userRole={session?.role || 'OPERATOR'}
+      userName={session?.name || 'Foydalanuvchi'}
+    />
+  )
 }

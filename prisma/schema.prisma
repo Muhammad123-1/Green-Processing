@@ -61,6 +61,12 @@ model User {
   ticketsReported  MaintenanceTicket[] @relation("ReportedTickets")
   ticketsAssigned  MaintenanceTicket[] @relation("AssignedTickets")
   degustations     DegustationLog[]
+  temperatureLogs  TemperatureLog[]
+  processQCLogs    ProcessQCLog[]
+  disinfectionLogs DisinfectionLog[]
+  calibrationLogs  CalibrationLog[]
+  fsscQcLogs       FsscQcLog[]
+  receivingLogs    ReceivingLog[]
 }
 
 model MedicalRecord {
@@ -140,6 +146,7 @@ model InventoryBatch {
   zone           WarehouseZone?  @relation(fields: [zoneId], references: [id])
   transactions   InventoryTransaction[]
   degustations   DegustationLog[]
+  transfers      StockTransfer[]
 }
 
 model InventoryTransaction {
@@ -152,6 +159,42 @@ model InventoryTransaction {
   createdAt       DateTime @default(now())
 
   batch           InventoryBatch @relation(fields: [batchId], references: [id])
+}
+
+model StockTransfer {
+  id                Int      @id @default(autoincrement())
+  transferNumber    String   @unique
+  productId         Int
+  batchId           Int?
+  sourceLocation    String   @default("SKLAD") // SKLAD, ZAGOTOVKA, OSHXONA, COLD_STORAGE
+  targetLocation    String   // ZAGOTOVKA, OSHXONA, COLD_STORAGE, SKLAD
+  issuedQuantity    Float    // Sklad chiqargan miqdor (masalan, 30 kg)
+  issuedUnit        String   @default("kg")
+  issuedById        Int?
+  issuedByName      String?  // Sklad xodimi ismi
+  issuedAt          DateTime @default(now())
+  
+  receivedQuantity  Float?   // Oshxona / Zagotovka tortib olgan miqdor (masalan, 28.5 kg)
+  receivedById      Int?
+  receivedByName    String?  // Oshpaz / Zagotovkachi ismi
+  receivedAt        DateTime?
+  
+  discrepancy       Float?   // Farq (masalan, 1.5 kg)
+  discrepancyReason String?  // Sabab: Masalan "Go'sht suvi oqishi", "Qirqish isrofi"
+  status            String   @default("IN_TRANSIT") // IN_TRANSIT, ACCEPTED, DISCREPANCY, REJECTED
+  
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  product           Product         @relation(fields: [productId], references: [id])
+  batch             InventoryBatch? @relation(fields: [batchId], references: [id])
+
+  @@index([transferNumber])
+  @@index([productId])
+  @@index([status])
+  @@index([sourceLocation])
+  @@index([targetLocation])
 }
 
 // -----------------------------------------------------------------------------
@@ -186,17 +229,51 @@ model RecipeIngredient {
 }
 
 model ProductionOrder {
+  id                Int      @id @default(autoincrement())
+  orderNumber       String?  @unique
+  recipeId          Int
+  plannedOutput     Float
+  actualOutput      Float?
+  yieldPercent      Float?   // Chiqish normasi foizi (masalan 94.5%)
+  rawBatchCode      String?  // Xomashyo partiya kodi (Traceability)
+  finishedBatchCode String?  // Tayyor mahsulot partiya kodi
+  lineName          String?  // Masalan: "1-Liniya: Salat Yuvish va Kesish"
+  supervisorName    String?  // Sex nazoratchisi FIO
+  status            String   @default("COMPLETED") // PLANNED, IN_PROGRESS, QC_CHECK, COMPLETED
+  notes             String?
+  startedAt         DateTime?
+  endedAt           DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  recipe            Recipe   @relation(fields: [recipeId], references: [id])
+}
+
+model DefectLog {
   id            Int      @id @default(autoincrement())
-  recipeId      Int
-  plannedOutput Float
-  actualOutput  Float?
-  status        String   @default("PLANNED") // PLANNED, IN_PROGRESS, QC_CHECK, COMPLETED
-  startedAt     DateTime?
-  endedAt       DateTime?
+  defectNumber  String   @unique
+  productId     Int
+  batchNumber   String?
+  supplierId    Int?
+  location      String   @default("INSPECTION") // INSPECTION, WAREHOUSE, WORKSHOP, KITCHEN
+  defectType    String   // ROTTEN, FOREIGN_OBJECT, TEMPERATURE_ABUSE, EXPIRED, MECHANICAL_DAMAGE, PACKAGING_DEFECT, OTHER
+  quantity      Float
+  unit          String   @default("kg")
+  estimatedCost Float?
+  actionTaken   String   // RETURN_TO_SUPPLIER, SCRAP_DISPOSAL, REWORK_RE_SORT, DOWNGRADE
+  reason        String
+  responsible   String?
+  inspectorId   Int?
+  status        String   @default("RECORDED") // RECORDED, APPROVED, DISPOSED, REIMBURSED
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  recipe        Recipe   @relation(fields: [recipeId], references: [id])
+  product       Product   @relation(fields: [productId], references: [id])
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@index([productId])
+  @@index([supplierId])
+  @@index([location])
 }
 
 model DegustationLog {
@@ -251,6 +328,8 @@ model Product {
   batches          InventoryBatch[]
   recipesWhereOutput Recipe[]
   recipesWhereInput  RecipeIngredient[] @relation("RecipeInputs")
+  transfers          StockTransfer[]
+  defects          DefectLog[]
 }
 
 model Supplier {
@@ -269,6 +348,8 @@ model Supplier {
   updatedAt      DateTime @updatedAt
 
   inspections    Inspection[]
+  orders         Order[]
+  defects        DefectLog[]
 }
 
 model Inspection {
@@ -322,18 +403,25 @@ model Inspection {
 model Order {
   id                 Int      @id @default(autoincrement())
   productId          Int
+  supplierId         Int?
+  supplierName       String?  // Qo'lda kiritilgan yoki tezkor yetkazib beruvchi nomi
   quantity           Float
-  unit               String?
+  unit               String?  @default("kg")
   expectedDate       DateTime
   timeRange          String?  // e.g. "08:00 - 13:00"
   actualDeliveryTime DateTime?
-  status             String   @default("PENDING") // PENDING, DELIVERED, CANCELLED
+  deliveredQuantity  Float?   // Amalda kelgan miqdor (masalan, 92 kg)
+  acceptedQuantity   Float?   // Sifat nazorati qabul qilgan miqdor (masalan, 90 kg)
+  rejectedQuantity   Float?   // Qaytarilgan miqdor (masalan, 2 kg)
+  status             String   @default("PENDING") // PENDING, DELIVERED, PARTIAL, DELAYED, CANCELLED
   imageUrl           String?
   price              Float?   
+  notes              String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
   product     Product      @relation(fields: [productId], references: [id])
+  supplier    Supplier?    @relation(fields: [supplierId], references: [id])
   inspections Inspection[]
 }
 
@@ -451,3 +539,176 @@ model ChatMessage {
   readBy    String[] @default([]) // Kim ko'rganligini saqlash uchun
   createdAt DateTime @default(now())
 }
+
+// -----------------------------------------------------------------------------
+// SEX SIFAT NAZORATI (Inspector & QA shop floor logs)
+// -----------------------------------------------------------------------------
+
+model TemperatureLog {
+  id               Int      @id @default(autoincrement())
+  date             String   // Sana (YYYY-MM-DD)
+  time             String   // Vaqt (masalan: 8-00, 17-00)
+  icebergTemp      Float?   // Салат Айсберг (°C)
+  onionTemp        Float?   // Лук белый (°C)
+  tomatoTemp       Float?   // Томаты (°C)
+  carrotTemp       Float?   // Морковь (°C)
+  cabbageTemp      Float?   // Капуста белокочанная (°C)
+  deviation        String   @default("Норма") // "Норма", "ВНИМАНИЕ: Нарушение"
+  correctiveAction String?  // "Отрегулирован хладагент", "-"
+  responsible      String   // Иванов И., Петров П.
+  inspectorId      Int?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  inspector        User?    @relation(fields: [inspectorId], references: [id])
+
+  @@index([date])
+}
+
+model ProcessQCLog {
+  id                 Int      @id @default(autoincrement())
+  dateTime           DateTime @default(now())
+  date               String   // YYYY-MM-DD
+  time               String   // HH:mm
+  cleanZoneTemp      Float?   // Темп-ра Чистой зоны
+  dirtyZoneTemp      Float?   // Темп-ра Грязной зоны
+  
+  // Полуфабрикаты (ПФ) № партии
+  pfColeCarrotBatch  String?  // ПФ Коул-слоу Морковь № партии
+  pfColeCabbageBatch String?  // ПФ Коул-слоу Капуста № партии
+  pfIcebergBatch     String?  // ПФ Айсберг № партии
+  pfOnionBatch       String?  // ПФ Лук № партии
+  pfTomatoBatch      String?  // ПФ Томат № партии
+  
+  // Готовая Продукция (ГП) Температура
+  gpColeTemp         Float?   // Температура ГП Коул-слоу
+  gpIcebergTemp      Float?   // Температура ГП Айсберг
+  gpTomatoTemp       Float?   // Температура ГП Томат
+  gpOnionTemp        Float?   // Температура ГП Лук
+  
+  correctiveAction   String?  // Корректирующие действия
+  responsible        String?  // Mas'ul shaxs (FIO)
+  inspectorId        Int?
+  status             String   @default("APPROVED") // APPROVED, ATTENTION, REJECTED
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  inspector          User?    @relation(fields: [inspectorId], references: [id])
+
+  @@index([date])
+}
+
+// -----------------------------------------------------------------------------
+// 1. FSSC 22000 & QADOQLASH NAZORATI (FSSC 22000 QC Checklist)
+// -----------------------------------------------------------------------------
+model FsscQcLog {
+  id              Int      @id @default(autoincrement())
+  date            String   // YYYY-MM-DD
+  time            String   // HH:mm
+  lineName        String   @default("1-Qadoqlash Liniyasi") // "1-Qadoqlash", "2-Qadoqlash"
+  productName     String   // "Aysberg 500g", "Koul-slou 300g"
+  batchNumber     String   // Tayyor partiya kodi
+  nominalWeight   Float    // Nominal vazn (masalan 500g)
+  actualWeight    Float    // Haqiqiy o'lchangan vazn (masalan 504g)
+  weightDeviation Float    // Og'ish (masalan +4g, ruxsat etilgan: +-10g)
+  packageCheckNo  Int      @default(5) // Har 5-paket tekshiruvi
+  sealIntegrityOk Boolean  @default(true) // Germetik payvand sifati
+  metalDetectorOk Boolean  @default(true) // Metall detektor nazorati (Fe/Non-Fe/SS)
+  labelCorrectOk  Boolean  @default(true) // Etiketka va sana to'g'riligi
+  gasMixLevel     String?  // MAP gaz muhiti (O2 / CO2)
+  status          String   @default("APPROVED") // APPROVED, WARNING, REJECTED
+  correctiveAction String?
+  responsible     String
+  inspectorId     Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  inspector       User?    @relation(fields: [inspectorId], references: [id])
+
+  @@index([date])
+}
+
+// -----------------------------------------------------------------------------
+// 2. KKT-1 (CCP-1) DEZINFEKSIYA ERITMASI NAZORATI (Чек лист дезраствора)
+// -----------------------------------------------------------------------------
+model DisinfectionLog {
+  id               Int      @id @default(autoincrement())
+  date             String   // YYYY-MM-DD
+  time             String   // HH:mm
+  vannaNumber      String   // "1-Vanna (Yuvish)", "2-Vanna (Dezinfeksiya)", "3-Vanna (Chayish)"
+  solutionType     String   @default("Xlor eritmasi") // "Xlor eritmasi", "Ozonlangan suv", "Perasetik kislota"
+  concentrationPpm Float    // Konsentratsiya (ppm): Masalan 50 - 100 ppm
+  phLevel          Float?   // pH darajasi: 6.5 - 7.5
+  waterTemp        Float?   // Suv harorati: +2C...+6C
+  isStandard       Boolean  @default(true) // Me'yordami?
+  correctiveAction String?  // "Xlor konsentrati qo'shildi", "Suv almashtirildi"
+  responsible      String
+  inspectorId      Int?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  inspector        User?    @relation(fields: [inspectorId], references: [id])
+
+  @@index([date])
+}
+
+// -----------------------------------------------------------------------------
+// 3. KALIBROVKA VA HAR SOATLIK O'LCHOV (Чек лист калибровки)
+// -----------------------------------------------------------------------------
+model CalibrationLog {
+  id               Int      @id @default(autoincrement())
+  date             String   // YYYY-MM-DD
+  time             String   // HH:mm
+  productName      String   // "Айсберг", "Коул-слоу", "Морковь", "Капуста"
+  batchNumber      String?  // Xomashyo partiya raqami
+  diameterMm       Float?   // Kesim o'lchami / Diametri (Ø mm)
+  sampleTemp       Float?   // Mahsulot harorati (0°C - +5°C)
+  bladeSharpness   String?  @default("A'lo") // Pichoq o'tkirligi / kesim sifati
+  wastePercent     Float?   // Chiqindi / Tozalash isrofi %
+  isStandard       Boolean  @default(true)
+  correctiveAction String?
+  responsible      String
+  inspectorId      Int?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  inspector        User?    @relation(fields: [inspectorId], references: [id])
+
+  @@index([date])
+}
+
+// -----------------------------------------------------------------------------
+// 7. XOMASHYONI QABUL QILISH JURNALI (Журнал приемки входного сырья)
+// -----------------------------------------------------------------------------
+model ReceivingLog {
+  id                Int      @id @default(autoincrement())
+  docNumber         String   @unique
+  date              String   // YYYY-MM-DD
+  time              String   // HH:mm
+  supplierName      String
+  productName       String
+  batchNumber       String
+  quantityKg        Float
+  vehicleNumber     String?  // Mashina davlat raqami
+  vehicleCleanOk    Boolean  @default(true) // Transport tozaligi va sanitariyasi
+  cargoTemp         Float?   // Yuk/kuzov harorati (°C)
+  hasLabCertificate Boolean  @default(true) // Fitosanitariya / Lab sertifikati
+  organolepticScore Int?     @default(5) // Organoleptik baho (1-5)
+  status            String   @default("ACCEPTED") // ACCEPTED, CONDITIONAL, REJECTED
+  rejectReason      String?
+  responsible       String
+  inspectorId       Int?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  inspector         User?    @relation(fields: [inspectorId], references: [id])
+
+  @@index([date])
+}
+

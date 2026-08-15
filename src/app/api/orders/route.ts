@@ -23,12 +23,18 @@ export async function POST(request: NextRequest) {
     const order = await prisma.order.create({
       data: {
         productId: parseInt(body.productId),
+        supplierId: body.supplierId ? parseInt(body.supplierId) : null,
+        supplierName: body.supplierName || null,
         quantity: parseFloat(body.quantity),
-        unit: body.unit,
+        unit: body.unit || 'kg',
         expectedDate: new Date(body.expectedDate),
         timeRange: body.timeRange || null,
         status: body.status || 'PENDING',
         price: body.price ? parseFloat(body.price) : null,
+        notes: body.notes || null,
+        deliveredQuantity: body.deliveredQuantity !== undefined ? parseFloat(body.deliveredQuantity) : null,
+        acceptedQuantity: body.acceptedQuantity !== undefined ? parseFloat(body.acceptedQuantity) : null,
+        rejectedQuantity: body.rejectedQuantity !== undefined ? parseFloat(body.rejectedQuantity) : null,
       },
       include: {
         product: true,
@@ -36,6 +42,7 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json(order, { status: 201 })
   } catch (error) {
+    console.error('Create order error:', error)
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
   }
 }

@@ -9,34 +9,32 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const groupId = searchParams.get('groupId') || 'general'
-    
+    const userIdentifier = session.name || session.role
+
     const messages = await prisma.chatMessage.findMany({
       where: { groupId },
       orderBy: { createdAt: 'asc' },
-      take: 200 // To prevent fetching too many initially
+      take: 300
     })
 
     // Mark unread messages as read by the current user
     const unreadMessagesIds = messages
-      .filter(msg => msg.sender !== session.role && !msg.readBy.includes(session.role))
+      .filter(msg => msg.sender !== userIdentifier && !msg.readBy.includes(userIdentifier) && !msg.readBy.includes(session.role))
       .map(msg => msg.id)
 
     if (unreadMessagesIds.length > 0) {
-      // We do this in a single query by appending to the array
-      // In Prisma, appending to an array on PostgreSQL:
       await prisma.chatMessage.updateMany({
         where: { id: { in: unreadMessagesIds } },
         data: {
           readBy: {
-            push: session.role
+            push: userIdentifier
           }
         }
       })
       
-      // Update the local array to reflect the new state for the client
       messages.forEach(msg => {
         if (unreadMessagesIds.includes(msg.id)) {
-          msg.readBy.push(session.role)
+          msg.readBy.push(userIdentifier)
         }
       })
     }
@@ -53,13 +51,15 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
+    const userIdentifier = session.name || session.role
+
     const message = await prisma.chatMessage.create({
       data: {
-        sender: session.role, // Force sender to be the actual logged-in user's role
+        sender: userIdentifier,
         text: body.text || null,
         imageUrl: body.imageUrl || null,
         groupId: body.groupId || 'general',
-        readBy: [session.role] // Mark as read by the sender themselves
+        readBy: [userIdentifier]
       }
     })
     
@@ -68,3 +68,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
   }
 }
+

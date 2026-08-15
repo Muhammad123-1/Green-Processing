@@ -8,31 +8,47 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { recipeId, plannedOutput } = body
+    const {
+      recipeId,
+      plannedOutput,
+      actualOutput,
+      lineName = '1-Sex / Asosiy Liniya',
+      supervisorName = session.name || 'Sex Nazoratchisi',
+      notes
+    } = body
 
     if (!recipeId || !plannedOutput || parseFloat(plannedOutput) <= 0) {
       return NextResponse.json({ error: 'Noto\'g\'ri ma\'lumotlar' }, { status: 400 })
     }
 
     const outputQty = parseFloat(plannedOutput)
+    const actOutputQty = actualOutput ? parseFloat(actualOutput) : outputQty
 
-    // 1. Fetch recipe
+    // 1. Fetch recipe with ingredients
     const recipe = await prisma.recipe.findUnique({
       where: { id: parseInt(recipeId) },
-      include: { ingredients: true }
+      include: {
+        outputProduct: true,
+        ingredients: {
+          include: { inputProduct: true }
+        }
+      }
     })
 
     if (!recipe) return NextResponse.json({ error: 'Retsept topilmadi' }, { status: 404 })
 
     // 2. Calculate required ingredient quantities based on output ratio
     const ratio = outputQty / recipe.baseYieldQty
-    
+    let totalRawKg = 0
+    const usedBatchCodes: string[] = []
+
     // We will do this inside a transaction to ensure atomic deducts
     const result = await prisma.$transaction(async (tx) => {
       
       // Step A: Check and deduct inventory for each ingredient (FEFO)
       for (const ingredient of recipe.ingredients) {
         const requiredQty = ingredient.requiredQty * ratio
+        totalRawKg += requiredQty
         let remainingToDeduct = requiredQty
 
         // Find available approved batches for this ingredient, ordered by expirationDate ASC (FEFO)
@@ -50,7 +66,7 @@ export async function POST(request: NextRequest) {
         // Check total available
         const totalAvailable = batches.reduce((sum, b) => sum + b.quantity, 0)
         if (totalAvailable < requiredQty) {
-          throw new Error(`Yetarli xomashyo yo'q: Mahsulot ID=${ingredient.inputProductId}. Talab: ${requiredQty}, Ombor: ${totalAvailable}`)
+          throw new Error(`Yetarli xomashyo yo'q: ${ingredient.inputProduct.name}. Talab: ${requiredQty} ${ingredient.inputProduct.unit}, Ombor qoldig'i: ${totalAvailable} ${ingredient.inputProduct.unit}`)
         }
 
         // Deduct from batches
@@ -58,7 +74,8 @@ export async function POST(request: NextRequest) {
           if (remainingToDeduct <= 0) break
 
           const deductAmt = Math.min(batch.quantity, remainingToDeduct)
-          
+          usedBatchCodes.push(`#${batch.batchNumber}`)
+
           // Update batch
           await tx.inventoryBatch.update({
             where: { id: batch.id },
@@ -82,24 +99,38 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Step B: Create Production Order record
+      // Step B: Calculate Yield Rate (%)
+      const yieldPercent = totalRawKg > 0 ? (actOutputQty / totalRawKg) * 100 : 100
+      const orderCount = await tx.productionOrder.count()
+      const orderNumber = `ORD-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`
+      const finishedBatchCode = `FG-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(orderCount + 1).padStart(3, '0')}`
+      const rawBatchCode = Array.from(new Set(usedBatchCodes)).join(', ')
+
+      // Step C: Create Production Order record
       const order = await tx.productionOrder.create({
         data: {
+          orderNumber,
           recipeId: recipe.id,
           plannedOutput: outputQty,
+          actualOutput: actOutputQty,
+          yieldPercent: parseFloat(yieldPercent.toFixed(1)),
+          rawBatchCode,
+          finishedBatchCode,
+          lineName,
+          supervisorName,
           status: 'COMPLETED',
+          notes: notes || null,
           startedAt: new Date(),
           endedAt: new Date()
         }
       })
 
-      // Step C: (Optional) Add the finished product to the warehouse
-      // Usually, Kitchen creates the finished product, which goes back to Warehouse (FINISHED goods)
+      // Step D: Add finished product batch into inventory (FINISHED GOODS)
       await tx.inventoryBatch.create({
         data: {
           productId: recipe.outputProductId,
-          batchNumber: `PROD-${order.id}-${new Date().getTime()}`,
-          quantity: outputQty,
+          batchNumber: finishedBatchCode,
+          quantity: actOutputQty,
           qcStatus: 'APPROVED'
         }
       })
@@ -110,10 +141,11 @@ export async function POST(request: NextRequest) {
     // Log action
     await prisma.log.create({
       data: {
+        userId: session.id,
         action: 'EXECUTE_PRODUCTION',
         entity: 'ProductionOrder',
         entityId: result.id,
-        details: `Ishlab chiqarish yakunlandi. Retsept ID: ${recipe.id}, Miqdor: ${outputQty}`,
+        details: `Ishlab chiqarish yakunlandi: ${recipe.outputProduct?.name}, Chiqish: ${actOutputQty} ${recipe.outputProduct?.unit}, Partiya: ${result.finishedBatchCode}`,
       },
     })
 
@@ -133,7 +165,10 @@ export async function GET(request: NextRequest) {
       include: {
         recipe: {
           include: {
-            outputProduct: true
+            outputProduct: true,
+            ingredients: {
+              include: { inputProduct: true }
+            }
           }
         }
       },

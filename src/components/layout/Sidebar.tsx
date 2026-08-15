@@ -25,7 +25,8 @@ import {
   ShieldAlert,
   DollarSign,
   Briefcase,
-  Utensils
+  Utensils,
+  ClipboardCheck
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -50,6 +51,12 @@ const allNavItems = [
     href: '/inspections',
     icon: History,
     roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
+  },
+  {
+    key: 'shopQC',
+    href: '/inspector',
+    icon: ClipboardCheck,
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'],
   },
   {
     key: 'products',
@@ -91,7 +98,7 @@ const allNavItems = [
     key: 'chat',
     href: '/chat',
     icon: MessageSquare,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR'],
+    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR'],
   },
   {
     key: 'suppliers',

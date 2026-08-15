@@ -1,543 +1,709 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, Plus, ChefHat, Beaker, Play, Save, Loader2, ClipboardCheck, ArrowRight, CheckCircle2, History, X, Utensils, ShoppingCart, Globe } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  Search,
+  Plus,
+  ChefHat,
+  Beaker,
+  Play,
+  Save,
+  Loader2,
+  ClipboardCheck,
+  ArrowRight,
+  CheckCircle2,
+  History,
+  X,
+  Utensils,
+  ShoppingCart,
+  Scale,
+  Building2,
+  AlertTriangle,
+  RefreshCw,
+  Clock,
+  Layers,
+  Thermometer,
+  FileCheck2,
+  HelpCircle
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
-// --- TRANSLATIONS DICTIONARY ---
-const t = {
-  uz: {
-    title: "Oshxona",
-    subtitle: "Xodimlar uchun ovqat tayyorlash va ta'minotga zayavka berish.",
-    btnNewRecipe: "Yangi Taom",
-    btnProduce: "Ovqat tayyorlash",
-    btnRequest: "Ta'minotga Zayavka",
-    tabHistory: "Tarix va Jarayon",
-    tabRecipes: "Retseptlar",
-    colDate: "Tarix",
-    colProduct: "Mahsulot",
-    colQty: "Miqdor",
-    colStatus: "Holat",
-    colActions: "Amallar",
-    emptyHistoryTitle: "Hali hech narsa pishirilmadi",
-    emptyHistorySub: "Yangi ishlab chiqarishni boshlang",
-    statusDone: "Yakunlangan",
-    btnDegustation: "Degustatsiya qog'ozi",
-    emptyRecipes: "Retseptlar yo'q",
-    norma: "Norma",
-    requiredIngredients: "Kerakli Xomashyolar:",
-    recModalTitle: "Yangi Taom Qo'shish",
-    recModalSub: "Xodimlar uchun yangi taom nomi va tarkibi",
-    recOutputProduct: "Taom Nomi",
-    recYield: "Chiqish Normasi (Porsiya/kg)",
-    recIngredients: "Kerakli Xomashyolar",
-    btnAdd: "Qo'shish",
-    placeholderSelect: "— Tanlang —",
-    placeholderIngredient: "— Xomashyo tanlang —",
-    placeholderQty: "Miqdor",
-    emptyIngredients: "Hech qanday xomashyo qo'shilmagan",
-    btnCancel: "Bekor qilish",
-    btnSave: "Saqlash",
-    prodModalTitle: "Ovqat Tayyorlash",
-    prodSelectRecipe: "Qaysi taomni tayyorlaymiz?",
-    prodPlannedQty: "Rejalashtirilgan miqdor",
-    prodFefoInfo: "Boshlash tugmasi bosilgach, tizim ombordan kerakli xomashyolarni sarflaydi.",
-    btnStart: "Boshlash",
-    degModalTitle: "Izohlar Jurnali",
-    degModalSub: "Taom haqida xulosa",
-    degVanna: "Vanna (Qozon) raqami",
-    degOrganoleptic: "Organoleptik ko'rsatkichlar",
-    degAppearance: "Tashqi ko'rinish va rang",
-    degSmell: "Hid (Aromat)",
-    degTaste: "Ta'm (Maza)",
-    degMoisture: "Namlik (Konsistensiya)",
-    degNotes: "Izohlar (agar normadan chiqish bo'lsa)",
-    degNotesPlaceholder: "Qo'shimcha izohlar...",
-    btnClose: "Yopish",
-    btnSaveConclusion: "Xulosani Saqlash",
-    reqModalTitle: "Zayavka (Ta'minotga)",
-    reqProduct: "Qanday xomashyo kerak?",
-    reqQty: "Miqdor",
-    reqDate: "Qachonga kerak?",
-    reqTime: "Vaqti / Izoh (Masalan: Ertalab 09:00 gacha)",
-    reqUnitPlaceholder: "O'lchov",
-    btnSendRequest: "Zayavka Qilish",
-    msgFillAll: "Barcha maydonlarni to'ldiring",
-    msgRecipeSaved: "Retsept saqlandi",
-    msgProdSuccess: "Ishlab chiqarish muvaffaqiyatli yakunlandi! Omborxona yangilandi.",
-    msgDegustationSaved: "Degustatsiya xulosasi saqlandi!",
-    msgRequestSent: "Zayavka ta'minot bo'limiga yuborildi!",
-    msgError: "Xatolik yuz berdi",
-    msgNetworkError: "Tarmoq xatosi"
-  },
-  ru: {
-    title: "Кухня",
-    subtitle: "Приготовление еды для персонала и заявки в снабжение.",
-    btnNewRecipe: "Новое Блюдо",
-    btnProduce: "Приготовить",
-    btnRequest: "Заявка в снабжение",
-    tabHistory: "История и Процесс",
-    tabRecipes: "Рецепты",
-    colDate: "Дата",
-    colProduct: "Продукт",
-    colQty: "Количество",
-    colStatus: "Статус",
-    colActions: "Действия",
-    emptyHistoryTitle: "Пока ничего не приготовлено",
-    emptyHistorySub: "Начните новое производство",
-    statusDone: "Завершено",
-    btnDegustation: "Лист дегустации",
-    emptyRecipes: "Нет рецептов",
-    norma: "Норма",
-    requiredIngredients: "Необходимое сырье:",
-    recModalTitle: "Добавить Новое Блюдо",
-    recModalSub: "Название и состав нового блюда",
-    recOutputProduct: "Название Блюда",
-    recYield: "Норма выхода (Порция/кг)",
-    recIngredients: "Необходимое Сырье",
-    btnAdd: "Добавить",
-    placeholderSelect: "— Выберите —",
-    placeholderIngredient: "— Выберите сырье —",
-    placeholderQty: "Кол-во",
-    emptyIngredients: "Сырье не добавлено",
-    btnCancel: "Отмена",
-    btnSave: "Сохранить",
-    prodModalTitle: "Приготовление Еды",
-    prodSelectRecipe: "Какое блюдо готовим?",
-    prodPlannedQty: "Запланированное количество",
-    prodFefoInfo: "После нажатия кнопки 'Начать', система спишет со склада необходимое сырье.",
-    btnStart: "Начать",
-    degModalTitle: "Журнал Комментариев",
-    degModalSub: "Заключение о блюде",
-    degVanna: "Номер Ванны (Котла)",
-    degOrganoleptic: "Органолептические показатели",
-    degAppearance: "Внешний вид и цвет",
-    degSmell: "Запах (Аромат)",
-    degTaste: "Вкус",
-    degMoisture: "Влажность (Консистенция)",
-    degNotes: "Комментарии (при отклонении от нормы)",
-    degNotesPlaceholder: "Доп. комментарии...",
-    btnClose: "Закрыть",
-    btnSaveConclusion: "Сохранить заключение",
-    reqModalTitle: "Заявка (Снабжению)",
-    reqProduct: "Какое сырье необходимо?",
-    reqQty: "Кол-во",
-    reqDate: "К какому сроку?",
-    reqTime: "Время / Комментарий (Напр: К 09:00 утра)",
-    reqUnitPlaceholder: "Ед. изм.",
-    btnSendRequest: "Отправить заявку",
-    msgFillAll: "Заполните все поля",
-    msgRecipeSaved: "Рецепт сохранен",
-    msgProdSuccess: "Производство успешно завершено! Склад обновлен.",
-    msgDegustationSaved: "Заключение дегустации сохранено!",
-    msgRequestSent: "Заявка отправлена в отдел снабжения!",
-    msgError: "Произошла ошибка",
-    msgNetworkError: "Ошибка сети"
-  },
-  en: {
-    title: "Staff Kitchen",
-    subtitle: "Staff meal preparation and supply requests.",
-    btnNewRecipe: "New Dish",
-    btnProduce: "Cook Meal",
-    btnRequest: "Supply Request",
-    tabHistory: "History & Process",
-    tabRecipes: "Recipes",
-    colDate: "Date",
-    colProduct: "Product",
-    colQty: "Quantity",
-    colStatus: "Status",
-    colActions: "Actions",
-    emptyHistoryTitle: "Nothing has been produced yet",
-    emptyHistorySub: "Start a new production run",
-    statusDone: "Completed",
-    btnDegustation: "Degustation form",
-    emptyRecipes: "No recipes found",
-    norma: "Yield",
-    requiredIngredients: "Required Ingredients:",
-    recModalTitle: "Add New Dish",
-    recModalSub: "Name and ingredients for a new dish",
-    recOutputProduct: "Dish Name",
-    recYield: "Yield (Portion/kg)",
-    recIngredients: "Required Ingredients",
-    btnAdd: "Add",
-    placeholderSelect: "— Select —",
-    placeholderIngredient: "— Select material —",
-    placeholderQty: "Qty",
-    emptyIngredients: "No ingredients added",
-    btnCancel: "Cancel",
-    btnSave: "Save",
-    prodModalTitle: "Meal Preparation",
-    prodSelectRecipe: "Which dish are we cooking?",
-    prodPlannedQty: "Planned quantity",
-    prodFefoInfo: "After clicking 'Start', the system will consume the required ingredients from the warehouse.",
-    btnStart: "Start",
-    degModalTitle: "Comments Log",
-    degModalSub: "Conclusion about the dish",
-    degVanna: "Vat (Pot) Number",
-    degOrganoleptic: "Organoleptic Indicators",
-    degAppearance: "Appearance and Color",
-    degSmell: "Smell (Aroma)",
-    degTaste: "Taste",
-    degMoisture: "Moisture (Consistency)",
-    degNotes: "Notes (if any deviations)",
-    degNotesPlaceholder: "Additional notes...",
-    btnClose: "Close",
-    btnSaveConclusion: "Save Conclusion",
-    reqModalTitle: "Material Request",
-    reqProduct: "Which raw material is needed?",
-    reqQty: "Quantity",
-    reqDate: "Needed By Date",
-    reqTime: "Time / Note (E.g. By 09:00 AM)",
-    reqUnitPlaceholder: "Unit",
-    btnSendRequest: "Send Request",
-    msgFillAll: "Please fill in all fields",
-    msgRecipeSaved: "Recipe saved successfully",
-    msgProdSuccess: "Production completed! Warehouse updated.",
-    msgDegustationSaved: "Degustation conclusion saved!",
-    msgRequestSent: "Request sent to supply department!",
-    msgError: "An error occurred",
-    msgNetworkError: "Network error"
-  }
-}
-
-type LangType = 'uz' | 'ru' | 'en'
-
-export default function ProductionContent({ isKitchen = false }: { isKitchen?: boolean }) {
+export default function ProductionContent({ isKitchen = true }: { isKitchen?: boolean } = {}) {
   const { lang } = useLanguage()
-  const currentLang = (lang || 'uz') as LangType
-  const l = t[currentLang]
+  const [activeTab, setActiveTab] = useState<'handshake' | 'multistock' | 'zagotovka' | 'cooking' | 'recipes' | 'history'>('handshake')
 
-  const titleText = isKitchen ? l.title : (currentLang === 'ru' ? 'Производство' : currentLang === 'en' ? 'Production' : 'Ishlab chiqarish');
-  const subText = isKitchen ? l.subtitle : (currentLang === 'ru' ? 'Процесс производства и рецептуры' : currentLang === 'en' ? 'Factory production process and recipes' : 'Zavod ishlab chiqarish jarayoni va retseptlar');
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
+  // Data states
+  const [dashboardData, setDashboardData] = useState<any>({
+    kpis: {
+      pendingHandshakesCount: 0,
+      totalTransfersCount: 0,
+      discrepancyCount: 0,
+      totalDiscrepancyKg: 0
+    },
+    pendingHandshakes: [],
+    completedTransfers: [],
+    discrepancyTransfers: [],
+    multiLocationStock: []
+  })
 
-  const [activeTab, setActiveTab] = useState<'orders' | 'recipes' | 'degustation'>('orders')
-  
   const [recipes, setRecipes] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
-  const [orders, setOrders] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [productionHistory, setProductionHistory] = useState<any[]>([])
 
+  // Modal States
+  const [showHandshakeModal, setShowHandshakeModal] = useState(false)
+  const [selectedTransfer, setSelectedTransfer] = useState<any>(null)
+  const [handshakeForm, setHandshakeForm] = useState({
+    receivedQuantity: '',
+    discrepancyReason: 'Go\'sht suvi oqishi / Idish og\'irligi',
+    customReason: '',
+    notes: ''
+  })
+  const [savingHandshake, setSavingHandshake] = useState(false)
+
+  // Zagotovka Prep Modal
+  const [showZagotovkaModal, setShowZagotovkaModal] = useState(false)
+  const [zagotovkaForm, setZagotovkaForm] = useState({
+    productId: '',
+    inputQuantity: '',
+    outputQuantity: '',
+    wasteReason: 'Tozalash va qirqish isrofi',
+    storageLocation: 'SOVUTGICH_1',
+    temperature: '2.5',
+    notes: ''
+  })
+  const [savingZagotovka, setSavingZagotovka] = useState(false)
+
+  // Cooking Modal
+  const [showProduceModal, setShowProduceModal] = useState(false)
+  const [selectedRecipe, setSelectedRecipe] = useState<any>(null)
+  const [plannedQty, setPlannedQty] = useState('')
+  const [producing, setProducing] = useState(false)
+
+  // New Recipe Modal
   const [showRecipeModal, setShowRecipeModal] = useState(false)
-  const [showOrderModal, setShowOrderModal] = useState(false)
-  const [showDegustationModal, setShowDegustationModal] = useState(false)
-  const [showRequestModal, setShowRequestModal] = useState(false)
-  const [saving, setSaving] = useState(false)
-
   const [recipeForm, setRecipeForm] = useState({
     outputProductId: '',
-    baseYieldQty: '1',
-    ingredients: [] as { inputProductId: string, requiredQty: string }[]
+    baseYieldQty: '100',
+    ingredients: [{ inputProductId: '', requiredQty: '' }]
   })
+  const [savingRecipe, setSavingRecipe] = useState(false)
 
-  const [orderForm, setOrderForm] = useState({
-    recipeId: '',
-    plannedOutput: ''
-  })
-
+  // Request to Supply Modal
+  const [showRequestModal, setShowRequestModal] = useState(false)
   const [requestForm, setRequestForm] = useState({
     productId: '',
     quantity: '',
     unit: 'kg',
     expectedDate: new Date().toISOString().split('T')[0],
-    timeRange: ''
+    timeRange: '08:00 - 10:00'
   })
+  const [savingRequest, setSavingRequest] = useState(false)
 
-  const [degustationForm, setDegustationForm] = useState({
-    orderId: null as number | null,
-    vannaNo: '1',
-    appearanceOk: true,
-    smellOk: true,
-    tasteOk: true,
-    moistureOk: true,
-    notes: ''
-  })
+  // Filter & Search
+  const [stockSearch, setStockSearch] = useState('')
+  const [transferSearch, setTransferSearch] = useState('')
 
+  // Close modals on Escape key
   useEffect(() => {
-    fetchData()
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowHandshakeModal(false)
+        setShowZagotovkaModal(false)
+        setShowProduceModal(false)
+        setShowRecipeModal(false)
+        setShowRequestModal(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  async function fetchData() {
+  useEffect(() => {
+    loadAllData()
+  }, [])
+
+  async function loadAllData() {
     setLoading(true)
     try {
-      const [resR, resP, resO] = await Promise.all([
+      const [dashRes, recRes, prodRes, historyRes] = await Promise.all([
+        fetch('/api/kitchen/dashboard'),
         fetch('/api/recipes'),
         fetch('/api/products'),
         fetch('/api/production')
       ])
-      
-      if (resR.ok) setRecipes(await resR.json())
-      if (resP.ok) setProducts(await resP.json())
-      if (resO.ok) setOrders(await resO.json())
-    } catch (err) {
-      toast.error(l.msgNetworkError)
+
+      if (dashRes.ok) setDashboardData(await dashRes.json())
+      if (recRes.ok) setRecipes(await recRes.json())
+      if (prodRes.ok) setProducts(await prodRes.json())
+      if (historyRes.ok) setProductionHistory(await historyRes.json())
+    } catch {
+      toast.error("Ma'lumotlarni yuklashda xatolik yuz berdi")
     } finally {
       setLoading(false)
     }
   }
 
-  const addIngredientRow = () => {
-    setRecipeForm(prev => ({
-      ...prev,
-      ingredients: [...prev.ingredients, { inputProductId: '', requiredQty: '' }]
-    }))
-  }
-
-  const updateIngredient = (index: number, field: string, value: string) => {
-    const newIngredients = [...recipeForm.ingredients]
-    newIngredients[index] = { ...newIngredients[index], [field]: value }
-    setRecipeForm(prev => ({ ...prev, ingredients: newIngredients }))
-  }
-
-  const removeIngredient = (index: number) => {
-    const newIngredients = [...recipeForm.ingredients]
-    newIngredients.splice(index, 1)
-    setRecipeForm(prev => ({ ...prev, ingredients: newIngredients }))
-  }
-
-  async function handleSaveRecipe() {
-    if (!recipeForm.outputProductId || !recipeForm.baseYieldQty || recipeForm.ingredients.length === 0) {
-      toast.error(l.msgFillAll)
-      return
-    }
-
-    setSaving(true)
+  async function refreshDashboard() {
+    setRefreshing(true)
     try {
-      const res = await fetch('/api/recipes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(recipeForm)
-      })
-
+      const res = await fetch('/api/kitchen/dashboard')
       if (res.ok) {
-        toast.success(l.msgRecipeSaved)
-        setShowRecipeModal(false)
-        fetchData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || l.msgError)
+        setDashboardData(await res.json())
+        toast.success("Oshxona ma'lumotlari yangilandi")
       }
     } catch {
-      toast.error(l.msgNetworkError)
+      toast.error("Yangilashda xatolik")
     } finally {
-      setSaving(false)
+      setRefreshing(false)
     }
   }
 
-  async function handleStartProduction() {
-    if (!orderForm.recipeId || !orderForm.plannedOutput) {
-      toast.error(l.msgFillAll)
-      return
-    }
-
-    setSaving(true)
-    try {
-      const res = await fetch('/api/production', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderForm)
-      })
-
-      if (res.ok) {
-        toast.success(l.msgProdSuccess)
-        setShowOrderModal(false)
-        fetchData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || l.msgError)
-      }
-    } catch {
-      toast.error(l.msgNetworkError)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  function openDegustation(order: any) {
-    setDegustationForm({
-      orderId: order.id,
-      vannaNo: '1',
-      appearanceOk: true,
-      smellOk: true,
-      tasteOk: true,
-      moistureOk: true,
+  // Open Handshake Modal
+  function handleOpenHandshake(transfer: any) {
+    setSelectedTransfer(transfer)
+    setHandshakeForm({
+      receivedQuantity: transfer.issuedQuantity.toString(),
+      discrepancyReason: 'Go\'sht suvi oqishi / Idish og\'irligi',
+      customReason: '',
       notes: ''
     })
-    setShowDegustationModal(true)
+    setShowHandshakeModal(true)
   }
 
-  async function handleSaveDegustation() {
-    setSaving(true)
+  // Submit Two-Way Handshake Confirmation
+  async function handleSubmitHandshake(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedTransfer) return
+
+    setSavingHandshake(true)
     try {
-      const res = await fetch('/api/degustation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(degustationForm)
-      })
+      const finalReason = handshakeForm.discrepancyReason === 'Boshqa' 
+        ? handshakeForm.customReason 
+        : handshakeForm.discrepancyReason
 
-      if (res.ok) {
-        toast.success(l.msgDegustationSaved)
-        setShowDegustationModal(false)
-      } else {
-        const err = await res.json()
-        toast.error(err.error || l.msgError)
-      }
-    } catch {
-      toast.error(l.msgNetworkError)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleSendRequest() {
-    if (!requestForm.productId || !requestForm.quantity || !requestForm.expectedDate) {
-      toast.error(l.msgFillAll)
-      return
-    }
-
-    setSaving(true)
-    try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch(`/api/transfers/${selectedTransfer.id}/handshake`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...requestForm,
-          status: 'PENDING'
+          receivedQuantity: parseFloat(handshakeForm.receivedQuantity),
+          discrepancyReason: finalReason,
+          notes: handshakeForm.notes
         })
       })
 
       if (res.ok) {
-        toast.success(l.msgRequestSent)
-        setShowRequestModal(false)
-        setRequestForm({ productId: '', quantity: '', unit: 'kg', expectedDate: new Date().toISOString().split('T')[0], timeRange: '' })
+        toast.success("Yuk qabul qilindi va tortish natijasi tasdiqlandi!")
+        setShowHandshakeModal(false)
+        setSelectedTransfer(null)
+        loadAllData()
       } else {
-        const err = await res.json()
-        toast.error(err.error || l.msgError)
+        const data = await res.json()
+        toast.error(data.error || "Tasdiqlashda xatolik")
       }
     } catch {
-      toast.error(l.msgNetworkError)
+      toast.error("Tarmoq xatosi")
     } finally {
-      setSaving(false)
+      setSavingHandshake(false)
     }
   }
 
+  // Execute Cooking / Production
+  async function handleProduce() {
+    if (!selectedRecipe || !plannedQty || parseFloat(plannedQty) <= 0) {
+      toast.error("Miqdorni to'g'ri kiriting")
+      return
+    }
+
+    setProducing(true)
+    try {
+      const res = await fetch('/api/production', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipeId: selectedRecipe.id,
+          plannedOutput: plannedQty
+        })
+      })
+
+      if (res.ok) {
+        toast.success("Taom muvaffaqiyatli tayyorlandi! Xomashyo ombordan sarflandi.")
+        setShowProduceModal(false)
+        setPlannedQty('')
+        setSelectedRecipe(null)
+        loadAllData()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Ishlab chiqarishda xatolik")
+      }
+    } catch {
+      toast.error("Tarmoq xatosi")
+    } finally {
+      setProducing(false)
+    }
+  }
+
+  // Send Supply Request
+  async function handleSendRequest(e: React.FormEvent) {
+    e.preventDefault()
+    if (!requestForm.productId || !requestForm.quantity || !requestForm.expectedDate) {
+      toast.error("Barcha maydonlarni to'ldiring")
+      return
+    }
+
+    setSavingRequest(true)
+    try {
+      const selectedProd = products.find(p => p.id === parseInt(requestForm.productId))
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: requestForm.productId,
+          quantity: requestForm.quantity,
+          unit: selectedProd?.unit || 'kg',
+          expectedDate: requestForm.expectedDate,
+          timeRange: requestForm.timeRange,
+          notes: "Oshxona ehtiyoji uchun zayavka"
+        })
+      })
+
+      if (res.ok) {
+        toast.success("Zayavka ta'minot bo'limiga yuborildi!")
+        setShowRequestModal(false)
+        setRequestForm({
+          productId: '',
+          quantity: '',
+          unit: 'kg',
+          expectedDate: new Date().toISOString().split('T')[0],
+          timeRange: '08:00 - 10:00'
+        })
+      } else {
+        toast.error("Zayavka yuborishda xatolik")
+      }
+    } catch {
+      toast.error("Tarmoq xatosi")
+    } finally {
+      setSavingRequest(false)
+    }
+  }
+
+  // Filtered Multi-Location Stock
+  const filteredMultiStock = useMemo(() => {
+    return (dashboardData.multiLocationStock || []).filter((item: any) =>
+      item.name?.toLowerCase().includes(stockSearch.toLowerCase()) ||
+      item.code?.toLowerCase().includes(stockSearch.toLowerCase())
+    )
+  }, [dashboardData.multiLocationStock, stockSearch])
+
   return (
-    <div className="flex flex-col h-full animate-enter">
-      {/* Premium Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 rounded-3xl p-8 mb-8 shadow-2xl border border-white/10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200 tracking-tight">
-              {titleText}
-            </h1>
-            <p className="text-blue-200/80 mt-2 font-medium max-w-lg">
-              {subText}
-            </p>
+    <div className="space-y-6 max-w-7xl mx-auto animate-enter">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-900/60 p-6 rounded-2xl border border-dark-700 backdrop-blur-md">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Oshxona & Zagotovka Zanjiri
+            </span>
+            <span className="text-xs text-slate-500">Two-Way Handshake & Tortish Nazorati</span>
           </div>
-          
-          <div className="flex gap-3">
-            <button 
-              onClick={() => setShowRequestModal(true)}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl backdrop-blur-md border border-white/20 transition-all font-semibold shadow-lg hover:shadow-white/10"
-            >
-              <ShoppingCart size={18} />
-              {l.btnRequest}
-            </button>
-            <button 
-              onClick={() => setShowRecipeModal(true)}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl backdrop-blur-md border border-white/20 transition-all font-semibold shadow-lg hover:shadow-white/10"
-            >
-              <Beaker size={18} />
-              {l.btnNewRecipe}
-            </button>
-            <button 
-              onClick={() => setShowOrderModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-500/30 transition-all font-bold"
-            >
-              <ChefHat size={18} />
-              {l.btnProduce}
-            </button>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Oshxona va Zagotovka Boshqaruvi
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Skladdan qabul qilish (Two-Way Handshake), tortish farqlari, ko'p-joylashuvli zaxiralar va taom tayyorlash
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refreshDashboard}
+            disabled={refreshing}
+            className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white border border-dark-700 transition-colors"
+            title="Yangilash"
+          >
+            <RefreshCw size={18} className={refreshing ? 'animate-spin text-blue-400' : ''} />
+          </button>
+          <button
+            onClick={() => setShowRequestModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-dark-800 hover:bg-dark-700 text-slate-200 border border-dark-700 transition-all"
+          >
+            <ShoppingCart size={16} />
+            <span>Ta'minotga Zayavka</span>
+          </button>
+          <button
+            onClick={() => {
+              if (recipes.length === 0) {
+                toast.error("Avval retsept qo'shing")
+                return
+              }
+              setSelectedRecipe(recipes[0])
+              setShowProduceModal(true)
+            }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg hover:shadow-emerald-500/25 transition-all"
+          >
+            <Play size={18} fill="currentColor" />
+            <span>Ovqat Tayyorlash</span>
+          </button>
         </div>
       </div>
 
-      <div className="flex bg-slate-100/50 dark:bg-dark-800/50 p-1.5 rounded-2xl w-max mb-6 border border-slate-200 dark:border-dark-700/50 backdrop-blur-sm">
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'orders' ? 'bg-white dark:bg-dark-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+      {/* Handshake Alert Banner (If pending shipments from Sklad) */}
+      {(dashboardData.pendingHandshakes || []).length > 0 && (
+        <div className="bg-gradient-to-r from-amber-950/60 via-amber-900/40 to-dark-900 border-2 border-amber-500/40 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+              <Scale size={24} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <span>🔔 Skladdan Kelgan Yuklar Tasdiqlash Kutilmoqda ({dashboardData.pendingHandshakes.length} ta)</span>
+              </h3>
+              <p className="text-xs text-amber-200/80">
+                Sklad xomashyo chiqardi. Haqiqiy vaznni tortib, "Qabul qildim" tugmasi orqali tasdiqlang!
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('handshake')}
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black shadow-lg shadow-amber-500/30 transition-all shrink-0"
+          >
+            Darhol Qabul Qilish & Tortish
+          </button>
+        </div>
+      )}
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div 
+          onClick={() => setActiveTab('handshake')}
+          className="card p-5 rounded-2xl cursor-pointer hover:bg-dark-800 transition-all border-l-4 border-l-amber-500"
         >
-          <History size={16} /> {l.tabHistory}
+          <div className="flex items-center justify-between text-amber-400 mb-2">
+            <span className="text-xs font-semibold uppercase">Tasdiqlash Kutilmoqda</span>
+            <Scale size={18} />
+          </div>
+          <div className="text-3xl font-bold text-white">
+            {dashboardData.kpis?.pendingHandshakesCount || 0}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">Skladdan kelgan tranzit yuklar</div>
+        </div>
+
+        <div 
+          onClick={() => setActiveTab('multistock')}
+          className="card p-5 rounded-2xl cursor-pointer hover:bg-dark-800 transition-all border-l-4 border-l-rose-500"
+        >
+          <div className="flex items-center justify-between text-rose-400 mb-2">
+            <span className="text-xs font-semibold uppercase">Yo'qotish / Farqlar</span>
+            <AlertTriangle size={18} />
+          </div>
+          <div className="text-3xl font-bold text-rose-400">
+            {dashboardData.kpis?.totalDiscrepancyKg || 0} <span className="text-sm font-normal text-slate-400">kg</span>
+          </div>
+          <div className="text-xs text-slate-400 mt-1">{dashboardData.kpis?.discrepancyCount || 0} ta holatda farq aniqlangan</div>
+        </div>
+
+        <div 
+          onClick={() => setActiveTab('multistock')}
+          className="card p-5 rounded-2xl cursor-pointer hover:bg-dark-800 transition-all border-l-4 border-l-blue-500"
+        >
+          <div className="flex items-center justify-between text-blue-400 mb-2">
+            <span className="text-xs font-semibold uppercase">Zaxira Pozitsiyalari</span>
+            <Layers size={18} />
+          </div>
+          <div className="text-3xl font-bold text-white">
+            {(dashboardData.multiLocationStock || []).length}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">Barcha saqlash joylarida</div>
+        </div>
+
+        <div 
+          onClick={() => setActiveTab('history')}
+          className="card p-5 rounded-2xl cursor-pointer hover:bg-dark-800 transition-all border-l-4 border-l-emerald-500"
+        >
+          <div className="flex items-center justify-between text-emerald-400 mb-2">
+            <span className="text-xs font-semibold uppercase">Tayyorlangan Taomlar</span>
+            <ChefHat size={18} />
+          </div>
+          <div className="text-3xl font-bold text-white">
+            {productionHistory.length}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">Ishlab chiqarish jurnali</div>
+        </div>
+      </div>
+
+      {/* Tabs Bar */}
+      <div className="flex items-center gap-2 border-b border-dark-700 pb-2 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('handshake')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
+            activeTab === 'handshake'
+              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25 font-bold'
+              : 'bg-dark-800 text-slate-400 hover:text-white hover:bg-dark-700'
+          }`}
+        >
+          <Scale size={16} />
+          <span>🤝 Skladdan Qabul (Handshake & Tortish)</span>
+          {(dashboardData.pendingHandshakes || []).length > 0 && (
+            <span className="px-2 py-0.5 text-xs bg-red-600 text-white rounded-full font-bold">
+              {dashboardData.pendingHandshakes.length}
+            </span>
+          )}
         </button>
+
+        <button
+          onClick={() => setActiveTab('multistock')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
+            activeTab === 'multistock'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
+              : 'bg-dark-800 text-slate-400 hover:text-white hover:bg-dark-700'
+          }`}
+        >
+          <Building2 size={16} />
+          <span>🏢 Qayerda Qancha Mahsulot Bor? (Multi-Location)</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('recipes')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'recipes' ? 'bg-white dark:bg-dark-700 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
+            activeTab === 'recipes'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
+              : 'bg-dark-800 text-slate-400 hover:text-white hover:bg-dark-700'
+          }`}
         >
-          <ClipboardCheck size={16} /> {l.tabRecipes}
+          <Utensils size={16} />
+          <span>🍲 Retseptlar & Taomlar</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
+            activeTab === 'history'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
+              : 'bg-dark-800 text-slate-400 hover:text-white hover:bg-dark-700'
+          }`}
+        >
+          <History size={16} />
+          <span>📜 Tarix va Degustatsiya</span>
         </button>
       </div>
 
-      <div className="flex-1 relative">
-        {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="animate-spin text-blue-500" size={40} />
+      {/* ========================================================================= */}
+      {/* TAB 1: TWO-WAY HANDSHAKE (Skladdan Qabul Qilish va Tortish)                */}
+      {/* ========================================================================= */}
+      {activeTab === 'handshake' && (
+        <div className="space-y-6">
+          {/* Section 1: Pending Handshakes (Needs Confirmation) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+                <span>Qabul Qilinishi Kutilayotgan Yuklar</span>
+              </h2>
+              <span className="text-xs text-slate-400">
+                {(dashboardData.pendingHandshakes || []).length} ta transfer
+              </span>
+            </div>
+
+            {(dashboardData.pendingHandshakes || []).length === 0 ? (
+              <div className="card p-8 text-center text-slate-500 border border-dark-700 bg-dark-900/40">
+                <CheckCircle2 size={36} className="mx-auto mb-2 text-emerald-500" />
+                <p className="font-semibold text-slate-300">Barcha kelgan yuklar qabul qilingan!</p>
+                <p className="text-xs mt-1">Sklad yangi mahsulot chiqarganda bu yerda avtomatik ko'rinadi.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(dashboardData.pendingHandshakes || []).map((transfer: any) => (
+                  <div 
+                    key={transfer.id}
+                    className="card p-5 bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 border-2 border-amber-500/50 rounded-2xl shadow-xl space-y-4"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                          {transfer.transferNumber}
+                        </span>
+                        <h3 className="text-lg font-bold text-white mt-1.5">
+                          {transfer.product?.name || 'Mahsulot'}
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                          Yuboruvchi: <span className="text-slate-200">{transfer.issuedByName || 'Sklad'}</span> • {new Date(transfer.issuedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-xs text-slate-400">Sklad bergan miqdor:</div>
+                        <div className="text-2xl font-black text-amber-400 font-mono">
+                          {transfer.issuedQuantity} {transfer.issuedUnit}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-dark-700/80 flex items-center justify-between gap-3">
+                      <span className="text-xs text-slate-400">
+                        Manzil: <strong className="text-white">{transfer.targetLocation}</strong>
+                      </span>
+                      <button
+                        onClick={() => handleOpenHandshake(transfer)}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-lg shadow-amber-500/30 transition-all"
+                      >
+                        <Scale size={18} />
+                        <span>Tortish & Qabul Qilish</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : activeTab === 'orders' ? (
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl overflow-hidden shadow-sm">
+
+          {/* Section 2: Completed Handshakes & Discrepancies History */}
+          <div className="space-y-3 pt-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <History size={18} className="text-blue-400" />
+              <span>Qabul Qilingan Yuklar va Farqlar Jurnali (Reconciliation Log)</span>
+            </h2>
+
+            <div className="card overflow-hidden border border-dark-700 bg-dark-900/70">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-dark-800 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
+                      <th className="py-3 px-4">Transfer & Sana</th>
+                      <th className="py-3 px-4">Mahsulot</th>
+                      <th className="py-3 px-4">Bo'lim</th>
+                      <th className="py-3 px-4 text-center">Sklad Berdi</th>
+                      <th className="py-3 px-4 text-center">Qabul Qilindi (Tortildi)</th>
+                      <th className="py-3 px-4 text-center">Farq / Yo'qotish</th>
+                      <th className="py-3 px-4">Sabab / Izoh</th>
+                      <th className="py-3 px-4 text-center">Holat</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dark-700/50">
+                    {(dashboardData.completedTransfers || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-slate-500">
+                          Hozircha qabul qilingan transferlar mavjud emas
+                        </td>
+                      </tr>
+                    ) : (
+                      (dashboardData.completedTransfers || []).map((t: any) => (
+                        <tr key={t.id} className="hover:bg-dark-800/50">
+                          <td className="py-3 px-4 font-mono text-xs text-slate-300">
+                            <div className="font-bold text-blue-400">{t.transferNumber}</div>
+                            <div className="text-slate-500">{new Date(t.createdAt).toLocaleDateString()}</div>
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-white">
+                            {t.product?.name}
+                          </td>
+                          <td className="py-3 px-4 text-slate-300 text-xs">
+                            {t.targetLocation}
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono font-bold text-white">
+                            {t.issuedQuantity} {t.issuedUnit}
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono font-bold text-emerald-400">
+                            {t.receivedQuantity} {t.issuedUnit}
+                          </td>
+                          <td className="py-3 px-4 text-center font-mono font-bold">
+                            {t.discrepancy && Math.abs(t.discrepancy) > 0 ? (
+                              <span className="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                                -{t.discrepancy.toFixed(2)} {t.issuedUnit}
+                              </span>
+                            ) : (
+                              <span className="text-emerald-400">0 (To'liq)</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-xs text-slate-400">
+                            {t.discrepancyReason || t.notes || '-'}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            {t.status === 'DISCREPANCY' ? (
+                              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                Farq bilan
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                Mos (To'liq)
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: MULTI-LOCATION STOCK ("Qayerda Qancha Mahsulot Bor?")               */}
+      {/* ========================================================================= */}
+      {activeTab === 'multistock' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-dark-900/60 p-4 rounded-xl border border-dark-700">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input
+                type="text"
+                placeholder="Mahsulot nomi yoki kodi bo'yicha qidirish..."
+                value={stockSearch}
+                onChange={(e) => setStockSearch(e.target.value)}
+                className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="card overflow-hidden border border-dark-700 bg-dark-900/70">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-700">
-                    <th className="p-5 font-semibold text-xs tracking-wider text-slate-500 dark:text-slate-400 uppercase">{l.colDate}</th>
-                    <th className="p-5 font-semibold text-xs tracking-wider text-slate-500 dark:text-slate-400 uppercase">{l.colProduct}</th>
-                    <th className="p-5 font-semibold text-xs tracking-wider text-slate-500 dark:text-slate-400 uppercase">{l.colQty}</th>
-                    <th className="p-5 font-semibold text-xs tracking-wider text-slate-500 dark:text-slate-400 uppercase">{l.colStatus}</th>
-                    <th className="p-5 font-semibold text-xs tracking-wider text-slate-500 dark:text-slate-400 uppercase text-right">{l.colActions}</th>
+                  <tr className="bg-dark-800 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
+                    <th className="py-3.5 px-4">Mahsulot Nomi</th>
+                    <th className="py-3.5 px-4">Kategoriya</th>
+                    <th className="py-3.5 px-4 text-center text-blue-400">🏢 Markaziy Sklad</th>
+                    <th className="py-3.5 px-4 text-center text-amber-400">🔪 Zagotovka Sexi</th>
+                    <th className="py-3.5 px-4 text-center text-emerald-400">🍲 Oshxona</th>
+                    <th className="py-3.5 px-4 text-center font-bold text-white">📦 JAMI Zaxira</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-dark-700/50">
-                  {orders.length === 0 ? (
+                <tbody className="divide-y divide-dark-700/50">
+                  {filteredMultiStock.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-12 text-center text-slate-500">
-                        <div className="flex flex-col items-center justify-center">
-                          <ChefHat size={48} className="text-slate-300 dark:text-dark-600 mb-4" />
-                          <p className="text-lg font-medium">{l.emptyHistoryTitle}</p>
-                          <p className="text-sm">{l.emptyHistorySub}</p>
-                        </div>
+                      <td colSpan={6} className="py-8 text-center text-slate-500">
+                        Mahsulotlar topilmadi
                       </td>
                     </tr>
                   ) : (
-                    orders.map(o => (
-                      <tr key={o.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/30 transition-colors group">
-                        <td className="p-5 text-sm font-medium text-slate-600 dark:text-slate-300">
-                          {new Date(o.createdAt).toLocaleString()}
+                    filteredMultiStock.map((item: any) => (
+                      <tr key={item.id} className="hover:bg-dark-800/50">
+                        <td className="py-3.5 px-4 font-semibold text-white">
+                          <div>{item.name}</div>
+                          {item.code && <div className="text-[11px] font-mono text-slate-500">{item.code}</div>}
                         </td>
-                        <td className="p-5">
-                          <div className="font-bold text-slate-800 dark:text-white text-base">
-                            {o.recipe?.outputProduct?.name || '—'}
-                          </div>
-                          <div className="text-xs text-slate-500">Order #{o.id}</div>
+                        <td className="py-3.5 px-4 text-slate-400 text-xs">
+                          {item.category || 'Xomashyo'}
                         </td>
-                        <td className="p-5">
-                          <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-200 dark:border-emerald-500/20">
-                            <Plus size={14} /> {o.plannedOutput} {o.recipe?.outputProduct?.unit}
+                        <td className="py-3.5 px-4 text-center font-mono font-bold text-blue-400">
+                          {item.locations.warehouse} {item.unit}
+                        </td>
+                        <td className="py-3.5 px-4 text-center font-mono font-bold text-amber-400">
+                          {item.locations.zagotovka} {item.unit}
+                        </td>
+                        <td className="py-3.5 px-4 text-center font-mono font-bold text-emerald-400">
+                          {item.locations.oshxona} {item.unit}
+                        </td>
+                        <td className="py-3.5 px-4 text-center font-mono font-bold text-white bg-dark-800/60">
+                          <span className="px-2.5 py-1 rounded-lg bg-dark-700 border border-dark-600">
+                            {item.totalQuantity} {item.unit}
                           </span>
-                        </td>
-                        <td className="p-5">
-                          <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-semibold">
-                            <CheckCircle2 size={14} /> {l.statusDone}
-                          </span>
-                        </td>
-                        <td className="p-5 text-right">
-                          <button 
-                            onClick={() => openDegustation(o)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity btn-secondary text-xs py-1.5 px-3"
-                          >
-                            {l.btnDegustation}
-                          </button>
                         </td>
                       </tr>
                     ))
@@ -546,349 +712,448 @@ export default function ProductionContent({ isKitchen = false }: { isKitchen?: b
               </table>
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {recipes.length === 0 ? (
-              <div className="col-span-full p-12 text-center text-slate-500 bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-700">
-                {l.emptyRecipes}
-              </div>
-            ) : (
-              recipes.map(r => (
-                <div key={r.id} className="group relative bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-colors" />
-                  
-                  <div className="flex items-start justify-between mb-4 relative z-10">
-                    <div>
-                      <h3 className="font-extrabold text-xl text-slate-800 dark:text-white mb-1">{r.outputProduct?.name}</h3>
-                      <span className="inline-block bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 text-xs px-2.5 py-1 rounded-lg font-medium">
-                        {l.norma}: {r.baseYieldQty} {r.outputProduct?.unit}
-                      </span>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                      <Utensils size={18} />
-                    </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: RECIPES & COOKING                                                  */}
+      {/* ========================================================================= */}
+      {activeTab === 'recipes' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">Standart Retseptlar (BOM)</h2>
+            <button
+              onClick={() => setShowRecipeModal(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+            >
+              <Plus size={16} />
+              <span>Yangi Retsept Qo'shish</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recipes.map((rec) => (
+              <div key={rec.id} className="card p-5 bg-dark-900 border border-dark-700 rounded-2xl space-y-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{rec.outputProduct?.name}</h3>
+                    <p className="text-xs text-slate-400">Chiqish normasi: {rec.baseYieldQty} {rec.outputProduct?.unit || 'porsiya'}</p>
                   </div>
-                  
-                  <div className="space-y-3 relative z-10">
-                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                      <ArrowRight size={12} /> {l.requiredIngredients}
-                    </p>
-                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                      {r.ingredients.map((ing: any) => (
-                        <div key={ing.id} className="flex items-center justify-between text-sm bg-slate-50 dark:bg-dark-800/50 p-3 rounded-xl border border-slate-100 dark:border-dark-700">
-                          <span className="font-medium text-slate-700 dark:text-slate-300">{ing.inputProduct?.name}</span>
-                          <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded text-xs">
-                            {ing.requiredQty} {ing.inputProduct?.unit}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                  <button
+                    onClick={() => {
+                      setSelectedRecipe(rec)
+                      setShowProduceModal(true)
+                    }}
+                    className="p-2.5 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors"
+                    title="Pishirish"
+                  >
+                    <Play size={18} fill="currentColor" />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5 pt-2 border-t border-dark-800">
+                  <span className="text-xs font-semibold text-slate-400 uppercase">Kerakli Xomashyolar:</span>
+                  <div className="space-y-1">
+                    {rec.ingredients?.map((ing: any) => (
+                      <div key={ing.id} className="flex items-center justify-between text-xs text-slate-300 bg-dark-800/70 px-3 py-1.5 rounded-lg">
+                        <span>{ing.inputProduct?.name}</span>
+                        <span className="font-mono font-bold text-amber-400">{ing.requiredQty} {ing.inputProduct?.unit || 'kg'}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
-
-      {showRecipeModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-enter">
-          <div className="bg-white dark:bg-dark-900 rounded-[2rem] w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col max-h-[90vh] overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-100 dark:border-dark-800 flex items-center justify-between bg-slate-50/50 dark:bg-dark-800/50">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white">{l.recModalTitle}</h2>
-                <p className="text-sm text-slate-500 mt-1">{l.recModalSub}</p>
               </div>
-              <button onClick={() => setShowRecipeModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-dark-700 transition-colors text-slate-500">
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: PRODUCTION HISTORY                                                 */}
+      {/* ========================================================================= */}
+      {activeTab === 'history' && (
+        <div className="space-y-4">
+          <div className="card overflow-hidden border border-dark-700 bg-dark-900/70">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="bg-dark-800 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
+                    <th className="py-3.5 px-4">Buyurtma ID & Sana</th>
+                    <th className="py-3.5 px-4">Tayyorlangan Taom</th>
+                    <th className="py-3.5 px-4 text-center">Miqdori</th>
+                    <th className="py-3.5 px-4 text-center">Holat</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dark-700/50">
+                  {productionHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-500">
+                        Hozircha tayyorlangan taomlar yo'q
+                      </td>
+                    </tr>
+                  ) : (
+                    productionHistory.map((order: any) => (
+                      <tr key={order.id} className="hover:bg-dark-800/50">
+                        <td className="py-3.5 px-4 font-mono text-xs text-slate-300">
+                          <div className="font-bold text-blue-400">#ORD-{order.id}</div>
+                          <div className="text-slate-500">{new Date(order.createdAt).toLocaleString()}</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-white">
+                          {order.recipe?.outputProduct?.name}
+                        </td>
+                        <td className="py-3.5 px-4 text-center font-mono font-bold text-emerald-400">
+                          {order.plannedOutput} {order.recipe?.outputProduct?.unit || 'porsiya'}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            Yakunlangan
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: TWO-WAY HANDSHAKE (Tortish va Qabul Qilish)                      */}
+      {/* ========================================================================= */}
+      {showHandshakeModal && selectedTransfer && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          onClick={() => setShowHandshakeModal(false)}
+        >
+          <div 
+            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Scale size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Skladdan Qabul Qilish (Tortish)</h3>
+                  <p className="text-xs text-slate-400">Transfer #{selectedTransfer.transferNumber}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowHandshakeModal(false)}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
-            
-            <div className="p-8 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
-              <div className="grid grid-cols-2 gap-6">
+
+            <form onSubmit={handleSubmitHandshake} className="space-y-4 pt-4">
+              {/* Product Info */}
+              <div className="bg-dark-800 p-3.5 rounded-xl border border-dark-700 grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.recOutputProduct}</label>
-                  <select 
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white"
-                    value={recipeForm.outputProductId}
-                    onChange={e => setRecipeForm(prev => ({...prev, outputProductId: e.target.value}))}
-                  >
-                    <option value="">{l.placeholderSelect}</option>
-                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
+                  <span className="text-slate-500 block">Mahsulot:</span>
+                  <span className="font-bold text-white text-sm">{selectedTransfer.product?.name}</span>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.recYield}</label>
-                  <input 
-                    type="number" 
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white"
-                    placeholder="1" min="0.1" step="0.1"
-                    value={recipeForm.baseYieldQty}
-                    onChange={e => setRecipeForm(prev => ({...prev, baseYieldQty: e.target.value}))}
-                  />
+                  <span className="text-slate-500 block">Sklad chiqargan vazn:</span>
+                  <span className="font-bold text-amber-400 text-sm font-mono">
+                    {selectedTransfer.issuedQuantity} {selectedTransfer.issuedUnit}
+                  </span>
                 </div>
               </div>
 
-              <div className="h-px w-full bg-slate-100 dark:bg-dark-800" />
-              
+              {/* Weighed Quantity Input */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">{l.recIngredients}</label>
-                  <button 
-                    onClick={addIngredientRow} 
-                    className="flex items-center gap-1.5 text-sm bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg font-semibold transition-colors"
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  Haqiqatda Tortilgan Miqdor ({selectedTransfer.issuedUnit}) <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={handshakeForm.receivedQuantity}
+                  onChange={(e) => setHandshakeForm({ ...handshakeForm, receivedQuantity: e.target.value })}
+                  required
+                  autoFocus
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-white text-lg font-mono font-bold focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Live Discrepancy Calculation */}
+              {(() => {
+                const rec = parseFloat(handshakeForm.receivedQuantity) || 0
+                const diff = selectedTransfer.issuedQuantity - rec
+                return (
+                  <div className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+                    Math.abs(diff) > 0.001 
+                      ? 'bg-rose-500/10 border-rose-500/30 text-rose-300' 
+                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  }`}>
+                    <span className="font-semibold">Tortishdagi Farq / Yo'qotish:</span>
+                    <span className="font-black font-mono text-sm">
+                      {Math.abs(diff) > 0.001 
+                        ? `-${diff.toFixed(2)} ${selectedTransfer.issuedUnit} (Nomuvofiqlik)`
+                        : '0.00 kg (100% Mos keldi)'}
+                    </span>
+                  </div>
+                )
+              })()}
+
+              {/* Discrepancy Reason if variance exists */}
+              {parseFloat(handshakeForm.receivedQuantity) < selectedTransfer.issuedQuantity && (
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-slate-300 uppercase">
+                    Farq Sababini Tanlang
+                  </label>
+                  <select
+                    value={handshakeForm.discrepancyReason}
+                    onChange={(e) => setHandshakeForm({ ...handshakeForm, discrepancyReason: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
                   >
-                    <Plus size={16} /> {l.btnAdd}
-                  </button>
-                </div>
-                
-                <div className="space-y-3">
-                  {recipeForm.ingredients.map((ing, idx) => (
-                    <div key={idx} className="flex gap-3 items-center bg-slate-50 dark:bg-dark-800/30 p-3 rounded-2xl border border-slate-200/60 dark:border-dark-700/50">
-                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-dark-700 flex items-center justify-center text-xs font-bold text-slate-500">{idx + 1}</div>
-                      <select 
-                        className="flex-1 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white"
-                        value={ing.inputProductId}
-                        onChange={e => updateIngredient(idx, 'inputProductId', e.target.value)}
-                      >
-                        <option value="">{l.placeholderIngredient}</option>
-                        {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                      <input 
-                        type="number" 
-                        className="w-28 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white text-center font-semibold"
-                        placeholder={l.placeholderQty} step="0.01"
-                        value={ing.requiredQty}
-                        onChange={e => updateIngredient(idx, 'requiredQty', e.target.value)}
-                      />
-                      <button 
-                        onClick={() => removeIngredient(idx)} 
-                        className="w-10 h-10 flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-colors"
-                      >
-                        <X size={18} />
-                      </button>
-                    </div>
-                  ))}
-                  {recipeForm.ingredients.length === 0 && (
-                    <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-dark-700 rounded-2xl">
-                      <p className="text-sm text-slate-400">{l.emptyIngredients}</p>
-                    </div>
+                    <option value="Go'sht suvi oqishi / Idish og'irligi">Go'sht suvi oqishi / Idish og'irligi</option>
+                    <option value="Muz erishi / Namlik yo'qolishi">Muz erishi / Namlik yo'qolishi</option>
+                    <option value="Sifat yaroqsiz qismi olib tashlandi">Sifat yaroqsiz qismi olib tashlandi</option>
+                    <option value="Sklad noto'g'ri o'lchagan">Sklad noto'g'ri o'lchagan</option>
+                    <option value="Boshqa">Boshqa sabab (qo'lda yozish)</option>
+                  </select>
+
+                  {handshakeForm.discrepancyReason === 'Boshqa' && (
+                    <input
+                      type="text"
+                      placeholder="Sababni batafsil yozing..."
+                      value={handshakeForm.customReason}
+                      onChange={(e) => setHandshakeForm({ ...handshakeForm, customReason: e.target.value })}
+                      className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                    />
                   )}
                 </div>
-              </div>
-            </div>
+              )}
 
-            <div className="px-8 py-5 border-t border-slate-100 dark:border-dark-800 flex justify-end gap-3 bg-slate-50/50 dark:bg-dark-800/50">
-              <button onClick={() => setShowRecipeModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 transition-colors">{l.btnCancel}</button>
-              <button onClick={handleSaveRecipe} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2">
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {l.btnSave}
-              </button>
-            </div>
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  Qo'shimcha Izoh
+                </label>
+                <input
+                  type="text"
+                  placeholder="Izoh yozing..."
+                  value={handshakeForm.notes}
+                  onChange={(e) => setHandshakeForm({ ...handshakeForm, notes: e.target.value })}
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700">
+                <button
+                  type="button"
+                  onClick={() => setShowHandshakeModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingHandshake}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-black bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-500/30 transition-all disabled:opacity-50"
+                >
+                  {savingHandshake && <Loader2 size={16} className="animate-spin" />}
+                  <span>Qabul Qilishni Tasdiqlash</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {showOrderModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-enter">
-          <div className="bg-white dark:bg-dark-900 rounded-[2rem] w-full max-w-md shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 dark:border-dark-800 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <ChefHat className="text-emerald-500" /> {l.prodModalTitle}
-              </h2>
-              <button onClick={() => setShowOrderModal(false)} className="text-slate-400 hover:bg-slate-100 p-1 rounded-full"><X size={20} /></button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.prodSelectRecipe}</label>
-                <select 
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none dark:text-white"
-                  value={orderForm.recipeId}
-                  onChange={e => setOrderForm(prev => ({...prev, recipeId: e.target.value}))}
-                >
-                  <option value="">{l.placeholderSelect}</option>
-                  {recipes.map(r => <option key={r.id} value={r.id}>{r.outputProduct?.name}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.prodPlannedQty}</label>
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-4 text-2xl font-black text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none text-center"
-                    placeholder="0.0" min="0.1" step="0.1"
-                    value={orderForm.plannedOutput}
-                    onChange={e => setOrderForm(prev => ({...prev, plannedOutput: e.target.value}))}
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 uppercase">
-                    {recipes.find(r => r.id.toString() === orderForm.recipeId)?.outputProduct?.unit || ''}
-                  </div>
+      {/* ========================================================================= */}
+      {/* MODAL 2: PRODUCE / COOKING MODAL                                          */}
+      {/* ========================================================================= */}
+      {showProduceModal && selectedRecipe && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          onClick={() => setShowProduceModal(false)}
+        >
+          <div 
+            className="w-full max-w-md bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <ChefHat size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Taom Tayyorlash</h3>
+                  <p className="text-xs text-slate-400">{selectedRecipe.outputProduct?.name}</p>
                 </div>
               </div>
-
-              <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
-                <p className="text-sm text-emerald-800 dark:text-emerald-300 flex items-start gap-3 leading-relaxed">
-                  <Play size={20} className="mt-0.5 shrink-0" />
-                  <span>{l.prodFefoInfo}</span>
-                </p>
-              </div>
+              <button 
+                onClick={() => setShowProduceModal(false)}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            <div className="px-6 py-5 bg-slate-50 dark:bg-dark-800/50 flex justify-end gap-3">
-              <button onClick={() => setShowOrderModal(false)} className="px-5 py-2.5 rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700">{l.btnCancel}</button>
-              <button onClick={handleStartProduction} disabled={saving} className="px-6 py-2.5 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all">
-                {saving ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />} {l.btnStart}
-              </button>
+            <div className="space-y-4 pt-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  Rejalashtirilgan Chiqish Miqdori ({selectedRecipe.outputProduct?.unit || 'porsiya'})
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  placeholder="Masalan: 120"
+                  value={plannedQty}
+                  onChange={(e) => setPlannedQty(e.target.value)}
+                  autoFocus
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-white text-lg font-mono font-bold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300">
+                <p>💡 Ushbu miqdor tasdiqlangach, retseptdagi xomashyolar (FEFO qoidasi bo'yicha) avtomatik ombordan sarflanadi.</p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700">
+                <button
+                  type="button"
+                  onClick={() => setShowProduceModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  onClick={handleProduce}
+                  disabled={producing}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
+                >
+                  {producing && <Loader2 size={16} className="animate-spin" />}
+                  <span>Pishirishni Boshlash</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {showDegustationModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-enter">
-          <div className="bg-white dark:bg-dark-900 rounded-[2rem] w-full max-w-lg shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-dark-700">
-            <div className="px-6 py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <ClipboardCheck /> {l.degModalTitle}
-                </h2>
-                <p className="text-orange-100 text-xs mt-1">{l.degModalSub}</p>
-              </div>
-              <button onClick={() => setShowDegustationModal(false)} className="hover:bg-white/20 p-1.5 rounded-full transition-colors"><X size={20} /></button>
-            </div>
-            
-            <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.degVanna}</label>
-                <input 
-                  type="number" className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none dark:text-white" placeholder="1"
-                  value={degustationForm.vannaNo}
-                  onChange={e => setDegustationForm(prev => ({...prev, vannaNo: e.target.value}))}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">{l.degOrganoleptic}</label>
-                
-                {[
-                  { key: 'appearanceOk', label: l.degAppearance },
-                  { key: 'smellOk', label: l.degSmell },
-                  { key: 'tasteOk', label: l.degTaste },
-                  { key: 'moistureOk', label: l.degMoisture }
-                ].map(item => (
-                  <div key={item.key} className="flex items-center justify-between bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-100 dark:border-dark-700">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.label}</span>
-                    <button 
-                      onClick={() => setDegustationForm(prev => ({...prev, [item.key]: !(prev as any)[item.key]}))}
-                      className={`w-12 h-6 rounded-full transition-colors relative ${
-                        (degustationForm as any)[item.key] ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-dark-600'
-                      }`}
-                    >
-                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                        (degustationForm as any)[item.key] ? 'translate-x-7' : 'translate-x-1'
-                      }`} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.degNotes}</label>
-                <textarea 
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none dark:text-white"
-                  rows={3} placeholder={l.degNotesPlaceholder}
-                  value={degustationForm.notes}
-                  onChange={e => setDegustationForm(prev => ({...prev, notes: e.target.value}))}
-                />
-              </div>
-            </div>
-
-            <div className="px-6 py-4 bg-slate-50 dark:bg-dark-800/50 flex justify-end gap-3 border-t border-slate-100 dark:border-dark-800">
-              <button onClick={() => setShowDegustationModal(false)} className="px-5 py-2.5 rounded-xl font-semibold text-slate-600 dark:text-slate-300">{l.btnClose}</button>
-              <button onClick={handleSaveDegustation} disabled={saving} className="px-6 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 shadow-lg shadow-orange-500/30 flex items-center gap-2">
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <ClipboardCheck size={18} />} {l.btnSaveConclusion}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* ========================================================================= */}
+      {/* MODAL 3: SUPPLY REQUEST                                                   */}
+      {/* ========================================================================= */}
       {showRequestModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-enter">
-          <div className="bg-white dark:bg-dark-900 rounded-[2rem] w-full max-w-md shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 dark:border-dark-800 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <ShoppingCart className="text-blue-500" /> {l.reqModalTitle}
-              </h2>
-              <button onClick={() => setShowRequestModal(false)} className="text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-700 p-1 rounded-full"><X size={20} /></button>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          onClick={() => setShowRequestModal(false)}
+        >
+          <div 
+            className="w-full max-w-md bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <ShoppingCart size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Ta'minotga Zayavka</h3>
+                  <p className="text-xs text-slate-400">Oshxona ehtiyojlari uchun xarid so'rovi</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowRequestModal(false)}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+              >
+                <X size={20} />
+              </button>
             </div>
-            
-            <div className="p-6 space-y-5">
+
+            <form onSubmit={handleSendRequest} className="space-y-4 pt-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.reqProduct}</label>
-                <select 
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  Xomashyo <span className="text-red-400">*</span>
+                </label>
+                <select
                   value={requestForm.productId}
-                  onChange={e => {
-                    const prod = products.find(p => p.id.toString() === e.target.value)
-                    setRequestForm(prev => ({...prev, productId: e.target.value, unit: prod ? prod.unit : 'kg'}))
+                  onChange={(e) => {
+                    const prod = products.find(p => p.id === parseInt(e.target.value))
+                    setRequestForm({
+                      ...requestForm,
+                      productId: e.target.value,
+                      unit: prod?.unit || 'kg'
+                    })
                   }}
+                  required
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
                 >
-                  <option value="">{l.placeholderSelect}</option>
-                  {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <option value="">Tanlang...</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.unit || 'kg'})</option>
+                  ))}
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.reqQty}</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="number" 
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
-                      placeholder="0" min="1"
-                      value={requestForm.quantity}
-                      onChange={e => setRequestForm(prev => ({...prev, quantity: e.target.value}))}
-                    />
-                    <input 
-                      type="text" 
-                      className="w-24 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-3 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-center font-bold"
-                      value={requestForm.unit}
-                      onChange={e => setRequestForm(prev => ({...prev, unit: e.target.value}))}
-                      placeholder={l.reqUnitPlaceholder}
-                    />
-                  </div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    Miqdor <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="Masalan: 50"
+                    value={requestForm.quantity}
+                    onChange={(e) => setRequestForm({ ...requestForm, quantity: e.target.value })}
+                    required
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 font-mono"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.reqDate}</label>
-                  <input 
-                    type="date" 
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white text-sm"
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    Kelish Sanasi <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="date"
                     value={requestForm.expectedDate}
-                    onChange={e => setRequestForm(prev => ({...prev, expectedDate: e.target.value}))}
+                    onChange={(e) => setRequestForm({ ...requestForm, expectedDate: e.target.value })}
+                    required
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.reqTime}</label>
-                <input 
-                  type="text" 
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
-                  placeholder="08:00 - 10:00"
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  Vaqt Oralig'i
+                </label>
+                <input
+                  type="text"
                   value={requestForm.timeRange}
-                  onChange={e => setRequestForm(prev => ({...prev, timeRange: e.target.value}))}
+                  onChange={(e) => setRequestForm({ ...requestForm, timeRange: e.target.value })}
+                  placeholder="08:00 - 10:00"
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
-            </div>
 
-            <div className="px-6 py-5 bg-slate-50 dark:bg-dark-800/50 flex justify-end gap-3 border-t border-slate-100 dark:border-dark-800">
-              <button onClick={() => setShowRequestModal(false)} className="px-5 py-2.5 rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700">{l.btnCancel}</button>
-              <button onClick={handleSendRequest} disabled={saving} className="px-6 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 flex items-center gap-2 transition-all">
-                {saving ? <Loader2 size={18} className="animate-spin" /> : <ShoppingCart size={18} fill="currentColor" />} {l.btnSendRequest}
-              </button>
-            </div>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700">
+                <button
+                  type="button"
+                  onClick={() => setShowRequestModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingRequest}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
+                >
+                  {savingRequest && <Loader2 size={16} className="animate-spin" />}
+                  <span>Zayavka Yuborish</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

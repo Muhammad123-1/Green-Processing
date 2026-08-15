@@ -18,9 +18,22 @@ export async function login(prevState: any, formData: FormData) {
 
   // In a real app, you'd use bcrypt for passwords. 
   // We check plain text or simply match for now in this offline app.
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { username }
   })
+
+  // Auto-provision inspector if it doesn't exist yet
+  if (!user && username.toLowerCase() === 'inspector' && password === '123') {
+    user = await prisma.user.create({
+      data: {
+        name: 'Sex Nazoratchisi',
+        username: 'inspector',
+        password: '123',
+        role: 'INSPECTOR',
+        isActive: true,
+      }
+    })
+  }
 
   if (!user || user.password !== password) {
     return { error: "Username yoki parol noto'g'ri" }
@@ -46,10 +59,10 @@ export async function login(prevState: any, formData: FormData) {
   switch (user.role) {
     case 'DIRECTOR': redirectUrl = '/director'; break;
     case 'QUALITY_CONTROL': redirectUrl = '/dashboard'; break;
+    case 'INSPECTOR': redirectUrl = '/inspector'; break;
     case 'TECHNOLOGY': redirectUrl = '/technology'; break;
     case 'PRODUCTION': redirectUrl = '/production'; break;
     case 'KITCHEN': redirectUrl = '/kitchen'; break;
-    case 'LOGISTICS': redirectUrl = '/logistics'; break;
     case 'LOGISTICS': redirectUrl = '/logistics'; break;
     case 'WAREHOUSE': redirectUrl = '/warehouse'; break;
     case 'ACCOUNTING': redirectUrl = '/accounting'; break;

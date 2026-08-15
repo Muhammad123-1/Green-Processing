@@ -5,9 +5,11 @@ export async function GET() {
   try {
     const roles = [
       { username: 'director', name: 'Direktor', role: 'DIRECTOR' },
-      { username: 'quality', name: 'Sifat Nazorati', role: 'QUALITY_CONTROL' },
+      { username: 'quality', name: 'Bosh Sifat Nazorati', role: 'QUALITY_CONTROL' },
+      { username: 'inspector', name: 'Sex Nazoratchisi', role: 'INSPECTOR' },
       { username: 'tech', name: 'Texnolog', role: 'TECHNOLOGY' },
       { username: 'production', name: 'Ishlab Chiqarish', role: 'PRODUCTION' },
+      { username: 'kitchen', name: 'Oshxona', role: 'KITCHEN' },
       { username: 'logistics', name: 'Logistika', role: 'LOGISTICS' },
       { username: 'warehouse', name: 'Sklad', role: 'WAREHOUSE' },
       { username: 'accounting', name: 'Buxgalteriya', role: 'ACCOUNTING' },
