@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       salesOrdersCount,
       revenueResult
     ] = await Promise.all([
-      prisma.employee.count({ where: { isActive: true } }),
+      prisma.employee.count({ where: { status: 'ACTIVE' } }),
       prisma.inspection.count(),
       prisma.salesOrder.count(),
       prisma.salesOrder.aggregate({
