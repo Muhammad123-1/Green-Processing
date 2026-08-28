@@ -66,6 +66,7 @@ interface FormData {
   inspector: string
   vehicleNumber: string
   invoiceNumber: string
+  rating: string
   notes: string
   sheetName: string
   customFields: string
@@ -90,6 +91,7 @@ const defaultForm: FormData = {
   inspector: '',
   vehicleNumber: '',
   invoiceNumber: '',
+  rating: '',
   notes: '',
   sheetName: '',
   customFields: '{}',
@@ -235,7 +237,6 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
     if (!form.inspectionDate) return 'Sana kiritilmagan'
     if (!form.supplierId) return 'Ta\'minotchi tanlanmagan'
     if (!form.productId) return 'Mahsulot tanlanmagan'
-    if (!form.batchNumber.trim()) return 'Partiya raqami kiritilmagan'
     if (!form.quantity || parseFloat(form.quantity) <= 0) return 'Miqdor noto\'g\'ri'
     return null
   }
@@ -470,7 +471,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           {/* Batch Number */}
           <div>
             <label className="label">
-              <span className="flex items-center gap-1.5"><Hash size={13} />Partiya raqami *</span>
+              <span className="flex items-center gap-1.5"><Hash size={13} />Partiya raqami</span>
             </label>
             <input
               type="text"
@@ -724,6 +725,36 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
                 >
                   {option.icon}
                   <span className="hidden sm:block">{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quality Rating */}
+          <div>
+            <label className="label">Mahsulot sifati (Baholash)</label>
+            <div className="flex gap-3">
+              {[
+                { value: 3, label: 'Yaxshi', color: 'emerald' },
+                { value: 2, label: "O'rtacha", color: 'amber' },
+                { value: 1, label: 'Yomon', color: 'red' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleChange('rating', option.value.toString())}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium
+                             transition-all duration-200
+                             ${parseInt(form.rating || '0') === option.value
+                               ? option.color === 'emerald'
+                                 ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                                 : option.color === 'red'
+                                 ? 'bg-red-500/20 border-red-500/50 text-red-300'
+                                 : 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                               : 'bg-dark-900 border-dark-600 text-slate-400 hover:border-dark-500'
+                             }`}
+                >
+                  {option.label}
                 </button>
               ))}
             </div>

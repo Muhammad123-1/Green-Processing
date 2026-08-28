@@ -40,6 +40,23 @@ export async function POST(request: NextRequest) {
         product: true,
       }
     })
+
+    // Avtomatik ravishda chatga xabar yuborish (Sklad yoki Ta'minotchi zayavkasi)
+    const zayavkaText = `🟢 YANGI ZAYAVKA / BUYURTMA:
+Mahsulot: ${order.product.name}
+Miqdor: ${order.quantity} ${order.unit}
+Kelish vaqti: ${new Date(order.expectedDate).toLocaleDateString()} (${order.timeRange || ''})
+Ta'minotchi: ${order.supplierName || 'Hali tanlanmagan'}
+Izoh: ${order.notes || 'Yo\'q'}`
+
+    await prisma.chatMessage.create({
+      data: {
+        sender: 'TIZIM',
+        text: zayavkaText,
+        groupId: 'general'
+      }
+    })
+
     return NextResponse.json(order, { status: 201 })
   } catch (error) {
     console.error('Create order error:', error)

@@ -6,6 +6,7 @@ export type Language = 'uz' | 'ru' | 'en'
 
 const translations = {
   uz: {
+    sales: 'Sotuv',
     dashboard: 'Bosh sahifa',
     inspections: 'Akt tarixi',
     newInspection: 'Yangi akt',
@@ -59,8 +60,13 @@ const translations = {
     arrivalsSub: 'Qabul qilingan mahsulotlar ro\'yxati (Приход)',
     suppliersSub: 'Ta\'minotchi kompaniyalar ro\'yxati',
     ordersSub: 'Snabjenets va kutilayotgan xaridlar',
+    monitoring: 'Mijoz Buyurtmalari (Zayavka)',
+    monitoringSub: 'Mijozlardan kelgan kunlik zayavkalar svodkasi',
     productionSub: 'Zavod ishlab chiqarish jarayoni',
+    shopReport: 'Sex Ishlab Chiqarish Hisoboti',
+    shopReportSub: 'Kirim, chiqim va kunlik sex hisobotlari jurnali',
     shopQC: 'Nazoratchi Jurnallari (Sex)',
+    dailyChecklist: 'Yagona Kunlik Check-list',
     shopQCSub: 'FSSC 22000, KKT-1 Dez-r, Kalibrovka, Degustatsiya va barcha operatsion jurnallar',
     kitchenSub: 'Xodimlar uchun ovqat pishirishga keladigan mahsulotlar',
     productsSub: 'Mahsulot katalogi va parametrlari',
@@ -108,6 +114,7 @@ const translations = {
     maxTemp: 'Max harorat (°C)'
   },
   ru: {
+    sales: 'Продажи',
     dashboard: 'Главная',
     inspections: 'История актов',
     newInspection: 'Новый акт',
@@ -157,8 +164,13 @@ const translations = {
     quickSuppDesc: 'Данные поставщиков',
     dashboardSub: 'Обзор и статистика',
     ordersSub: 'Ожидаемые закупки (Снабженец)',
+    monitoring: 'Заказы клиентов (Сводка)',
+    monitoringSub: 'Сводный отчет по заказам клиентов и экспорту',
     productionSub: 'Процесс производства и рецептуры',
+    shopReport: 'Производственный отчет ЦЕХ',
+    shopReportSub: 'Журнал прихода, расхода и ежедневных отчетов',
     shopQC: 'Журналы Контролера (Цех)',
+    dailyChecklist: 'Ежедневный чек-лист',
     shopQCSub: 'Операционные чек-листы: FSSC 22000, ККТ-1 Дезраствор, Калибровка, Дегустация',
     kitchenSub: 'Продукты для питания персонала',
     inspectionsSub: 'Все акты входящего сырья',
@@ -213,6 +225,7 @@ const translations = {
     maxTemp: 'Макс температура (°C)'
   },
   en: {
+    sales: 'Sales',
     dashboard: 'Dashboard',
     inspections: 'Act History',
     newInspection: 'New Act',
@@ -260,10 +273,15 @@ const translations = {
     quickProdDesc: 'Add/edit product',
     quickSupp: 'Suppliers',
     quickSuppDesc: 'Supplier information',
+    monitoring: 'Client Orders (Monitoring)',
+    monitoringSub: 'Pivot table for client orders and export',
     dashboardSub: 'Overview and statistics',
     ordersSub: 'Expected purchases (Supply)',
     productionSub: 'Factory production process and recipes',
+    shopReport: 'Shop Production Report',
+    shopReportSub: 'Daily incoming, outgoing, and shop report logs',
     shopQC: 'Line Inspector Journals',
+    dailyChecklist: 'Daily QC Checklist',
     shopQCSub: 'FSSC 22000, CCP-1 Disinfection, Calibration, Degustation & Shift Logs',
     kitchenSub: 'Food products for staff meals',
     inspectionsSub: 'All incoming raw material acts',

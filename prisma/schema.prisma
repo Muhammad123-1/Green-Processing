@@ -67,6 +67,7 @@ model User {
   calibrationLogs  CalibrationLog[]
   fsscQcLogs       FsscQcLog[]
   receivingLogs    ReceivingLog[]
+  dailyQcChecklists DailyQCChecklist[]
 }
 
 model MedicalRecord {
@@ -330,6 +331,8 @@ model Product {
   recipesWhereInput  RecipeIngredient[] @relation("RecipeInputs")
   transfers          StockTransfer[]
   defects          DefectLog[]
+  salesOrderItems  SalesOrderItem[]
+  purchaseOrderItems PurchaseOrderItem[]
 }
 
 model Supplier {
@@ -350,6 +353,7 @@ model Supplier {
   inspections    Inspection[]
   orders         Order[]
   defects        DefectLog[]
+  purchaseOrders PurchaseOrder[]
 }
 
 model Inspection {
@@ -712,3 +716,252 @@ model ReceivingLog {
   @@index([date])
 }
 
+// -----------------------------------------------------------------------------
+// FAZA 4: SOTUV VA MIJOZLAR (SALES & CRM)
+// -----------------------------------------------------------------------------
+
+model Customer {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  companyName String?
+  inn         String?
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, LEAD
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders      SalesOrder[]
+  invoices    Invoice[]
+  activities  CrmActivity[]
+}
+
+model SalesOrder {
+  id             Int      @id @default(autoincrement())
+  orderNumber    String   @unique
+  customerId     Int
+  status         String   @default("DRAFT") // DRAFT, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+  totalAmount    Float    @default(0)
+  currency       String   @default("UZS")
+  orderDate      DateTime @default(now())
+  deliveryDate   DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customer       Customer          @relation(fields: [customerId], references: [id])
+  items          SalesOrderItem[]
+  invoices       Invoice[]
+}
+
+model SalesOrderItem {
+  id           Int      @id @default(autoincrement())
+  salesOrderId Int
+  productId    Int
+  quantity     Float
+  unitPrice    Float
+  totalPrice   Float
+  discount     Float?   @default(0)
+
+  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  product      Product    @relation(fields: [productId], references: [id])
+}
+
+model CrmActivity {
+  id          Int      @id @default(autoincrement())
+  customerId  Int
+  type        String   // CALL, MEETING, EMAIL, NOTE
+  description String
+  date        DateTime @default(now())
+  userId      Int?
+  createdAt   DateTime @default(now())
+
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// FAZA 5: XARID (PROCUREMENT) - Purchase Orders
+// -----------------------------------------------------------------------------
+
+model PurchaseOrder {
+  id             Int      @id @default(autoincrement())
+  poNumber       String   @unique
+  supplierId     Int
+  status         String   @default("DRAFT") // DRAFT, ORDERED, RECEIVED, CANCELLED
+  totalAmount    Float    @default(0)
+  currency       String   @default("UZS")
+  orderDate      DateTime @default(now())
+  expectedDate   DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  supplier       Supplier            @relation(fields: [supplierId], references: [id])
+  items          PurchaseOrderItem[]
+  invoices       Invoice[]
+}
+
+model PurchaseOrderItem {
+  id              Int      @id @default(autoincrement())
+  purchaseOrderId Int
+  productId       Int
+  quantity        Float
+  unitPrice       Float
+  totalPrice      Float
+
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// FAZA 6: MOLIYA VA BUXGALTERIYA (FINANCE)
+// -----------------------------------------------------------------------------
+
+model Invoice {
+  id              Int      @id @default(autoincrement())
+  invoiceNumber   String   @unique
+  type            String   // SALES_INVOICE, PURCHASE_INVOICE
+  status          String   @default("UNPAID") // UNPAID, PARTIAL, PAID, CANCELLED
+  totalAmount     Float
+  paidAmount      Float    @default(0)
+  dueDate         DateTime?
+  issuedDate      DateTime @default(now())
+  
+  salesOrderId    Int?
+  purchaseOrderId Int?
+  customerId      Int?
+
+  salesOrder      SalesOrder?    @relation(fields: [salesOrderId], references: [id])
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  customer        Customer?      @relation(fields: [customerId], references: [id])
+  transactions    Transaction[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model BankAccount {
+  id            Int      @id @default(autoincrement())
+  name          String   // e.g. Asosiy Hisob, Kassa
+  accountNumber String?
+  currency      String   @default("UZS")
+  balance       Float    @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  type            String   // INCOME, EXPENSE, TRANSFER
+  amount          Float
+  date            DateTime @default(now())
+  description     String?
+  category        String?  // e.g. SALARY, RAW_MATERIALS, UTILITIES
+  
+  bankAccountId   Int
+  invoiceId       Int?
+  userId          Int?     // Who recorded it
+
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
+  invoice         Invoice?    @relation(fields: [invoiceId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// FAZA 7: XODIMLAR (HR)
+// -----------------------------------------------------------------------------
+
+model Employee {
+  id             Int      @id @default(autoincrement())
+  userId         Int?     @unique // If employee has system login
+  firstName      String
+  lastName       String
+  position       String
+  departmentId   Int?
+  hireDate       DateTime
+  salaryBase     Float    @default(0)
+  status         String   @default("ACTIVE") // ACTIVE, ON_LEAVE, TERMINATED
+  phone          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  attendances    Attendance[]
+  payrolls       Payroll[]
+}
+
+model Attendance {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  date        DateTime @default(now())
+  status      String   // PRESENT, ABSENT, LATE, SICK_LEAVE, VACATION
+  checkIn     DateTime?
+  checkOut    DateTime?
+  notes       String?
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Payroll {
+  id            Int      @id @default(autoincrement())
+  employeeId    Int
+  periodMonth   Int
+  periodYear    Int
+  baseSalary    Float
+  bonuses       Float    @default(0)
+  deductions    Float    @default(0)
+  netPay        Float
+  status        String   @default("DRAFT") // DRAFT, APPROVED, PAID
+  paymentDate   DateTime?
+
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// 8. YAGONA KUNLIK CHECK-LIST (Daily QC Checklist - Smena Yakuni)
+// -----------------------------------------------------------------------------
+model DailyQCChecklist {
+  id             Int      @id @default(autoincrement())
+  date           String   // YYYY-MM-DD
+  shift          String
+  lineName       String?
+  batchNumber    String?
+  rejectedKg     Float?
+  totalOutputBox Float?
+  supervisor     String?
+  inspector      String?
+  inspectorId    Int?
+  
+  formData       String   @db.Text // JSON string of the entire checklist data
+  status         String   @default("COMPLETED")
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User?    @relation(fields: [inspectorId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// 9. TAYYOR MAHSULOTNI JO'NATISH JURNALI (Shipping Log)
+// -----------------------------------------------------------------------------
+model ShippingLog {
+  id               Int      @id @default(autoincrement())
+  date             String   // YYYY-MM-DD
+  time             String   // HH:mm
+  productName      String
+  weight           Float
+  tempReceived     String?
+  tempStorage      String?
+  companyAndDriver String?
+  carCondition     String?
+  tempLoaded       String?
+  timeLoaded       String?
+  receiverName     String?
+  senderName       String?
+  correctiveAction String?
+  createdAt        DateTime @default(now())
+}

@@ -175,10 +175,17 @@ export default function InspectionsContent() {
     }
   }, [defectFilterLoc])
 
+  const [sqsPeriod, setSqsPeriod] = useState('all')
+  const [sqsProductId, setSqsProductId] = useState('')
+
   const fetchSQS = useCallback(async () => {
     setSqsLoading(true)
     try {
-      const res = await fetch('/api/suppliers/quality-score')
+      const params = new URLSearchParams()
+      if (sqsPeriod) params.append('period', sqsPeriod)
+      if (sqsProductId) params.append('productId', sqsProductId)
+
+      const res = await fetch(`/api/suppliers/quality-score?${params.toString()}`)
       if (res.ok) {
         const resData = await res.json()
         setSupplierScores(resData.data || [])
@@ -189,7 +196,7 @@ export default function InspectionsContent() {
     } finally {
       setSqsLoading(false)
     }
-  }, [])
+  }, [sqsPeriod, sqsProductId])
 
   useEffect(() => {
     fetchInspections()
@@ -703,6 +710,37 @@ export default function InspectionsContent() {
       {/* TAB 3: SUPPLIER QUALITY SCORE (SQS) */}
       {activeTab === 'sqs' && (
         <div className="space-y-6">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 bg-dark-900 border border-dark-750 p-4 rounded-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400 uppercase">Davr:</span>
+              <select
+                className="bg-dark-800 border border-dark-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                value={sqsPeriod}
+                onChange={(e) => setSqsPeriod(e.target.value)}
+              >
+                <option value="all">Barchasi (Umumiy)</option>
+                <option value="1week">Oxirgi 1 hafta</option>
+                <option value="1month">Oxirgi 1 oy</option>
+                <option value="1year">Oxirgi 1 yil</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400 uppercase">Mahsulot:</span>
+              <select
+                className="bg-dark-800 border border-dark-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                value={sqsProductId}
+                onChange={(e) => setSqsProductId(e.target.value)}
+              >
+                <option value="">Barcha mahsulotlar</option>
+                {productsList.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           {/* SQS Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="bg-dark-900 border border-dark-700 p-5 rounded-2xl">
@@ -733,25 +771,35 @@ export default function InspectionsContent() {
                   <thead>
                     <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">Yetkazib Beruvchi</th>
-                      <th className="p-4">Yetkazmalar Soni</th>
+                      <th className="p-4">Mahsulotlar</th>
                       <th className="p-4 text-center">Jami Kelgan (kg)</th>
                       <th className="p-4 text-center">Qabul Qilingan (kg)</th>
-                      <th className="p-4 text-center">Brak / Qaytarilgan (kg)</th>
+                      <th className="p-4 text-center">O'rtacha Baho</th>
                       <th className="p-4 text-center">Sifat Indeksi (SQS)</th>
                       <th className="p-4">Ishonchlilik Darajasi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
-                    {supplierScores.map((s) => (
+                    {supplierScores.map((s: any) => (
                       <tr key={s.supplierId} className="hover:bg-dark-800/30 transition-colors">
                         <td className="p-4">
                           <div className="font-bold text-white">{s.name}</div>
                           {s.phone && <div className="text-xs text-slate-500">{s.phone}</div>}
                         </td>
-                        <td className="p-4 font-mono text-slate-300 font-bold">{s.totalDeliveries} ta</td>
+                        <td className="p-4 text-slate-300 text-xs max-w-xs truncate" title={s.products}>
+                          {s.products || '—'}
+                        </td>
                         <td className="p-4 text-center font-mono font-bold text-white">{s.totalDeliveredKg.toLocaleString()} kg</td>
                         <td className="p-4 text-center font-mono font-bold text-emerald-400">{s.totalAcceptedKg.toLocaleString()} kg</td>
-                        <td className="p-4 text-center font-mono font-bold text-rose-400">{s.totalRejectedKg.toLocaleString()} kg</td>
+                        <td className="p-4 text-center">
+                          {s.avgRating ? (
+                            <div className="inline-flex items-center gap-1 font-mono font-black text-amber-400">
+                              {s.avgRating.toFixed(1)} / 3.0
+                            </div>
+                          ) : (
+                            <span className="text-slate-500">—</span>
+                          )}
+                        </td>
                         <td className="p-4 text-center">
                           <div className="inline-flex items-center gap-1 font-mono font-black text-base text-white">
                             <span>{s.qualityScore}%</span>

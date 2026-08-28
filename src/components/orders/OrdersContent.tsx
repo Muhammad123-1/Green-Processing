@@ -763,13 +763,13 @@ export default function OrdersContent() {
                     {filteredOrders.map((order) => (
                       <tr key={order.id} className="hover:bg-dark-800/50 transition-colors">
                         <td className="py-3.5 px-4 font-mono text-xs">
-                          <div className="font-bold text-blue-400">#{order.id}</div>
-                          <div className="text-slate-400 flex items-center gap-1 mt-0.5">
-                            <Calendar size={12} />
-                            {order.expectedDateStr}
+                          <div className="font-bold text-blue-400 mb-1">#{order.id}</div>
+                          <div className="text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded inline-block mb-1">
+                            Zakaz: {new Date(order.createdAt).toLocaleString('uz-UZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                           </div>
-                          <div className="text-slate-500 text-[10px]">
-                            {order.timeRange}
+                          <div className="text-slate-400 flex items-center gap-1 mt-0.5 font-bold">
+                            <span className="text-[10px] bg-dark-700 px-1 py-0.5 rounded">Kelish:</span>
+                            {order.expectedDateStr} {order.timeRange}
                           </div>
                         </td>
 

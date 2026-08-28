@@ -3,29 +3,51 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url)
+    const period = searchParams.get('period') || 'all'
+    const productId = searchParams.get('productId') || ''
+
+    let dateFilter: any = {}
+    if (period !== 'all') {
+      const now = new Date()
+      if (period === '1week') {
+        dateFilter = { gte: new Date(now.setDate(now.getDate() - 7)) }
+      } else if (period === '1month') {
+        dateFilter = { gte: new Date(now.setMonth(now.getMonth() - 1)) }
+      } else if (period === '1year') {
+        dateFilter = { gte: new Date(now.setFullYear(now.getFullYear() - 1)) }
+      }
+    }
+
+    const inspectionWhere: any = {}
+    if (Object.keys(dateFilter).length > 0) {
+      inspectionWhere.inspectionDate = dateFilter
+    }
+    if (productId) {
+      inspectionWhere.productId = parseInt(productId)
+    }
+
     // Fetch all active suppliers with inspections and defect logs
     const suppliers = await prisma.supplier.findMany({
       where: { isActive: true },
       include: {
         inspections: {
+          where: inspectionWhere,
           select: {
             id: true,
             quantity: true,
             status: true,
+            rating: true,
             conclusion: true,
-            inspectionDate: true
-          }
-        },
-        orders: {
-          select: {
-            id: true,
-            deliveredQuantity: true,
-            acceptedQuantity: true,
-            rejectedQuantity: true,
-            status: true
+            inspectionDate: true,
+            product: { select: { id: true, name: true } }
           }
         },
         defects: {
+          where: {
+            ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
+            ...(productId ? { productId: parseInt(productId) } : {})
+          },
           select: {
             id: true,
             quantity: true,
@@ -42,20 +64,36 @@ export async function GET(req: NextRequest) {
       let totalDeliveredKg = 0
       let totalAcceptedKg = 0
       let totalRejectedKg = 0
+      let totalRating = 0
+      let ratedDeliveries = 0
+
+      // Map to hold what products they brought
+      const productsMap: Record<string, number> = {}
 
       sup.inspections.forEach((ins: any) => {
         const qty = ins.quantity || 0
         totalDeliveredKg += qty
+        
+        if (ins.product?.name) {
+          productsMap[ins.product.name] = (productsMap[ins.product.name] || 0) + qty
+        }
+
+        if (ins.rating) {
+          totalRating += ins.rating
+          ratedDeliveries++
+        }
+
         if (ins.status === 'ACCEPTED') {
           totalAcceptedKg += qty
         } else if (ins.status === 'REJECTED') {
           totalRejectedKg += qty
         } else if (ins.status === 'CONDITIONAL') {
-          // 85% accepted, 15% loss
           totalAcceptedKg += qty * 0.85
           totalRejectedKg += qty * 0.15
         }
       })
+
+      const avgRating = ratedDeliveries > 0 ? totalRating / ratedDeliveries : null;
 
       // Add defect logs kg
       const defectKg = sup.defects?.reduce((sum: number, d: any) => sum + (d.quantity || 0), 0) || 0
@@ -81,6 +119,8 @@ export async function GET(req: NextRequest) {
         totalRejectedKg: Math.round(totalRejectedKg),
         defectCount: sup.defects?.length || 0,
         qualityScore: parseFloat(qualityScore.toFixed(1)),
+        avgRating,
+        products: Object.keys(productsMap).join(', '),
         grade
       }
     })

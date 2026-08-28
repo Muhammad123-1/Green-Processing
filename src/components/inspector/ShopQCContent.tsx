@@ -361,14 +361,13 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
     time: new Date().toTimeString().slice(0, 5),
     cleanZoneTemp: '11.5',
     dirtyZoneTemp: '18.0',
-    pfIcebergBatch: 'PF-101',
-    pfColeCarrotBatch: 'PF-102',
-    pfColeCabbageBatch: 'PF-103',
-    gpIcebergTemp: '3.5',
-    gpColeTemp: '4.0',
     correctiveAction: '-',
     responsible: userName || 'Sex Nazoratchisi'
   })
+
+  const [procDynamicProducts, setProcDynamicProducts] = useState([
+    { productName: 'Айсберг', pfBatch: 'PF-101', gpTemp: '3.5' }
+  ])
 
   const [rcvForm, setRcvForm] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -539,10 +538,14 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
     e.preventDefault()
     setSaving(true)
     try {
+      const finalForm = {
+        ...procForm,
+        notes: JSON.stringify(procDynamicProducts)
+      }
       const res = await fetch('/api/inspector/process-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(procForm)
+        body: JSON.stringify(finalForm)
       })
       if (res.ok) {
         toast.success(lang === 'ru' ? 'Запись температур цеха сохранена' : lang === 'en' ? 'Shop floor temp log saved' : 'Sex harorati qaydi saqlandi!')
@@ -696,24 +699,18 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
               }`}>
                 {isInspector
                   ? (lang === 'ru' ? '👷 Контролер Линии (Цех)' : '👷 Liniya Nazoratchisi (Sex)')
-                  : (lang === 'ru' ? '🛡️ Специалист ОКК / QA Lead' : '🛡️ Bosh Sifat Nazoratchisi (QA Lead)')}
-              </span>
-              <span className="px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-900 dark:bg-purple-500/20 dark:text-purple-300 text-[10px] font-extrabold uppercase tracking-wider border border-purple-300 dark:border-purple-500/30">
-                {d.fsscBadge}
-              </span>
-              <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 dark:bg-dark-800 dark:text-slate-300 text-[10px] font-extrabold uppercase tracking-wider border border-slate-300 dark:border-dark-700">
-                {d.all7Sheets}
+                  : (lang === 'ru' ? '🛡️ Специалист ОКК' : '🛡️ Sifat Nazoratchisi')}
               </span>
             </div>
             <h1 className="text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {isInspector
                 ? (lang === 'ru' ? 'Операционные Чек-листы Контролера Линии' : 'Liniya Nazoratchisi Operatsion Jurnallari')
-                : (lang === 'ru' ? 'Центр Контроля Качества & Аудит Журналов (QA Lead)' : 'Bosh Sifat Nazoratchisi & Audit Hubi (QA Lead)')}
+                : (lang === 'ru' ? 'Центр Контроля Качества & Аудит Журналов' : 'Sifat Nazorati Markazi')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-snug line-clamp-1 font-semibold">
               {isInspector
                 ? (lang === 'ru' ? 'Ввод текущих измерений смены под контролем Главного специалиста ОКК' : 'Bosh Sifat Nazoratchisi nazorati ostida joriy smena o\'lchovlarini kiritish')
-                : (lang === 'ru' ? 'Аудит и утверждение журналов контролеров линии (Камбарова А. М., Норкулова А.)' : 'Liniya nazoratchilari jurnallarini audit qilish va yakuniy tasdiqlash (Qambarova A. M., Norqulova A.)')}
+                : (lang === 'ru' ? 'Аудит и утверждение журналов контролеров линии' : 'Liniya nazoratchilari jurnallarini audit qilish va tasdiqlash')}
             </p>
           </div>
         </div>
@@ -888,6 +885,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.label}</th>
                         <th className="p-3.5 text-center">{d.status}</th>
                         <th className="p-3.5">{d.responsible}</th>
+                        <th className="p-3.5 text-center text-[10px]">RASM</th>
                         <th className="p-3.5 text-center">{d.actions}</th>
                       </tr>
                     </thead>
@@ -949,6 +947,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                             </td>
                             <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
                             <td className="p-3.5 text-center">
+                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
+                                📷
+                              </div>
+                            </td>
+                            <td className="p-3.5 text-center">
                               <button onClick={() => handleDeleteRecord('fssc-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
                                 <Trash2 size={14} />
                               </button>
@@ -974,6 +977,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.status}</th>
                         <th className="p-3.5">{d.corrAction}</th>
                         <th className="p-3.5">{d.responsible}</th>
+                        <th className="p-3.5 text-center text-[10px]">RASM</th>
                         <th className="p-3.5 text-center">{d.actions}</th>
                       </tr>
                     </thead>
@@ -1023,6 +1027,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                             <td className="p-3.5 text-xs text-slate-600 dark:text-slate-400">{l.correctiveAction || '—'}</td>
                             <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
                             <td className="p-3.5 text-center">
+                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
+                                📷
+                              </div>
+                            </td>
+                            <td className="p-3.5 text-center">
                               <button onClick={() => handleDeleteRecord('disinfection-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
                                 <Trash2 size={14} />
                               </button>
@@ -1048,6 +1057,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.wastePct}</th>
                         <th className="p-3.5 text-center">{d.status}</th>
                         <th className="p-3.5">{d.responsible}</th>
+                        <th className="p-3.5 text-center text-[10px]">RASM</th>
                         <th className="p-3.5 text-center">{d.actions}</th>
                       </tr>
                     </thead>
@@ -1095,6 +1105,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                             </td>
                             <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
                             <td className="p-3.5 text-center">
+                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
+                                📷
+                              </div>
+                            </td>
+                            <td className="p-3.5 text-center">
                               <button onClick={() => handleDeleteRecord('calibration-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
                                 <Trash2 size={14} />
                               </button>
@@ -1122,6 +1137,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.score}</th>
                         <th className="p-3.5">{d.conclusion}</th>
                         <th className="p-3.5">{d.responsible}</th>
+                        <th className="p-3.5 text-center text-[10px]">RASM</th>
                         <th className="p-3.5 text-center">{d.actions}</th>
                       </tr>
                     </thead>
@@ -1159,6 +1175,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                             <td className="p-3.5 text-xs text-emerald-700 dark:text-emerald-300 font-bold">{l.conclusion}</td>
                             <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
                             <td className="p-3.5 text-center">
+                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
+                                📷
+                              </div>
+                            </td>
+                            <td className="p-3.5 text-center">
                               <button onClick={() => handleDeleteRecord('degustation-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
                                 <Trash2 size={14} />
                               </button>
@@ -1183,6 +1204,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.gpTemps}</th>
                         <th className="p-3.5">{d.responsible}</th>
                         <th className="p-3.5 text-center">{d.status}</th>
+                        <th className="p-3.5 text-center text-[10px]">RASM</th>
                         <th className="p-3.5 text-center">{d.actions}</th>
                       </tr>
                     </thead>
@@ -1214,21 +1236,58 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                               {l.dirtyZoneTemp !== null ? `${l.dirtyZoneTemp}°C` : '—'}
                             </td>
                             <td className="p-3.5 text-xs font-mono text-slate-800 dark:text-slate-300">
-                              {l.pfIcebergBatch && <div>Айсберг: #{l.pfIcebergBatch}</div>}
-                              {l.pfColeCarrotBatch && <div>Морковь: #{l.pfColeCarrotBatch}</div>}
-                              {l.pfColeCabbageBatch && <div>Капуста: #{l.pfColeCabbageBatch}</div>}
-                              {!l.pfIcebergBatch && !l.pfColeCarrotBatch && !l.pfColeCabbageBatch && <span className="text-slate-400">—</span>}
+                              {(() => {
+                                try {
+                                  if (l.notes) {
+                                    const parsed = JSON.parse(l.notes);
+                                    if (Array.isArray(parsed) && parsed.length > 0) {
+                                      return parsed.map((item: any, i: number) => (
+                                        <div key={i}>{item.productName}: #{item.pfBatch}</div>
+                                      ));
+                                    }
+                                  }
+                                } catch (e) {}
+                                return (
+                                  <>
+                                    {l.pfIcebergBatch && <div>Айсберг: #{l.pfIcebergBatch}</div>}
+                                    {l.pfColeCarrotBatch && <div>Морковь: #{l.pfColeCarrotBatch}</div>}
+                                    {l.pfColeCabbageBatch && <div>Капуста: #{l.pfColeCabbageBatch}</div>}
+                                    {!l.pfIcebergBatch && !l.pfColeCarrotBatch && !l.pfColeCabbageBatch && !l.notes && <span className="text-slate-400">—</span>}
+                                  </>
+                                )
+                              })()}
                             </td>
                             <td className="p-3.5 text-center text-xs font-mono">
-                              {l.gpIcebergTemp && <div className="text-emerald-600 dark:text-emerald-400 font-bold">Айсберг: {l.gpIcebergTemp}°C</div>}
-                              {l.gpColeTemp && <div className="text-emerald-600 dark:text-emerald-400 font-bold">Коул: {l.gpColeTemp}°C</div>}
-                              {!l.gpIcebergTemp && !l.gpColeTemp && <span className="text-slate-400">—</span>}
+                              {(() => {
+                                try {
+                                  if (l.notes) {
+                                    const parsed = JSON.parse(l.notes);
+                                    if (Array.isArray(parsed) && parsed.length > 0) {
+                                      return parsed.map((item: any, i: number) => (
+                                        <div key={i} className="text-emerald-600 dark:text-emerald-400 font-bold">{item.productName}: {item.gpTemp}°C</div>
+                                      ));
+                                    }
+                                  }
+                                } catch (e) {}
+                                return (
+                                  <>
+                                    {l.gpIcebergTemp && <div className="text-emerald-600 dark:text-emerald-400 font-bold">Айсберг: {l.gpIcebergTemp}°C</div>}
+                                    {l.gpColeTemp && <div className="text-emerald-600 dark:text-emerald-400 font-bold">Коул: {l.gpColeTemp}°C</div>}
+                                    {!l.gpIcebergTemp && !l.gpColeTemp && !l.notes && <span className="text-slate-400">—</span>}
+                                  </>
+                                )
+                              })()}
                             </td>
                             <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible || 'QC'}</td>
                             <td className="p-3.5 text-center">
                               <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
                                 {l.status || 'APPROVED'}
                               </span>
+                            </td>
+                            <td className="p-3.5 text-center">
+                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
+                                📷
+                              </div>
                             </td>
                             <td className="p-3.5 text-center">
                               <button onClick={() => handleDeleteRecord('process-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
@@ -1258,6 +1317,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.organoleptic}</th>
                         <th className="p-3.5 text-center">{d.status}</th>
                         <th className="p-3.5">{d.responsible}</th>
+                        <th className="p-3.5 text-center text-[10px]">RASM</th>
                         <th className="p-3.5 text-center">{d.actions}</th>
                       </tr>
                     </thead>
@@ -1303,6 +1363,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                               </span>
                             </td>
                             <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
+                            <td className="p-3.5 text-center">
+                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
+                                📷
+                              </div>
+                            </td>
                             <td className="p-3.5 text-center">
                               <button onClick={() => handleDeleteRecord('receiving-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
                                 <Trash2 size={14} />
@@ -1384,6 +1449,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 </label>
               </div>
 
+              <div className="col-span-full mb-3">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-tight">Rasm yuklash (Ixtiyoriy)</label>
+                <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">
                 <button type="button" onClick={() => setModalType(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-800">{d.cancel}</button>
                 <button type="submit" disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 flex items-center gap-2">
@@ -1442,6 +1512,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 <input type="text" value={dezForm.correctiveAction} onChange={e => setDezForm({...dezForm, correctiveAction: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
               </div>
 
+              <div className="col-span-full mb-3">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-tight">Rasm yuklash (Ixtiyoriy)</label>
+                <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">
                 <button type="button" onClick={() => setModalType(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-800">{d.cancel}</button>
                 <button type="submit" disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 flex items-center gap-2">
@@ -1488,6 +1563,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.wastePct}</label>
                   <input type="number" step="0.1" value={calForm.wastePercent} onChange={e => setCalForm({...calForm, wastePercent: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" />
                 </div>
+              </div>
+
+              <div className="col-span-full mb-3">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-tight">Rasm yuklash (Ixtiyoriy)</label>
+                <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">
@@ -1552,6 +1632,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 <input type="text" value={degForm.conclusion} onChange={e => setDegForm({...degForm, conclusion: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
               </div>
 
+              <div className="col-span-full mb-3">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-tight">Rasm yuklash (Ixtiyoriy)</label>
+                <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">
                 <button type="button" onClick={() => setModalType(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-800">{d.cancel}</button>
                 <button type="submit" disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-pink-600 hover:bg-pink-500 flex items-center gap-2">
@@ -1585,15 +1670,35 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">P/F Aysberg Partiya</label>
-                  <input type="text" value={procForm.pfIcebergBatch} onChange={e => setProcForm({...procForm, pfIcebergBatch: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" />
+              {/* Dynamic Products */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Mahsulotlar (P/F Partiya va GP Harorati)</label>
+                  <button type="button" onClick={() => setProcDynamicProducts([...procDynamicProducts, { productName: '', pfBatch: '', gpTemp: '' }])} className="text-xs font-bold text-blue-600 hover:text-blue-500 flex items-center gap-1"><Plus size={12}/> Qo'shish</button>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">GP Aysberg Harorati (°C)</label>
-                  <input type="number" step="0.1" value={procForm.gpIcebergTemp} onChange={e => setProcForm({...procForm, gpIcebergTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
-                </div>
+                {procDynamicProducts.map((prod, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-slate-50 dark:bg-dark-800 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700">
+                    <div className="col-span-4">
+                      <input type="text" placeholder="Mahsulot nomi (masalan: Aysberg)" value={prod.productName} onChange={e => { const newArr = [...procDynamicProducts]; newArr[idx].productName = e.target.value; setProcDynamicProducts(newArr) }} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white text-xs font-medium" />
+                    </div>
+                    <div className="col-span-4">
+                      <input type="text" placeholder="P/F Partiya" value={prod.pfBatch} onChange={e => { const newArr = [...procDynamicProducts]; newArr[idx].pfBatch = e.target.value; setProcDynamicProducts(newArr) }} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white text-xs font-mono font-bold" />
+                    </div>
+                    <div className="col-span-3">
+                      <input type="number" step="0.1" placeholder="Temp °C" value={prod.gpTemp} onChange={e => { const newArr = [...procDynamicProducts]; newArr[idx].gpTemp = e.target.value; setProcDynamicProducts(newArr) }} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
+                    </div>
+                    <div className="col-span-1 text-center">
+                      <button type="button" onClick={() => { const newArr = [...procDynamicProducts]; newArr.splice(idx, 1); setProcDynamicProducts(newArr) }} className="text-slate-400 hover:text-red-500">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="col-span-full mb-3">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-tight">Rasm yuklash (Ixtiyoriy)</label>
+                <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">
@@ -1660,6 +1765,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                   <input type="checkbox" checked={rcvForm.hasLabCertificate} onChange={e => setRcvForm({...rcvForm, hasLabCertificate: e.target.checked})} />
                   <span className="text-slate-800 dark:text-slate-200 font-medium">{d.labCert} (OK)</span>
                 </label>
+              </div>
+
+              <div className="col-span-full mb-3">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-tight">Rasm yuklash (Ixtiyoriy)</label>
+                <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">

@@ -43,11 +43,28 @@ export default function DirectorPage() {
   const { lang } = useLanguage()
   const t = tBase[lang as LangType] || tBase.uz
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalEmployees: 0,
+    totalInspections: 0,
+    salesOrdersCount: 0,
+    totalRevenue: 0
+  })
 
   useEffect(() => {
-    setTimeout(() => {
-      setLoading(false)
-    }, 800)
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/director')
+        if (res.ok) {
+          const data = await res.json()
+          setStats(data)
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadStats()
   }, [])
 
   if (loading) {
@@ -57,6 +74,13 @@ export default function DirectorPage() {
         <p className="text-slate-400">{t.loading}</p>
       </div>
     )
+  }
+
+  // Format currency dynamically based on size
+  const formatRevenue = (value: number) => {
+    if (value >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1) + ' mlrd'
+    if (value >= 1_000_000) return (value / 1_000_000).toFixed(1) + ' mln'
+    return value.toLocaleString()
   }
 
   return (
@@ -69,7 +93,7 @@ export default function DirectorPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-blue-500 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-blue-500 relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-xl">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all duration-500" />
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 shadow-inner">
@@ -77,10 +101,10 @@ export default function DirectorPage() {
             </div>
             <p className="text-sm font-medium text-slate-400">{t.statsTotalUsers}</p>
           </div>
-          <h3 className="text-3xl font-bold text-white tracking-tight">42</h3>
+          <h3 className="text-3xl font-bold text-white tracking-tight">{stats.totalEmployees}</h3>
         </div>
 
-        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-emerald-500 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-emerald-500 relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-xl">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all duration-500" />
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shadow-inner">
@@ -88,10 +112,11 @@ export default function DirectorPage() {
             </div>
             <p className="text-sm font-medium text-slate-400">{t.statsRevenue}</p>
           </div>
-          <h3 className="text-3xl font-bold text-white tracking-tight">120M</h3>
+          <h3 className="text-3xl font-bold text-emerald-400 tracking-tight">{formatRevenue(stats.totalRevenue)}</h3>
+          <p className="text-[10px] text-slate-500 mt-1 absolute bottom-4 right-4">UZS</p>
         </div>
 
-        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-purple-500 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-purple-500 relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-xl">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all duration-500" />
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 shadow-inner">
@@ -99,10 +124,10 @@ export default function DirectorPage() {
             </div>
             <p className="text-sm font-medium text-slate-400">{t.statsInspections}</p>
           </div>
-          <h3 className="text-3xl font-bold text-white tracking-tight">156</h3>
+          <h3 className="text-3xl font-bold text-white tracking-tight">{stats.totalInspections}</h3>
         </div>
 
-        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-amber-500 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+        <div className="card p-6 bg-gradient-to-br from-dark-800 to-dark-900 border-l-4 border-l-amber-500 relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-xl">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all duration-500" />
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 shadow-inner">
@@ -110,7 +135,7 @@ export default function DirectorPage() {
             </div>
             <p className="text-sm font-medium text-slate-400">{t.statsOrders}</p>
           </div>
-          <h3 className="text-3xl font-bold text-white tracking-tight">89</h3>
+          <h3 className="text-3xl font-bold text-white tracking-tight">{stats.salesOrdersCount}</h3>
         </div>
       </div>
 

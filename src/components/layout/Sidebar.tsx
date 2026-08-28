@@ -26,146 +26,70 @@ import {
   DollarSign,
   Briefcase,
   Utensils,
-  ClipboardCheck
+  ClipboardCheck,
+  CheckCircle2
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
 
-const allNavItems = [
+const navSections = [
   {
-    key: 'dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
+    title: 'Asosiy',
+    items: [
+      { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
+      { key: 'director', href: '/director', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR'] },
+    ]
   },
   {
-    key: 'newInspection',
-    href: '/inspections/new',
-    icon: ClipboardList,
-    highlight: true,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
+    title: 'Sifat Nazorati (QC)',
+    items: [
+      { key: 'newInspection', href: '/inspections/new', icon: ClipboardList, highlight: true, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
+      { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
+      { key: 'shopQC', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'dailyChecklist', href: '/inspector/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
+    ]
   },
   {
-    key: 'inspections',
-    href: '/inspections',
-    icon: History,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
+    title: 'Ombor va Ishlab chiqarish',
+    items: [
+      { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'arrivals', href: '/arrivals', icon: ArrowDownToLine, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
+      { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
+      { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
+      { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
+      { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'DIRECTOR', 'KITCHEN'] },
+    ]
   },
   {
-    key: 'shopQC',
-    href: '/inspector',
-    icon: ClipboardCheck,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'],
+    title: "Savdo va Ta'minot",
+    items: [
+      { key: 'sales', href: '/sales', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SALES'] },
+      { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'SALES', 'SUPPLY'] },
+      { key: 'orders', href: '/orders', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'WAREHOUSE'] },
+      { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
+      { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
+    ]
   },
   {
-    key: 'products',
-    href: '/products',
-    icon: Package,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'],
+    title: 'Moliya va HR',
+    items: [
+      { key: 'accounting', href: '/accounting', icon: DollarSign, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'] },
+      { key: 'hr', href: '/hr', icon: Briefcase, roles: ['ADMIN', 'DIRECTOR', 'HR'] },
+      { key: 'reports', href: '/reports', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'] },
+    ]
   },
   {
-    key: 'arrivals',
-    href: '/arrivals',
-    icon: ArrowDownToLine,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'],
-  },
-  {
-    key: 'orders',
-    href: '/orders',
-    icon: ShoppingCart,
-    roles: ['ADMIN', 'DIRECTOR', 'SUPPLY'],
-  },
-  {
-    key: 'warehouse',
-    href: '/warehouse',
-    icon: Package,
-    roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'],
-  },
-  {
-    key: 'production',
-    href: '/production',
-    icon: ChefHat, // Or maybe a factory icon like Building/Factory if imported
-    roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'],
-  },
-  {
-    key: 'kitchen',
-    href: '/kitchen',
-    icon: Utensils,
-    roles: ['ADMIN', 'DIRECTOR', 'KITCHEN'],
-  },
-  {
-    key: 'chat',
-    href: '/chat',
-    icon: MessageSquare,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR'],
-  },
-  {
-    key: 'suppliers',
-    href: '/suppliers',
-    icon: Truck,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'],
-  },
-  {
-    key: 'supervisors',
-    href: '/supervisors',
-    icon: UserCheck,
-    roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'],
-  },
-  {
-    key: 'reports',
-    href: '/reports',
-    icon: BarChart3,
-    roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'],
-  },
-  {
-    key: 'users',
-    href: '/users',
-    icon: Users,
-    roles: ['ADMIN', 'DIRECTOR', 'HR'],
-  },
-  {
-    key: 'director',
-    href: '/director',
-    icon: LayoutDashboard,
-    roles: ['ADMIN', 'DIRECTOR'],
-  },
-  {
-    key: 'hr',
-    href: '/hr',
-    icon: Briefcase,
-    roles: ['ADMIN', 'DIRECTOR', 'HR'],
-  },
-  {
-    key: 'logistics',
-    href: '/logistics',
-    icon: Truck,
-    roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'],
-  },
-  {
-    key: 'accounting',
-    href: '/accounting',
-    icon: DollarSign,
-    roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'],
-  },
-  {
-    key: 'security',
-    href: '/security',
-    icon: ShieldAlert,
-    roles: ['ADMIN', 'DIRECTOR', 'SECURITY'],
-  },
-  {
-    key: 'backup',
-    href: '/backup',
-    icon: Database,
-    roles: ['ADMIN'],
-  },
-  {
-    key: 'settings',
-    href: '/settings',
-    icon: Settings,
-    roles: ['ADMIN', 'DIRECTOR'],
-  },
+    title: 'Tizim va Boshqaruv',
+    items: [
+      { key: 'users', href: '/users', icon: Users, roles: ['ADMIN', 'DIRECTOR', 'HR'] },
+      { key: 'supervisors', href: '/supervisors', icon: UserCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
+      { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR'] },
+      { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
+      { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
+      { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR'] },
+    ]
+  }
 ]
 
 export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { userRole?: string, userName?: string }) {
@@ -199,39 +123,59 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {allNavItems.filter(item => item.roles.includes(userRole) || userRole === 'ADMIN').map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || 
-            (item.href !== '/dashboard' && pathname.startsWith(item.href))
-
-          if (item.highlight) {
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={close}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm
-                           bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/30
-                           transition-all duration-200 my-2"
-              >
-                <Icon size={18} />
-                <span>{t(item.key)}</span>
-              </Link>
-            )
-          }
+      <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto custom-scrollbar">
+        {navSections.map((section, idx) => {
+          // Filter items based on userRole
+          const visibleItems = section.items.filter(item => {
+            // Direktor paneli faqat DIRECTOR uchun ko'rinadi
+            if (item.key === 'director' && userRole !== 'DIRECTOR') {
+              return false
+            }
+            return item.roles.includes(userRole) || userRole === 'ADMIN'
+          })
+          
+          if (visibleItems.length === 0) return null
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={close}
-              className={`sidebar-link ${isActive ? 'active' : ''}`}
-            >
-              <Icon size={18} />
-              <span className="flex-1">{t(item.key)}</span>
-              {isActive && <ChevronRight size={14} className="text-blue-400" />}
-            </Link>
+            <div key={idx} className="space-y-1">
+              <h3 className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                {section.title}
+              </h3>
+              {visibleItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href || 
+                  (item.href !== '/dashboard' && pathname.startsWith(item.href))
+
+                if ((item as any).highlight) {
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={close}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm
+                                 bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/30
+                                 transition-all duration-200 my-2"
+                    >
+                      <Icon size={18} />
+                      <span>{t(item.key)}</span>
+                    </Link>
+                  )
+                }
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={close}
+                    className={`sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${isActive ? 'bg-dark-800 text-white' : 'text-slate-400 hover:bg-dark-800 hover:text-white'}`}
+                  >
+                    <Icon size={18} className={isActive ? 'text-blue-400' : ''} />
+                    <span className="flex-1">{t(item.key)}</span>
+                    {isActive && <ChevronRight size={14} className="text-blue-400" />}
+                  </Link>
+                )
+              })}
+            </div>
           )
         })}
       </nav>

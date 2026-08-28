@@ -106,6 +106,7 @@ export async function POST(request: NextRequest) {
         appearance: body.appearance || null,
         conclusion: body.conclusion || 'Muvofiq',
         status: body.status || 'ACCEPTED',
+        rating: body.rating ? parseInt(body.rating) : null,
         inspector: body.inspector || null,
         inspectorId: body.inspectorId ? parseInt(body.inspectorId) : null,
         vehicleNumber: body.vehicleNumber || null,
