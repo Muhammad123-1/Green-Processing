@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       include: {
         payrolls: {
-          orderBy: { periodStart: 'desc' },
+          orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
           take: 1
         }
       }
@@ -36,15 +36,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ism, familiya va lavozim majburiy" }, { status: 400 })
     }
 
-    const employee = await prisma.employee.create({
+      const employee = await prisma.employee.create({
       data: {
         firstName,
         lastName,
         position,
-        department,
+        departmentId: department ? parseInt(department) : undefined,
         phone,
-        salaryType: salaryType || 'FIXED',
-        baseSalary: baseSalary ? parseFloat(baseSalary) : 0
+        salaryBase: baseSalary ? parseFloat(baseSalary) : 0,
+        hireDate: new Date()
       }
     })
 

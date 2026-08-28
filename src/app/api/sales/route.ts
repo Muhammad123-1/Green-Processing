@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
             quantity: { gt: 0 }
           },
           orderBy: {
-            receivedDate: 'asc'
+            receivedAt: 'asc'
           }
         })
 
