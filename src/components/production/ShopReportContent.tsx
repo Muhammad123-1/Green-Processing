@@ -25,7 +25,7 @@ export default function ShopReportContent() {
   const addExpense = () => setExpenses([...expenses, { date: '', iceberg: 0, tomatoes: 0, onion: 0, cabbage: 0, carrot: 0, bag: 0, chlorine: 0, sorbat: 0, benzoat: 0, vinegar: 0, taygeta: 0, boxDefect: 0, bagDefect: 0, ses: 0, kitchen: 0 }])
 
   // Tab 4 Data: History
-  const [history, setHistory] = useState([
+  const [history, setHistory] = useState<{ id: number; type: 'arrival' | 'expense' | 'report'; date: string; createdBy: string; totalIceberg: number; totalTomatoes: number }[]>([
     { id: 1, type: 'report', date: '2026-07-05', createdBy: 'Admin', totalIceberg: 1800, totalTomatoes: 3000 },
     { id: 2, type: 'expense', date: '2026-07-06', createdBy: 'Operator', totalIceberg: 2897.6, totalTomatoes: 0 },
     { id: 3, type: 'arrival', date: '2026-07-07', createdBy: 'Omborchi', totalIceberg: 500, totalTomatoes: 1000 }
@@ -92,7 +92,7 @@ export default function ShopReportContent() {
     document.body.removeChild(link)
   }
 
-  const viewReport = (date: string, type: string) => {
+  const viewReport = (date: string, type: 'arrival' | 'expense' | 'report' | 'history') => {
     setReportDate(date)
     setActiveTab(type)
   }
