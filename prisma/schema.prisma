@@ -965,3 +965,28 @@ model ShippingLog {
   correctiveAction String?
   createdAt        DateTime @default(now())
 }
+
+// -----------------------------------------------------------------------------
+// 10. DINAMIK JADVAL MENEJERI (Custom Excel Templates)
+// -----------------------------------------------------------------------------
+model CustomTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String                          // Jadval nomi
+  description String?                         // Qisqacha tavsif
+  columns     String   @db.Text              // JSON: [{key, label, type}]
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  records     CustomRecord[]
+}
+
+model CustomRecord {
+  id         Int      @id @default(autoincrement())
+  templateId Int
+  data       String   @db.Text              // JSON: {col1: val1, col2: val2 ...}
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  template   CustomTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}

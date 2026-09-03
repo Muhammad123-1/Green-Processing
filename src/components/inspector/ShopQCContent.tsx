@@ -273,9 +273,23 @@ const DICT = {
   }
 }
 
-export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: { userRole?: string, userName?: string }) {
+export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', isArchive = false }: { userRole?: string, userName?: string, isArchive?: boolean }) {
   const { lang } = useLanguage()
   const d = DICT[lang as 'uz' | 'ru' | 'en'] || DICT.uz
+
+  const renderArchiveInfo = (createdAt: string, responsible: string) => {
+    if (!createdAt) return null;
+    const date = new Date(createdAt);
+    const hour = date.getHours();
+    const shift = (hour >= 8 && hour < 20) ? '1-Smena' : '2-Smena';
+    return (
+      <div className="text-right flex flex-col items-end">
+        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">{shift}</span>
+        <span className="text-[10px] text-slate-700 dark:text-slate-300 font-medium mt-0.5">{responsible}</span>
+        <span className="text-[10px] text-slate-500 font-mono mt-0.5">{date.toLocaleDateString('uz-UZ')} {date.toLocaleTimeString('uz-UZ', {hour:'2-digit', minute:'2-digit'})}</span>
+      </div>
+    );
+  };
 
   // Active Tab: fssc | disinfection | calibration | degustation | temperature | receiving
   const [activeTab, setActiveTab] = useState<'fssc' | 'disinfection' | 'calibration' | 'degustation' | 'temperature' | 'receiving'>('fssc')
@@ -359,15 +373,40 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
   const [procForm, setProcForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
-    cleanZoneTemp: '11.5',
-    dirtyZoneTemp: '18.0',
-    correctiveAction: '-',
+    cleanZoneTemp: '',
+    dirtyZoneTemp: '',
+    pfColeCarrotBatch: '',
+    pfColeCabbageBatch: '',
+    pfIcebergBatch: '',
+    pfOnionBatch: '',
+    pfTomatoBatch: '',
+    gpColeTemp: '',
+    gpIcebergTemp: '',
+    gpTomatoTemp: '',
+    gpOnionTemp: '',
+    correctiveAction: '',
     responsible: userName || 'Sex Nazoratchisi'
   })
 
-  const [procDynamicProducts, setProcDynamicProducts] = useState([
-    { productName: 'Айсберг', pfBatch: 'PF-101', gpTemp: '3.5' }
-  ])
+  // Dynamic Product Types for Degustation (Local Storage + DB)
+  const [productTypes, setProductTypes] = useState<string[]>(['Айсберг', 'Коулслоу', 'Романо', 'Салат Микс'])
+  
+  const [dbProducts, setDbProducts] = useState<string[]>([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('qc_product_types')
+    if (saved) {
+      try { setProductTypes(JSON.parse(saved)) } catch {}
+    }
+  }, [])
+
+  const saveProductTypes = (newTypes: string[]) => {
+    setProductTypes(newTypes)
+    localStorage.setItem('qc_product_types', JSON.stringify(newTypes))
+  }
+  
+  // Kombinatsiya qilingan (DB + Local) mahsulotlar ro'yxati
+  const combinedProductTypes = Array.from(new Set([...dbProducts, ...productTypes]))
 
   const [rcvForm, setRcvForm] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -394,14 +433,21 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
     setLoading(true)
     try {
       const q = filterDate ? `?date=${filterDate}` : ''
-      const [resFssc, resDez, resCal, resDeg, resProc, resRcv] = await Promise.all([
+      const [resFssc, resDez, resCal, resDeg, resProc, resRcv, resProducts] = await Promise.all([
         fetch(`/api/inspector/fssc-logs${q}`).then(r => r.json()).catch(() => []),
         fetch(`/api/inspector/disinfection-logs${q}`).then(r => r.json()).catch(() => []),
         fetch(`/api/inspector/calibration-logs${q}`).then(r => r.json()).catch(() => []),
         fetch(`/api/inspector/degustation-logs${q}`).then(r => r.json()).catch(() => []),
         fetch(`/api/inspector/process-logs${q}`).then(r => r.json()).catch(() => []),
         fetch(`/api/inspector/receiving-logs${q}`).then(r => r.json()).catch(() => []),
+        fetch(`/api/products`).then(r => r.json()).catch(() => []),
       ])
+
+      if (Array.isArray(resProducts)) {
+        // "Jarayon uchun" yoki "KITCHEN" bo'lganlarni ham olish mumkin, hozir "FINISHED_GOOD" larni ajratamiz
+        const pNames = resProducts.filter((p: any) => p.type === 'FINISHED_GOOD').map((p: any) => p.name);
+        setDbProducts(pNames);
+      }
 
       setFsscLogs(Array.isArray(resFssc) ? resFssc : [])
       setDisinfectionLogs(Array.isArray(resDez) ? resDez : [])
@@ -538,14 +584,10 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
     e.preventDefault()
     setSaving(true)
     try {
-      const finalForm = {
-        ...procForm,
-        notes: JSON.stringify(procDynamicProducts)
-      }
       const res = await fetch('/api/inspector/process-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalForm)
+        body: JSON.stringify(procForm)
       })
       if (res.ok) {
         toast.success(lang === 'ru' ? 'Запись температур цеха сохранена' : lang === 'en' ? 'Shop floor temp log saved' : 'Sex harorati qaydi saqlandi!')
@@ -726,33 +768,34 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
             <span>{d.excelBtn}</span>
           </button>
 
-          <button 
-            onClick={() => setModalType(activeTab)}
-            className={`flex items-center gap-2 text-white px-4 py-2 rounded-xl shadow-lg transition-all text-xs font-bold active:scale-95 ${activeItem.btnColor}`}
-          >
-            <Plus size={15} />
-            <span>{d.addRecordBtn}</span>
-          </button>
+          {!isArchive && (
+            <button 
+              onClick={() => setModalType(activeTab)}
+              className={`flex items-center gap-2 text-white px-4 py-2 rounded-xl shadow-lg transition-all text-xs font-bold active:scale-95 ${activeItem.btnColor}`}
+            >
+              <Plus size={15} />
+              <span>{d.addRecordBtn}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main 2-Column Responsive Layout: Left Navigation + Right Table Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      {/* Main 1-Column Responsive Layout: Top Navigation + Bottom Table Area */}
+      <div className="flex flex-col gap-5 items-start">
         
-        {/* Left Column: Vertical Checklist Navigation */}
-        <div className="lg:col-span-4 xl:col-span-3 space-y-4">
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-3.5 shadow-sm dark:shadow-xl">
-            <div className="flex items-center justify-between px-2 pb-2.5 mb-2 border-b border-slate-100 dark:border-dark-750">
-              <span className="text-[11px] font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <SlidersHorizontal size={13} className="text-emerald-600 dark:text-emerald-400" />
-                {d.journalsMenuTitle}
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 dark:bg-dark-800 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
-                6 / 6
-              </span>
-            </div>
+        {/* Top Column: Horizontal Checklist Navigation */}
+        <div className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-3 shadow-sm dark:shadow-xl">
+          <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-slate-100 dark:border-dark-750">
+            <span className="text-[11px] font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <SlidersHorizontal size={13} className="text-emerald-600 dark:text-emerald-400" />
+              {d.journalsMenuTitle}
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 dark:bg-dark-800 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+              6 / 6
+            </span>
+          </div>
 
-            <div className="space-y-1.5">
+          <div className="flex overflow-x-auto gap-2 pb-1 hide-scrollbar">
               {checklistItems.map((item) => {
                 const Icon = item.icon
                 const isActive = activeTab === item.id
@@ -761,7 +804,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
-                    className={`w-full text-left p-3 rounded-xl md:rounded-2xl transition-all flex items-start gap-2.5 relative group ${
+                    className={`min-w-[200px] flex-shrink-0 text-left p-2.5 rounded-xl md:rounded-2xl transition-all flex items-center gap-2.5 relative group ${
                       isActive
                         ? `${item.activeBg} shadow-lg shadow-black/20 border border-white/20`
                         : 'bg-slate-50 hover:bg-slate-100/90 text-slate-800 dark:bg-dark-800/60 dark:hover:bg-dark-800 dark:text-slate-300 dark:hover:text-white border border-slate-200/80 dark:border-transparent hover:border-slate-300 dark:hover:border-dark-700'
@@ -790,27 +833,19 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                           {item.count}
                         </span>
                       </div>
-                      <p className={`text-[10.5px] mt-0.5 leading-tight truncate ${
-                        isActive 
-                          ? 'text-white/90 font-medium' 
-                          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 font-medium'
-                      }`}>
-                        {item.desc}
-                      </p>
                     </div>
 
                     {isActive && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white self-center mr-0.5 animate-pulse flex-shrink-0" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse flex-shrink-0 absolute right-2" />
                     )}
                   </button>
                 )
               })}
             </div>
           </div>
-        </div>
-
-        {/* Right Column: Search, Filter, Dedicated Add Button and Table */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+        
+        {/* Bottom Area: Search, Filter, Dedicated Add Button and Table */}
+        <div className="w-full space-y-4">
           
           {/* Header of Active Table + Filters + Dedicated Add Button */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 md:p-4 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl">
@@ -825,18 +860,96 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Date Filter */}
-              <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-2.5 py-1.5">
-                <Calendar size={13} className="text-slate-500 dark:text-slate-400" />
+              {/* Custom Date Search */}
+              <div className="flex items-center bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-2 py-1 shadow-sm">
+                <Calendar size={14} className="text-emerald-500 dark:text-emerald-400 ml-1 mr-2" />
                 <input 
-                  type="date"
-                  value={filterDate}
-                  onChange={e => setFilterDate(e.target.value)}
-                  className="bg-transparent text-xs text-slate-800 dark:text-white outline-none cursor-pointer font-medium"
+                  type="text" 
+                  placeholder="Kun" 
+                  maxLength={2}
+                  className="w-7 text-center text-xs font-bold bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if(val.length === 2 && parseInt(val) > 0 && parseInt(val) <= 31) {
+                      e.target.nextElementSibling?.nextElementSibling?.focus();
+                    }
+                    e.target.value = val;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const btn = document.getElementById('search-date-btn');
+                      if (btn) btn.click();
+                    }
+                  }}
+                  id="search-day"
                 />
+                <span className="text-slate-300 dark:text-dark-600 font-medium text-xs">/</span>
+                <input 
+                  type="text" 
+                  placeholder="Oy" 
+                  maxLength={2}
+                  className="w-7 text-center text-xs font-bold bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if(val.length === 2 && parseInt(val) > 0 && parseInt(val) <= 12) {
+                      e.target.nextElementSibling?.nextElementSibling?.focus();
+                    }
+                    e.target.value = val;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const btn = document.getElementById('search-date-btn');
+                      if (btn) btn.click();
+                    }
+                  }}
+                  id="search-month"
+                />
+                <span className="text-slate-300 dark:text-dark-600 font-medium text-xs">/</span>
+                <input 
+                  type="text" 
+                  placeholder="Yil" 
+                  maxLength={4}
+                  className="w-9 text-center text-xs font-bold bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+                  onChange={(e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const btn = document.getElementById('search-date-btn');
+                      if (btn) btn.click();
+                    }
+                  }}
+                  id="search-year"
+                />
+                <button 
+                  id="search-date-btn"
+                  onClick={() => {
+                    const d = (document.getElementById('search-day') as HTMLInputElement)?.value;
+                    const m = (document.getElementById('search-month') as HTMLInputElement)?.value;
+                    const y = (document.getElementById('search-year') as HTMLInputElement)?.value;
+                    if(d && m && y) {
+                      const formattedDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                      setFilterDate(formattedDate);
+                    } else if (!d && !m && !y) {
+                      setFilterDate('');
+                    }
+                  }}
+                  className="bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded text-[10px] font-bold transition-colors ml-1"
+                >
+                  Qidirish
+                </button>
                 {filterDate && (
-                  <button onClick={() => setFilterDate('')} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-bold">
-                    {d.allDates}
+                  <button 
+                    onClick={() => {
+                      setFilterDate('');
+                      if(document.getElementById('search-day')) (document.getElementById('search-day') as HTMLInputElement).value = '';
+                      if(document.getElementById('search-month')) (document.getElementById('search-month') as HTMLInputElement).value = '';
+                      if(document.getElementById('search-year')) (document.getElementById('search-year') as HTMLInputElement).value = '';
+                    }}
+                    className="text-slate-400 hover:text-red-500 p-1 ml-1 transition-colors bg-slate-200 dark:bg-dark-700 rounded"
+                    title="Tozalash"
+                  >
+                    <X size={12} />
                   </button>
                 )}
               </div>
@@ -886,7 +999,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.status}</th>
                         <th className="p-3.5">{d.responsible}</th>
                         <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-center">{d.actions}</th>
+                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
@@ -895,13 +1008,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                           <td colSpan={10} className="p-12 text-center text-slate-500 dark:text-slate-400">
                             <ClipboardCheck size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
-                            <button
-                              onClick={() => setModalType('fssc')}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
-                            >
-                              <Plus size={14} />
-                              {d.addFirstRecord}
-                            </button>
+                            {!isArchive && (
+                              <button
+                                onClick={() => setModalType('fssc')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                              >
+                                <Plus size={14} />
+                                {d.addFirstRecord}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ) : (
@@ -952,9 +1067,13 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                               </div>
                             </td>
                             <td className="p-3.5 text-center">
-                              <button onClick={() => handleDeleteRecord('fssc-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                <Trash2 size={14} />
-                              </button>
+                              {isArchive ? (
+                                renderArchiveInfo(l.createdAt, l.responsible)
+                              ) : (
+                                <button onClick={() => handleDeleteRecord('fssc-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -978,7 +1097,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5">{d.corrAction}</th>
                         <th className="p-3.5">{d.responsible}</th>
                         <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-center">{d.actions}</th>
+                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
@@ -987,13 +1106,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                           <td colSpan={9} className="p-12 text-center text-slate-500 dark:text-slate-400">
                             <FlaskConical size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
-                            <button
-                              onClick={() => setModalType('disinfection')}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
-                            >
-                              <Plus size={14} />
-                              {d.addFirstRecord}
-                            </button>
+                            {!isArchive && (
+                              <button
+                                onClick={() => setModalType('disinfection')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                              >
+                                <Plus size={14} />
+                                {d.addFirstRecord}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ) : (
@@ -1031,10 +1152,14 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                                 📷
                               </div>
                             </td>
-                            <td className="p-3.5 text-center">
-                              <button onClick={() => handleDeleteRecord('disinfection-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                <Trash2 size={14} />
-                              </button>
+                            <td className="p-3.5 text-right">
+                              {isArchive ? (
+                                renderArchiveInfo(l.createdAt, l.responsible)
+                              ) : (
+                                <button onClick={() => handleDeleteRecord('disinfection-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -1058,7 +1183,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.status}</th>
                         <th className="p-3.5">{d.responsible}</th>
                         <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-center">{d.actions}</th>
+                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
@@ -1109,10 +1234,14 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                                 📷
                               </div>
                             </td>
-                            <td className="p-3.5 text-center">
-                              <button onClick={() => handleDeleteRecord('calibration-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                <Trash2 size={14} />
-                              </button>
+                            <td className="p-3.5 text-right">
+                              {isArchive ? (
+                                renderArchiveInfo(l.createdAt, l.responsible)
+                              ) : (
+                                <button onClick={() => handleDeleteRecord('calibration-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -1138,7 +1267,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5">{d.conclusion}</th>
                         <th className="p-3.5">{d.responsible}</th>
                         <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-center">{d.actions}</th>
+                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
@@ -1147,13 +1276,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                           <td colSpan={11} className="p-12 text-center text-slate-500 dark:text-slate-400">
                             <UtensilsCrossed size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
-                            <button
-                              onClick={() => setModalType('degustation')}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
-                            >
-                              <Plus size={14} />
-                              {d.addFirstRecord}
-                            </button>
+                            {!isArchive && (
+                              <button
+                                onClick={() => setModalType('degustation')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                              >
+                                <Plus size={14} />
+                                {d.addFirstRecord}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ) : (
@@ -1179,10 +1310,14 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                                 📷
                               </div>
                             </td>
-                            <td className="p-3.5 text-center">
-                              <button onClick={() => handleDeleteRecord('degustation-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                <Trash2 size={14} />
-                              </button>
+                            <td className="p-3.5 text-right">
+                              {isArchive ? (
+                                renderArchiveInfo(l.createdAt, l.responsible)
+                              ) : (
+                                <button onClick={() => handleDeleteRecord('degustation-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -1196,103 +1331,101 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 text-xs font-black uppercase tracking-wider">
-                        <th className="p-3.5">{d.timeLine}</th>
-                        <th className="p-3.5 text-center">{d.cleanZone}</th>
-                        <th className="p-3.5 text-center">{d.dirtyZone}</th>
-                        <th className="p-3.5">{d.pfBatches}</th>
-                        <th className="p-3.5 text-center">{d.gpTemps}</th>
-                        <th className="p-3.5">{d.responsible}</th>
-                        <th className="p-3.5 text-center">{d.status}</th>
-                        <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-center">{d.actions}</th>
+                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 font-black uppercase tracking-wider text-[10px]">
+                        <th className="p-2 min-w-[80px]">Sana/Vaqt</th>
+                        <th className="p-2 min-w-[70px] text-center bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400">Toza Zona</th>
+                        <th className="p-2 min-w-[70px] text-center bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400">Nopok Zona</th>
+                        <th className="p-2 min-w-[80px] text-center">PF Sabzi<br/><span className="text-[9px] text-slate-400">Koul-slou</span></th>
+                        <th className="p-2 min-w-[80px] text-center">PF Karam<br/><span className="text-[9px] text-slate-400">Koul-slou</span></th>
+                        <th className="p-2 min-w-[80px] text-center">PF Aysberg</th>
+                        <th className="p-2 min-w-[80px] text-center">PF Piyoz</th>
+                        <th className="p-2 min-w-[80px] text-center">PF Pomidor</th>
+                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Koul-slou</th>
+                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Aysberg</th>
+                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Pomidor</th>
+                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Piyoz</th>
+                        <th className="p-2 min-w-[100px]">{d.corrAction}</th>
+                        <th className="p-2 min-w-[80px]">{d.responsible}</th>
+                        <th className="p-2 text-center text-[10px]">Rasm</th>
+                        <th className="p-2 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : '#'}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
+                    <tbody className="divide-y divide-slate-100 dark:divide-dark-750 text-xs">
                       {filteredProc.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                          <td colSpan={16} className="p-12 text-center text-slate-500 dark:text-slate-400">
                             <Thermometer size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
-                            <button
-                              onClick={() => setModalType('temperature')}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
-                            >
-                              <Plus size={14} />
-                              {d.addFirstRecord}
-                            </button>
+                            {!isArchive && (
+                              <button
+                                onClick={() => setModalType('temperature')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                              >
+                                <Plus size={14} />
+                                {d.addFirstRecord}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ) : (
                         filteredProc.map(l => (
                           <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-dark-800/30 transition-colors">
-                            <td className="p-3.5">
-                              <div className="font-bold text-slate-900 dark:text-white text-xs">{l.date} <span className="text-blue-600 dark:text-blue-400">{l.time}</span></div>
+                            <td className="p-2">
+                              <div className="font-bold text-slate-900 dark:text-white text-[11px] whitespace-nowrap">{l.date}</div>
+                              <div className="text-blue-600 dark:text-blue-400 font-bold text-[10px]">{l.time}</div>
                             </td>
-                            <td className="p-3.5 text-center font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
+                            <td className="p-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-900/5">
                               {l.cleanZoneTemp !== null ? `${l.cleanZoneTemp}°C` : '—'}
                             </td>
-                            <td className="p-3.5 text-center font-mono font-bold text-xs text-amber-700 dark:text-amber-400">
+                            <td className="p-2 text-center font-mono font-bold text-amber-700 dark:text-amber-400 bg-emerald-50/30 dark:bg-emerald-900/5">
                               {l.dirtyZoneTemp !== null ? `${l.dirtyZoneTemp}°C` : '—'}
                             </td>
-                            <td className="p-3.5 text-xs font-mono text-slate-800 dark:text-slate-300">
-                              {(() => {
-                                try {
-                                  if (l.notes) {
-                                    const parsed = JSON.parse(l.notes);
-                                    if (Array.isArray(parsed) && parsed.length > 0) {
-                                      return parsed.map((item: any, i: number) => (
-                                        <div key={i}>{item.productName}: #{item.pfBatch}</div>
-                                      ));
-                                    }
-                                  }
-                                } catch (e) {}
-                                return (
-                                  <>
-                                    {l.pfIcebergBatch && <div>Айсберг: #{l.pfIcebergBatch}</div>}
-                                    {l.pfColeCarrotBatch && <div>Морковь: #{l.pfColeCarrotBatch}</div>}
-                                    {l.pfColeCabbageBatch && <div>Капуста: #{l.pfColeCabbageBatch}</div>}
-                                    {!l.pfIcebergBatch && !l.pfColeCarrotBatch && !l.pfColeCabbageBatch && !l.notes && <span className="text-slate-400">—</span>}
-                                  </>
-                                )
-                              })()}
+                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                              {l.pfColeCarrotBatch || '—'}
                             </td>
-                            <td className="p-3.5 text-center text-xs font-mono">
-                              {(() => {
-                                try {
-                                  if (l.notes) {
-                                    const parsed = JSON.parse(l.notes);
-                                    if (Array.isArray(parsed) && parsed.length > 0) {
-                                      return parsed.map((item: any, i: number) => (
-                                        <div key={i} className="text-emerald-600 dark:text-emerald-400 font-bold">{item.productName}: {item.gpTemp}°C</div>
-                                      ));
-                                    }
-                                  }
-                                } catch (e) {}
-                                return (
-                                  <>
-                                    {l.gpIcebergTemp && <div className="text-emerald-600 dark:text-emerald-400 font-bold">Айсберг: {l.gpIcebergTemp}°C</div>}
-                                    {l.gpColeTemp && <div className="text-emerald-600 dark:text-emerald-400 font-bold">Коул: {l.gpColeTemp}°C</div>}
-                                    {!l.gpIcebergTemp && !l.gpColeTemp && !l.notes && <span className="text-slate-400">—</span>}
-                                  </>
-                                )
-                              })()}
+                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                              {l.pfColeCabbageBatch || '—'}
                             </td>
-                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible || 'QC'}</td>
-                            <td className="p-3.5 text-center">
-                              <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
-                                {l.status || 'APPROVED'}
-                              </span>
+                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                              {l.pfIcebergBatch || '—'}
                             </td>
-                            <td className="p-3.5 text-center">
-                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
+                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                              {l.pfOnionBatch || '—'}
+                            </td>
+                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                              {l.pfTomatoBatch || '—'}
+                            </td>
+                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
+                              {l.gpColeTemp !== null ? `${l.gpColeTemp}°C` : '—'}
+                            </td>
+                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
+                              {l.gpIcebergTemp !== null ? `${l.gpIcebergTemp}°C` : '—'}
+                            </td>
+                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
+                              {l.gpTomatoTemp !== null ? `${l.gpTomatoTemp}°C` : '—'}
+                            </td>
+                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
+                              {l.gpOnionTemp !== null ? `${l.gpOnionTemp}°C` : '—'}
+                            </td>
+                            <td className="p-2 text-[11px] text-slate-600 dark:text-slate-400 font-medium max-w-[120px] truncate" title={l.correctiveAction}>
+                              {l.correctiveAction || '—'}
+                            </td>
+                            <td className="p-2 text-[11px] text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">
+                              {l.responsible}
+                            </td>
+                            <td className="p-2 text-center">
+                              <div className="w-7 h-7 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-[10px] text-slate-500 cursor-pointer hover:bg-slate-300 transition-colors" title="Rasm yo'q">
                                 📷
                               </div>
                             </td>
-                            <td className="p-3.5 text-center">
-                              <button onClick={() => handleDeleteRecord('process-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                <Trash2 size={14} />
-                              </button>
+                            <td className="p-2 text-right">
+                              {isArchive ? (
+                                renderArchiveInfo(l.createdAt, l.responsible)
+                              ) : (
+                                <button onClick={() => handleDeleteRecord('process-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -1318,7 +1451,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                         <th className="p-3.5 text-center">{d.status}</th>
                         <th className="p-3.5">{d.responsible}</th>
                         <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-center">{d.actions}</th>
+                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
@@ -1327,13 +1460,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                           <td colSpan={11} className="p-12 text-center text-slate-500 dark:text-slate-400">
                             <Truck size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
-                            <button
-                              onClick={() => setModalType('receiving')}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
-                            >
-                              <Plus size={14} />
-                              {d.addFirstRecord}
-                            </button>
+                            {!isArchive && (
+                              <button
+                                onClick={() => setModalType('receiving')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                              >
+                                <Plus size={14} />
+                                {d.addFirstRecord}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ) : (
@@ -1368,10 +1503,14 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                                 📷
                               </div>
                             </td>
-                            <td className="p-3.5 text-center">
-                              <button onClick={() => handleDeleteRecord('receiving-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                <Trash2 size={14} />
-                              </button>
+                            <td className="p-3.5 text-right">
+                              {isArchive ? (
+                                renderArchiveInfo(l.createdAt, l.responsible)
+                              ) : (
+                                <button onClick={() => handleDeleteRecord('receiving-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -1403,7 +1542,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Vaqt</label>
-                  <input type="text" value={fsscForm.time} onChange={e => setFsscForm({...fsscForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                  <input type="time" value={fsscForm.time} onChange={e => setFsscForm({...fsscForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
               </div>
 
@@ -1450,6 +1589,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
               </div>
 
               <div className="col-span-full mb-3">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
+                <input type="text" value={fsscForm.responsible} onChange={e => setFsscForm({...fsscForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+              </div>
+
+              <div className="col-span-full mb-3">
                 <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-tight">Rasm yuklash (Ixtiyoriy)</label>
                 <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
               </div>
@@ -1483,7 +1627,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Vaqt</label>
-                  <input type="text" value={dezForm.time} onChange={e => setDezForm({...dezForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                  <input type="time" value={dezForm.time} onChange={e => setDezForm({...dezForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
               </div>
 
@@ -1507,9 +1651,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.corrAction}</label>
-                <input type="text" value={dezForm.correctiveAction} onChange={e => setDezForm({...dezForm, correctiveAction: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.corrAction}</label>
+                  <input type="text" value={dezForm.correctiveAction} onChange={e => setDezForm({...dezForm, correctiveAction: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
+                  <input type="text" value={dezForm.responsible} onChange={e => setDezForm({...dezForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                </div>
               </div>
 
               <div className="col-span-full mb-3">
@@ -1541,6 +1691,16 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
             <form onSubmit={handleSaveCal} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
+                  <input type="date" value={calForm.date} onChange={e => setCalForm({...calForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Vaqt</label>
+                  <input type="time" value={calForm.time} onChange={e => setCalForm({...calForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.productBatch}</label>
                   <input type="text" value={calForm.productName} onChange={e => setCalForm({...calForm, productName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
@@ -1563,6 +1723,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.wastePct}</label>
                   <input type="number" step="0.1" value={calForm.wastePercent} onChange={e => setCalForm({...calForm, wastePercent: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" />
                 </div>
+              </div>
+
+              <div className="col-span-full mb-3">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
+                <input type="text" value={calForm.responsible} onChange={e => setCalForm({...calForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
               </div>
 
               <div className="col-span-full mb-3">
@@ -1594,12 +1759,26 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
             <form onSubmit={handleSaveDeg} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
+                  <input type="date" value={degForm.date} onChange={e => setDegForm({...degForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Vaqt</label>
+                  <input type="time" value={degForm.time} onChange={e => setDegForm({...degForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Mahsulot Turi</label>
-                  <select value={degForm.productType} onChange={e => setDegForm({...degForm, productType: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium">
-                    <option value="Айсберг">Айсберг</option>
-                    <option value="Коулслоу">Коулслоу</option>
-                    <option value="Романо">Романо</option>
-                    <option value="Салат Микс">Салат Микс</option>
+                  <select 
+                    value={degForm.productType} 
+                    onChange={e => setDegForm({...degForm, productType: e.target.value})} 
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium"
+                  >
+                    {combinedProductTypes.length === 0 && <option value="Айсберг">Айсберг</option>}
+                    {combinedProductTypes.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -1627,9 +1806,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 </label>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.conclusion}</label>
-                <input type="text" value={degForm.conclusion} onChange={e => setDegForm({...degForm, conclusion: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.conclusion}</label>
+                  <input type="text" value={degForm.conclusion} onChange={e => setDegForm({...degForm, conclusion: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
+                  <input type="text" value={degForm.responsible} onChange={e => setDegForm({...degForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                </div>
               </div>
 
               <div className="col-span-full mb-3">
@@ -1661,6 +1846,16 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
             <form onSubmit={handleSaveProc} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
+                  <input type="date" value={procForm.date} onChange={e => setProcForm({...procForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Vaqt</label>
+                  <input type="time" value={procForm.time} onChange={e => setProcForm({...procForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.cleanZone}</label>
                   <input type="number" step="0.1" value={procForm.cleanZoneTemp} onChange={e => setProcForm({...procForm, cleanZoneTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-blue-600 dark:text-blue-400 text-xs font-mono font-bold" />
                 </div>
@@ -1670,30 +1865,61 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                 </div>
               </div>
 
-              {/* Dynamic Products */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Mahsulotlar (P/F Partiya va GP Harorati)</label>
-                  <button type="button" onClick={() => setProcDynamicProducts([...procDynamicProducts, { productName: '', pfBatch: '', gpTemp: '' }])} className="text-xs font-bold text-blue-600 hover:text-blue-500 flex items-center gap-1"><Plus size={12}/> Qo'shish</button>
-                </div>
-                {procDynamicProducts.map((prod, idx) => (
-                  <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-slate-50 dark:bg-dark-800 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700">
-                    <div className="col-span-4">
-                      <input type="text" placeholder="Mahsulot nomi (masalan: Aysberg)" value={prod.productName} onChange={e => { const newArr = [...procDynamicProducts]; newArr[idx].productName = e.target.value; setProcDynamicProducts(newArr) }} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white text-xs font-medium" />
-                    </div>
-                    <div className="col-span-4">
-                      <input type="text" placeholder="P/F Partiya" value={prod.pfBatch} onChange={e => { const newArr = [...procDynamicProducts]; newArr[idx].pfBatch = e.target.value; setProcDynamicProducts(newArr) }} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1.5 text-slate-900 dark:text-white text-xs font-mono font-bold" />
-                    </div>
-                    <div className="col-span-3">
-                      <input type="number" step="0.1" placeholder="Temp °C" value={prod.gpTemp} onChange={e => { const newArr = [...procDynamicProducts]; newArr[idx].gpTemp = e.target.value; setProcDynamicProducts(newArr) }} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
-                    </div>
-                    <div className="col-span-1 text-center">
-                      <button type="button" onClick={() => { const newArr = [...procDynamicProducts]; newArr.splice(idx, 1); setProcDynamicProducts(newArr) }} className="text-slate-400 hover:text-red-500">
-                        <X size={16} />
-                      </button>
-                    </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3 p-3 bg-slate-50 dark:bg-dark-800 rounded-xl border border-slate-200 dark:border-dark-700">
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-dark-700 pb-1">Yarim tayyor mahsulot (PF) Partiya №</h4>
+                  
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Koul-slou (Sabzi)</label>
+                    <input type="text" value={procForm.pfColeCarrotBatch} onChange={e => setProcForm({...procForm, pfColeCarrotBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
                   </div>
-                ))}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Koul-slou (Karam)</label>
+                    <input type="text" value={procForm.pfColeCabbageBatch} onChange={e => setProcForm({...procForm, pfColeCabbageBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Aysberg</label>
+                    <input type="text" value={procForm.pfIcebergBatch} onChange={e => setProcForm({...procForm, pfIcebergBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Piyoz</label>
+                    <input type="text" value={procForm.pfOnionBatch} onChange={e => setProcForm({...procForm, pfOnionBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Pomidor</label>
+                    <input type="text" value={procForm.pfTomatoBatch} onChange={e => setProcForm({...procForm, pfTomatoBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-3 p-3 bg-slate-50 dark:bg-dark-800 rounded-xl border border-slate-200 dark:border-dark-700">
+                  <h4 className="text-xs font-bold text-blue-700 dark:text-blue-400 border-b border-slate-200 dark:border-dark-700 pb-1">Tayyor mahsulot (GP) Harorati °C</h4>
+                  
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Koul-slou °C</label>
+                    <input type="number" step="0.1" value={procForm.gpColeTemp} onChange={e => setProcForm({...procForm, gpColeTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Aysberg °C</label>
+                    <input type="number" step="0.1" value={procForm.gpIcebergTemp} onChange={e => setProcForm({...procForm, gpIcebergTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Pomidor °C</label>
+                    <input type="number" step="0.1" value={procForm.gpTomatoTemp} onChange={e => setProcForm({...procForm, gpTomatoTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Piyoz °C</label>
+                    <input type="number" step="0.1" value={procForm.gpOnionTemp} onChange={e => setProcForm({...procForm, gpOnionTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">{d.corrAction}</label>
+                    <input type="text" value={procForm.correctiveAction} onChange={e => setProcForm({...procForm, correctiveAction: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-medium text-amber-700" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-span-full mb-3">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
+                <input type="text" value={procForm.responsible} onChange={e => setProcForm({...procForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
               </div>
 
               <div className="col-span-full mb-3">
@@ -1723,6 +1949,16 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
             <form onSubmit={handleSaveRcv} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
+                  <input type="date" value={rcvForm.date} onChange={e => setRcvForm({...rcvForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Vaqt</label>
+                  <input type="time" value={rcvForm.time} onChange={e => setRcvForm({...rcvForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.supplier}</label>
@@ -1765,6 +2001,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '' }: 
                   <input type="checkbox" checked={rcvForm.hasLabCertificate} onChange={e => setRcvForm({...rcvForm, hasLabCertificate: e.target.checked})} />
                   <span className="text-slate-800 dark:text-slate-200 font-medium">{d.labCert} (OK)</span>
                 </label>
+              </div>
+
+              <div className="col-span-full mb-3">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
+                <input type="text" value={rcvForm.responsible} onChange={e => setRcvForm({...rcvForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
               </div>
 
               <div className="col-span-full mb-3">

@@ -13,5 +13,5 @@ export default async function InspectorPage() {
     redirect('/login')
   }
 
-  return <ShopQCContent userRole={session.role} userName={session.name} />
+  return <ShopQCContent />
 }

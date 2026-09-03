@@ -92,7 +92,7 @@ const statusBadge = (status: string) => {
 }
 
 export default function InspectionsContent() {
-  const [activeTab, setActiveTab] = useState<'journals' | 'inspections' | 'defects' | 'sqs'>('journals')
+  const [activeTab, setActiveTab] = useState<'journals' | 'inspections' | 'defects' | 'sqs'>('inspections')
 
   // Inspections state
   const [inspections, setInspections] = useState<Inspection[]>([])
@@ -377,7 +377,7 @@ export default function InspectionsContent() {
       {/* TAB 0: 7 QC JOURNALS (FSSC 22000, CCP-1, CALIBRATION, DEGUSTATION, ETC.) */}
       {activeTab === 'journals' && (
         <div className="space-y-5">
-          <ShopQCContent userRole="QUALITY_CONTROL" />
+          <ShopQCContent userRole="QUALITY_CONTROL" isArchive={true} />
         </div>
       )}
 
@@ -437,13 +437,6 @@ export default function InspectionsContent() {
                 <FileSpreadsheet size={16} />
                 To'liq Jurnal (.xlsx)
               </button>
-              <Link 
-                href="/inspections/new" 
-                className="btn-primary flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
-              >
-                <Plus size={18} />
-                Yangi Akt Yaratish
-              </Link>
             </div>
           </div>
 

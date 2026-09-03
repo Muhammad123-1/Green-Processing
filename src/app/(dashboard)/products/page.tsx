@@ -40,7 +40,7 @@ export default function ProductsPage() {
   const { t } = useLanguage()
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
-  const [activeTab, setActiveTab] = useState<'RAW_MATERIAL' | 'KITCHEN'>('RAW_MATERIAL')
+  const [activeTab, setActiveTab] = useState<'RAW_MATERIAL' | 'KITCHEN' | 'FINISHED_GOOD'>('RAW_MATERIAL')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
@@ -151,6 +151,12 @@ export default function ProductsPage() {
           >
             {t('kitchenProducts')}
           </button>
+          <button 
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'FINISHED_GOOD' ? 'text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/5' : 'text-slate-400 hover:text-slate-300 hover:bg-dark-800'}`}
+            onClick={() => setActiveTab('FINISHED_GOOD')}
+          >
+            Jarayon uchun (Tayyor)
+          </button>
         </div>
         <div className="p-4 flex gap-3">
           <div className="relative flex-1">
@@ -258,6 +264,13 @@ export default function ProductsPage() {
                 >
                   {t('forKitchen')}
                 </button>
+                <button
+                  type="button"
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${form.type === 'FINISHED_GOOD' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-300 hover:bg-dark-800'}`}
+                  onClick={() => setForm(f => ({ ...f, type: 'FINISHED_GOOD' }))}
+                >
+                  Jarayon uchun
+                </button>
               </div>
               
               <div className="col-span-2">
@@ -284,7 +297,7 @@ export default function ProductsPage() {
                 </>
               )}
 
-              <div className={form.type === 'KITCHEN' ? 'col-span-2' : ''}>
+              <div className={form.type !== 'RAW_MATERIAL' ? 'col-span-2' : ''}>
                 <label className="label">{t('unit')}</label>
                 <select className="input-field" value={form.unit}
                   onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}>
