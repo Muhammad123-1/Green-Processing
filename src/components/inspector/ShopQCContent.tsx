@@ -892,7 +892,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, '');
                     if(val.length === 2 && parseInt(val) > 0 && parseInt(val) <= 12) {
-                      e.target.nextElementSibling?.nextElementSibling?.focus();
+                      (e.target.nextElementSibling?.nextElementSibling as HTMLElement)?.focus();
                     }
                     e.target.value = val;
                   }}
