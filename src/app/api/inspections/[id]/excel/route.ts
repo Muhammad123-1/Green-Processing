@@ -60,6 +60,29 @@ export async function GET(_req: NextRequest, { params }: Params) {
         });
         destRow.height = srcRow.height;
       }
+
+      // Override headers based on SHEET_CONFIGS
+      const configObj = SHEET_CONFIGS[sheetNameStr];
+      if (configObj && configObj.customFields) {
+        const row1 = newWs.getRow(1);
+        const row2 = newWs.getRow(2);
+        
+        if (row2.getCell(3).value && typeof row2.getCell(3).value === 'string' && row2.getCell(3).value.toString().includes('СЫРЬЯ')) {
+          row2.getCell(3).value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
+        } else if (row1.getCell(3).value && typeof row1.getCell(3).value === 'string' && row1.getCell(3).value.toString().includes('СЫРЬЯ')) {
+          row1.getCell(3).value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
+        }
+
+        configObj.customFields.forEach((cf: any) => {
+          if (row2.getCell(cf.col).value) {
+            row2.getCell(cf.col).value = cf.label;
+          } else {
+            row1.getCell(cf.col).value = cf.label;
+          }
+        });
+        row1.commit();
+        row2.commit();
+      }
     }
 
     // Keep ONLY this newly selected/created worksheet to keep the file clean

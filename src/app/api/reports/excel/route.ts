@@ -60,9 +60,34 @@ export async function GET() {
       // Attempt to clone merges (if any exist in top rows)
       try {
         if (modelSheet.hasMerges) {
-          // It's hard to iterate merges perfectly in exceljs, we skip to avoid breaking
+          // Skip exact merge cloning for now to avoid breaking exceljs
         }
       } catch(e) {}
+
+      // Override headers based on SHEET_CONFIGS
+      const configObj = SHEET_CONFIGS[sheetName];
+      if (configObj && configObj.customFields) {
+        // Headers are usually in row 1 or 2. We'll update both just in case, or specifically row 2.
+        const row1 = newWs.getRow(1);
+        const row2 = newWs.getRow(2);
+        
+        // Update product name in header
+        if (row2.getCell(3).value && typeof row2.getCell(3).value === 'string' && row2.getCell(3).value.toString().includes('СЫРЬЯ')) {
+          row2.getCell(3).value = `Наименование основного СЫРЬЯ - ${sheetName}`;
+        } else if (row1.getCell(3).value && typeof row1.getCell(3).value === 'string' && row1.getCell(3).value.toString().includes('СЫРЬЯ')) {
+          row1.getCell(3).value = `Наименование основного СЫРЬЯ - ${sheetName}`;
+        }
+
+        configObj.customFields.forEach((cf: any) => {
+          if (row2.getCell(cf.col).value) {
+            row2.getCell(cf.col).value = cf.label;
+          } else {
+            row1.getCell(cf.col).value = cf.label;
+          }
+        });
+        row1.commit();
+        row2.commit();
+      }
       
       return newWs;
     }

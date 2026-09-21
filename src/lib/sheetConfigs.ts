@@ -18,106 +18,118 @@ export const SHEET_CONFIGS: Record<string, SheetConfig> = {
       21: 'quantitySklad', 22: 'quantityTseh', 23: 'rejectActNumber', 24: 'rejectDate', 25: 'inspector'
     },
     customFields: [
-      { col: 8, key: 'struktura', label: 'Tuzilishi', default: 'Листья салата плотные, сочные с хрустящей структурой' },
-      { col: 9, key: 'rangi', label: 'Rangi', default: 'От светло-желтого до светло-зеленого и насыщенно-зеленого' },
-      { col: 10, key: 'tam', label: 'Ta\'m va hid', default: 'Вкус, запах свежий, свойственный данному сорту' },
-      { col: 11, key: 'oksidlanish', label: 'Ichki oksidlanish', default: 'Отсутствует' },
-      { col: 12, key: 'hasharot', label: 'Hasharotlar izi', default: 'Отсутствует' },
-      { col: 13, key: 'nuqsonlar', label: 'Kasallik va chirish', default: 'Отсутствует' },
-      { col: 14, key: 'ozagi', label: 'O\'zagi', default: 'В разрезе кочерыжка ровная, не более 3 см' },
-      { col: 15, key: 'zichligi', label: 'Ichki zichligi', default: 'Средней плотности' },
-      { col: 16, key: 'olchami', label: 'O\'lchami', default: 'Диаметр не менее 12 см' },
-      { col: 17, key: 'qoplovchi', label: 'Qoplovchi barglari', default: 'Удалены' },
-      { col: 18, key: 'shikastlanish', label: 'Mexanik shikastlanish', default: 'Отсутствует' }
+      { col: 8, key: 'struktura', label: 'Структура: Листья салата плотные, сочные с хрустящей структурой', default: 'да' },
+      { col: 9, key: 'rangi', label: 'Цвет листьев от светло-желтого до светло-зеленого и насыщенно-зеленого', default: 'да' },
+      { col: 10, key: 'tam', label: 'Вкус, запах свежий, свойственный данному сорту, без постороннего вкуса и запаха', default: 'да' },
+      { col: 11, key: 'oksidlanish', label: 'Внутреннее окисление (порозовение)', default: 'отсутствует' },
+      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные ими места', default: 'отсутствует' },
+      { col: 13, key: 'nuqsonlar', label: 'Слизь, разложение, поражение болезнями и гниль, грязь и другие чужеродные материалы, увядание; признаки некроза, высушивания, перфорации листьев, подморожения, потемневший, пожелтевший или обесцветившийся продукт, избыточная влага', default: 'нет' },
+      { col: 14, key: 'ozagi', label: 'В разрезе кочерыжка ровная, не более 3 см высотой без прорастания в стрелку', default: 'да' },
+      { col: 15, key: 'zichligi', label: 'В разрезе плотность средней плотности', default: 'да' },
+      { col: 16, key: 'olchami', label: 'Диаметр кочана-не менее 12 см, Минимальный вес кочана-с ноября до марта-не менее 300 г, с апреля до октября-не менее 350г.', default: 'да' },
+      { col: 17, key: 'qoplovchi', label: 'Удаленными покровными листьями темно-зеленого цвета', default: 'да' },
+      { col: 18, key: 'shikastlanish', label: 'Отсутствие механические повреждения', default: 'отсутствует' }
     ]
   },
   'ТОМАТ': {
     standardFields: {
       1: 'auto-number', 2: 'date', 3: 'productName', 4: 'supplierName', 5: 'temperature',
       6: 'packagingCondition', 7: 'certificate', 19: 'batchNumber', 20: 'statusText',
-      21: 'quantitySklad', 22: 'quantityTseh', 23: 'rejectActNumber', 24: 'rejectDate', 25: 'inspector'
+      21: 'quantitySklad', 22: 'quantityTseh', 23: 'rejectDate', 24: 'rejectActNumber', 25: 'inspector', 26: 'price'
     },
     customFields: [
-      { col: 8, key: 'konsistensiya', label: 'Tuzilishi', default: 'Томаты упругие, неперезрелые, сочные' },
-      { col: 9, key: 'rangi', label: 'Rangi', default: 'Цвет светло-красный и красный' },
-      { col: 10, key: 'tam', label: 'Ta\'m va hid', default: 'Вкус, запах свежий' },
-      { col: 11, key: 'olchami', label: 'O\'lchami', default: 'От 6,0 до 7,0 см' },
-      { col: 12, key: 'hasharot', label: 'Hasharotlar izi', default: 'Отсутствует' },
-      { col: 13, key: 'nuqsonlar', label: 'Chirish va shilimshiq', default: 'Отсутствует' },
-      { col: 14, key: 'ezilgan', label: 'Ezilganlik (pachoq)', default: 'Отсутствует' },
-      { col: 15, key: 'bitgan_yoriq', label: 'Bitib ketgan yoriqlar', default: 'Отсутствует' },
-      { col: 16, key: 'yoriqlar', label: 'Yoriqlar', default: 'Отсутствует' },
-      { col: 17, key: 'qadoqlash', label: 'Bir qator joylanganmi', default: 'Да' },
-      { col: 18, key: 'shikastlanish', label: 'Mexanik shikastlanish', default: 'Отсутствует' }
+      { col: 8, key: 'konsistensiya', label: 'Консистенция: томаты упругие,', default: 'да' },
+      { col: 9, key: 'rangi', label: 'Цвет светло-красный и красный', default: 'красный' },
+      { col: 10, key: 'tam', label: 'Вкус, запах свежий, свойственный', default: 'да' },
+      { col: 11, key: 'olchami', label: 'Размер плодов по наибольшему', default: '6-7 см' },
+      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные', default: 'отсутствует' },
+      { col: 13, key: 'nuqsonlar', label: 'Слизь, разложение, поражение болезнями и гниль, грязь и другие', default: 'нет' },
+      { col: 14, key: 'ezilgan', label: 'Плоды с легкими нажимами от тары,', default: 'нет' },
+      { col: 15, key: 'bitgan_yoriq', label: 'С зарубцевавшимися трещинами', default: 'не имеется' },
+      { col: 16, key: 'yoriqlar', label: 'Плоды с трещинами', default: 'нет' },
+      { col: 17, key: 'qadoqlash', label: 'Упакованные в один ряд', default: 'да' },
+      { col: 18, key: 'shikastlanish', label: 'Отсутствие механические', default: 'отсутствует' }
     ]
   },
   'ЛУК БЕЛЫЙ': {
     standardFields: {
       1: 'auto-number', 2: 'date', 3: 'productName', 4: 'supplierName', 5: 'temperature',
-      6: 'packagingCondition', 7: 'certificate', 18: 'batchNumber', 19: 'statusText',
-      20: 'quantitySklad', 21: 'quantityTseh', 22: 'rejectActNumber', 23: 'rejectDate', 24: 'inspector'
+      6: 'packagingCondition', 7: 'certificate', 19: 'batchNumber', 20: 'statusText',
+      21: 'quantitySklad', 22: 'quantityTseh', 23: 'rejectDate', 24: 'rejectActNumber', 25: 'inspector', 26: 'price'
     },
     customFields: [
-      { col: 8, key: 'konsistensiya', label: 'Консистенция: хрустящий, крепкий...', default: 'да' },
-      { col: 9, key: 'rangi', label: 'Цвет: однородный, белый, светло зеленый', default: 'соответствует' },
-      { col: 10, key: 'tam', label: 'Вкус, запах: свежий, свойственный сорту', default: 'да' },
-      { col: 11, key: 'olchami', label: 'Размер плодов от 5,0 до 6,0 см', default: 'да' },
-      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные места', default: 'отсутствует' },
-      { col: 13, key: 'nuqsonlar', label: 'Слизь, разложение, поражение болезнями и гниль...', default: 'нет' },
-      { col: 14, key: 'qora_doglar', label: 'Луковицы с черными пятнами', default: 'нет' },
-      { col: 15, key: 'yalangochlangan', label: 'Оголенные от верхних чешуй', default: 'нет' },
-      { col: 16, key: 'okargan', label: 'Открывшаяся луковица (стрелка)', default: 'нет' },
-      { col: 17, key: 'qoshaloq', label: 'Двойные луковицы', default: 'не обнаружено' },
-      { col: 18, key: 'shikastlanish', label: 'Механические повреждения', default: 'нет' }
+      { col: 8, key: 'konsistensiya', label: 'Консистенция: хрустящий, крепкий с сочной волокнистой структурой', default: 'да' },
+      { col: 9, key: 'rangi', label: 'Цвет: однородный по окраске, белый, светло зеленый', default: 'соответствует' },
+      { col: 10, key: 'tam', label: 'Вкус, запах свежий, свойственный данному сорту, без постороннего его вкуса и запаха', default: 'да' },
+      { col: 11, key: 'olchami', label: 'Размер плодов по наибольшему поперечному диаметру должен составлять от 5,0 до 6,0 см', default: 'да' },
+      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные ими места', default: 'отсутствует' },
+      { col: 13, key: 'nuqsonlar', label: 'Слизь, разложение, поражение болезнями и гниль, грязь и другие чужеродные материалы', default: 'нет' },
+      { col: 14, key: 'qora_doglar', label: 'Луковицы с черными пятнами, затрагивающими только внешний слой рубашки и занимающих более 50% или...', default: 'нет' },
+      { col: 15, key: 'yalangochlangan', label: 'Оголенные от верхних защитных чешуй', default: 'нет' },
+      { col: 16, key: 'okargan', label: 'Открывшаяся луковица, выпустившая ростки (стрелку)', default: 'нет' },
+      { col: 17, key: 'qoshaloq', label: 'Двойные луковицы, не покрытые одной рубашкой или покрытые одной рубашкой, но...', default: 'не обнаружено' },
+      { col: 18, key: 'shikastlanish', label: 'Отсутствие механические повреждения', default: 'нет' }
     ]
   },
   'КАПУСТА БЕЛОКОЧАННАЯ': {
     standardFields: {
       1: 'auto-number', 2: 'date', 3: 'productName', 4: 'supplierName', 5: 'temperature',
-      6: 'packagingCondition', 7: 'certificate', 18: 'batchNumber', 19: 'statusText',
-      20: 'quantitySklad', 21: 'quantityTseh', 22: 'rejectActNumber', 23: 'rejectDate', 24: 'inspector'
+      6: 'packagingCondition', 7: 'certificate', 19: 'batchNumber', 20: 'statusText',
+      21: 'quantitySklad', 22: 'quantityTseh', 23: 'rejectDate', 24: 'rejectActNumber', 25: 'inspector', 26: 'price'
     },
     customFields: [
-      { col: 8, key: 'konsistensiya', label: 'Консистенция: сочная, плотная', default: 'да' },
-      { col: 9, key: 'rangi', label: 'Цвет: от белого до светло-зеленого', default: 'да' },
-      { col: 10, key: 'tam', label: 'Вкус, запах: свежий, свойственный сорту', default: 'да' },
-      { col: 11, key: 'tozalangan', label: 'Зачистка кочана: зачищены до плотно облегающих листьев', default: 'да' },
-      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные места', default: 'отсутствует' },
-      { col: 13, key: 'kesilganda_struktura', label: 'В разрезе: структура плотная, без полостей', default: 'да' },
+      { col: 8, key: 'konsistensiya', label: 'Консистенция: сочная, плотная, соответствующая консистенции вида овощей, входящих в состав смеси', default: 'да' },
+      { col: 9, key: 'rangi', label: 'Цвет: окраска листьев от белого до светло- зеленого', default: 'да' },
+      { col: 10, key: 'tam', label: 'Вкус, запах свежий, свойственный данному сорту, без постороннего его вкуса и запаха', default: 'да' },
+      { col: 11, key: 'tozalangan', label: 'Зачистка кочана: кочаны должны быть зачищены до плотно облегающих их зеленых или белых листьев...', default: 'да' },
+      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные ими места', default: 'отсутствует' },
+      { col: 13, key: 'kesilganda_struktura', label: 'В разрезе: структура плотная, без полостей, без потемнений, без признаков прорастания, без механических повреждений и наличия вредителей', default: 'да' },
       { col: 14, key: 'eski_yoki_osgan', label: 'Капуста старая с желтыми листьями или Проросшая', default: 'нет' },
       { col: 15, key: 'kesilganda_zichlik', label: 'В разрезе плотность средней плотности', default: 'да' },
-      { col: 16, key: 'vazni', label: 'Масса кочана', default: 'соответствует' },
-      { col: 17, key: 'zichligi', label: 'Плотность кочана: плотные или менее плотные', default: 'да' },
-      { col: 18, key: 'shikastlanish', label: 'Механические повреждения', default: 'нет' }
+      { col: 16, key: 'vazni', label: 'Масса качана: для раннеспелой - 0,4-0,6: для среднеспелой, среднепоздней и позднеспелой: 1,0', default: 'соответствует' },
+      { col: 17, key: 'zichligi', label: 'Плотность кочана: плотные или менее плотные, но не рыхлые', default: 'да' },
+      { col: 18, key: 'shikastlanish', label: 'Отсутствие механические повреждения', default: 'нет' }
     ]
   },
   'МОРКОВЬ': {
     standardFields: {
       1: 'auto-number', 2: 'date', 3: 'productName', 4: 'supplierName', 5: 'temperature',
-      6: 'packagingCondition', 7: 'certificate', 18: 'batchNumber', 19: 'statusText',
-      20: 'quantitySklad', 21: 'quantityTseh', 22: 'rejectActNumber', 23: 'rejectDate', 24: 'inspector'
+      6: 'packagingCondition', 7: 'certificate', 19: 'batchNumber', 20: 'statusText',
+      21: 'quantitySklad', 22: 'quantityTseh', 23: 'rejectDate', 24: 'rejectActNumber', 25: 'inspector', 26: 'price'
     },
     customFields: [
-      { col: 8, key: 'konsistensiya', label: 'Консистенция: мякоть плотная, хрустящая', default: 'да' },
-      { col: 9, key: 'rangi', label: 'Цвет: оранжевая или желтая', default: 'да' },
-      { col: 10, key: 'tam', label: 'Вкус, запах: свежий', default: 'да' },
-      { col: 11, key: 'soligan', label: 'Морковь увядшая, морщинистая, запаренная', default: 'отсутствует' },
-      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные места', default: 'отсутствует' },
-      { col: 13, key: 'nuqsonlar', label: 'Слизь, разложение, поражение болезнями и гниль, грязь...', default: 'нет' },
-      { col: 14, key: 'olchami', label: 'Размер по наибольшему диаметру 3-4 см, длина средняя', default: 'да' },
-      { col: 15, key: 'xunuk', label: 'Наличие «уродливых» плодов', default: 'не имеется' },
-      { col: 16, key: 'kesilganda_struktura', label: 'В разрезе: структура плотная, мякоть не повреждена', default: 'да' },
+      { col: 8, key: 'konsistensiya', label: 'Консистенция: мякоть доброкачественная, плотная, хрустящая, сочная, на разрезе оранжевого цвета', default: 'да' },
+      { col: 9, key: 'rangi', label: 'Цвет должна иметь оранжевую или желтую окраску в зависимости от особенности', default: 'да' },
+      { col: 10, key: 'tam', label: 'Вкус, запах свежий, свойственный данному сорту, без постороннего вкуса и запаха', default: 'да' },
+      { col: 11, key: 'soligan', label: 'Морковь увядшая, морщинистая, запаренная, с признаками увядания (усыхания', default: 'отсутствует' },
+      { col: 12, key: 'hasharot', label: 'Следы насекомых и пораженные ими места', default: 'отсутствует' },
+      { col: 13, key: 'nuqsonlar', label: 'Слизь, разложение, поражение болезнями и гниль, грязь и другие чужеродные материалы, увядание; признаки некроза, высушивания, перфорации лист...', default: 'нет' },
+      { col: 14, key: 'xunuk', label: 'Наличие «уродливых» плодов', default: 'не имеется' },
+      { col: 15, key: 'olchami', label: 'Размер по наибольшему диаметру 3-4 см, длина средняя', default: 'да' },
+      { col: 16, key: 'kesilganda_struktura', label: 'В разрезе: структура плотная, мякоть не повреждена, без полостей, без потемнений', default: 'да' },
       { col: 17, key: 'yoriq', label: 'Треснутая с открытой сердцевиной', default: 'не имеется' },
-      { col: 18, key: 'shikastlanish', label: 'Механические повреждения', default: 'нет' }
+      { col: 18, key: 'shikastlanish', label: 'Отсутствие механические повреждения', default: 'нет' }
     ]
   },
   'ЛИМОН': {
     standardFields: {
       1: 'auto-number', 2: 'date', 3: 'productName', 4: 'supplierName', 5: 'temperature',
-      6: 'packagingCondition', 7: 'certificate', 8: 'batchNumber', 9: 'statusText',
-      10: 'quantitySklad', 11: 'rejectActNumber', 12: 'inspector'
+      6: 'packagingCondition', 7: 'certificate', 19: 'batchNumber', 20: 'statusText',
+      21: 'quantitySklad', 22: 'quantityTseh', 23: 'rejectDate', 24: 'rejectActNumber', 25: 'inspector', 26: 'price'
     },
-    customFields: []
+    customFields: [
+      { col: 8, key: 'konsistensiya', label: 'Консистенция (упругая, сочная)', default: 'да' },
+      { col: 9, key: 'rangi', label: 'Цвет (желтый, однородный)', default: 'да' },
+      { col: 10, key: 'tam', label: 'Вкус, запах (свойственный)', default: 'да' },
+      { col: 11, key: 'shikastlanish1', label: 'Отсутствие повреждений (механических)', default: 'отсутствует' },
+      { col: 12, key: 'hasharot', label: 'Следы насекомых', default: 'отсутствует' },
+      { col: 13, key: 'nuqsonlar', label: 'Слизь, гниль, поражения', default: 'нет' },
+      { col: 14, key: 'muzlagan', label: 'Подмороженность / увядание', default: 'нет' },
+      { col: 15, key: 'yoriq', label: 'Трещины и дефекты', default: 'не имеется' },
+      { col: 16, key: 'qadoqlash', label: 'Качество упаковки / калибровка', default: 'да' },
+      { col: 17, key: 'tozalik', label: 'Отсутствие грязи', default: 'да' },
+      { col: 18, key: 'shikastlanish2', label: 'Отсутствие иных повреждений', default: 'не имеется' }
+    ]
   },
   'ГОФРОЯЩИК': {
     standardFields: {
