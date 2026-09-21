@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 
 // Routes that don't require authentication
 const publicRoutes = ['/login']
+const publicPrefixes = ['/feedback']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -18,7 +19,8 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = !!sessionCookie
 
   // If user is not authenticated and trying to access a protected route
-  if (!isAuthenticated && !publicRoutes.includes(pathname)) {
+  const isPublicPrefix = publicPrefixes.some(prefix => pathname.startsWith(prefix))
+  if (!isAuthenticated && !publicRoutes.includes(pathname) && !isPublicPrefix) {
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }

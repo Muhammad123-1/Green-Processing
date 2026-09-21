@@ -1,5 +1,5 @@
-import ProductionContent from '@/components/production/ProductionContent'
+﻿import KitchenContent from '@/components/kitchen/KitchenContent'
 
 export default function KitchenPage() {
-  return <ProductionContent isKitchen={true} />
+  return <KitchenContent />
 }

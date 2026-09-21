@@ -81,7 +81,7 @@ export default function DashboardContent() {
     )
   }
 
-  const today = new Date().toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'uz-UZ', {
+  const today = new Date().toLocaleDateString(lang.includes('ru') ? 'ru-RU' : 'uz-UZ', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -213,7 +213,7 @@ export default function DashboardContent() {
                   <tr key={item.id} className="table-row">
                     <td className="font-mono text-blue-400 font-medium">{item.actNumber}</td>
                     <td className="text-slate-300">
-                      {new Date(item.inspectionDate).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'uz-UZ')}
+                      {new Date(item.inspectionDate).toLocaleDateString(lang.includes('ru') ? 'ru-RU' : 'uz-UZ')}
                     </td>
                     <td className="text-slate-200">{item.supplier.name}</td>
                     <td className="text-slate-200">{item.product.name}</td>

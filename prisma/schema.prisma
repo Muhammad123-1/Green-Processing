@@ -128,26 +128,44 @@ model WarehouseZone {
 }
 
 model InventoryBatch {
-  id             Int      @id @default(autoincrement())
-  productId      Int
-  batchNumber    String   @unique
-  warehouseId    Int?
-  zoneId         Int?
-  quantity       Float
-  cost           Float?
-  receivedAt     DateTime @default(now())
-  expirationDate DateTime?
-  qcStatus       String   @default("PENDING") // PENDING, APPROVED, REJECTED, QUARANTINE
-  version        Int      @default(1) // For Optimistic Concurrency Control
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                  Int      @id @default(autoincrement())
+  productId           Int
+  batchNumber         String   @unique
+  warehouseId         Int?
+  zoneId              Int?
+  quantity            Float
+  cost                Float?
+  receivedAt          DateTime @default(now())
+  expirationDate      DateTime?
+  qcStatus            String   @default("PENDING") // PENDING, APPROVED, REJECTED, QUARANTINE
+  version             Int      @default(1) // For Optimistic Concurrency Control
 
-  product        Product         @relation(fields: [productId], references: [id])
-  warehouse      Warehouse?      @relation(fields: [warehouseId], references: [id])
-  zone           WarehouseZone?  @relation(fields: [zoneId], references: [id])
-  transactions   InventoryTransaction[]
-  degustations   DegustationLog[]
-  transfers      StockTransfer[]
+  // Traceability: Postavshik va kirish ma'lumotlari
+  supplierBatchNumber String?  // Postavshikning o'z partiya raqami
+  certificateNumber   String?  // Sertifikat raqami
+  arrivalTemperature  Float?   // Kelgan vaqtdagi harorat (°C)
+  arrivalPhotoUrl     String?  // Kelish paytidagi surat
+  inspectionId        Int?     // Qaysi Inspection (akt) orqali kirgan
+  supplierId          Int?     // Qaysi ta'minotchidan
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  product             Product         @relation(fields: [productId], references: [id])
+  warehouse           Warehouse?      @relation(fields: [warehouseId], references: [id])
+  zone                WarehouseZone?  @relation(fields: [zoneId], references: [id])
+  transactions        InventoryTransaction[]
+  degustations        DegustationLog[]
+  transfers           StockTransfer[]
+
+  // Traceability relations
+  supplier            Supplier?               @relation(fields: [supplierId], references: [id])
+  productionInputs    ProductionBatchInput[]  @relation("BatchUsedInProduction")
+  reagentUsages       ReagentUsageLog[]       @relation("ReagentBatch")
+  processTemps        ProcessTemperatureLog[] @relation("ProcessTemp")
+  salesItems          SalesOrderItem[]        @relation("SalesBatch")
+  shipments           ShippingLog[]           @relation("ShipmentBatch")
+  defects             DefectLog[]             @relation("DefectBatch")
 }
 
 model InventoryTransaction {
@@ -236,7 +254,7 @@ model ProductionOrder {
   plannedOutput     Float
   actualOutput      Float?
   yieldPercent      Float?   // Chiqish normasi foizi (masalan 94.5%)
-  rawBatchCode      String?  // Xomashyo partiya kodi (Traceability)
+  rawBatchCode      String?  // Xomashyo partiya kodi (Traceability) — legacy
   finishedBatchCode String?  // Tayyor mahsulot partiya kodi
   lineName          String?  // Masalan: "1-Liniya: Salat Yuvish va Kesish"
   supervisorName    String?  // Sex nazoratchisi FIO
@@ -244,10 +262,20 @@ model ProductionOrder {
   notes             String?
   startedAt         DateTime?
   endedAt           DateTime?
+
+  // Traceability: Tayyor mahsulot partiyasi va ishchi identifikatsiyasi
+  outputBatchId     Int?     // Tayyor mahsulot InventoryBatch.id
+  workerPinCode     String?  // Ishchi identifikatsiyasi (pin-kod yoki ID karta)
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   recipe            Recipe   @relation(fields: [recipeId], references: [id])
+
+  // Traceability relations
+  batchInputs       ProductionBatchInput[]
+  reagentUsages     ReagentUsageLog[]
+  processTemps      ProcessTemperatureLog[]
 }
 
 model DefectLog {
@@ -255,6 +283,7 @@ model DefectLog {
   defectNumber  String   @unique
   productId     Int
   batchNumber   String?
+  batchId       Int?     // Traceability: InventoryBatch FK
   supplierId    Int?
   location      String   @default("INSPECTION") // INSPECTION, WAREHOUSE, WORKSHOP, KITCHEN
   defectType    String   // ROTTEN, FOREIGN_OBJECT, TEMPERATURE_ABUSE, EXPIRED, MECHANICAL_DAMAGE, PACKAGING_DEFECT, OTHER
@@ -269,8 +298,9 @@ model DefectLog {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  product       Product   @relation(fields: [productId], references: [id])
-  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  product       Product         @relation(fields: [productId], references: [id])
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  batch         InventoryBatch? @relation("DefectBatch", fields: [batchId], references: [id])
 
   @@index([productId])
   @@index([supplierId])
@@ -353,6 +383,7 @@ model Supplier {
   inspections    Inspection[]
   orders         Order[]
   defects        DefectLog[]
+  inventoryBatches InventoryBatch[]
   purchaseOrders PurchaseOrder[]
 }
 
@@ -764,8 +795,13 @@ model SalesOrderItem {
   totalPrice   Float
   discount     Float?   @default(0)
 
-  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
-  product      Product    @relation(fields: [productId], references: [id])
+  // Traceability
+  batchId      Int?
+  batchNumber  String?
+
+  salesOrder   SalesOrder      @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  product      Product         @relation(fields: [productId], references: [id])
+  batch        InventoryBatch? @relation("SalesBatch", fields: [batchId], references: [id])
 }
 
 model CrmActivity {
@@ -963,7 +999,15 @@ model ShippingLog {
   receiverName     String?
   senderName       String?
   correctiveAction String?
+  
+  // Traceability
+  batchId          Int?
+  batchNumber      String?
+  productionOrderId Int?
+
   createdAt        DateTime @default(now())
+
+  batch            InventoryBatch? @relation("ShipmentBatch", fields: [batchId], references: [id])
 }
 
 // -----------------------------------------------------------------------------
@@ -989,4 +1033,101 @@ model CustomRecord {
   createdAt  DateTime @default(now())
 
   template   CustomTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// 11. OSHXONA — OVQAT JURNALI VA BAHOLASH
+// -----------------------------------------------------------------------------
+
+model MealLog {
+  id          Int      @id @default(autoincrement())
+  mealName    String                         // Ovqat nomi
+  cookedDate  String                         // YYYY-MM-DD
+  shift       String   @default("1-Smena")   // 1-Smena / 2-Smena
+  preparedBy  String                         // Povar ismi
+  ingredients String   @db.Text             // JSON: [{name, qty, unit}]
+  notes       String?
+  servings    Int?                           // Necha kishiga
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cookedDate])
+}
+
+model MealFeedback {
+  id        Int      @id @default(autoincrement())
+  rating    String                           // GOOD | AVERAGE | BAD
+  comment   String?
+  date      String                           // YYYY-MM-DD (qaysi kun uchun)
+  mealName  String?                          // Qaysi ovqat haqida
+  createdAt DateTime @default(now())
+  // IP yoki user ma'lumotlari saqlanmaydi — to'liq anonim
+
+  @@index([date])
+  @@index([rating])
+}
+
+// -----------------------------------------------------------------------------
+// 12. KUZATUVCHANLIK ZANJIRI (Traceability: Batch Lineage & Temperature)
+// -----------------------------------------------------------------------------
+
+model ProductionBatchInput {
+  id                Int             @id @default(autoincrement())
+  productionOrderId Int
+  inputBatchId      Int             // qaysi xomashyo partiyasidan
+  quantityUsed      Float           // necha kg/dona/litr ishlatildi
+  unit              String          @default("kg")
+  usedAt            DateTime        @default(now())
+  usedByName        String?         // kim ishlatdi
+  usedById          Int?            // User.id
+  notes             String?
+
+  productionOrder   ProductionOrder @relation(fields: [productionOrderId], references: [id])
+  inputBatch        InventoryBatch  @relation("BatchUsedInProduction", fields: [inputBatchId], references: [id])
+
+  createdAt         DateTime        @default(now())
+}
+
+model ReagentUsageLog {
+  id                Int             @id @default(autoincrement())
+  productionOrderId Int?
+  reagentBatchId    Int?            // InventoryBatch dan
+  reagentName       String          // "Xlor", "Tuz", "Sirka kislota"
+  reagentBatchCode  String?         // tashqi partiya raqami
+  quantityUsed      Float           // gramm/ml
+  unit              String          @default("g")
+  appliedByName     String          // "Xasanov M."
+  appliedById       Int?
+  appliedAt         DateTime        @default(now())
+  processStep       String?         // "Yuvish", "Xlorlash", "Upakovka"
+  temperatureAtUse  Float?          // reagent qo'shilgan paytdagi harorat
+  photoUrl          String?         // isbotlovchi rasm
+
+  productionOrder   ProductionOrder? @relation(fields: [productionOrderId], references: [id])
+  reagentBatch      InventoryBatch?  @relation("ReagentBatch", fields: [reagentBatchId], references: [id])
+
+  createdAt         DateTime        @default(now())
+}
+
+model ProcessTemperatureLog {
+  id                Int             @id @default(autoincrement())
+  productionOrderId Int?
+  batchId           Int?            // InventoryBatch
+  processStep       String          // "SKLADDAN_CHIQISH", "ZAGATOVKA", "YUVISH", "UPAKOVKA", "SAQLASH"
+  temperatureC      Float           // haqiqiy harorat
+  minExpected       Float?          // norma: min
+  maxExpected       Float?          // norma: max
+  isWithinNorm      Boolean         @default(true)
+  measuredByName    String
+  measuredById      Int?
+  measuredAt        DateTime        @default(now())
+  photoUrl          String?         // termometr rasmi (inson omili uchun)
+  isAutomatic       Boolean         @default(false) // IoT datchik yoki qo'lda
+  deviceId          String?         // datchik ID si (kelajak uchun)
+  notes             String?
+
+  productionOrder   ProductionOrder? @relation(fields: [productionOrderId], references: [id])
+  batch             InventoryBatch?  @relation("ProcessTemp", fields: [batchId], references: [id])
+
+  createdAt         DateTime        @default(now())
 }

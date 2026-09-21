@@ -36,6 +36,7 @@ import { useSidebar } from '@/store/sidebar'
 
 const navSections = [
   {
+    key: 'navMain',
     title: 'Asosiy',
     items: [
       { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
@@ -43,6 +44,7 @@ const navSections = [
     ]
   },
   {
+    key: 'navQC',
     title: 'Sifat Nazorati (QC)',
     items: [
       { key: 'newInspection', href: '/inspections/new', icon: ClipboardList, highlight: true, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
@@ -52,9 +54,11 @@ const navSections = [
     ]
   },
   {
+    key: 'navWarehouse',
     title: 'Ombor va Ishlab chiqarish',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'traceability', href: '/dashboard/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'arrivals', href: '/arrivals', icon: ArrowDownToLine, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
       { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
@@ -63,6 +67,7 @@ const navSections = [
     ]
   },
   {
+    key: 'navTrade',
     title: "Savdo va Ta'minot",
     items: [
       { key: 'sales', href: '/sales', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SALES'] },
@@ -73,6 +78,7 @@ const navSections = [
     ]
   },
   {
+    key: 'navFinance',
     title: 'Moliya va HR',
     items: [
       { key: 'accounting', href: '/accounting', icon: DollarSign, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'] },
@@ -81,6 +87,7 @@ const navSections = [
     ]
   },
   {
+    key: 'navSystem',
     title: 'Tizim va Boshqaruv',
     items: [
       { key: 'customTables', href: '/custom-tables', icon: Table2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
@@ -96,7 +103,7 @@ const navSections = [
 
 export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { userRole?: string, userName?: string }) {
   const pathname = usePathname()
-  const { t, lang } = useLanguage()
+  const { t, formatDual } = useLanguage()
   const { isOpen, close } = useSidebar()
 
   return (
@@ -119,7 +126,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
           </div>
           <div>
             <h1 className="text-sm font-bold text-white leading-tight">Green Processing</h1>
-            <p className="text-xs text-slate-500 leading-tight">{lang === 'ru' ? 'ERP Система' : lang === 'en' ? 'ERP System' : 'ERP Tizimi'}</p>
+            <p className="text-xs text-slate-500 leading-tight">{formatDual('ERP Tizimi', 'ERP Система', 'ERP System')}</p>
           </div>
         </div>
       </div>
@@ -141,7 +148,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
           return (
             <div key={idx} className="space-y-1">
               <h3 className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                {section.title}
+                {t(section.key, section.title)}
               </h3>
               {visibleItems.map((item) => {
                 const Icon = item.icon

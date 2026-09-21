@@ -2,7 +2,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-export type Language = 'uz' | 'ru' | 'en'
+export type Language = 'uz_ru' | 'uz_en' | 'ru_en' | 'uz' | 'ru' | 'en'
+
+export interface LanguageOption {
+  id: Language
+  label: string
+  short: string
+  badge: string
+}
+
+export const LANGUAGE_OPTIONS: LanguageOption[] = [
+  { id: 'uz_ru', label: "O'zbekcha / Русский", short: 'UZ / RU', badge: 'O\'zbek / Rus' },
+  { id: 'uz_en', label: "O'zbekcha / English", short: 'UZ / EN', badge: 'O\'zbek / Ingliz' },
+  { id: 'ru_en', label: "Русский / English", short: 'RU / EN', badge: 'Rus / Ingliz' },
+]
 
 const translations = {
   uz: {
@@ -21,6 +34,7 @@ const translations = {
     backup: 'Zaxira nusxa',
     settings: 'Sozlamalar',
     warehouse: 'Omborxona',
+    traceability: 'Pasport',
     arrivals: 'Kirimlar',
     director: 'Direktor paneli',
     hr: 'Kadrlar',
@@ -39,26 +53,26 @@ const translations = {
     rejected: 'Rad etildi',
     conditional: 'Shartli qabul',
     recentInspections: 'Oxirgi aktlar',
-    recentDesc: 'Eng so\'nggi qayd etilgan aktlar',
-    seeAll: 'Barchasini ko\'rish',
-    noInspections: 'Hozircha aktlar yo\'q',
+    recentDesc: "Eng so'nggi qayd etilgan aktlar",
+    seeAll: "Barchasini ko'rish",
+    noInspections: "Hozircha aktlar yo'q",
     createOne: 'Yangi akt yaratish uchun yuqoridagi tugmani bosing',
     actNumber: 'Akt raqami',
     date: 'Sana',
     quantity: 'Miqdor',
     status: 'Holat',
-    view: 'Ko\'rish',
+    view: "Ko'rish",
     quickNewAct: 'Yangi akt',
     quickNewActDesc: 'Kiruvchi xomashyo akti',
     quickProd: 'Mahsulotlar',
-    quickProdDesc: 'Mahsulot qo\'shish/tahrirlash',
-    quickSupp: 'Ta\'minotchilar',
-    quickSuppDesc: 'Ta\'minotchi ma\'lumotlari',
-    dashboardSub: 'Umumiy ko\'rinish va statistika',
+    quickProdDesc: "Mahsulot qo'shish/tahrirlash",
+    quickSupp: "Ta'minotchilar",
+    quickSuppDesc: "Ta'minotchi ma'lumotlari",
+    dashboardSub: "Umumiy ko'rinish va statistika",
     inspectionsSub: 'Barcha kiruvchi xomashyo aktlari',
     newInspectionSub: 'Kiruvchi xomashyo qabul akti',
-    arrivalsSub: 'Qabul qilingan mahsulotlar ro\'yxati (Приход)',
-    suppliersSub: 'Ta\'minotchi kompaniyalar ro\'yxati',
+    arrivalsSub: "Qabul qilingan mahsulotlar ro'yxati (Приход)",
+    suppliersSub: "Ta'minotchi kompaniyalar ro'yxati",
     ordersSub: 'Snabjenets va kutilayotgan xaridlar',
     monitoring: 'Mijoz Buyurtmalari (Zayavka)',
     monitoringSub: 'Mijozlardan kelgan kunlik zayavkalar svodkasi',
@@ -70,11 +84,24 @@ const translations = {
     shopQCSub: 'FSSC 22000, KKT-1 Dez-r, Kalibrovka, Degustatsiya va barcha operatsion jurnallar',
     kitchenSub: 'Xodimlar uchun ovqat pishirishga keladigan mahsulotlar',
     productsSub: 'Mahsulot katalogi va parametrlari',
-    reportsSub: 'Statistika va tahlil ma\'lumotlari',
+    reportsSub: "Statistika va tahlil ma'lumotlari",
     usersSub: 'Tizim foydalanuvchilari va ruxsatlar',
-    backupSub: 'Ma\'lumotlar bazasini zaxiralash',
+    backupSub: "Ma'lumotlar bazasini zaxiralash",
     settingsSub: 'Tizim va shablon sozlamalari',
     chat: 'Xodimlar Chati',
+    customTables: 'Dinamik Jadvallar',
+    customTablesSub: 'Excel shablonlar va maxsus jadvallar',
+    directorSub: 'Direktor umumiy monitoringi va tahlili',
+    logisticsSub: 'Yuk tashish va transport logistikasi',
+    accountingSub: 'Moliya va hisob-kitoblar',
+    hrSub: "Xodimlar va tibbiy daftarchalar",
+    securitySub: 'KPP va xavfsizlik nazorati',
+    navMain: 'Asosiy',
+    navQC: 'Sifat Nazorati (QC)',
+    navWarehouse: 'Ombor va Ishlab chiqarish',
+    navTrade: "Savdo va Ta'minot",
+    navFinance: 'Moliya va HR',
+    navSystem: 'Tizim va Boshqaruv',
     price: 'Narxi',
     name: 'Nomi',
     code: 'Kod',
@@ -90,7 +117,7 @@ const translations = {
     actProducts: 'Akt mahsulotlari (Xomashyo)',
     kitchenProducts: 'Oshxona mahsulotlari',
     pending: 'Kutilmoqda',
-    delivered: 'Qabul qilindi',
+    delivered: 'Yetkazildi',
     cancelled: 'Rad etildi',
     editOrder: 'Buyurtmani tahrirlash',
     newOrder: 'Yangi buyurtma',
@@ -101,7 +128,10 @@ const translations = {
     cancel: 'Bekor qilish',
     confirm: 'Tasdiqlash',
     uploadImage: 'Rasm yuklash',
-    noOrders: 'Hali buyurtmalar yo\'q',
+    noOrders: "Hali buyurtmalar yo'q",
+    loading: 'Yuklanmoqda...',
+    accept: 'Qabul qilish',
+    confirmReceiptDesc: "Mahsulot qabul qilinganligini tasdiqlash uchun uning haqiqiy rasmlarini yuklang.",
     clickToUploadImages: 'Rasmlar yuklash uchun bosing',
     productImages: 'Mahsulot rasmlari',
     saving: 'Saqlanmoqda...',
@@ -111,7 +141,23 @@ const translations = {
     defaultPackaging: 'Standart qadoqlash',
     defaultConclusion: 'Standart xulosa',
     minTemp: 'Min harorat (°C)',
-    maxTemp: 'Max harorat (°C)'
+    maxTemp: 'Max harorat (°C)',
+    filter: 'Filtr',
+    all: 'Barchasi',
+    export: 'Eksport',
+    import: 'Import',
+    add: "Qo'shish",
+    edit: 'Tahrirlash',
+    delete: "O'chirish",
+    details: 'Tafsilotlar',
+    success: 'Muvaffaqiyatli',
+    error: 'Xatolik',
+    warning: 'Ogohlantirish',
+    info: "Ma'lumot",
+    yes: 'Ha',
+    no: "Yo'q",
+    close: 'Yopish',
+    back: 'Orqaga'
   },
   ru: {
     sales: 'Продажи',
@@ -129,7 +175,8 @@ const translations = {
     backup: 'Резерв. копии',
     settings: 'Настройки',
     warehouse: 'Склад',
-    arrivals: 'Приход',
+    traceability: 'Паспорт',
+    arrivals: 'Приходы',
     director: 'Панель Директора',
     hr: 'Отдел кадров',
     logistics: 'Логистика',
@@ -183,6 +230,19 @@ const translations = {
     backupSub: 'Резервное копирование базы данных',
     settingsSub: 'Настройки системы и шаблонов',
     chat: 'Чат сотрудников',
+    customTables: 'Динамические таблицы',
+    customTablesSub: 'Excel шаблоны и настраиваемые таблицы',
+    directorSub: 'Общий мониторинг и аналитика директора',
+    logisticsSub: 'Грузоперевозки и транспортная логистика',
+    accountingSub: 'Финансы и взаиморасчеты',
+    hrSub: 'Сотрудники и медицинские книжки',
+    securitySub: 'КПП и контроль безопасности',
+    navMain: 'Главное',
+    navQC: 'Контроль Качества (ОКК)',
+    navWarehouse: 'Склад и Производство',
+    navTrade: 'Продажи и Снабжение',
+    navFinance: 'Финансы и Кадры',
+    navSystem: 'Система и Управление',
     price: 'Цена',
     name: 'Наименование',
     code: 'Код',
@@ -222,7 +282,23 @@ const translations = {
     defaultPackaging: 'Стандартная упаковка',
     defaultConclusion: 'Стандартное заключение',
     minTemp: 'Мин температура (°C)',
-    maxTemp: 'Макс температура (°C)'
+    maxTemp: 'Макс температура (°C)',
+    filter: 'Фильтр',
+    all: 'Все',
+    export: 'Экспорт',
+    import: 'Импорт',
+    add: 'Добавить',
+    edit: 'Редактировать',
+    delete: 'Удалить',
+    details: 'Детали',
+    success: 'Успешно',
+    error: 'Ошибка',
+    warning: 'Внимание',
+    info: 'Информация',
+    yes: 'Да',
+    no: 'Нет',
+    close: 'Закрыть',
+    back: 'Назад'
   },
   en: {
     sales: 'Sales',
@@ -240,6 +316,7 @@ const translations = {
     backup: 'Backup',
     settings: 'Settings',
     warehouse: 'Warehouse',
+    traceability: 'Passport',
     arrivals: 'Arrivals',
     director: 'Director Dashboard',
     hr: 'HR',
@@ -294,6 +371,19 @@ const translations = {
     backupSub: 'Database backup',
     settingsSub: 'System and template settings',
     chat: 'Staff Chat',
+    customTables: 'Custom Tables',
+    customTablesSub: 'Excel templates and dynamic tables',
+    directorSub: 'Director monitoring and comprehensive analytics',
+    logisticsSub: 'Freight shipping and transport logistics',
+    accountingSub: 'Finance and accounting management',
+    hrSub: 'Human resources and medical records',
+    securitySub: 'Checkpoint and perimeter security',
+    navMain: 'Main',
+    navQC: 'Quality Control (QC)',
+    navWarehouse: 'Warehouse & Production',
+    navTrade: 'Sales & Supply',
+    navFinance: 'Finance & HR',
+    navSystem: 'System & Admin',
     price: 'Price',
     name: 'Name',
     code: 'Code',
@@ -333,7 +423,23 @@ const translations = {
     defaultPackaging: 'Default packaging',
     defaultConclusion: 'Default conclusion',
     minTemp: 'Min temp (°C)',
-    maxTemp: 'Max temp (°C)'
+    maxTemp: 'Max temp (°C)',
+    filter: 'Filter',
+    all: 'All',
+    export: 'Export',
+    import: 'Import',
+    add: 'Add',
+    edit: 'Edit',
+    delete: 'Delete',
+    details: 'Details',
+    success: 'Success',
+    error: 'Error',
+    warning: 'Warning',
+    info: 'Information',
+    yes: 'Yes',
+    no: 'No',
+    close: 'Close',
+    back: 'Back'
   }
 }
 
@@ -343,18 +449,39 @@ type TranslationKey = keyof Translations
 interface LanguageContextType {
   lang: Language
   setLang: (lang: Language) => void
-  t: (key: TranslationKey | string) => string
+  t: (key: TranslationKey | string, fallback?: string) => string
+  formatDual: (uz: string, ru: string, en?: string) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
+function combineTexts(text1: string | undefined, text2: string | undefined, fallback: string): string {
+  const t1 = (text1 || '').trim()
+  const t2 = (text2 || '').trim()
+  if (!t1 && !t2) return fallback
+  if (t1 && !t2) return t1
+  if (!t1 && t2) return t2
+  if (t1.toLowerCase() === t2.toLowerCase()) return t1
+  return `${t1} / ${t2}`
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Language>('uz')
+  const [lang, setLang] = useState<Language>('uz_ru')
 
   useEffect(() => {
     const saved = localStorage.getItem('language') as Language
-    if (saved && (saved === 'uz' || saved === 'ru' || saved === 'en')) {
+    if (saved && (saved === 'uz_ru' || saved === 'uz_en' || saved === 'ru_en')) {
       setLang(saved)
+    } else if (saved === 'uz') {
+      setLang('uz_ru')
+    } else if (saved === 'ru') {
+      setLang('ru_en')
+    } else if (saved === 'en') {
+      setLang('uz_en')
+    } else {
+      // Boshlang'ich holat: sayt ochilishi bilan o'zbek/rus tilida bo'ladi
+      setLang('uz_ru')
+      localStorage.setItem('language', 'uz_ru')
     }
   }, [])
 
@@ -363,12 +490,56 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('language', newLang)
   }
 
-  const t = (key: TranslationKey | string): string => {
-    return (translations[lang] as Record<string, string>)[key as string] || (key as string)
+  const t = (key: TranslationKey | string, fallback?: string): string => {
+    const k = key as string
+    const fallbackVal = fallback || k
+
+    if (lang === 'uz_ru') {
+      const uzVal = (translations.uz as Record<string, string>)[k]
+      const ruVal = (translations.ru as Record<string, string>)[k]
+      return combineTexts(uzVal, ruVal, fallbackVal)
+    }
+
+    if (lang === 'uz_en') {
+      const uzVal = (translations.uz as Record<string, string>)[k]
+      const enVal = (translations.en as Record<string, string>)[k]
+      return combineTexts(uzVal, enVal, fallbackVal)
+    }
+
+    if (lang === 'ru_en') {
+      const ruVal = (translations.ru as Record<string, string>)[k]
+      const enVal = (translations.en as Record<string, string>)[k]
+      return combineTexts(ruVal, enVal, fallbackVal)
+    }
+
+    if (lang === 'uz') {
+      return (translations.uz as Record<string, string>)[k] || fallbackVal
+    }
+
+    if (lang === 'ru') {
+      return (translations.ru as Record<string, string>)[k] || fallbackVal
+    }
+
+    if (lang === 'en') {
+      return (translations.en as Record<string, string>)[k] || fallbackVal
+    }
+
+    return fallbackVal
+  }
+
+  const formatDual = (uz: string, ru: string, en?: string): string => {
+    const enText = en || ru
+    if (lang === 'uz_ru') return combineTexts(uz, ru, uz)
+    if (lang === 'uz_en') return combineTexts(uz, enText, uz)
+    if (lang === 'ru_en') return combineTexts(ru, enText, ru)
+    if (lang === 'uz') return uz
+    if (lang === 'ru') return ru
+    if (lang === 'en') return enText
+    return combineTexts(uz, ru, uz)
   }
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t, formatDual }}>
       {children}
     </LanguageContext.Provider>
   )

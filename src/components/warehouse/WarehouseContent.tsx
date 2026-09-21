@@ -22,7 +22,8 @@ import {
   Send,
   Building2,
   X,
-  History
+  History,
+  QrCode
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -161,6 +162,7 @@ type InventoryBatch = {
   quantity: number
   receivedAt: string
   expirationDate: string | null
+  zone?: { id: number, name: string } | null
 }
 
 type ProductInventory = {
@@ -241,11 +243,43 @@ export default function WarehouseContent() {
 
   const [tempForm, setTempForm] = useState(initialTempForm)
 
+  const [zones, setZones] = useState<any[]>([])
+  const [showZoneModal, setShowZoneModal] = useState<{batchId: number, currentZoneId: number | null} | null>(null)
+
   useEffect(() => {
     fetchInventory()
     fetchTempLogs()
     fetchTransfers()
+    fetchZones()
   }, [])
+
+  async function fetchZones() {
+    try {
+      const res = await fetch('/api/warehouse/zones')
+      if (res.ok) setZones(await res.json())
+    } catch {
+      console.error('Fetch zones error')
+    }
+  }
+
+  async function handleUpdateZone(batchId: number, zoneId: number | null) {
+    try {
+      const res = await fetch('/api/warehouse/zones', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batchId, zoneId })
+      })
+      if (res.ok) {
+        toast.success("Zona o'zgartirildi")
+        setShowZoneModal(null)
+        fetchInventory()
+      } else {
+        toast.error('Xatolik')
+      }
+    } catch {
+      toast.error('Tarmoq xatosi')
+    }
+  }
 
   async function fetchInventory() {
     try {
@@ -345,6 +379,42 @@ export default function WarehouseContent() {
       notes: ''
     })
     setShowTransferModal(true)
+  }
+
+  // Handle QR Code Print
+  async function handlePrintQR(batchId: number) {
+    try {
+      const res = await fetch('/api/batches/qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batchId })
+      })
+      if (res.ok) {
+        const { qrDataUrl, printData } = await res.json()
+        const printWindow = window.open('', '_blank')
+        if (printWindow) {
+          printWindow.document.write(`
+            <html>
+              <head><title>Print QR</title></head>
+              <body style="text-align:center; font-family:sans-serif; margin-top:20px;">
+                <h3>Partiya: ${printData.lot}</h3>
+                <p>Mahsulot: ${printData.prod}</p>
+                <p>Ta'minotchi: ${printData.sup}</p>
+                <p>Muddati: ${printData.exp}</p>
+                <img src="${qrDataUrl}" width="200" height="200" />
+                <br />
+                <button onclick="window.print()" style="margin-top:20px; padding:10px 20px; font-size:16px;">Chop Etish</button>
+              </body>
+            </html>
+          `)
+          printWindow.document.close()
+        }
+      } else {
+        toast.error('QR yaratishda xatolik')
+      }
+    } catch {
+      toast.error('Tarmoq xatosi')
+    }
   }
 
   // Handle Excel Download for Warehouse Temp Log
@@ -680,8 +750,21 @@ export default function WarehouseContent() {
                             <div className="flex flex-col gap-1.5 max-w-[200px]">
                               {item.batches.slice(0, 3).map((b) => (
                                 <div key={b.id} className="flex items-center justify-between bg-dark-800 border border-dark-700 rounded-lg px-2.5 py-1 text-xs">
-                                  <span className="font-mono font-bold text-slate-400">#{b.batchNumber}</span>
-                                  <span className="font-black text-indigo-400 bg-indigo-500/10 px-1.5 rounded">{b.quantity} {item.unit}</span>
+                                  <div className="flex flex-col">
+                                    <span className="font-mono font-bold text-slate-400">#{b.batchNumber}</span>
+                                    <button 
+                                      onClick={() => setShowZoneModal({batchId: b.id, currentZoneId: b.zone?.id || null})} 
+                                      className="text-[10px] text-emerald-400 hover:text-emerald-300 text-left"
+                                    >
+                                      {b.zone ? b.zone.name : "+ Zona qo'shish"}
+                                    </button>
+                                  </div>
+                                  <div className="flex gap-1 items-center">
+                                    <button onClick={() => handlePrintQR(b.id)} className="text-slate-400 hover:text-white p-0.5" title="Print QR">
+                                      <QrCode size={12} />
+                                    </button>
+                                    <span className="font-black text-indigo-400 bg-indigo-500/10 px-1.5 rounded">{b.quantity} {item.unit}</span>
+                                  </div>
                                 </div>
                               ))}
                               {item.batches.length > 3 && (
@@ -1082,6 +1165,35 @@ export default function WarehouseContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ZONE */}
+      {showZoneModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter" onClick={() => setShowZoneModal(null)}>
+          <div className="bg-dark-900 rounded-3xl w-full max-w-sm shadow-2xl border border-dark-700 flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2"><Package size={20} className="text-emerald-400" /> Zona Tanlash</h2>
+              <button onClick={() => setShowZoneModal(null)} className="text-slate-400 hover:text-white p-1 rounded-lg"><X size={20} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Omborxonadagi Zona</label>
+                <select 
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none text-white text-sm"
+                  value={showZoneModal.currentZoneId || ''}
+                  onChange={e => setShowZoneModal({...showZoneModal, currentZoneId: e.target.value ? Number(e.target.value) : null})}
+                >
+                  <option value="">Belgilash...</option>
+                  {zones.map(z => <option key={z.id} value={z.id}>{z.name} ({z.warehouse.name})</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-dark-800/50 flex justify-end gap-3 border-t border-dark-800">
+              <button onClick={() => setShowZoneModal(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-dark-700">Bekor qilish</button>
+              <button onClick={() => handleUpdateZone(showZoneModal.batchId, showZoneModal.currentZoneId)} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all">Saqlash</button>
+            </div>
           </div>
         </div>
       )}

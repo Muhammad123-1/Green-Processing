@@ -273,9 +273,42 @@ const DICT = {
   }
 }
 
+function getDualDict(lang: string) {
+  const uz = DICT.uz
+  const ru = DICT.ru
+  const en = DICT.en
+
+  if (lang === 'uz') return uz
+  if (lang === 'ru') return ru
+  if (lang === 'en') return en
+
+  let lang1 = uz
+  let lang2 = ru
+
+  if (lang === 'uz_en') {
+    lang1 = uz
+    lang2 = en
+  } else if (lang === 'ru_en') {
+    lang1 = ru
+    lang2 = en
+  }
+
+  const combined: Record<string, string> = {}
+  for (const key of Object.keys(lang1)) {
+    const v1 = (lang1 as any)[key] || ''
+    const v2 = (lang2 as any)[key] || ''
+    if (v1 && v2 && v1.toLowerCase().trim() !== v2.toLowerCase().trim()) {
+      combined[key] = `${v1} / ${v2}`
+    } else {
+      combined[key] = v1 || v2
+    }
+  }
+  return combined as typeof DICT.uz
+}
+
 export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', isArchive = false }: { userRole?: string, userName?: string, isArchive?: boolean }) {
   const { lang } = useLanguage()
-  const d = DICT[lang as 'uz' | 'ru' | 'en'] || DICT.uz
+  const d = getDualDict(lang)
 
   const renderArchiveInfo = (createdAt: string, responsible: string) => {
     if (!createdAt) return null;
@@ -740,19 +773,19 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
               }`}>
                 {isInspector
-                  ? (lang === 'ru' ? '👷 Контролер Линии (Цех)' : '👷 Liniya Nazoratchisi (Sex)')
-                  : (lang === 'ru' ? '🛡️ Специалист ОКК' : '🛡️ Sifat Nazoratchisi')}
+                  ? (lang === 'uz_ru' ? '👷 Liniya Nazoratchisi / Контролер Линии' : lang === 'uz_en' ? '👷 Liniya Nazoratchisi / Line Inspector' : lang === 'ru_en' ? '👷 Контролер Линии / Line Inspector' : '👷 Liniya Nazoratchisi (Sex)')
+                  : (lang === 'uz_ru' ? '🛡️ Sifat Nazoratchisi / Специалист ОКК' : lang === 'uz_en' ? '🛡️ Sifat Nazoratchisi / QC Specialist' : lang === 'ru_en' ? '🛡️ Специалист ОКК / QC Specialist' : '🛡️ Sifat Nazoratchisi')}
               </span>
             </div>
             <h1 className="text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {isInspector
-                ? (lang === 'ru' ? 'Операционные Чек-листы Контролера Линии' : 'Liniya Nazoratchisi Operatsion Jurnallari')
-                : (lang === 'ru' ? 'Центр Контроля Качества & Аудит Журналов' : 'Sifat Nazorati Markazi')}
+                ? (lang === 'uz_ru' ? 'Liniya Nazoratchisi Jurnallari / Журналы Контролера' : lang === 'uz_en' ? 'Liniya Nazoratchisi Jurnallari / Line Inspector Journals' : lang === 'ru_en' ? 'Журналы Контролера / Line Inspector Journals' : 'Liniya Nazoratchisi Operatsion Jurnallari')
+                : (lang === 'uz_ru' ? 'Sifat Nazorati Markazi / Центр Контроля Качества' : lang === 'uz_en' ? 'Sifat Nazorati Markazi / Quality Control Center' : lang === 'ru_en' ? 'Центр Контроля Качества / Quality Control Center' : 'Sifat Nazorati Markazi')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-snug line-clamp-1 font-semibold">
               {isInspector
-                ? (lang === 'ru' ? 'Ввод текущих измерений смены под контролем Главного специалиста ОКК' : 'Bosh Sifat Nazoratchisi nazorati ostida joriy smena o\'lchovlarini kiritish')
-                : (lang === 'ru' ? 'Аудит и утверждение журналов контролеров линии' : 'Liniya nazoratchilari jurnallarini audit qilish va tasdiqlash')}
+                ? (lang.includes('ru') ? 'Ввод текущих измерений смены под контролем Главного специалиста ОКК' : 'Bosh Sifat Nazoratchisi nazorati ostida joriy smena o\'lchovlarini kiritish')
+                : (lang.includes('ru') ? 'Аудит и утверждение журналов контролеров линии' : 'Liniya nazoratchilari jurnallarini audit qilish va tasdiqlash')}
             </p>
           </div>
         </div>
@@ -767,16 +800,6 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
             {exporting ? <Loader2 size={15} className="animate-spin" /> : <FileSpreadsheet size={15} />}
             <span>{d.excelBtn}</span>
           </button>
-
-          {!isArchive && (
-            <button 
-              onClick={() => setModalType(activeTab)}
-              className={`flex items-center gap-2 text-white px-4 py-2 rounded-xl shadow-lg transition-all text-xs font-bold active:scale-95 ${activeItem.btnColor}`}
-            >
-              <Plus size={15} />
-              <span>{d.addRecordBtn}</span>
-            </button>
-          )}
         </div>
       </div>
 

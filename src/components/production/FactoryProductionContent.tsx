@@ -187,7 +187,10 @@ export default function FactoryProductionContent() {
     actualOutput: '',
     lineName: '1-Liniya: Salat Yuvish & Kesish',
     supervisorName: '',
-    notes: ''
+    workerPinCode: '',
+    notes: '',
+    reagentUsages: [] as { reagentName: string, quantityUsed: string, unit: string }[],
+    processTemps: [] as { processStep: string, temperatureC: string }[]
   })
 
   const [processForm, setProcessForm] = useState({
@@ -298,7 +301,10 @@ export default function FactoryProductionContent() {
           actualOutput: '',
           lineName: '1-Liniya: Salat Yuvish & Kesish',
           supervisorName: '',
-          notes: ''
+          workerPinCode: '',
+          notes: '',
+          reagentUsages: [],
+          processTemps: []
         })
         fetchData()
       } else {
@@ -718,6 +724,61 @@ export default function FactoryProductionContent() {
                     value={prodForm.supervisorName}
                     onChange={e => setProdForm(prev => ({...prev, supervisorName: e.target.value}))}
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Ishchi identifikatsiyasi (PIN) <span className="text-indigo-400">*</span></label>
+                <input 
+                  type="text" 
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2 text-white text-sm"
+                  placeholder="PIN kod yoki ID karta raqami"
+                  value={prodForm.workerPinCode}
+                  onChange={e => setProdForm(prev => ({...prev, workerPinCode: e.target.value}))}
+                  required
+                />
+              </div>
+
+              {/* Reagents */}
+              <div className="bg-dark-800/50 p-4 rounded-xl border border-dark-700">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-xs font-bold text-slate-300 uppercase">Reagentlar (Xlor, Tuz va h.k.)</label>
+                  <button type="button" onClick={() => setProdForm(p => ({...p, reagentUsages: [...p.reagentUsages, {reagentName: '', quantityUsed: '', unit: 'g'}]}))} className="text-indigo-400 text-xs flex items-center gap-1 hover:text-indigo-300">
+                    <Plus size={14} /> Qo'shish
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
+                  {prodForm.reagentUsages.map((r, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <input type="text" placeholder="Reagent nomi" className="flex-1 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={r.reagentName} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].reagentName = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }} />
+                      <input type="number" placeholder="Miqdor" className="w-20 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={r.quantityUsed} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].quantityUsed = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }} />
+                      <select className="bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={r.unit} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].unit = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }}>
+                        <option value="g">g</option>
+                        <option value="ml">ml</option>
+                        <option value="kg">kg</option>
+                      </select>
+                      <button type="button" onClick={() => setProdForm(p => ({...p, reagentUsages: p.reagentUsages.filter((_, i) => i !== idx)}))} className="text-red-400 hover:text-red-300 p-1"><X size={14} /></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Temps */}
+              <div className="bg-dark-800/50 p-4 rounded-xl border border-dark-700">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-xs font-bold text-slate-300 uppercase">Jarayon Harorati</label>
+                  <button type="button" onClick={() => setProdForm(p => ({...p, processTemps: [...p.processTemps, {processStep: '', temperatureC: ''}]}))} className="text-indigo-400 text-xs flex items-center gap-1 hover:text-indigo-300">
+                    <Plus size={14} /> Qo'shish
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
+                  {prodForm.processTemps.map((t, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <input type="text" placeholder="Jarayon (Masalan: Yuvish)" className="flex-1 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={t.processStep} onChange={e => { const newArr = [...prodForm.processTemps]; newArr[idx].processStep = e.target.value; setProdForm(p => ({...p, processTemps: newArr})) }} />
+                      <input type="number" step="0.1" placeholder="°C" className="w-24 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={t.temperatureC} onChange={e => { const newArr = [...prodForm.processTemps]; newArr[idx].temperatureC = e.target.value; setProdForm(p => ({...p, processTemps: newArr})) }} />
+                      <button type="button" onClick={() => setProdForm(p => ({...p, processTemps: p.processTemps.filter((_, i) => i !== idx)}))} className="text-red-400 hover:text-red-300 p-1"><X size={14} /></button>
+                    </div>
+                  ))}
                 </div>
               </div>
 

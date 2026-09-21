@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
       actualOutput,
       lineName = '1-Sex / Asosiy Liniya',
       supervisorName = session.name || 'Sex Nazoratchisi',
-      notes
+      notes,
+      workerPinCode, // NEW
+      reagentUsages = [], // NEW
+      processTemps = [] // NEW
     } = body
 
     if (!recipeId || !plannedOutput || parseFloat(plannedOutput) <= 0) {
@@ -45,6 +48,8 @@ export async function POST(request: NextRequest) {
     // We will do this inside a transaction to ensure atomic deducts
     const result = await prisma.$transaction(async (tx) => {
       
+      const batchInputsData: any[] = []
+
       // Step A: Check and deduct inventory for each ingredient (FEFO)
       for (const ingredient of recipe.ingredients) {
         const requiredQty = ingredient.requiredQty * ratio
@@ -95,6 +100,15 @@ export async function POST(request: NextRequest) {
             }
           })
 
+          // Record Traceability Input
+          batchInputsData.push({
+            inputBatchId: batch.id,
+            quantityUsed: deductAmt,
+            unit: ingredient.inputProduct.unit,
+            usedByName: session.name,
+            usedById: session.id
+          })
+
           remainingToDeduct -= deductAmt
         }
       }
@@ -106,7 +120,17 @@ export async function POST(request: NextRequest) {
       const finishedBatchCode = `FG-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(orderCount + 1).padStart(3, '0')}`
       const rawBatchCode = Array.from(new Set(usedBatchCodes)).join(', ')
 
-      // Step C: Create Production Order record
+      // Step C: Create finished product batch into inventory (FINISHED GOODS)
+      const outputBatch = await tx.inventoryBatch.create({
+        data: {
+          productId: recipe.outputProductId,
+          batchNumber: finishedBatchCode,
+          quantity: actOutputQty,
+          qcStatus: 'APPROVED'
+        }
+      })
+
+      // Step D: Create Production Order record with full traceability relations
       const order = await tx.productionOrder.create({
         data: {
           orderNumber,
@@ -116,22 +140,41 @@ export async function POST(request: NextRequest) {
           yieldPercent: parseFloat(yieldPercent.toFixed(1)),
           rawBatchCode,
           finishedBatchCode,
+          outputBatchId: outputBatch.id, // NEW: Link to batch
           lineName,
           supervisorName,
+          workerPinCode, // NEW
           status: 'COMPLETED',
           notes: notes || null,
           startedAt: new Date(),
-          endedAt: new Date()
-        }
-      })
-
-      // Step D: Add finished product batch into inventory (FINISHED GOODS)
-      await tx.inventoryBatch.create({
-        data: {
-          productId: recipe.outputProductId,
-          batchNumber: finishedBatchCode,
-          quantity: actOutputQty,
-          qcStatus: 'APPROVED'
+          endedAt: new Date(),
+          
+          // NEW: Create all traceability relations in one go
+          batchInputs: {
+            create: batchInputsData
+          },
+          reagentUsages: {
+            create: reagentUsages.map((ru: any) => ({
+              reagentName: ru.reagentName,
+              reagentBatchCode: ru.reagentBatchCode,
+              quantityUsed: ru.quantityUsed,
+              unit: ru.unit || 'g',
+              appliedByName: ru.appliedByName || session.name,
+              processStep: ru.processStep,
+              temperatureAtUse: ru.temperatureAtUse
+            }))
+          },
+          processTemps: {
+            create: processTemps.map((pt: any) => ({
+              batchId: pt.batchId,
+              processStep: pt.processStep,
+              temperatureC: pt.temperatureC,
+              measuredByName: pt.measuredByName || session.name,
+              measuredById: session.id,
+              isWithinNorm: pt.isWithinNorm ?? true,
+              photoUrl: pt.photoUrl
+            }))
+          }
         }
       })
 
