@@ -67,10 +67,16 @@ export async function GET(_req: NextRequest, { params }: Params) {
         const row1 = newWs.getRow(1);
         const row2 = newWs.getRow(2);
         
-        if (row2.getCell(3).value && typeof row2.getCell(3).value === 'string' && row2.getCell(3).value.toString().includes('СЫРЬЯ')) {
-          row2.getCell(3).value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
-        } else if (row1.getCell(3).value && typeof row1.getCell(3).value === 'string' && row1.getCell(3).value.toString().includes('СЫРЬЯ')) {
-          row1.getCell(3).value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
+        const cell2 = row2.getCell(3);
+        const val2 = cell2.value ? cell2.value.toString() : '';
+        if (val2.includes('СЫРЬЯ')) {
+          cell2.value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
+        } else {
+          const cell1 = row1.getCell(3);
+          const val1 = cell1.value ? cell1.value.toString() : '';
+          if (val1.includes('СЫРЬЯ')) {
+            cell1.value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
+          }
         }
 
         configObj.customFields.forEach((cf: any) => {
