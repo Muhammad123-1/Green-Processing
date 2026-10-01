@@ -26,6 +26,7 @@ const translations = {
     orders: 'Buyurtmalar',
     production: 'Ishlab chiqarish',
     kitchen: 'Xodimlar oshxonasi',
+      surveys: 'So\'rovnomalar',
     products: 'Mahsulotlar',
     suppliers: "Ta'minotchilar",
     supervisors: 'Nazoratchilar',

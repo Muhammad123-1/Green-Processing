@@ -343,6 +343,8 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
   // Modal State
   const [modalType, setModalType] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [viewingRecord, setViewingRecord] = useState<any | null>(null)
 
   // Forms
   const [fsscForm, setFsscForm] = useState({
@@ -517,163 +519,72 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
     }
   }
 
+  const handleEditRecord = (type: string, record: any) => {
+    setEditingId(record.id)
+    setModalType(type)
+    if (type === 'fssc') setFsscForm({ ...record })
+    if (type === 'disinfection') setDezForm({ ...record })
+    if (type === 'calibration') setCalForm({ ...record })
+    if (type === 'degustation') setDegForm({ ...record })
+    if (type === 'temperature') setProcForm({ ...record })
+    if (type === 'receiving') setRcvForm({ ...record })
+  }
+
+  const submitForm = async (endpoint: string, table: string, formState: any, successMsg: string) => {
+    setSaving(true)
+    try {
+      const url = editingId ? '/api/inspector/update-log' : `/api/inspector/${endpoint}`
+      const method = editingId ? 'PUT' : 'POST'
+      
+      const payload = { ...formState }
+      delete payload.id
+      delete payload.createdAt
+      delete payload.updatedAt
+      delete payload.inspector
+      delete payload.batch
+      delete payload.qcInspector
+      delete payload.updatedBy
+
+      const body = editingId ? JSON.stringify({ table, id: editingId, payload }) : JSON.stringify(payload)
+      
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body })
+      if (res.ok) {
+        toast.success(successMsg)
+        setModalType(null)
+        setEditingId(null)
+        fetchAllData()
+      } else {
+        const err = await res.json()
+        toast.error(err.error || 'Error')
+      }
+    } catch {
+      toast.error('Network Error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleSaveFssc(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inspector/fssc-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fsscForm)
-      })
-      if (res.ok) {
-        toast.success(lang === 'ru' ? 'Запись FSSC 22000 сохранена' : lang === 'en' ? 'FSSC 22000 log saved' : 'FSSC 22000 qadoqlash nazorati saqlandi!')
-        setModalType(null)
-        fetchAllData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || 'Error')
-      }
-    } catch {
-      toast.error('Network Error')
-    } finally {
-      setSaving(false)
-    }
+    e.preventDefault(); submitForm('fssc-logs', 'FsscQcLog', fsscForm, lang === 'ru' ? 'Запись FSSC 22000 сохранена' : 'FSSC 22000 qadoqlash nazorati saqlandi!');
   }
-
   async function handleSaveDez(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inspector/disinfection-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dezForm)
-      })
-      if (res.ok) {
-        toast.success(lang === 'ru' ? 'Запись ККТ-1 дезраствора сохранена' : lang === 'en' ? 'CCP-1 Disinfection log saved' : 'KKT-1 Dezinfeksiya eritmasi qaydi saqlandi!')
-        setModalType(null)
-        fetchAllData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || 'Error')
-      }
-    } catch {
-      toast.error('Network Error')
-    } finally {
-      setSaving(false)
-    }
+    e.preventDefault(); submitForm('disinfection-logs', 'DisinfectionLog', dezForm, lang === 'ru' ? 'Запись ККТ-1 дезраствора сохранена' : 'KKT-1 Dezinfeksiya eritmasi qaydi saqlandi!');
   }
-
   async function handleSaveCal(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inspector/calibration-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(calForm)
-      })
-      if (res.ok) {
-        toast.success(lang === 'ru' ? 'Запись калибровки сохранена' : lang === 'en' ? 'Calibration log saved' : 'Kalibrovka va tozalash qaydi saqlandi!')
-        setModalType(null)
-        fetchAllData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || 'Error')
-      }
-    } catch {
-      toast.error('Network Error')
-    } finally {
-      setSaving(false)
-    }
+    e.preventDefault(); submitForm('calibration-logs', 'CalibrationLog', calForm, lang === 'ru' ? 'Запись калибровки сохранена' : 'Kalibrovka va tozalash qaydi saqlandi!');
   }
-
   async function handleSaveDeg(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inspector/degustation-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(degForm)
-      })
-      if (res.ok) {
-        toast.success(lang === 'ru' ? 'Запись дегустации сохранена' : lang === 'en' ? 'Degustation log saved' : 'Degustatsiya & organoleptika qaydi saqlandi!')
-        setModalType(null)
-        fetchAllData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || 'Error')
-      }
-    } catch {
-      toast.error('Network Error')
-    } finally {
-      setSaving(false)
-    }
+    e.preventDefault(); submitForm('degustation-logs', 'DegustationLog', degForm, lang === 'ru' ? 'Запись дегустации сохранена' : 'Degustatsiya qaydi saqlandi!');
   }
-
   async function handleSaveProc(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inspector/process-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(procForm)
-      })
-      if (res.ok) {
-        toast.success(lang === 'ru' ? 'Запись температур цеха сохранена' : lang === 'en' ? 'Shop floor temp log saved' : 'Sex harorati qaydi saqlandi!')
-        setModalType(null)
-        fetchAllData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || 'Error')
-      }
-    } catch {
-      toast.error('Network Error')
-    } finally {
-      setSaving(false)
-    }
+    e.preventDefault(); submitForm('process-logs', 'ProcessQCLog', procForm, lang === 'ru' ? 'Запись температуры цеха сохранена' : 'Sex harorati qaydi saqlandi!');
   }
-
   async function handleSaveRcv(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const res = await fetch('/api/inspector/receiving-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rcvForm)
-      })
-      if (res.ok) {
-        toast.success(lang === 'ru' ? 'Акт приемки сырья сохранен' : lang === 'en' ? 'Raw material intake act saved' : 'Xomashyoni qabul qilish akti saqlandi!')
-        setModalType(null)
-        fetchAllData()
-      } else {
-        const err = await res.json()
-        toast.error(err.error || 'Error')
-      }
-    } catch {
-      toast.error('Network Error')
-    } finally {
-      setSaving(false)
-    }
+    e.preventDefault(); submitForm('receiving-logs', 'ReceivingLog', rcvForm, lang === 'ru' ? 'Акт приемки сырья сохранен' : 'Xomashyoni qabul qilish akti saqlandi!');
   }
 
-  async function handleDeleteRecord(endpoint: string, id: number) {
-    if (!confirm(d.deleteConfirm)) return
-    try {
-      const res = await fetch(`/api/inspector/${endpoint}?id=${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        toast.success('OK')
-        fetchAllData()
-      }
-    } catch {
-      toast.error('Error')
-    }
-  }
 
+  
   // Filter helper
   const filterList = (list: any[], fields: string[]) => {
     if (!searchQuery) return list
@@ -757,48 +668,34 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       
       {/* Top Header Card - Crisp Light & Dark Mode */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className={`w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center border shadow-sm dark:shadow-inner flex-shrink-0 ${
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
             isInspector 
-              ? 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30'
-              : 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30'
+              ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400'
+              : 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
           }`}>
-            {isInspector ? <ClipboardCheck size={26} /> : <ShieldCheck size={26} />}
+            {isInspector ? <ClipboardCheck size={22} /> : <ShieldCheck size={22} />}
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider border ${
-                isInspector
-                  ? 'bg-blue-100 text-blue-900 dark:bg-blue-500/20 dark:text-blue-300 border-blue-300 dark:border-blue-500/30'
-                  : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
-              }`}>
-                {isInspector
-                  ? (lang === 'uz_ru' ? '👷 Liniya Nazoratchisi / Контролер Линии' : lang === 'uz_en' ? '👷 Liniya Nazoratchisi / Line Inspector' : lang === 'ru_en' ? '👷 Контролер Линии / Line Inspector' : '👷 Liniya Nazoratchisi (Sex)')
-                  : (lang === 'uz_ru' ? '🛡️ Sifat Nazoratchisi / Специалист ОКК' : lang === 'uz_en' ? '🛡️ Sifat Nazoratchisi / QC Specialist' : lang === 'ru_en' ? '🛡️ Специалист ОКК / QC Specialist' : '🛡️ Sifat Nazoratchisi')}
-              </span>
-            </div>
-            <h1 className="text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">
               {isInspector
-                ? (lang === 'uz_ru' ? 'Liniya Nazoratchisi Jurnallari / Журналы Контролера' : lang === 'uz_en' ? 'Liniya Nazoratchisi Jurnallari / Line Inspector Journals' : lang === 'ru_en' ? 'Журналы Контролера / Line Inspector Journals' : 'Liniya Nazoratchisi Operatsion Jurnallari')
-                : (lang === 'uz_ru' ? 'Sifat Nazorati Markazi / Центр Контроля Качества' : lang === 'uz_en' ? 'Sifat Nazorati Markazi / Quality Control Center' : lang === 'ru_en' ? 'Центр Контроля Качества / Quality Control Center' : 'Sifat Nazorati Markazi')}
+                ? (lang === 'uz_ru' ? 'Nazoratchi Jurnallari / Журналы Контролера' : lang === 'uz_en' ? 'Nazoratchi Jurnallari / Inspector Journals' : lang === 'ru_en' ? 'Журналы Контролера / Inspector Journals' : 'Nazoratchi Jurnallari')
+                : (lang === 'uz_ru' ? 'Sifat Nazorati / Контроль Качества' : lang === 'uz_en' ? 'Sifat Nazorati / Quality Control' : lang === 'ru_en' ? 'Контроль Качества / Quality Control' : 'Sifat Nazorati')}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-snug line-clamp-1 font-semibold">
-              {isInspector
-                ? (lang.includes('ru') ? 'Ввод текущих измерений смены под контролем Главного специалиста ОКК' : 'Bosh Sifat Nazoratchisi nazorati ostida joriy smena o\'lchovlarini kiritish')
-                : (lang.includes('ru') ? 'Аудит и утверждение журналов контролеров линии' : 'Liniya nazoratchilari jurnallarini audit qilish va tasdiqlash')}
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              FSSC 22000 • {isInspector ? 'Smena o\'lchovlari' : 'Audit va tasdiqlash'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
+        <div className="flex items-center gap-2 self-start md:self-auto">
           <button 
             onClick={handleDownloadExcel}
             disabled={exporting}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 text-emerald-700 dark:bg-dark-800 dark:hover:bg-dark-700 dark:text-emerald-400 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-dark-600 transition-all text-xs font-bold shadow-sm active:scale-95"
-            title="Excel eksport"
+            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-dark-800 dark:hover:bg-dark-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
           >
-            {exporting ? <Loader2 size={15} className="animate-spin" /> : <FileSpreadsheet size={15} />}
-            <span>{d.excelBtn}</span>
+            {exporting ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
+            <span>Excel</span>
           </button>
         </div>
       </div>
@@ -807,18 +704,8 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       <div className="flex flex-col gap-5 items-start">
         
         {/* Top Column: Horizontal Checklist Navigation */}
-        <div className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-3 shadow-sm dark:shadow-xl">
-          <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-slate-100 dark:border-dark-750">
-            <span className="text-[11px] font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <SlidersHorizontal size={13} className="text-emerald-600 dark:text-emerald-400" />
-              {d.journalsMenuTitle}
-            </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 dark:bg-dark-800 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
-              6 / 6
-            </span>
-          </div>
-
-          <div className="flex overflow-x-auto gap-2 pb-1 hide-scrollbar">
+        <div className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-xl md:rounded-2xl px-2 py-2 shadow-sm dark:shadow-xl">
+          <div className="flex overflow-x-auto gap-1 hide-scrollbar">
               {checklistItems.map((item) => {
                 const Icon = item.icon
                 const isActive = activeTab === item.id
@@ -827,40 +714,21 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
-                    className={`min-w-[200px] flex-shrink-0 text-left p-2.5 rounded-xl md:rounded-2xl transition-all flex items-center gap-2.5 relative group ${
+                    className={`flex-shrink-0 text-left px-3 py-2 rounded-lg transition-all flex items-center gap-2 ${
                       isActive
-                        ? `${item.activeBg} shadow-lg shadow-black/20 border border-white/20`
-                        : 'bg-slate-50 hover:bg-slate-100/90 text-slate-800 dark:bg-dark-800/60 dark:hover:bg-dark-800 dark:text-slate-300 dark:hover:text-white border border-slate-200/80 dark:border-transparent hover:border-slate-300 dark:hover:border-dark-700'
+                        ? `${item.activeBg} text-white shadow-md`
+                        : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                    <Icon size={15} />
+                    <span className="font-medium text-xs whitespace-nowrap">{item.title.split('.')[1]?.split('(')[0]?.trim() || item.title}</span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
                       isActive 
-                        ? 'bg-white/20 text-white' 
-                        : 'bg-white dark:bg-dark-700 text-slate-700 dark:text-slate-400 shadow-sm border border-slate-200/60 dark:border-transparent group-hover:text-slate-900 dark:group-hover:text-white'
+                        ? 'bg-white/20' 
+                        : 'bg-slate-100 dark:bg-dark-700 text-slate-500 dark:text-slate-400'
                     }`}>
-                      <Icon size={16} />
-                    </div>
-
-                    <div className="flex-1 min-w-0 pr-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <span className={`font-bold text-xs leading-snug truncate ${
-                          isActive ? 'text-white' : 'text-slate-900 dark:text-white group-hover:text-slate-950 dark:group-hover:text-white'
-                        }`}>
-                          {item.title}
-                        </span>
-                        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md ${
-                          isActive 
-                            ? 'bg-black/30 text-white' 
-                            : 'bg-slate-200/80 text-slate-800 dark:bg-dark-700 dark:text-slate-400'
-                        }`}>
-                          {item.count}
-                        </span>
-                      </div>
-                    </div>
-
-                    {isActive && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse flex-shrink-0 absolute right-2" />
-                    )}
+                      {item.count}
+                    </span>
                   </button>
                 )
               })}
@@ -870,27 +738,17 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
         {/* Bottom Area: Search, Filter, Dedicated Add Button and Table */}
         <div className="w-full space-y-4">
           
-          {/* Header of Active Table + Filters + Dedicated Add Button */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 md:p-4 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 ${activeItem.activeBg}`}>
-                <activeItem.icon size={19} />
-              </div>
-              <div>
-                <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white leading-tight">{activeItem.title}</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{activeItem.desc} • <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{activeItem.count}</span> {d.totalEntries}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Custom Date Search */}
-              <div className="flex items-center bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-2 py-1 shadow-sm">
-                <Calendar size={14} className="text-emerald-500 dark:text-emerald-400 ml-1 mr-2" />
+          {/* Compact Filters + Add Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 px-3 py-2.5 rounded-xl shadow-sm dark:shadow-xl">
+            <div className="flex items-center gap-2 flex-wrap flex-1">
+              {/* Date Search */}
+              <div className="flex items-center bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg px-2 py-1">
+                <Calendar size={13} className="text-slate-400 mr-1.5" />
                 <input 
                   type="text" 
-                  placeholder="Kun" 
+                  placeholder="KK" 
                   maxLength={2}
-                  className="w-7 text-center text-xs font-bold bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+                  className="w-6 text-center text-xs bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, '');
                     if(val.length === 2 && parseInt(val) > 0 && parseInt(val) <= 31) {
@@ -906,12 +764,12 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   }}
                   id="search-day"
                 />
-                <span className="text-slate-300 dark:text-dark-600 font-medium text-xs">/</span>
+                <span className="text-slate-300 text-xs">/</span>
                 <input 
                   type="text" 
-                  placeholder="Oy" 
+                  placeholder="OO" 
                   maxLength={2}
-                  className="w-7 text-center text-xs font-bold bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+                  className="w-6 text-center text-xs bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, '');
                     if(val.length === 2 && parseInt(val) > 0 && parseInt(val) <= 12) {
@@ -927,12 +785,12 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   }}
                   id="search-month"
                 />
-                <span className="text-slate-300 dark:text-dark-600 font-medium text-xs">/</span>
+                <span className="text-slate-300 text-xs">/</span>
                 <input 
                   type="text" 
-                  placeholder="Yil" 
+                  placeholder="YYYY" 
                   maxLength={4}
-                  className="w-9 text-center text-xs font-bold bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
+                  className="w-9 text-center text-xs bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-300"
                   onChange={(e) => {
                     e.target.value = e.target.value.replace(/\D/g, '');
                   }}
@@ -947,19 +805,19 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 <button 
                   id="search-date-btn"
                   onClick={() => {
-                    const d = (document.getElementById('search-day') as HTMLInputElement)?.value;
+                    const d2 = (document.getElementById('search-day') as HTMLInputElement)?.value;
                     const m = (document.getElementById('search-month') as HTMLInputElement)?.value;
                     const y = (document.getElementById('search-year') as HTMLInputElement)?.value;
-                    if(d && m && y) {
-                      const formattedDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                    if(d2 && m && y) {
+                      const formattedDate = `${y}-${m.padStart(2, '0')}-${d2.padStart(2, '0')}`;
                       setFilterDate(formattedDate);
-                    } else if (!d && !m && !y) {
+                    } else if (!d2 && !m && !y) {
                       setFilterDate('');
                     }
                   }}
-                  className="bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded text-[10px] font-bold transition-colors ml-1"
+                  className="text-emerald-600 hover:text-emerald-500 p-0.5 ml-1 transition-colors"
                 >
-                  Qidirish
+                  <Search size={13} />
                 </button>
                 {filterDate && (
                   <button 
@@ -969,8 +827,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                       if(document.getElementById('search-month')) (document.getElementById('search-month') as HTMLInputElement).value = '';
                       if(document.getElementById('search-year')) (document.getElementById('search-year') as HTMLInputElement).value = '';
                     }}
-                    className="text-slate-400 hover:text-red-500 p-1 ml-1 transition-colors bg-slate-200 dark:bg-dark-700 rounded"
-                    title="Tozalash"
+                    className="text-slate-400 hover:text-red-500 p-0.5 ml-0.5 transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -978,26 +835,26 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               </div>
 
               {/* Live Search */}
-              <div className="relative flex-1 sm:w-48 md:w-56">
-                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="relative flex-1 min-w-[140px]">
+                <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text"
-                  placeholder={d.searchPlaceholder}
+                  placeholder="Qidirish..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-8 pr-2.5 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg pl-7 pr-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-400"
                 />
               </div>
-
-              {/* DEDICATED ADD DATA BUTTON RIGHT IN THE TABLE HEADER */}
-              <button 
-                onClick={() => setModalType(activeTab)}
-                className={`flex items-center gap-1.5 text-white px-3.5 py-1.5 md:py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex-shrink-0 ${activeItem.btnColor}`}
-              >
-                <Plus size={15} />
-                <span>{d.addRecordBtn}</span>
-              </button>
             </div>
+
+            {/* Add Button */}
+            <button 
+              onClick={() => setModalType(activeTab)}
+              className={`flex items-center gap-1.5 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0 ${activeItem.btnColor}`}
+            >
+              <Plus size={14} />
+              <span>Qo&apos;shish</span>
+            </button>
           </div>
 
           {/* Data Tables Container */}
@@ -1011,24 +868,21 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 text-xs font-black uppercase tracking-wider">
-                        <th className="p-3.5">{d.timeLine}</th>
-                        <th className="p-3.5">{d.productBatch}</th>
-                        <th className="p-3.5 text-center">{d.nomFact}</th>
-                        <th className="p-3.5 text-center">{d.deviation}</th>
-                        <th className="p-3.5 text-center">{d.seal}</th>
-                        <th className="p-3.5 text-center">{d.metal}</th>
-                        <th className="p-3.5 text-center">{d.label}</th>
-                        <th className="p-3.5 text-center">{d.status}</th>
-                        <th className="p-3.5">{d.responsible}</th>
-                        <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
+                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                        <th className="p-3 pl-4">Sana</th>
+                        <th className="p-3">Mahsulot</th>
+                        <th className="p-3 text-center">Vazn (g)</th>
+                        <th className="p-3 text-center">Og&apos;ish</th>
+                        <th className="p-3 text-center">Tekshiruvlar</th>
+                        <th className="p-3 text-center">Holat</th>
+                        <th className="p-3">Mas&apos;ul</th>
+                        <th className="p-3 text-right pr-4">{isArchive ? '' : ''}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
                       {filteredFssc.length === 0 ? (
                         <tr>
-                          <td colSpan={10} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                          <td colSpan={8} className="p-12 text-center text-slate-500 dark:text-slate-400">
                             <ClipboardCheck size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             {!isArchive && (
@@ -1044,58 +898,58 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                         </tr>
                       ) : (
                         filteredFssc.map(l => (
-                          <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-dark-800/30 transition-colors">
-                            <td className="p-3.5">
-                              <div className="font-bold text-slate-900 dark:text-white text-xs">{l.date} <span className="text-emerald-600 dark:text-emerald-400">{l.time}</span></div>
-                              <div className="text-[11px] text-slate-500 dark:text-slate-400">{l.lineName}</div>
+                          <tr key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/30 transition-colors">
+                            <td className="p-3 pl-4">
+                              <div className="font-semibold text-slate-900 dark:text-white text-xs">{l.date}</div>
+                              <div className="text-[10px] text-slate-400">{l.time} • {l.lineName}</div>
                             </td>
-                            <td className="p-3.5">
-                              <div className="font-bold text-slate-900 dark:text-white text-xs">{l.productName}</div>
-                              <div className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">{l.batchNumber}</div>
+                            <td className="p-3">
+                              <div className="font-semibold text-slate-900 dark:text-white text-xs">{l.productName}</div>
+                              <div className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">{l.batchNumber}</div>
                             </td>
-                            <td className="p-3.5 text-center font-mono text-xs">
-                              <span className="text-slate-500 dark:text-slate-400">{l.nominalWeight}g</span> / <span className="font-bold text-slate-900 dark:text-white">{l.actualWeight}g</span>
+                            <td className="p-3 text-center font-mono text-xs">
+                              <span className="text-slate-400">{l.nominalWeight}</span> / <span className="font-bold text-slate-900 dark:text-white">{l.actualWeight}</span>
                             </td>
-                            <td className="p-3.5 text-center font-mono text-xs">
-                              <span className={`px-2 py-0.5 rounded font-bold ${
+                            <td className="p-3 text-center">
+                              <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold font-mono ${
                                 Math.abs(l.weightDeviation) <= 10 
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20' 
-                                  : 'bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20'
+                                  ? 'text-emerald-600 dark:text-emerald-400' 
+                                  : 'text-red-600 dark:text-red-400'
                               }`}>
-                                {l.weightDeviation > 0 ? `+${l.weightDeviation}g` : `${l.weightDeviation}g`}
+                                {l.weightDeviation > 0 ? `+${l.weightDeviation}` : l.weightDeviation}g
                               </span>
                             </td>
-                            <td className="p-3.5 text-center text-xs font-bold">
-                              {l.sealIntegrityOk ? <span className="text-emerald-600 dark:text-emerald-400">{d.passed}</span> : <span className="text-red-600 dark:text-red-400">{d.failed}</span>}
-                            </td>
-                            <td className="p-3.5 text-center text-xs font-bold">
-                              {l.metalDetectorOk ? <span className="text-emerald-600 dark:text-emerald-400">{d.passed}</span> : <span className="text-red-600 dark:text-red-400">{d.failed}</span>}
-                            </td>
-                            <td className="p-3.5 text-center text-xs font-bold">
-                              {l.labelCorrectOk ? <span className="text-emerald-600 dark:text-emerald-400">{d.passed}</span> : <span className="text-red-600 dark:text-red-400">{d.failed}</span>}
-                            </td>
-                            <td className="p-3.5 text-center">
-                              <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
-                                l.status === 'APPROVED' 
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-transparent' 
-                                  : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-200 dark:border-transparent'
-                              }`}>
-                                {l.status === 'APPROVED' ? d.approved : d.warning}
-                              </span>
-                            </td>
-                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
-                            <td className="p-3.5 text-center">
-                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
-                                📷
+                            <td className="p-3 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span title="Germetiklik" className={`w-5 h-5 rounded flex items-center justify-center text-[10px] ${l.sealIntegrityOk ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'}`}>
+                                  {l.sealIntegrityOk ? '✓' : '✗'}
+                                </span>
+                                <span title="Metall detektor" className={`w-5 h-5 rounded flex items-center justify-center text-[10px] ${l.metalDetectorOk ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'}`}>
+                                  {l.metalDetectorOk ? '✓' : '✗'}
+                                </span>
+                                <span title="Etiketka" className={`w-5 h-5 rounded flex items-center justify-center text-[10px] ${l.labelCorrectOk ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'}`}>
+                                  {l.labelCorrectOk ? '✓' : '✗'}
+                                </span>
                               </div>
                             </td>
-                            <td className="p-3.5 text-center">
+                            <td className="p-3 text-center">
+                              <span className={`w-2 h-2 inline-block rounded-full ${
+                                l.status === 'APPROVED' 
+                                  ? 'bg-emerald-500' 
+                                  : 'bg-amber-500'
+                              }`} />
+                            </td>
+                            <td className="p-3 text-xs text-slate-600 dark:text-slate-300">
+                              <div>{l.responsible}</div>
+                              {l.updatedBy && <div className="text-[10px] text-blue-500 font-mono mt-0.5">✍️ {l.updatedBy}</div>}
+                            </td>
+                            <td className="p-3 text-right pr-4">
                               {isArchive ? (
                                 renderArchiveInfo(l.createdAt, l.responsible)
                               ) : (
-                                <button onClick={() => handleDeleteRecord('fssc-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                  <Trash2 size={14} />
-                                </button>
+                                <button onClick={() => handleEditRecord('fssc', l)} className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 transition-colors" title="Tahrirlash">
+    <Edit2 size={14} />
+  </button>
                               )}
                             </td>
                           </tr>
@@ -1110,17 +964,16 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 text-xs font-black uppercase tracking-wider">
-                        <th className="p-3.5">{d.timeVat}</th>
-                        <th className="p-3.5">{d.solType}</th>
-                        <th className="p-3.5 text-center">{d.concPpm}</th>
-                        <th className="p-3.5 text-center">{d.phLevel}</th>
-                        <th className="p-3.5 text-center">{d.waterTemp}</th>
-                        <th className="p-3.5 text-center">{d.status}</th>
-                        <th className="p-3.5">{d.corrAction}</th>
-                        <th className="p-3.5">{d.responsible}</th>
-                        <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
+                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                        <th className="p-3 pl-4">Sana / Vanna</th>
+                        <th className="p-3">Eritma</th>
+                        <th className="p-3 text-center">PPM</th>
+                        <th className="p-3 text-center">pH</th>
+                        <th className="p-3 text-center">Suv °C</th>
+                        <th className="p-3 text-center">Holat</th>
+                        <th className="p-3">Tuzatish</th>
+                        <th className="p-3">Mas&apos;ul</th>
+                        <th className="p-3 text-right pr-4"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
@@ -1132,7 +985,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             {!isArchive && (
                               <button
                                 onClick={() => setModalType('disinfection')}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition-all"
                               >
                                 <Plus size={14} />
                                 {d.addFirstRecord}
@@ -1142,46 +995,38 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                         </tr>
                       ) : (
                         filteredDez.map(l => (
-                          <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-dark-800/30 transition-colors">
-                            <td className="p-3.5">
-                              <div className="font-bold text-slate-900 dark:text-white text-xs">{l.date} <span className="text-cyan-600 dark:text-cyan-400">{l.time}</span></div>
-                              <div className="text-[11px] text-slate-700 dark:text-slate-300 font-semibold">{l.vannaNumber}</div>
+                          <tr key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/30 transition-colors">
+                            <td className="p-3 pl-4">
+                              <div className="font-semibold text-slate-900 dark:text-white text-xs">{l.date}</div>
+                              <div className="text-[10px] text-slate-400">{l.time} • {l.vannaNumber}</div>
                             </td>
-                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300">{l.solutionType}</td>
-                            <td className="p-3.5 text-center font-mono font-bold text-xs">
-                              <span className={`px-2.5 py-0.5 rounded ${
+                            <td className="p-3 text-xs text-slate-600 dark:text-slate-300">{l.solutionType}</td>
+                            <td className="p-3 text-center">
+                              <span className={`text-[11px] font-bold font-mono ${
                                 l.concentrationPpm >= 50 && l.concentrationPpm <= 100 
-                                  ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/30' 
-                                  : 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400 border border-red-200 dark:border-red-500/30'
+                                  ? 'text-cyan-600 dark:text-cyan-400' 
+                                  : 'text-red-600 dark:text-red-400'
                               }`}>
-                                {l.concentrationPpm} ppm
+                                {l.concentrationPpm}
                               </span>
                             </td>
-                            <td className="p-3.5 text-center font-mono text-xs text-slate-700 dark:text-slate-300">{l.phLevel || '—'}</td>
-                            <td className="p-3.5 text-center font-mono text-xs text-emerald-600 dark:text-emerald-400 font-bold">{l.waterTemp !== null ? `${l.waterTemp}°C` : '—'}</td>
-                            <td className="p-3.5 text-center">
-                              <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                                l.isStandard 
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300' 
-                                  : 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
-                              }`}>
-                                {l.isStandard ? d.standard : d.violation}
-                              </span>
+                            <td className="p-3 text-center font-mono text-xs text-slate-600 dark:text-slate-300">{l.phLevel || '—'}</td>
+                            <td className="p-3 text-center font-mono text-xs text-emerald-600 dark:text-emerald-400">{l.waterTemp !== null ? `${l.waterTemp}°` : '—'}</td>
+                            <td className="p-3 text-center">
+                              <span className={`w-2 h-2 inline-block rounded-full ${l.isStandard ? 'bg-emerald-500' : 'bg-red-500'}`} />
                             </td>
-                            <td className="p-3.5 text-xs text-slate-600 dark:text-slate-400">{l.correctiveAction || '—'}</td>
-                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
-                            <td className="p-3.5 text-center">
-                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
-                                📷
-                              </div>
+                            <td className="p-3 text-[11px] text-slate-500 dark:text-slate-400 max-w-[120px] truncate">{l.correctiveAction || '—'}</td>
+                            <td className="p-3 text-xs text-slate-600 dark:text-slate-300">
+                              <div>{l.responsible}</div>
+                              {l.updatedBy && <div className="text-[10px] text-blue-500 font-mono mt-0.5">✍️ {l.updatedBy}</div>}
                             </td>
-                            <td className="p-3.5 text-right">
+                            <td className="p-3 text-right pr-4">
                               {isArchive ? (
                                 renderArchiveInfo(l.createdAt, l.responsible)
                               ) : (
-                                <button onClick={() => handleDeleteRecord('disinfection-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                  <Trash2 size={14} />
-                                </button>
+                                <button onClick={() => handleEditRecord('disinfection', l)} className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 transition-colors" title="Tahrirlash">
+    <Edit2 size={14} />
+  </button>
                               )}
                             </td>
                           </tr>
@@ -1196,17 +1041,16 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 text-xs font-black uppercase tracking-wider">
-                        <th className="p-3.5">{d.timeLine}</th>
-                        <th className="p-3.5">{d.productBatch}</th>
-                        <th className="p-3.5 text-center">{d.dimMm}</th>
-                        <th className="p-3.5 text-center">{d.tempSample}</th>
-                        <th className="p-3.5 text-center">{d.blade}</th>
-                        <th className="p-3.5 text-center">{d.wastePct}</th>
-                        <th className="p-3.5 text-center">{d.status}</th>
-                        <th className="p-3.5">{d.responsible}</th>
-                        <th className="p-3.5 text-center text-[10px]">RASM</th>
-                        <th className="p-3.5 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : d.actions}</th>
+                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                        <th className="p-3 pl-4">Sana</th>
+                        <th className="p-3">Mahsulot</th>
+                        <th className="p-3 text-center">Ø mm</th>
+                        <th className="p-3 text-center">°C</th>
+                        <th className="p-3 text-center">Pichoq</th>
+                        <th className="p-3 text-center">Chiqindi %</th>
+                        <th className="p-3 text-center">Holat</th>
+                        <th className="p-3">Mas&apos;ul</th>
+                        <th className="p-3 text-right pr-4"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
@@ -1217,7 +1061,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             <button
                               onClick={() => setModalType('calibration')}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium transition-all"
                             >
                               <Plus size={14} />
                               {d.addFirstRecord}
@@ -1226,44 +1070,37 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                         </tr>
                       ) : (
                         filteredCal.map(l => (
-                          <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-dark-800/30 transition-colors">
-                            <td className="p-3.5">
-                              <div className="font-bold text-slate-900 dark:text-white text-xs">{l.date} <span className="text-purple-600 dark:text-purple-400">{l.time}</span></div>
+                          <tr key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/30 transition-colors">
+                            <td className="p-3 pl-4">
+                              <div className="font-semibold text-slate-900 dark:text-white text-xs">{l.date}</div>
+                              <div className="text-[10px] text-slate-400">{l.time}</div>
                             </td>
-                            <td className="p-3.5">
-                              <div className="font-bold text-slate-900 dark:text-white text-xs">{l.productName}</div>
-                              <div className="text-[11px] font-mono font-bold text-purple-600 dark:text-purple-400">{l.batchNumber || '—'}</div>
+                            <td className="p-3">
+                              <div className="font-semibold text-slate-900 dark:text-white text-xs">{l.productName}</div>
+                              <div className="text-[10px] font-mono text-purple-600 dark:text-purple-400">{l.batchNumber || '—'}</div>
                             </td>
-                            <td className="p-3.5 text-center font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
-                              {l.diameterMm ? `Ø ${l.diameterMm} mm` : '—'}
+                            <td className="p-3 text-center font-mono text-xs text-slate-700 dark:text-slate-200">
+                              {l.diameterMm ? `${l.diameterMm}` : '—'}
                             </td>
-                            <td className="p-3.5 text-center font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                              {l.sampleTemp !== null ? `${l.sampleTemp}°C` : '—'}
+                            <td className="p-3 text-center font-mono text-xs text-emerald-600 dark:text-emerald-400">
+                              {l.sampleTemp !== null ? `${l.sampleTemp}°` : '—'}
                             </td>
-                            <td className="p-3.5 text-center text-xs text-slate-700 dark:text-slate-300 font-medium">{l.bladeSharpness || 'OK'}</td>
-                            <td className="p-3.5 text-center font-mono text-xs text-amber-700 dark:text-amber-300 font-bold">{l.wastePercent ? `${l.wastePercent}%` : '—'}</td>
-                            <td className="p-3.5 text-center">
-                              <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                                l.isStandard 
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300' 
-                                  : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300'
-                              }`}>
-                                {l.isStandard ? d.standard : d.warning}
-                              </span>
+                            <td className="p-3 text-center text-xs text-slate-600 dark:text-slate-300">{l.bladeSharpness || 'OK'}</td>
+                            <td className="p-3 text-center font-mono text-xs text-amber-600 dark:text-amber-300">{l.wastePercent ? `${l.wastePercent}%` : '—'}</td>
+                            <td className="p-3 text-center">
+                              <span className={`w-2 h-2 inline-block rounded-full ${l.isStandard ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                             </td>
-                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
-                            <td className="p-3.5 text-center">
-                              <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
-                                📷
-                              </div>
+                            <td className="p-3 text-xs text-slate-600 dark:text-slate-300">
+                              <div>{l.responsible}</div>
+                              {l.updatedBy && <div className="text-[10px] text-blue-500 font-mono mt-0.5">✍️ {l.updatedBy}</div>}
                             </td>
-                            <td className="p-3.5 text-right">
+                            <td className="p-3 text-right pr-4">
                               {isArchive ? (
                                 renderArchiveInfo(l.createdAt, l.responsible)
                               ) : (
-                                <button onClick={() => handleDeleteRecord('calibration-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                  <Trash2 size={14} />
-                                </button>
+                                <button onClick={() => handleEditRecord('calibration', l)} className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 transition-colors" title="Tahrirlash">
+    <Edit2 size={14} />
+  </button>
                               )}
                             </td>
                           </tr>
@@ -1327,7 +1164,10 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <td className="p-3.5 text-center text-xs font-bold">{l.foreignFlavorOk ? <span className="text-emerald-600 dark:text-emerald-400">OK</span> : <span className="text-red-600 dark:text-red-400">X</span>}</td>
                             <td className="p-3.5 text-center font-bold text-xs text-amber-600 dark:text-yellow-400">⭐ {l.overallScore}/5</td>
                             <td className="p-3.5 text-xs text-emerald-700 dark:text-emerald-300 font-bold">{l.conclusion}</td>
-                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
+                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                              <div>{l.responsible}</div>
+                              {l.updatedBy && <div className="text-[10px] text-blue-500 font-mono mt-0.5">✍️ {l.updatedBy}</div>}
+                            </td>
                             <td className="p-3.5 text-center">
                               <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
                                 📷
@@ -1337,9 +1177,9 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                               {isArchive ? (
                                 renderArchiveInfo(l.createdAt, l.responsible)
                               ) : (
-                                <button onClick={() => handleDeleteRecord('degustation-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                  <Trash2 size={14} />
-                                </button>
+                                <button onClick={() => handleEditRecord('degustation', l)} className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 transition-colors" title="Tahrirlash">
+    <Edit2 size={14} />
+  </button>
                               )}
                             </td>
                           </tr>
@@ -1354,35 +1194,44 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-sm">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 font-black uppercase tracking-wider text-[10px]">
-                        <th className="p-2 min-w-[80px]">Sana/Vaqt</th>
-                        <th className="p-2 min-w-[70px] text-center bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400">Toza Zona</th>
-                        <th className="p-2 min-w-[70px] text-center bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400">Nopok Zona</th>
-                        <th className="p-2 min-w-[80px] text-center">PF Sabzi<br/><span className="text-[9px] text-slate-400">Koul-slou</span></th>
-                        <th className="p-2 min-w-[80px] text-center">PF Karam<br/><span className="text-[9px] text-slate-400">Koul-slou</span></th>
-                        <th className="p-2 min-w-[80px] text-center">PF Aysberg</th>
-                        <th className="p-2 min-w-[80px] text-center">PF Piyoz</th>
-                        <th className="p-2 min-w-[80px] text-center">PF Pomidor</th>
-                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Koul-slou</th>
-                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Aysberg</th>
-                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Pomidor</th>
-                        <th className="p-2 min-w-[80px] text-center bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">GP Piyoz</th>
-                        <th className="p-2 min-w-[100px]">{d.corrAction}</th>
-                        <th className="p-2 min-w-[80px]">{d.responsible}</th>
-                        <th className="p-2 text-center text-[10px]">Rasm</th>
-                        <th className="p-2 text-right">{isArchive ? 'Arxiv Ma\'lumoti' : '#'}</th>
+                      <tr className="bg-slate-50 dark:bg-dark-800/50 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                        <th className="p-2 pl-3">Sana</th>
+                        <th className="p-2 text-center text-emerald-600 dark:text-emerald-400">Toza</th>
+                        <th className="p-2 text-center text-amber-600 dark:text-amber-400">Nopok</th>
+                        <th className="p-2 text-center" colSpan={5}>PF (Yarim tayyor)</th>
+                        <th className="p-2 text-center text-blue-600 dark:text-blue-400" colSpan={4}>GP (Tayyor)</th>
+                        <th className="p-2">Tuzatish</th>
+                        <th className="p-2">Mas&apos;ul</th>
+                          <th className="p-2 pr-3 text-right"></th>
+                      </tr>
+                      <tr className="bg-slate-50/50 dark:bg-dark-800/30 border-b border-slate-200 dark:border-dark-750 text-[9px] text-slate-400 dark:text-slate-500 uppercase">
+                        <th className="p-1 pl-3"></th>
+                        <th className="p-1 text-center">°C</th>
+                        <th className="p-1 text-center">°C</th>
+                        <th className="p-1 text-center">Sabzi</th>
+                        <th className="p-1 text-center">Karam</th>
+                        <th className="p-1 text-center">Aysb</th>
+                        <th className="p-1 text-center">Piyoz</th>
+                        <th className="p-1 text-center">Pom</th>
+                        <th className="p-1 text-center">K-S</th>
+                        <th className="p-1 text-center">Aysb</th>
+                        <th className="p-1 text-center">Pom</th>
+                        <th className="p-1 text-center">Piyoz</th>
+                        <th className="p-1"></th>
+                        <th className="p-1"></th>
+                          <th className="p-1 pr-3 text-right"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750 text-xs">
                       {filteredProc.length === 0 ? (
                         <tr>
-                          <td colSpan={16} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                          <td colSpan={14} className="p-12 text-center text-slate-500 dark:text-slate-400">
                             <Thermometer size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             {!isArchive && (
                               <button
                                 onClick={() => setModalType('temperature')}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-all"
                               >
                                 <Plus size={14} />
                                 {d.addFirstRecord}
@@ -1392,64 +1241,40 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                         </tr>
                       ) : (
                         filteredProc.map(l => (
-                          <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-dark-800/30 transition-colors">
-                            <td className="p-2">
-                              <div className="font-bold text-slate-900 dark:text-white text-[11px] whitespace-nowrap">{l.date}</div>
-                              <div className="text-blue-600 dark:text-blue-400 font-bold text-[10px]">{l.time}</div>
+                          <tr key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/30 transition-colors">
+                            <td className="p-2 pl-3">
+                              <div className="font-semibold text-slate-900 dark:text-white text-[11px]">{l.date}</div>
+                              <div className="text-[10px] text-slate-400">{l.time}</div>
                             </td>
-                            <td className="p-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-900/5">
-                              {l.cleanZoneTemp !== null ? `${l.cleanZoneTemp}°C` : '—'}
+                            <td className="p-2 text-center font-mono text-emerald-600 dark:text-emerald-400">
+                              {l.cleanZoneTemp !== null ? `${l.cleanZoneTemp}°` : '—'}
                             </td>
-                            <td className="p-2 text-center font-mono font-bold text-amber-700 dark:text-amber-400 bg-emerald-50/30 dark:bg-emerald-900/5">
-                              {l.dirtyZoneTemp !== null ? `${l.dirtyZoneTemp}°C` : '—'}
+                            <td className="p-2 text-center font-mono text-amber-600 dark:text-amber-400">
+                              {l.dirtyZoneTemp !== null ? `${l.dirtyZoneTemp}°` : '—'}
                             </td>
-                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                              {l.pfColeCarrotBatch || '—'}
+                            <td className="p-2 text-center font-mono text-slate-500 dark:text-slate-400">{l.pfColeCarrotBatch || '—'}</td>
+                            <td className="p-2 text-center font-mono text-slate-500 dark:text-slate-400">{l.pfColeCabbageBatch || '—'}</td>
+                            <td className="p-2 text-center font-mono text-slate-500 dark:text-slate-400">{l.pfIcebergBatch || '—'}</td>
+                            <td className="p-2 text-center font-mono text-slate-500 dark:text-slate-400">{l.pfOnionBatch || '—'}</td>
+                            <td className="p-2 text-center font-mono text-slate-500 dark:text-slate-400">{l.pfTomatoBatch || '—'}</td>
+                            <td className="p-2 text-center font-mono text-blue-600 dark:text-blue-400">{l.gpColeTemp !== null ? `${l.gpColeTemp}°` : '—'}</td>
+                            <td className="p-2 text-center font-mono text-blue-600 dark:text-blue-400">{l.gpIcebergTemp !== null ? `${l.gpIcebergTemp}°` : '—'}</td>
+                            <td className="p-2 text-center font-mono text-blue-600 dark:text-blue-400">{l.gpTomatoTemp !== null ? `${l.gpTomatoTemp}°` : '—'}</td>
+                            <td className="p-2 text-center font-mono text-blue-600 dark:text-blue-400">{l.gpOnionTemp !== null ? `${l.gpOnionTemp}°` : '—'}</td>
+                            <td className="p-2 text-[10px] text-slate-500 max-w-[100px] truncate">{l.correctiveAction || '—'}</td>
+                            <td className="p-2 text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                              <div>{l.responsible}</div>
+                              {l.updatedBy && <div className="text-[10px] text-blue-500 font-mono mt-0.5">✍️ {l.updatedBy}</div>}
                             </td>
-                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                              {l.pfColeCabbageBatch || '—'}
-                            </td>
-                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                              {l.pfIcebergBatch || '—'}
-                            </td>
-                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                              {l.pfOnionBatch || '—'}
-                            </td>
-                            <td className="p-2 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                              {l.pfTomatoBatch || '—'}
-                            </td>
-                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
-                              {l.gpColeTemp !== null ? `${l.gpColeTemp}°C` : '—'}
-                            </td>
-                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
-                              {l.gpIcebergTemp !== null ? `${l.gpIcebergTemp}°C` : '—'}
-                            </td>
-                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
-                              {l.gpTomatoTemp !== null ? `${l.gpTomatoTemp}°C` : '—'}
-                            </td>
-                            <td className="p-2 text-center font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/5">
-                              {l.gpOnionTemp !== null ? `${l.gpOnionTemp}°C` : '—'}
-                            </td>
-                            <td className="p-2 text-[11px] text-slate-600 dark:text-slate-400 font-medium max-w-[120px] truncate" title={l.correctiveAction}>
-                              {l.correctiveAction || '—'}
-                            </td>
-                            <td className="p-2 text-[11px] text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">
-                              {l.responsible}
-                            </td>
-                            <td className="p-2 text-center">
-                              <div className="w-7 h-7 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-[10px] text-slate-500 cursor-pointer hover:bg-slate-300 transition-colors" title="Rasm yo'q">
-                                📷
-                              </div>
-                            </td>
-                            <td className="p-2 text-right">
-                              {isArchive ? (
-                                renderArchiveInfo(l.createdAt, l.responsible)
-                              ) : (
-                                <button onClick={() => handleDeleteRecord('process-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                  <Trash2 size={14} />
-                                </button>
-                              )}
-                            </td>
+                              <td className="p-2 pr-3 text-right">
+                                {isArchive ? (
+                                  renderArchiveInfo(l.createdAt, l.responsible)
+                                ) : (
+                                  <button onClick={() => handleEditRecord('temperature', l)} className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 transition-colors" title="Tahrirlash">
+                                    <Edit2 size={14} />
+                                  </button>
+                                )}
+                              </td>
                           </tr>
                         ))
                       )}
@@ -1520,7 +1345,10 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                                 {l.status === 'ACCEPTED' ? d.accepted : d.rejected}
                               </span>
                             </td>
-                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">{l.responsible}</td>
+                            <td className="p-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                              <div>{l.responsible}</div>
+                              {l.updatedBy && <div className="text-[10px] text-blue-500 font-mono mt-0.5">✍️ {l.updatedBy}</div>}
+                            </td>
                             <td className="p-3.5 text-center">
                               <div className="w-8 h-8 mx-auto bg-slate-200 dark:bg-dark-700 rounded flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-dark-600 shadow-sm cursor-pointer hover:bg-slate-300 dark:hover:bg-dark-600 transition-colors" title="Rasm yo'q">
                                 📷
@@ -1530,9 +1358,9 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                               {isArchive ? (
                                 renderArchiveInfo(l.createdAt, l.responsible)
                               ) : (
-                                <button onClick={() => handleDeleteRecord('receiving-logs', l.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                                  <Trash2 size={14} />
-                                </button>
+                                <button onClick={() => handleEditRecord('receiving', l)} className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 transition-colors" title="Tahrirlash">
+    <Edit2 size={14} />
+  </button>
                               )}
                             </td>
                           </tr>

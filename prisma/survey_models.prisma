@@ -1,0 +1,59 @@
+
+// -----------------------------------------------------------------------------
+// MIJOZ QONIQISH SO'ROVNOMASI
+// -----------------------------------------------------------------------------
+
+model Survey {
+  id          Int       @id @default(autoincrement())
+  title       String    // So'rovnoma nomi
+  description String?   // Qo'shimcha tavsif
+  token       String    @unique  // Unique link token
+  isActive    Boolean   @default(true)  // Link faol/o'chiq
+  expiresAt   DateTime?  // Muddati
+  createdById Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  questions   SurveyQuestion[]
+  responses   SurveyResponse[]
+  createdBy   User?     @relation(fields: [createdById], references: [id])
+}
+
+model SurveyQuestion {
+  id           Int       @id @default(autoincrement())
+  surveyId     Int
+  orderIndex   Int       @default(0)
+  questionText String
+  questionType String    @default("rating")
+  options      String?
+  isRequired   Boolean   @default(true)
+  groupName    String?
+  subLabel     String?
+  helpText     String?
+
+  survey       Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  answers      SurveyAnswer[]
+}
+
+model SurveyResponse {
+  id             Int       @id @default(autoincrement())
+  surveyId       Int
+  respondentName String?
+  restaurantName String?
+  respondentDate String?
+  submittedAt    DateTime  @default(now())
+  ipAddress      String?
+
+  survey         Survey    @relation(fields: [surveyId], references: [id])
+  answers        SurveyAnswer[]
+}
+
+model SurveyAnswer {
+  id          Int    @id @default(autoincrement())
+  responseId  Int
+  questionId  Int
+  answerValue String
+
+  response    SurveyResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question    SurveyQuestion  @relation(fields: [questionId], references: [id])
+}
