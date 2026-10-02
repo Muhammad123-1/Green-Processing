@@ -298,8 +298,8 @@ function ResponseViewer({ surveyId }: { surveyId: number }) {
                                   ans.answerValue === '3' ? 'bg-yellow-100 text-yellow-700' :
                                   ans.answerValue === '2' ? 'bg-orange-100 text-orange-700' :
                                   ans.answerValue === '1' ? 'bg-red-100 text-red-700' :
-                                  ans.answerValue === 'Ha' ? 'bg-red-100 text-red-700' :
-                                  ans.answerValue === "Yo'q" ? 'bg-green-100 text-green-700' :
+                                  (ans.answerValue === 'Ha' || ans.answerValue === 'Да') ? 'bg-red-100 text-red-700' :
+                                  (ans.answerValue === "Yo'q" || ans.answerValue === 'Нет') ? 'bg-green-100 text-green-700' :
                                   'bg-slate-200 text-slate-800 dark:bg-dark-700 dark:text-slate-200'
                                 }`}>
                                   {ans.answerValue}

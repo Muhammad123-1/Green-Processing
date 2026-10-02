@@ -177,7 +177,7 @@ export default function SurveyPublicPage() {
                 onClick={() => setAnswer(q.id, opt)}
                 className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all border-2 ${
                   selected === opt
-                    ? opt === "Ha" ? 'bg-red-500 border-red-500 text-white' : 'bg-green-600 border-green-600 text-white'
+                    ? (opt === "Ha" || opt === "Да") ? 'bg-red-500 border-red-500 text-white' : 'bg-green-600 border-green-600 text-white'
                     : 'bg-white border-slate-200 text-slate-700 hover:border-slate-400'
                 }`}
               >
@@ -185,7 +185,7 @@ export default function SurveyPublicPage() {
               </button>
             ))}
           </div>
-          {selected === "Ha" && q.helpText && (
+          {(selected === "Ha" || selected === "Да") && q.helpText && (
             <div className="mt-2">
               <p className="text-xs text-slate-500 mb-1">{formatDual('Agar "Ha" bo\'lsa — batafsil:', 'Если "Да" — подробнее:', 'If "Yes" — please specify:')}</p>
               <textarea

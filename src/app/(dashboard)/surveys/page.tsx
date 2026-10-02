@@ -26,8 +26,8 @@ export default function SurveysPage() {
   const [creating, setCreating] = useState(false);
 
   const [form, setForm] = useState({
-    title: "",
-    description: "",
+    title: "OOO \"GREEN PROCESSING\" mijozlar qoniqish anketasi",
+    description: "Iltimos, anketani to'ldiring, sizning fikringiz biz uchun juda muhim. Ushbu anketa ishlab chiqarilayotgan mahsulotlar sifatini va siz bilan hamkorlikni yaxshilash uchun ishlatiladi.",
     expiresAt: "",
     addDefault: true,
   });
@@ -528,7 +528,8 @@ function ResponseViewer({ surveyId }: { surveyId: number }) {
                                       ? "text-red-600"
                                       : ans.answerValue === "Ha"
                                         ? "text-red-500"
-                                        : ans.answerValue === "Yo'q"
+                                        : ans.answerValue === "Yo'q" ||
+                                            ans.answerValue === "Нет"
                                           ? "text-green-600"
                                           : "text-slate-700 dark:text-slate-300"
                           }`}

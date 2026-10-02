@@ -87,10 +87,115 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
     const body = await req.json()
-    const { title, description, expiresAt, questions } = body
+    
+    const { title, description, expiresAt, addDefault } = body
+    let { questions } = body
 
-    const token = randomBytes(16).toString('hex')
+    
+    if (addDefault) {
+      questions = [
+        {
+          orderIndex: 0,
+          groupName: 'OOO "GREEN PROCESSING" mahsulotlarini yetkazib berish bo\'yicha shartnoma talablari bajarilishini va hamkorlikni 5 ballik shkalada baholang',
+          subLabel: 'a)',
+          questionText: 'Yetkazib berilayotgan mahsulot sifati kelishilgan talablarga (harorat, tashqi ko\'rinish, shartnoma shartlariga) mos keladimi?',
+          questionType: 'rating',
+          isRequired: true
+        },
+        {
+          orderIndex: 1,
+          groupName: 'OOO "GREEN PROCESSING" mahsulotlarini yetkazib berish bo\'yicha shartnoma talablari bajarilishini va hamkorlikni 5 ballik shkalada baholang',
+          subLabel: 'b)',
+          questionText: 'So\'rovlaringiz, eslatmalaringiz, e\'tiroz va shikoyatlaringiz bo\'yicha ishlar tezkorlik bilan bajariladimi?',
+          questionType: 'rating',
+          isRequired: true
+        },
+        {
+          orderIndex: 2,
+          groupName: 'OOO "GREEN PROCESSING" mahsulotlarini yetkazib berish bo\'yicha shartnoma talablari bajarilishini va hamkorlikni 5 ballik shkalada baholang',
+          subLabel: 'v)',
+          questionText: 'Mahsulotimizning rang va ta\'m ko\'rsatkichlarini qanday baholaysiz?',
+          questionType: 'rating',
+          isRequired: true
+        },
+        {
+          orderIndex: 3,
+          groupName: 'OOO "GREEN PROCESSING" mahsulotlarini yetkazib berish bo\'yicha shartnoma talablari bajarilishini va hamkorlikni 5 ballik shkalada baholang',
+          subLabel: 'g)',
+          questionText: 'Mahsulotlar o\'z vaqtida yetkazib berilmoqdami?',
+          questionType: 'rating',
+          isRequired: true
+        },
+        {
+          orderIndex: 4,
+          groupName: 'OOO "GREEN PROCESSING" mahsulotlarini yetkazib berish bo\'yicha shartnoma talablari bajarilishini va hamkorlikni 5 ballik shkalada baholang',
+          subLabel: 'd)',
+          questionText: 'So\'nggi uch oy ichida tayyor mahsulotda yot jismlar (soch, shisha, plastmassa va hokazo) uchrash holatlari bo\'ldimi?',
+          questionType: 'rating',
+          isRequired: true
+        },
+        {
+          orderIndex: 5,
+          groupName: 'Iltimos, quyidagi savollarga javob bering:',
+          subLabel: 'a)',
+          questionText: 'So\'nggi uch oy davomida amaliyotingizda quyidagi holatlar kuzatildimi: -qutida mahsulot yetishmasligi; -qadoqning shikastlanishi; -pomidorlar ezilgan yoki butun emasligi; -buzilgan mahsulot; -vakuumlanmagan mahsulot; -markirovkasiz mahsulot;',
+          questionType: 'yesno',
+          helpText: 'Agar Ha bo\'lsa, iltimos batafsil yozing',
+          options: ['Ha', "Yo'q"],
+          isRequired: true
+        },
+        {
+          orderIndex: 6,
+          groupName: 'Iltimos, quyidagi savollarga javob bering:',
+          subLabel: 'b)',
+          questionText: 'So\'nggi uch oy ichida mahsulotlarimiz (piyoz, aysberg, "Koul Slou" salat aralashmasi) nostandart to\'g\'ralish holatlari bo\'ldimi? Agar javob "Ha" bo\'lsa, qachon? Qaysi mahsulot? Va bu haqda kimga xabar berdingiz?',
+          questionType: 'yesno',
+          helpText: 'Agar Ha bo\'lsa, qachon, qaysi mahsulot va kimga xabar berdingiz?',
+          options: ['Ha', "Yo'q"],
+          isRequired: true
+        },
+        {
+          orderIndex: 7,
+          groupName: 'Iltimos, quyidagi savollarga javob bering:',
+          subLabel: 'v)',
+          questionText: 'Mijozlar tomonidan mahsulotimizga nisbatan shikoyatlar bo\'ldimi? Agar javob "Ha" bo\'lsa, aynan nima bo\'yicha? Qaysi mahsulotga?',
+          questionType: 'yesno',
+          helpText: 'Agar Ha bo\'lsa, nima bo\'yicha va qaysi mahsulotga?',
+          options: ['Ha', "Yo'q"],
+          isRequired: true
+        },
+        {
+          orderIndex: 8,
+          groupName: 'Iltimos, quyidagi savollarga javob bering:',
+          subLabel: 'g)',
+          questionText: 'So\'nggi paytlarda mahsulot sifati o\'zgardimi? Agar "Ha" bo\'lsa, qachon? Qaysi mahsulot? Yaxshi tarafga yoxud yomon tarafga?',
+          questionType: 'yesno',
+          helpText: 'Agar Ha bo\'lsa, qachon, qaysi mahsulot, yaxshi yoki yomon tarafga?',
+          options: ['Ha', "Yo'q"],
+          isRequired: true
+        },
+        {
+          orderIndex: 9,
+          groupName: 'Iltimos, quyidagi savollarga javob bering:',
+          subLabel: 'd)',
+          questionText: 'Sizningcha, kompaniyamizdan xarid hajmini oshirishga nima yordam bergan bo\'lar edi:',
+          questionType: 'select',
+          options: ['Assortimentni kengaytirish', 'Mahsulot miqdori va grammini oshirish', 'Boshqa (fikringizni yozing)'],
+          isRequired: true
+        },
+        {
+          orderIndex: 10,
+          groupName: null,
+          subLabel: null,
+          questionText: 'Tavsiyalar, e\'tirozlar va shikoyatlar:',
+          questionType: 'text',
+          isRequired: false
+        }
+      ]
+    }
 
+
+    const token = randomBytes(16).toString('hex');
     const surveys = await prisma.$queryRawUnsafe(`
       INSERT INTO "Survey" ("title", "description", "token", "isActive", "expiresAt", "createdById", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, true, $4, $5, NOW(), NOW())
