@@ -191,7 +191,7 @@ export default function SurveyPublicPage() {
               <textarea
                 value={textExtras[q.id] || ''}
                 onChange={e => setTextExtras(prev => ({ ...prev, [q.id]: e.target.value }))}
-                className="w-full border border-slate-200 rounded-xl p-3 text-sm resize-none"
+                className="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-900 resize-none"
                 rows={2}
                 placeholder={q.helpText}
               />
@@ -222,7 +222,7 @@ export default function SurveyPublicPage() {
             <textarea
               value={textExtras[q.id] || ''}
               onChange={e => setTextExtras(prev => ({ ...prev, [q.id]: e.target.value }))}
-              className="w-full border border-slate-200 rounded-xl p-3 text-sm resize-none"
+              className="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-900 resize-none"
               rows={2}
               placeholder={formatDual("O'z fikringizni yozing...", "Напишите свое мнение...", "Write your opinion...")}
             />
@@ -237,7 +237,7 @@ export default function SurveyPublicPage() {
         <textarea
           value={answers[q.id] || ''}
           onChange={e => setAnswer(q.id, e.target.value)}
-          className="w-full border border-slate-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
+          className="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-900 resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
           rows={3}
           placeholder={formatDual("Javobingizni yozing...", "Напишите ваш ответ...", "Write your answer...")}
         />
@@ -277,7 +277,7 @@ export default function SurveyPublicPage() {
                 type="text"
                 value={restaurantName}
                 onChange={e => setRestaurantName(e.target.value)}
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-400"
                 placeholder={formatDual('Restoran nomi', 'Название ресторана', 'Restaurant Name')}
               />
             </div>
@@ -287,7 +287,7 @@ export default function SurveyPublicPage() {
                 type="text"
                 value={respondentName}
                 onChange={e => setRespondentName(e.target.value)}
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-400"
                 placeholder={formatDual("To'liq ism", 'Полное имя', 'Full name')}
               />
             </div>
@@ -297,7 +297,7 @@ export default function SurveyPublicPage() {
                 type="text"
                 value={respondentDate}
                 onChange={e => setRespondentDate(e.target.value)}
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-400"
               />
             </div>
           </div>
