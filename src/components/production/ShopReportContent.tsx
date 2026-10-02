@@ -1,11 +1,21 @@
 'use client'
 
-import React, { useState } from 'react'
-import { FileSpreadsheet, Save, Download, ArrowDownToLine, ArrowUpFromLine, Calculator, Calendar as CalendarIcon, ChevronRight } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
+import { FileSpreadsheet, Save, Download, Upload, ArrowDownToLine, ArrowUpFromLine, Calculator, Calendar as CalendarIcon, ChevronRight, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export default function ShopReportContent() {
   const { lang } = useLanguage()
+  const [isLoading, setIsLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetch('/api/shop-report').then(res => res.json()).then(data => {
+      if(data.arrivals) setArrivals(data.arrivals)
+      if(data.expenses) setExpenses(data.expenses.map((e:any) => ({ date: e.date, ...e.materials })))
+    })
+  }, [])
   const [activeTab, setActiveTab] = useState<'arrival' | 'expense' | 'report' | 'history'>('arrival')
   
   // Tab 1 Data: Приход (Incoming)
@@ -17,7 +27,7 @@ export default function ShopReportContent() {
   const addArrival = () => setArrivals([...arrivals, { date: '', nomenclature: '', quantity: 0, supplier: '', batch: '' }])
 
   // Tab 2 Data: Расход ГП (Expense / Finished Goods)
-  const [expenses, setExpenses] = useState([
+  const [expenses, setExpenses] = useState<any[]>([ 
     { date: '2026-09-01', iceberg: 1999.7, tomatoes: 0, onion: 0, cabbage: 0, carrot: 1468.0, bag: 245, chlorine: 34.98, sorbat: 0, benzoat: 0, vinegar: 0, taygeta: 0, boxDefect: 0, bagDefect: 0, ses: 0, kitchen: 0 },
     { date: '2026-09-02', iceberg: 0, tomatoes: 3025.9, onion: 127.7, cabbage: 623.9, carrot: 3124.0, bag: 407, chlorine: 9.02, sorbat: 3.75, benzoat: 3.75, vinegar: 0.75, taygeta: 0, boxDefect: 0, bagDefect: 0, ses: 0, kitchen: 0 },
   ])
@@ -59,43 +69,41 @@ export default function ShopReportContent() {
     setHistoryType('report')
   }
 
-  const exportToExcel = () => {
-    let csvContent = '\uFEFF' // BOM for UTF-8 Excel support
+  
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsLoading(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const res = await fetch('/api/shop-report/import', { method: 'POST', body: formData })
+      if (res.ok) {
+        toast.success(lang === 'ru' ? 'Импортировано успешно!' : 'Muvaffaqiyatli import qilindi!')
+        const data = await fetch('/api/shop-report').then(r => r.json())
+        if(data.arrivals) setArrivals(data.arrivals)
+        if(data.expenses) setExpenses(data.expenses.map((e:any) => ({ date: e.date, ...e.materials })))
+      } else {
+        toast.error('Xatolik yuz berdi')
+      }
+    } catch (err) {
+      toast.error('Xatolik yuz berdi')
+    } finally {
+      setIsLoading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const exportToExcelReal = () => {
+      window.location.href = '/api/shop-report/export'
+    }
     
-    if (activeTab === 'arrival') {
-      csvContent += 'Дата;Номенклатура;Количество;Поставщик;Партии\n'
-      arrivals.forEach(r => {
-        csvContent += `${r.date};${r.nomenclature};${r.quantity};${r.supplier};${r.batch}\n`
-      })
-    } else if (activeTab === 'expense') {
-      csvContent += 'Число;Айсберг;Томаты;Лук;Капуста;Морковь;Пакет;Коробки;Хлор;Сорбат;Бензоат;Уксус;Тайгета;Коробки БРАК;Пакет БРАК;СЕС;КУХНЯ\n'
-      expenses.forEach(r => {
-        csvContent += `${r.date};${r.iceberg};${r.tomatoes};${r.onion};${r.cabbage};${r.carrot};${r.bag};${r.boxDefect};${r.chlorine};${r.sorbat};${r.benzoat};${r.vinegar};${r.taygeta};${r.boxDefect};${r.bagDefect};${r.ses};${r.kitchen}\n`
-      })
-    } else if (activeTab === 'history') {
-      csvContent += 'Сана;Aysberg Rasxodi;Tomat Rasxodi;Kirituvchi xodim\n'
-      filteredHistory.forEach(h => {
-        csvContent += `${h.date};${h.totalIceberg};${h.totalTomatoes};${h.createdBy}\n`
-      })
-    } else {
-      csvContent += 'Остатка начало дня;;;;\nПриход;;;;\nРасход;;;;\nОстатка конец дня;;;;\n'
+    const viewReport = (date: any, type: any) => {
+      setReportDate(date)
+      setActiveTab(type)
     }
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `Sex_Hisoboti_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  const viewReport = (date: string, type: 'arrival' | 'expense' | 'report' | 'history') => {
-    setReportDate(date)
-    setActiveTab(type)
-  }
+  
 
   return (
     <div className="flex flex-col h-full space-y-5 animate-enter">
@@ -121,9 +129,14 @@ export default function ShopReportContent() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          <button onClick={exportToExcel} className="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm">
+          <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />
+          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm disabled:opacity-50">
+            {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+            <span>{lang === 'ru' ? 'Импорт Excel' : 'Excel Import'}</span>
+          </button>
+          <button onClick={exportToExcelReal} className="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm">
             <Download size={15} />
-            <span>Excel Export</span>
+            <span>{lang === 'ru' ? 'Экспорт Excel' : 'Excel Export'}</span>
           </button>
         </div>
       </div>
@@ -183,19 +196,19 @@ export default function ShopReportContent() {
                 {arrivals.map((row, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-dark-800/50">
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
-                      <input type="date" value={row.date} onChange={(e) => { const nw = [...arrivals]; nw[idx].date = e.target.value; setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none" />
+                      <input type="date" value={row.date || ''} onChange={(e) => { const nw = [...arrivals]; nw[idx].date = e.target.value; setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none" />
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
-                      <input type="text" placeholder="Томат..." value={row.nomenclature} onChange={(e) => { const nw = [...arrivals]; nw[idx].nomenclature = e.target.value; setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs font-medium text-slate-900 dark:text-white outline-none" />
+                      <input type="text" placeholder="Томат..." value={row.nomenclature || ''} onChange={(e) => { const nw = [...arrivals]; nw[idx].nomenclature = e.target.value; setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs font-medium text-slate-900 dark:text-white outline-none" />
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
-                      <input type="number" step="0.1" value={row.quantity} onChange={(e) => { const nw = [...arrivals]; nw[idx].quantity = Number(e.target.value); setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 dark:text-amber-500 outline-none" />
+                      <input type="number" step="0.1" value={row.quantity || ''} onChange={(e) => { const nw = [...arrivals]; nw[idx].quantity = Number(e.target.value); setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 dark:text-amber-500 outline-none" />
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
-                      <input type="text" placeholder="Turk shanay biznes" value={row.supplier} onChange={(e) => { const nw = [...arrivals]; nw[idx].supplier = e.target.value; setArrivals(nw) }} className="w-full bg-blue-100/50 dark:bg-blue-900/20 px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none" />
+                      <input type="text" placeholder="Turk shanay biznes" value={row.supplier || ''} onChange={(e) => { const nw = [...arrivals]; nw[idx].supplier = e.target.value; setArrivals(nw) }} className="w-full bg-blue-100/50 dark:bg-blue-900/20 px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none" />
                     </td>
                     <td className="p-1">
-                      <input type="text" placeholder="Партия" value={row.batch} onChange={(e) => { const nw = [...arrivals]; nw[idx].batch = e.target.value; setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs font-mono text-slate-900 dark:text-white outline-none" />
+                      <input type="text" placeholder="Партия" value={row.batch || ''} onChange={(e) => { const nw = [...arrivals]; nw[idx].batch = e.target.value; setArrivals(nw) }} className="w-full bg-transparent px-2 py-1.5 text-xs font-mono text-slate-900 dark:text-white outline-none" />
                     </td>
                   </tr>
                 ))}
@@ -244,7 +257,7 @@ export default function ShopReportContent() {
                 {expenses.map((row, idx) => (
                   <tr key={idx} className="hover:bg-amber-50 dark:hover:bg-dark-800/50">
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750 bg-amber-100/50 dark:bg-amber-900/20">
-                      <input type="date" value={row.date} onChange={(e) => { const nw = [...expenses]; nw[idx].date = e.target.value; setExpenses(nw) }} className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none" />
+                      <input type="date" value={row.date || ''} onChange={(e) => { const nw = [...expenses]; nw[idx].date = e.target.value; setExpenses(nw) }} className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none" />
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
                       <input type="number" value={row.iceberg || ''} onChange={(e) => { const nw = [...expenses]; nw[idx].iceberg = Number(e.target.value); setExpenses(nw) }} className="w-full bg-transparent px-1 py-1 text-[11px] font-mono text-right text-slate-800 dark:text-slate-300 outline-none" />
@@ -345,16 +358,20 @@ export default function ShopReportContent() {
                     </tr>
                   </thead>
                   <tbody className="bg-white text-slate-900 font-mono">
-                    {[
-                      { name: 'Салат Айсберг', in: '2897.6', v1: '2897.6', v2: '', v3: '', v4: '', v5: '', v6: '', v7: '', y1: true },
-                      { name: 'Томаты', in: '0.0', v1: '', v2: '0.0', v3: '', v4: '', v5: '', v6: '', v7: '', y2: true },
-                      { name: 'Лук салатный белый', in: '0.0', v1: '', v2: '', v3: '0.0', v4: '', v5: '', v6: '', v7: '', y3: true },
-                      { name: 'Капуста/Морковь', in: '167.3', v1: '', v2: '', v3: '', v4: '143.8', v5: '23.5', v6: '', v7: '0.0', y4: true, y5: true },
-                      { name: 'Лимон', in: '0.0', v1: '', v2: '', v3: '', v4: '', v5: '', v6: '0', v7: '0', y6: true, y7: true },
-                      { name: 'Пакет вакуумный 30*35', in: '0.0', v1: '', v2: '', v3: '', v4: '', v5: '', v6: '', v7: '' },
-                      { name: 'Коробка из гофрокартона', in: '0.0', v1: '', v2: '', v3: '', v4: '', v5: '', v6: '', v7: '' },
-                      { name: 'Этикетка 56*60', in: '0.0', v1: '0', v2: '0', v3: '0', v4: '0', v5: '0', v6: '0', v7: '0' },
-                    ].map((r, i) => (
+                    {(function() {
+                        const exp = expenses.find(e => e.date === reportDate);
+                        const m = exp?.matrix || {};
+                        return [
+                          { name: 'Салат Айсберг', in: m['Салат Айсберг']?.['Салат Айсберг нарезанный'] || '', v1: m['Салат Айсберг']?.['Салат Айсберг нарезанный'] || '', v2: '', v3: '', v4: '', v5: '', v6: '', v7: '', y1: true },
+                          { name: 'Томаты', in: m['Томаты']?.['Томаты целые'] || '', v1: '', v2: m['Томаты']?.['Томаты целые'] || '', v3: '', v4: '', v5: '', v6: '', v7: '', y2: true },
+                          { name: 'Лук салатный белый', in: m['Лук салатный белый']?.['Лук салатный белый нарезанный'] || m['Лук салатный белый ']?.['Лук салатный белый нарезанный'] || '', v1: '', v2: '', v3: m['Лук салатный белый']?.['Лук салатный белый нарезанный'] || m['Лук салатный белый ']?.['Лук салатный белый нарезанный'] || '', v4: '', v5: '', v6: '', v7: '', y3: true },
+                          { name: 'Капуста/Морковь', in: (m['Капуста/Морковь']?.['Капуста'] || 0) + (m['Капуста/Морковь']?.['Морковь'] || 0) || '', v1: '', v2: '', v3: '', v4: m['Капуста/Морковь']?.['Капуста'] || m['Капуста']?.['Капуста'] || '', v5: m['Капуста/Морковь']?.['Морковь'] || m['Морковь']?.['Морковь'] || '', v6: '', v7: '', y4: true, y5: true },
+                          { name: 'Лимон', in: m['Лимон']?.['Лимон'] || '', v1: '', v2: '', v3: '', v4: '', v5: '', v6: m['Лимон']?.['Лимон'] || '', v7: '', y6: true, y7: true },
+                          { name: 'Пакет вакуумный 30*35', in: '', v1: '', v2: '', v3: '', v4: '', v5: '', v6: '', v7: '' },
+                          { name: 'Коробка из гофрокартона', in: '', v1: '', v2: '', v3: '', v4: '', v5: '', v6: '', v7: '' },
+                          { name: 'Этикетка 56*60', in: '', v1: '', v2: '', v3: '', v4: '', v5: '', v6: '', v7: '' },
+                        ]
+                      })().map((r, i) => (
                       <tr key={i} className="hover:bg-slate-50">
                         <td className="p-1 border border-[#8EA9DB] font-sans font-bold">{r.name}</td>
                         <td className="p-0 border border-[#8EA9DB]"><input type="number" className="w-full h-full p-1 text-center outline-none bg-transparent" defaultValue={r.in} /></td>
@@ -391,13 +408,22 @@ export default function ShopReportContent() {
                       </tr>
                     </thead>
                     <tbody className="bg-white text-slate-900 font-mono">
-                      {[
-                        { n: 'Салат Айсберг нарезанный', v1: '1833.0', v2: '1833', v3: '306' },
-                        { n: 'Томаты целые', v1: '0.0', v2: '0', v3: '0' },
-                        { n: 'Лук салатный белый нарезанный', v1: '0.0', v2: '0', v3: '0' },
-                        { n: 'Коул Слоу', v1: '126.0', v2: '252', v3: '21' },
-                        { n: 'Лимон', v1: '0.0', v2: '0', v3: '0' },
-                      ].map((r, i) => (
+                      {(function() {
+                          const exp = expenses.find(e => e.date === reportDate);
+                          const o = exp?.outputs || {};
+                          return [
+                            { n: 'Салат Айсберг нарезанный', v1: o['Салат Айсберг нарезанный']?.kg || '', v2: o['Салат Айсберг нарезанный']?.upakovki || '', v3: o['Салат Айсберг нарезанный']?.korobki || '' },
+                            { n: 'Томаты целые', v1: o['Томаты целые']?.kg || '', v2: o['Томаты целые']?.upakovki || '', v3: o['Томаты целые']?.korobki || '' },
+                            { n: 'Лук салатный белый нарезанный', v1: o['Лук салатный белый нарезанный']?.kg || '', v2: o['Лук салатный белый нарезанный']?.upakovki || '', v3: o['Лук салатный белый нарезанный']?.korobki || '' },
+                            { n: 'Коул Слоу', v1: o['Коул Слоу']?.kg || '', v2: o['Коул Слоу']?.upakovki || '', v3: o['Коул Слоу']?.korobki || '' },
+                            { n: 'Лимон', v1: o['Лимон']?.kg || '', v2: o['Лимон']?.upakovki || '', v3: o['Лимон']?.korobki || '' },
+                            { n: 'Огурцы свежие', v1: o['Огурцы свежие']?.kg || '', v2: o['Огурцы свежие']?.upakovki || '', v3: o['Огурцы свежие']?.korobki || '' },
+                            { n: 'Микс салат', v1: o['Микс салат']?.kg || '', v2: o['Микс салат']?.upakovki || '', v3: o['Микс салат']?.korobki || '' },
+                            { n: 'Мята', v1: o['Мята']?.kg || '', v2: o['Мята']?.upakovki || '', v3: o['Мята']?.korobki || '' },
+                            { n: 'Сельдерей', v1: o['Сельдерей']?.kg || '', v2: o['Сельдерей']?.upakovki || '', v3: o['Сельдерей']?.korobki || '' },
+                            { n: 'Айсберг (листовой)', v1: o['Айсберг (листовой)']?.kg || '', v2: o['Айсберг (листовой)']?.upakovki || '', v3: o['Айсберг (листовой)']?.korobki || '' },
+                          ]
+                        })().map((r, i) => (
                         <tr key={i} className="hover:bg-slate-50">
                           <td className="p-1 border border-slate-300 font-sans text-left">{r.n}</td>
                           <td className="p-0 border border-slate-300 bg-[#FFFF00]"><input type="number" className="w-full h-full p-1 text-center outline-none bg-transparent font-bold text-red-600" defaultValue={r.v1} /></td>
@@ -630,6 +656,8 @@ export default function ShopReportContent() {
 }
 
 function ClipboardListIcon(props: any) {
+    
+
   return (
     <svg
       {...props}

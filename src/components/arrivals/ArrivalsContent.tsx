@@ -58,9 +58,13 @@ const tBase = {
 type LangType = 'uz' | 'ru' | 'en'
 
 export default function ArrivalsContent() {
-  const { t, lang } = useLanguage()
-  const currentLang = (lang || 'uz') as LangType
-  const l = tBase[currentLang]
+  const { t, lang, formatDual } = useLanguage()
+  
+  const l = {} as typeof tBase.uz;
+  for (const key in tBase.uz) {
+    (l as any)[key] = formatDual((tBase.uz as any)[key] || '', (tBase.ru as any)[key] || '', (tBase.en as any)[key] || '');
+  }
+
 
   const [arrivals, setArrivals] = useState<Arrival[]>([])
   const [total, setTotal] = useState(0)

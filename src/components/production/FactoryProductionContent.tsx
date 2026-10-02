@@ -159,9 +159,13 @@ const tBase = {
 type LangType = 'uz' | 'ru' | 'en'
 
 export default function FactoryProductionContent() {
-  const { lang } = useLanguage()
-  const currentLang = (lang || 'uz') as LangType
-  const l = tBase[currentLang] || tBase.uz
+  const { lang, formatDual } = useLanguage()
+  
+  const l = {} as typeof tBase.uz;
+  for (const key in tBase.uz) {
+    (l as any)[key] = formatDual((tBase.uz as any)[key] || '', (tBase.ru as any)[key] || '', (tBase.en as any)[key] || '');
+  }
+
 
   const [activeTab, setActiveTab] = useState<'orders' | 'processQC' | 'boms'>('orders')
   const [recipes, setRecipes] = useState<any[]>([])
@@ -343,7 +347,7 @@ export default function FactoryProductionContent() {
   }
 
   return (
-    <div className="flex flex-col h-full animate-enter space-y-6">
+    <div className="flex flex-col min-h-full animate-enter space-y-6">
       {/* Industrial Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />

@@ -190,7 +190,7 @@ export default function Header() {
             const fd = new FormData(e.currentTarget)
             const q = fd.get('q')
             if (q) {
-              window.location.href = `/dashboard/traceability?q=${q}`
+              window.location.href = `/traceability?q=${q}`
             }
           }} 
           className="hidden md:flex relative ml-auto max-w-xs w-full mr-4"

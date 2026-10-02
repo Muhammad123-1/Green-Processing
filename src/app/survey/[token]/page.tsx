@@ -135,7 +135,7 @@ export default function SurveyPublicPage() {
   })
 
   const renderQuestion = (q: Question) => {
-    const opts = q.options ? JSON.parse(q.options) : []
+    const opts = q.options ? JSON.parse(q.options) : (q.questionType === 'rating' ? ['5','4','3','2','1'] : (q.questionType === 'yesno' ? ['Ha',"Yo'q"] : []))
     const selected = answers[q.id]
 
     if (q.questionType === 'rating') {

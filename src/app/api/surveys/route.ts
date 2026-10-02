@@ -100,7 +100,8 @@ export async function POST(req: NextRequest) {
           subLabel: 'a)',
           questionText: 'Yetkazib berilayotgan mahsulot sifati kelishilgan talablarga (harorat, tashqi ko\'rinish, shartnoma shartlariga) mos keladimi?',
           questionType: 'rating',
-          isRequired: true
+            options: ['5','4','3','2','1'],
+            isRequired: true
         },
         {
           orderIndex: 1,
@@ -108,7 +109,8 @@ export async function POST(req: NextRequest) {
           subLabel: 'b)',
           questionText: 'So\'rovlaringiz, eslatmalaringiz, e\'tiroz va shikoyatlaringiz bo\'yicha ishlar tezkorlik bilan bajariladimi?',
           questionType: 'rating',
-          isRequired: true
+            options: ['5','4','3','2','1'],
+            isRequired: true
         },
         {
           orderIndex: 2,
@@ -116,7 +118,8 @@ export async function POST(req: NextRequest) {
           subLabel: 'v)',
           questionText: 'Mahsulotimizning rang va ta\'m ko\'rsatkichlarini qanday baholaysiz?',
           questionType: 'rating',
-          isRequired: true
+            options: ['5','4','3','2','1'],
+            isRequired: true
         },
         {
           orderIndex: 3,
@@ -124,7 +127,8 @@ export async function POST(req: NextRequest) {
           subLabel: 'g)',
           questionText: 'Mahsulotlar o\'z vaqtida yetkazib berilmoqdami?',
           questionType: 'rating',
-          isRequired: true
+            options: ['5','4','3','2','1'],
+            isRequired: true
         },
         {
           orderIndex: 4,
@@ -132,7 +136,8 @@ export async function POST(req: NextRequest) {
           subLabel: 'd)',
           questionText: 'So\'nggi uch oy ichida tayyor mahsulotda yot jismlar (soch, shisha, plastmassa va hokazo) uchrash holatlari bo\'ldimi?',
           questionType: 'rating',
-          isRequired: true
+            options: ['5','4','3','2','1'],
+            isRequired: true
         },
         {
           orderIndex: 5,

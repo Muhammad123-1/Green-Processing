@@ -52,7 +52,7 @@ export default function OrdersContent() {
   const [stockFilter, setStockFilter] = useState<'ALL' | 'RED' | 'YELLOW' | 'GREEN'>('ALL')
 
   const [orderSearch, setOrderSearch] = useState('')
-  const [orderFilter, setOrderFilter] = useState<'ALL' | 'PENDING' | 'DELAYED' | 'DELIVERED' | 'CANCELLED'>('ALL')
+  const [orderFilter, setOrderFilter] = useState<'ALL' | 'PENDING' | 'DELAYED' | 'DELIVERED' | 'CANCELLED' | 'TODAY'>('ALL')
 
   // Modals
   const [showOrderModal, setShowOrderModal] = useState(false)
@@ -306,6 +306,10 @@ export default function OrdersContent() {
         order.supplierName?.toLowerCase().includes(orderSearch.toLowerCase())
       
       if (orderFilter === 'PENDING') return matchesSearch && (order.status === 'PENDING')
+      if (orderFilter === 'TODAY') {
+        const today = new Date().toISOString().split('T')[0]
+        return matchesSearch && (order.status === 'PENDING') && (order.expectedDate && order.expectedDate.startsWith(today))
+      }
       if (orderFilter === 'DELAYED') return matchesSearch && (order.status === 'DELAYED')
       if (orderFilter === 'DELIVERED') return matchesSearch && (order.status === 'DELIVERED')
       if (orderFilter === 'CANCELLED') return matchesSearch && (order.status === 'CANCELLED')
@@ -433,8 +437,8 @@ export default function OrdersContent() {
 
         {/* 6. Today deliveries */}
         <div 
-          onClick={() => { setActiveTab('orders'); setOrderFilter('PENDING'); }}
-          className="card p-4 rounded-xl cursor-pointer hover:bg-dark-800 transition-all border-l-4 border-l-cyan-500"
+          onClick={() => { setActiveTab('orders'); setOrderFilter('TODAY'); }}
+          className={`card p-4 rounded-xl cursor-pointer transition-all border-l-4 border-l-cyan-500 ${orderFilter === 'TODAY' && activeTab === 'orders' ? 'ring-2 ring-cyan-500/50 bg-cyan-500/10' : 'hover:bg-dark-800'}`}
         >
           <div className="flex items-center justify-between text-cyan-400 mb-2">
             <span className="text-xs font-semibold uppercase">Bugun</span>
