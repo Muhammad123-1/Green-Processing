@@ -50,10 +50,12 @@ export async function GET(req: NextRequest) {
 
     const buffer = await workbook.xlsx.writeBuffer()
 
+    const filename = encodeURIComponent('Производственный_отчет_Экспорт.xlsx')
+
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Disposition': 'attachment; filename="Производственный_отчет_Экспорт.xlsx"',
+        'Content-Disposition': `attachment; filename="shop_report.xlsx"; filename*=UTF-8''${filename}`,
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       }
     })
