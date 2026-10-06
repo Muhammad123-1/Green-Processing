@@ -20,6 +20,7 @@ export const LANGUAGE_OPTIONS: LanguageOption[] = [
 const translations = {
   uz: {
     sales: 'Sotuv',
+    archive: 'Umumiy Arxiv',
     dashboard: 'Bosh sahifa',
     inspections: 'Akt tarixi',
     newInspection: 'Yangi akt',
@@ -162,6 +163,7 @@ const translations = {
   },
   ru: {
     sales: 'Продажи',
+    archive: 'Общий Архив',
     dashboard: 'Главная',
     inspections: 'История актов',
     newInspection: 'Новый акт',
@@ -303,6 +305,7 @@ const translations = {
   },
   en: {
     sales: 'Sales',
+    archive: 'Global Archive',
     dashboard: 'Dashboard',
     inspections: 'Act History',
     newInspection: 'New Act',

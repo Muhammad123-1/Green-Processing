@@ -1,0 +1,280 @@
+// Shared definitions for the "Производственный отчет ЦЕХ" module.
+// Used by BOTH the React components and the API routes so that the
+// field names / template layout never drift apart.
+
+export const normKey = (s: any) => String(s ?? '').toLowerCase().replace(/\s+/g, '')
+
+export const isDateStr = (s: any) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
+
+export const toNum = (v: any): number => {
+  if (v === null || v === undefined || v === '') return 0
+  const n = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'))
+  return Number.isFinite(n) ? n : 0
+}
+
+// -----------------------------------------------------------------------------
+// TAB 2: Расход (flat per-day totals) -> ShopExpense.materials
+// -----------------------------------------------------------------------------
+export interface ExpenseField {
+  field: string
+  label: string
+  unit: string
+  aliases: string[] // first alias is the canonical key written to the DB
+}
+
+export const EXPENSE_FIELDS: ExpenseField[] = [
+  { field: 'iceberg', label: 'Айсберг', unit: 'кг', aliases: ['Айсберг', 'Салат Айсберг'] },
+  { field: 'tomatoes', label: 'ТОМАТЫ', unit: 'кг', aliases: ['ТОМАТЫ', 'Томаты'] },
+  { field: 'onion', label: 'Лук', unit: 'кг', aliases: ['Лук', 'Лук салатный белый'] },
+  { field: 'cabbage', label: 'Капуста', unit: 'кг', aliases: ['Капуста'] },
+  { field: 'carrot', label: 'Морковь', unit: 'кг', aliases: ['Морковь'] },
+  { field: 'bag', label: 'Пакет', unit: 'шт', aliases: ['Пакет'] },
+  { field: 'box', label: 'Коробки', unit: 'шт', aliases: ['Коробки'] },
+  { field: 'chlorine', label: 'Хлор', unit: 'кг', aliases: ['Хлор'] },
+  { field: 'sorbat', label: 'Сорбат', unit: 'кг', aliases: ['Сорбат'] },
+  { field: 'benzoat', label: 'Бензоат', unit: 'кг', aliases: ['Бензоат'] },
+  { field: 'vinegar', label: 'Уксус', unit: 'кг', aliases: ['Уксус'] },
+  { field: 'taygeta', label: 'Тайгета 218', unit: 'л', aliases: ['Тайгета 218'] },
+  { field: 'boxDefect', label: 'Коробки2 БРАК', unit: 'шт', aliases: ['Коробки2 БРАК', 'Коробки 2 БРАК'] },
+  { field: 'bagDefect', label: 'Пакет 2 БРАК', unit: 'шт', aliases: ['Пакет 2 БРАК'] },
+  { field: 'ses', label: 'СЕС', unit: 'кг', aliases: ['СЕС'] },
+  { field: 'kitchen', label: 'КУХНЯ', unit: 'кг', aliases: ['КУХНЯ'] },
+]
+
+/** DB record -> flat row used by the Tab 2 table. */
+export function readExpenseRow(rec: { date: string; materials?: any }) {
+  const materials = (rec.materials || {}) as Record<string, any>
+  const normalized: Record<string, any> = {}
+  for (const [k, v] of Object.entries(materials)) normalized[normKey(k)] = v
+  const row: Record<string, any> = { date: rec.date }
+  for (const f of EXPENSE_FIELDS) {
+    let val: any = 0
+    for (const a of f.aliases) {
+      const hit = normalized[normKey(a)]
+      if (hit !== undefined && hit !== null) {
+        val = hit
+        break
+      }
+    }
+    row[f.field] = toNum(val)
+  }
+  return row
+}
+
+/**
+ * Apply an edited Tab 2 row on top of the stored materials.
+ * Materials that are not part of the table (Мята, Шпинат, ...) are kept untouched.
+ */
+export function applyExpenseRow(existing: any, row: Record<string, any>) {
+  const materials: Record<string, any> = { ...(existing || {}) }
+  for (const f of EXPENSE_FIELDS) {
+    const aliasSet = new Set(f.aliases.map(normKey))
+    const existingKeys = Object.keys(materials).filter((k) => aliasSet.has(normKey(k)))
+    const value = toNum(row[f.field])
+    if (value === 0) {
+      existingKeys.forEach((k) => delete materials[k])
+    } else {
+      const targetKey = existingKeys[0] || f.aliases[0]
+      existingKeys.slice(1).forEach((k) => delete materials[k])
+      materials[targetKey] = value
+    }
+  }
+  return materials
+}
+
+// -----------------------------------------------------------------------------
+// TAB 3: daily workshop report -> ShopExpense.balances.report
+// (kept under its own key so it never mixes with the noisy imported matrix)
+// -----------------------------------------------------------------------------
+export const RAW_ROWS = [
+  'Салат Айсберг',
+  'Томаты',
+  'Лук салатный белый',
+  'Капуста/Морковь',
+  'Лимон',
+  'Пакет вакуумный 30*35',
+  'Коробка из гофрокартона',
+  'Этикетка 56*60',
+]
+
+export interface MatrixCol {
+  key: string
+  label: string
+  green?: boolean
+}
+
+export const MATRIX_COLS: MatrixCol[] = [
+  { key: 'Приход в цех', label: 'Приход в цех' },
+  { key: 'Салат Айсберг нарезанный', label: 'Салат Айсберг нарезанный' },
+  { key: 'Томаты целые', label: 'Томаты целые' },
+  { key: 'Лук салатный белый нарезанный', label: 'Лук салатный белый нарезанный' },
+  { key: 'Капуста', label: 'Капуста' },
+  { key: 'Морковь', label: 'Морковь' },
+  { key: 'СЭС', label: 'СЭС', green: true },
+  { key: 'КУХНЯ', label: 'КУХНЯ', green: true },
+]
+
+// Highlighted (yellow) "main" cells of the Excel template
+export const MATRIX_HIGHLIGHT: Record<string, string[]> = {
+  'Салат Айсберг': ['Салат Айсберг нарезанный'],
+  'Томаты': ['Томаты целые'],
+  'Лук салатный белый': ['Лук салатный белый нарезанный'],
+  'Капуста/Морковь': ['Капуста', 'Морковь'],
+  'Лимон': ['СЭС', 'КУХНЯ'],
+}
+
+export const OUTPUT_ROWS = [
+  'Салат Айсберг нарезанный',
+  'Томаты целые',
+  'Лук салатный белый нарезанный',
+  'Коул Слоу',
+  'Лимон',
+  'Огурцы свежие',
+  'Микс салат',
+  'Мята',
+  'Сельдерей',
+  'Айсберг (листовой)',
+]
+
+export const OUTPUT_FIELDS = [
+  { key: 'kg', label: 'Кол-во ГП, кг', main: true },
+  { key: 'upakovki', label: 'Упаковки, шт' },
+  { key: 'korobki', label: 'Коробки, шт' },
+  { key: 'ses', label: 'Кол-во ГП, кг СЭС', green: true },
+  { key: 'kitchen', label: 'Кол-во ГП, кг КУХНЯ', green: true },
+] as const
+
+export type OutputFieldKey = (typeof OUTPUT_FIELDS)[number]['key']
+
+export const BALANCE_COLS = [
+  { key: 'iceberg', label: 'Салат Айсберг' },
+  { key: 'tomato', label: 'Томат' },
+  { key: 'onion', label: 'Лук салатный белый' },
+  { key: 'cabbage', label: 'Капуста белокочанная' },
+  { key: 'carrot', label: 'Морковь' },
+  { key: 'lemon', label: 'Лимон' },
+]
+
+export const BALANCE_ROWS = [
+  { key: 'start', label: 'остатка начало дня' },
+  { key: 'income', label: 'приход' },
+  { key: 'expense', label: 'расход' },
+  { key: 'end', label: 'остатка конец дня' },
+] as const
+
+// % of raw material losses: (raw - finished) / raw * 100
+export const PERCENT_COLS = [
+  'Салат Айсберг нарезанный',
+  'Томаты целые',
+  'Лук салатный белый нарезанный',
+  'Коул Слоу',
+  'Лимон',
+]
+
+export interface PercentRowDef {
+  name: string
+  norm: string
+  /** index into PERCENT_COLS; undefined => not auto-calculated */
+  col?: number
+  /** raw consumption cells [matrixRow, matrixCol] that are summed */
+  raw?: [string, string][]
+}
+
+export const PERCENT_ROWS: PercentRowDef[] = [
+  { name: 'Салат Айсберг', norm: '25-35', col: 0, raw: [['Салат Айсберг', 'Салат Айсберг нарезанный']] },
+  { name: 'Томаты', norm: '15', col: 1, raw: [['Томаты', 'Томаты целые']] },
+  { name: 'Лук салатный белый', norm: '20-25', col: 2, raw: [['Лук салатный белый', 'Лук салатный белый нарезанный']] },
+  { name: 'Капуста/Морковь', norm: '', col: 3, raw: [['Капуста/Морковь', 'Капуста'], ['Капуста/Морковь', 'Морковь']] },
+  { name: 'Лимон', norm: '', col: 4, raw: [['Лимон', 'СЭС'], ['Лимон', 'КУХНЯ']] },
+  { name: 'Пакет вакуумный (Салат Айсберг)', norm: '12.07' },
+  { name: 'Пакет вакуумный (Томаты)', norm: '12.07' },
+  { name: 'Пакет вакуумный (Лук)', norm: '32' },
+  { name: 'Этикетка 56*60 (Салат Айсберг)', norm: '11.19' },
+  { name: 'Этикетка 56*60 (Томаты)', norm: '11.19' },
+  { name: 'Этикетка 56*60 (Лук)', norm: '30.5' },
+  { name: 'Коробка из гофрокартона (Салат Айсберг, Томаты, Лук)', norm: '5.56' },
+]
+
+export interface DayReport {
+  matrix: Record<string, Record<string, number>>
+  outputs: Record<string, Partial<Record<OutputFieldKey, number>>>
+  balances: Record<string, Record<string, number>>
+  updatedAt?: string
+  updatedBy?: string
+}
+
+export const emptyDayReport = (): DayReport => ({ matrix: {}, outputs: {}, balances: {} })
+
+export const hasReportData = (r: DayReport | null | undefined) =>
+  !!r &&
+  (Object.keys(r.matrix || {}).length > 0 ||
+    Object.keys(r.outputs || {}).length > 0 ||
+    Object.keys(r.balances || {}).length > 0)
+
+/** Keep only template keys + finite non-zero numbers. Used on the server before saving. */
+export function sanitizeDayReport(input: any): DayReport {
+  const out = emptyDayReport()
+  const src = input || {}
+
+  for (const row of RAW_ROWS) {
+    for (const col of MATRIX_COLS) {
+      const v = toNum(src.matrix?.[row]?.[col.key])
+      if (v !== 0) {
+        out.matrix[row] = out.matrix[row] || {}
+        out.matrix[row][col.key] = v
+      }
+    }
+  }
+
+  for (const name of OUTPUT_ROWS) {
+    for (const f of OUTPUT_FIELDS) {
+      const v = toNum(src.outputs?.[name]?.[f.key])
+      if (v !== 0) {
+        out.outputs[name] = out.outputs[name] || {}
+        out.outputs[name][f.key] = v
+      }
+    }
+  }
+
+  for (const row of BALANCE_ROWS) {
+    for (const col of BALANCE_COLS) {
+      const v = toNum(src.balances?.[row.key]?.[col.key])
+      if (v !== 0) {
+        out.balances[row.key] = out.balances[row.key] || {}
+        out.balances[row.key][col.key] = v
+      }
+    }
+  }
+
+  return out
+}
+
+/** Read the clean daily report out of a ShopExpense record. */
+export function getDayReport(rec: { balances?: any } | null | undefined): DayReport | null {
+  const r = (rec?.balances as any)?.report
+  if (!r || typeof r !== 'object') return null
+  const clean = sanitizeDayReport(r)
+  clean.updatedAt = r.updatedAt
+  clean.updatedBy = r.updatedBy
+  return clean
+}
+
+export interface PercentResult {
+  name: string
+  norm: string
+  values: (number | null)[] // per PERCENT_COLS
+}
+
+export function computePercents(report: DayReport): PercentResult[] {
+  return PERCENT_ROWS.map((def) => {
+    const values: (number | null)[] = PERCENT_COLS.map(() => null)
+    if (def.col !== undefined && def.raw) {
+      const raw = def.raw.reduce((s, [r, c]) => s + toNum(report.matrix?.[r]?.[c]), 0)
+      const finished = toNum(report.outputs?.[PERCENT_COLS[def.col]]?.kg)
+      if (raw > 0 && finished > 0) {
+        values[def.col] = Math.round(((raw - finished) / raw) * 1000) / 10
+      }
+    }
+    return { name: def.name, norm: def.norm, values }
+  })
+}

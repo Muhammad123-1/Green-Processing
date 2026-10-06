@@ -4,7 +4,7 @@ import React, { useMemo } from 'react'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
+import { Archive, 
   LayoutDashboard,
   ClipboardList,
   History,
@@ -29,7 +29,7 @@ import {
   ClipboardCheck,
   CheckCircle2,
   Table2
-} from 'lucide-react'
+ } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
@@ -41,6 +41,7 @@ const navSections = [
     items: [
       { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'director', href: '/director', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR'] },
+      { key: 'archive', href: '/archive', icon: Archive, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   },
   {
