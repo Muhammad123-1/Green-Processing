@@ -142,6 +142,10 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
             if (item.key === 'director' && userRole !== 'DIRECTOR') {
               return false
             }
+            // User requested: "1savolga javob: ha kerak emas faqat ombor qolsin"
+            if (userRole === 'DIRECTOR') {
+              return item.key === 'director' || item.key === 'warehouse'
+            }
             return item.roles.includes(userRole) || userRole === 'ADMIN'
           })
           
