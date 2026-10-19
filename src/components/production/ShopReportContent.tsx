@@ -13,6 +13,10 @@ import {
   ChevronRight,
   Loader2,
   Package,
+  HelpCircle,
+  CheckCircle2,
+  Info,
+  Calendar,
   X,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -64,6 +68,7 @@ export default function ShopReportContent() {
   const [savingArrivals, setSavingArrivals] = useState(false)
   const [savingExpenses, setSavingExpenses] = useState(false)
   const [savingGP, setSavingGP] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   // ---------------------------------------------------------------------------
   // Loading + history (Tab 4)
@@ -444,6 +449,14 @@ export default function ShopReportContent() {
           >
             <Download size={15} />
             <span>{lang === 'ru' ? 'Экспорт Excel' : 'Excel Export'}</span>
+          </button>
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="flex items-center gap-2 bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:hover:bg-purple-500/20 border border-purple-200 dark:border-purple-500/30 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm"
+            title={lang === 'ru' ? 'Справка по форматам дат и импорту' : "Sana formati va import bo'yicha qo'llanma"}
+          >
+            <HelpCircle size={15} />
+            <span>{lang === 'ru' ? 'Справка (Формат дат)' : "Sana formati (Qo'llanma)"}</span>
           </button>
         </div>
       </div>
@@ -905,6 +918,118 @@ export default function ShopReportContent() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Help Modal: Sana va Excel Import bo'yicha yo'riqnoma */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="max-w-2xl w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-750">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center justify-center">
+                  <Calendar size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                    {lang === 'ru' ? 'Формат дат и инструкция по импорту Excel' : "Sana formati va Excel import yo'riqnomasi"}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {lang === 'ru' ? 'Как правильно указывать дату в таблицах' : "Jadvallarda sanani to'g'ri kiritish qoidalari"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content Sections */}
+            <div className="space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              {/* Rule 1: Short dates */}
+              <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-blue-700 dark:text-blue-400">
+                  <CheckCircle2 size={16} />
+                  <span>{lang === 'ru' ? '1. Краткий формат даты (Основной стандарт)' : '1. Qisqa sana formati (Asosiy standart)'}</span>
+                </div>
+                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  {lang === 'ru'
+                    ? 'В компании используется порядок: ДЕНЬ / МЕСЯЦ / ГОД. Система автоматически распознает первое число как день, а второе как месяц.'
+                    : "Korxonada KUN / OY / YIL tartibi ishlatiladi. Tizim birinchi raqamni kun, ikkinchi raqamni oy deb avtomatik tushunadi."}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs pt-1">
+                  <div className="bg-white dark:bg-dark-800 p-2 rounded-lg border border-blue-200 dark:border-blue-500/30 font-semibold">
+                    12.09.2025 <span className="text-[10px] text-slate-400 font-sans block">{lang === 'ru' ? '12 сентября' : '12-Sentabr'}</span>
+                  </div>
+                  <div className="bg-white dark:bg-dark-800 p-2 rounded-lg border border-blue-200 dark:border-blue-500/30 font-semibold">
+                    12/09/2025 <span className="text-[10px] text-slate-400 font-sans block">{lang === 'ru' ? '12 сентября' : '12-Sentabr'}</span>
+                  </div>
+                  <div className="bg-white dark:bg-dark-800 p-2 rounded-lg border border-blue-200 dark:border-blue-500/30 font-semibold">
+                    05.09.2025 <span className="text-[10px] text-slate-400 font-sans block">{lang === 'ru' ? '5 сентября (не май)' : '5-Sentabr (may emas)'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rule 2: Long dates */}
+              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 size={16} />
+                  <span>{lang === 'ru' ? '2. Длинный формат даты (С названием месяца)' : "2. Uzun sana formati (Oy nomi so'z bilan)"}</span>
+                </div>
+                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  {lang === 'ru'
+                    ? 'Если в Excel дата указана прописью (на русском, узбекском или английском языке), система распознает месяц автоматически.'
+                    : "Agar Excelda sana so'z bilan yozilgan bo'lsa (ruscha, o'zbekcha yoki inglizcha), tizim oy nomini avtomatik taniydi."}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-xs pt-1">
+                  <div className="bg-white dark:bg-dark-800 p-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30">
+                    &quot;12 сентября 2025 г.&quot;
+                  </div>
+                  <div className="bg-white dark:bg-dark-800 p-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30">
+                    &quot;15-sentabr 2025&quot;
+                  </div>
+                </div>
+              </div>
+
+              {/* Rule 3: Smart Merge Info */}
+              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400">
+                  <Info size={16} />
+                  <span>{lang === 'ru' ? '3. Умное слияние (Данные не перезаписываются)' : "3. Aqlli birlashtirish (Ma'lumotlar o'chib ketmaydi)"}</span>
+                </div>
+                <ul className="text-xs space-y-1 text-slate-600 dark:text-slate-400 list-disc list-inside">
+                  <li>
+                    {lang === 'ru'
+                      ? 'Уже заполненные в программе значения сохраняются. Excel дополняет только пустые ячейки.'
+                      : "Dasturda kiritilgan mavjud qiymatlar saqlanadi. Excel faqat bo'sh qolib ketgan kataklarni to'ldiradi."}
+                  </li>
+                  <li>
+                    {lang === 'ru'
+                      ? 'Формулы в ячейках Excel (например =250+6) автоматически вычисляются (256).'
+                      : "Excel kataklaridagi formulalar (masalan =250+6) avtomatik hisoblab olinadi (256)."}
+                  </li>
+                  <li>
+                    {lang === 'ru'
+                      ? 'Пустые будущие даты пропускаются и не засоряют базу.'
+                      : "Kelajakdagi hamma katagi bo'sh bo'lgan qatorlar bazaga kirmaydi."}
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-purple-600/20 transition-all"
+              >
+                {lang === 'ru' ? 'Понятно, закрыть' : 'Tushundim, yopish'}
+              </button>
             </div>
           </div>
         </div>
