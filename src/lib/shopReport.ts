@@ -108,6 +108,71 @@ export function formatDMY(dateStr: any): string {
   return dateStr
 }
 
+/**
+ * Sanani oy nomi bilan uzun formatda ko'rsatish (Long Date format).
+ * Misol: "2026-08-03" -> Uzbek: "3-avgust, 2026", Russian: "3 августа 2026 г."
+ */
+export function formatLongDate(dateStr: any, lang: string = 'uz'): string {
+  if (!dateStr || typeof dateStr !== 'string') return ''
+  let y = '', m = '', d = ''
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const parts = dateStr.split('-')
+    y = parts[0]
+    m = parts[1]
+    d = parts[2]
+  } else {
+    const parsed = parseExcelDate(dateStr)
+    if (parsed && /^\d{4}-\d{2}-\d{2}$/.test(parsed)) {
+      const parts = parsed.split('-')
+      y = parts[0]
+      m = parts[1]
+      d = parts[2]
+    } else {
+      return String(dateStr)
+    }
+  }
+
+  const dayNum = parseInt(d, 10)
+  if (isNaN(dayNum)) return String(dateStr)
+
+  const uzMonths: Record<string, string> = {
+    '01': 'yanvar',
+    '02': 'fevral',
+    '03': 'mart',
+    '04': 'aprel',
+    '05': 'may',
+    '06': 'iyun',
+    '07': 'iyul',
+    '08': 'avgust',
+    '09': 'sentabr',
+    '10': 'oktabr',
+    '11': 'noyabr',
+    '12': 'dekabr',
+  }
+  const ruMonths: Record<string, string> = {
+    '01': 'января',
+    '02': 'февраля',
+    '03': 'марта',
+    '04': 'апреля',
+    '05': 'мая',
+    '06': 'июня',
+    '07': 'июля',
+    '08': 'августа',
+    '09': 'сентября',
+    '10': 'октября',
+    '11': 'ноября',
+    '12': 'декабря',
+  }
+
+  if (lang === 'ru') {
+    const monthName = ruMonths[m] || m
+    return `${dayNum} ${monthName} ${y} г.`
+  } else {
+    const monthName = uzMonths[m] || m
+    return `${dayNum}-${monthName}, ${y}`
+  }
+}
+
 // -----------------------------------------------------------------------------
 // TAB 2: Расход (flat per-day totals) -> ShopExpense.materials
 // -----------------------------------------------------------------------------

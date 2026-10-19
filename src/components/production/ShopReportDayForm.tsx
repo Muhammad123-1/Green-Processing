@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Save, Loader2, ChevronLeft, ChevronRight, RotateCcw, CheckCircle2, Info } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 import {
   RAW_ROWS,
   MATRIX_COLS,
@@ -16,6 +17,7 @@ import {
   getDayReport,
   sanitizeDayReport,
   toNum,
+  formatLongDate,
   type DayReport,
 } from '@/lib/shopReport'
 
@@ -117,6 +119,7 @@ const fmtTime = (iso?: string) => {
 }
 
 export default function ShopReportDayForm({ date, onDateChange, record, prevEnd, onSaved }: Props) {
+  const { lang } = useLanguage()
   const saved = useMemo(() => getDayReport(record), [record])
   const savedCells = useMemo(() => reportToCells(saved), [saved])
 
@@ -231,12 +234,17 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           >
             <ChevronLeft size={16} />
           </button>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => changeDate(e.target.value)}
-            className="bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none"
-          />
+          <div className="flex items-center gap-1.5">
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => changeDate(e.target.value)}
+              className="bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none"
+            />
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-sm">
+              {formatLongDate(date, lang)}
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => changeDate(shiftDate(date, 1))}

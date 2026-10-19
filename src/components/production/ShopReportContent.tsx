@@ -30,6 +30,8 @@ import {
   hasReportData,
   isDateStr,
   toNum,
+  formatDMY,
+  formatLongDate,
 } from '@/lib/shopReport'
 
 const todayStr = () => {
@@ -49,6 +51,18 @@ export default function ShopReportContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [activeTab, setActiveTab] = useState<'arrival' | 'expense' | 'gp' | 'report' | 'history'>('arrival')
+
+  // Date format toggle: 'short' (DD.MM.YYYY) or 'long' (3-avgust, 2026 / 3 августа 2026 г.)
+  const [dateFormatMode, setDateFormatMode] = useState<'short' | 'long'>('short')
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('shop_report_date_mode')
+      if (saved === 'short' || saved === 'long') {
+        setDateFormatMode(saved)
+      }
+    } catch {}
+  }, [])
 
   // Raw DB data
   const [arrivals, setArrivals] = useState<any[]>([])
@@ -458,6 +472,39 @@ export default function ShopReportContent() {
             <HelpCircle size={15} />
             <span>{lang === 'ru' ? 'Справка (Формат дат)' : "Sana formati (Qo'llanma)"}</span>
           </button>
+          <button
+            onClick={() => {
+              const next = dateFormatMode === 'short' ? 'long' : 'short'
+              setDateFormatMode(next)
+              try {
+                localStorage.setItem('shop_report_date_mode', next)
+              } catch {}
+            }}
+            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all border shadow-sm ${
+              dateFormatMode === 'long'
+                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-amber-500/20'
+                : 'bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-750'
+            }`}
+            title={
+              dateFormatMode === 'short'
+                ? (lang === 'ru' ? 'Переключить на длинный формат (с названием месяца)' : "Uzun sana formatiga o'tish (oy nomi bilan)")
+                : (lang === 'ru' ? 'Переключить на краткий формат (ДД.ММ.ГГГГ)' : "Qisqa sana formatiga o'tish (03.08.2026)")
+            }
+          >
+            <Calendar size={15} />
+            <span>{lang === 'ru' ? 'Вид даты:' : "Sana ko'rinishi:"}</span>
+            <span
+              className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold ${
+                dateFormatMode === 'long'
+                  ? 'bg-white text-amber-700'
+                  : 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300'
+              }`}
+            >
+              {dateFormatMode === 'short'
+                ? (lang === 'ru' ? 'Краткая (03.08)' : 'Qisqa (03.08)')
+                : (lang === 'ru' ? 'Длинная (август)' : 'Uzun (avgust)')}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -517,7 +564,11 @@ export default function ShopReportContent() {
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead className="bg-amber-500 text-white text-xs font-bold uppercase sticky top-0 z-10">
                 <tr>
-                  <th className="p-3 border-r border-amber-600">Дата</th>
+                  <th className="p-3 border-r border-amber-600 min-w-[130px]">
+                    {dateFormatMode === 'long'
+                      ? (lang === 'ru' ? 'Дата (месяц)' : 'Sana (oy nomi)')
+                      : (lang === 'ru' ? 'Дата' : 'Sana')}
+                  </th>
                   <th className="p-3 border-r border-amber-600">Номенклатура</th>
                   <th className="p-3 border-r border-amber-600 text-right">Количество</th>
                   <th className="p-3 border-r border-amber-600">Поставщик</th>
@@ -539,12 +590,32 @@ export default function ShopReportContent() {
                     className={`hover:bg-slate-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-50 dark:bg-amber-500/10' : ''}`}
                   >
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
-                      <input
-                        type="date"
-                        value={row.date || ''}
-                        onChange={(e) => updateArrival(idx, { date: e.target.value })}
-                        className="w-full bg-transparent px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none"
-                      />
+                      {row._new ? (
+                        <input
+                          type="date"
+                          value={row.date || ''}
+                          onChange={(e) => updateArrival(idx, { date: e.target.value })}
+                          className="w-full bg-transparent px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-between gap-1 px-2 py-1 group rounded hover:bg-amber-100/50 dark:hover:bg-dark-800 transition-colors">
+                          <span className="text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                            {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
+                          </span>
+                          <label
+                            className="relative cursor-pointer p-1 rounded hover:bg-amber-200/60 dark:hover:bg-amber-900/40 text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+                            title={lang === 'ru' ? 'Изменить дату' : "Sanani o'zgartirish"}
+                          >
+                            <Calendar size={13} />
+                            <input
+                              type="date"
+                              value={row.date || ''}
+                              onChange={(e) => updateArrival(idx, { date: e.target.value })}
+                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                            />
+                          </label>
+                        </div>
+                      )}
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
                       <input
@@ -628,7 +699,11 @@ export default function ShopReportContent() {
             <table className="w-full text-left border-collapse min-w-[1500px]">
               <thead className="bg-[#FFE699] dark:bg-amber-900/40 text-slate-900 dark:text-amber-100 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-amber-300 dark:border-amber-700">
                 <tr>
-                  <th className="p-2 border-r border-amber-300 dark:border-amber-700/50 w-32 bg-amber-200 dark:bg-amber-800">Число</th>
+                  <th className="p-2 border-r border-amber-300 dark:border-amber-700/50 min-w-[130px] bg-amber-200 dark:bg-amber-800">
+                    {dateFormatMode === 'long'
+                      ? (lang === 'ru' ? 'Число (месяц)' : 'Sana (oy nomi)')
+                      : (lang === 'ru' ? 'Число' : 'Sana')}
+                  </th>
                   {EXPENSE_FIELDS.map((f) => (
                     <th
                       key={f.field}
@@ -656,13 +731,18 @@ export default function ShopReportContent() {
                     className={`hover:bg-amber-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-100/70 dark:bg-amber-500/10' : ''}`}
                   >
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750 bg-amber-100/50 dark:bg-amber-900/20">
-                      <input
-                        type="date"
-                        value={row.date || ''}
-                        readOnly={!row._new}
-                        onChange={(e) => updateExpense(idx, { date: e.target.value })}
-                        className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
-                      />
+                      {row._new ? (
+                        <input
+                          type="date"
+                          value={row.date || ''}
+                          onChange={(e) => updateExpense(idx, { date: e.target.value })}
+                          className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
+                        />
+                      ) : (
+                        <div className="px-2 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                          {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
+                        </div>
+                      )}
                     </td>
                     {EXPENSE_FIELDS.map((f) => {
                       const defect = f.field === 'boxDefect' || f.field === 'bagDefect'
@@ -729,7 +809,11 @@ export default function ShopReportContent() {
             <table className="w-full text-left border-collapse min-w-[1200px]">
               <thead className="bg-[#70AD47] text-white text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-emerald-600">
                 <tr>
-                  <th className="p-2 border-r border-emerald-600 w-32 bg-[#548235] text-white">Дата</th>
+                  <th className="p-2 border-r border-emerald-600 min-w-[130px] bg-[#548235] text-white">
+                    {dateFormatMode === 'long'
+                      ? (lang === 'ru' ? 'Дата (месяц)' : 'Sana (oy nomi)')
+                      : (lang === 'ru' ? 'Дата' : 'Sana')}
+                  </th>
                   {GP_FIELDS.map((f) => (
                     <th key={f.field} className="p-2 border-r border-emerald-600/80 text-center">
                       {f.label}
@@ -757,13 +841,18 @@ export default function ShopReportContent() {
                       className={`hover:bg-emerald-50/50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-emerald-100/60 dark:bg-emerald-500/10' : ''}`}
                     >
                       <td className="p-1 border-r border-slate-200 dark:border-dark-750 bg-emerald-50/60 dark:bg-emerald-900/10">
-                        <input
-                          type="date"
-                          value={row.date || ''}
-                          readOnly={!row._new}
-                          onChange={(e) => updateGP(idx, { date: e.target.value })}
-                          className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
-                        />
+                        {row._new ? (
+                          <input
+                            type="date"
+                            value={row.date || ''}
+                            onChange={(e) => updateGP(idx, { date: e.target.value })}
+                            className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
+                          />
+                        ) : (
+                          <div className="px-2 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                            {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
+                          </div>
+                        )}
                       </td>
                       {GP_FIELDS.map((f) => (
                         <td key={f.field} className="p-1 border-r border-slate-200 dark:border-dark-750">
@@ -886,7 +975,9 @@ export default function ShopReportContent() {
                         >
                           {h.type === 'arrival' ? 'Приход' : h.type === 'expense' ? 'Расход' : 'Отчет ЦЕХ'}
                         </span>
-                        <h3 className="text-lg font-black text-slate-900 dark:text-white mt-1">{h.date}</h3>
+                        <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
+                          {dateFormatMode === 'long' ? formatLongDate(h.date, lang) : formatDMY(h.date)}
+                        </h3>
                       </div>
                       <div className="bg-slate-200 dark:bg-dark-700 w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-xs">
                         {String(h.createdBy || '?').charAt(0)}
@@ -1019,6 +1110,23 @@ export default function ShopReportContent() {
                       : "Kelajakdagi hamma katagi bo'sh bo'lgan qatorlar bazaga kirmaydi."}
                   </li>
                 </ul>
+              </div>
+
+              {/* Rule 4: Toggle Display button */}
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400">
+                  <Calendar size={16} />
+                  <span>
+                    {lang === 'ru'
+                      ? '4. Переключатель "Вид даты" в панели'
+                      : '4. Panelda "Sana ko\'rinishi" tugmasi'}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  {lang === 'ru'
+                    ? 'Сверху в панели нажмите кнопку "Вид даты", чтобы мгновенно переключать отображение в таблицах между кратким форматом (03.08.2026) и длинным с названием месяца (3 августа 2026 г.).'
+                    : 'Yuqori paneldagi "Sana ko\'rinishi" tugmasi orqali istalgan paytda jadvallardagi sanani qisqa (03.08.2026) va uzun oy nomi bilan (3-avgust, 2026) ko\'rinishga o\'tkazishingiz mumkin.'}
+                </p>
               </div>
             </div>
 
