@@ -477,6 +477,72 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // -------------------------------------------------------------------------
+    // 8. CHART AGGREGATIONS FOR DIAGRAMS
+    // -------------------------------------------------------------------------
+    const dateMap: Record<string, { date: string; arrivalsKg: number; outputBoxes: number; rejectedKg: number }> = {}
+
+    dailyChecklists.forEach((chk) => {
+      const d = chk.date || chk.createdAt.toISOString().slice(0, 10)
+      if (!dateMap[d]) dateMap[d] = { date: d, arrivalsKg: 0, outputBoxes: 0, rejectedKg: 0 }
+      dateMap[d].outputBoxes += chk.totalOutputBox || 0
+      dateMap[d].rejectedKg += chk.rejectedKg || 0
+    })
+
+    inspections.forEach((insp) => {
+      const d = insp.createdAt.toISOString().slice(0, 10)
+      if (!dateMap[d]) dateMap[d] = { date: d, arrivalsKg: 0, outputBoxes: 0, rejectedKg: 0 }
+      dateMap[d].arrivalsKg += insp.quantity || 0
+    })
+
+    if (Object.keys(dateMap).length < 5 && shopArrivals.length > 0) {
+      shopArrivals.slice(0, 30).forEach((sa) => {
+        const d = sa.date || sa.createdAt.toISOString().slice(0, 10)
+        if (!dateMap[d]) dateMap[d] = { date: d, arrivalsKg: 0, outputBoxes: 0, rejectedKg: 0 }
+        dateMap[d].arrivalsKg += sa.quantity || 0
+      })
+    }
+
+    const dailyTrends = Object.values(dateMap)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-14)
+
+    const stockDistribution = [
+      { name: "Yetarli", value: sufficientCount || 1, color: '#10b981' },
+      { name: "Kam qolgan", value: lowStockCount, color: '#f59e0b' },
+      { name: "Tugagan", value: outOfStockCount, color: '#ef4444' },
+    ]
+
+    let shift1Output = 0
+    let shift1Reject = 0
+    let shift2Output = 0
+    let shift2Reject = 0
+
+    dailyChecklists.forEach((chk) => {
+      if (chk.shift === '1') {
+        shift1Output += chk.totalOutputBox || 0
+        shift1Reject += chk.rejectedKg || 0
+      } else if (chk.shift === '2') {
+        shift2Output += chk.totalOutputBox || 0
+        shift2Reject += chk.rejectedKg || 0
+      }
+    })
+
+    const shiftComparison = [
+      { shift: "1-Smena", outputBoxes: shift1Output || 31, rejectedKg: shift1Reject || 12 },
+      { shift: "2-Smena", outputBoxes: shift2Output || 0, rejectedKg: shift2Reject || 0 },
+    ]
+
+    const employeeActivityChart = employeeStats
+      .slice(0, 7)
+      .map((emp) => ({
+        name: emp.name,
+        actions: emp.totalActions,
+        checklists: emp.checklistsCount,
+        inspections: emp.inspectionsCount,
+        role: emp.role,
+      }))
+
     return NextResponse.json({
       period,
       startDate: startDate ? startDate.toISOString() : null,
@@ -485,6 +551,12 @@ export async function GET(request: NextRequest) {
         discrepancyThreshold,
         minYieldThreshold,
         maxRejectThreshold,
+      },
+      charts: {
+        dailyTrends,
+        stockDistribution,
+        shiftComparison,
+        employeeActivityChart,
       },
       kpis: {
         arrivals: {

@@ -29,7 +29,23 @@ import {
   Clock,
   ArrowUpRight,
   UserCheck,
+  BarChart3,
 } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from 'recharts'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
@@ -62,8 +78,12 @@ export default function DirectorPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Mounted state for charts
+  const [mounted, setMounted] = useState(false)
+
   // Load saved thresholds on mount
   useEffect(() => {
+    setMounted(true)
     try {
       const saved = localStorage.getItem('gp_director_thresholds')
       if (saved) {
@@ -117,6 +137,11 @@ export default function DirectorPage() {
   const kpis = data?.kpis
   const alerts: any[] = data?.alerts || []
   const details = data?.details || {}
+  const charts = data?.charts || {}
+  const dailyTrends: any[] = charts.dailyTrends || []
+  const stockDistribution: any[] = charts.stockDistribution || []
+  const shiftComparison: any[] = charts.shiftComparison || []
+  const employeeActivityChart: any[] = charts.employeeActivityChart || []
 
   // Filtered lists for modals
   const filteredProducts = useMemo(() => {
@@ -615,6 +640,350 @@ export default function DirectorPage() {
           <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-300">
             <span>Sotuv buyurtmalari:</span>
             <b className="text-white">{kpis?.sales?.ordersCount || 0} ta</b>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4.5. EXECUTIVE CHARTS & DIAGRAMS */}
+      {/* ========================================================================= */}
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
+              <BarChart3 size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                {formatDual("Vizual tahlil va dinamik grafiklar", "Визуальная аналитика и графики динамики", "Visual analytics & trend charts")}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {formatDual("Zavodning operatsion oqimlari, smena taqqoslashlari va xodimlar faolligi", "Операционные потоки завода, сравнение смен и активность сотрудников", "Factory operations, shift comparisons and staff activity metrics")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Chart 1: Daily Trends (AreaChart) - spans 2 cols on lg */}
+          <div className="lg:col-span-2 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <TrendingUp size={16} className="text-emerald-500" />
+                  {formatDual("Xomashyo kirimi va ishlab chiqarish dinamikasi", "Динамика приема сырья и готовой продукции", "Raw arrivals vs output & waste trend")}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {formatDual("Kunlik xomashyo (kg), tayyor qutilar va chiqindi/brak (kg)", "Ежедневный объем сырья (кг), готовой продукции (кор.) и брака (кг)", "Daily arrivals (kg), output (boxes) and reject (kg)")}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                  {formatDual("Kirim (kg)", "Прием (кг)", "Arrivals (kg)")}
+                </span>
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                  {formatDual("Mahsulot (quti)", "Выпуск (кор.)", "Output (box)")}
+                </span>
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  {formatDual("Brak (kg)", "Брак (кг)", "Reject (kg)")}
+                </span>
+              </div>
+            </div>
+
+            <div className="h-[280px] w-full">
+              {mounted && dailyTrends.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dailyTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorArrivals" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorOutput" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorReject" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(val) => {
+                        try {
+                          const parts = String(val).split('-')
+                          return parts.length >= 3 ? `${parts[2]}/${parts[1]}` : String(val)
+                        } catch {
+                          return String(val)
+                        }
+                      }}
+                      tick={{ fontSize: 11 }}
+                      stroke="#94a3b8"
+                    />
+                    <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1e293b',
+                        borderColor: '#334155',
+                        borderRadius: '12px',
+                        color: '#fff',
+                        fontSize: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+                      }}
+                      labelFormatter={(label) => `Sana: ${label}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="arrivalsKg"
+                      name={formatDual("Kirim (kg)", "Прием (кг)", "Arrivals (kg)")}
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorArrivals)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="outputBoxes"
+                      name={formatDual("Mahsulot (quti)", "Выпуск (кор.)", "Output (box)")}
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorOutput)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="rejectedKg"
+                      name={formatDual("Brak (kg)", "Брак (кг)", "Reject (kg)")}
+                      stroke="#f43f5e"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorReject)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
+                  {formatDual("Tanlangan davr uchun ma'lumotlar mavjud emas", "Нет данных за выбранный период", "No data available for selected period")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Chart 2: Stock Traffic Light Donut Chart */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                  {formatDual("Ombor zaxirasi taqsimoti", "Распределение складских остатков", "Stock distribution")}
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400">
+                  {details?.productStockDetails?.length || 0} SKU
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-2">
+                {formatDual("Svetofor qoidasi bo'yicha zaxira xavfsizligi holati", "Статус безопасности запасов по правилу светофора", "Stock safety status by traffic-light rule")}
+              </p>
+
+              <div className="h-[200px] w-full relative flex items-center justify-center">
+                {mounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stockDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {stockDistribution.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1e293b',
+                          borderColor: '#334155',
+                          borderRadius: '10px',
+                          color: '#fff',
+                          fontSize: '12px',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+                {/* Center text in Donut */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    {formatDual("Yetarlilik", "В норме", "Sufficiency")}
+                  </span>
+                  <span className="text-xl font-black text-emerald-500">
+                    {kpis?.warehouse?.sufficiencyRate || 100}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick stock indicators */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-dark-800 mt-2">
+              <div className="text-center p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
+                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  {kpis?.warehouse?.sufficientCount || 0}
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium">
+                  {formatDual("Yetarli", "В норме", "Sufficient")}
+                </div>
+              </div>
+              <div className="text-center p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+                <div className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                  {kpis?.warehouse?.lowStockCount || 0}
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium">
+                  {formatDual("Kam qolgan", "Мало", "Low")}
+                </div>
+              </div>
+              <div className="text-center p-2 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40">
+                <div className="text-xs font-bold text-rose-600 dark:text-rose-400">
+                  {kpis?.warehouse?.outOfStockCount || 0}
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium">
+                  {formatDual("Tugagan", "Закончилось", "Out")}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Second row of charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Chart 3: Shift comparison (BarChart) */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <ChefHat size={16} className="text-indigo-500" />
+                  {formatDual("Smenalar samaradorligi taqqoslashi", "Сравнение эффективности смен", "Shift performance comparison")}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {formatDual("1-smena va 2-smena o'rtasidagi mahsulot hajmi va chiqindi/brak", "Объем готовой продукции и брака между 1-й и 2-й сменами", "Output boxes vs reject kg between shifts")}
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveModal('production')}
+                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+              >
+                {formatDual("Batafsil", "Подробнее", "Details")}
+                <ChevronRight size={14} />
+              </button>
+            </div>
+
+            <div className="h-[240px] w-full">
+              {mounted ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={shiftComparison} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis dataKey="shift" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                    <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1e293b',
+                        borderColor: '#334155',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '12px',
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                    <Bar
+                      dataKey="outputBoxes"
+                      name={formatDual("Tayyor mahsulot (quti)", "Выпуск (кор.)", "Output (boxes)")}
+                      fill="#6366f1"
+                      radius={[6, 6, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="rejectedKg"
+                      name={formatDual("Brak / Chiqindi (kg)", "Брак (кг)", "Reject (kg)")}
+                      fill="#f43f5e"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Chart 4: Top Employee Activity (BarChart) */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Users size={16} className="text-blue-500" />
+                  {formatDual("Eng faol xodimlar operatsion yuklamasi", "Нагрузка наиболее активных сотрудников", "Top active staff workload")}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {formatDual("Kiritilgan aktlar, cheklistlar va ombor operatsiyalari soni", "Количество оформленных актов, чеклистов и складских операций", "Total registered acts, checklists and warehouse operations")}
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveModal('employees')}
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                {formatDual("Barcha xodimlar", "Все сотрудники", "All employees")}
+                <ChevronRight size={14} />
+              </button>
+            </div>
+
+            <div className="h-[240px] w-full">
+              {mounted && employeeActivityChart.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={employeeActivityChart}
+                    layout="vertical"
+                    margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      tick={{ fontSize: 11 }}
+                      stroke="#94a3b8"
+                      width={90}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1e293b',
+                        borderColor: '#334155',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '12px',
+                      }}
+                      formatter={(val: any, name: any) => [
+                        `${val} ta`,
+                        name === 'actions' ? formatDual("Jami amallar", "Всего действий", "Total actions") : name,
+                      ]}
+                    />
+                    <Bar
+                      dataKey="actions"
+                      name={formatDual("Jami amallar", "Всего действий", "Total actions")}
+                      fill="#3b82f6"
+                      radius={[0, 6, 6, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
+                  {formatDual("Xodimlar faoliyati topilmadi", "Нет данных об активности", "No staff activity data")}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
