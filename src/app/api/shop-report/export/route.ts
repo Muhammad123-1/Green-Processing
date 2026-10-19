@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import ExcelJS from 'exceljs'
+import { formatDMY } from '@/lib/shopReport'
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     prihodSheet.getRow(1).font = { bold: true }
     
     arrivals.forEach(a => {
-      prihodSheet.addRow([a.date, a.nomenclature, a.quantity, a.supplier])
+      prihodSheet.addRow([formatDMY(a.date), a.nomenclature, a.quantity, a.supplier])
     })
 
     // Expenses Sheet
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     expenses.forEach(e => {
       const mats = e.materials as Record<string, number>
-      const row = [e.date]
+      const row = [formatDMY(e.date)]
       keysArray.forEach(k => {
         row.push(mats[k]?.toString() || '')
       })
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
       const outputs = (e.outputs || {}) as Record<string, any>
       const hasAnyGP = Object.keys(outputs).length > 0
       if (hasAnyGP) {
-        const row = [e.date]
+        const row = [formatDMY(e.date)]
         gpFields.forEach((f) => {
           let val = 0
           for (const [k, v] of Object.entries(outputs)) {

@@ -2,29 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import ExcelJS from 'exceljs'
-import { toNum } from '@/lib/shopReport'
+import { toNum, parseExcelDate } from '@/lib/shopReport'
 
-function parseDateVal(dateVal: any): string {
-  if (!dateVal) return ''
-  if (dateVal instanceof Date) return dateVal.toISOString().split('T')[0]
-  if (typeof dateVal === 'string') {
-    const val = dateVal.trim()
-    if (val.match(/^\d{4}-\d{2}-\d{2}$/)) return val
-    if (val.match(/^\d{1,2}[\.\/]\d{1,2}[\.\/]\d{4}$/)) {
-      const parts = val.split(/[\.\/]/)
-      if (parts.length === 3) {
-        if (val.includes('/')) {
-          // MM/DD/YYYY
-          return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`
-        } else {
-          // DD.MM.YYYY
-          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
-        }
-      }
-    }
-  }
-  return ''
-}
+const parseDateVal = parseExcelDate
 
 function getCellValueNum(cell: ExcelJS.Cell): number {
   if (!cell) return 0

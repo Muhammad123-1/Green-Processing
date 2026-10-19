@@ -12,6 +12,102 @@ export const toNum = (v: any): number => {
   return Number.isFinite(n) ? n : 0
 }
 
+/**
+ * Universal Excel sana o'quvchi (Short & Long date, Serial, Date object).
+ * Korxona standarti: KUN / OY / YIL (DD.MM.YYYY yoki DD/MM/YYYY).
+ */
+export function parseExcelDate(val: any): string {
+  if (val === null || val === undefined || val === '') return ''
+
+  // 1. Agar JavaScript Date obyekti bo'lsa (local time bilan olish)
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return ''
+    const y = val.getFullYear()
+    const m = String(val.getMonth() + 1).padStart(2, '0')
+    const d = String(val.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  // 2. Agar Excel serial number bo'lsa (masalan 45547)
+  if (typeof val === 'number') {
+    if (val > 30000 && val < 65000) {
+      const d = new Date(Math.round((val - 25569) * 86400 * 1000))
+      const y = d.getUTCFullYear()
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+      const day = String(d.getUTCDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    }
+  }
+
+  let s = String(val).trim().toLowerCase()
+  s = s.replace(/(г\.|года|год|йили|й\.|yili|г)/g, '').trim()
+
+  // 3. Agar allaqachon ISO YYYY-MM-DD bo'lsa
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+
+  // 4. "Dlinniy sana" (Long Date): Masalan "12 сентября 2025", "12-sentabr 2025", "12 September 2025"
+  const monthMap: Record<string, string> = {
+    'янв': '01', 'jan': '01',
+    'фев': '02', 'feb': '02',
+    'мар': '03', 'mar': '03',
+    'апр': '04', 'apr': '04',
+    'май': '05', 'мая': '05', 'may': '05',
+    'июн': '06', 'jun': '06',
+    'июл': '07', 'jul': '07',
+    'авг': '08', 'aug': '08',
+    'сен': '09', 'sep': '09',
+    'окт': '10', 'oct': '10',
+    'ноя': '11', 'nov': '11',
+    'дек': '12', 'dec': '12'
+  }
+
+  for (const [prefix, monthNum] of Object.entries(monthMap)) {
+    if (s.includes(prefix)) {
+      const match = s.match(/(\d{1,2})[^\d]+(?:[a-zа-яё]+)[^\d]+(\d{4})/)
+      if (match) {
+        const day = match[1].padStart(2, '0')
+        const year = match[2]
+        return `${year}-${monthNum}-${day}`
+      }
+    }
+  }
+
+  // 5. "Karotkiy sana" (Short Date): DD.MM.YYYY, DD/MM/YYYY, DD-MM-YYYY
+  const parts = s.split(/[\.\/\-]/).map((p) => p.trim())
+  if (parts.length === 3) {
+    let [p1, p2, p3] = parts
+    // Agar YYYY/MM/DD bo'lsa:
+    if (p1.length === 4) {
+      return `${p1}-${p2.padStart(2, '0')}-${p3.padStart(2, '0')}`
+    }
+    // Agar yil oxirida bo'lsa:
+    if (p3.length === 2) p3 = '20' + p3
+    if (p3.length === 4) {
+      const n1 = parseInt(p1, 10)
+      const n2 = parseInt(p2, 10)
+      if (!isNaN(n1) && !isNaN(n2)) {
+        if (n2 > 12) {
+          // n2 bu kun (masalan 9/13/2025 -> oy=9, kun=13)
+          return `${p3}-${p1.padStart(2, '0')}-${p2.padStart(2, '0')}`
+        }
+        // Korxona qoidasi: KUN / OY / YIL (p1=KUN, p2=OY)
+        return `${p3}-${p2.padStart(2, '0')}-${p1.padStart(2, '0')}`
+      }
+    }
+  }
+
+  return ''
+}
+
+export function formatDMY(dateStr: any): string {
+  if (!dateStr || typeof dateStr !== 'string') return ''
+  const parts = dateStr.split('-')
+  if (parts.length === 3) {
+    return `${parts[2]}.${parts[1]}.${parts[0]}`
+  }
+  return dateStr
+}
+
 // -----------------------------------------------------------------------------
 // TAB 2: Расход (flat per-day totals) -> ShopExpense.materials
 // -----------------------------------------------------------------------------
