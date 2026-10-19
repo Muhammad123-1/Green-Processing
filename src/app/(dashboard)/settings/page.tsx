@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Save, Loader2, Settings, Building, FileSpreadsheet, Hash } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface SettingItem {
   key: string
@@ -11,6 +12,7 @@ interface SettingItem {
 }
 
 export default function SettingsPage() {
+  const { formatDual } = useLanguage()
   const [settings, setSettings] = useState<SettingItem[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -59,12 +61,16 @@ export default function SettingsPage() {
     <div className="max-w-3xl mx-auto space-y-5 animate-enter">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="section-title">Sozlamalar</h1>
-          <p className="section-subtitle">Tizim sozlamalari va konfiguratsiya</p>
+          <h1 className="section-title">
+            {formatDual("Tizim Sozlamalari", "Настройки системы", "System Settings")}
+          </h1>
+          <p className="section-subtitle">
+            {formatDual("Korxona parametrlari, rekvizitlar va shablon konfiguratsiyasi", "Параметры предприятия, реквизиты и шаблоны", "Enterprise parameters, credentials and template configs")}
+          </p>
         </div>
         <button onClick={handleSave} disabled={saving} className="btn-primary">
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Saqlash
+          {formatDual("Saqlash", "Сохранить", "Save")}
         </button>
       </div>
 

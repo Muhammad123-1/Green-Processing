@@ -1,9 +1,10 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, ChefHat, UtensilsCrossed, QrCode, BarChart3, Calendar, RefreshCw, CheckCircle2, AlertTriangle, X, Loader2, Package, Clock, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import QRCode from 'qrcode'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface Ingredient {
   id: string
@@ -41,6 +42,7 @@ interface Feedback {
 }
 
 export default function KitchenContent() {
+  const { formatDual } = useLanguage()
   const [activeTab, setActiveTab] = useState<'journal' | 'stats'>('journal')
   const [logs, setLogs] = useState<MealLog[]>([])
   const [loading, setLoading] = useState(false)
@@ -159,8 +161,12 @@ export default function KitchenContent() {
             <ChefHat size={24} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white">Oshxona Boshqaruvi</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ovqat jurnali · Baholash statistikasi · QR kod</p>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white">
+              {formatDual("Xodimlar Oshxonasi", "Кухня персонала", "Staff Kitchen")}
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              {formatDual("Ovqat jurnali · Baholash statistikasi · QR kod", "Журнал питания · Статистика отзывов · QR-код", "Meal log · Feedback analytics · QR code")}
+            </p>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">

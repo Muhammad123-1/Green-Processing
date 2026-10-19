@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import {
   Activity,
   Users,
@@ -30,6 +31,9 @@ import {
   ArrowUpRight,
   UserCheck,
   BarChart3,
+  Utensils,
+  MessageSquare,
+  Layers,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -985,6 +989,227 @@ export default function DirectorPage() {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4.9. DIRECT DEPARTMENT NAVIGATION PANELS */}
+      {/* ========================================================================= */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-sm">
+            <Layers size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">
+              {formatDual("Zavod bo'limlari va Boshqaruv panellari", "Отделы завода и панели управления", "Factory departments & management panels")}
+            </h2>
+            <p className="text-xs text-slate-500">
+              {formatDual("Direktor uchun barcha tegishli bo'limlar, hisobotlar va tizim sozlamalariga to'g'ridan-to'g'ri o'tish", "Прямой переход ко всем ключевым отделам, отчетам и системным настройкам директора", "Direct access to key departments, reports, and system settings for the director")}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Reports */}
+          <Link
+            href="/reports"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <BarChart3 size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">
+                {formatDual("Hisobotlar", "Отчеты", "Reports")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Oylik va yillik tahlillar, xomashyo dinamikasi va rasmiy Excel reyestri", "Ежемесячная и годовая аналитика, динамика сырья и официальный реестр Excel", "Monthly/yearly analytics and official Excel registry")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+              <span>{formatDual("Hisobotlarni ko'rish", "Открыть отчеты", "View reports")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
+
+          {/* Card 2: Accounting / Finance */}
+          <Link
+            href="/accounting"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <DollarSign size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
+                {formatDual("Buxgalteriya", "Бухгалтерия", "Accounting")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Bank hisoblari, kassa, to'lovlar va hisob-fakturalar monitoringi", "Банковские счета, касса, платежи и мониторинг счетов-фактур", "Bank accounts, cash desk, payments and invoices")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span>{formatDual("Moliyani ochish", "Открыть финансы", "Open finance")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
+
+          {/* Card 3: Kitchen */}
+          <Link
+            href="/kitchen"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-rose-500/50 dark:hover:border-rose-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                  <Utensils size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-rose-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-rose-500 transition-colors">
+                {formatDual("Xodimlar oshxonasi", "Кухня персонала", "Staff Kitchen")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Kunlik taomlar menyusi, xarajatlar va xodimlarning QR baholari", "Меню ежедневного питания, расходы и отзывы сотрудников по QR", "Daily meal logs, expenses and staff QR feedback")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+              <span>{formatDual("Oshxonani tekshirish", "Проверить кухню", "Check kitchen")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
+
+          {/* Card 4: Surveys */}
+          <Link
+            href="/surveys"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-amber-500/50 dark:hover:border-amber-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <Award size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-amber-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">
+                {formatDual("Mijozlar so'rovnomalari", "Опросы клиентов", "Customer Surveys")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Mijozlar qoniqishi, anketalar arxivi va restoran/kafe baholari", "Удовлетворенность клиентов, архив анкет и отзывы ресторанов", "Customer satisfaction, questionnaire archive & feedback")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <span>{formatDual("Anketalarni ko'rish", "Открыть анкеты", "View surveys")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
+
+          {/* Card 5: Users */}
+          <Link
+            href="/users"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <Users size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-purple-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-purple-500 transition-colors">
+                {formatDual("Foydalanuvchilar", "Пользователи", "Users & Staff")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Zavod xodimlari ro'yxati, lavozimlar, ruxsatlar va tibbiy ko'riklar", "Список сотрудников завода, должности, доступы и медкнижки", "Factory staff directory, roles, permissions and medical records")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+              <span>{formatDual("Xodimlarni boshqarish", "Управление персоналом", "Manage staff")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
+
+          {/* Card 6: Chat */}
+          <Link
+            href="/chat"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                  <MessageSquare size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-teal-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-teal-500 transition-colors">
+                {formatDual("Xodimlar Chati", "Чат сотрудников", "Staff Chat")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Zavod ichki korporativ xabar almashinuvi va tezkor topshiriqlar", "Внутренний корпоративный чат завода и оперативные задачи", "Internal corporate chat and real-time announcements")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-teal-600 dark:text-teal-400 flex items-center gap-1">
+              <span>{formatDual("Chatga o'tish", "Перейти в чат", "Open chat")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
+
+          {/* Card 7: Settings */}
+          <Link
+            href="/settings"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-slate-400 dark:hover:border-slate-500 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+                  <Settings size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">
+                {formatDual("Sozlamalar", "Настройки", "Settings")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Korxona rekvizitlari, akt prefikslari va Excel shablon yo'llari", "Реквизиты компании, префиксы актов и пути к шаблонам Excel", "Company details, act prefixes & Excel template configs")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+              <span>{formatDual("Sozlamalarni ochish", "Открыть настройки", "Open settings")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
+
+          {/* Card 8: Warehouse */}
+          <Link
+            href="/warehouse"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-orange-500/50 dark:hover:border-orange-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                  <Package size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-orange-500 transition-colors">
+                {formatDual("Omborxona (WMS)", "Склад (WMS)", "Warehouse (WMS)")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual("Xomashyo va tayyor mahsulot zaxiralari, partiyalar pasporti va transferlar", "Остатки сырья и готовой продукции, паспорт партий и перемещения", "Raw & finished stock, lot passport and stock transfers")}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-1">
+              <span>{formatDual("Omborga o'tish", "Перейти на склад", "Go to warehouse")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
         </div>
       </div>
 

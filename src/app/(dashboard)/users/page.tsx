@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Plus, Users, Edit, Shield, Eye, EyeOff, Save, Loader2, X, RefreshCw } from 'lucide-react'
+import { Plus, Users, Edit, Shield, Eye, EyeOff, Save, Loader2, X, RefreshCw, UserCheck } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface User {
   id: number
@@ -14,20 +15,43 @@ interface User {
 }
 
 const roleColors: Record<string, string> = {
+  DIRECTOR: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
   ADMIN: 'badge-danger',
+  QUALITY_CONTROL: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30',
+  INSPECTOR: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+  PRODUCTION: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
+  TECHNOLOGY: 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
+  WAREHOUSE: 'bg-orange-500/15 text-orange-400 border border-orange-500/30',
+  SUPPLY: 'bg-teal-500/15 text-teal-400 border border-teal-500/30',
+  ACCOUNTING: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30',
+  HR: 'bg-pink-500/15 text-pink-400 border border-pink-500/30',
+  KITCHEN: 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+  SECURITY: 'bg-slate-500/15 text-slate-300 border border-slate-500/30',
   OPERATOR: 'badge-info',
   READONLY: 'badge-warning',
 }
 
 const roleLabels: Record<string, string> = {
+  DIRECTOR: 'Direktor (Boshqaruv)',
   ADMIN: 'Administrator',
+  QUALITY_CONTROL: 'Bosh Sifat Nazorati (QC)',
+  INSPECTOR: 'Sex Nazoratchisi',
+  PRODUCTION: 'Ishlab Chiqarish',
+  TECHNOLOGY: 'Bosh Texnolog',
+  WAREHOUSE: 'Ombor (Sklad Mudiri)',
+  SUPPLY: "Ta'minot Bo'limi",
+  ACCOUNTING: 'Buxgalteriya',
+  HR: 'Kadrlar Bo\'limi (HR)',
+  KITCHEN: 'Xodimlar Oshxonasi',
+  SECURITY: 'Xavfsizlik Xizmati',
   OPERATOR: 'Operator',
-  READONLY: 'Faqat o\'qish',
+  READONLY: "Faqat ko'rish",
 }
 
 const emptyForm = { name: '', username: '', password: '', role: 'OPERATOR' }
 
 export default function UsersPage() {
+  const { formatDual } = useLanguage()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -206,12 +230,23 @@ export default function UsersPage() {
                 </div>
               </div>
               <div>
-                <label className="label">Rol</label>
+                <label className="label">{formatDual("Lavozim / Rol", "Должность / Роль", "Position / Role")}</label>
                 <select className="input-field" value={form.role}
                   onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
+                  <option value="DIRECTOR">Direktor (Boshqaruv)</option>
                   <option value="ADMIN">Administrator</option>
+                  <option value="QUALITY_CONTROL">Bosh Sifat Nazorati (QC)</option>
+                  <option value="INSPECTOR">Sex Nazoratchisi</option>
+                  <option value="PRODUCTION">Ishlab Chiqarish</option>
+                  <option value="TECHNOLOGY">Bosh Texnolog</option>
+                  <option value="WAREHOUSE">Ombor (Sklad Mudiri)</option>
+                  <option value="SUPPLY">Ta'minot Bo'limi</option>
+                  <option value="ACCOUNTING">Buxgalteriya</option>
+                  <option value="HR">Kadrlar Bo'limi (HR)</option>
+                  <option value="KITCHEN">Xodimlar Oshxonasi</option>
+                  <option value="SECURITY">Xavfsizlik Xizmati</option>
                   <option value="OPERATOR">Operator</option>
-                  <option value="READONLY">Faqat o'qish</option>
+                  <option value="READONLY">Faqat ko'rish</option>
                 </select>
               </div>
             </div>

@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Wallet, TrendingUp, TrendingDown, Plus, FileText, Landmark, Loader2, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export default function AccountingContent() {
+  const { formatDual } = useLanguage()
   const [activeTab, setActiveTab] = useState<'accounts' | 'transactions' | 'invoices'>('accounts')
   const [loading, setLoading] = useState(true)
   
@@ -76,11 +78,15 @@ export default function AccountingContent() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
-              Moliya & Buxgalteriya
+              {formatDual("Moliya & Buxgalteriya", "Финансы и Бухгалтерия", "Finance & Accounting")}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Kassa va Hisoblar</h1>
-          <p className="text-sm text-slate-400 mt-1">Kompaniya hisob raqamlari, daromad-xarajat va qarzdorliklar</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            {formatDual("Kassa va Hisoblar", "Касса и Счета", "Cash & Accounts")}
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            {formatDual("Kompaniya hisob raqamlari, daromad-xarajat va qarzdorliklar", "Банковские счета компании, доходы, расходы и задолженности", "Company accounts, income, expenses and balances")}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">

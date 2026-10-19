@@ -10,7 +10,11 @@ import {
   Truck,
   TrendingUp,
   Calendar,
+  FileSpreadsheet,
+  Printer,
+  Download,
 } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 const MONTHS_UZ = [
   'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
@@ -33,6 +37,7 @@ interface YearlyStats {
 
 export default function ReportsPage() {
   const now = new Date()
+  const { formatDual } = useLanguage()
   const [viewType, setViewType] = useState<'monthly' | 'yearly'>('monthly')
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
@@ -63,10 +68,32 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-5 animate-enter">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="section-title">Hisobotlar</h1>
-          <p className="section-subtitle">Kiruvchi xomashyo statistikasi</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">
+            {formatDual("Tahliliy Hisobotlar", "Аналитические отчеты", "Analytical Reports")}
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {formatDual("Xomashyo kirimi, qabul qilish va rad etish ko'rsatkichlari", "Показатели прихода сырья, приемки и отклонений", "Raw material arrival, acceptance and defect rates")}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition-all shadow-sm"
+          >
+            <Printer size={15} />
+            <span>{formatDual("Chop etish", "Печать", "Print")}</span>
+          </button>
+          <a
+            href="/api/reports/excel"
+            download
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+          >
+            <FileSpreadsheet size={15} />
+            <span>{formatDual("Excel Reyestr", "Excel Реестр", "Excel Registry")}</span>
+          </a>
         </div>
       </div>
 

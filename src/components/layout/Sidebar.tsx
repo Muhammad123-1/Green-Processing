@@ -142,9 +142,21 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
             if (item.key === 'director' && userRole !== 'DIRECTOR') {
               return false
             }
-            // User requested: "1savolga javob: ha kerak emas faqat ombor qolsin"
+            // Director panel items requested by user:
+            // director, warehouse, reports, settings, chat, users, accounting, surveys, kitchen
             if (userRole === 'DIRECTOR') {
-              return item.key === 'director' || item.key === 'warehouse'
+              const directorAllowedKeys = [
+                'director',
+                'warehouse',
+                'kitchen',
+                'surveys',
+                'accounting',
+                'reports',
+                'users',
+                'chat',
+                'settings',
+              ]
+              return directorAllowedKeys.includes(item.key)
             }
             return item.roles.includes(userRole) || userRole === 'ADMIN'
           })
