@@ -18,8 +18,113 @@ import {
   Printer,
   ShieldCheck,
   AlertTriangle,
+  Plus,
+  Trash2,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
+export interface PackagingProductItem {
+  id: string
+  nameUz: string
+  nameSub?: string
+  packWeight: string
+  packWeightSub?: string
+  packsPerBox: string
+  packsPerBoxSub?: string
+  boxTotalWeight: string
+  boxTotalWeightSub?: string
+  weightTolerance: string
+  inspectionFrequency: string
+  statusOk: boolean
+  isCustom?: boolean
+}
+
+export const defaultPackagingItems: PackagingProductItem[] = [
+  {
+    id: 'lemon',
+    nameUz: 'Лимон',
+    nameSub: 'Лимон / Lemon',
+    packWeight: '1 пакетда 2 dona',
+    packWeightSub: '2 pcs per pack',
+    packsPerBox: '12 та пакет',
+    packsPerBoxSub: '12 packs',
+    boxTotalWeight: '12 пакет (24 dona / box)',
+    boxTotalWeightSub: '24 pcs / box',
+    weightTolerance: '2 dona / пакет (100% соғлом)',
+    inspectionFrequency: 'Ҳар 5-пакет',
+    statusOk: true,
+  },
+  {
+    id: 'cucumber',
+    nameUz: 'Бодринг',
+    nameSub: 'Огурец / Cucumber',
+    packWeight: '1 kg / 1 пакет',
+    packWeightSub: '1 kg / 1 pack',
+    packsPerBox: '6 та пакет',
+    packsPerBoxSub: '6 packs',
+    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeightSub: '6 kg / 1 box',
+    weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
+    inspectionFrequency: 'Ҳар 5-пакет',
+    statusOk: true,
+  },
+  {
+    id: 'tomato',
+    nameUz: 'Томат',
+    nameSub: 'Томаты / Tomato',
+    packWeight: '1 kg / 1 пакет',
+    packWeightSub: '1 kg / 1 pack',
+    packsPerBox: '6 та пакет',
+    packsPerBoxSub: '6 packs',
+    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeightSub: '6 kg / 1 box',
+    weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
+    inspectionFrequency: 'Ҳар 5-пакет',
+    statusOk: true,
+  },
+  {
+    id: 'iceberg',
+    nameUz: 'Айсберг',
+    nameSub: 'Айсберг / Iceberg',
+    packWeight: '1 kg / 1 пакет',
+    packWeightSub: '1 kg / 1 pack',
+    packsPerBox: '6 та пакет',
+    packsPerBoxSub: '6 packs',
+    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeightSub: '6 kg / 1 box',
+    weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
+    inspectionFrequency: 'Ҳар 5-пакет',
+    statusOk: true,
+  },
+  {
+    id: 'onion',
+    nameUz: 'Пиёз',
+    nameSub: 'Лук / Onion',
+    packWeight: '0.5 kg / 1 пакет',
+    packWeightSub: '0.5 kg / 1 pack',
+    packsPerBox: '12 та пакет',
+    packsPerBoxSub: '12 packs',
+    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeightSub: '6 kg / 1 box',
+    weightTolerance: '492.5 g - 507.5 g (0.5 kg ± 7.5g)',
+    inspectionFrequency: 'Ҳар 5-пакет',
+    statusOk: true,
+  },
+  {
+    id: 'coleslaw',
+    nameUz: 'Коул Слоу',
+    nameSub: 'Коул Слоу / Cole Slaw',
+    packWeight: '0.5 kg / 1 пакет',
+    packWeightSub: '0.5 kg / 1 pack',
+    packsPerBox: '12 та пакет',
+    packsPerBoxSub: '12 packs',
+    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeightSub: '6 kg / 1 box',
+    weightTolerance: '492.5 g - 507.5 g (0.5 kg ± 7.5g)',
+    inspectionFrequency: 'Ҳар 5-пакет',
+    statusOk: true,
+  },
+]
 
 interface ChecklistForm {
   // 1. Qadoqlash standartlari (Section 1)
@@ -282,6 +387,98 @@ export default function DailyChecklistContent() {
   // Form State
   const [form, setForm] = useState<ChecklistForm>(initialForm)
 
+  // Dynamic Packaging Products State & Persistence
+  const [packagingItems, setPackagingItems] = useState<PackagingProductItem[]>(defaultPackagingItems)
+
+  // Load saved packaging products from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('gp_qc_packaging_products')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Ensure lemon has "Ҳар 5-пакет" as requested by user
+          const updated = parsed.map((item: PackagingProductItem) => {
+            if (item.id === 'lemon') {
+              return { ...item, inspectionFrequency: 'Ҳар 5-пакет' }
+            }
+            return item
+          })
+          setPackagingItems(updated)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load saved products:', err)
+    }
+  }, [])
+
+  const updatePackagingItemsAndSave = (items: PackagingProductItem[]) => {
+    setPackagingItems(items)
+    try {
+      localStorage.setItem('gp_qc_packaging_products', JSON.stringify(items))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleAddProduct = () => {
+    const newIndex = packagingItems.length + 1
+    const newId = `custom_${Date.now()}`
+    const newItem: PackagingProductItem = {
+      id: newId,
+      nameUz: '',
+      nameSub: '',
+      packWeight: '1 kg / 1 пакет',
+      packWeightSub: '1 kg / 1 pack',
+      packsPerBox: '6 та пакет',
+      packsPerBoxSub: '6 packs',
+      boxTotalWeight: '6 kg / 1 коробка',
+      boxTotalWeightSub: '6 kg / 1 box',
+      weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
+      inspectionFrequency: 'Ҳар 5-пакет',
+      statusOk: true,
+      isCustom: true,
+    }
+    const next = [...packagingItems, newItem]
+    updatePackagingItemsAndSave(next)
+    toast.success(`${newIndex}-маҳсулот қатори қўшилди! Номи ва меъёрларини киритинг.`)
+  }
+
+  const handleDeleteProduct = (id: string) => {
+    if (confirm("Ушбу маҳсулотни рўйхатдан ўчиришни тасдиқлайсизми?")) {
+      const next = packagingItems.filter((item) => item.id !== id)
+      updatePackagingItemsAndSave(next)
+      toast.info("Маҳсулот рўйхатдан ўчирилди")
+    }
+  }
+
+  const handleToggleProductStatus = (id: string) => {
+    const next = packagingItems.map((item) => {
+      if (item.id === id) {
+        return { ...item, statusOk: !item.statusOk }
+      }
+      return item
+    })
+    updatePackagingItemsAndSave(next)
+  }
+
+  const handleProductFieldChange = (id: string, field: keyof PackagingProductItem, value: any) => {
+    const next = packagingItems.map((item) => {
+      if (item.id === id) {
+        return { ...item, [field]: value }
+      }
+      return item
+    })
+    updatePackagingItemsAndSave(next)
+  }
+
+  const handleResetPackagingToDefault = () => {
+    if (confirm("Барча қўшимча маҳсулотларни ўчириб, стандарт 6 талик рўйхатни тиклашни хоҳлайсизми?")) {
+      updatePackagingItemsAndSave(defaultPackagingItems)
+      toast.success("Стандарт 6 талик маҳсулотлар тикланди")
+    }
+  }
+
   const handleChange = (field: keyof ChecklistForm, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
@@ -337,6 +534,23 @@ export default function DailyChecklistContent() {
           inspectorName: parsed.inspectorName || doc.inspector || '',
           supervisorName: parsed.supervisorName || doc.supervisor || '',
         }))
+
+        if (parsed.packagingItems && Array.isArray(parsed.packagingItems)) {
+          setPackagingItems(parsed.packagingItems)
+        } else {
+          setPackagingItems(
+            defaultPackagingItems.map((item) => {
+              let statusOk = true
+              if (item.id === 'lemon') statusOk = parsed.packLemon ?? true
+              if (item.id === 'cucumber') statusOk = parsed.packCucumber ?? true
+              if (item.id === 'tomato') statusOk = parsed.packTomato ?? true
+              if (item.id === 'iceberg') statusOk = parsed.packIceberg ?? true
+              if (item.id === 'onion') statusOk = parsed.packOnion ?? true
+              if (item.id === 'coleslaw') statusOk = parsed.packColeslaw ?? true
+              return { ...item, statusOk }
+            })
+          )
+        }
       }
       setView('form')
       toast.success("Jurnal ko'rish uchun yuklandi!")
@@ -361,6 +575,13 @@ export default function DailyChecklistContent() {
           ...form,
           inspectorName: form.inspectorName || inspector,
           supervisorName: form.supervisorName || supervisor,
+          packagingItems,
+          packLemon: packagingItems.find((p) => p.id === 'lemon')?.statusOk ?? true,
+          packCucumber: packagingItems.find((p) => p.id === 'cucumber')?.statusOk ?? true,
+          packTomato: packagingItems.find((p) => p.id === 'tomato')?.statusOk ?? true,
+          packIceberg: packagingItems.find((p) => p.id === 'iceberg')?.statusOk ?? true,
+          packOnion: packagingItems.find((p) => p.id === 'onion')?.statusOk ?? true,
+          packColeslaw: packagingItems.find((p) => p.id === 'coleslaw')?.statusOk ?? true,
         },
       }
 
@@ -621,290 +842,251 @@ export default function DailyChecklistContent() {
           {/* SECTION 1: PACKAGING SPECIFICATIONS (Excel rows 7-14) */}
           {/* ========================================================================= */}
           <div className="border-b border-slate-300 dark:border-dark-700">
-            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
-                1. МАҲСУЛОТ ВА ҚАДОҚЛАШ СТАНДАРТЛАРИ / СТАНДАРТЫ УПАКОВКИ И КОРОБОК / PACKAGING SPECIFICATIONS
-              </h3>
-              <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded">6 та маҳсулот</span>
+            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
+                  1. МАҲСУЛОТ ВА ҚАДОҚЛАШ СТАНДАРТЛАРИ / СТАНДАРТЫ УПАКОВКИ И КОРОБОК / PACKAGING SPECIFICATIONS
+                </h3>
+                <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded">
+                  {packagingItems.length} та маҳсулот
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {packagingItems.length > 6 && (
+                  <button
+                    type="button"
+                    onClick={handleResetPackagingToDefault}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white/10 hover:bg-white/20 text-white transition-all border border-white/20"
+                    title="Стандарт 6 талик рўйхатни тиклаш"
+                  >
+                    Стандартга қайтиш
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAddProduct}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow transition-all active:scale-95"
+                >
+                  <Plus size={14} />
+                  <span>Янги маҳсулот қўшиш</span>
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left border-collapse min-w-[950px] text-xs">
+              <table className="w-full text-left border-collapse min-w-[980px] text-xs">
                 <thead className="bg-[#2F5597] text-white text-[10px] font-bold uppercase sticky top-0">
                   <tr>
-                    <th className="p-2 border-r border-[#1F4E78] w-10 text-center">№</th>
-                    <th className="p-2 border-r border-[#1F4E78] w-48">
+                    <th className="p-2.5 border-r border-[#1F4E78] w-10 text-center">№</th>
+                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[180px]">
                       Маҳсулот номи
                       <div className="font-normal text-[9px] text-blue-200">Наименование / Product</div>
                     </th>
-                    <th className="p-2 border-r border-[#1F4E78] w-40 text-center">
+                    <th className="p-2.5 border-r border-[#1F4E78] w-40 text-center">
                       1 пакетдаги вазни / сони
                       <div className="font-normal text-[9px] text-blue-200">Weight / Qty per pack</div>
                     </th>
-                    <th className="p-2 border-r border-[#1F4E78] w-36 text-center">
+                    <th className="p-2.5 border-r border-[#1F4E78] w-36 text-center">
                       1 коробкадаги пакет сони
                       <div className="font-normal text-[9px] text-blue-200">Packs per box</div>
                     </th>
-                    <th className="p-2 border-r border-[#1F4E78] w-44 text-center">
+                    <th className="p-2.5 border-r border-[#1F4E78] w-44 text-center">
                       1 коробка умумий вазни
                       <div className="font-normal text-[9px] text-blue-200">Total box weight / qty</div>
                     </th>
-                    <th className="p-2 border-r border-[#1F4E78]">
+                    <th className="p-2.5 border-r border-[#1F4E78]">
                       Вазн ва меъёр талаби
-                      <div className="font-normal text-[9px] text-blue-200">Weight norm & tolerance</div>
+                      <div className="font-normal text-[9px] text-blue-200">Weight norm &amp; tolerance</div>
                     </th>
-                    <th className="p-2 border-r border-[#1F4E78] w-36 text-center">
+                    <th className="p-2.5 border-r border-[#1F4E78] w-36 text-center">
                       Вақти ва Текширув
-                      <div className="font-normal text-[9px] text-blue-200">Time & Inspection</div>
+                      <div className="font-normal text-[9px] text-blue-200">Time &amp; Inspection</div>
                     </th>
-                    <th className="p-2 text-center w-28 bg-[#1B365D]">
+                    <th className="p-2.5 text-center w-32 bg-[#1B365D]">
                       Мақоми / Status
                       <div className="font-normal text-[9px] text-blue-200">ОПРП / OPRP</div>
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
-                  {/* 1. Limon */}
-                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
-                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">1</td>
-                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>Лимон</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Лимон / Lemon</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">1 пакетда 2 dona</div>
-                      <div className="text-[10px] text-slate-500">2 pcs per pack</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">12 та пакет</div>
-                      <div className="text-[10px] text-slate-500">12 packs</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">12 пакет (24 dona / box)</div>
-                      <div className="text-[10px] text-slate-500">24 pcs / box</div>
-                    </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
-                      2 dona / пакет (100% соғлом)
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
-                      Ҳар партияда
-                    </td>
-                    <td className="p-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleChange('packLemon', !form.packLemon)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
-                          form.packLemon
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
+                  {packagingItems.map((item, index) => {
+                    const isCustom = item.isCustom || index >= 6
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`transition-colors ${
+                          isCustom
+                            ? 'bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/40 border-l-2 border-l-amber-500'
+                            : 'hover:bg-blue-50/40 dark:hover:bg-dark-800/40'
                         }`}
                       >
-                        {form.packLemon ? '✓ Мос (OK)' : '✗ Н/К'}
-                      </button>
-                    </td>
-                  </tr>
+                        {/* № */}
+                        <td className="p-2.5 text-center font-black border-r border-slate-200 dark:border-dark-750 w-10 text-slate-700 dark:text-slate-300">
+                          {index + 1}
+                        </td>
 
-                  {/* 2. Bodring */}
-                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
-                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">2</td>
-                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>Бодринг</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Огурец / Cucumber</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">1 kg / 1 пакет</div>
-                      <div className="text-[10px] text-slate-500">1 kg / 1 pack</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 та пакет</div>
-                      <div className="text-[10px] text-slate-500">6 packs</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 kg / 1 коробка</div>
-                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
-                    </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
-                      990 g - 1010 g (1 kg ± 10g)
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
-                      Ҳар 5-пакет
-                    </td>
-                    <td className="p-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleChange('packCucumber', !form.packCucumber)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
-                          form.packCucumber
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
-                      >
-                        {form.packCucumber ? '✓ Мос (OK)' : '✗ Н/К'}
-                      </button>
-                    </td>
-                  </tr>
+                        {/* Mahsulot nomi */}
+                        <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750 min-w-[180px]">
+                          {isCustom ? (
+                            <div className="space-y-1">
+                              <input
+                                type="text"
+                                placeholder="Маҳсулот номи (Мас: Сабзи)"
+                                value={item.nameUz}
+                                onChange={(e) => handleProductFieldChange(item.id, 'nameUz', e.target.value)}
+                                className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Таржимаси (Морковь / Carrot)"
+                                value={item.nameSub || ''}
+                                onChange={(e) => handleProductFieldChange(item.id, 'nameSub', e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-0.5 text-[10px] text-slate-500 outline-none"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="text-slate-900 dark:text-white font-bold">{item.nameUz}</div>
+                              <div className="text-[10px] text-slate-500 font-normal">{item.nameSub}</div>
+                            </div>
+                          )}
+                        </td>
 
-                  {/* 3. Tomat */}
-                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
-                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">3</td>
-                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>Томат</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Томаты / Tomato</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">1 kg / 1 пакет</div>
-                      <div className="text-[10px] text-slate-500">1 kg / 1 pack</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 та пакет</div>
-                      <div className="text-[10px] text-slate-500">6 packs</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 kg / 1 коробка</div>
-                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
-                    </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
-                      990 g - 1010 g (1 kg ± 10g)
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
-                      Ҳар 5-пакет
-                    </td>
-                    <td className="p-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleChange('packTomato', !form.packTomato)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
-                          form.packTomato
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
-                      >
-                        {form.packTomato ? '✓ Мос (OK)' : '✗ Н/К'}
-                      </button>
-                    </td>
-                  </tr>
+                        {/* 1 paketdagi vazni / soni */}
+                        <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 min-w-[140px]">
+                          {isCustom ? (
+                            <input
+                              type="text"
+                              placeholder="1 kg / 1 пакет"
+                              value={item.packWeight}
+                              onChange={(e) => handleProductFieldChange(item.id, 'packWeight', e.target.value)}
+                              className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
+                            />
+                          ) : (
+                            <div>
+                              <div className="font-bold text-slate-800 dark:text-slate-200">{item.packWeight}</div>
+                              <div className="text-[10px] text-slate-500">{item.packWeightSub}</div>
+                            </div>
+                          )}
+                        </td>
 
-                  {/* 4. Aysberg */}
-                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
-                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">4</td>
-                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>Айсберг</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Айсберг / Iceberg</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">1 kg / 1 пакет</div>
-                      <div className="text-[10px] text-slate-500">1 kg / 1 pack</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 та пакет</div>
-                      <div className="text-[10px] text-slate-500">6 packs</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 kg / 1 коробка</div>
-                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
-                    </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
-                      990 g - 1010 g (1 kg ± 10g)
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
-                      Ҳар 5-пакет
-                    </td>
-                    <td className="p-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleChange('packIceberg', !form.packIceberg)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
-                          form.packIceberg
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
-                      >
-                        {form.packIceberg ? '✓ Мос (OK)' : '✗ Н/К'}
-                      </button>
-                    </td>
-                  </tr>
+                        {/* 1 qutidagi paket soni */}
+                        <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 min-w-[130px]">
+                          {isCustom ? (
+                            <input
+                              type="text"
+                              placeholder="6 та пакет"
+                              value={item.packsPerBox}
+                              onChange={(e) => handleProductFieldChange(item.id, 'packsPerBox', e.target.value)}
+                              className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
+                            />
+                          ) : (
+                            <div>
+                              <div className="font-bold text-slate-800 dark:text-slate-200">{item.packsPerBox}</div>
+                              <div className="text-[10px] text-slate-500">{item.packsPerBoxSub}</div>
+                            </div>
+                          )}
+                        </td>
 
-                  {/* 5. Piyoz */}
-                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
-                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">5</td>
-                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>Пиёз</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Лук / Onion</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">0.5 kg / 1 пакет</div>
-                      <div className="text-[10px] text-slate-500">0.5 kg / 1 pack</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">12 та пакет</div>
-                      <div className="text-[10px] text-slate-500">12 packs</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 kg / 1 коробка</div>
-                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
-                    </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
-                      492.5 g - 507.5 g (0.5 kg ± 7.5g)
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
-                      Ҳар 5-пакет
-                    </td>
-                    <td className="p-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleChange('packOnion', !form.packOnion)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
-                          form.packOnion
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
-                      >
-                        {form.packOnion ? '✓ Мос (OK)' : '✗ Н/К'}
-                      </button>
-                    </td>
-                  </tr>
+                        {/* 1 quti umumiy vazni */}
+                        <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 min-w-[140px]">
+                          {isCustom ? (
+                            <input
+                              type="text"
+                              placeholder="6 kg / 1 коробка"
+                              value={item.boxTotalWeight}
+                              onChange={(e) => handleProductFieldChange(item.id, 'boxTotalWeight', e.target.value)}
+                              className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
+                            />
+                          ) : (
+                            <div>
+                              <div className="font-bold text-slate-800 dark:text-slate-200">{item.boxTotalWeight}</div>
+                              <div className="text-[10px] text-slate-500">{item.boxTotalWeightSub}</div>
+                            </div>
+                          )}
+                        </td>
 
-                  {/* 6. Koul Slou */}
-                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
-                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">6</td>
-                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>Коул Слоу</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Коул Слоу / Cole Slaw</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">0.5 kg / 1 пакет</div>
-                      <div className="text-[10px] text-slate-500">0.5 kg / 1 pack</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">12 та пакет</div>
-                      <div className="text-[10px] text-slate-500">12 packs</div>
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold">6 kg / 1 коробка</div>
-                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
-                    </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
-                      492.5 g - 507.5 g (0.5 kg ± 7.5g)
-                    </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
-                      Ҳар 5-пакет
-                    </td>
-                    <td className="p-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleChange('packColeslaw', !form.packColeslaw)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
-                          form.packColeslaw
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
-                      >
-                        {form.packColeslaw ? '✓ Мос (OK)' : '✗ Н/К'}
-                      </button>
-                    </td>
-                  </tr>
+                        {/* Vazn va me'yor talabi */}
+                        <td className="p-2.5 border-r border-slate-200 dark:border-dark-750 min-w-[160px]">
+                          {isCustom ? (
+                            <input
+                              type="text"
+                              placeholder="990 g - 1010 g (1 kg ± 10g)"
+                              value={item.weightTolerance}
+                              onChange={(e) => handleProductFieldChange(item.id, 'weightTolerance', e.target.value)}
+                              className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
+                            />
+                          ) : (
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                              {item.weightTolerance}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Vaqti va tekshiruv */}
+                        <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400 min-w-[130px]">
+                          {isCustom ? (
+                            <input
+                              type="text"
+                              placeholder="Ҳар 5-пакет"
+                              value={item.inspectionFrequency}
+                              onChange={(e) => handleProductFieldChange(item.id, 'inspectionFrequency', e.target.value)}
+                              className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
+                            />
+                          ) : (
+                            <div>
+                              <div className="font-bold text-blue-600 dark:text-blue-400">{item.inspectionFrequency}</div>
+                              <div className="text-[9px] text-slate-400">Каждый 5-пакет / Every 5th pack</div>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Maqomi / Status + Delete if custom */}
+                        <td className="p-2.5 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleProductStatus(item.id)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
+                                item.statusOk
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                                  : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
+                              }`}
+                            >
+                              {item.statusOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                            </button>
+                            {isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteProduct(item.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                                title="Маҳсулотни ўчириш"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Bottom Add Product Button */}
+            <div className="p-3 bg-slate-50/60 dark:bg-dark-900/50 border-t border-slate-200 dark:border-dark-750 flex items-center justify-between flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleAddProduct}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-900/60 transition-all shadow-sm active:scale-95"
+              >
+                <Plus size={16} />
+                <span>+ Янги маҳсулот қўшиш (Янги маҳсулот чиқса)</span>
+              </button>
+              <span className="text-[11px] text-slate-400 font-medium">
+                Қўшилган янги маҳсулотлар ўзгартирилмагунча браузерда доимий сақланади
+              </span>
             </div>
           </div>
 
