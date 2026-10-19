@@ -55,7 +55,7 @@ export async function GET(req: Request, { params }: Params) {
       const statusT = (val: boolean) => (val ? '[✓] Мос / OK' : '[✗] Н/К (Не соотв)')
 
       // 1. Raw material
-      ws.getCell('D18').value = `08:00: [ ${form.rawMaterialTemp1 || '+2'} ] °C\n14:00: [ ${form.rawMaterialTemp2 || '+3'} ] °C`
+      ws.getCell('D18').value = `08:00: [ ${form.rawMaterialTemp1 || '+2'} ] °C\n14:00: [ ${form.rawMaterialTemp2 || '+3'} ] °C${form.rawMaterialTemp3 ? `\n__:__: [ ${form.rawMaterialTemp3} ] °C` : ''}`
       ws.getCell('E18').value = statusT(form.rawMaterialOk ?? true)
       if (form.rawMaterialDisc) ws.getCell('F18').value = form.rawMaterialDisc
       if (form.rawMaterialAct) ws.getCell('G18').value = form.rawMaterialAct
@@ -109,7 +109,7 @@ export async function GET(req: Request, { params }: Params) {
       if (form.inspectionAct) ws.getCell('G26').value = form.inspectionAct
 
       // 10. Weight control
-      ws.getCell('D27').value = `Лимон: [✓] 2шт\n1 kg: [ ${form.weight1kg || '1000'} ] g\n0.5 kg: [ ${form.weight500g || '500'} ] g`
+      ws.getCell('D27').value = `Лимон: [ ${form.weightLemon || '2'} ] дона\n1 kg: [ ${form.weight1kg || '1000'} ] g\n0.5 kg: [ ${form.weight500g || '500'} ] g`
       ws.getCell('E27').value = statusT(form.weightOk ?? true)
       if (form.weightDisc) ws.getCell('F27').value = form.weightDisc
       if (form.weightAct) ws.getCell('G27').value = form.weightAct

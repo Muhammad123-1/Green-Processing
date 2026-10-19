@@ -935,23 +935,23 @@ export default function DailyChecklistContent() {
                       Вақти
                       <div className="font-normal text-[9px] text-blue-200">Время / Time</div>
                     </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[230px]">
+                    <th className="p-3 border-r border-[#1F4E78] min-w-[380px] text-left">
                       Ҳақиқий кўрсаткич (Қийматлар)
                       <div className="font-normal text-[9px] text-blue-200">Факт. показатель / Actual Value</div>
                     </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-28 text-center">
+                    <th className="p-3 border-r border-[#1F4E78] w-28 text-center">
                       Мослиги
                       <div className="font-normal text-[9px] text-blue-200">Соотв. / Status</div>
                     </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[140px]">
+                    <th className="p-3 border-r border-[#1F4E78] min-w-[140px] text-left">
                       Аниқланган нуқсон
                       <div className="font-normal text-[9px] text-blue-200">Описание отклонения / Discrepancy</div>
                     </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[140px]">
+                    <th className="p-3 border-r border-[#1F4E78] min-w-[140px] text-left">
                       Кўрилган чора ва Имзо
                       <div className="font-normal text-[9px] text-blue-200">Принятые меры / Corrective Action</div>
                     </th>
-                    <th className="p-2.5 text-center w-28 bg-[#1B365D]">
+                    <th className="p-3 text-center w-28 bg-[#1B365D]">
                       Мақоми
                       <div className="font-normal text-[9px] text-blue-200">CCP / OPRP</div>
                     </th>
@@ -959,281 +959,288 @@ export default function DailyChecklistContent() {
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
                   {/* Row 1: Xomashyo */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>1. Хомашё</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">1. Хомашё</div>
                       <div className="text-[10px] text-slate-500 font-normal">Сырье / Raw Material</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Сақлаш камераси / Storage</div>
                       <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">
                         Меъёр: +1°C … +5°C
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[11px]">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                       08:00<br />14:00
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-slate-400">08:</span>
-                          <input
-                            type="text"
-                            placeholder="+2"
-                            value={form.rawMaterialTemp1}
-                            onChange={(e) => handleChange('rawMaterialTemp1', e.target.value)}
-                            className="w-12 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
-                          />
-                          <span className="text-[10px] text-slate-500">°C</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-slate-400">14:</span>
-                          <input
-                            type="text"
-                            placeholder="+3"
-                            value={form.rawMaterialTemp2}
-                            onChange={(e) => handleChange('rawMaterialTemp2', e.target.value)}
-                            className="w-12 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
-                          />
-                          <span className="text-[10px] text-slate-500">°C</span>
-                        </div>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {[
+                          { time: '08:00', key: 'rawMaterialTemp1', placeholder: '+2' },
+                          { time: '14:00', key: 'rawMaterialTemp2', placeholder: '+3' },
+                          { time: '__:__', key: 'rawMaterialTemp3', placeholder: '+2' },
+                        ].map((slot, idx) => (
+                          <div
+                            key={idx}
+                            className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all"
+                          >
+                            <span className="text-[10px] font-bold text-slate-400 font-mono mr-1.5">{slot.time}</span>
+                            <input
+                              type="text"
+                              placeholder={slot.placeholder}
+                              value={(form as any)[slot.key]}
+                              onChange={(e) => handleChange(slot.key as any, e.target.value)}
+                              className="w-10 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
+                            />
+                            <span className="text-[10px] font-bold text-slate-400 ml-1">°C</span>
+                          </div>
+                        ))}
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('rawMaterialOk', !form.rawMaterialOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.rawMaterialOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.rawMaterialOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.rawMaterialDisc}
                         onChange={(e) => handleChange('rawMaterialDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.rawMaterialAct}
                         onChange={(e) => handleChange('rawMaterialAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 2: Tozalash */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>2. Тозалаш</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">2. Тозалаш</div>
                       <div className="text-[10px] text-slate-500 font-normal">Очистка / Cleaning</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Ифлос зона / Dirty area</div>
                       <div className="text-[11px] text-slate-500">100% чириш ва ёт нарсаларсиз</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Узлуксиз
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Соғлом / Чисто:</span>
-                        <input
-                          type="number"
-                          value={form.cleaningPercent}
-                          onChange={(e) => handleChange('cleaningPercent', e.target.value)}
-                          className="w-16 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-2 py-0.5 text-center font-bold text-xs"
-                        />
-                        <span className="text-xs font-bold">%</span>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Соғлом / Чисто:</span>
+                        <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                          <input
+                            type="text"
+                            value={form.cleaningPercent}
+                            onChange={(e) => handleChange('cleaningPercent', e.target.value)}
+                            placeholder="100"
+                            className="w-14 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
+                          />
+                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-1.5">%</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('cleaningOk', !form.cleaningOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.cleaningOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.cleaningOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.cleaningDisc}
                         onChange={(e) => handleChange('cleaningDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.cleaningAct}
                         onChange={(e) => handleChange('cleaningAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 3: To'g'rash kalibri */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>3. Тўғраш калибри</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">3. Тўғраш калибри</div>
                       <div className="text-[10px] text-slate-500 font-normal">Калибр нарезки / Slicer</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Сабзавот тўғрагич / Slicer</div>
                       <div className="text-[11px] text-slate-500">Спецификация бўйича</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Ҳар 1 соат
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-slate-600 dark:text-slate-300">Калибр / Размер:</span>
-                        <input
-                          type="text"
-                          value={form.cuttingSize}
-                          onChange={(e) => handleChange('cuttingSize', e.target.value)}
-                          className="w-16 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-2 py-0.5 text-center font-bold text-xs"
-                        />
-                        <span className="text-[11px] text-slate-500">мм</span>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Калибр / Ўлчам:</span>
+                        <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                          <input
+                            type="text"
+                            value={form.cuttingSize}
+                            onChange={(e) => handleChange('cuttingSize', e.target.value)}
+                            placeholder="45"
+                            className="w-14 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
+                          />
+                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-1.5">мм</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('cuttingOk', !form.cuttingOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.cuttingOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.cuttingOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.cuttingDisc}
                         onChange={(e) => handleChange('cuttingDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.cuttingAct}
                         onChange={(e) => handleChange('cuttingAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 4: Dezinfeksiya t° (CCP-2) */}
-                  <tr className="bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 border-l-4 border-l-red-500">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                  <tr className="bg-red-50/30 dark:bg-red-950/20 hover:bg-red-50/60 dark:hover:bg-red-950/30 transition-colors border-l-4 border-l-red-500">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
                       <div className="text-red-700 dark:text-red-400 font-black">4. Дезраствор t°</div>
                       <div className="text-[10px] text-slate-500 font-normal">Температура дез. / Temp</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-bold text-slate-900 dark:text-white">Дезинфекция ваннаси / Bath</div>
                       <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
                         Норма: +1°C … +3°C (макс +3°C)
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
                       08:00 10:00<br />12:00 14:00<br />16:00 18:00
                     </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="grid grid-cols-3 gap-1.5">
                         {[
-                          { key: 'dezTemp1', time: '08:00' },
-                          { key: 'dezTemp2', time: '10:00' },
-                          { key: 'dezTemp3', time: '12:00' },
-                          { key: 'dezTemp4', time: '14:00' },
-                          { key: 'dezTemp5', time: '16:00' },
-                          { key: 'dezTemp6', time: '18:00' },
+                          { key: 'dezTemp1', time: '08:00', def: '+2' },
+                          { key: 'dezTemp2', time: '10:00', def: '+2' },
+                          { key: 'dezTemp3', time: '12:00', def: '+2' },
+                          { key: 'dezTemp4', time: '14:00', def: '+2' },
+                          { key: 'dezTemp5', time: '16:00', def: '+2' },
+                          { key: 'dezTemp6', time: '18:00', def: '+2' },
                         ].map((t, idx) => (
-                          <div key={idx} className="flex items-center gap-1 bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/40 rounded px-1.5 py-0.5">
-                            <span className="text-[9px] text-slate-400 font-mono">{t.time}</span>
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/60 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-red-500/20 focus-within:border-red-500 transition-all"
+                          >
+                            <span className="text-[10px] text-slate-400 font-mono font-semibold">{t.time}</span>
                             <input
                               type="text"
                               value={(form as any)[t.key]}
                               onChange={(e) => handleChange(t.key as any, e.target.value)}
-                              placeholder="+2"
-                              className="w-8 text-center font-bold text-xs bg-transparent outline-none text-red-700 dark:text-red-400"
+                              placeholder={t.def}
+                              className="w-9 text-center font-black text-xs bg-transparent outline-none text-red-600 dark:text-red-400"
                             />
-                            <span className="text-[9px] text-slate-400">°C</span>
+                            <span className="text-[9px] font-bold text-slate-400">°C</span>
                           </div>
                         ))}
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('dezTempOk', !form.dezTempOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.dezTempOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.dezTempOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.dezTempDisc}
                         onChange={(e) => handleChange('dezTempDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.dezTempAct}
                         onChange={(e) => handleChange('dezTempAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center bg-[#FCE4D6] dark:bg-red-950/40">
+                    <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
                       <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
                         ККТ-2 / CCP-2<br />(Температура)
                       </span>
@@ -1241,76 +1248,79 @@ export default function DailyChecklistContent() {
                   </tr>
 
                   {/* Row 5: Faol xlor (CCP-1) */}
-                  <tr className="bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 border-l-4 border-l-red-500">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                  <tr className="bg-red-50/30 dark:bg-red-950/20 hover:bg-red-50/60 dark:hover:bg-red-950/30 transition-colors border-l-4 border-l-red-500">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
                       <div className="text-red-700 dark:text-red-400 font-black">5. Фаол хлор</div>
                       <div className="text-[10px] text-slate-500 font-normal">Активный хлор / Chlorine</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-bold text-slate-900 dark:text-white">Дезинфекция ваннаси / Bath</div>
                       <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
                         Норма: Қатъий 300 мг/л (ppm)
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
                       08:00 10:00<br />12:00 14:00<br />16:00 18:00
                     </td>
-                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="grid grid-cols-3 gap-1.5">
                         {[
-                          { key: 'dezChlorine1', time: '08:00' },
-                          { key: 'dezChlorine2', time: '10:00' },
-                          { key: 'dezChlorine3', time: '12:00' },
-                          { key: 'dezChlorine4', time: '14:00' },
-                          { key: 'dezChlorine5', time: '16:00' },
-                          { key: 'dezChlorine6', time: '18:00' },
+                          { key: 'dezChlorine1', time: '08:00', def: '300' },
+                          { key: 'dezChlorine2', time: '10:00', def: '300' },
+                          { key: 'dezChlorine3', time: '12:00', def: '300' },
+                          { key: 'dezChlorine4', time: '14:00', def: '300' },
+                          { key: 'dezChlorine5', time: '16:00', def: '300' },
+                          { key: 'dezChlorine6', time: '18:00', def: '300' },
                         ].map((t, idx) => (
-                          <div key={idx} className="flex items-center gap-1 bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/40 rounded px-1.5 py-0.5">
-                            <span className="text-[9px] text-slate-400 font-mono">{t.time}</span>
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/60 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-red-500/20 focus-within:border-red-500 transition-all"
+                          >
+                            <span className="text-[10px] text-slate-400 font-mono font-semibold">{t.time}</span>
                             <input
                               type="text"
                               value={(form as any)[t.key]}
                               onChange={(e) => handleChange(t.key as any, e.target.value)}
-                              placeholder="300"
-                              className="w-10 text-center font-bold text-xs bg-transparent outline-none text-red-700 dark:text-red-400"
+                              placeholder={t.def}
+                              className="w-10 text-center font-black text-xs bg-transparent outline-none text-red-600 dark:text-red-400"
                             />
-                            <span className="text-[8px] text-slate-400">mg</span>
+                            <span className="text-[9px] font-bold text-slate-400">mg</span>
                           </div>
                         ))}
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('dezChlorineOk', !form.dezChlorineOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.dezChlorineOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.dezChlorineOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.dezChlorineDisc}
                         onChange={(e) => handleChange('dezChlorineDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.dezChlorineAct}
                         onChange={(e) => handleChange('dezChlorineAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center bg-[#FCE4D6] dark:bg-red-950/40">
+                    <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
                       <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
                         ККТ-1 / CCP-1<br />(Хлор / Chlorine)
                       </span>
@@ -1318,521 +1328,552 @@ export default function DailyChecklistContent() {
                   </tr>
 
                   {/* Row 6: Konservant */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>6. Консервант</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">6. Консервант</div>
                       <div className="text-[10px] text-slate-500 font-normal">Консервант / Preservative</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Салат майдончаси / Salad area</div>
                       <div className="text-[11px] text-slate-500">≤1г/кг (Карам 85%, Сабзи 15%)</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Ҳар эритмада
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-slate-600 dark:text-slate-300">Коул-Слоу Доза:</span>
-                        <input
-                          type="text"
-                          value={form.preservative}
-                          onChange={(e) => handleChange('preservative', e.target.value)}
-                          placeholder="1"
-                          className="w-14 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-2 py-0.5 text-center font-bold text-xs"
-                        />
-                        <span className="text-[11px] text-slate-500">г/кг</span>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Коул-Слоу Доза:</span>
+                        <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                          <input
+                            type="text"
+                            value={form.preservative}
+                            onChange={(e) => handleChange('preservative', e.target.value)}
+                            placeholder="1"
+                            className="w-14 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
+                          />
+                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-1.5">г/кг</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('preservativeOk', !form.preservativeOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.preservativeOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.preservativeOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.preservativeDisc}
                         onChange={(e) => handleChange('preservativeDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.preservativeAct}
                         onChange={(e) => handleChange('preservativeAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 7: Qoldiq xlor */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>7. Қолдиқ хлор</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">7. Қолдиқ хлор</div>
                       <div className="text-[10px] text-slate-500 font-normal">Остаточный хлор / Residual</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Чиллер чиқиши / Chiller outlet</div>
                       <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">Қолдиқ хлор = 0 мг/л</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] font-mono text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] font-mono text-slate-500">
                       09:00 13:00 17:00
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200">
-                          <input
-                            type="radio"
-                            name="residualChlorine"
-                            checked={form.residualChlorine === true}
-                            onChange={() => handleChange('residualChlorine', true)}
-                            className="accent-blue-600"
-                          />
-                          <span>0 mg/l (OK)</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-red-600">
-                          <input
-                            type="radio"
-                            name="residualChlorine"
-                            checked={form.residualChlorine === false}
-                            onChange={() => handleChange('residualChlorine', false)}
-                            className="accent-red-600"
-                          />
-                          <span>Хлор бор / Есть</span>
-                        </label>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="inline-flex p-0.5 bg-slate-100 dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-dark-700">
+                        <button
+                          type="button"
+                          onClick={() => handleChange('residualChlorine', true)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            form.residualChlorine
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          ✓ 0 mg/l (OK)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('residualChlorine', false)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            !form.residualChlorine
+                              ? 'bg-rose-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'
+                          }`}
+                        >
+                          ⚠ Хлор бор / Есть
+                        </button>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('residualChlorineOk', !form.residualChlorineOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.residualChlorineOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.residualChlorineOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.residualChlorineDisc}
                         onChange={(e) => handleChange('residualChlorineDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.residualChlorineAct}
                         onChange={(e) => handleChange('residualChlorineAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 8: Tsentrifuga */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>8. Центрифуга</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">8. Центрифуга</div>
                       <div className="text-[10px] text-slate-500 font-normal">Сушка / Centrifuge</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Центрифуга / Dryer</div>
                       <div className="text-[11px] text-slate-500">30сек, 950об/мин, салфетка қуруқ</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Ҳар 1 соат
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200">
-                          <input
-                            type="radio"
-                            name="dryingDry"
-                            checked={form.dryingDry === true}
-                            onChange={() => handleChange('dryingDry', true)}
-                            className="accent-blue-600"
-                          />
-                          <span>Қуруқ / Dry (OK)</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-amber-600">
-                          <input
-                            type="radio"
-                            name="dryingDry"
-                            checked={form.dryingDry === false}
-                            onChange={() => handleChange('dryingDry', false)}
-                            className="accent-amber-600"
-                          />
-                          <span>Нам / Wet</span>
-                        </label>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="inline-flex p-0.5 bg-slate-100 dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-dark-700">
+                        <button
+                          type="button"
+                          onClick={() => handleChange('dryingDry', true)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            form.dryingDry
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          ✓ Салфетка: Қуруқ (OK)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('dryingDry', false)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            !form.dryingDry
+                              ? 'bg-amber-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
+                          }`}
+                        >
+                          ⚠ Нам / Wet
+                        </button>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('dryingOk', !form.dryingOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.dryingOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.dryingOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.dryingDisc}
                         onChange={(e) => handleChange('dryingDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.dryingAct}
                         onChange={(e) => handleChange('dryingAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 9: Vizual nazorat */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>9. Визуал назорат</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">9. Визуал назорат</div>
                       <div className="text-[10px] text-slate-500 font-normal">Инспекция / Inspection</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Инспекция столи / Table</div>
                       <div className="text-[11px] text-slate-500">Юпқа ёйилиш, 100% ёт нарсасиз</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Доимий
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                        <input
-                          type="checkbox"
-                          checked={form.inspectionClean}
-                          onChange={(e) => handleChange('inspectionClean', e.target.checked)}
-                          className="accent-emerald-600 w-4 h-4"
-                        />
-                        <span>Визуал: 100% Тоза / Clean</span>
-                      </label>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="inline-flex p-0.5 bg-slate-100 dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-dark-700">
+                        <button
+                          type="button"
+                          onClick={() => handleChange('inspectionClean', true)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            form.inspectionClean
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          ✓ 100% Тоза / Clean
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('inspectionClean', false)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            !form.inspectionClean
+                              ? 'bg-rose-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'
+                          }`}
+                        >
+                          ⚠ Ёт жисм / Нуқсон
+                        </button>
+                      </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('inspectionOk', !form.inspectionOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.inspectionOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.inspectionOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.inspectionDisc}
                         onChange={(e) => handleChange('inspectionDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.inspectionAct}
                         onChange={(e) => handleChange('inspectionAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 10: Vazn nazorati */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>10. Вазн назорати</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">10. Вазн назорати</div>
                       <div className="text-[10px] text-slate-500 font-normal">Контроль веса / Weight</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Қадоқлаш / Packaging</div>
                       <div className="text-[11px] text-slate-500">Спецификация бўйича</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Ҳар 5-пакет
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-2 flex-wrap text-xs">
-                        <span className="font-bold">Лимон: 2шт</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-slate-500">1kg:</span>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Limon */}
+                        <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mr-1.5 uppercase">Лимон:</span>
                           <input
                             type="text"
+                            placeholder="2"
+                            value={form.weightLemon}
+                            onChange={(e) => handleChange('weightLemon', e.target.value)}
+                            className="w-8 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
+                          />
+                          <span className="text-[10px] font-semibold text-slate-400 ml-1">дона</span>
+                        </div>
+
+                        {/* 1 kg */}
+                        <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mr-1.5">1 kg:</span>
+                          <input
+                            type="text"
+                            placeholder="1000"
                             value={form.weight1kg}
                             onChange={(e) => handleChange('weight1kg', e.target.value)}
-                            placeholder="1000"
-                            className="w-14 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                            className="w-12 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
                           />
-                          <span className="text-[10px]">g</span>
+                          <span className="text-[10px] font-semibold text-slate-400 ml-1">g</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-slate-500">0.5kg:</span>
+
+                        {/* 0.5 kg */}
+                        <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mr-1.5">0.5 kg:</span>
                           <input
                             type="text"
+                            placeholder="500"
                             value={form.weight500g}
                             onChange={(e) => handleChange('weight500g', e.target.value)}
-                            placeholder="500"
-                            className="w-14 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                            className="w-12 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
                           />
-                          <span className="text-[10px]">g</span>
+                          <span className="text-[10px] font-semibold text-slate-400 ml-1">g</span>
                         </div>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('weightOk', !form.weightOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.weightOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.weightOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.weightDisc}
                         onChange={(e) => handleChange('weightDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.weightAct}
                         onChange={(e) => handleChange('weightAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 11: Germetiklik */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>11. Герметиклик</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">11. Герметиклик</div>
                       <div className="text-[10px] text-slate-500 font-normal">Герметичность / Sealing</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Қадоқлаш / Package Sealing</div>
                       <div className="text-[11px] text-slate-500">100% герметик, чок текис ва мустаҳкам</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Узлуксиз
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200">
-                          <input
-                            type="radio"
-                            name="sealingOk"
-                            checked={form.sealingOk === true}
-                            onChange={() => handleChange('sealingOk', true)}
-                            className="accent-blue-600"
-                          />
-                          <span>Герметик / OK</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-red-600">
-                          <input
-                            type="radio"
-                            name="sealingOk"
-                            checked={form.sealingOk === false}
-                            onChange={() => handleChange('sealingOk', false)}
-                            className="accent-red-600"
-                          />
-                          <span>Ҳаво бор / Утечка</span>
-                        </label>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="inline-flex p-0.5 bg-slate-100 dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-dark-700">
+                        <button
+                          type="button"
+                          onClick={() => handleChange('sealingOk', true)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            form.sealingOk
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          ✓ Герметик / OK
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('sealingOk', false)}
+                          className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                            !form.sealingOk
+                              ? 'bg-rose-600 text-white shadow-sm'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'
+                          }`}
+                        >
+                          ⚠ Ҳаво бор / Утечка
+                        </button>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('sealingStatusOk', !form.sealingStatusOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.sealingStatusOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.sealingStatusOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.sealingDisc}
                         onChange={(e) => handleChange('sealingDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.sealingAct}
                         onChange={(e) => handleChange('sealingAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 12: Metallodetektor (CCP-3) */}
-                  <tr className="bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 border-l-4 border-l-red-500">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                  <tr className="bg-red-50/30 dark:bg-red-950/20 hover:bg-red-50/60 dark:hover:bg-red-950/30 transition-colors border-l-4 border-l-red-500">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
                       <div className="text-red-700 dark:text-red-400 font-black">12. Металлодетектор</div>
                       <div className="text-[10px] text-slate-500 font-normal">Metal Detector</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-bold text-slate-900 dark:text-white">Рамка / Детектор металлов</div>
                       <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
                         Fe ≥2.0mm, Non-Fe ≥3.0mm, SS ≥3.0mm
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
                       08:00 10:00<br />12:00 14:00<br />16:00 18:00
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-3 flex-wrap text-xs font-bold">
-                        <label className="flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={form.metalFe}
-                            onChange={(e) => handleChange('metalFe', e.target.checked)}
-                            className="accent-blue-600"
-                          />
-                          <span>Fe (Темир)</span>
-                        </label>
-                        <label className="flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={form.metalNonFe}
-                            onChange={(e) => handleChange('metalNonFe', e.target.checked)}
-                            className="accent-blue-600"
-                          />
-                          <span>Non-Fe</span>
-                        </label>
-                        <label className="flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={form.metalSs}
-                            onChange={(e) => handleChange('metalSs', e.target.checked)}
-                            className="accent-blue-600"
-                          />
-                          <span>SS</span>
-                        </label>
-                        <label className="flex items-center gap-1 cursor-pointer bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded ml-auto">
-                          <input
-                            type="checkbox"
-                            checked={form.metalSignal}
-                            onChange={(e) => handleChange('metalSignal', e.target.checked)}
-                            className="accent-amber-600"
-                          />
-                          <span>Сигнал Бор</span>
-                        </label>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {[
+                          { key: 'metalFe', label: 'Fe (Темир)' },
+                          { key: 'metalNonFe', label: 'Non-Fe' },
+                          { key: 'metalSs', label: 'SS (Зангламас)' },
+                        ].map((m) => (
+                          <button
+                            key={m.key}
+                            type="button"
+                            onClick={() => handleChange(m.key as any, !(form as any)[m.key])}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                              (form as any)[m.key]
+                                ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                                : 'bg-white dark:bg-dark-900 text-slate-500 border-slate-300 dark:border-dark-700 hover:border-blue-300'
+                            }`}
+                          >
+                            {(form as any)[m.key] ? '✓ ' : ''}{m.label}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => handleChange('metalSignal', !form.metalSignal)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                            form.metalSignal
+                              ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                              : 'bg-white dark:bg-dark-900 text-slate-400 border-slate-300 dark:border-dark-700'
+                          }`}
+                        >
+                          {form.metalSignal ? '🔔 Сигнал Бор' : '🔕 Сигнал Йўқ'}
+                        </button>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('metalOk', !form.metalOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.metalOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.metalOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.metalDisc}
                         onChange={(e) => handleChange('metalDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.metalAct}
                         onChange={(e) => handleChange('metalAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center bg-[#FCE4D6] dark:bg-red-950/40">
+                    <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
                       <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
                         ККТ-3 / CCP-3<br />(Металл / Metal)
                       </span>
@@ -1840,150 +1881,156 @@ export default function DailyChecklistContent() {
                   </tr>
 
                   {/* Row 13: Ombordagi rejim */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>13. Омбор режими</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">13. Омбор режими</div>
                       <div className="text-[10px] text-slate-500 font-normal">Склад ГП / Warehouse</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">ТМО / Склад ГП</div>
                       <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">
                         +1°C … +5°C, вакуумли ва тоза
                       </div>
                     </td>
-                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] text-slate-500 leading-tight">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] text-slate-500 leading-tight">
                       Эрталаб / Кечқурун
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-slate-500">t°:</span>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mr-1.5">t°:</span>
                           <input
                             type="text"
+                            placeholder="+3"
                             value={form.fgStoreTemp}
                             onChange={(e) => handleChange('fgStoreTemp', e.target.value)}
-                            placeholder="+3"
-                            className="w-12 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                            className="w-10 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
                           />
-                          <span className="text-[10px]">°C</span>
+                          <span className="text-[10px] font-bold text-slate-400 ml-1">°C</span>
                         </div>
-                        <label className="flex items-center gap-1 cursor-pointer font-bold text-emerald-700 dark:text-emerald-400 ml-2">
-                          <input
-                            type="checkbox"
-                            checked={form.fgStoreVacuum}
-                            onChange={(e) => handleChange('fgStoreVacuum', e.target.checked)}
-                            className="accent-emerald-600"
-                          />
-                          <span>Вакуум: Зич / OK</span>
-                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('fgStoreVacuum', !form.fgStoreVacuum)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                            form.fgStoreVacuum
+                              ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                              : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-400'
+                          }`}
+                        >
+                          {form.fgStoreVacuum ? '✓ Вакуум: Зич / OK' : '⚠ Вакуум Бузилган'}
+                        </button>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('fgStoreOk', !form.fgStoreOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.fgStoreOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.fgStoreOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.fgStoreDisc}
                         onChange={(e) => handleChange('fgStoreDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.fgStoreAct}
                         onChange={(e) => handleChange('fgStoreAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
                   </tr>
 
                   {/* Row 14: Gigiyena */}
-                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div>14. Гигиена</div>
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-slate-900 dark:text-white font-black">14. Гигиена</div>
                       <div className="text-[10px] text-slate-500 font-normal">Sanitation &amp; Hygiene</div>
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="font-semibold text-slate-900 dark:text-white">Ускуна ва ходимлар</div>
                       <div className="text-[11px] text-slate-500">100% тозалик, спецодежда, ниқоб, қўлқоп</div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
                       Смена бошида
                     </td>
-                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
-                      <div className="flex items-center gap-3 text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                        <label className="flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={form.hygieneClean}
-                            onChange={(e) => handleChange('hygieneClean', e.target.checked)}
-                            className="accent-emerald-600"
-                          />
-                          <span>Тозалик OK</span>
-                        </label>
-                        <label className="flex items-center gap-1 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={form.hygieneGear}
-                            onChange={(e) => handleChange('hygieneGear', e.target.checked)}
-                            className="accent-emerald-600"
-                          />
-                          <span>Гигиена OK</span>
-                        </label>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => handleChange('hygieneClean', !form.hygieneClean)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                            form.hygieneClean
+                              ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                              : 'bg-white dark:bg-dark-900 text-slate-500 border-slate-300 dark:border-dark-700'
+                          }`}
+                        >
+                          {form.hygieneClean ? '✓ 100% Тозалик OK' : '✗ Тозалик Камчилик'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('hygieneGear', !form.hygieneGear)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                            form.hygieneGear
+                              ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                              : 'bg-white dark:bg-dark-900 text-slate-500 border-slate-300 dark:border-dark-700'
+                          }`}
+                        >
+                          {form.hygieneGear ? '✓ Спецодежда / Ниқоб OK' : '✗ Спецодежда Йўқ'}
+                        </button>
                       </div>
                     </td>
-                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                       <button
                         type="button"
                         onClick={() => handleChange('hygieneOk', !form.hygieneOk)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
                           form.hygieneOk
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                            : 'bg-red-100 text-red-800 border-red-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
                         {form.hygieneOk ? '✓ Мос (OK)' : '✗ Н/К'}
                       </button>
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.hygieneDisc}
                         onChange={(e) => handleChange('hygieneDisc', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
                       <input
                         type="text"
                         placeholder="—"
                         value={form.hygieneAct}
                         onChange={(e) => handleChange('hygieneAct', e.target.value)}
-                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-2 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         ОПРП / OPRP
                       </span>
                     </td>
