@@ -1,11 +1,266 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Save, CheckCircle2, AlertCircle, Clock, ShieldCheck, Thermometer, Droplets, Zap, ShieldAlert, ArrowLeft, Download } from 'lucide-react'
+import {
+  Save,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ArrowLeft,
+  Download,
+  FileSpreadsheet,
+  Database,
+  FileText,
+  RotateCcw,
+  Eye,
+  Loader2,
+  Printer,
+  ShieldCheck,
+  AlertTriangle,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { FileText, Database, FileSpreadsheet } from 'lucide-react'
-import { useEffect } from 'react'
+
+interface ChecklistForm {
+  // 1. Qadoqlash standartlari (Section 1)
+  packLemon: boolean
+  packCucumber: boolean
+  packTomato: boolean
+  packIceberg: boolean
+  packOnion: boolean
+  packColeslaw: boolean
+
+  // 2. Texnologik jarayon va xavfsizlik (Section 2 - 14 rows)
+  // Row 1: Xomashyo
+  rawMaterialTemp1: string
+  rawMaterialTemp2: string
+  rawMaterialTemp3: string
+  rawMaterialOk: boolean
+  rawMaterialDisc: string
+  rawMaterialAct: string
+
+  // Row 2: Tozalash
+  cleaningPercent: string
+  cleaningOk: boolean
+  cleaningDisc: string
+  cleaningAct: string
+
+  // Row 3: To'g'rash kalibri
+  cuttingSize: string
+  cuttingOk: boolean
+  cuttingDisc: string
+  cuttingAct: string
+
+  // Row 4: Dezinfeksiya harorati (CCP-2)
+  dezTemp1: string
+  dezTemp2: string
+  dezTemp3: string
+  dezTemp4: string
+  dezTemp5: string
+  dezTemp6: string
+  dezTempOk: boolean
+  dezTempDisc: string
+  dezTempAct: string
+
+  // Row 5: Faol xlor (CCP-1)
+  dezChlorine1: string
+  dezChlorine2: string
+  dezChlorine3: string
+  dezChlorine4: string
+  dezChlorine5: string
+  dezChlorine6: string
+  dezChlorineOk: boolean
+  dezChlorineDisc: string
+  dezChlorineAct: string
+
+  // Row 6: Konservant
+  preservative: string
+  preservativeOk: boolean
+  preservativeDisc: string
+  preservativeAct: string
+
+  // Row 7: Qoldiq xlor
+  residualChlorine: boolean
+  residualChlorineOk: boolean
+  residualChlorineDisc: string
+  residualChlorineAct: string
+
+  // Row 8: Tsentrifuga
+  dryingDry: boolean
+  dryingOk: boolean
+  dryingDisc: string
+  dryingAct: string
+
+  // Row 9: Vizual nazorat
+  inspectionClean: boolean
+  inspectionOk: boolean
+  inspectionDisc: string
+  inspectionAct: string
+
+  // Row 10: Vazn nazorati
+  weightLemon: string
+  weight1kg: string
+  weight500g: string
+  weightOk: boolean
+  weightDisc: string
+  weightAct: string
+
+  // Row 11: Germetiklik
+  sealingOk: boolean
+  sealingStatusOk: boolean
+  sealingDisc: string
+  sealingAct: string
+
+  // Row 12: Metallodetektor (CCP-3)
+  metalFe: boolean
+  metalNonFe: boolean
+  metalSs: boolean
+  metalSignal: boolean
+  metalOk: boolean
+  metalDisc: string
+  metalAct: string
+
+  // Row 13: Ombordagi rejim
+  fgStoreTemp: string
+  fgStoreMorningTime: string
+  fgStoreEveningTime: string
+  fgStoreVacuum: boolean
+  fgStoreOk: boolean
+  fgStoreDisc: string
+  fgStoreAct: string
+
+  // Row 14: Gigiyena
+  hygieneClean: boolean
+  hygieneGear: boolean
+  hygieneOk: boolean
+  hygieneDisc: string
+  hygieneAct: string
+
+  // 3. Smena yakunini tasdiqlash (Section 3 - Sign-offs)
+  inspectorName: string
+  inspectorSign: string
+  inspectorTime: string
+
+  supervisorName: string
+  supervisorSign: string
+  supervisorTime: string
+
+  qaEngineerName: string
+  qaEngineerSign: string
+  qaEngineerTime: string
+}
+
+const initialForm: ChecklistForm = {
+  packLemon: true,
+  packCucumber: true,
+  packTomato: true,
+  packIceberg: true,
+  packOnion: true,
+  packColeslaw: true,
+
+  rawMaterialTemp1: '+2',
+  rawMaterialTemp2: '+3',
+  rawMaterialTemp3: '',
+  rawMaterialOk: true,
+  rawMaterialDisc: '',
+  rawMaterialAct: '',
+
+  cleaningPercent: '100',
+  cleaningOk: true,
+  cleaningDisc: '',
+  cleaningAct: '',
+
+  cuttingSize: '45',
+  cuttingOk: true,
+  cuttingDisc: '',
+  cuttingAct: '',
+
+  dezTemp1: '+2',
+  dezTemp2: '+2',
+  dezTemp3: '+2',
+  dezTemp4: '+2',
+  dezTemp5: '+2',
+  dezTemp6: '+2',
+  dezTempOk: true,
+  dezTempDisc: '',
+  dezTempAct: '',
+
+  dezChlorine1: '300',
+  dezChlorine2: '300',
+  dezChlorine3: '300',
+  dezChlorine4: '300',
+  dezChlorine5: '300',
+  dezChlorine6: '300',
+  dezChlorineOk: true,
+  dezChlorineDisc: '',
+  dezChlorineAct: '',
+
+  preservative: '1',
+  preservativeOk: true,
+  preservativeDisc: '',
+  preservativeAct: '',
+
+  residualChlorine: true,
+  residualChlorineOk: true,
+  residualChlorineDisc: '',
+  residualChlorineAct: '',
+
+  dryingDry: true,
+  dryingOk: true,
+  dryingDisc: '',
+  dryingAct: '',
+
+  inspectionClean: true,
+  inspectionOk: true,
+  inspectionDisc: '',
+  inspectionAct: '',
+
+  weightLemon: '2',
+  weight1kg: '1000',
+  weight500g: '500',
+  weightOk: true,
+  weightDisc: '',
+  weightAct: '',
+
+  sealingOk: true,
+  sealingStatusOk: true,
+  sealingDisc: '',
+  sealingAct: '',
+
+  metalFe: true,
+  metalNonFe: true,
+  metalSs: true,
+  metalSignal: true,
+  metalOk: true,
+  metalDisc: '',
+  metalAct: '',
+
+  fgStoreTemp: '+3',
+  fgStoreMorningTime: '08:00',
+  fgStoreEveningTime: '18:00',
+  fgStoreVacuum: true,
+  fgStoreOk: true,
+  fgStoreDisc: '',
+  fgStoreAct: '',
+
+  hygieneClean: true,
+  hygieneGear: true,
+  hygieneOk: true,
+  hygieneDisc: '',
+  hygieneAct: '',
+
+  inspectorName: '',
+  inspectorSign: '',
+  inspectorTime: '',
+
+  supervisorName: '',
+  supervisorSign: '',
+  supervisorTime: '',
+
+  qaEngineerName: '',
+  qaEngineerSign: '',
+  qaEngineerTime: '',
+}
 
 export default function DailyChecklistContent() {
   const router = useRouter()
@@ -13,47 +268,35 @@ export default function DailyChecklistContent() {
   const [saving, setSaving] = useState(false)
   const [history, setHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-  
+
+  // Top Metadata
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
-  const [shift, setShift] = useState('1')
+  const [shift, setShift] = useState<'1' | '2'>('1')
   const [supervisor, setSupervisor] = useState('')
   const [inspector, setInspector] = useState('')
   const [batchNo, setBatchNo] = useState('')
-  const [line, setLine] = useState('1-Qadoqlash')
+  const [line, setLine] = useState('1-Линия')
   const [rejected, setRejected] = useState('')
   const [totalOutput, setTotalOutput] = useState('')
 
-  const [form, setForm] = useState({
-    // Part 1: Packaging
-    packLemon: true,
-    packCucumber: true,
-    packTomato: true,
-    packIceberg: true,
-    packOnion: true,
-    packColeslaw: true,
+  // Form State
+  const [form, setForm] = useState<ChecklistForm>(initialForm)
 
-    // Part 2: Process
-    rawMaterialTemp1: '', rawMaterialTemp2: '', rawMaterialTemp3: '', rawMaterialOk: true,
-    cleaningPercent: '100', cleaningOk: true,
-    cuttingSize: '45', cuttingOk: true,
-    dezTemp1: '', dezTemp2: '', dezTemp3: '', dezTemp4: '', dezTemp5: '', dezTemp6: '', dezTempOk: true,
-    dezChlorine1: '', dezChlorine2: '', dezChlorine3: '', dezChlorine4: '', dezChlorine5: '', dezChlorine6: '', dezChlorineOk: true,
-    preservative: '1', preservativeOk: true,
-    residualChlorine: true, residualChlorineOk: true,
-    dryingDry: true, dryingOk: true,
-    inspectionClean: true, inspectionOk: true,
-    weightLemon: '2', weight1kg: '1002', weight500g: '504', weightOk: true,
-    sealingOk: true, sealingStatusOk: true,
-    metalFe: true, metalNonFe: true, metalSs: true, metalSignal: true, metalOk: true,
-    fgStoreTemp: '', fgStoreVacuum: true, fgStoreOk: true,
-    hygieneClean: true, hygieneOk: true
-  })
-
-  const handleChange = (field: string, value: any) => {
-    setForm(prev => ({ ...prev, [field]: value }))
+  const handleChange = (field: keyof ChecklistForm, value: any) => {
+    setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const fetchHistory = async () => {
+  const handleReset = () => {
+    if (confirm("Haqiqatan ham barcha maydonlarni tozalab, yangidan to'ldirmoqchimisiz?")) {
+      setForm(initialForm)
+      setRejected('')
+      setTotalOutput('')
+      setBatchNo('')
+      toast.info('Forma tozalandi')
+    }
+  }
+
+  const fetchHistory = useCallback(async () => {
     setLoadingHistory(true)
     try {
       const res = await fetch('/api/daily-checklist')
@@ -66,13 +309,41 @@ export default function DailyChecklistContent() {
     } finally {
       setLoadingHistory(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     if (view === 'archive') {
       fetchHistory()
     }
-  }, [view])
+  }, [view, fetchHistory])
+
+  // Load a record from archive into the form
+  const loadFromArchive = (doc: any) => {
+    try {
+      setDate(doc.date || '')
+      setShift((doc.shift === '2' ? '2' : '1') as '1' | '2')
+      setSupervisor(doc.supervisor || '')
+      setInspector(doc.inspector || '')
+      setBatchNo(doc.batchNumber || '')
+      setLine(doc.lineName || '1-Линия')
+      setRejected(doc.rejectedKg ? String(doc.rejectedKg) : '')
+      setTotalOutput(doc.totalOutputBox ? String(doc.totalOutputBox) : '')
+
+      if (doc.formData) {
+        const parsed = typeof doc.formData === 'string' ? JSON.parse(doc.formData) : doc.formData
+        setForm((prev) => ({
+          ...prev,
+          ...parsed,
+          inspectorName: parsed.inspectorName || doc.inspector || '',
+          supervisorName: parsed.supervisorName || doc.supervisor || '',
+        }))
+      }
+      setView('form')
+      toast.success("Jurnal ko'rish uchun yuklandi!")
+    } catch (err) {
+      toast.error('Jurnalni yuklashda xatolik yuz berdi')
+    }
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -84,26 +355,30 @@ export default function DailyChecklistContent() {
         batchNumber: batchNo,
         rejectedKg: rejected,
         totalOutputBox: totalOutput,
-        supervisor,
-        inspector,
-        formData: form
+        supervisor: form.supervisorName || supervisor,
+        inspector: form.inspectorName || inspector,
+        formData: {
+          ...form,
+          inspectorName: form.inspectorName || inspector,
+          supervisorName: form.supervisorName || supervisor,
+        },
       }
-      
+
       const res = await fetch('/api/daily-checklist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       })
-      
+
       if (!res.ok) {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Xatolik yuz berdi')
       }
-      
-      toast.success("Smena yakuni bo'yicha Yagona Check-list muvaffaqiyatli saqlandi!")
+
+      toast.success("Smena yakuni bo'yicha Yagona Check-list muvaffaqiyatli arxivga saqlandi!")
       setView('archive')
-    } catch (e) {
-      toast.error("Saqlashda xatolik yuz berdi")
+    } catch (e: any) {
+      toast.error(e?.message || 'Saqlashda xatolik yuz berdi')
       console.error(e)
     } finally {
       setSaving(false)
@@ -111,450 +386,1931 @@ export default function DailyChecklistContent() {
   }
 
   return (
-    <div className="space-y-6 animate-enter pb-20">
-      {/* Tabs */}
-      <div className="flex bg-slate-100 dark:bg-dark-800 p-1 rounded-2xl w-full max-w-sm mb-6 border border-slate-200 dark:border-dark-700">
-        <button
-          onClick={() => setView('form')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${view === 'form' ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-        >
-          <FileText size={16} /> Yangi To'ldirish
-        </button>
-        <button
-          onClick={() => setView('archive')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${view === 'archive' ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-        >
-          <Database size={16} /> Arxiv
-        </button>
-      </div>
-
-      {view === 'form' ? (
-        <>
-          {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/inspector')} className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-dark-700">
+    <div className="space-y-6 animate-enter pb-24">
+      {/* Top Header & Tab Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-750 pb-4">
+        <div className="flex items-center gap-3.5">
+          <button
+            onClick={() => router.push('/inspector')}
+            className="w-10 h-10 rounded-xl bg-white dark:bg-dark-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors border border-slate-200 dark:border-dark-700 shadow-sm"
+            title="Orqaga"
+          >
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-              Yagona Kunlik Check-list
-              <span className="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold uppercase tracking-wider border border-blue-200 dark:border-blue-800">FSSC 22000</span>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="px-2.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider border border-blue-200 dark:border-blue-800">
+                FSSC 22000 v6 / ISO 22000
+              </span>
+              <span className="text-xs text-slate-400 font-semibold">• 3 Tilda</span>
+            </div>
+            <h1 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              СНБ (ОТК) Назоратчисининг Кунлик Иш Чек-листи
             </h1>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Smena yakuni bo'yicha QC nazoratchisining umumiy hisoboti</p>
           </div>
         </div>
-        <button onClick={handleSave} disabled={saving} className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 active:scale-95 disabled:opacity-70">
-          {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
-          <span>Smenani Tasdiqlash</span>
-        </button>
-      </div>
 
-      {/* Meta Info */}
-      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Sana / Smena</label>
-            <div className="flex gap-2">
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-2/3 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500" />
-              <select value={shift} onChange={e => setShift(e.target.value)} className="w-1/3 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500">
-                <option value="1">1-Smena</option>
-                <option value="2">2-Smena</option>
-              </select>
-            </div>
+        {/* View switcher tabs */}
+        <div className="flex items-center gap-2">
+          <div className="flex bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 shadow-inner">
+            <button
+              onClick={() => setView('form')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                view === 'form'
+                  ? 'bg-white dark:bg-dark-900 text-blue-700 dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <FileText size={15} />
+              <span>Чек-лист (Excel жадвал)</span>
+            </button>
+            <button
+              onClick={() => setView('archive')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                view === 'archive'
+                  ? 'bg-white dark:bg-dark-900 text-blue-700 dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Database size={15} />
+              <span>Архив ({history.length})</span>
+            </button>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Liniya / Partiya №</label>
-            <div className="flex gap-2">
-              <input type="text" placeholder="Liniya" value={line} onChange={e => setLine(e.target.value)} className="w-1/2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500" />
-              <input type="text" placeholder="Partiya №" value={batchNo} onChange={e => setBatchNo(e.target.value)} className="w-1/2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Brak / Umumiy chiqish</label>
-            <div className="flex gap-2">
-              <div className="relative w-1/2">
-                <input type="number" placeholder="Brak" value={rejected} onChange={e => setRejected(e.target.value)} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-3 pr-7 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 text-red-600 dark:text-red-400" />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">kg</span>
-              </div>
-              <div className="relative w-1/2">
-                <input type="number" placeholder="Chiqish" value={totalOutput} onChange={e => setTotalOutput(e.target.value)} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-3 pr-8 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 text-emerald-600 dark:text-emerald-400" />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">kor</span>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Mas'ullar (Ustasi / QC)</label>
-            <div className="flex gap-2">
-              <input type="text" placeholder="Smena ustasi" value={supervisor} onChange={e => setSupervisor(e.target.value)} className="w-1/2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500" />
-              <input type="text" placeholder="Nazoratchi" value={inspector} onChange={e => setInspector(e.target.value)} className="w-1/2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500" />
-            </div>
-          </div>
+
+          {view === 'form' && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-600/25 transition-all disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+              <span>Сақлаш (Архивга)</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Part 1: Packaging Standards */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-2xl md:rounded-3xl p-5 shadow-sm h-full">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-dark-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <ShieldCheck size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">1. Qadoqlash</h2>
-                <p className="text-[11px] font-bold text-slate-500 uppercase">Qadoq standartlari (OPRP)</p>
-              </div>
-            </div>
+      {view === 'form' ? (
+        <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-750 rounded-2xl shadow-xl overflow-hidden print:border-none print:shadow-none">
+          {/* ========================================================================= */}
+          {/* EXCEL TITLE BANNER */}
+          {/* ========================================================================= */}
+          <div className="bg-[#1F4E78] text-white py-4 px-6 text-center border-b-2 border-[#1B365D]">
+            <h2 className="text-sm sm:text-base md:text-lg font-black tracking-wide uppercase leading-snug">
+              СНБ (ОТК) НАЗОРАТЧИСИНИНГ КУНЛИК ИШ ЧЕК-ЛИСТИ / ЕЖЕДНЕВНЫЙ ЧЕК-ЛИСТ КОНТРОЛЕРА ОКК / DAILY QC CHECKLIST
+            </h2>
+            <p className="text-[11px] sm:text-xs text-blue-200 font-medium mt-1">
+              (FSSC 22000 v6 / ISO 22000:2018 — Уч тилда: O&apos;zbekcha / Русский / English)
+            </p>
+          </div>
 
-            <div className="space-y-3">
-              {[
-                { key: 'packLemon', name: 'Limon (Lemon)', desc: '2 dona / 12 paket / 24 kor', norm: '100% sog\'lom' },
-                { key: 'packCucumber', name: 'Bodring (Cucumber)', desc: '1 kg / 6 paket / 6 kg', norm: '990g - 1010g' },
-                { key: 'packTomato', name: 'Tomat (Tomato)', desc: '1 kg / 6 paket / 6 kg', norm: '990g - 1010g' },
-                { key: 'packIceberg', name: 'Aysberg (Iceberg)', desc: '1 kg / 6 paket / 6 kg', norm: '990g - 1010g' },
-                { key: 'packOnion', name: 'Piyoz (Onion)', desc: '0.5 kg / 12 paket / 6 kg', norm: '492.5g - 507.5g' },
-                { key: 'packColeslaw', name: 'Koul Slou (Cole Slaw)', desc: '0.5 kg / 12 paket / 6 kg', norm: '492.5g - 507.5g' },
-              ].map((item, idx) => (
-                <div key={idx} className="p-3 rounded-xl border border-slate-100 dark:border-dark-800 bg-slate-50/50 dark:bg-dark-800/30 flex items-center justify-between group hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{item.name}</h3>
-                    <div className="flex flex-col mt-0.5">
-                      <span className="text-[10px] text-slate-500">{item.desc}</span>
-                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Norma: {item.norm}</span>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={(form as any)[item.key]} onChange={e => handleChange(item.key, e.target.checked)} className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-dark-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
-                  </label>
+          {/* ========================================================================= */}
+          {/* METADATA GRID (Rows 4-5 of Excel) */}
+          {/* ========================================================================= */}
+          <div className="p-4 sm:p-5 border-b border-slate-300 dark:border-dark-700 bg-slate-50/80 dark:bg-dark-850">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Row 1 / Col 1: Sana */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Сана / Дата / Date
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Row 1 / Col 2: Smena */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Смена / Shift
+                </label>
+                <div className="grid grid-cols-2 gap-2 mt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setShift('1')}
+                    className={`py-1.5 rounded-lg text-xs font-extrabold transition-all border ${
+                      shift === '1'
+                        ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                        : 'bg-slate-50 dark:bg-dark-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    1-Смена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShift('2')}
+                    className={`py-1.5 rounded-lg text-xs font-extrabold transition-all border ${
+                      shift === '2'
+                        ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                        : 'bg-slate-50 dark:bg-dark-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    2-Смена
+                  </button>
                 </div>
-              ))}
+              </div>
+
+              {/* Row 1 / Col 3: Nazoratchi */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Назоратчи / Контролер / Inspector
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ф.И.Ш киритинг"
+                  value={inspector}
+                  onChange={(e) => {
+                    setInspector(e.target.value)
+                    handleChange('inspectorName', e.target.value)
+                  }}
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Row 1 / Col 4: Liniya */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Линия / Линия / Line
+                </label>
+                <input
+                  type="text"
+                  placeholder="Масалан: 1-Линия"
+                  value={line}
+                  onChange={(e) => setLine(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Row 2 / Col 1: Smena boshlig'i */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Смена бошлиғи / Мастер / Supervisor
+                </label>
+                <input
+                  type="text"
+                  placeholder="Мастер Ф.И.Ш"
+                  value={supervisor}
+                  onChange={(e) => {
+                    setSupervisor(e.target.value)
+                    handleChange('supervisorName', e.target.value)
+                  }}
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Row 2 / Col 2: Partiya raqami */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Партия № / Партия № / Batch №
+                </label>
+                <input
+                  type="text"
+                  placeholder="Партия рақами"
+                  value={batchNo}
+                  onChange={(e) => setBatchNo(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Row 2 / Col 3: Brak */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Брак / Брак / Rejected: кг (kg)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="0"
+                    value={rejected}
+                    onChange={(e) => setRejected(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 pl-2.5 pr-8 py-1.5 rounded-lg text-xs font-black font-mono text-red-600 outline-none focus:border-blue-500"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                    кг
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 2 / Col 4: Umumiy chiqish */}
+              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                  Умумий чиқиш / Выход / Total Output: коробка / box
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="0"
+                    value={totalOutput}
+                    onChange={(e) => setTotalOutput(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 pl-2.5 pr-10 py-1.5 rounded-lg text-xs font-black font-mono text-emerald-600 outline-none focus:border-blue-500"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                    кор
+                  </span>
+                </div>
+              </div>
             </div>
-            
-            <div className="mt-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30">
-              <p className="text-xs font-bold text-amber-700 dark:text-amber-500 flex gap-2">
-                <AlertCircle size={14} className="shrink-0" />
-                <span>Barcha mahsulot qadoqlari belgilangan og'irlik va sifat spetsifikatsiyasiga mos kelishi shart. (OPRP)</span>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* SECTION 1: PACKAGING SPECIFICATIONS (Excel rows 7-14) */}
+          {/* ========================================================================= */}
+          <div className="border-b border-slate-300 dark:border-dark-700">
+            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex items-center justify-between">
+              <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
+                1. МАҲСУЛОТ ВА ҚАДОҚЛАШ СТАНДАРТЛАРИ / СТАНДАРТЫ УПАКОВКИ И КОРОБОК / PACKAGING SPECIFICATIONS
+              </h3>
+              <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded">6 та маҳсулот</span>
+            </div>
+
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[950px] text-xs">
+                <thead className="bg-[#2F5597] text-white text-[10px] font-bold uppercase sticky top-0">
+                  <tr>
+                    <th className="p-2 border-r border-[#1F4E78] w-10 text-center">№</th>
+                    <th className="p-2 border-r border-[#1F4E78] w-48">
+                      Маҳсулот номи
+                      <div className="font-normal text-[9px] text-blue-200">Наименование / Product</div>
+                    </th>
+                    <th className="p-2 border-r border-[#1F4E78] w-40 text-center">
+                      1 пакетдаги вазни / сони
+                      <div className="font-normal text-[9px] text-blue-200">Weight / Qty per pack</div>
+                    </th>
+                    <th className="p-2 border-r border-[#1F4E78] w-36 text-center">
+                      1 коробкадаги пакет сони
+                      <div className="font-normal text-[9px] text-blue-200">Packs per box</div>
+                    </th>
+                    <th className="p-2 border-r border-[#1F4E78] w-44 text-center">
+                      1 коробка умумий вазни
+                      <div className="font-normal text-[9px] text-blue-200">Total box weight / qty</div>
+                    </th>
+                    <th className="p-2 border-r border-[#1F4E78]">
+                      Вазн ва меъёр талаби
+                      <div className="font-normal text-[9px] text-blue-200">Weight norm & tolerance</div>
+                    </th>
+                    <th className="p-2 border-r border-[#1F4E78] w-36 text-center">
+                      Вақти ва Текширув
+                      <div className="font-normal text-[9px] text-blue-200">Time & Inspection</div>
+                    </th>
+                    <th className="p-2 text-center w-28 bg-[#1B365D]">
+                      Мақоми / Status
+                      <div className="font-normal text-[9px] text-blue-200">ОПРП / OPRP</div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
+                  {/* 1. Limon */}
+                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">1</td>
+                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>Лимон</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Лимон / Lemon</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">1 пакетда 2 dona</div>
+                      <div className="text-[10px] text-slate-500">2 pcs per pack</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">12 та пакет</div>
+                      <div className="text-[10px] text-slate-500">12 packs</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">12 пакет (24 dona / box)</div>
+                      <div className="text-[10px] text-slate-500">24 pcs / box</div>
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
+                      2 dona / пакет (100% соғлом)
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
+                      Ҳар партияда
+                    </td>
+                    <td className="p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('packLemon', !form.packLemon)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
+                          form.packLemon
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
+                        }`}
+                      >
+                        {form.packLemon ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* 2. Bodring */}
+                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">2</td>
+                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>Бодринг</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Огурец / Cucumber</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">1 kg / 1 пакет</div>
+                      <div className="text-[10px] text-slate-500">1 kg / 1 pack</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 та пакет</div>
+                      <div className="text-[10px] text-slate-500">6 packs</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 kg / 1 коробка</div>
+                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
+                      990 g - 1010 g (1 kg ± 10g)
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
+                      Ҳар 5-пакет
+                    </td>
+                    <td className="p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('packCucumber', !form.packCucumber)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
+                          form.packCucumber
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
+                        }`}
+                      >
+                        {form.packCucumber ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* 3. Tomat */}
+                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">3</td>
+                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>Томат</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Томаты / Tomato</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">1 kg / 1 пакет</div>
+                      <div className="text-[10px] text-slate-500">1 kg / 1 pack</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 та пакет</div>
+                      <div className="text-[10px] text-slate-500">6 packs</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 kg / 1 коробка</div>
+                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
+                      990 g - 1010 g (1 kg ± 10g)
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
+                      Ҳар 5-пакет
+                    </td>
+                    <td className="p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('packTomato', !form.packTomato)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
+                          form.packTomato
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
+                        }`}
+                      >
+                        {form.packTomato ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* 4. Aysberg */}
+                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">4</td>
+                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>Айсберг</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Айсберг / Iceberg</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">1 kg / 1 пакет</div>
+                      <div className="text-[10px] text-slate-500">1 kg / 1 pack</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 та пакет</div>
+                      <div className="text-[10px] text-slate-500">6 packs</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 kg / 1 коробка</div>
+                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
+                      990 g - 1010 g (1 kg ± 10g)
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
+                      Ҳар 5-пакет
+                    </td>
+                    <td className="p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('packIceberg', !form.packIceberg)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
+                          form.packIceberg
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
+                        }`}
+                      >
+                        {form.packIceberg ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* 5. Piyoz */}
+                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">5</td>
+                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>Пиёз</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Лук / Onion</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">0.5 kg / 1 пакет</div>
+                      <div className="text-[10px] text-slate-500">0.5 kg / 1 pack</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">12 та пакет</div>
+                      <div className="text-[10px] text-slate-500">12 packs</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 kg / 1 коробка</div>
+                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
+                      492.5 g - 507.5 g (0.5 kg ± 7.5g)
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
+                      Ҳар 5-пакет
+                    </td>
+                    <td className="p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('packOnion', !form.packOnion)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
+                          form.packOnion
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
+                        }`}
+                      >
+                        {form.packOnion ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* 6. Koul Slou */}
+                  <tr className="hover:bg-blue-50/40 dark:hover:bg-dark-800/40 transition-colors">
+                    <td className="p-2 text-center font-bold border-r border-slate-200 dark:border-dark-750">6</td>
+                    <td className="p-2 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>Коул Слоу</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Коул Слоу / Cole Slaw</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">0.5 kg / 1 пакет</div>
+                      <div className="text-[10px] text-slate-500">0.5 kg / 1 pack</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">12 та пакет</div>
+                      <div className="text-[10px] text-slate-500">12 packs</div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold">6 kg / 1 коробка</div>
+                      <div className="text-[10px] text-slate-500">6 kg / 1 box</div>
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750 font-semibold text-slate-700 dark:text-slate-300">
+                      492.5 g - 507.5 g (0.5 kg ± 7.5g)
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-400">
+                      Ҳар 5-пакет
+                    </td>
+                    <td className="p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('packColeslaw', !form.packColeslaw)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all border ${
+                          form.packColeslaw
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300'
+                        }`}
+                      >
+                        {form.packColeslaw ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* SECTION 2: PROCESS & SAFETY CHECKLIST (Excel rows 16-31, Image 3) */}
+          {/* ========================================================================= */}
+          <div className="border-b border-slate-300 dark:border-dark-700">
+            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex items-center justify-between">
+              <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
+                2. ТЕХНОЛОГИК ЖАРАЁН ВА ХАВФСИЗЛИК ЧЕК-ЛИСТИ / ТЕХНОЛОГИЧЕСКИЙ ПРОЦЕСС И БЕЗОПАСНОСТЬ / PROCESS &amp; SAFETY CHECKLIST
+              </h3>
+              <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded">14 та назорат босқичи</span>
+            </div>
+
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[1250px] text-xs">
+                <thead className="bg-[#2F5597] text-white text-[10px] font-bold uppercase sticky top-0">
+                  <tr>
+                    <th className="p-2.5 border-r border-[#1F4E78] w-32">
+                      № / Босқич
+                      <div className="font-normal text-[9px] text-blue-200">Этап / Process</div>
+                    </th>
+                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[220px]">
+                      Назорат нуқтаси ва Меъёр
+                      <div className="font-normal text-[9px] text-blue-200">Точка контроля и Норма / Norm</div>
+                    </th>
+                    <th className="p-2.5 border-r border-[#1F4E78] w-28 text-center">
+                      Вақти
+                      <div className="font-normal text-[9px] text-blue-200">Время / Time</div>
+                    </th>
+                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[230px]">
+                      Ҳақиқий кўрсаткич (Қийматлар)
+                      <div className="font-normal text-[9px] text-blue-200">Факт. показатель / Actual Value</div>
+                    </th>
+                    <th className="p-2.5 border-r border-[#1F4E78] w-28 text-center">
+                      Мослиги
+                      <div className="font-normal text-[9px] text-blue-200">Соотв. / Status</div>
+                    </th>
+                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[140px]">
+                      Аниқланган нуқсон
+                      <div className="font-normal text-[9px] text-blue-200">Описание отклонения / Discrepancy</div>
+                    </th>
+                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[140px]">
+                      Кўрилган чора ва Имзо
+                      <div className="font-normal text-[9px] text-blue-200">Принятые меры / Corrective Action</div>
+                    </th>
+                    <th className="p-2.5 text-center w-28 bg-[#1B365D]">
+                      Мақоми
+                      <div className="font-normal text-[9px] text-blue-200">CCP / OPRP</div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
+                  {/* Row 1: Xomashyo */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>1. Хомашё</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Сырье / Raw Material</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Сақлаш камераси / Storage</div>
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">
+                        Меъёр: +1°C … +5°C
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[11px]">
+                      08:00<br />14:00
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-slate-400">08:</span>
+                          <input
+                            type="text"
+                            placeholder="+2"
+                            value={form.rawMaterialTemp1}
+                            onChange={(e) => handleChange('rawMaterialTemp1', e.target.value)}
+                            className="w-12 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                          />
+                          <span className="text-[10px] text-slate-500">°C</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-slate-400">14:</span>
+                          <input
+                            type="text"
+                            placeholder="+3"
+                            value={form.rawMaterialTemp2}
+                            onChange={(e) => handleChange('rawMaterialTemp2', e.target.value)}
+                            className="w-12 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                          />
+                          <span className="text-[10px] text-slate-500">°C</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('rawMaterialOk', !form.rawMaterialOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.rawMaterialOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.rawMaterialOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.rawMaterialDisc}
+                        onChange={(e) => handleChange('rawMaterialDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.rawMaterialAct}
+                        onChange={(e) => handleChange('rawMaterialAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 2: Tozalash */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>2. Тозалаш</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Очистка / Cleaning</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Ифлос зона / Dirty area</div>
+                      <div className="text-[11px] text-slate-500">100% чириш ва ёт нарсаларсиз</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Узлуксиз
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Соғлом / Чисто:</span>
+                        <input
+                          type="number"
+                          value={form.cleaningPercent}
+                          onChange={(e) => handleChange('cleaningPercent', e.target.value)}
+                          className="w-16 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-2 py-0.5 text-center font-bold text-xs"
+                        />
+                        <span className="text-xs font-bold">%</span>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('cleaningOk', !form.cleaningOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.cleaningOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.cleaningOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.cleaningDisc}
+                        onChange={(e) => handleChange('cleaningDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.cleaningAct}
+                        onChange={(e) => handleChange('cleaningAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 3: To'g'rash kalibri */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>3. Тўғраш калибри</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Калибр нарезки / Slicer</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Сабзавот тўғрагич / Slicer</div>
+                      <div className="text-[11px] text-slate-500">Спецификация бўйича</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Ҳар 1 соат
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-600 dark:text-slate-300">Калибр / Размер:</span>
+                        <input
+                          type="text"
+                          value={form.cuttingSize}
+                          onChange={(e) => handleChange('cuttingSize', e.target.value)}
+                          className="w-16 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-2 py-0.5 text-center font-bold text-xs"
+                        />
+                        <span className="text-[11px] text-slate-500">мм</span>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('cuttingOk', !form.cuttingOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.cuttingOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.cuttingOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.cuttingDisc}
+                        onChange={(e) => handleChange('cuttingDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.cuttingAct}
+                        onChange={(e) => handleChange('cuttingAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 4: Dezinfeksiya t° (CCP-2) */}
+                  <tr className="bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 border-l-4 border-l-red-500">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-red-700 dark:text-red-400 font-black">4. Дезраствор t°</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Температура дез. / Temp</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold text-slate-900 dark:text-white">Дезинфекция ваннаси / Bath</div>
+                      <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
+                        Норма: +1°C … +3°C (макс +3°C)
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
+                      08:00 10:00<br />12:00 14:00<br />16:00 18:00
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { key: 'dezTemp1', time: '08:00' },
+                          { key: 'dezTemp2', time: '10:00' },
+                          { key: 'dezTemp3', time: '12:00' },
+                          { key: 'dezTemp4', time: '14:00' },
+                          { key: 'dezTemp5', time: '16:00' },
+                          { key: 'dezTemp6', time: '18:00' },
+                        ].map((t, idx) => (
+                          <div key={idx} className="flex items-center gap-1 bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/40 rounded px-1.5 py-0.5">
+                            <span className="text-[9px] text-slate-400 font-mono">{t.time}</span>
+                            <input
+                              type="text"
+                              value={(form as any)[t.key]}
+                              onChange={(e) => handleChange(t.key as any, e.target.value)}
+                              placeholder="+2"
+                              className="w-8 text-center font-bold text-xs bg-transparent outline-none text-red-700 dark:text-red-400"
+                            />
+                            <span className="text-[9px] text-slate-400">°C</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('dezTempOk', !form.dezTempOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.dezTempOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.dezTempOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.dezTempDisc}
+                        onChange={(e) => handleChange('dezTempDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.dezTempAct}
+                        onChange={(e) => handleChange('dezTempAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center bg-[#FCE4D6] dark:bg-red-950/40">
+                      <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
+                        ККТ-2 / CCP-2<br />(Температура)
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 5: Faol xlor (CCP-1) */}
+                  <tr className="bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 border-l-4 border-l-red-500">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-red-700 dark:text-red-400 font-black">5. Фаол хлор</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Активный хлор / Chlorine</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold text-slate-900 dark:text-white">Дезинфекция ваннаси / Bath</div>
+                      <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
+                        Норма: Қатъий 300 мг/л (ppm)
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
+                      08:00 10:00<br />12:00 14:00<br />16:00 18:00
+                    </td>
+                    <td className="p-2 border-r border-slate-200 dark:border-dark-750">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { key: 'dezChlorine1', time: '08:00' },
+                          { key: 'dezChlorine2', time: '10:00' },
+                          { key: 'dezChlorine3', time: '12:00' },
+                          { key: 'dezChlorine4', time: '14:00' },
+                          { key: 'dezChlorine5', time: '16:00' },
+                          { key: 'dezChlorine6', time: '18:00' },
+                        ].map((t, idx) => (
+                          <div key={idx} className="flex items-center gap-1 bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/40 rounded px-1.5 py-0.5">
+                            <span className="text-[9px] text-slate-400 font-mono">{t.time}</span>
+                            <input
+                              type="text"
+                              value={(form as any)[t.key]}
+                              onChange={(e) => handleChange(t.key as any, e.target.value)}
+                              placeholder="300"
+                              className="w-10 text-center font-bold text-xs bg-transparent outline-none text-red-700 dark:text-red-400"
+                            />
+                            <span className="text-[8px] text-slate-400">mg</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('dezChlorineOk', !form.dezChlorineOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.dezChlorineOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.dezChlorineOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.dezChlorineDisc}
+                        onChange={(e) => handleChange('dezChlorineDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.dezChlorineAct}
+                        onChange={(e) => handleChange('dezChlorineAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center bg-[#FCE4D6] dark:bg-red-950/40">
+                      <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
+                        ККТ-1 / CCP-1<br />(Хлор / Chlorine)
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 6: Konservant */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>6. Консервант</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Консервант / Preservative</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Салат майдончаси / Salad area</div>
+                      <div className="text-[11px] text-slate-500">≤1г/кг (Карам 85%, Сабзи 15%)</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Ҳар эритмада
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-600 dark:text-slate-300">Коул-Слоу Доза:</span>
+                        <input
+                          type="text"
+                          value={form.preservative}
+                          onChange={(e) => handleChange('preservative', e.target.value)}
+                          placeholder="1"
+                          className="w-14 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-2 py-0.5 text-center font-bold text-xs"
+                        />
+                        <span className="text-[11px] text-slate-500">г/кг</span>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('preservativeOk', !form.preservativeOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.preservativeOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.preservativeOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.preservativeDisc}
+                        onChange={(e) => handleChange('preservativeDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.preservativeAct}
+                        onChange={(e) => handleChange('preservativeAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 7: Qoldiq xlor */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>7. Қолдиқ хлор</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Остаточный хлор / Residual</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Чиллер чиқиши / Chiller outlet</div>
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">Қолдиқ хлор = 0 мг/л</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] font-mono text-slate-500">
+                      09:00 13:00 17:00
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200">
+                          <input
+                            type="radio"
+                            name="residualChlorine"
+                            checked={form.residualChlorine === true}
+                            onChange={() => handleChange('residualChlorine', true)}
+                            className="accent-blue-600"
+                          />
+                          <span>0 mg/l (OK)</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-red-600">
+                          <input
+                            type="radio"
+                            name="residualChlorine"
+                            checked={form.residualChlorine === false}
+                            onChange={() => handleChange('residualChlorine', false)}
+                            className="accent-red-600"
+                          />
+                          <span>Хлор бор / Есть</span>
+                        </label>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('residualChlorineOk', !form.residualChlorineOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.residualChlorineOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.residualChlorineOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.residualChlorineDisc}
+                        onChange={(e) => handleChange('residualChlorineDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.residualChlorineAct}
+                        onChange={(e) => handleChange('residualChlorineAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 8: Tsentrifuga */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>8. Центрифуга</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Сушка / Centrifuge</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Центрифуга / Dryer</div>
+                      <div className="text-[11px] text-slate-500">30сек, 950об/мин, салфетка қуруқ</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Ҳар 1 соат
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200">
+                          <input
+                            type="radio"
+                            name="dryingDry"
+                            checked={form.dryingDry === true}
+                            onChange={() => handleChange('dryingDry', true)}
+                            className="accent-blue-600"
+                          />
+                          <span>Қуруқ / Dry (OK)</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-amber-600">
+                          <input
+                            type="radio"
+                            name="dryingDry"
+                            checked={form.dryingDry === false}
+                            onChange={() => handleChange('dryingDry', false)}
+                            className="accent-amber-600"
+                          />
+                          <span>Нам / Wet</span>
+                        </label>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('dryingOk', !form.dryingOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.dryingOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.dryingOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.dryingDisc}
+                        onChange={(e) => handleChange('dryingDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.dryingAct}
+                        onChange={(e) => handleChange('dryingAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 9: Vizual nazorat */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>9. Визуал назорат</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Инспекция / Inspection</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Инспекция столи / Table</div>
+                      <div className="text-[11px] text-slate-500">Юпқа ёйилиш, 100% ёт нарсасиз</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Доимий
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                        <input
+                          type="checkbox"
+                          checked={form.inspectionClean}
+                          onChange={(e) => handleChange('inspectionClean', e.target.checked)}
+                          className="accent-emerald-600 w-4 h-4"
+                        />
+                        <span>Визуал: 100% Тоза / Clean</span>
+                      </label>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('inspectionOk', !form.inspectionOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.inspectionOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.inspectionOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.inspectionDisc}
+                        onChange={(e) => handleChange('inspectionDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.inspectionAct}
+                        onChange={(e) => handleChange('inspectionAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 10: Vazn nazorati */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>10. Вазн назорати</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Контроль веса / Weight</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Қадоқлаш / Packaging</div>
+                      <div className="text-[11px] text-slate-500">Спецификация бўйича</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Ҳар 5-пакет
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2 flex-wrap text-xs">
+                        <span className="font-bold">Лимон: 2шт</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-slate-500">1kg:</span>
+                          <input
+                            type="text"
+                            value={form.weight1kg}
+                            onChange={(e) => handleChange('weight1kg', e.target.value)}
+                            placeholder="1000"
+                            className="w-14 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                          />
+                          <span className="text-[10px]">g</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-slate-500">0.5kg:</span>
+                          <input
+                            type="text"
+                            value={form.weight500g}
+                            onChange={(e) => handleChange('weight500g', e.target.value)}
+                            placeholder="500"
+                            className="w-14 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                          />
+                          <span className="text-[10px]">g</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('weightOk', !form.weightOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.weightOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.weightOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.weightDisc}
+                        onChange={(e) => handleChange('weightDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.weightAct}
+                        onChange={(e) => handleChange('weightAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 11: Germetiklik */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>11. Герметиклик</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Герметичность / Sealing</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Қадоқлаш / Package Sealing</div>
+                      <div className="text-[11px] text-slate-500">100% герметик, чок текис ва мустаҳкам</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Узлуксиз
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200">
+                          <input
+                            type="radio"
+                            name="sealingOk"
+                            checked={form.sealingOk === true}
+                            onChange={() => handleChange('sealingOk', true)}
+                            className="accent-blue-600"
+                          />
+                          <span>Герметик / OK</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-red-600">
+                          <input
+                            type="radio"
+                            name="sealingOk"
+                            checked={form.sealingOk === false}
+                            onChange={() => handleChange('sealingOk', false)}
+                            className="accent-red-600"
+                          />
+                          <span>Ҳаво бор / Утечка</span>
+                        </label>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('sealingStatusOk', !form.sealingStatusOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.sealingStatusOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.sealingStatusOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.sealingDisc}
+                        onChange={(e) => handleChange('sealingDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.sealingAct}
+                        onChange={(e) => handleChange('sealingAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 12: Metallodetektor (CCP-3) */}
+                  <tr className="bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 border-l-4 border-l-red-500">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div className="text-red-700 dark:text-red-400 font-black">12. Металлодетектор</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Metal Detector</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-bold text-slate-900 dark:text-white">Рамка / Детектор металлов</div>
+                      <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
+                        Fe ≥2.0mm, Non-Fe ≥3.0mm, SS ≥3.0mm
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
+                      08:00 10:00<br />12:00 14:00<br />16:00 18:00
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-3 flex-wrap text-xs font-bold">
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.metalFe}
+                            onChange={(e) => handleChange('metalFe', e.target.checked)}
+                            className="accent-blue-600"
+                          />
+                          <span>Fe (Темир)</span>
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.metalNonFe}
+                            onChange={(e) => handleChange('metalNonFe', e.target.checked)}
+                            className="accent-blue-600"
+                          />
+                          <span>Non-Fe</span>
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.metalSs}
+                            onChange={(e) => handleChange('metalSs', e.target.checked)}
+                            className="accent-blue-600"
+                          />
+                          <span>SS</span>
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded ml-auto">
+                          <input
+                            type="checkbox"
+                            checked={form.metalSignal}
+                            onChange={(e) => handleChange('metalSignal', e.target.checked)}
+                            className="accent-amber-600"
+                          />
+                          <span>Сигнал Бор</span>
+                        </label>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('metalOk', !form.metalOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.metalOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.metalOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.metalDisc}
+                        onChange={(e) => handleChange('metalDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.metalAct}
+                        onChange={(e) => handleChange('metalAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center bg-[#FCE4D6] dark:bg-red-950/40">
+                      <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
+                        ККТ-3 / CCP-3<br />(Металл / Metal)
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 13: Ombordagi rejim */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>13. Омбор режими</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Склад ГП / Warehouse</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">ТМО / Склад ГП</div>
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">
+                        +1°C … +5°C, вакуумли ва тоза
+                      </div>
+                    </td>
+                    <td className="p-2 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] text-slate-500 leading-tight">
+                      Эрталаб / Кечқурун
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-slate-500">t°:</span>
+                          <input
+                            type="text"
+                            value={form.fgStoreTemp}
+                            onChange={(e) => handleChange('fgStoreTemp', e.target.value)}
+                            placeholder="+3"
+                            className="w-12 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded px-1.5 py-0.5 text-center font-bold text-xs"
+                          />
+                          <span className="text-[10px]">°C</span>
+                        </div>
+                        <label className="flex items-center gap-1 cursor-pointer font-bold text-emerald-700 dark:text-emerald-400 ml-2">
+                          <input
+                            type="checkbox"
+                            checked={form.fgStoreVacuum}
+                            onChange={(e) => handleChange('fgStoreVacuum', e.target.checked)}
+                            className="accent-emerald-600"
+                          />
+                          <span>Вакуум: Зич / OK</span>
+                        </label>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('fgStoreOk', !form.fgStoreOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.fgStoreOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.fgStoreOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.fgStoreDisc}
+                        onChange={(e) => handleChange('fgStoreDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.fgStoreAct}
+                        onChange={(e) => handleChange('fgStoreAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+
+                  {/* Row 14: Gigiyena */}
+                  <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
+                    <td className="p-2.5 font-bold border-r border-slate-200 dark:border-dark-750">
+                      <div>14. Гигиена</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Sanitation &amp; Hygiene</div>
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="font-semibold text-slate-900 dark:text-white">Ускуна ва ходимлар</div>
+                      <div className="text-[11px] text-slate-500">100% тозалик, спецодежда, ниқоб, қўлқоп</div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
+                      Смена бошида
+                    </td>
+                    <td className="p-2.5 border-r border-slate-200 dark:border-dark-750">
+                      <div className="flex items-center gap-3 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.hygieneClean}
+                            onChange={(e) => handleChange('hygieneClean', e.target.checked)}
+                            className="accent-emerald-600"
+                          />
+                          <span>Тозалик OK</span>
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.hygieneGear}
+                            onChange={(e) => handleChange('hygieneGear', e.target.checked)}
+                            className="accent-emerald-600"
+                          />
+                          <span>Гигиена OK</span>
+                        </label>
+                      </div>
+                    </td>
+                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-dark-750">
+                      <button
+                        type="button"
+                        onClick={() => handleChange('hygieneOk', !form.hygieneOk)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                          form.hygieneOk
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {form.hygieneOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                      </button>
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.hygieneDisc}
+                        onChange={(e) => handleChange('hygieneDisc', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                      <input
+                        type="text"
+                        placeholder="—"
+                        value={form.hygieneAct}
+                        onChange={(e) => handleChange('hygieneAct', e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 text-xs outline-none"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                        ОПРП / OPRP
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* SECTION 3: SHIFT SIGN-OFF (Excel rows 33-35, Image 4) */}
+          {/* ========================================================================= */}
+          <div className="bg-[#1F4E78] text-white px-4 py-2.5">
+            <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
+              СМЕНА ЯКУНИ БЎЙИЧА ТАСДИҚЛАШ / ПОДТВЕРЖДЕНИЕ СМЕНЫ / SHIFT SIGN-OFF
+            </h3>
+          </div>
+
+          <div className="p-4 sm:p-5 bg-slate-50/60 dark:bg-dark-850">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Block 1: QC Inspector */}
+              <div className="bg-white dark:bg-dark-900 border-2 border-blue-200 dark:border-blue-900/50 rounded-2xl p-4 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-blue-100 dark:border-blue-900/30">
+                  <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    1
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
+                      СНБ (ОТК) Назоратчиси
+                    </h4>
+                    <span className="text-[10px] text-slate-400 font-medium">Контролер ОКК / QC Inspector</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Ф.И.Ш / ФИО
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Назоратчи Ф.И.Ш"
+                      value={form.inspectorName || inspector}
+                      onChange={(e) => {
+                        handleChange('inspectorName', e.target.value)
+                        setInspector(e.target.value)
+                      }}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Имзо / Подпись
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Электрон имзо / Тасдиқ"
+                      value={form.inspectorSign}
+                      onChange={(e) => handleChange('inspectorSign', e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Вақт / Время
+                    </label>
+                    <input
+                      type="time"
+                      value={form.inspectorTime}
+                      onChange={(e) => handleChange('inspectorTime', e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Block 2: Shift Supervisor */}
+              <div className="bg-white dark:bg-dark-900 border-2 border-amber-200 dark:border-amber-900/50 rounded-2xl p-4 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-amber-100 dark:border-amber-900/30">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center font-bold text-xs">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
+                      Смена бошлиғи
+                    </h4>
+                    <span className="text-[10px] text-slate-400 font-medium">Мастер смены / Shift Supervisor</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Ф.И.Ш / ФИО
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Мастер Ф.И.Ш"
+                      value={form.supervisorName || supervisor}
+                      onChange={(e) => {
+                        handleChange('supervisorName', e.target.value)
+                        setSupervisor(e.target.value)
+                      }}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Имзо / Подпись
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Электрон имзо / Тасдиқ"
+                      value={form.supervisorSign}
+                      onChange={(e) => handleChange('supervisorSign', e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Вақт / Время
+                    </label>
+                    <input
+                      type="time"
+                      value={form.supervisorTime}
+                      onChange={(e) => handleChange('supervisorTime', e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Block 3: QA Engineer */}
+              <div className="bg-white dark:bg-dark-900 border-2 border-emerald-200 dark:border-emerald-900/50 rounded-2xl p-4 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-emerald-100 dark:border-emerald-900/30">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                    3
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
+                      Сифат мутахассиси
+                    </h4>
+                    <span className="text-[10px] text-slate-400 font-medium">Инженер по качеству / QA Engineer</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Ф.И.Ш / ФИО
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Сифат мутахассиси Ф.И.Ш"
+                      value={form.qaEngineerName}
+                      onChange={(e) => handleChange('qaEngineerName', e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Имзо / Подпись
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Электрон имзо / Тасдиқ"
+                      value={form.qaEngineerSign}
+                      onChange={(e) => handleChange('qaEngineerSign', e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
+                      Вақт / Время
+                    </label>
+                    <input
+                      type="time"
+                      value={form.qaEngineerTime}
+                      onChange={(e) => handleChange('qaEngineerTime', e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* BOTTOM ACTIONS BAR */}
+          {/* ========================================================================= */}
+          <div className="p-4 bg-white dark:bg-dark-900 border-t border-slate-200 dark:border-dark-700 flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-dark-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+            >
+              <RotateCcw size={14} />
+              <span>Янгидан тўлдириш</span>
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-dark-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <Printer size={14} />
+                <span>Чоп этиш</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white px-7 py-2.5 rounded-xl font-black text-xs shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                <span>Сақлаш ва Архивга топшириш</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ========================================================================= */
+        /* ARCHIVE VIEW */
+        /* ========================================================================= */
+        <div className="space-y-4">
+          <div className="flex justify-between items-center bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                Архив: Сақланган Кунлик Чек-листлар
+              </h2>
+              <p className="text-xs text-slate-500">Барча смена якуни бўйича тўлдирилган расмий журналлар</p>
+            </div>
+            <button
+              onClick={fetchHistory}
+              disabled={loadingHistory}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors"
+            >
+              {loadingHistory ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
+              <span>Янгилаш</span>
+            </button>
+          </div>
+
+          {loadingHistory ? (
+            <div className="p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
+              <Loader2 size={28} className="animate-spin text-blue-600" />
+              <span className="text-sm font-semibold">Архив юкланмоқда...</span>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+              <Database size={48} className="text-slate-300 dark:text-dark-700 mb-3" />
+              <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">Архив бўш</h3>
+              <p className="text-xs text-slate-500 max-w-sm">
+                Ҳозирча сақланган кунлик чек-листлар йўқ. &quot;Чек-лист&quot; бўлимидан янги сменани тўлдириб сақланг.
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Part 2: Process & Safety Checklist */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-dark-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                <Zap size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">2. Texnologik Jarayon va Xavfsizlik</h2>
-                <p className="text-[11px] font-bold text-slate-500 uppercase">Nazorat nuqtalari (CCP) & OPRP</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* CCPs Section */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase text-red-600 dark:text-red-400 tracking-wider flex items-center gap-2">
-                  <ShieldAlert size={14} /> Kritik Nazorat Nuqtalari (CCP)
-                </h3>
-                
-                {/* CCP-1 Active Chlorine */}
-                <div className="p-4 rounded-xl border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                        <Droplets size={16} className="text-blue-500" />
-                        Faol Xlor (CCP-1)
-                      </h4>
-                      <p className="text-[11px] font-bold text-slate-500 mt-0.5">Norma: Qat'iy 300 mg/l (ppm)</p>
-                    </div>
-                    <label className="flex items-center gap-2 text-xs font-bold bg-white dark:bg-dark-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-dark-700 cursor-pointer">
-                      <input type="checkbox" checked={form.dezChlorineOk} onChange={e => handleChange('dezChlorineOk', e.target.checked)} className="accent-emerald-500 w-3.5 h-3.5" />
-                      <span className={form.dezChlorineOk ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
-                        {form.dezChlorineOk ? 'Mos (OK)' : 'Mos Emas'}
-                      </span>
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {[
-                      { time: '08:00', field: 'dezChlorine1' },
-                      { time: '10:00', field: 'dezChlorine2' },
-                      { time: '12:00', field: 'dezChlorine3' },
-                      { time: '14:00', field: 'dezChlorine4' },
-                      { time: '16:00', field: 'dezChlorine5' },
-                      { time: '18:00', field: 'dezChlorine6' },
-                    ].map((item, idx) => (
-                      <div key={idx} className="bg-white dark:bg-dark-800 rounded-lg p-1.5 border border-slate-200 dark:border-dark-700">
-                        <div className="text-[9px] font-bold text-slate-400 text-center mb-1 flex justify-center items-center gap-1">
-                          <Clock size={8} /> {item.time}
-                        </div>
-                        <input type="number" value={(form as any)[item.field]} onChange={e => handleChange(item.field, e.target.value)} placeholder="300" className="w-full text-center text-xs font-black text-slate-900 dark:text-white bg-transparent outline-none" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* CCP-2 Temp */}
-                <div className="p-4 rounded-xl border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                        <Thermometer size={16} className="text-rose-500" />
-                        Dezinfeksiya Harorati (CCP-2)
-                      </h4>
-                      <p className="text-[11px] font-bold text-slate-500 mt-0.5">Norma: +1°C ... +3°C (maks +3°C)</p>
-                    </div>
-                    <label className="flex items-center gap-2 text-xs font-bold bg-white dark:bg-dark-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-dark-700 cursor-pointer">
-                      <input type="checkbox" checked={form.dezTempOk} onChange={e => handleChange('dezTempOk', e.target.checked)} className="accent-emerald-500 w-3.5 h-3.5" />
-                      <span className={form.dezTempOk ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
-                        {form.dezTempOk ? 'Mos (OK)' : 'Mos Emas'}
-                      </span>
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {[
-                      { time: '08:00', field: 'dezTemp1' },
-                      { time: '10:00', field: 'dezTemp2' },
-                      { time: '12:00', field: 'dezTemp3' },
-                      { time: '14:00', field: 'dezTemp4' },
-                      { time: '16:00', field: 'dezTemp5' },
-                      { time: '18:00', field: 'dezTemp6' },
-                    ].map((item, idx) => (
-                      <div key={idx} className="bg-white dark:bg-dark-800 rounded-lg p-1.5 border border-slate-200 dark:border-dark-700">
-                        <div className="text-[9px] font-bold text-slate-400 text-center mb-1 flex justify-center items-center gap-1">
-                          <Clock size={8} /> {item.time}
-                        </div>
-                        <input type="number" value={(form as any)[item.field]} onChange={e => handleChange(item.field, e.target.value)} placeholder="+2" className="w-full text-center text-xs font-black text-slate-900 dark:text-white bg-transparent outline-none" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* CCP-3 Metal Detector */}
-                <div className="p-4 rounded-xl border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                        <ShieldAlert size={16} className="text-red-500" />
-                        Metall Detektor (CCP-3)
-                      </h4>
-                      <p className="text-[11px] font-bold text-slate-500 mt-0.5">Fe ≥2.0mm, Non-Fe ≥3.0mm, SS ≥3.0mm (Har 2 soatda)</p>
-                    </div>
-                    <label className="flex items-center gap-2 text-xs font-bold bg-white dark:bg-dark-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-dark-700 cursor-pointer">
-                      <input type="checkbox" checked={form.metalOk} onChange={e => handleChange('metalOk', e.target.checked)} className="accent-emerald-500 w-3.5 h-3.5" />
-                      <span className={form.metalOk ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
-                        {form.metalOk ? 'Mos (OK)' : 'Mos Emas'}
-                      </span>
-                    </label>
-                  </div>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-xs font-bold">
-                      <input type="checkbox" checked={form.metalFe} onChange={e => handleChange('metalFe', e.target.checked)} className="accent-blue-500 w-3.5 h-3.5" /> Fe (Temir)
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-bold">
-                      <input type="checkbox" checked={form.metalNonFe} onChange={e => handleChange('metalNonFe', e.target.checked)} className="accent-blue-500 w-3.5 h-3.5" /> Non-Fe
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-bold">
-                      <input type="checkbox" checked={form.metalSs} onChange={e => handleChange('metalSs', e.target.checked)} className="accent-blue-500 w-3.5 h-3.5" /> SS
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-bold ml-auto bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-1 rounded">
-                      <input type="checkbox" checked={form.metalSignal} onChange={e => handleChange('metalSignal', e.target.checked)} className="accent-amber-500 w-3 h-3" /> Signal Bor
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-100 dark:border-dark-800 my-4" />
-
-              {/* OPRP Section */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">
-                  Operatsion Dasturlar (OPRP)
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Item */}
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">1. Xomashyo Ombori Harorati</h4>
-                      <p className="text-[10px] text-slate-500">Norma: +1°C ... +5°C</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.rawMaterialOk} onChange={e => handleChange('rawMaterialOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">2. Tozalash (Iflos Zona)</h4>
-                      <p className="text-[10px] text-slate-500">100% chirishsiz va toza</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.cleaningOk} onChange={e => handleChange('cleaningOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">3. To'g'rash Kalibri</h4>
-                      <p className="text-[10px] text-slate-500">Spetsifikatsiya bo'yicha (har soatda)</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.cuttingOk} onChange={e => handleChange('cuttingOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">6. Konservant (Koul-Slou)</h4>
-                      <p className="text-[10px] text-slate-500">≤1g/kg (Karam 85%, Sabzi 15%)</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.preservativeOk} onChange={e => handleChange('preservativeOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">7. Qoldiq Xlor (Chiller)</h4>
-                      <p className="text-[10px] text-slate-500">Norma: 0 mg/l</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.residualChlorineOk} onChange={e => handleChange('residualChlorineOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">8. Tsentrifuga (Quritish)</h4>
-                      <p className="text-[10px] text-slate-500">30sek, 950rpm, salfetka quruq</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.dryingOk} onChange={e => handleChange('dryingOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">9. Vizual Nazorat (Inspeksiya)</h4>
-                      <p className="text-[10px] text-slate-500">Yupqa yoyilish, 100% toza</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.inspectionOk} onChange={e => handleChange('inspectionOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">11. Germetiklik (Qadoq choki)</h4>
-                      <p className="text-[10px] text-slate-500">100% germetik, chok tekis</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.sealingOk} onChange={e => handleChange('sealingOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">13. Tayyor Mahsulot Ombori</h4>
-                      <p className="text-[10px] text-slate-500">+1°C ... +5°C, vakuum, toza</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.fgStoreOk} onChange={e => handleChange('fgStoreOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-slate-100 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">14. Gigiyena va Sanitariya</h4>
-                      <p className="text-[10px] text-slate-500">100% tozalik, niqob, qo'lqop</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={form.hygieneOk} onChange={e => handleChange('hygieneOk', e.target.checked)} className="sr-only peer" />
-                      <div className="w-9 h-5 bg-red-200 peer-focus:outline-none rounded-full peer dark:bg-red-900/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div>
-        </>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Arxiv: Smena Yakuni Jurnallari</h2>
-            <button onClick={fetchHistory} className="text-sm text-blue-600 hover:underline">Yangilash</button>
-          </div>
-          
-          {loadingHistory ? (
-            <div className="p-8 text-center text-slate-500">Yuklanmoqda...</div>
-          ) : history.length === 0 ? (
-            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-2xl p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
-              <Database size={48} className="text-slate-300 dark:text-dark-700 mb-4" />
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Hali ma'lumot yo'q</h2>
-              <p className="text-slate-500 max-w-sm">Saqlangan smena yakuni jurnallari ro'yxati bo'sh.</p>
-            </div>
           ) : (
-            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-2xl overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700">
+            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left text-xs">
+                  <thead className="text-[10px] font-bold text-slate-500 uppercase bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700">
                     <tr>
-                      <th className="px-6 py-4 font-black">Sana / Smena</th>
-                      <th className="px-6 py-4 font-black">Partiya №</th>
-                      <th className="px-6 py-4 font-black">Umumiy Chiqish</th>
-                      <th className="px-6 py-4 font-black">Brak (kg)</th>
-                      <th className="px-6 py-4 font-black">Mas'ullar</th>
-                      <th className="px-6 py-4 font-black">Holat</th>
-                      <th className="px-6 py-4 text-right font-black">Harakat</th>
+                      <th className="px-5 py-3.5">Сана / Смена</th>
+                      <th className="px-5 py-3.5">Линия / Партия №</th>
+                      <th className="px-5 py-3.5">Умумий чиқиш</th>
+                      <th className="px-5 py-3.5">Брак (кг)</th>
+                      <th className="px-5 py-3.5">Масъуллар</th>
+                      <th className="px-5 py-3.5 text-center">Ҳолат</th>
+                      <th className="px-5 py-3.5 text-right">Ҳаракат</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                  <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-medium">
                     {history.map((doc: any, i: number) => (
                       <tr key={i} className="hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                        <td className="px-5 py-3.5">
                           <div className="flex items-center gap-2">
-                            <Clock size={14} className="text-blue-500" />
-                            {doc.date}
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-dark-800">{doc.shift}-Smena</span>
+                            <Clock size={13} className="text-blue-500" />
+                            <span className="font-bold text-slate-900 dark:text-white">{doc.date}</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                              {doc.shift}-Смена
+                            </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 font-medium text-slate-600 dark:text-slate-300">{doc.batchNumber || '-'}</td>
-                        <td className="px-6 py-4 text-emerald-600 font-bold">{doc.totalOutputBox ? `${doc.totalOutputBox} kor` : '-'}</td>
-                        <td className="px-6 py-4 text-red-500 font-bold">{doc.rejectedKg ? `${doc.rejectedKg} kg` : '-'}</td>
-                        <td className="px-6 py-4 text-slate-500">
-                          <div className="text-xs">Usta: <span className="font-medium text-slate-700 dark:text-slate-300">{doc.supervisor || '-'}</span></div>
-                          <div className="text-xs">QC: <span className="font-medium text-slate-700 dark:text-slate-300">{doc.inspector || '-'}</span></div>
+                        <td className="px-5 py-3.5">
+                          <div className="font-semibold text-slate-800 dark:text-slate-200">{doc.lineName || '1-Линия'}</div>
+                          <div className="text-[11px] font-mono text-slate-400">Партия: {doc.batchNumber || '—'}</div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-bold uppercase">
-                            Tasdiqlangan
+                        <td className="px-5 py-3.5 text-emerald-600 dark:text-emerald-400 font-bold font-mono">
+                          {doc.totalOutputBox ? `${doc.totalOutputBox} кор` : '—'}
+                        </td>
+                        <td className="px-5 py-3.5 text-red-500 font-bold font-mono">
+                          {doc.rejectedKg ? `${doc.rejectedKg} кг` : '—'}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-600 dark:text-slate-400">
+                          <div className="text-[11px]">
+                            Уста: <span className="font-bold text-slate-800 dark:text-slate-200">{doc.supervisor || '—'}</span>
+                          </div>
+                          <div className="text-[11px]">
+                            ОТК: <span className="font-bold text-slate-800 dark:text-slate-200">{doc.inspector || '—'}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase">
+                            <CheckCircle2 size={11} />
+                            <span>Тасдиқланган</span>
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => window.open(`/api/daily-checklist/${doc.id}/export`, '_blank')}
-                            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 text-xs font-bold flex items-center justify-end gap-1 ml-auto"
-                          >
-                            <FileSpreadsheet size={14} /> Excel
-                          </button>
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => loadFromArchive(doc)}
+                              className="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 font-bold text-xs flex items-center gap-1 transition-colors"
+                              title="Чек-листни очиш"
+                            >
+                              <Eye size={13} />
+                              <span>Кўриш</span>
+                            </button>
+                            <button
+                              onClick={() => window.open(`/api/daily-checklist/${doc.id}/export`, '_blank')}
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 font-bold text-xs flex items-center gap-1 transition-colors"
+                              title="Excel юклаб олиш"
+                            >
+                              <FileSpreadsheet size={13} />
+                              <span>Excel</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -565,7 +2321,6 @@ export default function DailyChecklistContent() {
           )}
         </div>
       )}
-
     </div>
   )
 }
