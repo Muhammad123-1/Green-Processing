@@ -14,9 +14,14 @@ import {
   ChevronUp,
   RefreshCw,
   Archive,
+  Printer,
+  FileSpreadsheet,
+  BarChart2,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import SurveyReportModal from "@/components/surveys/SurveyReportModal";
 
 export default function SurveysPage() {
   const { formatDual } = useLanguage();
@@ -24,6 +29,8 @@ export default function SurveysPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const [form, setForm] = useState({
     title: "OOO \"GREEN PROCESSING\" mijozlar qoniqish anketasi",
@@ -384,6 +391,32 @@ export default function SurveysPage() {
                           </svg>
                         </a>
                         <button
+                          onClick={() => {
+                            setSelectedSurveyId(s.id);
+                            setIsReportOpen(true);
+                          }}
+                          title={formatDual(
+                            "Statistika va Chop etish",
+                            "Статистика и печать",
+                            "Statistics & print",
+                          )}
+                          className="p-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 transition-colors flex items-center justify-center"
+                        >
+                          <Printer size={16} />
+                        </button>
+                        <a
+                          href={`/api/surveys/${s.id}/export`}
+                          download
+                          title={formatDual(
+                            "Excel (.xlsx) formatida yuklab olish",
+                            "Скачать в формате Excel (.xlsx)",
+                            "Download in Excel (.xlsx)",
+                          )}
+                          className="p-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 text-green-700 dark:text-green-400 transition-colors flex items-center justify-center"
+                        >
+                          <FileSpreadsheet size={16} />
+                        </a>
+                        <button
                           onClick={() => copyLink(s.token, s.id)}
                           title="Linkni nusxalash"
                           className="p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 transition-colors"
@@ -433,18 +466,41 @@ export default function SurveysPage() {
                       </button>
                     </div>
                   </div>
-                  {isExpanded && <ResponseViewer surveyId={s.id} />}
+                  {isExpanded && (
+                    <ResponseViewer
+                      surveyId={s.id}
+                      onOpenReport={() => {
+                        setSelectedSurveyId(s.id);
+                        setIsReportOpen(true);
+                      }}
+                    />
+                  )}
                 </div>
               );
             })}
           </div>
         )}
+
+        <SurveyReportModal
+          surveyId={selectedSurveyId}
+          isOpen={isReportOpen}
+          onClose={() => {
+            setIsReportOpen(false);
+            setSelectedSurveyId(null);
+          }}
+        />
       </div>
     </div>
   );
 }
 
-function ResponseViewer({ surveyId }: { surveyId: number }) {
+function ResponseViewer({
+  surveyId,
+  onOpenReport,
+}: {
+  surveyId: number;
+  onOpenReport?: () => void;
+}) {
   const { formatDual } = useLanguage();
   const [data, setData] = useState<any>(null);
 
@@ -462,10 +518,36 @@ function ResponseViewer({ surveyId }: { surveyId: number }) {
   return (
     <div className="border-t border-slate-100 dark:border-dark-750 bg-slate-50/50 dark:bg-dark-800/30">
       <div className="p-5">
-        <h4 className="font-semibold text-slate-700 dark:text-slate-300 text-sm mb-4">
-          {formatDual("Javoblar (", "Ответы (", "Answers (")}
-          {responses.length} {formatDual("ta)", "шт.)", "count)")}
-        </h4>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-dark-700">
+          <h4 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+            <Users size={16} className="text-blue-500" />
+            <span>
+              {formatDual("Javoblar (", "Ответы (", "Answers (")}
+              {responses.length} {formatDual("ta)", "шт.)", "count)")}
+            </span>
+          </h4>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/api/surveys/${surveyId}/export`}
+              download
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-bold transition-all shadow-sm"
+              title="Excel formatida yuklab olish"
+            >
+              <FileSpreadsheet size={14} className="text-green-600" />
+              <span>{formatDual("Excel yuklash", "Скачать Excel", "Excel export")}</span>
+            </a>
+            {onOpenReport && (
+              <button
+                onClick={onOpenReport}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all"
+                title="Rasmiy statistika hisoboti va chop etish"
+              >
+                <Printer size={14} />
+                <span>{formatDual("Statistika va Chop etish", "Печать и статистика", "Print & statistics")}</span>
+              </button>
+            )}
+          </div>
+        </div>
         {responses.length === 0 ? (
           <p className="text-xs text-slate-400 italic">
             {formatDual(

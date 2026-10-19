@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Link2, Users, Calendar, ChevronDown, ChevronUp, RefreshCw, ArrowLeft, Archive, BarChart2, UserCheck } from 'lucide-react'
+import { Link2, Users, Calendar, ChevronDown, ChevronUp, RefreshCw, ArrowLeft, Archive, BarChart2, UserCheck, Printer, FileSpreadsheet, Download } from 'lucide-react'
 import Link from 'next/link'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts'
+import SurveyReportModal from '@/components/surveys/SurveyReportModal'
 
 interface Survey {
   id: number
@@ -20,6 +21,8 @@ export default function SurveysArchivePage() {
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null)
+  const [isReportOpen, setIsReportOpen] = useState(false)
 
   useEffect(() => { fetchSurveys() }, [])
 
@@ -90,24 +93,69 @@ export default function SurveysArchivePage() {
                           <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-dark-800 rounded-lg"><BarChart2 size={14} /> Statistika</span>
                         </div>
                       </div>
-                      <div className="p-2 bg-slate-100 dark:bg-dark-800 rounded-full text-slate-500">
-                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedSurveyId(s.id)
+                            setIsReportOpen(true)
+                          }}
+                          title="Statistika va Chop etish (Print)"
+                          className="p-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 transition-colors flex items-center justify-center border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800"
+                        >
+                          <Printer size={16} />
+                        </button>
+                        <a
+                          href={`/api/surveys/${s.id}/export`}
+                          download
+                          onClick={(e) => e.stopPropagation()}
+                          title="Excel (.xlsx) formatida yuklab olish"
+                          className="p-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 text-green-700 dark:text-green-400 transition-colors flex items-center justify-center border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800"
+                        >
+                          <FileSpreadsheet size={16} />
+                        </a>
+                        <div className="p-2 bg-slate-100 dark:bg-dark-800 rounded-full text-slate-500">
+                          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {isExpanded && <ResponseViewer surveyId={s.id} />}
+                  {isExpanded && (
+                    <ResponseViewer
+                      surveyId={s.id}
+                      onOpenReport={(id) => {
+                        setSelectedSurveyId(id)
+                        setIsReportOpen(true)
+                      }}
+                    />
+                  )}
                 </div>
               )
             })}
           </div>
         )}
+
+        <SurveyReportModal
+          surveyId={selectedSurveyId}
+          isOpen={isReportOpen}
+          onClose={() => {
+            setIsReportOpen(false)
+            setSelectedSurveyId(null)
+          }}
+        />
       </div>
     </div>
   )
 }
 
-function ResponseViewer({ surveyId }: { surveyId: number }) {
+function ResponseViewer({
+  surveyId,
+  onOpenReport,
+}: {
+  surveyId: number
+  onOpenReport?: (id: number) => void
+}) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showUsers, setShowUsers] = useState(false)
@@ -153,18 +201,39 @@ function ResponseViewer({ surveyId }: { surveyId: number }) {
           <div className="text-center py-8 text-slate-400 text-sm">Hali javob yo'q</div>
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200 dark:border-dark-700">
               <h4 className="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2">
                 <BarChart2 size={18} className="text-blue-500" /> 
                 Umumiy statistika
               </h4>
-              <button 
-                onClick={() => setShowUsers(!showUsers)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 hover:bg-slate-50 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors"
-              >
-                <UserCheck size={16} />
-                {showUsers ? "Faqat statistika" : "Kim qanday javob berganini ko'rish"}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={`/api/surveys/${surveyId}/export`}
+                  download
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-700 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors shadow-sm"
+                  title="Excel formatida yuklab olish"
+                >
+                  <FileSpreadsheet size={16} className="text-green-600" />
+                  <span>Excel ga yuklash</span>
+                </a>
+                {onOpenReport && (
+                  <button
+                    onClick={() => onOpenReport(surveyId)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-emerald-600/20 transition-all"
+                    title="Rasmiy hisobotni ko'rish va printerdan chop etish"
+                  >
+                    <Printer size={16} />
+                    <span>Chop etish (Print)</span>
+                  </button>
+                )}
+                <button 
+                  onClick={() => setShowUsers(!showUsers)}
+                  className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-700 rounded-xl text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors"
+                >
+                  <UserCheck size={16} />
+                  {showUsers ? "Faqat statistika" : "Mijozlar javoblari"}
+                </button>
+              </div>
             </div>
 
             {/* STATISTICS VIEW */}
