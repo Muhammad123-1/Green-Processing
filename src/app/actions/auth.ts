@@ -22,17 +22,38 @@ export async function login(prevState: any, formData: FormData) {
     where: { username }
   })
 
-  // Auto-provision inspector if it doesn't exist yet
-  if (!user && username.toLowerCase() === 'inspector' && password === '123') {
-    user = await prisma.user.create({
-      data: {
-        name: 'Sex Nazoratchisi',
-        username: 'inspector',
-        password: '123',
-        role: 'INSPECTOR',
-        isActive: true,
-      }
-    })
+  // Auto-provision default role users if they don't exist yet
+  const defaultRolesMap: Record<string, { name: string; role: string }> = {
+    director: { name: 'Direktor', role: 'DIRECTOR' },
+    admin: { name: 'Tizim Administratori', role: 'ADMIN' },
+    quality: { name: 'Bosh Sifat Nazorati', role: 'QUALITY_CONTROL' },
+    inspector: { name: 'Sex Nazoratchisi', role: 'INSPECTOR' },
+    production: { name: 'Ishlab Chiqarish', role: 'PRODUCTION' },
+    tech: { name: 'Texnolog', role: 'TECHNOLOGY' },
+    warehouse: { name: 'Ombor (Sklad)', role: 'WAREHOUSE' },
+    supply: { name: "Ta'minot", role: 'SUPPLY' },
+    accounting: { name: 'Buxgalteriya', role: 'ACCOUNTING' },
+    hr: { name: 'Kadrlar (HR)', role: 'HR' },
+    kitchen: { name: 'Oshxona (Bosh Oshpaz)', role: 'KITCHEN' },
+    security: { name: 'Xavfsizlik Xizmati', role: 'SECURITY' },
+  }
+
+  const lowerUsername = username.toLowerCase()
+  if (!user && defaultRolesMap[lowerUsername] && password === '123') {
+    try {
+      user = await prisma.user.create({
+        data: {
+          name: defaultRolesMap[lowerUsername].name,
+          username: lowerUsername,
+          password: '123',
+          role: defaultRolesMap[lowerUsername].role,
+          isActive: true,
+        }
+      })
+    } catch (createErr) {
+      console.warn('Auto-provision user failed, checking if created concurrently:', createErr)
+      user = await prisma.user.findUnique({ where: { username: lowerUsername } })
+    }
   }
 
   if (!user || user.password !== password) {
