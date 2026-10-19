@@ -83,6 +83,73 @@ export function applyExpenseRow(existing: any, row: Record<string, any>) {
 }
 
 // -----------------------------------------------------------------------------
+// TAB GP: Выпуск готовой продукции (ГП) -> ShopExpense.outputs
+// -----------------------------------------------------------------------------
+export interface GPField {
+  field: string
+  label: string
+  unit: string
+  aliases: string[]
+}
+
+export const GP_FIELDS: GPField[] = [
+  { field: 'iceberg', label: 'Айсберг', unit: 'кг', aliases: ['Айсберг', 'Салат Айсберг', 'Салат Айсберг нарезанный'] },
+  { field: 'tomatoes', label: 'ТОМАТЫ', unit: 'кг', aliases: ['ТОМАТЫ', 'Томаты', 'Томаты целые'] },
+  { field: 'onion', label: 'Лук', unit: 'кг', aliases: ['Лук', 'Лук салатный белый', 'Лук салатный белый нарезанный'] },
+  { field: 'coleslaw', label: 'Коул Слоу', unit: 'кг', aliases: ['Коул Слоу', 'Салат Коул Слоу'] },
+  { field: 'lemon', label: 'Лимон', unit: 'кг', aliases: ['Лимон'] },
+  { field: 'cucumbers', label: 'Огурцы свежие', unit: 'кг', aliases: ['Огурцы свежие', 'Огурцы'] },
+  { field: 'mixSalad', label: 'Микс салат', unit: 'кг', aliases: ['Микс салат'] },
+  { field: 'mint', label: 'Мята', unit: 'кг', aliases: ['Мята'] },
+  { field: 'celery', label: 'Сельдерей', unit: 'кг', aliases: ['Сельдерей'] },
+  { field: 'icebergLeaf', label: 'Айсберг (листовой)', unit: 'кг', aliases: ['Айсберг (листовой)', 'Айсберг листовой'] },
+]
+
+export function readGPRow(rec: { date: string; outputs?: any }) {
+  const outputs = (rec.outputs || {}) as Record<string, any>
+  const normalized: Record<string, any> = {}
+  for (const [k, v] of Object.entries(outputs)) {
+    const val = typeof v === 'object' && v !== null ? ((v as any).kg ?? (v as any).val ?? 0) : v
+    normalized[normKey(k)] = val
+  }
+  const row: Record<string, any> = { date: rec.date }
+  for (const f of GP_FIELDS) {
+    let val: any = 0
+    for (const a of f.aliases) {
+      const hit = normalized[normKey(a)]
+      if (hit !== undefined && hit !== null) {
+        val = hit
+        break
+      }
+    }
+    row[f.field] = toNum(val)
+  }
+  return row
+}
+
+export function applyGPRow(existingOutputs: any, row: Record<string, any>) {
+  const outputs: Record<string, any> = { ...(existingOutputs || {}) }
+  for (const f of GP_FIELDS) {
+    const aliasSet = new Set(f.aliases.map(normKey))
+    const existingKeys = Object.keys(outputs).filter((k) => aliasSet.has(normKey(k)))
+    const value = toNum(row[f.field])
+    const targetKey = existingKeys[0] || f.aliases[0]
+    
+    if (value === 0) {
+      existingKeys.forEach((k) => delete outputs[k])
+    } else {
+      existingKeys.slice(1).forEach((k) => delete outputs[k])
+      if (typeof outputs[targetKey] === 'object' && outputs[targetKey] !== null) {
+        outputs[targetKey] = { ...outputs[targetKey], kg: value }
+      } else {
+        outputs[targetKey] = { kg: value }
+      }
+    }
+  }
+  return outputs
+}
+
+// -----------------------------------------------------------------------------
 // TAB 3: daily workshop report -> ShopExpense.balances.report
 // (kept under its own key so it never mixes with the noisy imported matrix)
 // -----------------------------------------------------------------------------

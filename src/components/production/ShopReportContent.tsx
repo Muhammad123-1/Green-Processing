@@ -12,11 +12,21 @@ import {
   Calculator,
   ChevronRight,
   Loader2,
+  Package,
   X,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import ShopReportDayForm from './ShopReportDayForm'
-import { EXPENSE_FIELDS, readExpenseRow, getDayReport, hasReportData, isDateStr, toNum } from '@/lib/shopReport'
+import {
+  EXPENSE_FIELDS,
+  readExpenseRow,
+  GP_FIELDS,
+  readGPRow,
+  getDayReport,
+  hasReportData,
+  isDateStr,
+  toNum,
+} from '@/lib/shopReport'
 
 const todayStr = () => {
   const d = new Date()
@@ -34,23 +44,26 @@ export default function ShopReportContent() {
   const [isLoading, setIsLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [activeTab, setActiveTab] = useState<'arrival' | 'expense' | 'report' | 'history'>('arrival')
+  const [activeTab, setActiveTab] = useState<'arrival' | 'expense' | 'gp' | 'report' | 'history'>('arrival')
 
   // Raw DB data
   const [arrivals, setArrivals] = useState<any[]>([])
   const [expenses, setExpenses] = useState<any[]>([])
+  const [gpList, setGpList] = useState<any[]>([])
   const [rawExpenses, setRawExpenses] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
 
   // Filters
   const [arrFilter, setArrFilter] = useState('')
   const [expFilter, setExpFilter] = useState('')
+  const [gpFilter, setGpFilter] = useState('')
   const [reportDate, setReportDate] = useState(todayStr())
   const [historyFilterDate, setHistoryFilterDate] = useState('')
-  const [historyType, setHistoryType] = useState<'arrival' | 'expense' | 'report'>('report')
+  const [historyType, setHistoryType] = useState<'arrival' | 'expense' | 'gp' | 'report'>('report')
 
   const [savingArrivals, setSavingArrivals] = useState(false)
   const [savingExpenses, setSavingExpenses] = useState(false)
+  const [savingGP, setSavingGP] = useState(false)
 
   // ---------------------------------------------------------------------------
   // Loading + history (Tab 4)
@@ -113,6 +126,7 @@ export default function ShopReportContent() {
       setArrivals((data.arrivals || []).map((a: any) => ({ ...a })))
       setRawExpenses(data.expenses || [])
       setExpenses((data.expenses || []).map((e: any) => readExpenseRow(e)))
+      setGpList((data.expenses || []).map((e: any) => readGPRow(e)))
       buildHistory(data)
     } catch (e: any) {
       toast.error(e?.message || "Ma'lumotlarni yuklashda xatolik")
@@ -228,6 +242,55 @@ export default function ShopReportContent() {
   }
 
   // ---------------------------------------------------------------------------
+  // Tab GP: Выпуск готовой продукции (ГП)
+  // ---------------------------------------------------------------------------
+  const blankGP = (date: string) => {
+    const row: Record<string, any> = { date, _dirty: true, _new: true }
+    GP_FIELDS.forEach((f) => (row[f.field] = ''))
+    return row
+  }
+
+  const updateGP = (idx: number, patch: any) =>
+    setGpList((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch, _dirty: true } : r)))
+
+  const addGP = () => setGpList((prev) => [blankGP(gpFilter || todayStr()), ...prev])
+
+  const removeNewGP = (idx: number) => setGpList((prev) => prev.filter((_, i) => i !== idx))
+
+  const dirtyGP = gpList.filter((r) => r._dirty).length
+
+  const saveGP = async () => {
+    const rows = gpList.filter((r) => r._dirty)
+    if (rows.length === 0) return
+    if (rows.some((r) => !isDateStr(r.date))) {
+      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
+      return
+    }
+    setSavingGP(true)
+    try {
+      const res = await fetch('/api/shop-report/gp', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rows: rows.map((r) => {
+            const out: Record<string, any> = { date: r.date }
+            GP_FIELDS.forEach((f) => (out[f.field] = toNum(r[f.field])))
+            return out
+          }),
+        }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(j?.error || 'Saqlashda xatolik')
+      toast.success(`ГП (Tayyor mahsulot) saqlandi: ${j.saved} ta kun`)
+      await loadData()
+    } catch (e: any) {
+      toast.error(e?.message || 'Saqlashda xatolik')
+    } finally {
+      setSavingGP(false)
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Tab 3 helpers
   // ---------------------------------------------------------------------------
   const reportRecord = useMemo(() => rawExpenses.find((e) => e.date === reportDate) || null, [rawExpenses, reportDate])
@@ -272,9 +335,10 @@ export default function ShopReportContent() {
     window.location.href = '/api/shop-report/export'
   }
 
-  const viewReport = (date: string, type: 'arrival' | 'expense' | 'report') => {
+  const viewReport = (date: string, type: 'arrival' | 'expense' | 'gp' | 'report') => {
     if (type === 'arrival') setArrFilter(date)
     if (type === 'expense') setExpFilter(date)
+    if (type === 'gp') setGpFilter(date)
     if (type === 'report') setReportDate(date)
     setActiveTab(type)
   }
@@ -299,6 +363,13 @@ export default function ShopReportContent() {
       .filter(({ row }) => !expFilter || row.date === expFilter || !row.date)
     return expFilter ? list : list.slice(0, EXPENSE_PAGE + dirtyExpenses)
   }, [expenses, expFilter, dirtyExpenses])
+
+  const visibleGP = useMemo(() => {
+    const list = gpList
+      .map((row, idx) => ({ row, idx }))
+      .filter(({ row }) => !gpFilter || row.date === gpFilter || !row.date)
+    return gpFilter ? list : list.slice(0, EXPENSE_PAGE + dirtyGP)
+  }, [gpList, gpFilter, dirtyGP])
 
   const dateFilterInput = (value: string, onChange: (v: string) => void) => (
     <div className="flex items-center gap-1.5">
@@ -392,16 +463,22 @@ export default function ShopReportContent() {
           <ArrowUpFromLine size={16} /> 2. Расход (Chiqim)
         </button>
         <button
+          onClick={() => setActiveTab('gp')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'gp' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+        >
+          <Package size={16} /> 3. ГП (Tayyor mahsulot)
+        </button>
+        <button
           onClick={() => setActiveTab('report')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'report' ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <Calculator size={16} /> 3. Отчет ЦЕХ (Hisobot)
+          <Calculator size={16} /> 4. Отчет ЦЕХ (Hisobot)
         </button>
         <button
           onClick={() => setActiveTab('history')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'history' ? 'bg-slate-800 text-white dark:bg-dark-700' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <FileSpreadsheet size={16} /> 4. Arxiv (Tarix)
+          <FileSpreadsheet size={16} /> 5. Arxiv (Tarix)
         </button>
       </div>
 
@@ -616,7 +693,105 @@ export default function ShopReportContent() {
         </div>
       )}
 
-      {/* Tab 3: Отчет ЦЕХ (Report Form) */}
+      {/* Tab GP: Выпуск готовой продукции (ГП) */}
+      {activeTab === 'gp' && (
+        <div className="flex-1 min-h-0 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-3 bg-emerald-500/10">
+            <h2 className="text-base font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight flex items-center gap-2">
+              <Package size={18} />
+              <span>ГП (Выпуск готовой продукции)</span>
+            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              {dateFilterInput(gpFilter, setGpFilter)}
+              <button
+                onClick={addGP}
+                className="text-xs font-bold bg-white dark:bg-dark-800 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 px-3 py-1.5 rounded-lg hover:bg-emerald-50"
+              >
+                + Qo&apos;shish
+              </button>
+              {saveButton(dirtyGP, savingGP, saveGP)}
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto custom-scrollbar p-0">
+            <table className="w-full text-left border-collapse min-w-[1200px]">
+              <thead className="bg-[#70AD47] text-white text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-emerald-600">
+                <tr>
+                  <th className="p-2 border-r border-emerald-600 w-32 bg-[#548235] text-white">Дата</th>
+                  {GP_FIELDS.map((f) => (
+                    <th key={f.field} className="p-2 border-r border-emerald-600/80 text-center">
+                      {f.label}
+                      <br />
+                      <span className="font-normal text-[8px]">({f.unit})</span>
+                    </th>
+                  ))}
+                  <th className="p-2 border-r border-emerald-600/80 text-center bg-[#548235] text-white">ИТОГО</th>
+                  <th className="p-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-white dark:bg-transparent">
+                {visibleGP.length === 0 && (
+                  <tr>
+                    <td colSpan={GP_FIELDS.length + 3} className="p-8 text-center text-sm text-slate-500">
+                      {gpFilter ? "Bu sanada ГП yozuvi yo'q. \"+ Qo'shish\" orqali yangi kun kiriting." : "Ma'lumot yo'q"}
+                    </td>
+                  </tr>
+                )}
+                {visibleGP.map(({ row, idx }) => {
+                  const rowSum = GP_FIELDS.reduce((acc, f) => acc + toNum(row[f.field]), 0)
+                  return (
+                    <tr
+                      key={row._new ? `new-${idx}` : row.date}
+                      className={`hover:bg-emerald-50/50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-emerald-100/60 dark:bg-emerald-500/10' : ''}`}
+                    >
+                      <td className="p-1 border-r border-slate-200 dark:border-dark-750 bg-emerald-50/60 dark:bg-emerald-900/10">
+                        <input
+                          type="date"
+                          value={row.date || ''}
+                          readOnly={!row._new}
+                          onChange={(e) => updateGP(idx, { date: e.target.value })}
+                          className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
+                        />
+                      </td>
+                      {GP_FIELDS.map((f) => (
+                        <td key={f.field} className="p-1 border-r border-slate-200 dark:border-dark-750">
+                          <input
+                            type="number"
+                            step="any"
+                            value={inputVal(row[f.field])}
+                            onChange={(e) => updateGP(idx, { [f.field]: e.target.value })}
+                            className="w-full bg-transparent px-1 py-1 text-[11px] font-mono text-right outline-none text-slate-800 dark:text-slate-300"
+                          />
+                        </td>
+                      ))}
+                      <td className="p-1 border-r border-slate-200 dark:border-dark-750 text-right font-mono font-bold text-[11px] text-emerald-700 dark:text-emerald-400 bg-emerald-50/40 dark:bg-emerald-900/20 pr-2">
+                        {rowSum > 0 ? rowSum.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
+                      </td>
+                      <td className="p-1 text-center">
+                        {row._new && (
+                          <button
+                            onClick={() => removeNewGP(idx)}
+                            className="p-1 rounded text-red-500 hover:bg-red-50"
+                            title="Yangi qatorni o'chirish"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            {!gpFilter && gpList.length > visibleGP.length && (
+              <div className="p-3 text-center text-xs font-semibold text-slate-500 bg-slate-50 dark:bg-dark-800">
+                Oxirgi {visibleGP.length} ta kun ko&apos;rsatilmoqda (jami {gpList.length}). Boshqa kunni ko&apos;rish uchun yuqoridan sanani tanlang.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Отчет ЦЕХ (Report Form) */}
       {activeTab === 'report' && (
         <ShopReportDayForm
           date={reportDate}
