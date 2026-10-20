@@ -14,8 +14,8 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed-demo": "node seed_demo_data.js",
-    "db:clean-demo": "node clean_demo_data.js"
+    "db:seed-demo": "node scripts/seed_demo_data.js",
+    "db:clean-demo": "node scripts/clean_demo_data.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1086.0",
