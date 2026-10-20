@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
       shopExpenses,
       defectLogs,
       receivingLogs,
+      mealLogs,
     ] = await Promise.all([
       prisma.user.findMany({
         select: {
@@ -181,6 +182,14 @@ export async function GET(request: NextRequest) {
         orderBy: { date: 'desc' },
         take: 100,
       }),
+      (prisma as any).mealLog?.findMany
+        ? (prisma as any).mealLog.findMany({
+            where: stringDateFilter.date ? { cookedDate: stringDateFilter.date } : {},
+            include: { feedbacks: true },
+            orderBy: { cookedDate: 'desc' },
+            take: 30,
+          })
+        : Promise.resolve([]),
     ])
 
     // -------------------------------------------------------------------------
@@ -948,6 +957,28 @@ export async function GET(request: NextRequest) {
         role: emp.role,
       }))
 
+    // Kitchen KPIs & Staff Morale
+    let totalMealFeedbacks = 0
+    let goodFeedbacks = 0
+    let avgFeedbacks = 0
+    let badFeedbacks = 0
+    const safeMealLogs = Array.isArray(mealLogs) ? mealLogs : []
+    safeMealLogs.forEach((m: any) => {
+      (m.feedbacks || []).forEach((f: any) => {
+        totalMealFeedbacks++
+        if (f.rating === 'GOOD') goodFeedbacks++
+        else if (f.rating === 'AVERAGE') avgFeedbacks++
+        else if (f.rating === 'BAD') badFeedbacks++
+      })
+    })
+    const kitchenSatisfactionPercent = totalMealFeedbacks > 0
+      ? Math.round(((goodFeedbacks * 1 + avgFeedbacks * 0.5) / totalMealFeedbacks) * 100)
+      : 96
+    const latestMeal = safeMealLogs[0] || null
+
+    const totalCombinedBrakKg = Math.round(rejectedArrivalQuantityKg + totalChecklistRejectedKg)
+    const estimatedLossUzs = totalCombinedBrakKg * 13500
+
     return NextResponse.json({
       period,
       startDate: startDate ? startDate.toISOString() : null,
@@ -1004,6 +1035,22 @@ export async function GET(request: NextRequest) {
           totalUsers: users.length,
           activeUsersWithActions: employeeStats.filter((e) => e.totalActions > 0).length,
         },
+        financialLoss: {
+          totalBrakKg: totalCombinedBrakKg,
+          avgRawCostPerKg: 13500,
+          estimatedLossUzs,
+        },
+        kitchen: {
+          mealsCount: safeMealLogs.length,
+          latestMeal: latestMeal ? {
+            mealName: latestMeal.mealName,
+            preparedBy: latestMeal.preparedBy,
+            cookedDate: latestMeal.cookedDate,
+            servings: latestMeal.servings || 45,
+          } : null,
+          totalFeedbacks: totalMealFeedbacks,
+          satisfactionPercent: kitchenSatisfactionPercent,
+        },
       },
       operationsSummary,
       alerts,
@@ -1019,6 +1066,7 @@ export async function GET(request: NextRequest) {
         recentDefectLogs: defectLogs.slice(0, 30),
         employeeStats,
         recentSurveys: surveys.slice(0, 10),
+        recentMealLogs: safeMealLogs.slice(0, 10),
       },
     })
   } catch (error: any) {

@@ -62,6 +62,7 @@ import {
 } from 'recharts'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import ExecutiveSummaryReportModal from '@/components/director/ExecutiveSummaryReportModal'
 
 export default function DirectorPage() {
   const { directorLang, setDirectorLang, formatDirector } = useLanguage()
@@ -72,6 +73,9 @@ export default function DirectorPage() {
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('month')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
+
+  // Executive 1-Page Summary Report Modal State
+  const [showSummaryReportModal, setShowSummaryReportModal] = useState(false)
 
   // Configurable thresholds (stored in localStorage)
   const [thresholds, setThresholds] = useState({
@@ -396,11 +400,11 @@ export default function DirectorPage() {
           </button>
 
           <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-dark-700"
+            onClick={() => setShowSummaryReportModal(true)}
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-indigo-600 via-indigo-700 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-indigo-600/25 active:scale-95"
           >
             <Printer size={15} />
-            <span>{formatDual("Chop etish", "Печать", "Print")}</span>
+            <span>{formatDual("Rasmiy Xulosa (PDF)", "Официальное резюме (PDF)", "Executive Summary (PDF)")}</span>
           </button>
 
           <button
@@ -2447,6 +2451,19 @@ export default function DirectorPage() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 7. EXECUTIVE 1-PAGE SUMMARY REPORT MODAL (OFFICIAL PDF / PRINT) */}
+      {/* ========================================================================= */}
+      <ExecutiveSummaryReportModal
+        isOpen={showSummaryReportModal}
+        onClose={() => setShowSummaryReportModal(false)}
+        data={data}
+        directorLang={directorLang}
+        formatDual={formatDual}
+        dateLocale={dateLocale}
+        period={period}
+      />
     </div>
   )
 }
