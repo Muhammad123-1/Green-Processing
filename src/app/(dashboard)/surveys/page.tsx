@@ -18,10 +18,14 @@ import {
   FileSpreadsheet,
   BarChart2,
   Download,
+  CheckCircle2,
+  AlertTriangle,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import SurveyReportModal from "@/components/surveys/SurveyReportModal";
+import QuestionDrillDownModal from "@/components/surveys/QuestionDrillDownModal";
 
 export default function SurveysPage() {
   const { formatDual } = useLanguage();
@@ -503,6 +507,9 @@ function ResponseViewer({
 }) {
   const { formatDual } = useLanguage();
   const [data, setData] = useState<any>(null);
+  const [viewTab, setViewTab] = useState<'questions' | 'clients'>('questions');
+  const [selectedQuestion, setSelectedQuestion] = useState<any | null>(null);
+  const [isDrillDownOpen, setIsDrillDownOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/surveys/${surveyId}`)
@@ -512,20 +519,103 @@ function ResponseViewer({
 
   if (!data) return null;
 
-  const questions = data.questions || [];
-  const responses = data.responses || [];
+  const questions: any[] = data.questions || [];
+  const responses: any[] = data.responses || [];
+
+  // Pre-calculate per-question stats
+  const questionSummaries = questions.map((q) => {
+    let posCount = 0;
+    let negCount = 0;
+    let otherCount = 0;
+    let totalCount = 0;
+
+    responses.forEach((resp) => {
+      const ans = (resp.answers || []).find((a: any) => a.questionId === q.id);
+      if (!ans || !ans.answerValue) return;
+      const raw = (ans.answerValue || '').trim();
+      let clean = raw;
+      if (raw.includes('. Izoh:')) clean = raw.split('. Izoh:')[0].trim();
+      else if (raw.includes('Izoh:')) clean = raw.split('Izoh:')[0].trim();
+
+      const norm = clean.toLowerCase();
+      totalCount++;
+
+      if (q.questionType === 'yesno') {
+        // INVERSION FIX:
+        // "Yo'q" = POSITIVE (no defects reported)
+        // "Ha" = NEGATIVE (defects / complaints)
+        if (norm === "yo'q" || norm === 'yoq' || norm === 'нет' || norm === 'no') {
+          posCount++;
+        } else if (norm === 'ha' || norm === 'да' || norm === 'yes') {
+          negCount++;
+        } else {
+          otherCount++;
+        }
+      } else if (q.questionType === 'rating' || ['1', '2', '3', '4', '5'].includes(clean)) {
+        if (clean === '5' || clean === '4' || norm === "a'lo" || norm === 'yaxshi') {
+          posCount++;
+        } else {
+          negCount++;
+        }
+      } else {
+        posCount++;
+      }
+    });
+
+    const evaluated = posCount + negCount;
+    const satisfactionPct = evaluated > 0 ? (posCount / evaluated) * 100 : 0;
+
+    return {
+      question: q,
+      totalCount,
+      posCount,
+      negCount,
+      otherCount,
+      satisfactionPct,
+    };
+  });
 
   return (
     <div className="border-t border-slate-100 dark:border-dark-750 bg-slate-50/50 dark:bg-dark-800/30">
       <div className="p-5">
+        {/* Header Controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-dark-700">
-          <h4 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
-            <Users size={16} className="text-blue-500" />
-            <span>
-              {formatDual("Javoblar (", "Ответы (", "Answers (")}
-              {responses.length} {formatDual("ta)", "шт.)", "count)")}
-            </span>
-          </h4>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2 mr-2">
+              <Users size={16} className="text-blue-500" />
+              <span>
+                {formatDual("Javoblar (", "Ответы (", "Answers (")}
+                {responses.length} {formatDual("ta)", "шт.)", "count)")}
+              </span>
+            </h4>
+
+            {/* View Mode Switcher */}
+            <div className="flex items-center bg-slate-200/70 dark:bg-dark-750 p-1 rounded-xl">
+              <button
+                onClick={() => setViewTab('questions')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  viewTab === 'questions'
+                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <BarChart2 size={13} />
+                <span>{formatDual("Savollar bo'yicha tahlil", "По вопросам", "By questions")}</span>
+              </button>
+              <button
+                onClick={() => setViewTab('clients')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  viewTab === 'clients'
+                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Users size={13} />
+                <span>{formatDual("Mijozlar bo'yicha", "По клиентам", "By clients")}</span>
+              </button>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <a
               href={`/api/surveys/${surveyId}/export`}
@@ -548,76 +638,201 @@ function ResponseViewer({
             )}
           </div>
         </div>
+
         {responses.length === 0 ? (
-          <p className="text-xs text-slate-400 italic">
-            {formatDual(
-              "Hali javob yo'q",
-              "Пока нет ответов",
-              "No answers yet",
-            )}
+          <p className="text-xs text-slate-400 italic py-4 text-center">
+            {formatDual("Hali javob yo'q", "Пока нет ответов", "No answers yet")}
           </p>
+        ) : viewTab === 'questions' ? (
+          /* =================================================================== */
+          /* VIEW 1: BY QUESTIONS ANALYSIS (CLICKABLE FOR POSITIVE / NEGATIVE)   */
+          /* =================================================================== */
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+              <span>
+                {formatDual(
+                  "Istalgan savol ustiga bosing — kim nima deb javob bergani (ijobiy va salbiy) ochiladi:",
+                  "Нажмите на вопрос для подробного анализа (положительные и отрицательные ответы):",
+                  "Click any question to view respondents (categorized into positive and negative):"
+                )}
+              </span>
+              <span className="font-semibold">{questions.length} ta savol</span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              {questionSummaries.map(({ question: q, totalCount, posCount, negCount, satisfactionPct }) => (
+                <div
+                  key={q.id}
+                  onClick={() => {
+                    setSelectedQuestion(q);
+                    setIsDrillDownOpen(true);
+                  }}
+                  className="bg-white dark:bg-dark-900 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 border border-slate-200 dark:border-dark-700 hover:border-emerald-300 dark:hover:border-emerald-800 rounded-2xl p-4 cursor-pointer transition-all shadow-xs group"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <span className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-black text-xs flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                        {q.subLabel || `#${(q.orderIndex ?? 0) + 1}`}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-bold text-slate-800 dark:text-white text-xs sm:text-sm group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                          {q.questionText}
+                        </h5>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {q.questionType === 'yesno'
+                            ? formatDual("Ha / Yo'q savoli", "Вопрос Да / Нет", "Yes / No question")
+                            : q.questionType === 'rating'
+                              ? formatDual("5 ballik baholash", "5-балльная шкала", "5-star rating")
+                              : formatDual("Matn / Variantli", "Текстовый ответ", "Text / Options")}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stats & Bar */}
+                    <div className="flex items-center gap-4 flex-shrink-0 sm:min-w-[240px] justify-between sm:justify-end">
+                      <div className="text-right">
+                        <div className="flex items-center gap-2 text-xs font-bold">
+                          <span className="text-emerald-600 flex items-center gap-1">
+                            <CheckCircle2 size={12} /> {posCount}
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-red-500 flex items-center gap-1">
+                            <AlertTriangle size={12} /> {negCount}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          {formatDual("Qoniqish:", "Удовл.:", "Satisf.:")} {satisfactionPct.toFixed(0)}%
+                        </span>
+                      </div>
+
+                      {/* Percentage pill button */}
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 group-hover:bg-emerald-600 group-hover:text-white transition-all flex items-center gap-1.5"
+                      >
+                        <Users size={12} />
+                        <span>{formatDual("Tahlil", "Анализ", "Inspect")}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  {totalCount > 0 && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center gap-3">
+                      <div className="flex-1 h-2 bg-slate-100 dark:bg-dark-800 rounded-full overflow-hidden flex">
+                        <div
+                          style={{ width: `${satisfactionPct}%` }}
+                          className="h-full bg-emerald-500 transition-all duration-300"
+                          title={`Ijobiy: ${satisfactionPct.toFixed(0)}%`}
+                        />
+                        <div
+                          style={{ width: `${100 - satisfactionPct}%` }}
+                          className="h-full bg-red-400 transition-all duration-300"
+                          title={`Salbiy / E'tiroz: ${(100 - satisfactionPct).toFixed(0)}%`}
+                        />
+                      </div>
+                      <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 flex-shrink-0">
+                        {satisfactionPct.toFixed(0)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
+          /* =================================================================== */
+          /* VIEW 2: BY CLIENTS (RESPONSES LIST)                                 */
+          /* =================================================================== */
           <div className="space-y-4">
             {responses.map((resp: any) => (
               <div
                 key={resp.id}
-                className="bg-white dark:bg-dark-900 rounded-xl p-4 border border-slate-200 dark:border-dark-700 text-xs"
+                className="bg-white dark:bg-dark-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-dark-700 text-xs shadow-xs"
               >
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-100 dark:border-dark-800">
                   <div>
-                    <span className="font-bold text-slate-800 dark:text-white">
+                    <span className="font-black text-slate-900 dark:text-white text-sm">
                       {resp.restaurantName ||
-                        formatDual(
-                          "Noma'lum restoran",
-                          "Неизвестный ресторан",
-                          "Unknown restaurant",
-                        )}
+                        formatDual("Noma'lum restoran", "Неизвестный ресторан", "Unknown restaurant")}
                     </span>
                     {resp.respondentName && (
-                      <span className="text-slate-500 ml-2">
+                      <span className="text-slate-500 ml-2 font-medium">
                         — {resp.respondentName}
                       </span>
                     )}
                   </div>
-                  <span className="text-slate-400">
-                    {new Date(resp.submittedAt).toLocaleDateString("uz-UZ")}
+                  <span className="text-slate-400 font-medium">
+                    {resp.respondentDate || (resp.submittedAt ? new Date(resp.submittedAt).toLocaleDateString("uz-UZ") : '-')}
                   </span>
                 </div>
-                <div className="space-y-1.5">
+
+                <div className="space-y-2">
                   {resp.answers?.map((ans: any) => {
-                    const q = questions.find(
-                      (q: any) => q.id === ans.questionId,
-                    );
+                    const q = questions.find((item: any) => item.id === ans.questionId);
+                    const raw = (ans.answerValue || '').trim();
+                    let clean = raw;
+                    let comment = '';
+                    if (raw.includes('. Izoh:')) {
+                      const parts = raw.split('. Izoh:');
+                      clean = parts[0].trim();
+                      comment = parts.slice(1).join('. Izoh:').trim();
+                    } else if (raw.includes('Izoh:')) {
+                      const parts = raw.split('Izoh:');
+                      clean = parts[0].trim();
+                      comment = parts.slice(1).join('Izoh:').trim();
+                    }
+
+                    const isYoq = clean === "Yo'q" || clean === "Нет" || clean === "No";
+                    const isHa = clean === "Ha" || clean === "Да" || clean === "Yes";
+
                     return (
-                      <div key={ans.id} className="flex gap-2">
-                        <span className="text-slate-500 flex-shrink-0 w-3">
-                          {q?.subLabel || "•"}
-                        </span>
-                        <span className="text-slate-600 dark:text-slate-400 flex-1 line-clamp-1">
-                          {q?.questionText?.substring(0, 40)}...
-                        </span>
-                        <span
-                          className={`font-bold flex-shrink-0 ${
-                            ans.answerValue === "5"
-                              ? "text-green-600"
-                              : ans.answerValue === "4"
-                                ? "text-blue-600"
-                                : ans.answerValue === "3"
-                                  ? "text-yellow-600"
-                                  : ans.answerValue === "2"
-                                    ? "text-orange-600"
-                                    : ans.answerValue === "1"
-                                      ? "text-red-600"
-                                      : ans.answerValue === "Ha"
-                                        ? "text-red-500"
-                                        : ans.answerValue === "Yo'q" ||
-                                            ans.answerValue === "Нет"
-                                          ? "text-green-600"
-                                          : "text-slate-700 dark:text-slate-300"
-                          }`}
-                        >
-                          {ans.answerValue}
-                        </span>
+                      <div
+                        key={ans.id}
+                        onClick={() => {
+                          if (q) {
+                            setSelectedQuestion(q);
+                            setIsDrillDownOpen(true);
+                          }
+                        }}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-800 cursor-pointer transition-colors"
+                        title="Savol bo'yicha tahlilni ko'rish"
+                      >
+                        <div className="flex items-start gap-2 flex-1 min-w-0">
+                          <span className="text-slate-400 font-bold flex-shrink-0 w-4">
+                            {q?.subLabel || "•"}
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-300 flex-1 line-clamp-1">
+                            {q?.questionText}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0 pl-6 sm:pl-0">
+                          <span
+                            className={`font-black px-2 py-0.5 rounded-lg text-xs ${
+                              isYoq
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                                : isHa
+                                  ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800"
+                                  : clean === "5"
+                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                    : clean === "4"
+                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
+                                      : clean === "3"
+                                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                        : clean === "2" || clean === "1"
+                                          ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+                                          : "bg-slate-100 text-slate-700 dark:bg-dark-800 dark:text-slate-300"
+                            }`}
+                          >
+                            {isYoq ? formatDual("Yo'q (Benuqson)", "Нет (Без дефектов)", "No (Flawless)") : isHa ? formatDual("Ha (Nuqson)", "Да (Дефект)", "Yes (Defect)") : clean}
+                          </span>
+                          {comment && (
+                            <span className="text-slate-500 italic text-[11px] max-w-[200px] truncate" title={comment}>
+                              "{comment}"
+                            </span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -627,6 +842,17 @@ function ResponseViewer({
           </div>
         )}
       </div>
+
+      {/* QUESTION DRILL-DOWN MODAL */}
+      <QuestionDrillDownModal
+        isOpen={isDrillDownOpen}
+        onClose={() => {
+          setIsDrillDownOpen(false);
+          setSelectedQuestion(null);
+        }}
+        question={selectedQuestion}
+        responses={responses}
+      />
     </div>
   );
 }

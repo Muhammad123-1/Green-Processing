@@ -4,6 +4,7 @@ import { Link2, Users, Calendar, ChevronDown, ChevronUp, RefreshCw, ArrowLeft, A
 import Link from 'next/link'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts'
 import SurveyReportModal from '@/components/surveys/SurveyReportModal'
+import QuestionDrillDownModal from '@/components/surveys/QuestionDrillDownModal'
 
 interface Survey {
   id: number
@@ -159,6 +160,8 @@ function ResponseViewer({
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showUsers, setShowUsers] = useState(false)
+  const [selectedQuestion, setSelectedQuestion] = useState<any | null>(null)
+  const [isDrillDownOpen, setIsDrillDownOpen] = useState(false)
 
   useEffect(() => {
     fetch(`/api/surveys/${surveyId}`)
@@ -245,11 +248,11 @@ function ResponseViewer({
                 // Prepare data for recharts
                 const chartData = Object.entries(qStats).map(([name, value]) => {
                   let color = '#3b82f6' // blue-500
-                  if (name === '5' || name === "A'lo" || name === "Ha") color = '#22c55e' // green-500
-                  if (name === '4' || name === 'Yaxshi') color = '#34d399' // emerald-400
-                  if (name === '3' || name === 'Qoniqarli') color = '#facc15' // yellow-400
-                  if (name === '2' || name === 'Yomon') color = '#f97316' // orange-500
-                  if (name === '1' || name === 'Juda yomon' || name === "Yo'q") color = '#ef4444' // red-500
+                  if (name === '5' || name === "A'lo" || name === "Yo'q" || name === 'Нет' || name === 'No') color = '#22c55e' // green-500
+                  else if (name === '4' || name === 'Yaxshi') color = '#34d399' // emerald-400
+                  else if (name === '3' || name === 'Qoniqarli') color = '#facc15' // yellow-400
+                  else if (name === '2' || name === 'Yomon') color = '#f97316' // orange-500
+                  else if (name === '1' || name === 'Juda yomon' || name === "Ha" || name === 'Да' || name === 'Yes') color = '#ef4444' // red-500
                   
                   // Truncate long text
                   const shortName = name.length > 20 ? name.substring(0, 20) + '...' : name;
@@ -258,11 +261,24 @@ function ResponseViewer({
                 }).sort((a,b) => b.value - a.value)
 
                 return (
-                  <div key={q.id} className="bg-white dark:bg-dark-900 rounded-xl p-5 border border-slate-200 dark:border-dark-700 shadow-sm flex flex-col h-full">
-                    <p className="font-semibold text-slate-800 dark:text-white text-sm mb-6 line-clamp-3">
-                      {q.subLabel && <span className="text-slate-400 mr-2">{q.subLabel}</span>}
-                      {q.questionText}
-                    </p>
+                  <div
+                    key={q.id}
+                    onClick={() => {
+                      setSelectedQuestion(q)
+                      setIsDrillDownOpen(true)
+                    }}
+                    title="Savol bo'yicha batafsil tahlilni ko'rish uchun bosing"
+                    className="bg-white dark:bg-dark-900 hover:border-emerald-400 dark:hover:border-emerald-600 rounded-xl p-5 border border-slate-200 dark:border-dark-700 shadow-sm flex flex-col h-full cursor-pointer transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-4">
+                      <p className="font-semibold text-slate-800 dark:text-white text-sm line-clamp-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                        {q.subLabel && <span className="text-slate-400 mr-2">{q.subLabel}</span>}
+                        {q.questionText}
+                      </p>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 opacity-80 group-hover:opacity-100 flex-shrink-0">
+                        Tahlil
+                      </span>
+                    </div>
                     
                     {totalAnswers === 0 ? (
                       <div className="flex-1 flex items-center justify-center text-xs text-slate-400 min-h-[150px]">Javoblar yo'q</div>
@@ -386,6 +402,16 @@ function ResponseViewer({
           </div>
         )}
       </div>
+
+      <QuestionDrillDownModal
+        isOpen={isDrillDownOpen}
+        onClose={() => {
+          setIsDrillDownOpen(false)
+          setSelectedQuestion(null)
+        }}
+        question={selectedQuestion}
+        responses={responses}
+      />
     </div>
   )
 }

@@ -93,24 +93,45 @@ export async function GET(req: NextRequest, { params }: Params) {
       })
     })
 
-    // Compute overall score
-    let totalScoreSum = 0
-    let totalScoreCount = 0
+    // Compute overall score (including rating and inverted yes/no)
+    let totalWeightedPct = 0
+    let totalEvaluatedCount = 0
 
     questions.forEach((q: any) => {
       const st = statsByQuestion[q.id]
-      if (st) {
+      if (!st) return
+
+      if (q.questionType === 'rating') {
         const ratingCount = st.c5 + st.c4 + st.c3 + st.c2 + st.c1
         if (ratingCount > 0) {
           const sum = 5 * st.c5 + 4 * st.c4 + 3 * st.c3 + 2 * st.c2 + 1 * st.c1
-          totalScoreSum += sum
-          totalScoreCount += ratingCount
+          const avg = sum / ratingCount
+          const pct = (avg / 5) * 100
+          ;(st as any).avg = avg
+          ;(st as any).pct = pct
+          ;(st as any).evaluatedCount = ratingCount
+          totalWeightedPct += pct * ratingCount
+          totalEvaluatedCount += ratingCount
+        }
+      } else if (q.questionType === 'yesno') {
+        const yesNoCount = st.ha + st.yoq
+        if (yesNoCount > 0) {
+          // INVERSION FIX:
+          // "Yo'q" = POSITIVE (no defects) -> 100%
+          // "Ha" = NEGATIVE (defects / complaints) -> 0%
+          const pct = (st.yoq / yesNoCount) * 100
+          const avg = (pct / 100) * 5
+          ;(st as any).avg = avg
+          ;(st as any).pct = pct
+          ;(st as any).evaluatedCount = yesNoCount
+          totalWeightedPct += pct * yesNoCount
+          totalEvaluatedCount += yesNoCount
         }
       }
     })
 
-    const overallAvg = totalScoreCount > 0 ? totalScoreSum / totalScoreCount : 0
-    const overallPercent = (overallAvg / 5) * 100
+    const overallPercent = totalEvaluatedCount > 0 ? totalWeightedPct / totalEvaluatedCount : 0
+    const overallAvg = (overallPercent / 100) * 5
 
     // Build Excel Workbook
     const workbook = new ExcelJS.Workbook()
@@ -218,9 +239,10 @@ export async function GET(req: NextRequest, { params }: Params) {
       const avg = ratingCount > 0 ? (5 * st.c5 + 4 * st.c4 + 3 * st.c3 + 2 * st.c2 + 1 * st.c1) / ratingCount : 0
       const pct = (avg / 5) * 100
 
-      const yesNoStr = q.questionType === 'yesno' ? `Ha: ${st.ha} / Yo'q: ${st.yoq}` : '-'
-      const avgStr = ratingCount > 0 ? avg.toFixed(2) : '-'
-      const pctStr = ratingCount > 0 ? `${pct.toFixed(0)}%` : q.questionType === 'yesno' && (st.ha + st.yoq > 0) ? `${((st.ha / (st.ha + st.yoq)) * 100).toFixed(0)}%` : '-'
+      const yesNoStr = q.questionType === 'yesno' ? `Yo'q: ${st.yoq} / Ha: ${st.ha}` : '-'
+      const anySt = st as any
+      const avgStr = (anySt.evaluatedCount && anySt.evaluatedCount > 0) ? anySt.avg.toFixed(2) : '-'
+      const pctStr = (anySt.evaluatedCount && anySt.evaluatedCount > 0) ? `${anySt.pct.toFixed(0)}%` : '-'
 
       const row = ws1.getRow(rowIndex)
       row.values = [

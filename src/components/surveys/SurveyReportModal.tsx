@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Printer, Download, X, Loader2, CheckCircle2, TrendingUp, Users, Award, FileSpreadsheet, MessageSquare, AlertCircle } from 'lucide-react'
+import { Printer, Download, X, Loader2, CheckCircle2, TrendingUp, Users, Award, FileSpreadsheet, MessageSquare, AlertCircle, Search, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import QuestionDrillDownModal from './QuestionDrillDownModal'
 
 interface SurveyReportModalProps {
   surveyId: number | null
@@ -17,6 +18,8 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
   const [loading, setLoading] = useState(false)
   const [showComments, setShowComments] = useState(true)
   const [downloadingExcel, setDownloadingExcel] = useState(false)
+  const [selectedQuestionForDrillDown, setSelectedQuestionForDrillDown] = useState<any | null>(null)
+  const [isDrillDownOpen, setIsDrillDownOpen] = useState(false)
 
   useEffect(() => {
     if (isOpen && surveyId) {
@@ -54,6 +57,9 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
       c1: number
       ha: number
       yoq: number
+      avg: number
+      pct: number
+      evaluatedCount: number
       other: Record<string, number>
       comments: { respondent: string; comment: string; date: string }[]
     }
@@ -69,6 +75,9 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
       c1: 0,
       ha: 0,
       yoq: 0,
+      avg: 0,
+      pct: 0,
+      evaluatedCount: 0,
       other: {},
       comments: [],
     }
@@ -122,23 +131,44 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
     })
   })
 
-  let totalScoreSum = 0
-  let totalScoreCount = 0
+  let totalWeightedPct = 0
+  let totalEvaluatedCount = 0
 
   questions.forEach((q) => {
     const st = statsByQuestion[q.id]
-    if (st) {
+    if (!st) return
+
+    if (q.questionType === 'rating') {
       const ratingCount = st.c5 + st.c4 + st.c3 + st.c2 + st.c1
       if (ratingCount > 0) {
         const sum = 5 * st.c5 + 4 * st.c4 + 3 * st.c3 + 2 * st.c2 + 1 * st.c1
-        totalScoreSum += sum
-        totalScoreCount += ratingCount
+        const avg = sum / ratingCount
+        const pct = (avg / 5) * 100
+        st.avg = avg
+        st.pct = pct
+        st.evaluatedCount = ratingCount
+        totalWeightedPct += pct * ratingCount
+        totalEvaluatedCount += ratingCount
+      }
+    } else if (q.questionType === 'yesno') {
+      const yesNoCount = st.ha + st.yoq
+      if (yesNoCount > 0) {
+        // INVERSION FIX:
+        // "Yo'q" = POSITIVE (benuqson, shikoyatsiz) -> umumiy foiz ko'tariladi!
+        // "Ha" = NEGATIVE (nuqson topildi, shikoyat) -> umumiy foiz tushadi!
+        const pct = (st.yoq / yesNoCount) * 100
+        const avg = (pct / 100) * 5
+        st.avg = avg
+        st.pct = pct
+        st.evaluatedCount = yesNoCount
+        totalWeightedPct += pct * yesNoCount
+        totalEvaluatedCount += yesNoCount
       }
     }
   })
 
-  const overallAvg = totalScoreCount > 0 ? totalScoreSum / totalScoreCount : 0
-  const overallPercent = (overallAvg / 5) * 100
+  const overallPercent = totalEvaluatedCount > 0 ? totalWeightedPct / totalEvaluatedCount : 0
+  const overallAvg = (overallPercent / 100) * 5
 
   // Grade
   let gradeText = "A'lo darajada"
@@ -358,14 +388,19 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
               {/* QUESTIONS & RESULTS TABLE */}
               {/* ===================================================================== */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-black text-slate-900 dark:text-white print:text-black uppercase tracking-wider flex items-center gap-1.5">
                     <Award size={16} className="text-emerald-600 print:text-black" />
                     <span>SAVOLLAR BO'YICHA TAHLILIY STATISTIKA JADVALI</span>
                   </h3>
-                  <span className="text-xs text-slate-500 print:text-black font-semibold">
-                    Jami savollar: {questions.length} ta
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 print:hidden">
+                      👆 {formatDual("Savol ustiga bosing — batafsil tahlil", "Нажмите на вопрос для анализа", "Click question to inspect")}
+                    </span>
+                    <span className="text-xs text-slate-500 print:text-black font-semibold">
+                      Jami savollar: {questions.length} ta
+                    </span>
+                  </div>
                 </div>
 
                 <div className="border border-slate-300 dark:border-dark-700 print:border-slate-400 rounded-2xl overflow-hidden shadow-sm">
@@ -379,7 +414,7 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                         <th className="p-2 sm:p-2.5 text-center w-12 border-r border-slate-700 print:border-slate-300">3 (Qoniq.)</th>
                         <th className="p-2 sm:p-2.5 text-center w-12 border-r border-slate-700 print:border-slate-300">2 (Yomon)</th>
                         <th className="p-2 sm:p-2.5 text-center w-12 border-r border-slate-700 print:border-slate-300">1 (J.yom.)</th>
-                        <th className="p-2 sm:p-2.5 text-center w-20 border-r border-slate-700 print:border-slate-300">Ha / Yo'q</th>
+                        <th className="p-2 sm:p-2.5 text-center w-24 border-r border-slate-700 print:border-slate-300">Yo'q / Ha</th>
                         <th className="p-2 sm:p-2.5 text-center w-14 border-r border-slate-700 print:border-slate-300">Jami</th>
                         <th className="p-2 sm:p-2.5 text-center w-16 border-r border-slate-700 print:border-slate-300">O'rtacha</th>
                         <th className="p-2 sm:p-2.5 text-center w-16">Qoniqish %</th>
@@ -396,18 +431,26 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                           c1: 0,
                           ha: 0,
                           yoq: 0,
+                          avg: 0,
+                          pct: 0,
+                          evaluatedCount: 0,
                           other: {},
                           comments: [],
                         }
 
-                        const ratingCount = st.c5 + st.c4 + st.c3 + st.c2 + st.c1
-                        const avg = ratingCount > 0 ? (5 * st.c5 + 4 * st.c4 + 3 * st.c3 + 2 * st.c2 + 1 * st.c1) / ratingCount : 0
-                        const pct = (avg / 5) * 100
-
                         return (
                           <tr
                             key={q.id}
-                            className={`hover:bg-slate-50 dark:hover:bg-dark-800/50 print:hover:bg-transparent ${
+                            onClick={() => {
+                              setSelectedQuestionForDrillDown(q)
+                              setIsDrillDownOpen(true)
+                            }}
+                            title={formatDual(
+                              "Respondentlar javoblari va ijobiy/salbiy tahlilni ko'rish uchun bosing",
+                              "Нажмите для просмотра ответов респондентов",
+                              "Click to inspect respondent answers"
+                            )}
+                            className={`cursor-pointer hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 print:hover:bg-transparent transition-all group ${
                               idx % 2 === 0 ? 'bg-white dark:bg-dark-900' : 'bg-slate-50/60 dark:bg-dark-800/40 print:bg-slate-50/30'
                             }`}
                           >
@@ -415,7 +458,15 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                               {q.subLabel || idx + 1}
                             </td>
                             <td className="p-2 sm:p-2.5 font-medium text-slate-800 dark:text-slate-200 print:text-black border-r border-slate-200 dark:border-dark-700 print:border-slate-300 leading-snug">
-                              {q.questionText}
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                                  {q.questionText}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-800 opacity-80 group-hover:opacity-100 transition-opacity print:hidden flex-shrink-0">
+                                  <Users size={10} />
+                                  <span>{formatDual("Tahlil", "Анализ", "Inspect")}</span>
+                                </span>
+                              </div>
                             </td>
                             <td className={`p-2 sm:p-2.5 text-center font-bold border-r border-slate-200 dark:border-dark-700 print:border-slate-300 ${st.c5 > 0 ? 'text-emerald-600 print:text-black' : 'text-slate-400'}`}>
                               {st.c5 || '-'}
@@ -435,7 +486,11 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                             <td className="p-2 sm:p-2.5 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-300 print:text-black border-r border-slate-200 dark:border-dark-700 print:border-slate-300">
                               {q.questionType === 'yesno' ? (
                                 <span>
-                                  <span className="text-emerald-600 print:text-black">Ha: {st.ha}</span> / <span className="text-red-500 print:text-black">Yo'q: {st.yoq}</span>
+                                  <span className="text-emerald-600 font-bold print:text-black">Yo'q: {st.yoq}</span>
+                                  {' / '}
+                                  <span className={`${st.ha > 0 ? 'text-red-600 font-black' : 'text-slate-400'} print:text-black`}>
+                                    Ha: {st.ha}
+                                  </span>
                                 </span>
                               ) : (
                                 '-'
@@ -445,10 +500,26 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                               {st.total}
                             </td>
                             <td className="p-2 sm:p-2.5 text-center font-black text-slate-900 dark:text-white print:text-black border-r border-slate-200 dark:border-dark-700 print:border-slate-300">
-                              {ratingCount > 0 ? avg.toFixed(2) : '-'}
+                              {st.evaluatedCount > 0 ? st.avg.toFixed(2) : '-'}
                             </td>
-                            <td className="p-2 sm:p-2.5 text-center font-black text-emerald-600 dark:text-emerald-400 print:text-black">
-                              {ratingCount > 0 ? `${pct.toFixed(0)}%` : q.questionType === 'yesno' && (st.ha + st.yoq > 0) ? `${((st.ha / (st.ha + st.yoq)) * 100).toFixed(0)}%` : '-'}
+                            <td className="p-2 sm:p-2.5 text-center font-black print:text-black">
+                              {st.evaluatedCount > 0 ? (
+                                <span
+                                  className={
+                                    st.pct >= 90
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : st.pct >= 75
+                                        ? 'text-blue-600 dark:text-blue-400'
+                                        : st.pct >= 60
+                                          ? 'text-amber-600 dark:text-amber-400'
+                                          : 'text-red-600 dark:text-red-400'
+                                  }
+                                >
+                                  {st.pct.toFixed(0)}%
+                                </span>
+                              ) : (
+                                '-'
+                              )}
                             </td>
                           </tr>
                         )
@@ -545,6 +616,17 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
         </div>
 
       </div>
+
+      {/* QUESTION DRILL-DOWN INSPECTION MODAL */}
+      <QuestionDrillDownModal
+        isOpen={isDrillDownOpen}
+        onClose={() => {
+          setIsDrillDownOpen(false)
+          setSelectedQuestionForDrillDown(null)
+        }}
+        question={selectedQuestionForDrillDown}
+        responses={responses}
+      />
     </div>
   )
 }
