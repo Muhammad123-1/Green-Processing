@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 import {
   Plus,
   Search,
@@ -92,6 +93,7 @@ const statusBadge = (status: string) => {
 }
 
 export default function InspectionsContent() {
+  const { lang, formatDual } = useLanguage()
   const [activeTab, setActiveTab] = useState<'journals' | 'inspections' | 'defects' | 'sqs'>('inspections')
 
   // Inspections state
@@ -415,18 +417,21 @@ export default function InspectionsContent() {
                 onClick={async () => {
                   const toastId = toast.loading("Excel jurnal yaratilmoqda...");
                   try {
-                    const res = await fetch('/api/reports/excel');
+                    const res = await fetch(`/api/reports/excel?lang=${lang || 'uz'}`);
                     if (res.ok) {
                       const blob = await res.blob();
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = `To'liq_Jurnal_${new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')}.xlsx`;
+                      const d = new Date();
+                      const dateTag = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                      const prefix = lang === 'ru' ? 'Polniy_Jurnal' : lang === 'en' ? 'Full_Registry' : 'Toliq_Jurnal';
+                      a.download = `${prefix}_${dateTag}.xlsx`;
                       a.click();
                       URL.revokeObjectURL(url);
-                      toast.success('Yuklab olindi', { id: toastId });
+                      toast.success(formatDual('Yuklab olindi', 'Успешно скачано', 'Downloaded successfully'), { id: toastId });
                     } else {
-                      toast.error('Xatolik yuz berdi', { id: toastId });
+                      toast.error(formatDual('Xatolik yuz berdi', 'Произошла ошибка', 'An error occurred'), { id: toastId });
                     }
                   } catch {
                     toast.error('Tarmoq xatosi', { id: toastId });

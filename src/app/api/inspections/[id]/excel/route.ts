@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import path from 'path'
-import fs from 'fs'
 import ExcelJS from 'exceljs'
-import { SHEET_CONFIGS } from '@/lib/sheetConfigs'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -23,224 +20,106 @@ export async function GET(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Inspection not found' }, { status: 404 })
     }
 
-    // Template path - use the original Excel file
-    const templatePath = path.join(process.cwd(), 'templates', 'ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx')
-
-    if (!fs.existsSync(templatePath)) {
-      return generateSimpleExcel(inspection)
-    }
-
-    // Load the original template
-    const workbook = new ExcelJS.Workbook()
-    await workbook.xlsx.readFile(templatePath)
-
-    // Clean sheet name
-    let sheetNameStr = inspection.product?.name || inspection.sheetName || 'Sheet1';
-    sheetNameStr = sheetNameStr.substring(0, 31).replace(/[\[\]\*\/\\\?]/g, '');
-
-    let worksheet = workbook.getWorksheet(sheetNameStr);
-    
-    // If doesn't exist, create it from the first sheet
-    if (!worksheet) {
-      const modelSheet = workbook.worksheets[0];
-      const newWs = workbook.addWorksheet(sheetNameStr);
-      worksheet = newWs;
-      
-      modelSheet.columns.forEach((col, i) => {
-        newWs.getColumn(i + 1).width = col.width;
-      });
-
-      for (let i = 1; i <= 2; i++) {
-        const srcRow = modelSheet.getRow(i);
-        const destRow = newWs.getRow(i);
-        srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          const newCell = destRow.getCell(colNumber);
-          newCell.value = cell.value;
-          newCell.style = cell.style;
-        });
-        destRow.height = srcRow.height;
-      }
-
-      // Override headers based on SHEET_CONFIGS
-      const configObj = SHEET_CONFIGS[sheetNameStr];
-      if (configObj && configObj.customFields) {
-        const row1 = newWs.getRow(1);
-        const row2 = newWs.getRow(2);
-        
-        const cell2 = row2.getCell(3);
-        const val2 = cell2.value ? cell2.value.toString() : '';
-        if (val2.includes('СЫРЬЯ')) {
-          cell2.value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
-        } else {
-          const cell1 = row1.getCell(3);
-          const val1 = cell1.value ? cell1.value.toString() : '';
-          if (val1.includes('СЫРЬЯ')) {
-            cell1.value = `Наименование основного СЫРЬЯ - ${sheetNameStr}`;
-          }
-        }
-
-        configObj.customFields.forEach((cf: any) => {
-          if (row2.getCell(cf.col).value) {
-            row2.getCell(cf.col).value = cf.label;
-          } else {
-            row1.getCell(cf.col).value = cf.label;
-          }
-        });
-        row1.commit();
-        row2.commit();
-      }
-    }
-
-    // Keep ONLY this newly selected/created worksheet to keep the file clean
-    const allWorksheets = workbook.worksheets;
-    for (const ws of allWorksheets) {
-      if (ws.id !== worksheet.id) {
-        workbook.removeWorksheet(ws.id);
-      }
-    }
-
-    const date = new Date(inspection.inspectionDate);
-    const dateFormatted = date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-
-    // Find the first empty row
-    let targetRow = 3;
-    while (worksheet.getCell(targetRow, 2).value) {
-      targetRow++;
-    }
-
-    const row = worksheet.getRow(targetRow);
-    const config = SHEET_CONFIGS[worksheet.name];
-
-    if (config) {
-      // Map standard fields based on config
-      Object.entries(config.standardFields).forEach(([colStr, fieldName]) => {
-        const col = parseInt(colStr);
-        let value: any = '-';
-        switch (fieldName) {
-          case 'auto-number': value = targetRow - 2; break;
-          case 'date': value = dateFormatted; break;
-          case 'productName': value = inspection.product.name; break;
-          case 'supplierName': value = inspection.supplier.name; break;
-          case 'temperature': value = inspection.temperature != null ? inspection.temperature : '-'; break;
-          case 'packagingCondition': value = inspection.packaging || 'удовлетворительно'; break;
-          case 'certificate': value = inspection.supplier.certificate || '-'; break;
-          case 'batchNumber': value = inspection.batchNumber; break;
-          case 'statusText': value = inspection.status === 'ACCEPTED' ? 'допущено' : (inspection.status === 'REJECTED' ? 'брак' : 'условно'); break;
-          case 'quantitySklad': value = inspection.status === 'ACCEPTED' ? inspection.quantity : '-'; break;
-          case 'quantityTseh': value = '-'; break;
-          case 'rejectActNumber': value = inspection.status !== 'ACCEPTED' ? (inspection.invoiceNumber || 'Акт забраковки') : '-'; break;
-          case 'rejectDate': value = inspection.status !== 'ACCEPTED' ? dateFormatted : '-'; break;
-          case 'inspector': value = inspection.inspector || '-'; break;
-          case 'gost': value = inspection.product.gost || '-'; break;
-          case 'quantity': value = inspection.quantity; break;
-        }
-        row.getCell(col).value = value;
-      });
-
-      // Map custom fields
-      let parsedCustomFields: Record<string, string> = {};
-      try {
-        if (inspection.customFields) parsedCustomFields = JSON.parse(inspection.customFields);
-      } catch (e) {}
-
-      config.customFields.forEach(cf => {
-        row.getCell(cf.col).value = parsedCustomFields[cf.key] || cf.default;
-      });
-    }
-
-    row.commit();
-
-    // Save to buffer
-    const buffer = await workbook.xlsx.writeBuffer()
-
-    const filename = `Akt_${inspection.actNumber.replace(/[^a-zA-Z0-9-]/g, '_')}_${dateFormatted.replace(/\./g, '-')}.xlsx`
-
-    return new NextResponse(buffer, {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
-      },
-    })
+    return generateInspectionExcel(inspection)
   } catch (error) {
     console.error('Excel generation error:', error)
     return NextResponse.json({ error: 'Failed to generate Excel' }, { status: 500 })
   }
 }
 
-async function generateSimpleExcel(inspection: {
-  id: number
-  actNumber: string
-  inspectionDate: Date | string
-  batchNumber: string
-  quantity: number
-  quantityUnit: string
-  temperature: number | null
-  temperatureUnit: string
-  packaging: string | null
-  color: string | null
-  smell: string | null
-  appearance: string | null
-  conclusion: string
-  status: string
-  inspector: string | null
-  vehicleNumber: string | null
-  invoiceNumber: string | null
-  notes: string | null
-  supplier: { name: string }
-  product: { name: string }
-}) {
+async function generateInspectionExcel(inspection: any) {
   const workbook = new ExcelJS.Workbook()
-  const worksheet = workbook.addWorksheet('Akt')
+  workbook.creator = 'Green Processing ERP'
+  workbook.lastModifiedBy = 'Green Processing Sifat Nazorati'
+  workbook.created = new Date()
+  workbook.modified = new Date()
+
+  const worksheet = workbook.addWorksheet(`Akt_${inspection.actNumber || inspection.id}`)
+
+  const isAccepted = inspection.status === 'ACCEPTED'
+  const isRejected = inspection.status === 'REJECTED'
 
   const date = new Date(inspection.inspectionDate)
-  const dateFormatted = date.toLocaleDateString('ru-RU')
+  const dateFormatted = date.toLocaleDateString('ru-RU', {
+    day: '2-digit', month: '2-digit', year: 'numeric'
+  })
 
-  worksheet.mergeCells('A1:F1')
-  const headerCell = worksheet.getCell('A1')
-  headerCell.value = 'KIRUVCHI XOM ASHYO QABUL QILISH AKTI'
-  headerCell.font = { bold: true, size: 14 }
-  headerCell.alignment = { horizontal: 'center' }
+  // Title
+  worksheet.mergeCells('A1:D1')
+  const titleCell = worksheet.getCell('A1')
+  titleCell.value = 'KIRUVCHI XOMASHYO SIFAT NAZORATI DALOLATNOMASI'
+  titleCell.font = { name: 'Calibri', bold: true, size: 14, color: { argb: 'FFFFFFFF' } }
+  titleCell.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: isAccepted ? 'FF15803D' : (isRejected ? 'FFB91C1C' : 'FFB45309') }
+  }
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  worksheet.getRow(1).height = 36
 
-  const fields = [
-    ['Akt raqami:', inspection.actNumber],
+  const thinBorder: Partial<ExcelJS.Borders> = {
+    top: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+    left: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+    bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+    right: { style: 'thin', color: { argb: 'FFE5E7EB' } },
+  }
+
+  const fields: [string, any][] = [
+    ['Akt raqami:', inspection.actNumber || `ACT-${inspection.id.toString().padStart(4, '0')}`],
     ['Sana:', dateFormatted],
-    ['Ta\'minotchi:', inspection.supplier.name],
-    ['Mahsulot:', inspection.product.name],
-    ['Partiya raqami:', inspection.batchNumber],
-    ['Miqdor:', `${inspection.quantity} ${inspection.quantityUnit}`],
-    ['Harorat:', inspection.temperature != null ? `${inspection.temperature} ${inspection.temperatureUnit}` : '-'],
-    ['Qadoqlash:', inspection.packaging || '-'],
-    ['Rang:', inspection.color || '-'],
-    ['Hid:', inspection.smell || '-'],
-    ['Ko\'rinish:', inspection.appearance || '-'],
-    ['Xulosa:', inspection.conclusion],
-    ['Natija:', inspection.status === 'ACCEPTED' ? 'Qabul qilindi' : 'Rad etildi'],
-    ['Nazoratchi:', inspection.inspector || '-'],
-    ['Izoh:', inspection.notes || '-'],
+    ['Ta\'minotchi (Yetkazib beruvchi):', inspection.supplier?.name || '-'],
+    ['Mahsulot nomi:', inspection.product?.name || inspection.sheetName || '-'],
+    ['Partiya raqami:', inspection.batchNumber || '-'],
+    ['Miqdor (Hajmi):', `${inspection.quantity} ${inspection.quantityUnit || 'kg'}`],
+    ['O\'lchangan harorat:', inspection.temperature != null ? `${inspection.temperature} ${inspection.temperatureUnit || '°C'}` : '-'],
+    ['Qadoqlash holati:', inspection.packaging || 'Qoniqarli'],
+    ['Rang ko\'rsatkichi:', inspection.color || '-'],
+    ['Hid va ta\'m:', inspection.smell || '-'],
+    ['Tashqi ko\'rinishi:', inspection.appearance || '-'],
+    ['Qabul holati (Status):', isAccepted ? 'QABUL QILINDI' : (isRejected ? 'RAD ETILDI (BRAK)' : 'SHARTLI QABUL')],
+    ['Tekshiruvchi inspektor:', inspection.inspector || inspection.user?.name || '-'],
+    ['Sifat xulosasi:', inspection.conclusion || '-'],
+    ['Qo\'shimcha izoh va qaydlar:', inspection.notes || '-'],
   ]
 
   fields.forEach(([label, value], index) => {
-    const row = worksheet.getRow(index + 3)
-    row.getCell(1).value = label
-    row.getCell(1).font = { bold: true }
-    row.getCell(2).value = value
-    row.height = 20
+    const rowNum = index + 3
+    const row = worksheet.getRow(rowNum)
+    row.height = 24
+
+    const c1 = row.getCell(1)
+    c1.value = label
+    c1.font = { name: 'Calibri', bold: true, size: 10, color: { argb: 'FF374151' } }
+    c1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }
+    c1.border = thinBorder
+    c1.alignment = { vertical: 'middle' }
+
+    worksheet.mergeCells(`B${rowNum}:D${rowNum}`)
+    const c2 = row.getCell(2)
+    c2.value = value
+    c2.font = { name: 'Calibri', size: 10 }
+    c2.border = thinBorder
+    c2.alignment = { vertical: 'middle' }
+
+    if (label.includes('Status')) {
+      c2.font = { name: 'Calibri', bold: true, size: 11, color: { argb: isAccepted ? 'FF166534' : (isRejected ? 'FF991B1B' : 'FF92400E') } }
+      c2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isAccepted ? 'FFDCFCE7' : (isRejected ? 'FFFEE2E2' : 'FFFEF3C7') } }
+    }
   })
 
-  worksheet.getColumn(1).width = 25
-  worksheet.getColumn(2).width = 50
+  worksheet.getColumn(1).width = 30
+  worksheet.getColumn(2).width = 25
+  worksheet.getColumn(3).width = 25
+  worksheet.getColumn(4).width = 25
 
   const buffer = await workbook.xlsx.writeBuffer()
-  const filename = `Akt_${inspection.actNumber}.xlsx`
+  const actName = (inspection.actNumber || `ACT-${inspection.id}`).replace(/[^a-zA-Z0-9_-]/g, '_')
+  const filename = `Akt_${actName}.xlsx`
 
   return new NextResponse(buffer, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+      'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })
 }

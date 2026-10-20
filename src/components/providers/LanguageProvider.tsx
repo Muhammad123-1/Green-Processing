@@ -498,30 +498,52 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (saved === 'uz' || saved === 'ru' || saved === 'en') {
       setLangState(saved)
       setDirectorLangState(saved)
+      try {
+        document.cookie = `language=${saved}; path=/; max-age=31536000; SameSite=Lax`
+        document.cookie = `director_lang=${saved}; path=/; max-age=31536000; SameSite=Lax`
+      } catch (e) {}
     } else if (saved === 'ru_en') {
       setLangState('ru')
       setDirectorLangState('ru')
       localStorage.setItem('language', 'ru')
       localStorage.setItem('director_lang', 'ru')
+      try {
+        document.cookie = `language=ru; path=/; max-age=31536000; SameSite=Lax`
+        document.cookie = `director_lang=ru; path=/; max-age=31536000; SameSite=Lax`
+      } catch (e) {}
     } else if (saved === 'uz_en') {
       setLangState('en')
       setDirectorLangState('en')
       localStorage.setItem('language', 'en')
       localStorage.setItem('director_lang', 'en')
+      try {
+        document.cookie = `language=en; path=/; max-age=31536000; SameSite=Lax`
+        document.cookie = `director_lang=en; path=/; max-age=31536000; SameSite=Lax`
+      } catch (e) {}
     } else {
       setLangState('uz')
       setDirectorLangState('uz')
       localStorage.setItem('language', 'uz')
       localStorage.setItem('director_lang', 'uz')
+      try {
+        document.cookie = `language=uz; path=/; max-age=31536000; SameSite=Lax`
+        document.cookie = `director_lang=uz; path=/; max-age=31536000; SameSite=Lax`
+      } catch (e) {}
     }
   }, [])
 
   const handleSetLang = (newLang: Language) => {
     setLangState(newLang)
     localStorage.setItem('language', newLang)
+    try {
+      document.cookie = `language=${newLang}; path=/; max-age=31536000; SameSite=Lax`
+    } catch (e) {}
     if (newLang === 'uz' || newLang === 'ru' || newLang === 'en') {
       setDirectorLangState(newLang)
       localStorage.setItem('director_lang', newLang)
+      try {
+        document.cookie = `director_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`
+      } catch (e) {}
     }
   }
 
@@ -530,6 +552,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('director_lang', newLang)
     setLangState(newLang)
     localStorage.setItem('language', newLang)
+    try {
+      document.cookie = `language=${newLang}; path=/; max-age=31536000; SameSite=Lax`
+      document.cookie = `director_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`
+    } catch (e) {}
   }
 
   const t = (key: TranslationKey | string, fallback?: string): string => {

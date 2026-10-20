@@ -120,7 +120,7 @@ interface YearlyStats {
 
 export default function ReportsPage() {
   const now = new Date()
-  const { formatDual } = useLanguage()
+  const { formatDual, lang } = useLanguage()
   const [viewType, setViewType] = useState<'monthly' | 'yearly'>('monthly')
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
@@ -176,7 +176,7 @@ export default function ReportsPage() {
             <span>{formatDual("Chop etish", "Печать", "Print")}</span>
           </button>
           <a
-            href="/api/reports/excel"
+            href={`/api/reports/excel?lang=${lang || 'uz'}`}
             download
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
           >
@@ -290,7 +290,7 @@ function MonthlyReport({
   month: number
   onPreviewImage: (url: string) => void
 }) {
-  const { formatDual } = useLanguage()
+  const { formatDual, lang } = useLanguage()
   const acceptRate = data.acceptRate
 
   const statusPieData = [
@@ -306,28 +306,28 @@ function MonthlyReport({
         <StatCard
           icon={<BarChart3 className="text-blue-500" size={20} />}
           label={formatDual("Jami aktlar", "Всего актов", "Total acts")}
-          value={`${data.total} ta`}
+          value={`${data.total} ${formatDual('ta', 'шт', 'pcs')}`}
           subtext={`${(data.totalQuantity / 1000).toFixed(1)} tn ${formatDual("xomashyo", "сырья", "raw material")}`}
           color="blue"
         />
         <StatCard
           icon={<CheckCircle className="text-emerald-500" size={20} />}
           label={formatDual("Qabul qilindi", "Принято", "Accepted")}
-          value={`${data.accepted} ta`}
+          value={`${data.accepted} ${formatDual('ta', 'шт', 'pcs')}`}
           subtext={`${acceptRate}% ${formatDual("qabul darajasi", "приемка", "accept rate")}`}
           color="emerald"
         />
         <StatCard
           icon={<XCircle className="text-red-500" size={20} />}
           label={formatDual("Rad etildi", "Отклонено", "Rejected")}
-          value={`${data.rejected} ta`}
+          value={`${data.rejected} ${formatDual('ta', 'шт', 'pcs')}`}
           subtext={`${data.total > 0 ? ((data.rejected / data.total) * 100).toFixed(1) : 0}% ${formatDual("brak / qaytarish", "брак", "defect")}`}
           color="red"
         />
         <StatCard
           icon={<AlertTriangle className="text-amber-500" size={20} />}
           label={formatDual("Shartli qabul", "Условно", "Conditional")}
-          value={`${data.conditional} ta`}
+          value={`${data.conditional} ${formatDual('ta', 'шт', 'pcs')}`}
           subtext={formatDual("Sexda qayta ishlash", "Переработка", "Processing")}
           color="amber"
         />
@@ -360,15 +360,15 @@ function MonthlyReport({
 
           <div className="mt-5 pt-4 border-t border-slate-100 dark:border-dark-800 grid grid-cols-3 gap-2 text-center">
             <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
-              <span className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400 block">Qabul</span>
+              <span className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400 block">{formatDual("Qabul", "Принято", "Accepted")}</span>
               <span className="text-base font-black text-emerald-600 dark:text-emerald-300">{data.accepted}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
-              <span className="text-[10px] font-bold uppercase text-red-700 dark:text-red-400 block">Rad</span>
+              <span className="text-[10px] font-bold uppercase text-red-700 dark:text-red-400 block">{formatDual("Rad", "Отклонено", "Rejected")}</span>
               <span className="text-base font-black text-red-600 dark:text-red-300">{data.rejected}</span>
             </div>
             <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
-              <span className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400 block">Shartli</span>
+              <span className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400 block">{formatDual("Shartli", "Условно", "Conditional")}</span>
               <span className="text-base font-black text-amber-600 dark:text-amber-300">{data.conditional}</span>
             </div>
           </div>
@@ -395,20 +395,20 @@ function MonthlyReport({
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value} ta`, 'Soni']} />
+                <Tooltip formatter={(value, name) => [`${value} ${formatDual('ta', 'шт', 'pcs')}`, name]} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="flex items-center gap-3 text-xs font-semibold mt-2">
             <span className="flex items-center gap-1 text-emerald-600">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Qabul ({data.accepted})
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> {formatDual("Qabul", "Принято", "Accepted")} ({data.accepted})
             </span>
             <span className="flex items-center gap-1 text-red-500">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Rad ({data.rejected})
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> {formatDual("Rad", "Отклонено", "Rejected")} ({data.rejected})
             </span>
             {data.conditional > 0 && (
               <span className="flex items-center gap-1 text-amber-500">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Shartli ({data.conditional})
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> {formatDual("Shartli", "Условно", "Conditional")} ({data.conditional})
               </span>
             )}
           </div>
@@ -668,7 +668,7 @@ function YearlyReport({
   data: YearlyStats
   onPreviewImage: (url: string) => void
 }) {
-  const { formatDual } = useLanguage()
+  const { formatDual, lang } = useLanguage()
   const summary = data.yearlySummary || {
     total: data.monthlyData.reduce((s, m) => s + m.total, 0),
     accepted: data.monthlyData.reduce((s, m) => s + m.accepted, 0),
@@ -733,11 +733,11 @@ function YearlyReport({
               <Tooltip
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 formatter={(val, name) => [
-                  `${val} ta`,
-                  name === 'accepted' ? 'Qabul' : name === 'rejected' ? 'Rad etildi' : 'Shartli'
+                  `${val} ${formatDual('ta', 'шт', 'pcs')}`,
+                  name === 'accepted' ? formatDual('Qabul', 'Принято', 'Accepted') : name === 'rejected' ? formatDual('Rad etildi', 'Отклонено', 'Rejected') : formatDual('Shartli', 'Условно', 'Conditional')
                 ]}
               />
-              <Legend formatter={(val) => val === 'accepted' ? 'Qabul' : val === 'rejected' ? 'Rad etildi' : 'Shartli'} />
+              <Legend formatter={(val) => val === 'accepted' ? formatDual('Qabul', 'Принято', 'Accepted') : val === 'rejected' ? formatDual('Rad etildi', 'Отклонено', 'Rejected') : formatDual('Shartli', 'Условно', 'Conditional')} />
               <Bar dataKey="accepted" fill="#10b981" radius={[4, 4, 0, 0]} name="accepted" />
               <Bar dataKey="rejected" fill="#ef4444" radius={[4, 4, 0, 0]} name="rejected" />
               <Bar dataKey="conditional" fill="#f59e0b" radius={[4, 4, 0, 0]} name="conditional" />

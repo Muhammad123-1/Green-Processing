@@ -179,8 +179,28 @@ export default function DirectorPage() {
   const details = data?.details || {}
   const charts = data?.charts || {}
   const dailyTrends: any[] = charts.dailyTrends || []
-  const stockDistribution: any[] = charts.stockDistribution || []
-  const shiftComparison: any[] = charts.shiftComparison || []
+  const stockDistribution: any[] = useMemo(() => {
+    const list: any[] = charts.stockDistribution || []
+    return list.map((item: any) => {
+      let localizedName = item.name
+      if (item.name === "Yetarli") localizedName = formatDual("Yetarli", "В норме", "Sufficient")
+      else if (item.name === "Kam qolgan") localizedName = formatDual("Kam qolgan", "Мало", "Low stock")
+      else if (item.name === "Tugagan") localizedName = formatDual("Tugagan", "Закончилось", "Out of stock")
+      return {
+        ...item,
+        name: localizedName,
+      }
+    })
+  }, [charts.stockDistribution, formatDual])
+
+  const shiftComparison: any[] = useMemo(() => {
+    const list: any[] = charts.shiftComparison || []
+    return list.map((item: any) => ({
+      ...item,
+      shift: item.shift?.replace('1-Smena', formatDual('1-smena', '1-я смена', 'Shift 1')).replace('2-Smena', formatDual('2-smena', '2-я смена', 'Shift 2')) || item.shift,
+    }))
+  }, [charts.shiftComparison, formatDual])
+
   const employeeActivityChart: any[] = charts.employeeActivityChart || []
   const operationsSummary = data?.operationsSummary
 
@@ -1024,6 +1044,10 @@ export default function DirectorPage() {
                         ))}
                       </Pie>
                       <Tooltip
+                        formatter={(val: any, name: any) => [
+                          `${val} ${formatDual('ta', 'позиций', 'items')}`,
+                          name,
+                        ]}
                         contentStyle={{
                           backgroundColor: '#1e293b',
                           borderColor: '#334155',
@@ -1182,7 +1206,7 @@ export default function DirectorPage() {
                         fontSize: '12px',
                       }}
                       formatter={(val: any, name: any) => [
-                        `${val} ta`,
+                        `${val} ${formatDual('ta', 'операций', 'actions')}`,
                         name === 'actions' ? formatDual("Jami amallar", "Всего действий", "Total actions") : name,
                       ]}
                     />
