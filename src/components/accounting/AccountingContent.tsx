@@ -94,7 +94,7 @@ export default function AccountingContent() {
             onClick={() => setShowTxModal(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20 transition-all"
           >
-            <Plus size={18} /> Yangi Tranzaksiya
+            <Plus size={18} /> {formatDual("Yangi Tranzaksiya", "Новая транзакция", "New Transaction")}
           </button>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function AccountingContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5 rounded-2xl border border-dark-700 bg-dark-900/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 font-medium">Jami Qoldiq (Balans)</span>
+            <span className="text-slate-400 font-medium">{formatDual("Jami Qoldiq (Balans)", "Общий остаток (Баланс)", "Total Balance")}</span>
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
               <Wallet size={20} />
             </div>
@@ -113,24 +113,24 @@ export default function AccountingContent() {
 
         <div className="card p-5 rounded-2xl border border-dark-700 bg-dark-900/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 font-medium">Bizga to'lashlari kerak (Haqdorlik)</span>
+            <span className="text-slate-400 font-medium">{formatDual("Bizga to'lashlari kerak (Haqdorlik)", "Нам должны (Дебиторка)", "Receivables")}</span>
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
               <TrendingUp size={20} />
             </div>
           </div>
           <h2 className="text-2xl font-bold text-emerald-400 font-mono">{totalReceivables.toLocaleString()} UZS</h2>
-          <p className="text-xs text-slate-500 mt-1">Sotuv bo'yicha qarzdorliklar</p>
+          <p className="text-xs text-slate-500 mt-1">{formatDual("Sotuv bo'yicha qarzdorliklar", "Задолженность по продажам", "Sales debt")}</p>
         </div>
 
         <div className="card p-5 rounded-2xl border border-dark-700 bg-dark-900/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 font-medium">Biz to'lashimiz kerak (Qarzdorlik)</span>
+            <span className="text-slate-400 font-medium">{formatDual("Biz to'lashimiz kerak (Qarzdorlik)", "Мы должны (Кредиторка)", "Payables")}</span>
             <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
               <TrendingDown size={20} />
             </div>
           </div>
           <h2 className="text-2xl font-bold text-red-400 font-mono">{totalPayables.toLocaleString()} UZS</h2>
-          <p className="text-xs text-slate-500 mt-1">Xomashyo va xizmatlar bo'yicha qarzlar</p>
+          <p className="text-xs text-slate-500 mt-1">{formatDual("Xomashyo va xizmatlar bo'yicha qarzlar", "Долги за сырье и услуги", "Supplier debt")}</p>
         </div>
       </div>
 
@@ -144,7 +144,7 @@ export default function AccountingContent() {
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
           }`}
         >
-          <Landmark size={16} /> Hisoblar / Kassa
+          <Landmark size={16} /> {formatDual("Hisoblar va Kassa", "Счета и Касса", "Accounts & Cash")}
         </button>
         <button
           onClick={() => setActiveTab('transactions')}
@@ -154,7 +154,7 @@ export default function AccountingContent() {
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
           }`}
         >
-          <TrendingUp size={16} /> Daromad / Xarajat
+          <TrendingUp size={16} /> {formatDual("Daromad va Xarajat", "Доходы и Расходы", "Income & Expense")}
         </button>
         <button
           onClick={() => setActiveTab('invoices')}
@@ -164,7 +164,7 @@ export default function AccountingContent() {
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
           }`}
         >
-          <FileText size={16} /> Invoyslar (Qarzlar)
+          <FileText size={16} /> {formatDual("Invoyslar (Qarzlar)", "Счета-фактуры (Долги)", "Invoices")}
         </button>
       </div>
 

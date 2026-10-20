@@ -105,8 +105,11 @@ const navSections = [
 
 export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { userRole?: string, userName?: string }) {
   const pathname = usePathname()
-  const { t, formatDual } = useLanguage()
+  const { t, formatDual, lang } = useLanguage()
   const { isOpen, close } = useSidebar()
+
+  const translate = t
+  const formatText = formatDual
 
   return (
     <>
@@ -128,7 +131,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
           </div>
           <div>
             <h1 className="text-sm font-bold text-white leading-tight">Green Processing</h1>
-            <p className="text-xs text-slate-500 leading-tight">{formatDual('ERP Tizimi', 'ERP Система', 'ERP System')}</p>
+            <p className="text-xs text-slate-500 leading-tight">{formatText('ERP Tizimi', 'ERP Система', 'ERP System')}</p>
           </div>
         </div>
       </div>
@@ -167,7 +170,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
           return (
             <div key={idx} className="space-y-1">
               <h3 className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                {t(section.key, section.title)}
+                {translate(section.key, section.title)}
               </h3>
               {visibleItems.map((item) => {
                 const Icon = item.icon
@@ -185,7 +188,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
                                  transition-all duration-200 my-2"
                     >
                       <Icon size={18} />
-                      <span>{t(item.key)}</span>
+                      <span>{translate(item.key)}</span>
                     </Link>
                   )
                 }
@@ -198,7 +201,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
                     className={`sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${isActive ? 'bg-dark-800 text-white' : 'text-slate-400 hover:bg-dark-800 hover:text-white'}`}
                   >
                     <Icon size={18} className={isActive ? 'text-blue-400' : ''} />
-                    <span className="flex-1">{t(item.key)}</span>
+                    <span className="flex-1">{translate(item.key)}</span>
                     {isActive && <ChevronRight size={14} className="text-blue-400" />}
                   </Link>
                 )
@@ -216,13 +219,17 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
           </div>
           <div>
             <p className="text-xs font-medium text-slate-300">{userName}</p>
-            <p className="text-[10px] text-slate-500">{userRole}</p>
+            <p className="text-[10px] text-slate-500">
+              {userRole === 'DIRECTOR'
+                ? (lang === 'ru' ? 'Директор' : lang === 'en' ? 'Director' : 'Direktor') 
+                : userRole}
+            </p>
           </div>
         </div>
         <button 
           onClick={() => logout()} 
           className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors"
-          title={t('logout')}
+          title={translate('logout')}
         >
           <LogOut size={16} />
         </button>

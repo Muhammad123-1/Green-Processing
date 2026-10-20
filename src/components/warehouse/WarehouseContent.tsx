@@ -555,7 +555,7 @@ export default function WarehouseContent() {
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <Package size={14} />
-                {lang === 'ru' ? 'Управление складом (WMS)' : 'Omborxona Boshqaruvi (WMS)'}
+                {formatDual('Omborxona Boshqaruvi (WMS)', 'Управление складом (WMS)', 'Warehouse Management (WMS)')}
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-emerald-300 tracking-tight">

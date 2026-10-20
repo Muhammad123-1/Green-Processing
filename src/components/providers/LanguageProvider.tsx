@@ -20,9 +20,9 @@ export interface DirectorLanguageOption {
 }
 
 export const LANGUAGE_OPTIONS: LanguageOption[] = [
-  { id: 'uz_ru', label: "O'zbekcha / Русский", short: 'UZ / RU', badge: 'O\'zbek / Rus' },
-  { id: 'uz_en', label: "O'zbekcha / English", short: 'UZ / EN', badge: 'O\'zbek / Ingliz' },
-  { id: 'ru_en', label: "Русский / English", short: 'RU / EN', badge: 'Rus / Ingliz' },
+  { id: 'uz', label: "O'zbekcha", short: 'UZ', badge: "O'zbekcha" },
+  { id: 'ru', label: "Русский", short: 'RU', badge: "Русский" },
+  { id: 'en', label: "English", short: 'EN', badge: "English" },
 ]
 
 export const DIRECTOR_LANGUAGE_OPTIONS: DirectorLanguageOption[] = [
@@ -184,6 +184,7 @@ const translations = {
     orders: 'Заказы',
     production: 'Производство',
     kitchen: 'Кухня персонала',
+    surveys: 'Опросы',
     products: 'Продукты',
     suppliers: 'Поставщики',
     supervisors: 'Супервайзеры',
@@ -326,6 +327,7 @@ const translations = {
     orders: 'Orders',
     production: 'Production',
     kitchen: 'Staff Kitchen',
+    surveys: 'Surveys',
     products: 'Products',
     suppliers: 'Suppliers',
     supervisors: 'Supervisors',
@@ -470,6 +472,7 @@ interface LanguageContextType {
   directorLang: DirectorLanguage
   setDirectorLang: (lang: DirectorLanguage) => void
   t: (key: TranslationKey | string, fallback?: string) => string
+  tDirector: (key: TranslationKey | string, fallback?: string) => string
   formatDual: (uz: string, ru: string, en?: string) => string
   formatDirector: (uz: string, ru: string, en?: string) => string
 }
@@ -487,48 +490,63 @@ function combineTexts(text1: string | undefined, text2: string | undefined, fall
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Language>('uz_ru')
+  const [lang, setLangState] = useState<Language>('uz')
   const [directorLang, setDirectorLangState] = useState<DirectorLanguage>('uz')
 
   useEffect(() => {
     const saved = localStorage.getItem('language') as Language
-    if (saved && (saved === 'uz_ru' || saved === 'uz_en' || saved === 'ru_en')) {
-      setLang(saved)
-    } else if (saved === 'uz') {
-      setLang('uz_ru')
-    } else if (saved === 'ru') {
-      setLang('ru_en')
-    } else if (saved === 'en') {
-      setLang('uz_en')
+    if (saved === 'uz' || saved === 'ru' || saved === 'en') {
+      setLangState(saved)
+      setDirectorLangState(saved)
+    } else if (saved === 'ru_en') {
+      setLangState('ru')
+      setDirectorLangState('ru')
+      localStorage.setItem('language', 'ru')
+      localStorage.setItem('director_lang', 'ru')
+    } else if (saved === 'uz_en') {
+      setLangState('en')
+      setDirectorLangState('en')
+      localStorage.setItem('language', 'en')
+      localStorage.setItem('director_lang', 'en')
     } else {
-      // Boshlang'ich holat: sayt ochilishi bilan o'zbek/rus tilida bo'ladi
-      setLang('uz_ru')
-      localStorage.setItem('language', 'uz_ru')
-    }
-
-    const savedDir = localStorage.getItem('director_lang') as DirectorLanguage
-    if (savedDir && (savedDir === 'uz' || savedDir === 'ru' || savedDir === 'en')) {
-      setDirectorLangState(savedDir)
-    } else {
-      const defaultDir: DirectorLanguage = saved?.startsWith('ru') ? 'ru' : saved?.endsWith('en') ? 'en' : 'uz'
-      setDirectorLangState(defaultDir)
-      localStorage.setItem('director_lang', defaultDir)
+      setLangState('uz')
+      setDirectorLangState('uz')
+      localStorage.setItem('language', 'uz')
+      localStorage.setItem('director_lang', 'uz')
     }
   }, [])
 
   const handleSetLang = (newLang: Language) => {
-    setLang(newLang)
+    setLangState(newLang)
     localStorage.setItem('language', newLang)
+    if (newLang === 'uz' || newLang === 'ru' || newLang === 'en') {
+      setDirectorLangState(newLang)
+      localStorage.setItem('director_lang', newLang)
+    }
   }
 
   const setDirectorLang = (newLang: DirectorLanguage) => {
     setDirectorLangState(newLang)
     localStorage.setItem('director_lang', newLang)
+    setLangState(newLang)
+    localStorage.setItem('language', newLang)
   }
 
   const t = (key: TranslationKey | string, fallback?: string): string => {
     const k = key as string
     const fallbackVal = fallback || k
+
+    if (lang === 'ru') {
+      return (translations.ru as Record<string, string>)[k] || (translations.uz as Record<string, string>)[k] || fallbackVal
+    }
+
+    if (lang === 'en') {
+      return (translations.en as Record<string, string>)[k] || (translations.uz as Record<string, string>)[k] || fallbackVal
+    }
+
+    if (lang === 'uz') {
+      return (translations.uz as Record<string, string>)[k] || fallbackVal
+    }
 
     if (lang === 'uz_ru') {
       const uzVal = (translations.uz as Record<string, string>)[k]
@@ -548,40 +566,25 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return combineTexts(ruVal, enVal, fallbackVal)
     }
 
-    if (lang === 'uz') {
-      return (translations.uz as Record<string, string>)[k] || fallbackVal
-    }
-
-    if (lang === 'ru') {
-      return (translations.ru as Record<string, string>)[k] || fallbackVal
-    }
-
-    if (lang === 'en') {
-      return (translations.en as Record<string, string>)[k] || fallbackVal
-    }
-
     return fallbackVal
   }
 
   const formatDual = (uz: string, ru: string, en?: string): string => {
     const enText = en || ru
+    if (lang === 'uz') return uz
+    if (lang === 'ru') return ru || uz
+    if (lang === 'en') return enText || ru || uz
     if (lang === 'uz_ru') return combineTexts(uz, ru, uz)
     if (lang === 'uz_en') return combineTexts(uz, enText, uz)
     if (lang === 'ru_en') return combineTexts(ru, enText, ru)
-    if (lang === 'uz') return uz
-    if (lang === 'ru') return ru
-    if (lang === 'en') return enText
-    return combineTexts(uz, ru, uz)
-  }
-
-  const formatDirector = (uz: string, ru: string, en?: string): string => {
-    if (directorLang === 'ru') return ru || uz
-    if (directorLang === 'en') return en || ru || uz
     return uz
   }
 
+  const formatDirector = formatDual
+  const tDirector = t
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, directorLang, setDirectorLang, t, formatDual, formatDirector }}>
+    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, directorLang, setDirectorLang, t, tDirector, formatDual, formatDirector }}>
       {children}
     </LanguageContext.Provider>
   )
