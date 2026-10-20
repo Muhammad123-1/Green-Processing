@@ -3,9 +3,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
 export type Language = 'uz_ru' | 'uz_en' | 'ru_en' | 'uz' | 'ru' | 'en'
+export type DirectorLanguage = 'uz' | 'ru' | 'en'
 
 export interface LanguageOption {
   id: Language
+  label: string
+  short: string
+  badge: string
+}
+
+export interface DirectorLanguageOption {
+  id: DirectorLanguage
   label: string
   short: string
   badge: string
@@ -15,6 +23,12 @@ export const LANGUAGE_OPTIONS: LanguageOption[] = [
   { id: 'uz_ru', label: "O'zbekcha / Русский", short: 'UZ / RU', badge: 'O\'zbek / Rus' },
   { id: 'uz_en', label: "O'zbekcha / English", short: 'UZ / EN', badge: 'O\'zbek / Ingliz' },
   { id: 'ru_en', label: "Русский / English", short: 'RU / EN', badge: 'Rus / Ingliz' },
+]
+
+export const DIRECTOR_LANGUAGE_OPTIONS: DirectorLanguageOption[] = [
+  { id: 'uz', label: "O'zbekcha", short: 'UZ', badge: "O'zbekcha" },
+  { id: 'ru', label: "Русский", short: 'RU', badge: "Русский" },
+  { id: 'en', label: "English", short: 'EN', badge: "English" },
 ]
 
 const translations = {
@@ -93,7 +107,7 @@ const translations = {
     chat: 'Xodimlar Chati',
     customTables: 'Dinamik Jadvallar',
     customTablesSub: 'Excel shablonlar va maxsus jadvallar',
-    directorSub: 'Direktor umumiy monitoringi va tahlili',
+    directorSub: 'Zavod monitoringi',
     logisticsSub: 'Yuk tashish va transport logistikasi',
     accountingSub: 'Moliya va hisob-kitoblar',
     hrSub: "Xodimlar va tibbiy daftarchalar",
@@ -235,7 +249,7 @@ const translations = {
     chat: 'Чат сотрудников',
     customTables: 'Динамические таблицы',
     customTablesSub: 'Excel шаблоны и настраиваемые таблицы',
-    directorSub: 'Общий мониторинг и аналитика директора',
+    directorSub: 'Мониторинг завода',
     logisticsSub: 'Грузоперевозки и транспортная логистика',
     accountingSub: 'Финансы и взаиморасчеты',
     hrSub: 'Сотрудники и медицинские книжки',
@@ -377,7 +391,7 @@ const translations = {
     chat: 'Staff Chat',
     customTables: 'Custom Tables',
     customTablesSub: 'Excel templates and dynamic tables',
-    directorSub: 'Director monitoring and comprehensive analytics',
+    directorSub: 'Plant monitoring',
     logisticsSub: 'Freight shipping and transport logistics',
     accountingSub: 'Finance and accounting management',
     hrSub: 'Human resources and medical records',
@@ -453,8 +467,11 @@ type TranslationKey = keyof Translations
 interface LanguageContextType {
   lang: Language
   setLang: (lang: Language) => void
+  directorLang: DirectorLanguage
+  setDirectorLang: (lang: DirectorLanguage) => void
   t: (key: TranslationKey | string, fallback?: string) => string
   formatDual: (uz: string, ru: string, en?: string) => string
+  formatDirector: (uz: string, ru: string, en?: string) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
@@ -471,6 +488,7 @@ function combineTexts(text1: string | undefined, text2: string | undefined, fall
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Language>('uz_ru')
+  const [directorLang, setDirectorLangState] = useState<DirectorLanguage>('uz')
 
   useEffect(() => {
     const saved = localStorage.getItem('language') as Language
@@ -487,11 +505,25 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setLang('uz_ru')
       localStorage.setItem('language', 'uz_ru')
     }
+
+    const savedDir = localStorage.getItem('director_lang') as DirectorLanguage
+    if (savedDir && (savedDir === 'uz' || savedDir === 'ru' || savedDir === 'en')) {
+      setDirectorLangState(savedDir)
+    } else {
+      const defaultDir: DirectorLanguage = saved?.startsWith('ru') ? 'ru' : saved?.endsWith('en') ? 'en' : 'uz'
+      setDirectorLangState(defaultDir)
+      localStorage.setItem('director_lang', defaultDir)
+    }
   }, [])
 
   const handleSetLang = (newLang: Language) => {
     setLang(newLang)
     localStorage.setItem('language', newLang)
+  }
+
+  const setDirectorLang = (newLang: DirectorLanguage) => {
+    setDirectorLangState(newLang)
+    localStorage.setItem('director_lang', newLang)
   }
 
   const t = (key: TranslationKey | string, fallback?: string): string => {
@@ -542,8 +574,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     return combineTexts(uz, ru, uz)
   }
 
+  const formatDirector = (uz: string, ru: string, en?: string): string => {
+    if (directorLang === 'ru') return ru || uz
+    if (directorLang === 'en') return en || ru || uz
+    return uz
+  }
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t, formatDual }}>
+    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, directorLang, setDirectorLang, t, formatDual, formatDirector }}>
       {children}
     </LanguageContext.Provider>
   )

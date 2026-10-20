@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Bell, Sun, Moon, Globe, Menu, Type, Check, ChevronDown, Search } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
-import { useLanguage, LANGUAGE_OPTIONS, Language } from '@/components/providers/LanguageProvider'
+import { useLanguage, LANGUAGE_OPTIONS, DIRECTOR_LANGUAGE_OPTIONS, Language, DirectorLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
 
 const getPageInfo = (pathname: string, t: any, formatDual: any) => {
@@ -124,10 +124,12 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
 export default function Header() {
   const pathname = usePathname()
   const { theme, setTheme, fontSize, setFontSize } = useTheme()
-  const { lang, setLang, t, formatDual } = useLanguage()
+  const { lang, setLang, directorLang, setDirectorLang, t, formatDual, formatDirector } = useLanguage()
   const [mounted, setMounted] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const langMenuRef = useRef<HTMLDivElement>(null)
+
+  const isDirector = pathname?.startsWith('/director')
 
   useEffect(() => {
     setMounted(true)
@@ -144,13 +146,23 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
   
-  const pageInfo = getPageInfo(pathname, t, formatDual) || { 
+  let pageInfo = getPageInfo(pathname, t, formatDual) || { 
     title: 'Green Processing ERP', 
     subtitle: formatDual('Korporativ boshqaruv tizimi', 'Корпоративная система управления', 'Enterprise Management System') 
   }
 
+  if (isDirector) {
+    pageInfo = {
+      title: formatDirector('Direktor Paneli', 'Панель Директора', 'Director Dashboard'),
+      subtitle: formatDirector('Zavod monitoringi', 'Мониторинг завода', 'Plant monitoring'),
+    }
+  }
+
   const now = new Date()
-  const dateLocale = lang.includes('ru') ? 'ru-RU' : 'uz-UZ'
+  const dateLocale = isDirector
+    ? (directorLang === 'ru' ? 'ru-RU' : directorLang === 'en' ? 'en-US' : 'uz-UZ')
+    : (lang.includes('ru') ? 'ru-RU' : 'uz-UZ')
+
   const dateStr = now.toLocaleDateString(dateLocale, {
     weekday: 'long',
     year: 'numeric',
@@ -160,12 +172,21 @@ export default function Header() {
 
   const { toggle } = useSidebar()
 
-  const currentOption = LANGUAGE_OPTIONS.find(opt => opt.id === lang) || LANGUAGE_OPTIONS[0]
+  const activeOptions = isDirector ? DIRECTOR_LANGUAGE_OPTIONS : LANGUAGE_OPTIONS
+  const currentOption = isDirector
+    ? (DIRECTOR_LANGUAGE_OPTIONS.find(opt => opt.id === directorLang) || DIRECTOR_LANGUAGE_OPTIONS[0])
+    : (LANGUAGE_OPTIONS.find(opt => opt.id === lang) || LANGUAGE_OPTIONS[0])
 
   const handleCycleLang = () => {
-    const currentIndex = LANGUAGE_OPTIONS.findIndex(opt => opt.id === lang)
-    const nextIndex = (currentIndex + 1) % LANGUAGE_OPTIONS.length
-    setLang(LANGUAGE_OPTIONS[nextIndex].id)
+    if (isDirector) {
+      const currentIndex = DIRECTOR_LANGUAGE_OPTIONS.findIndex(opt => opt.id === directorLang)
+      const nextIndex = (currentIndex + 1) % DIRECTOR_LANGUAGE_OPTIONS.length
+      setDirectorLang(DIRECTOR_LANGUAGE_OPTIONS[nextIndex].id)
+    } else {
+      const currentIndex = LANGUAGE_OPTIONS.findIndex(opt => opt.id === lang)
+      const nextIndex = (currentIndex + 1) % LANGUAGE_OPTIONS.length
+      setLang(LANGUAGE_OPTIONS[nextIndex].id)
+    }
   }
 
   return (
@@ -235,15 +256,21 @@ export default function Header() {
           {langMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-dark-900 border border-dark-700 rounded-2xl p-1.5 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-dark-750 mb-1">
-                {formatDual('Tilni tanlang', 'Выберите язык', 'Select language')}
+                {isDirector
+                  ? formatDirector('Tilni tanlang', 'Выберите язык', 'Select language')
+                  : formatDual('Tilni tanlang', 'Выберите язык', 'Select language')}
               </div>
-              {LANGUAGE_OPTIONS.map((opt) => {
-                const isSelected = opt.id === lang
+              {activeOptions.map((opt) => {
+                const isSelected = isDirector ? opt.id === directorLang : opt.id === lang
                 return (
                   <button
                     key={opt.id}
                     onClick={() => {
-                      setLang(opt.id)
+                      if (isDirector) {
+                        setDirectorLang(opt.id as DirectorLanguage)
+                      } else {
+                        setLang(opt.id as Language)
+                      }
                       setLangMenuOpen(false)
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
