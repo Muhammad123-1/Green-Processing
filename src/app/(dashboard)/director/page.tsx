@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
   Activity,
@@ -122,6 +123,19 @@ export default function DirectorPage() {
         setTempThresholds(parsed)
       }
     } catch {}
+  }, [])
+
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveModal(null)
+        setShowSettingsModal(false)
+        setShowSummaryReportModal(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   // Fetch dashboard data
@@ -1481,9 +1495,15 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       {/* 5. DRILL-DOWN MODAL FOR DEPARTMENTS / AUDIT */}
       {/* ========================================================================= */}
-      {activeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-6xl shadow-2xl border border-slate-200 dark:border-dark-750 flex flex-col max-h-[92vh] overflow-hidden">
+      {mounted && activeModal && createPortal(
+        <div
+          onClick={() => setActiveModal(null)}
+          className="fixed inset-0 z-[100] w-screen h-screen flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-md overflow-y-auto cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-6xl shadow-2xl border border-slate-200 dark:border-dark-750 flex flex-col max-h-[92vh] overflow-hidden my-auto cursor-default"
+          >
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between gap-4 bg-slate-50 dark:bg-dark-850">
               <div className="flex items-center gap-3">
@@ -2309,15 +2329,22 @@ export default function DirectorPage() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
       {/* 6. THRESHOLDS SETTINGS MODAL (CONFIGURABLE BY DIRECTOR) */}
       {/* ========================================================================= */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-dark-750 overflow-hidden">
+      {mounted && showSettingsModal && createPortal(
+        <div 
+          onClick={() => setShowSettingsModal(false)}
+          className="fixed inset-0 z-[100] w-screen h-screen flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md overflow-y-auto cursor-pointer"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-dark-750 overflow-hidden my-auto cursor-default"
+          >
             <div className="p-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Sliders size={20} className="text-indigo-600" />
@@ -2449,7 +2476,8 @@ export default function DirectorPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}

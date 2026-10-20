@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Printer, X, Download, ShieldCheck, CheckCircle2, Award, Users, ChefHat, Package, AlertTriangle, Building2, TrendingUp, DollarSign } from 'lucide-react'
 
 interface ExecutiveSummaryReportModalProps {
@@ -23,8 +24,23 @@ export default function ExecutiveSummaryReportModal({
   period,
 }: ExecutiveSummaryReportModalProps) {
   const reportRef = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
 
-  if (!isOpen || !data) return null
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
+  if (!isOpen || !data || !mounted) return null
 
   const kpis = data?.kpis || {}
   const arrivals = kpis.arrivals || {}
@@ -86,8 +102,11 @@ export default function ExecutiveSummaryReportModal({
     window.print()
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+  const modalContent = (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[100] w-screen h-screen flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto cursor-pointer"
+    >
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body {
@@ -125,17 +144,20 @@ export default function ExecutiveSummaryReportModal({
         }
       `}} />
       {/* Top Action Bar (hidden on print) */}
-      <div className="fixed top-3 sm:top-5 right-3 sm:right-6 z-50 flex items-center gap-2 no-print">
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="fixed top-3 sm:top-5 right-3 sm:right-6 z-[101] flex items-center gap-2 no-print"
+      >
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
         >
           <Printer size={18} />
           <span>{formatDual("Chop etish / PDF saqlash", "Печать / Сохранить в PDF", "Print / Save as PDF")}</span>
         </button>
         <button
           onClick={onClose}
-          className="p-2.5 rounded-2xl bg-slate-800/80 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700 backdrop-blur-md transition-all"
+          className="p-2.5 rounded-2xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 backdrop-blur-md transition-all cursor-pointer"
         >
           <X size={20} />
         </button>
@@ -147,7 +169,8 @@ export default function ExecutiveSummaryReportModal({
       <div
         id="executive-report-a4"
         ref={reportRef}
-        className="bg-white text-slate-900 w-full max-w-[210mm] my-auto rounded-2xl shadow-2xl border border-slate-300 print:border-none print:shadow-none print:m-0 print:p-0 print:w-full print:max-w-none overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white text-slate-900 w-full max-w-[210mm] my-auto rounded-2xl shadow-2xl border border-slate-300 print:border-none print:shadow-none print:m-0 print:p-0 print:w-full print:max-w-none overflow-hidden cursor-default"
         style={{
           boxSizing: 'border-box',
           minHeight: '275mm',
@@ -451,4 +474,6 @@ export default function ExecutiveSummaryReportModal({
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
