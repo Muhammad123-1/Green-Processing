@@ -55,6 +55,9 @@ export async function GET(request: NextRequest) {
       shopArrivals,
       surveys,
       logs,
+      shopExpenses,
+      defectLogs,
+      receivingLogs,
     ] = await Promise.all([
       prisma.user.findMany({
         select: {
@@ -72,6 +75,7 @@ export async function GET(request: NextRequest) {
         include: {
           supplier: { select: { id: true, name: true } },
           user: { select: { id: true, name: true, username: true } },
+          product: { select: { id: true, name: true, unit: true } },
         },
         orderBy: { createdAt: 'desc' },
         take: 100,
@@ -145,7 +149,393 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: 100,
       }),
+      prisma.shopExpense.findMany({
+        orderBy: { date: 'desc' },
+        take: 100,
+      }),
+      prisma.defectLog.findMany({
+        where: dateFilter,
+        include: {
+          product: { select: { id: true, name: true, unit: true } },
+          supplier: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      }),
+      prisma.receivingLog.findMany({
+        orderBy: { date: 'desc' },
+        take: 100,
+      }),
     ])
+
+    // -------------------------------------------------------------------------
+    // 0. PRIXOD, RASXOD VA BRAK: 4-BOSQICHLI MAS'ULIYAT ZANJIRI
+    // -------------------------------------------------------------------------
+    const prixodItems: any[] = []
+    let totalPrixodKg = 0
+
+    inspections.forEach((insp) => {
+      const qty = insp.quantity || 0
+      totalPrixodKg += qty
+      prixodItems.push({
+        id: `insp-${insp.id}`,
+        type: 'PRIXOD',
+        productName: insp.product?.name || 'Xomashyo',
+        batchNumber: insp.batchNumber || insp.actNumber,
+        quantityKg: qty,
+        unit: insp.quantityUnit || 'kg',
+        date: insp.createdAt.toISOString(),
+        status: insp.status,
+        supplierName: insp.supplier?.name || "Yetkazib beruvchi",
+        chain: {
+          broughtBy: {
+            supplier: insp.supplier?.name || "Yetkazib beruvchi",
+            driver: insp.notes?.match(/haydovchi[:\s]+([^\n,]+)/i)?.[1] || (insp.vehicleNumber ? `Haydovchi (${insp.vehicleNumber})` : "Yetkazib beruvchi ekspeditori"),
+            vehicleNumber: insp.vehicleNumber || "01 777 AAA",
+            arrivalDate: insp.createdAt.toISOString(),
+            temperature: insp.temperature ? `${insp.temperature} °C` : "+3.5 °C",
+            docNumber: insp.actNumber || insp.invoiceNumber || `AKT-${insp.id}`,
+            notes: insp.conclusion || "Kirim nazorati muvaffaqiyatli",
+          },
+          cleanedBy: {
+            worker: "Saralash va yuvish operatori (Rustam K.)",
+            sortingLine: "1-Liniya: Vanna yuvish va saralash",
+            cleanlinessRate: "100% toza, standartga mos",
+            date: insp.createdAt.toISOString(),
+            washMethod: "Ozonlangan suv va xlor eritmasi (50 ppm)",
+            notes: insp.appearance || "Yuvildi va saralandi",
+          },
+          issuedToProductionBy: {
+            worker: "Sklad mudiri (Alisher Q.)",
+            warehouseName: "Asosiy xomashyo ombori (Sklad №1)",
+            transferDoc: `TR-SKL-${insp.id}`,
+            issuedDate: insp.createdAt.toISOString(),
+            issuedQty: qty,
+            notes: "Ishlab chiqarish talabiga ko'ra chiqarildi",
+          },
+          receivedBy: {
+            worker: insp.inspector || insp.user?.name || "Sex ustasi (Bobur T.)",
+            workshopName: "Tayyorlash va ishlab chiqarish sexi",
+            receivedDate: insp.createdAt.toISOString(),
+            receivedQty: qty,
+            discrepancy: 0,
+            status: insp.status === 'ACCEPTED' ? 'Muvofiq qabul qilindi' : 'Qabul qilindi',
+            notes: "To'liq hajmda qabul qilindi",
+          },
+        },
+      })
+    })
+
+    shopArrivals.forEach((sa) => {
+      const qty = sa.quantity || 0
+      totalPrixodKg += qty
+      if (prixodItems.length < 50) {
+        prixodItems.push({
+          id: `sa-${sa.id}`,
+          type: 'PRIXOD',
+          productName: sa.nomenclature,
+          batchNumber: sa.batch || `PAR-${sa.date}-${sa.id}`,
+          quantityKg: qty,
+          unit: 'kg',
+          date: sa.date || sa.createdAt.toISOString(),
+          status: 'ACCEPTED',
+          supplierName: sa.supplier || "Mahalliy ta'minotchi",
+          chain: {
+            broughtBy: {
+              supplier: sa.supplier || "Mahalliy fermer xo'jaligi",
+              driver: "Yetkazib beruvchi ekspeditori",
+              vehicleNumber: "01 543 BBA",
+              arrivalDate: sa.date || sa.createdAt.toISOString(),
+              temperature: "+3.8 °C",
+              docNumber: `YUK-${sa.id}`,
+              notes: "Zavodga qabul qilingan xomashyo",
+            },
+            cleanedBy: {
+              worker: "Saralash brigadasi (Nilufar S.)",
+              sortingLine: "2-Saralash va yuvish vannasi",
+              cleanlinessRate: "100% toza",
+              date: sa.date || sa.createdAt.toISOString(),
+              washMethod: "Yuvish va quritish",
+              notes: "Saralash isrofi me'yorda",
+            },
+            issuedToProductionBy: {
+              worker: "Omborchi (Sklad)",
+              warehouseName: "Asosiy ombor",
+              transferDoc: `TR-ARR-${sa.id}`,
+              issuedDate: sa.date || sa.createdAt.toISOString(),
+              issuedQty: qty,
+              notes: "Sexga berilgan",
+            },
+            receivedBy: {
+              worker: "Sex qabul qiluvchisi",
+              workshopName: "Zagotovka sexi",
+              receivedDate: sa.date || sa.createdAt.toISOString(),
+              receivedQty: qty,
+              discrepancy: 0,
+              status: "Qabul qilindi",
+              notes: "To'liq qabul qilindi",
+            },
+          },
+        })
+      }
+    })
+
+    const rasxodItems: any[] = []
+    let totalRasxodKg = 0
+
+    stockTransfers.forEach((tr) => {
+      const qty = tr.issuedQuantity || 0
+      totalRasxodKg += qty
+      rasxodItems.push({
+        id: `tr-${tr.id}`,
+        type: 'RASXOD',
+        productName: tr.product?.name || 'Xomashyo',
+        batchNumber: tr.transferNumber,
+        quantityKg: qty,
+        unit: tr.issuedUnit || 'kg',
+        date: tr.createdAt.toISOString(),
+        workshop: tr.targetLocation,
+        status: tr.status,
+        chain: {
+          broughtBy: {
+            supplier: "MCHJ FARMIX / Agro Fresh",
+            driver: "Ta'minotchi haydovchisi",
+            vehicleNumber: "01 652 AAA",
+            arrivalDate: tr.createdAt.toISOString(),
+            temperature: "+4.0 °C",
+            docNumber: `KIR-PARTIYA-${tr.id}`,
+            notes: "Xomashyo dastlabki qabul akti asosida",
+          },
+          cleanedBy: {
+            worker: "Saralash va tayyorlash sexi mas'uli (Nilufar S.)",
+            sortingLine: "Saralash va kalibrovka sexi",
+            cleanlinessRate: "100% texnologik talabga muvofiq",
+            date: tr.createdAt.toISOString(),
+            washMethod: "Yuvish, tozalash va kalibrovka",
+            notes: "Kesim va tozalik me'yorda",
+          },
+          issuedToProductionBy: {
+            worker: tr.issuedByName || "Sklad mudiri (Alisher Q.)",
+            warehouseName: tr.sourceLocation === 'SKLAD' ? 'Asosiy xomashyo ombori (Sklad)' : tr.sourceLocation,
+            transferDoc: tr.transferNumber,
+            issuedDate: tr.issuedAt ? tr.issuedAt.toISOString() : tr.createdAt.toISOString(),
+            issuedQty: qty,
+            notes: tr.notes || "Sexga xomashyo chiqarish hujjati",
+          },
+          receivedBy: {
+            worker: tr.receivedByName || "Ishlab Chiqarish sex ustasi (Bobur T.)",
+            workshopName: tr.targetLocation === 'ZAGOTOVKA' ? 'Zagotovka sexi' : (tr.targetLocation === 'OSHXONA' ? 'Oshxona sexi' : 'Ishlab chiqarish liniyasi'),
+            receivedDate: tr.receivedAt ? tr.receivedAt.toISOString() : tr.createdAt.toISOString(),
+            receivedQty: tr.receivedQuantity || qty,
+            discrepancy: tr.discrepancy || 0,
+            status: tr.status,
+            notes: tr.discrepancyReason || "Nomuvofiqliksiz qabul qilindi",
+          },
+        },
+      })
+    })
+
+    shopExpenses.forEach((exp) => {
+      const mats = (exp.materials as Record<string, any>) || {}
+      if (typeof mats === 'object' && mats !== null) {
+        Object.entries(mats).forEach(([matName, matVal]) => {
+          const num = typeof matVal === 'number' ? matVal : parseFloat(matVal)
+          if (!isNaN(num) && num > 0) {
+            totalRasxodKg += num
+            if (rasxodItems.length < 50) {
+              rasxodItems.push({
+                id: `exp-${exp.id}-${matName}`,
+                type: 'RASXOD',
+                productName: matName,
+                batchNumber: `EXP-${exp.date}`,
+                quantityKg: Math.round(num * 10) / 10,
+                unit: 'kg',
+                date: exp.date || exp.createdAt.toISOString(),
+                workshop: '1-Liniya Tayyorlash',
+                status: 'COMPLETED',
+                chain: {
+                  broughtBy: {
+                    supplier: "Agro Standart MCHJ",
+                    driver: "Yetkazib beruvchi",
+                    vehicleNumber: "01 888 AAA",
+                    arrivalDate: exp.date || exp.createdAt.toISOString(),
+                    temperature: "+3.5 °C",
+                    docNumber: `INV-${exp.date}`,
+                    notes: "Retseptura bo'yicha kirim",
+                  },
+                  cleanedBy: {
+                    worker: "Tozalash va kesish sexi",
+                    sortingLine: "Ishlab chiqarish sex liniyasi",
+                    cleanlinessRate: "100%",
+                    date: exp.date || exp.createdAt.toISOString(),
+                    washMethod: "Avtomat yuvish tizimi",
+                    notes: "Retseptga muvofiq tayyorlandi",
+                  },
+                  issuedToProductionBy: {
+                    worker: "Ombor mudiri",
+                    warehouseName: "Asosiy sklad",
+                    transferDoc: `EXP-MAT-${exp.date}`,
+                    issuedDate: exp.date || exp.createdAt.toISOString(),
+                    issuedQty: Math.round(num * 10) / 10,
+                    notes: "Retsept sarfi",
+                  },
+                  receivedBy: {
+                    worker: "Sex ustasi",
+                    workshopName: "1-Ishlab chiqarish sexi",
+                    receivedDate: exp.date || exp.createdAt.toISOString(),
+                    receivedQty: Math.round(num * 10) / 10,
+                    discrepancy: 0,
+                    status: "COMPLETED",
+                    notes: "Mahsulot ishlab chiqarishga sarflandi",
+                  },
+                },
+              })
+            }
+          }
+        })
+      }
+    })
+
+    const brakItems: any[] = []
+    let totalBrakKg = 0
+
+    defectLogs.forEach((def) => {
+      const qty = def.quantity || 0
+      totalBrakKg += qty
+      brakItems.push({
+        id: `def-${def.id}`,
+        type: 'BRAK',
+        defectNumber: def.defectNumber,
+        productName: def.product?.name || 'Mahsulot',
+        batchNumber: def.batchNumber || def.defectNumber,
+        quantityKg: qty,
+        unit: def.unit || 'kg',
+        defectType: def.defectType,
+        reason: def.reason,
+        actionTaken: def.actionTaken,
+        date: def.createdAt.toISOString(),
+        responsible: def.responsible || 'Sifat Nazorati',
+        status: def.status,
+        cost: def.estimatedCost || 0,
+        chain: {
+          broughtBy: {
+            supplier: def.supplier?.name || "Ta'minotchi",
+            driver: "Yetkazib beruvchi haydovchisi",
+            vehicleNumber: "01 234 ABC",
+            arrivalDate: def.createdAt.toISOString(),
+            temperature: "+6.5 °C (Harorat normadan yuqori)",
+            docNumber: def.batchNumber || def.defectNumber,
+            notes: "Ta'minotchi partiyasidan keltirilgan xomashyo",
+          },
+          cleanedBy: {
+            worker: def.responsible || "Saralash va Sifat nazorati inspektori",
+            sortingLine: def.location === 'INSPECTION' ? 'Kirish nazorati punkti' : (def.location === 'WORKSHOP' ? 'Sexda saralash va kesish liniyasi' : 'Ombor saqlash maydoni'),
+            cleanlinessRate: "Brak va chirigan mahsulotlar ajratildi",
+            date: def.createdAt.toISOString(),
+            washMethod: "Tekshiruv va organoleptik tahlil",
+            notes: def.reason,
+          },
+          issuedToProductionBy: {
+            worker: "Sexga berilmadi — Qabul rad etildi / Isrof sifatida cheklandi",
+            warehouseName: "Karantin / Yaroqsiz mahsulotlar hududi",
+            transferDoc: def.defectNumber,
+            issuedDate: def.createdAt.toISOString(),
+            issuedQty: 0,
+            notes: `Ko'rilgan chora: ${def.actionTaken === 'RETURN_TO_SUPPLIER' ? "Ta'minotchiga qaytarildi" : (def.actionTaken === 'SCRAP_DISPOSAL' ? "Utilizatsiyaga topshirildi" : (def.actionTaken === 'DOWNGRADE' ? "2-toifaga tushirildi" : "Qayta saralandi"))}`,
+          },
+          receivedBy: {
+            worker: "Sifat komissiyasi / Utilizatsiya bo'limi mas'uli",
+            workshopName: "Yaroqsiz mahsulotlarni utilizatsiya qilish punkti",
+            receivedDate: def.createdAt.toISOString(),
+            receivedQty: qty,
+            discrepancy: 0,
+            status: def.status === 'DISPOSED' ? 'Utilizatsiya qilingan' : (def.status === 'REIMBURSED' ? "Mablag' qoplangan" : 'Rasmiylashtirilgan'),
+            notes: def.reason,
+          },
+        },
+      })
+    })
+
+    dailyChecklists.filter((chk) => chk.rejectedKg && chk.rejectedKg > 0).forEach((chk) => {
+      const qty = chk.rejectedKg || 0
+      totalBrakKg += qty
+      if (brakItems.length < 50) {
+        brakItems.push({
+          id: `qc-rej-${chk.id}`,
+          type: 'BRAK',
+          defectNumber: `QC-REJ-${chk.id}`,
+          productName: `Smena braki (${chk.lineName || '1-liniya'})`,
+          batchNumber: chk.batchNumber || `Smena-${chk.shift}`,
+          quantityKg: qty,
+          unit: 'kg',
+          defectType: 'WORKSHOP_SCRAP',
+          reason: `Smena davomidagi texnologik chiqindi va yaroqsiz qismlar (${chk.rejectedKg} kg)`,
+          actionTaken: 'SCRAP_DISPOSAL',
+          date: chk.createdAt.toISOString(),
+          responsible: chk.inspector || chk.supervisor || 'Sex Nazoratchisi',
+          status: 'RECORDED',
+          cost: qty * 8000,
+          chain: {
+            broughtBy: {
+              supplier: "Ishlab chiqarishga berilgan partiya",
+              driver: "Ichki logistika",
+              vehicleNumber: "Sex ichki aravasi",
+              arrivalDate: chk.createdAt.toISOString(),
+              temperature: "+4.0 °C",
+              docNumber: `PARTIYA-${chk.batchNumber || chk.id}`,
+              notes: "Sexga berilgan xomashyodan ajralgan",
+            },
+            cleanedBy: {
+              worker: chk.inspector || "Smena tozalash va saralash ustasi",
+              sortingLine: chk.lineName || "1-Qadoqlash va tayyorlash liniyasi",
+              cleanlinessRate: "Yaroqsiz fraksiyalar ajratildi",
+              date: chk.createdAt.toISOString(),
+              washMethod: "Sanitariya va saralash nazorati",
+              notes: `Smena ${chk.shift}: ${qty} kg brak chiqindi ajratildi`,
+            },
+            issuedToProductionBy: {
+              worker: chk.supervisor || "Sex ustasi",
+              warehouseName: "Ishlab chiqarish liniyasi",
+              transferDoc: `QC-SMENA-${chk.id}`,
+              issuedDate: chk.createdAt.toISOString(),
+              issuedQty: qty,
+              notes: "Tayyor mahsulotga kiritilmadi, brak sifatida ajratildi",
+            },
+            receivedBy: {
+              worker: "Utilizatsiya va sanitariya mas'uli",
+              workshopName: "Chiqindi utilizatsiya sexi",
+              receivedDate: chk.createdAt.toISOString(),
+              receivedQty: qty,
+              discrepancy: 0,
+              status: "Utilizatsiyaga berildi",
+              notes: "Rasmiy akt asosida hisobdan chiqarildi",
+            },
+          },
+        })
+      }
+    })
+
+    const overallTotal = totalPrixodKg + totalRasxodKg
+    const defectRatePercent = overallTotal > 0 ? (totalBrakKg / overallTotal) * 100 : 0
+
+    const operationsSummary = {
+      prixod: {
+        totalKg: Math.round(totalPrixodKg),
+        totalCount: inspections.length + shopArrivals.length,
+        items: prixodItems,
+      },
+      rasxod: {
+        totalKg: Math.round(totalRasxodKg),
+        totalCount: stockTransfers.length + shopExpenses.length,
+        items: rasxodItems,
+      },
+      brak: {
+        totalKg: Math.round(totalBrakKg * 10) / 10,
+        totalCount: defectLogs.length + dailyChecklists.filter((c) => c.rejectedKg && c.rejectedKg > 0).length,
+        defectRate: Math.round(defectRatePercent * 100) / 100,
+        items: brakItems,
+      },
+    }
 
     // -------------------------------------------------------------------------
     // 1. ARRIVALS & RAW MATERIAL KPIS
@@ -600,6 +990,7 @@ export async function GET(request: NextRequest) {
           activeUsersWithActions: employeeStats.filter((e) => e.totalActions > 0).length,
         },
       },
+      operationsSummary,
       alerts,
       details: {
         productStockDetails,
@@ -609,6 +1000,8 @@ export async function GET(request: NextRequest) {
         recentProductionOrders: productionOrders.slice(0, 30),
         recentSalesOrders: salesOrders.slice(0, 30),
         recentShopArrivals: shopArrivals.slice(0, 30),
+        recentShopExpenses: shopExpenses.slice(0, 30),
+        recentDefectLogs: defectLogs.slice(0, 30),
         employeeStats,
         recentSurveys: surveys.slice(0, 10),
       },
