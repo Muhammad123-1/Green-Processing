@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Archive, ArrowDownToLine, ArrowUpFromLine, Calculator, CheckCircle2, Calendar as CalendarIcon, Loader2, X, User as UserIcon, Clock, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { Archive, ArrowDownToLine, ArrowUpFromLine, Calculator, CheckCircle2, Calendar as CalendarIcon, Loader2, X, User as UserIcon, Clock, ChevronRight, ChevronLeft } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 const isPlainObject = (v: any) => v !== null && typeof v === 'object' && !Array.isArray(v)
 
@@ -54,6 +56,7 @@ function DataView({ data, level = 0 }: { data: any; level?: number }) {
 }
 
 export default function ArchiveContent() {
+  const { formatDual } = useLanguage()
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filterDate, setFilterDate] = useState('')
@@ -67,7 +70,20 @@ export default function ArchiveContent() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selected])
 
-  const typeLabel = (type: string) => ({ ARRIVAL: 'Kirim', EXPENSE: 'Chiqim', REPORT: 'Tsex hisoboti', QC: 'Sifat nazorati' } as any)[type] || type
+  const typeLabel = (type: string) => {
+    switch (type) {
+      case 'ARRIVAL':
+        return formatDual('Kirim', 'Приход', 'Arrival')
+      case 'EXPENSE':
+        return formatDual('Chiqim', 'Расход', 'Expense')
+      case 'REPORT':
+        return formatDual('Tsex hisoboti', 'Отчет цеха', 'Shop report')
+      case 'QC':
+        return formatDual('Sifat nazorati', 'Контроль качества', 'QC')
+      default:
+        return type
+    }
+  }
 
   const formatDateTime = (iso: string) => {
     try { return new Date(iso).toLocaleString('uz-UZ', { dateStyle: 'medium', timeStyle: 'short' }) } catch { return iso }
@@ -123,27 +139,59 @@ export default function ArchiveContent() {
       {/* Header */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center">
             <Archive size={26} />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Umumiy Arxiv (Lenta)</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Boshliq uchun zavoddagi barcha amaliyotlar tarixi</p>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                {formatDual("Umumiy Arxiv (Lenta)", "Общий архив (Лента)", "Global Archive (Feed)")}
+              </h1>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                {events.length} ta amal
+              </span>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+              {formatDual(
+                "Direktor va boshqaruv uchun zavoddagi barcha amaliyotlar xronologik tarixi",
+                "Хронологическая лента всех операций завода для директора и руководства",
+                "Chronological timeline of all factory operations for executive management"
+              )}
+            </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-700 outline-none">
-            <option value="ALL">Barchasi</option>
-            <option value="ARRIVAL">Kirimlar</option>
-            <option value="EXPENSE">Chiqimlar</option>
-            <option value="REPORT">Tayyor Mahsulot</option>
-            <option value="QC">Sifat Nazorati</option>
+          <Link
+            href="/director"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-dark-700"
+          >
+            <ChevronLeft size={16} />
+            <span>{formatDual("Direktor paneli", "Панель директора", "Director panel")}</span>
+          </Link>
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
+          >
+            <option value="ALL">{formatDual("Barcha turlar", "Все типы", "All types")}</option>
+            <option value="ARRIVAL">{formatDual("Xomashyo kirimlari", "Приходы сырья", "Raw arrivals")}</option>
+            <option value="EXPENSE">{formatDual("Ishlab chiqarish chiqimlari", "Расходы производства", "Production expenses")}</option>
+            <option value="REPORT">{formatDual("Tayyor mahsulot hisobotlari", "Отчеты цеха (Выход ГП)", "Shop reports")}</option>
+            <option value="QC">{formatDual("Sifat nazorati (QC)", "Контроль качества (QC)", "Quality Control")}</option>
           </select>
-          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-700 outline-none" />
+          <input
+            type="date"
+            value={filterDate}
+            onChange={e => setFilterDate(e.target.value)}
+            className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
+          />
           {filterDate && (
-            <button onClick={() => setFilterDate('')} className="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors">
-              Tozalash
+            <button
+              onClick={() => setFilterDate('')}
+              className="bg-red-50 text-red-600 hover:bg-red-100 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors"
+            >
+              {formatDual("Tozalash", "Сброс", "Clear")}
             </button>
           )}
         </div>
@@ -153,20 +201,20 @@ export default function ArchiveContent() {
       <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-400 space-y-3">
-            <Loader2 className="animate-spin" size={32} />
-            <p className="font-bold text-sm">Yuklanmoqda...</p>
+            <Loader2 className="animate-spin text-indigo-600" size={32} />
+            <p className="font-bold text-sm">{formatDual("Yuklanmoqda...", "Загрузка...", "Loading...")}</p>
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-400">
             <Archive size={48} className="mb-3 opacity-20" />
-            <p className="font-bold">Hech qanday ma'lumot topilmadi</p>
+            <p className="font-bold">{formatDual("Hech qanday ma'lumot topilmadi", "Ничего не найдено", "No records found")}</p>
           </div>
         ) : (
           <div className="space-y-4">
             {filteredEvents.map((evt, idx) => (
               <div key={evt.id} className="flex gap-4 group">
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
+                  <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
                     {getIcon(evt.type)}
                   </div>
                   {idx !== filteredEvents.length - 1 && (
@@ -184,16 +232,16 @@ export default function ArchiveContent() {
                   <div className="flex justify-between items-start mb-2 gap-3">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${getBadgeColor(evt.type)}`}>
-                        {evt.type}
+                        {typeLabel(evt.type)}
                       </span>
                       <h3 className="font-bold text-slate-900 dark:text-white text-base">{evt.title}</h3>
                     </div>
-                    <span className="text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 shrink-0">{evt.date}</span>
+                    <span className="text-xs font-bold text-slate-500 bg-white dark:bg-dark-900 px-2 py-1 rounded-md border border-slate-200 dark:border-dark-700 shrink-0">{evt.date}</span>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{evt.desc}</p>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200 dark:border-dark-700 text-xs text-slate-500">
                     <span className="flex items-center gap-1.5"><UserIcon size={13} /> {evt.author}</span>
-                    <span className="flex items-center gap-1 text-indigo-500 font-bold">Batafsil <ChevronRight size={13} /></span>
+                    <span className="flex items-center gap-1 text-indigo-500 font-bold">{formatDual("Batafsil", "Подробнее", "Details")} <ChevronRight size={13} /></span>
                   </div>
                 </div>
               </div>
@@ -237,15 +285,15 @@ export default function ArchiveContent() {
             {/* Meta: who / when */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-5 pb-0">
               <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><UserIcon size={12} /> Kim yozgan</div>
+                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><UserIcon size={12} /> {formatDual("Kim kiritgan", "Кто внес", "Author")}</div>
                 <div className="font-bold text-slate-900 dark:text-white text-sm mt-1 break-words">{selected.author}</div>
               </div>
               <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><CalendarIcon size={12} /> Hisobot sanasi</div>
+                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><CalendarIcon size={12} /> {formatDual("Hisobot sanasi", "Дата отчета", "Report date")}</div>
                 <div className="font-bold text-slate-900 dark:text-white text-sm mt-1">{selected.date}</div>
               </div>
               <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><Clock size={12} /> Tizimga kiritilgan</div>
+                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><Clock size={12} /> {formatDual("Tizimga kiritilgan", "Внесено в систему", "Created at")}</div>
                 <div className="font-bold text-slate-900 dark:text-white text-sm mt-1">{formatDateTime(selected.createdAt)}</div>
               </div>
             </div>
@@ -261,7 +309,7 @@ export default function ArchiveContent() {
                 onClick={() => setSelected(null)}
                 className="px-5 py-2 rounded-xl bg-slate-900 dark:bg-dark-700 text-white text-sm font-bold hover:opacity-90 transition-opacity"
               >
-                Yopish
+                {formatDual("Yopish", "Закрыть", "Close")}
               </button>
             </div>
           </div>

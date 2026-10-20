@@ -34,6 +34,7 @@ import {
   Utensils,
   MessageSquare,
   Layers,
+  Archive,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -77,10 +78,12 @@ export default function DirectorPage() {
 
   // Drill-down modal state
   const [activeModal, setActiveModal] = useState<
-    'arrivals' | 'production' | 'warehouse' | 'sales' | 'surveys' | 'employees' | 'alerts' | null
+    'arrivals' | 'production' | 'warehouse' | 'sales' | 'surveys' | 'employees' | 'alerts' | 'archive' | null
   >(null)
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [archiveEvents, setArchiveEvents] = useState<any[]>([])
+  const [loadingArchive, setLoadingArchive] = useState(false)
 
   // Mounted state for charts
   const [mounted, setMounted] = useState(false)
@@ -127,6 +130,20 @@ export default function DirectorPage() {
   useEffect(() => {
     fetchData()
   }, [period, customFrom, customTo, thresholds])
+
+  // Lazy load archive events for director modal
+  useEffect(() => {
+    if (activeModal === 'archive' && archiveEvents.length === 0) {
+      setLoadingArchive(true)
+      fetch('/api/archive')
+        .then((r) => r.json())
+        .then((d) => {
+          if (Array.isArray(d)) setArchiveEvents(d)
+        })
+        .catch(console.error)
+        .finally(() => setLoadingArchive(false))
+    }
+  }, [activeModal, archiveEvents.length])
 
   // Save new thresholds
   const handleSaveThresholds = () => {
@@ -276,6 +293,15 @@ export default function DirectorPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            href="/archive"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold transition-all border border-indigo-200 dark:border-indigo-800"
+            title={formatDual("Zavod umumiy amaliyotlar arxiv lentasi", "Общий архив всех операций завода", "Global factory operations archive feed")}
+          >
+            <Archive size={15} />
+            <span>{formatDual("Umumiy Arxiv", "Общий архив", "Archive")}</span>
+          </Link>
+
           <button
             onClick={() => {
               setTempThresholds(thresholds)
@@ -1010,7 +1036,7 @@ export default function DirectorPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Card 1: Reports */}
           <Link
             href="/reports"
@@ -1210,6 +1236,35 @@ export default function DirectorPage() {
               <ChevronRight size={13} />
             </div>
           </Link>
+
+          {/* Card 9: General Archive */}
+          <Link
+            href="/archive"
+            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                  <Archive size={20} />
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-500 transition-colors">
+                {formatDual("Umumiy Arxiv (Lenta)", "Общий архив (Лента)", "Global Archive (Feed)")}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                {formatDual(
+                  "Zavoddagi barcha kirimlar, chiqimlar, tsex hisobotlari va sifat nazorati amaliyotlari lentasi",
+                  "Лента всех операций завода: приходы сырья, расходы, отчеты цеха и контроль качества",
+                  "Complete timeline of plant operations: raw arrivals, expenses, production reports & QC"
+                )}
+              </p>
+            </div>
+            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+              <span>{formatDual("Arxivni ochish", "Открыть архив", "Open archive")}</span>
+              <ChevronRight size={13} />
+            </div>
+          </Link>
         </div>
       </div>
 
@@ -1229,6 +1284,7 @@ export default function DirectorPage() {
                   {activeModal === 'employees' && <Users size={20} />}
                   {activeModal === 'surveys' && <Award size={20} />}
                   {activeModal === 'alerts' && <AlertTriangle size={20} />}
+                  {activeModal === 'archive' && <Archive size={20} />}
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
@@ -1238,6 +1294,7 @@ export default function DirectorPage() {
                     {activeModal === 'employees' && formatDual("Xodimlar faoliyati statistikasi", "Статистика активности сотрудников", "Employee activity audit")}
                     {activeModal === 'surveys' && formatDual("Mijozlar so'rovnomalari va fikrlari", "Опросы и отзывы клиентов", "Customer surveys & feedback")}
                     {activeModal === 'alerts' && formatDual("Shubhali holatlar va anomaliyalar", "Аномалии и расхождения", "Suspicious discrepancies & alerts")}
+                    {activeModal === 'archive' && formatDual("Umumiy Arxiv (Zavod amaliyotlari lentasi)", "Общий архив (Лента операций завода)", "Global Archive (Plant Feed)")}
                   </h3>
                   <p className="text-xs text-slate-500">
                     Faqat saqlangan rasmiy ma'lumotlar (faqat ko'rish uchun)
@@ -1616,6 +1673,76 @@ export default function DirectorPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* SECTION: ARCHIVE */}
+              {activeModal === 'archive' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                      {formatDual("Zavod amaliyotlari xronologik lentasi", "Хронологическая лента операций завода", "Plant operations timeline feed")}
+                    </h4>
+                    <Link
+                      href="/archive"
+                      className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800"
+                    >
+                      <span>{formatDual("To'liq arxiv sahifasiga o'tish", "Перейти на страницу архива", "Open full archive page")}</span>
+                      <ArrowUpRight size={14} />
+                    </Link>
+                  </div>
+
+                  {loadingArchive ? (
+                    <div className="py-12 text-center text-slate-400 text-xs">
+                      {formatDual("Arxiv yuklanmoqda...", "Загрузка архива...", "Loading archive...")}
+                    </div>
+                  ) : archiveEvents.length === 0 ? (
+                    <div className="py-12 text-center text-slate-400 text-xs">
+                      {formatDual("Arxivda ma'lumot topilmadi", "В архиве нет данных", "No archive records found")}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {archiveEvents
+                        .filter((evt) => {
+                          if (!searchQuery) return true
+                          const q = searchQuery.toLowerCase()
+                          return (
+                            evt.title?.toLowerCase().includes(q) ||
+                            evt.desc?.toLowerCase().includes(q) ||
+                            evt.author?.toLowerCase().includes(q)
+                          )
+                        })
+                        .slice(0, 30)
+                        .map((evt) => (
+                          <div
+                            key={evt.id}
+                            className="bg-white dark:bg-dark-900 rounded-2xl p-4 border border-slate-200 dark:border-dark-750 flex items-start gap-3 text-xs shadow-xs"
+                          >
+                            <span className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold flex-shrink-0">
+                              <Archive size={17} />
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <h5 className="font-bold text-slate-900 dark:text-white text-sm">
+                                  {evt.title}
+                                </h5>
+                                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-dark-800 px-2 py-0.5 rounded-lg flex-shrink-0">
+                                  {evt.date}
+                                </span>
+                              </div>
+                              <p className="text-slate-600 dark:text-slate-400 font-medium">
+                                {evt.desc}
+                              </p>
+                              <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
+                                <span>{formatDual("Kirituvchi:", "Автор:", "By:")} {evt.author}</span>
+                                <span>•</span>
+                                <span className="font-bold text-indigo-600 dark:text-indigo-400">{evt.type}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
