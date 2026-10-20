@@ -94,6 +94,11 @@ export default function ArchiveContent() {
     try {
       const url = date ? `/api/archive?date=${date}` : '/api/archive'
       const res = await fetch(url)
+      if (!res.ok) {
+        console.error('API Error status:', res.status)
+        setEvents([])
+        return
+      }
       const data = await res.json()
       if (Array.isArray(data)) {
         setEvents(data)
@@ -102,7 +107,8 @@ export default function ArchiveContent() {
         setEvents([])
       }
     } catch (e) {
-      console.error(e)
+      console.error('Archive fetch error:', e)
+      setEvents([])
     } finally {
       setLoading(false)
     }

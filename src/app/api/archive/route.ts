@@ -16,22 +16,23 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date') // YYYY-MM-DD
+    const takeCount = date ? 200 : 75
 
     const [arrivals, expenses, checklists] = await Promise.all([
       prisma.shopArrival.findMany({
         where: date ? { date } : {},
         orderBy: { createdAt: 'desc' },
-        take: 300
+        take: takeCount
       }),
       prisma.shopExpense.findMany({
         where: date ? { date } : {},
         orderBy: { date: 'desc' },
-        take: 300
+        take: takeCount
       }),
       prisma.dailyQCChecklist.findMany({
         where: date ? { date } : {},
         orderBy: { createdAt: 'desc' },
-        take: 300,
+        take: takeCount,
         include: { user: { select: { name: true, username: true, role: true } } }
       })
     ])
