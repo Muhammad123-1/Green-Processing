@@ -555,7 +555,7 @@ export default function DirectorPage() {
               {operationsSummary?.prixod?.totalKg ? `${(operationsSummary.prixod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
             </div>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              {operationsSummary?.prixod?.totalKg?.toLocaleString()} kg ({operationsSummary?.prixod?.totalCount || 0} partiya)
+              {operationsSummary?.prixod?.totalKg?.toLocaleString()} kg ({operationsSummary?.prixod?.totalCount || 0} {formatDual("partiya", "партий", "batches")})
             </p>
 
             <div className="mt-4 pt-3 border-t border-emerald-500/15 flex items-center justify-between text-xs">
@@ -587,7 +587,7 @@ export default function DirectorPage() {
               {operationsSummary?.rasxod?.totalKg ? `${(operationsSummary.rasxod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
             </div>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              {operationsSummary?.rasxod?.totalKg?.toLocaleString()} kg ({operationsSummary?.rasxod?.totalCount || 0} transfer)
+              {operationsSummary?.rasxod?.totalKg?.toLocaleString()} kg ({operationsSummary?.rasxod?.totalCount || 0} {formatDual("transfer", "перемещений", "transfers")})
             </p>
 
             <div className="mt-4 pt-3 border-t border-blue-500/15 flex items-center justify-between text-xs">
@@ -619,7 +619,7 @@ export default function DirectorPage() {
               {operationsSummary?.brak?.totalKg ? `${operationsSummary.brak.totalKg.toLocaleString()} kg` : "0 kg"}
             </div>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              {operationsSummary?.brak?.totalCount || 0} ta yaroqsiz ({operationsSummary?.brak?.defectRate || 0}%)
+              {operationsSummary?.brak?.totalCount || 0} {formatDual("ta yaroqsiz", "брак", "defects")} ({operationsSummary?.brak?.defectRate || 0}%)
             </p>
 
             <div className="mt-4 pt-3 border-t border-rose-500/15 flex items-center justify-between text-xs">

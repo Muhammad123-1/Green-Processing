@@ -26,8 +26,10 @@ export async function GET(request: NextRequest) {
 
     if (period === 'today') {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
     } else if (period === 'week') {
       startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      startDate.setHours(0, 0, 0, 0)
     } else if (period === 'month') {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0)
     } else if (period === 'year') {
@@ -39,7 +41,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const toYMD = (d: Date) => {
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    const startDateStr = startDate ? toYMD(startDate) : undefined
+    const endDateStr = toYMD(endDate)
+
     const dateFilter = startDate ? { createdAt: { gte: startDate, lte: endDate } } : {}
+    const stringDateFilter = startDateStr ? { date: { gte: startDateStr, lte: endDateStr } } : {}
 
     // Parallel queries across all operational departments
     const [
@@ -128,7 +140,8 @@ export async function GET(request: NextRequest) {
         take: 100,
       }),
       prisma.shopArrival.findMany({
-        orderBy: { id: 'desc' },
+        where: stringDateFilter,
+        orderBy: { date: 'desc' },
         take: 100,
       }),
       prisma.survey.findMany({
@@ -150,6 +163,7 @@ export async function GET(request: NextRequest) {
         take: 100,
       }),
       prisma.shopExpense.findMany({
+        where: stringDateFilter,
         orderBy: { date: 'desc' },
         take: 100,
       }),
@@ -163,6 +177,7 @@ export async function GET(request: NextRequest) {
         take: 100,
       }),
       prisma.receivingLog.findMany({
+        where: stringDateFilter,
         orderBy: { date: 'desc' },
         take: 100,
       }),
