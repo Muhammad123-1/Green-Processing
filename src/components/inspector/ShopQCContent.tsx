@@ -31,10 +31,19 @@ import {
   Info,
   SlidersHorizontal,
   ArrowUpDown,
-  PlusCircle
+  PlusCircle,
+  BookOpen,
+  XCircle,
+  ShieldAlert
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import QCInspectorGuideModal from '@/components/inspector/QCInspectorGuideModal'
+import {
+  validateProductName,
+  validatePackageWeight,
+  STANDARD_QC_PRODUCTS,
+} from '@/lib/qcValidation'
 
 const DICT = {
   uz: {
@@ -345,6 +354,8 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [viewingRecord, setViewingRecord] = useState<any | null>(null)
+  const [showGuideModal, setShowGuideModal] = useState(false)
+  const [guideInitialTab, setGuideInitialTab] = useState<'units' | 'products' | 'standards' | 'calc'>('units')
 
   // Forms
   const [fsscForm, setFsscForm] = useState({
@@ -460,6 +471,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
     responsible: userName || 'Kirish Nazoratchisi'
   })
 
+  // Real-time FSSC Validations (Direktor talabiga asosan xatolar bloklanadi)
+  const fsscNameValidation = validateProductName(fsscForm.productName)
+  const fsscWeightValidation = validatePackageWeight(fsscForm.nominalWeight, fsscForm.actualWeight)
+  const isFsscValid = fsscNameValidation.isValid && fsscWeightValidation.isValid
+
   useEffect(() => {
     fetchAllData()
   }, [filterDate])
@@ -565,7 +581,16 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
   }
 
   async function handleSaveFssc(e: React.FormEvent) {
-    e.preventDefault(); submitForm('fssc-logs', 'FsscQcLog', fsscForm, lang === 'ru' ? 'Запись FSSC 22000 сохранена' : 'FSSC 22000 qadoqlash nazorati saqlandi!');
+    e.preventDefault();
+    if (!fsscNameValidation.isValid) {
+      toast.error(fsscNameValidation.error || "Mahsulot nomida xatolik bor!");
+      return;
+    }
+    if (!fsscWeightValidation.isValid) {
+      toast.error(fsscWeightValidation.error || "Vazn noto'g'ri kiritilgan!");
+      return;
+    }
+    submitForm('fssc-logs', 'FsscQcLog', fsscForm, lang === 'ru' ? 'Запись FSSC 22000 сохранена' : 'FSSC 22000 qadoqlash nazorati saqlandi!');
   }
   async function handleSaveDez(e: React.FormEvent) {
     e.preventDefault(); submitForm('disinfection-logs', 'DisinfectionLog', dezForm, lang === 'ru' ? 'Запись ККТ-1 дезраствора сохранена' : 'KKT-1 Dezinfeksiya eritmasi qaydi saqlandi!');
@@ -688,7 +713,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
+        <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
+          <button 
+            onClick={() => { setGuideInitialTab('units'); setShowGuideModal(true); }}
+            className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+            title="Sifat nazorati va o'lchov birliklari bo'yicha to'liq qo'llanma"
+          >
+            <BookOpen size={14} className="text-emerald-600 dark:text-emerald-400" />
+            <span>📘 {lang === 'ru' ? 'Инструкция для сотрудников' : 'Xodimlar uchun Qo\'llanma'}</span>
+          </button>
           <button 
             onClick={handleDownloadExcel}
             disabled={exporting}
@@ -1398,8 +1431,49 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.productBatch}</label>
-                <input type="text" value={fsscForm.productName} onChange={e => setFsscForm({...fsscForm, productName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">{d.productBatch}</label>
+                  <button
+                    type="button"
+                    onClick={() => { setGuideInitialTab('products'); setShowGuideModal(true); }}
+                    className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1"
+                  >
+                    <BookOpen size={12} />
+                    <span>{lang === 'ru' ? 'Справочник названий' : 'Standart nomlar'}</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Masalan: Aysberg (1 kg paket)"
+                  value={fsscForm.productName}
+                  onChange={e => setFsscForm({...fsscForm, productName: e.target.value})}
+                  className={`w-full bg-slate-50 dark:bg-dark-800 border rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium outline-none transition-all ${
+                    !fsscNameValidation.isValid ? 'border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20' : 'border-slate-300 dark:border-dark-700'
+                  }`}
+                  required
+                />
+                
+                {/* Standard quick chips */}
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  <span className="text-[10px] text-slate-400 font-bold">{lang === 'ru' ? 'Быстрый выбор:' : 'Tezkor tanlash:'}</span>
+                  {STANDARD_QC_PRODUCTS.slice(0, 4).map((p) => (
+                    <button
+                      key={p.name}
+                      type="button"
+                      onClick={() => setFsscForm({ ...fsscForm, productName: p.name, nominalWeight: String(p.nominal) })}
+                      className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-800 hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-950/60 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-700 font-semibold transition-all"
+                    >
+                      {p.name.split(' ')[0]} ({p.nominal}g)
+                    </button>
+                  ))}
+                </div>
+
+                {!fsscNameValidation.isValid && fsscNameValidation.error && (
+                  <div className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold mt-1.5 flex items-center gap-1">
+                    <XCircle size={13} className="shrink-0 text-rose-500" />
+                    <span>{fsscNameValidation.error}</span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1416,13 +1490,65 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Nominal Vazn (g)</label>
-                  <input type="number" step="1" value={fsscForm.nominalWeight} onChange={e => setFsscForm({...fsscForm, nominalWeight: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="1000 yoki 500"
+                    value={fsscForm.nominalWeight}
+                    onChange={e => setFsscForm({...fsscForm, nominalWeight: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Haqiqiy Vazn (g)</label>
-                  <input type="number" step="1" value={fsscForm.actualWeight} onChange={e => setFsscForm({...fsscForm, actualWeight: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" required />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Haqiqiy Vazn (g)</label>
+                    <button
+                      type="button"
+                      onClick={() => { setGuideInitialTab('calc'); setShowGuideModal(true); }}
+                      className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                    >
+                      {lang === 'ru' ? 'Калькулятор' : 'Kalkulyator'}
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="Masalan: 1004"
+                    value={fsscForm.actualWeight}
+                    onChange={e => setFsscForm({...fsscForm, actualWeight: e.target.value})}
+                    className={`w-full bg-slate-50 dark:bg-dark-800 border rounded-xl px-3 py-2 text-xs font-mono font-bold outline-none transition-all ${
+                      !fsscWeightValidation.isValid
+                        ? 'border-rose-500 text-rose-600 bg-rose-50/20'
+                        : fsscWeightValidation.warning
+                        ? 'border-amber-500 text-amber-600 bg-amber-50/20'
+                        : 'border-slate-300 dark:border-dark-700 text-emerald-600 dark:text-emerald-400'
+                    }`}
+                    required
+                  />
                 </div>
               </div>
+
+              {/* Real-time Weight Validation Feedback */}
+              {!fsscWeightValidation.isValid && fsscWeightValidation.error && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-start gap-2.5">
+                  <XCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">{lang === 'ru' ? 'Ошибка ввода:' : 'Xatolik aniqlandi:'} </span>
+                    {fsscWeightValidation.error}
+                    <div className="text-[10px] text-rose-500 mt-1 font-normal">
+                      💡 {lang === 'ru' ? 'Пример: для 1 кг пакета писать 104 г — ошибка. Если на весах 1 кг 4 г, пишите 1004!' : 'Misol: 1 kg paket uchun 104 g deb yozish xato. Agar tarozida 1 kg 4 g bo\'lsa, \'1004\' deb yozing!'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {fsscWeightValidation.isValid && fsscWeightValidation.helperText && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-medium flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                  <span>{fsscWeightValidation.helperText}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <label className="flex items-center gap-2 bg-slate-50 dark:bg-dark-800 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700 cursor-pointer text-xs">
@@ -1449,11 +1575,27 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 <input type="file" accept="image/*" className="w-full bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 outline-none file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 hover:file:bg-emerald-200 transition-all cursor-pointer" />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">
-                <button type="button" onClick={() => setModalType(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-800">{d.cancel}</button>
-                <button type="submit" disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 flex items-center gap-2">
-                  {saving && <Loader2 size={14} className="animate-spin" />} {d.save}
-                </button>
+              <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-dark-800">
+                {!isFsscValid && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-[11px] font-bold flex items-center gap-2">
+                    <ShieldAlert size={16} className="text-rose-600 shrink-0" />
+                    <span>{lang === 'ru' ? '⛔ Сохранение заблокировано до устранения ошибок (Требование руководства)!' : '⛔ Ma\'lumotdagi xatoni to\'g\'irlamaguningizcha saqlash taqiqlanadi (Direktor buyrug\'i)!'}</span>
+                  </div>
+                )}
+                <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => setModalType(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-800">{d.cancel}</button>
+                  <button
+                    type="submit"
+                    disabled={!isFsscValid || saving}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2 transition-all ${
+                      !isFsscValid
+                        ? 'bg-slate-300 dark:bg-dark-750 text-slate-500 cursor-not-allowed opacity-60'
+                        : 'bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-600/20 active:scale-95'
+                    }`}
+                  >
+                    {saving && <Loader2 size={14} className="animate-spin" />} {d.save}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -1874,6 +2016,12 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
           </div>
         </div>
       )}
+      {/* Sifat Nazoratchisi Qo'llanma & Yo'riqnoma Modali */}
+      <QCInspectorGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        initialTab={guideInitialTab}
+      />
     </div>
   )
 }

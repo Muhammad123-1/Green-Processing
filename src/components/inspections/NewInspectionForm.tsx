@@ -24,9 +24,13 @@ import {
   Camera,
   Image as ImageIcon,
   X,
+  BookOpen,
+  ShieldAlert,
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import QCInspectorGuideModal from '@/components/inspector/QCInspectorGuideModal'
+import { validateInspectionQuantity } from '@/lib/qcValidation'
 
 interface Product {
   id: number
@@ -118,6 +122,8 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
 
   const isEditing = !!initialData?.id
   const [isOshxona, setIsOshxona] = useState(false)
+  const [showGuideModal, setShowGuideModal] = useState(false)
+  const qtyValidation = validateInspectionQuantity(form.quantity, form.quantityUnit)
 
   useEffect(() => {
     fetchProducts()
@@ -238,6 +244,19 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
     if (!form.supplierId) return 'Ta\'minotchi tanlanmagan'
     if (!form.productId) return 'Mahsulot tanlanmagan'
     if (!form.quantity || parseFloat(form.quantity) <= 0) return 'Miqdor noto\'g\'ri'
+
+    // Smart quantity validation (Direktor talabi: 1 kg o'rniga 1 g yoki adashib 1 tonna o'rniga 1 kg yozilishining oldini olish)
+    const qtyCheck = validateInspectionQuantity(form.quantity, form.quantityUnit)
+    if (!qtyCheck.isValid) {
+      return qtyCheck.error || 'Miqdor xato kiritilgan'
+    }
+
+    if (form.temperature) {
+      const temp = parseFloat(form.temperature)
+      if (isNaN(temp) || temp < -35 || temp > 45) {
+        return `O'lchangan harorat (${form.temperature}°C) qabul qilish me'yorlariga mos emas (-35°C dan +45°C gacha)!`
+      }
+    }
     return null
   }
 
@@ -347,18 +366,29 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-enter">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/inspections" className="w-9 h-9 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600
-                                             flex items-center justify-center text-slate-400 hover:text-slate-200
-                                             transition-all duration-200">
-          <ArrowLeft size={18} />
-        </Link>
-        <div>
-          <h1 className="section-title">
-            {isEditing ? `Akt tahrirlash — ${initialData?.actNumber}` : 'Yangi kiruvchi xomashyo akti'}
-          </h1>
-          <p className="section-subtitle">Barcha maydonlarni to'ldiring</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <Link href="/inspections" className="w-9 h-9 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600
+                                               flex items-center justify-center text-slate-400 hover:text-slate-200
+                                               transition-all duration-200">
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="section-title">
+              {isEditing ? `Akt tahrirlash — ${initialData?.actNumber}` : 'Yangi kiruvchi xomashyo akti'}
+            </h1>
+            <p className="section-subtitle">Barcha maydonlarni to'ldiring</p>
+          </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setShowGuideModal(true)}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all shadow-sm self-start sm:self-auto active:scale-95"
+        >
+          <BookOpen size={15} />
+          <span>📘 Xodim uchun qo'llanma & Birliklar konverteri</span>
+        </button>
       </div>
 
       {/* Section 1: Main Info */}
@@ -511,6 +541,20 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
                 <option value="t">t</option>
               </select>
             </div>
+
+            {/* Real-time quantity validation feedback */}
+            {form.quantity && !qtyValidation.isValid && (
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold mt-2 flex items-start gap-2">
+                <XCircle size={15} className="shrink-0 mt-0.5 text-rose-400" />
+                <span>{qtyValidation.error}</span>
+              </div>
+            )}
+            {form.quantity && qtyValidation.isValid && qtyValidation.helperText && (
+              <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium mt-2 flex items-center gap-2">
+                <CheckCircle size={14} className="shrink-0 text-emerald-400" />
+                <span>{qtyValidation.helperText}</span>
+              </div>
+            )}
           </div>
 
           {/* Temperature */}
@@ -802,36 +846,61 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       )}
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-3 justify-end pb-6">
-        <Link href="/inspections" className="btn-secondary">
-          <ArrowLeft size={16} />
-          Bekor qilish
-        </Link>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="btn-secondary"
-        >
-          {saving && !generating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Saqlash
-        </button>
-
-        {!isOshxona && (
-          <button
-            onClick={handleSaveAndExcel}
-            disabled={saving || generating}
-            className="btn-success"
-          >
-            {(saving || generating) ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <FileSpreadsheet size={16} />
-            )}
-            Saqlash + Excel yuklab olish
-          </button>
+      <div className="space-y-3 pb-6">
+        {form.quantity && !qtyValidation.isValid && (
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldAlert size={16} className="text-rose-400 shrink-0" />
+              <span>⛔ Miqdor noto'g'ri kiritilgan. Xatoni to'g'irlamaguningizcha saqlash taqiqlanadi (Direktor talabi)!</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowGuideModal(true)}
+              className="underline text-emerald-400 hover:text-emerald-300 text-[11px]"
+            >
+              Qo'llanmani ochish
+            </button>
+          </div>
         )}
+
+        <div className="flex items-center gap-3 justify-end">
+          <Link href="/inspections" className="btn-secondary">
+            <ArrowLeft size={16} />
+            Bekor qilish
+          </Link>
+
+          <button
+            onClick={handleSave}
+            disabled={saving || (!!form.quantity && !qtyValidation.isValid)}
+            className={`btn-secondary ${form.quantity && !qtyValidation.isValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {saving && !generating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            Saqlash
+          </button>
+
+          {!isOshxona && (
+            <button
+              onClick={handleSaveAndExcel}
+              disabled={saving || generating || (!!form.quantity && !qtyValidation.isValid)}
+              className={`btn-success ${form.quantity && !qtyValidation.isValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {(saving || generating) ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <FileSpreadsheet size={16} />
+              )}
+              Saqlash + Excel yuklab olish
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* QC Inspector Guide Modal */}
+      <QCInspectorGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        initialTab="units"
+      />
     </div>
   )
 }

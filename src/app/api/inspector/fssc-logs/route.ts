@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { validateProductName, validatePackageWeight } from '@/lib/qcValidation'
 
 async function ensureTable() {
   try {
@@ -92,8 +93,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Mahsulot nomi, partiya va haqiqiy vaznni kiriting' }, { status: 400 })
     }
 
+    // Strict validation: Reject short/gibberish product names (e.g. "aysberg 1k", "1k", etc.)
+    const nameCheck = validateProductName(productName)
+    if (!nameCheck.isValid) {
+      return NextResponse.json({ error: nameCheck.error }, { status: 400 })
+    }
+
     const nom = parseFloat(nominalWeight)
     const act = parseFloat(actualWeight)
+
+    // Strict validation: Reject impossible weights (e.g. 104g instead of 1004g, 1g instead of 1kg)
+    const weightCheck = validatePackageWeight(nom, act)
+    if (!weightCheck.isValid) {
+      return NextResponse.json({ error: weightCheck.error }, { status: 400 })
+    }
+
     const dev = parseFloat((act - nom).toFixed(1))
 
     // FSSC Tolerance: +-10g

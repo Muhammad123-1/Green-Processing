@@ -20,8 +20,10 @@ import {
   AlertTriangle,
   Plus,
   Trash2,
+  BookOpen,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import QCInspectorGuideModal from '@/components/inspector/QCInspectorGuideModal'
 
 export interface PackagingProductItem {
   id: string
@@ -370,6 +372,7 @@ const initialForm: ChecklistForm = {
 export default function DailyChecklistContent() {
   const router = useRouter()
   const [view, setView] = useState<'form' | 'archive'>('form')
+  const [showGuideModal, setShowGuideModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [history, setHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -631,8 +634,17 @@ export default function DailyChecklistContent() {
           </div>
         </div>
 
-        {/* View switcher tabs */}
-        <div className="flex items-center gap-2">
+        {/* View switcher tabs & Guide button */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowGuideModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 text-xs font-bold transition-all shadow-sm active:scale-95"
+          >
+            <BookOpen size={15} className="text-emerald-600 dark:text-emerald-400" />
+            <span>📘 Qo'llanma</span>
+          </button>
+
           <div className="flex bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 shadow-inner">
             <button
               onClick={() => setView('form')}
@@ -2550,6 +2562,11 @@ export default function DailyChecklistContent() {
           )}
         </div>
       )}
+      {/* QC Inspector Guide Modal */}
+      <QCInspectorGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+      />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { validateInspectionQuantity } from '@/lib/qcValidation'
 
 // GET /api/inspections - list all
 export async function GET(request: NextRequest) {
@@ -73,6 +74,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+
+    // Strict validation: Reject impossible quantities or unit conversion errors (Direktor talabi)
+    if (body.quantity !== undefined && body.quantity !== '') {
+      const qtyCheck = validateInspectionQuantity(body.quantity, body.quantityUnit || 'kg')
+      if (!qtyCheck.isValid) {
+        return NextResponse.json({ error: qtyCheck.error }, { status: 400 })
+      }
+    }
 
     // Generate act number
     const year = new Date().getFullYear()
