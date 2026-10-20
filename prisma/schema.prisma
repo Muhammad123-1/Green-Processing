@@ -1047,31 +1047,37 @@ model CustomRecord {
 // -----------------------------------------------------------------------------
 
 model MealLog {
-  id          Int      @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   mealName    String                         // Ovqat nomi
   cookedDate  String                         // YYYY-MM-DD
-  shift       String   @default("1-Smena")   // 1-Smena / 2-Smena
+  shift       String         @default("1-Smena")   // 1-Smena / 2-Smena
   preparedBy  String                         // Povar ismi
-  ingredients String   @db.Text             // JSON: [{name, qty, unit}]
+  ingredients String         @db.Text             // JSON: [{name, qty, unit}]
   notes       String?
   servings    Int?                           // Necha kishiga
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  token       String?        @unique               // Unique 1-kunlik baholash tokeni
+  expiresAt   DateTime?                      // Token amal qilish muddati
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
+  feedbacks   MealFeedback[]
   @@index([cookedDate])
 }
 
 model MealFeedback {
-  id        Int      @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   rating    String                           // GOOD | AVERAGE | BAD
   comment   String?
   date      String                           // YYYY-MM-DD (qaysi kun uchun)
   mealName  String?                          // Qaysi ovqat haqida
-  createdAt DateTime @default(now())
+  mealLogId Int?
+  createdAt DateTime       @default(now())
   // IP yoki user ma'lumotlari saqlanmaydi — to'liq anonim
 
+  mealLog   MealLog?       @relation(fields: [mealLogId], references: [id])
   @@index([date])
   @@index([rating])
+  @@index([mealLogId])
 }
 
 // -----------------------------------------------------------------------------
