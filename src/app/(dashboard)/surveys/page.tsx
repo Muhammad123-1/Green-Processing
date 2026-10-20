@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   HelpCircle,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -528,6 +529,7 @@ function ResponseViewer({
     let negCount = 0;
     let otherCount = 0;
     let totalCount = 0;
+    const isOpinion = q.questionType === 'text' || q.questionType === 'select';
 
     responses.forEach((resp) => {
       const ans = (resp.answers || []).find((a: any) => a.questionId === q.id);
@@ -540,7 +542,10 @@ function ResponseViewer({
       const norm = clean.toLowerCase();
       totalCount++;
 
-      if (q.questionType === 'yesno') {
+      // Text yoki Variantli taklif savollari ijobiy/salbiyga ajratilmaydi — faqat to'ldiruvchi fikri olinadi
+      if (isOpinion) {
+        otherCount++;
+      } else if (q.questionType === 'yesno') {
         // INVERSION FIX:
         // "Yo'q" = POSITIVE (no defects reported)
         // "Ha" = NEGATIVE (defects / complaints)
@@ -558,7 +563,7 @@ function ResponseViewer({
           negCount++;
         }
       } else {
-        posCount++;
+        otherCount++;
       }
     });
 
@@ -572,6 +577,7 @@ function ResponseViewer({
       negCount,
       otherCount,
       satisfactionPct,
+      isOpinion,
     };
   });
 
@@ -660,7 +666,7 @@ function ResponseViewer({
             </div>
 
             <div className="grid grid-cols-1 gap-2.5">
-              {questionSummaries.map(({ question: q, totalCount, posCount, negCount, satisfactionPct }) => (
+              {questionSummaries.map(({ question: q, totalCount, posCount, negCount, satisfactionPct, isOpinion }) => (
                 <div
                   key={q.id}
                   onClick={() => {
@@ -683,27 +689,39 @@ function ResponseViewer({
                             ? formatDual("Ha / Yo'q savoli", "Вопрос Да / Нет", "Yes / No question")
                             : q.questionType === 'rating'
                               ? formatDual("5 ballik baholash", "5-балльная шкала", "5-star rating")
-                              : formatDual("Matn / Variantli", "Текстовый ответ", "Text / Options")}
+                              : formatDual("Matn / Variantli fikrlar", "Текстовые отзывы", "Text / Feedback")}
                         </p>
                       </div>
                     </div>
 
                     {/* Stats & Bar */}
                     <div className="flex items-center gap-4 flex-shrink-0 sm:min-w-[240px] justify-between sm:justify-end">
-                      <div className="text-right">
-                        <div className="flex items-center gap-2 text-xs font-bold">
-                          <span className="text-emerald-600 flex items-center gap-1">
-                            <CheckCircle2 size={12} /> {posCount}
+                      {isOpinion ? (
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 justify-end">
+                            <MessageSquare size={12} />
+                            <span>{totalCount} {formatDual("ta fikr", "ответов", "opinions")}</span>
                           </span>
-                          <span className="text-slate-300">•</span>
-                          <span className="text-red-500 flex items-center gap-1">
-                            <AlertTriangle size={12} /> {negCount}
+                          <span className="text-[10px] text-slate-400 block mt-1">
+                            {formatDual("To'ldiruvchilar fikri", "Мнения респондентов", "Respondent feedback")}
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
-                          {formatDual("Qoniqish:", "Удовл.:", "Satisf.:")} {satisfactionPct.toFixed(0)}%
-                        </span>
-                      </div>
+                      ) : (
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 text-xs font-bold">
+                            <span className="text-emerald-600 flex items-center gap-1">
+                              <CheckCircle2 size={12} /> {posCount}
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-red-500 flex items-center gap-1">
+                              <AlertTriangle size={12} /> {negCount}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 block mt-0.5">
+                            {formatDual("Qoniqish:", "Удовл.:", "Satisf.:")} {satisfactionPct.toFixed(0)}%
+                          </span>
+                        </div>
+                      )}
 
                       {/* Percentage pill button */}
                       <button
@@ -716,25 +734,35 @@ function ResponseViewer({
                     </div>
                   </div>
 
-                  {/* Progress Bar */}
+                  {/* Progress Bar / Info */}
                   {totalCount > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center gap-3">
-                      <div className="flex-1 h-2 bg-slate-100 dark:bg-dark-800 rounded-full overflow-hidden flex">
-                        <div
-                          style={{ width: `${satisfactionPct}%` }}
-                          className="h-full bg-emerald-500 transition-all duration-300"
-                          title={`Ijobiy: ${satisfactionPct.toFixed(0)}%`}
-                        />
-                        <div
-                          style={{ width: `${100 - satisfactionPct}%` }}
-                          className="h-full bg-red-400 transition-all duration-300"
-                          title={`Salbiy / E'tiroz: ${(100 - satisfactionPct).toFixed(0)}%`}
-                        />
+                    isOpinion ? (
+                      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                          <MessageSquare size={12} className="text-blue-500" />
+                          {formatDual("Erkin fikr-mulohazalar (ijobiy/salbiyga ajratilmagan)", "Свободные мнения респондентов", "Open respondent opinions")}
+                        </span>
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{totalCount} {formatDual("ta to'ldirildi", "заполнено", "submitted")}</span>
                       </div>
-                      <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 flex-shrink-0">
-                        {satisfactionPct.toFixed(0)}%
-                      </span>
-                    </div>
+                    ) : (
+                      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center gap-3">
+                        <div className="flex-1 h-2 bg-slate-100 dark:bg-dark-800 rounded-full overflow-hidden flex">
+                          <div
+                            style={{ width: `${satisfactionPct}%` }}
+                            className="h-full bg-emerald-500 transition-all duration-300"
+                            title={`Ijobiy: ${satisfactionPct.toFixed(0)}%`}
+                          />
+                          <div
+                            style={{ width: `${100 - satisfactionPct}%` }}
+                            className="h-full bg-red-400 transition-all duration-300"
+                            title={`Salbiy / E'tiroz: ${(100 - satisfactionPct).toFixed(0)}%`}
+                          />
+                        </div>
+                        <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 flex-shrink-0">
+                          {satisfactionPct.toFixed(0)}%
+                        </span>
+                      </div>
+                    )
                   )}
                 </div>
               ))}

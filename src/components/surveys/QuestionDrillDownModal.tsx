@@ -1,23 +1,22 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   X,
+  Search,
   CheckCircle2,
   AlertTriangle,
-  ThumbsUp,
-  ThumbsDown,
   Building2,
   User,
   Calendar,
   MessageSquare,
-  Search,
-  Filter,
+  ThumbsUp,
+  ThumbsDown,
   Columns,
   ListFilter,
   Copy,
   Check,
-  Award,
+  Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -27,13 +26,12 @@ export interface QuestionDrillDownModalProps {
   onClose: () => void
   question: {
     id: number
-    orderIndex?: number
-    subLabel?: string | null
-    groupName?: string | null
     questionText: string
     questionType: string
-    options?: string | string[] | null
+    subLabel?: string | null
+    groupName?: string | null
     helpText?: string | null
+    orderIndex?: number
   } | null
   responses: Array<{
     id: number
@@ -72,6 +70,7 @@ export default function QuestionDrillDownModal({
 }: QuestionDrillDownModalProps) {
   const { formatDual } = useLanguage()
   const [activeTab, setActiveTab] = useState<'all' | 'pos' | 'neg'>('all')
+  const [selectedOptionFilter, setSelectedOptionFilter] = useState<string>('ALL')
   const [viewMode, setViewMode] = useState<'columns' | 'tabs'>('columns')
   const [searchQuery, setSearchQuery] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -91,25 +90,35 @@ export default function QuestionDrillDownModal({
   useEffect(() => {
     if (isOpen) {
       setActiveTab('all')
+      setSelectedOptionFilter('ALL')
       setSearchQuery('')
     }
   }, [isOpen, question?.id])
 
+  const qType = question?.questionType || 'rating'
+  // Text va Variantli fikr savollarida ijobiy/salbiyga ajratilmaydi — faqat to'ldiruvchi fikri ko'rinadi
+  const isOpinionQuestion = qType === 'text' || qType === 'select'
+
   // Process answers
-  const { positiveList, negativeList, allList, stats } = useMemo(() => {
+  const { positiveList, negativeList, allList, stats, optionsBreakdown, opinionsCount, uniqueRestaurantsCount } = useMemo(() => {
     if (!question || !responses || responses.length === 0) {
       return {
         positiveList: [],
         negativeList: [],
         allList: [],
         stats: { total: 0, pos: 0, neg: 0, pct: 0, avg: 0 },
+        optionsBreakdown: [] as { name: string; count: number }[],
+        opinionsCount: 0,
+        uniqueRestaurantsCount: 0,
       }
     }
 
-    const qType = question.questionType || 'rating'
     const pos: ClassifiedAnswer[] = []
     const neg: ClassifiedAnswer[] = []
     const all: ClassifiedAnswer[] = []
+    const optCounts: Record<string, number> = {}
+    const restaurantsSet = new Set<string>()
+    let textOpinions = 0
 
     let sumScores = 0
     let countScores = 0
@@ -144,6 +153,16 @@ export default function QuestionDrillDownModal({
         resp.respondentDate ||
         (resp.submittedAt ? new Date(resp.submittedAt).toLocaleDateString('uz-UZ') : '-')
 
+      restaurantsSet.add(restName)
+
+      if (comment || (qType === 'text' && cleanVal)) {
+        textOpinions++
+      }
+
+      if (cleanVal) {
+        optCounts[cleanVal] = (optCounts[cleanVal] || 0) + 1
+      }
+
       const norm = cleanVal.toLowerCase()
 
       let isPositive = false
@@ -151,10 +170,17 @@ export default function QuestionDrillDownModal({
       let score = 5
       let badgeLabel = cleanVal
       let badgeColor =
-        'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border-slate-200 dark:border-dark-700'
+        'bg-slate-100 text-slate-800 dark:bg-dark-800 dark:text-slate-200 border-slate-200 dark:border-dark-700'
 
-      if (qType === 'yesno') {
-        // INVERSION FIX:
+      // AGAR SAVOL MATNLI YOKI VARIANTLI FIKR BO'LSA: Ijobiy/Salbiyga ajratilmaydi!
+      if (isOpinionQuestion) {
+        isPositive = false
+        isNegative = false
+        score = 0
+        badgeLabel = qType === 'text' ? formatDual("Fikr-mulohaza", "Отзыв", "Feedback") : cleanVal
+        badgeColor =
+          'bg-slate-100 text-slate-700 dark:bg-dark-800 dark:text-slate-200 border-slate-200 dark:border-dark-700'
+      } else if (qType === 'yesno') {
         // Yo'q / Нет / No = POSITIVE (Zero complaints, flawless product)
         // Ha / Да / Yes = NEGATIVE (Defect / anomaly reported)
         if (
@@ -193,6 +219,8 @@ export default function QuestionDrillDownModal({
           isPositive = true
           score = 5
         }
+        sumScores += score
+        countScores += 1
       } else if (qType === 'rating' || ['1', '2', '3', '4', '5'].includes(cleanVal)) {
         if (cleanVal === '5' || norm === "a'lo" || norm === 'отлично') {
           isPositive = true
@@ -237,14 +265,9 @@ export default function QuestionDrillDownModal({
           badgeColor =
             'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-300 dark:border-red-800'
         }
-      } else {
-        // Text / select
-        isPositive = true
-        score = 5
+        sumScores += score
+        countScores += 1
       }
-
-      sumScores += score
-      countScores += 1
 
       const item: ClassifiedAnswer = {
         responseId: resp.id,
@@ -272,19 +295,32 @@ export default function QuestionDrillDownModal({
     const pct = total > 0 ? (posCount / total) * 100 : 0
     const avg = countScores > 0 ? sumScores / countScores : 0
 
+    const optionsList = Object.entries(optCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+
     return {
       positiveList: pos,
       negativeList: neg,
       allList: all,
       stats: { total, pos: posCount, neg: negCount, pct, avg },
+      optionsBreakdown: optionsList,
+      opinionsCount: textOpinions,
+      uniqueRestaurantsCount: restaurantsSet.size,
     }
-  }, [question, responses, formatDual])
+  }, [question, responses, formatDual, isOpinionQuestion, qType])
 
-  // Filter with live search
+  // Filter with live search and options
   const filterList = (list: ClassifiedAnswer[]) => {
-    if (!searchQuery.trim()) return list
+    let result = list
+
+    if (isOpinionQuestion && selectedOptionFilter !== 'ALL') {
+      result = result.filter(item => item.cleanVal === selectedOptionFilter)
+    }
+
+    if (!searchQuery.trim()) return result
     const q = searchQuery.toLowerCase()
-    return list.filter(
+    return result.filter(
       (item) =>
         item.restaurantName.toLowerCase().includes(q) ||
         item.respondentName.toLowerCase().includes(q) ||
@@ -293,14 +329,14 @@ export default function QuestionDrillDownModal({
     )
   }
 
-  const filteredPositive = useMemo(() => filterList(positiveList), [positiveList, searchQuery])
-  const filteredNegative = useMemo(() => filterList(negativeList), [negativeList, searchQuery])
-  const filteredAll = useMemo(() => filterList(allList), [allList, searchQuery])
+  const filteredPositive = useMemo(() => filterList(positiveList), [positiveList, searchQuery, selectedOptionFilter, isOpinionQuestion])
+  const filteredNegative = useMemo(() => filterList(negativeList), [negativeList, searchQuery, selectedOptionFilter, isOpinionQuestion])
+  const filteredAll = useMemo(() => filterList(allList), [allList, searchQuery, selectedOptionFilter, isOpinionQuestion])
 
   const copyComment = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopiedId(id)
-    toast.success(formatDual('Izoh nusxalandi!', 'Отзыв скопирован!', 'Comment copied!'))
+    toast.success(formatDual('Fikr nusxalandi!', 'Отзыв скопирован!', 'Feedback copied!'))
     setTimeout(() => setCopiedId(null), 2000)
   }
 
@@ -322,11 +358,19 @@ export default function QuestionDrillDownModal({
                 {qNumber}
               </div>
               <div className="flex-1 min-w-0">
-                {question.groupName && (
-                  <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide truncate mb-1">
-                    {question.groupName}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  {question.groupName && (
+                    <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide truncate">
+                      {question.groupName}
+                    </p>
+                  )}
+                  {isOpinionQuestion && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                      <MessageSquare size={10} />
+                      {formatDual("To'ldiruvchilar Fikrlari", "Мнения респондентов", "Respondent Opinions")}
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
                   {question.questionText}
                 </h3>
@@ -359,42 +403,80 @@ export default function QuestionDrillDownModal({
               </div>
             </div>
 
-            {/* Positive Count */}
-            <div className="bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl p-3 border border-emerald-200 dark:border-emerald-800/60 text-center shadow-xs">
-              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block flex items-center justify-center gap-1">
-                <CheckCircle2 size={12} />
-                {formatDual('Ijobiy javoblar', 'Положительные', 'Positive')}
-              </span>
-              <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                {stats.pos} <span className="text-xs font-semibold text-emerald-600/70">ta ({stats.pct.toFixed(0)}%)</span>
-              </div>
-            </div>
+            {isOpinionQuestion ? (
+              <>
+                {/* Opinions count */}
+                <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl p-3 border border-blue-200 dark:border-blue-800/60 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider block flex items-center justify-center gap-1">
+                    <MessageSquare size={12} />
+                    {formatDual('Fikr bildirganlar', 'Оставили мнение', 'Opinions given')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
+                    {opinionsCount} <span className="text-xs font-semibold text-blue-600/70">ta</span>
+                  </div>
+                </div>
 
-            {/* Negative / Complaints Count */}
-            <div className="bg-red-50/70 dark:bg-red-950/30 rounded-2xl p-3 border border-red-200 dark:border-red-800/60 text-center shadow-xs">
-              <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block flex items-center justify-center gap-1">
-                <AlertTriangle size={12} />
-                {formatDual('Salbiy / Shikoyatlar', 'Замечания', 'Defects / Issues')}
-              </span>
-              <div className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">
-                {stats.neg} <span className="text-xs font-semibold text-red-600/70">ta ({((stats.total > 0 ? stats.neg / stats.total : 0) * 100).toFixed(0)}%)</span>
-              </div>
-            </div>
+                {/* Clients count */}
+                <div className="bg-slate-100/70 dark:bg-dark-800 rounded-2xl p-3 border border-slate-200 dark:border-dark-700 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block flex items-center justify-center gap-1">
+                    <Building2 size={12} />
+                    {formatDual('Mijozlar / Restoranlar', 'Клиенты / Рестораны', 'Clients / Venues')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white mt-0.5">
+                    {uniqueRestaurantsCount} <span className="text-xs font-semibold text-slate-400">ta</span>
+                  </div>
+                </div>
 
-            {/* Satisfaction Index */}
-            <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 border border-slate-200/80 dark:border-dark-700 text-center shadow-xs">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                {formatDual('Qoniqish darajasi', 'Удовлетвор-ть', 'Satisfaction')}
-              </span>
-              <div className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
-                {stats.pct.toFixed(1)}%
-              </div>
-            </div>
+                {/* Status indicator */}
+                <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 border border-slate-200/80 dark:border-dark-700 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    {formatDual('Tahlil turi', 'Тип анализа', 'Analysis type')}
+                  </span>
+                  <div className="text-sm sm:text-base font-black text-slate-700 dark:text-slate-200 mt-1">
+                    {qType === 'text' ? formatDual("Erkin matn", "Свободный текст", "Open text") : formatDual("Variantli takliflar", "Варианты предложений", "Option feedback")}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Positive Count */}
+                <div className="bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl p-3 border border-emerald-200 dark:border-emerald-800/60 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block flex items-center justify-center gap-1">
+                    <CheckCircle2 size={12} />
+                    {formatDual('Ijobiy javoblar', 'Положительные', 'Positive')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {stats.pos} <span className="text-xs font-semibold text-emerald-600/70">ta ({stats.pct.toFixed(0)}%)</span>
+                  </div>
+                </div>
+
+                {/* Negative / Complaints Count */}
+                <div className="bg-red-50/70 dark:bg-red-950/30 rounded-2xl p-3 border border-red-200 dark:border-red-800/60 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block flex items-center justify-center gap-1">
+                    <AlertTriangle size={12} />
+                    {formatDual('Salbiy / Shikoyatlar', 'Замечания', 'Defects / Issues')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">
+                    {stats.neg} <span className="text-xs font-semibold text-red-600/70">ta ({((stats.total > 0 ? stats.neg / stats.total : 0) * 100).toFixed(0)}%)</span>
+                  </div>
+                </div>
+
+                {/* Satisfaction Index */}
+                <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 border border-slate-200/80 dark:border-dark-700 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    {formatDual('Qoniqish darajasi', 'Удовлетвор-ть', 'Satisfaction')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
+                    {stats.pct.toFixed(1)}%
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* ===================================================================== */}
-        {/* CONTROLS BAR: SEARCH, VIEW MODES, TABS */}
+        {/* CONTROLS BAR: SEARCH & TABS */}
         {/* ===================================================================== */}
         <div className="px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-dark-800 bg-white dark:bg-dark-900 flex flex-wrap items-center justify-between gap-3">
           {/* Live Search */}
@@ -405,9 +487,9 @@ export default function QuestionDrillDownModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={formatDual(
-                'Restoran, ism yoki izoh bo\'yicha qidirish...',
+                'Restoran, ism yoki fikr bo\'yicha qidirish...',
                 'Поиск по ресторану, имени или отзыву...',
-                'Search by restaurant, name or comment...'
+                'Search by restaurant, name or opinion...'
               )}
               className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
@@ -421,82 +503,139 @@ export default function QuestionDrillDownModal({
             )}
           </div>
 
-          {/* View mode toggle & Filter Tabs */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* View Mode (Columns vs Tabs) */}
-            <div className="hidden sm:flex items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
+          {/* OPINION QUESTION: OPTION FILTER BUTTONS (NO POSITIVE / NEGATIVE) */}
+          {isOpinionQuestion ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
               <button
-                onClick={() => setViewMode('columns')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'columns'
-                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-                title={formatDual('2 ta ustun yonma-yon', 'В две колонки', 'Side-by-side columns')}
-              >
-                <Columns size={13} />
-                <span>{formatDual('Yonma-yon', 'Колонки', 'Columns')}</span>
-              </button>
-              <button
-                onClick={() => setViewMode('tabs')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'tabs'
-                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-                title={formatDual('Tablar bo\'yicha', 'По вкладкам', 'Tabs view')}
-              >
-                <ListFilter size={13} />
-                <span>{formatDual('Tablar', 'Вкладки', 'Tabs')}</span>
-              </button>
-            </div>
-
-            {/* Filter Buttons */}
-            <div className="flex items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
-              <button
-                onClick={() => setActiveTab('all')}
+                onClick={() => setSelectedOptionFilter('ALL')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'all'
-                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-              >
-                {formatDual('Barchasi', 'Все', 'All')} ({filteredAll.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('pos')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'pos'
+                  selectedOptionFilter === 'ALL'
                     ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100/50'
+                    : 'bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                 }`}
               >
-                <CheckCircle2 size={12} />
-                <span>{formatDual('Ijobiy', 'Положит.', 'Positive')}</span>
-                <span>({filteredPositive.length})</span>
+                {formatDual('Barcha fikrlar', 'Все отзывы', 'All feedback')} ({allList.length})
               </button>
-              <button
-                onClick={() => setActiveTab('neg')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'neg'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'text-red-700 dark:text-red-400 hover:bg-red-100/50'
-                }`}
-              >
-                <AlertTriangle size={12} />
-                <span>{formatDual('Salbiy', 'Замечания', 'Negative')}</span>
-                <span>({filteredNegative.length})</span>
-              </button>
+              {optionsBreakdown.map((opt) => (
+                <button
+                  key={opt.name}
+                  onClick={() => setSelectedOptionFilter(opt.name)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all max-w-[220px] truncate ${
+                    selectedOptionFilter === opt.name
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  }`}
+                  title={opt.name}
+                >
+                  {opt.name} ({opt.count})
+                </button>
+              ))}
             </div>
-          </div>
+          ) : (
+            /* RATING / YES-NO QUESTION: POSITIVE & NEGATIVE CONTROLS */
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* View Mode (Columns vs Tabs) */}
+              <div className="hidden sm:flex items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
+                <button
+                  onClick={() => setViewMode('columns')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'columns'
+                      ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={formatDual('2 ta ustun yonma-yon', 'В две колонки', 'Side-by-side columns')}
+                >
+                  <Columns size={13} />
+                  <span>{formatDual('Yonma-yon', 'Колонки', 'Columns')}</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('tabs')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'tabs'
+                      ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={formatDual('Tablar bo\'yicha', 'По вкладкам', 'Tabs view')}
+                >
+                  <ListFilter size={13} />
+                  <span>{formatDual('Tablar', 'Вкладки', 'Tabs')}</span>
+                </button>
+              </div>
+
+              {/* Filter Buttons */}
+              <div className="flex items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
+                <button
+                  onClick={() => setActiveTab('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === 'all'
+                      ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {formatDual('Barchasi', 'Все', 'All')} ({filteredAll.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('pos')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === 'pos'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100/50'
+                  }`}
+                >
+                  <CheckCircle2 size={12} />
+                  <span>{formatDual('Ijobiy', 'Положит.', 'Positive')}</span>
+                  <span>({filteredPositive.length})</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('neg')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === 'neg'
+                      ? 'bg-red-600 text-white shadow-xs'
+                      : 'text-red-700 dark:text-red-400 hover:bg-red-100/50'
+                  }`}
+                >
+                  <AlertTriangle size={12} />
+                  <span>{formatDual('Salbiy', 'Замечания', 'Negative')}</span>
+                  <span>({filteredNegative.length})</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ===================================================================== */}
         {/* RESPONSES LIST AREA */}
         {/* ===================================================================== */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-dark-950/40">
-          {viewMode === 'columns' && activeTab === 'all' ? (
-            /* 2-COLUMN SIDE-BY-SIDE VIEW */
+          {/* OPINION / TEXT QUESTION: SINGLE CLEAN VIEW SHOWING RESPONDENT'S OPINION */}
+          {isOpinionQuestion ? (
+            <div className="space-y-3 max-w-4xl mx-auto">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+                <span>
+                  {formatDual("To'ldiruvchilar Fikrlari Ro'yxati", "Список отзывов респондентов", "Respondent Opinions List")}
+                </span>
+                <span>{filteredAll.length} ta javob</span>
+              </div>
+
+              {filteredAll.length === 0 ? (
+                <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-12 text-center text-slate-400 text-xs">
+                  {formatDual('Hech qanday fikr topilmadi', 'Отзывов не найдено', 'No feedback found')}
+                </div>
+              ) : (
+                filteredAll.map((item, idx) => (
+                  <OpinionCard
+                    key={`${item.responseId}-${idx}`}
+                    item={item}
+                    qType={qType}
+                    copiedId={copiedId}
+                    onCopy={copyComment}
+                    formatDual={formatDual}
+                  />
+                ))
+              )}
+            </div>
+          ) : viewMode === 'columns' && activeTab === 'all' ? (
+            /* 2-COLUMN SIDE-BY-SIDE VIEW FOR YES/NO & RATING */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* POSITIVE COLUMN */}
               <div className="space-y-3">
@@ -525,6 +664,7 @@ export default function QuestionDrillDownModal({
                         item={item}
                         copiedId={copiedId}
                         onCopy={copyComment}
+                        formatDual={formatDual}
                       />
                     ))}
                   </div>
@@ -556,13 +696,6 @@ export default function QuestionDrillDownModal({
                         'Great! No complaints or negative feedback submitted'
                       )}
                     </p>
-                    <p className="text-emerald-600/80 mt-1">
-                      {formatDual(
-                        'Barcha mijozlar mahsulot va xizmat sifatidan to\'liq qoniqqan.',
-                        'Все клиенты полностью удовлетворены качеством.',
-                        'All customers are satisfied with the quality.'
-                      )}
-                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2.5">
@@ -572,6 +705,7 @@ export default function QuestionDrillDownModal({
                         item={item}
                         copiedId={copiedId}
                         onCopy={copyComment}
+                        formatDual={formatDual}
                       />
                     ))}
                   </div>
@@ -579,7 +713,7 @@ export default function QuestionDrillDownModal({
               </div>
             </div>
           ) : (
-            /* TABBED / FILTERED VIEW */
+            /* TABBED / FILTERED VIEW FOR YES/NO & RATING */
             <div className="space-y-3 max-w-3xl mx-auto">
               {activeTab === 'pos' && (
                 <>
@@ -597,6 +731,7 @@ export default function QuestionDrillDownModal({
                         item={item}
                         copiedId={copiedId}
                         onCopy={copyComment}
+                        formatDual={formatDual}
                       />
                     ))
                   )}
@@ -626,6 +761,7 @@ export default function QuestionDrillDownModal({
                         item={item}
                         copiedId={copiedId}
                         onCopy={copyComment}
+                        formatDual={formatDual}
                       />
                     ))
                   )}
@@ -648,6 +784,7 @@ export default function QuestionDrillDownModal({
                         item={item}
                         copiedId={copiedId}
                         onCopy={copyComment}
+                        formatDual={formatDual}
                       />
                     ))
                   )}
@@ -662,22 +799,35 @@ export default function QuestionDrillDownModal({
         {/* ===================================================================== */}
         <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-dark-800 bg-slate-50 dark:bg-dark-850 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
-              {formatDual('Standart:', 'Стандарт:', 'Standard:')}
-            </span>
-            <span>
-              {question.questionType === 'yesno'
-                ? formatDual(
-                    "\"Yo'q\" = Ijobiy (Benuqson), \"Ha\" = Salbiy (Nuqson)",
-                    '"Нет" = Положительно (Без дефектов), "Да" = Отрицательно (Дефект)',
-                    '"No" = Positive (Flawless), "Yes" = Negative (Defect)'
-                  )
-                : formatDual(
-                    '4-5 ball = Ijobiy, 1-3 ball = E\'tiroz / Salbiy',
-                    '4-5 баллов = Положительно, 1-3 балла = Замечание',
-                    '4-5 points = Positive, 1-3 points = Defect / Attention'
-                  )}
-            </span>
+            {isOpinionQuestion ? (
+              <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                <MessageSquare size={13} className="text-blue-500" />
+                {formatDual(
+                  "Ushbu savolda respondentlarning erkin fikrlari jamlangan (ijobiy yoki salbiyga ajratilmagan)",
+                  "В этом вопросе собраны свободные мнения респондентов без разделения на положительные и отрицательные",
+                  "Open opinions collected without positive/negative categorization"
+                )}
+              </span>
+            ) : (
+              <>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {formatDual('Standart:', 'Стандарт:', 'Standard:')}
+                </span>
+                <span>
+                  {question.questionType === 'yesno'
+                    ? formatDual(
+                        "\"Yo'q\" = Ijobiy (Benuqson), \"Ha\" = Salbiy (Nuqson)",
+                        '"Нет" = Положительно (Без дефектов), "Да" = Отрицательно (Дефект)',
+                        '"No" = Positive (Flawless), "Yes" = Negative (Defect)'
+                      )
+                    : formatDual(
+                        '4-5 ball = Ijobiy, 1-3 ball = E\'tiroz / Salbiy',
+                        '4-5 баллов = Положительно, 1-3 балла = Замечание',
+                        '4-5 points = Positive, 1-3 points = Defect / Attention'
+                      )}
+                </span>
+              </>
+            )}
           </div>
 
           <button
@@ -693,14 +843,101 @@ export default function QuestionDrillDownModal({
   )
 }
 
+/**
+ * OPINION CARD: USED FOR TEXT AND SELECT QUESTIONS
+ * Shows ONLY the respondent's opinion/text without positive/negative classification
+ */
+function OpinionCard({
+  item,
+  qType,
+  copiedId,
+  onCopy,
+  formatDual,
+}: {
+  item: ClassifiedAnswer
+  qType: string
+  copiedId: string | null
+  onCopy: (text: string, id: string) => void
+  formatDual: (uz: string, ru: string, en?: string) => string
+}) {
+  const cardId = `opinion-${item.responseId}`
+  const opinionText = item.comment || (qType === 'text' ? item.cleanVal : '')
+
+  return (
+    <div className="bg-white dark:bg-dark-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-dark-750 shadow-xs hover:border-blue-400 dark:hover:border-blue-700 transition-all">
+      {/* Top: Restaurant & Date */}
+      <div className="flex items-start justify-between gap-3 mb-2 flex-wrap sm:flex-nowrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Building2 size={15} className="text-blue-500" />
+            <h5 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+              {item.restaurantName}
+            </h5>
+          </div>
+
+          <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+            <span className="flex items-center gap-1 font-medium">
+              <User size={12} className="text-slate-400" />
+              {item.respondentName}
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <Calendar size={12} className="text-slate-400" />
+              {item.date}
+            </span>
+          </div>
+        </div>
+
+        {/* Selected Option Badge (if select question) */}
+        {qType === 'select' && item.cleanVal && (
+          <span className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 shrink-0">
+            {item.cleanVal}
+          </span>
+        )}
+      </div>
+
+      {/* TO'LDIRUVCHINING FIKRI (THE RESPONDENT'S OPINION) */}
+      {opinionText ? (
+        <div className="mt-3 p-3.5 rounded-xl bg-slate-50 dark:bg-dark-800/90 border border-slate-200 dark:border-dark-700">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <MessageSquare size={13} className="text-blue-500" />
+              {formatDual("To'ldiruvchi fikri:", "Мнение респондента:", "Respondent's opinion:")}
+            </span>
+            <button
+              onClick={() => onCopy(opinionText, cardId)}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-dark-700 transition-colors"
+              title={formatDual("Fikrni nusxalash", "Скопировать мнение", "Copy opinion")}
+            >
+              {copiedId === cardId ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+            </button>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 font-medium leading-relaxed whitespace-pre-wrap">
+            &ldquo;{opinionText}&rdquo;
+          </p>
+        </div>
+      ) : (
+        <div className="mt-2 text-xs text-slate-400 italic">
+          {formatDual("Qo'shimcha matnli izoh qoldirilmagan", "Дополнительный комментарий не указан", "No additional text comment provided")}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * RESPONDENT CARD: USED FOR YES/NO AND RATING QUESTIONS
+ */
 function RespondentCard({
   item,
   copiedId,
   onCopy,
+  formatDual,
 }: {
   item: ClassifiedAnswer
   copiedId: string | null
   onCopy: (text: string, id: string) => void
+  formatDual: (uz: string, ru: string, en?: string) => string
 }) {
   const cardId = `${item.responseId}-${item.score}`
 
@@ -746,7 +983,7 @@ function RespondentCard({
         </span>
       </div>
 
-      {/* Comment / Complaint Details if any */}
+      {/* Respondent's Opinion / Comment if any */}
       {item.comment && (
         <div
           className={`mt-2.5 p-3 rounded-xl border text-xs relative group ${
@@ -759,17 +996,22 @@ function RespondentCard({
             <div className="flex items-start gap-1.5 flex-1">
               <MessageSquare
                 size={13}
-                className={item.isNegative ? 'text-red-600 mt-0.5 flex-shrink-0' : 'text-slate-400 mt-0.5 flex-shrink-0'}
+                className={item.isNegative ? 'text-red-600 mt-0.5 flex-shrink-0' : 'text-blue-500 mt-0.5 flex-shrink-0'}
               />
-              <p className="leading-relaxed italic">
-                "{item.comment}"
-              </p>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-0.5">
+                  {formatDual("To'ldiruvchi fikri:", "Мнение респондента:", "Respondent's opinion:")}
+                </span>
+                <p className="leading-relaxed italic">
+                  &ldquo;{item.comment}&rdquo;
+                </p>
+              </div>
             </div>
 
             <button
               onClick={() => onCopy(item.comment, cardId)}
               className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
-              title="Izohni nusxalash"
+              title="Fikrni nusxalash"
             >
               {copiedId === cardId ? (
                 <Check size={13} className="text-emerald-600" />
