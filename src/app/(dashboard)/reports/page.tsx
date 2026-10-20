@@ -20,6 +20,14 @@ const MONTHS_UZ = [
   'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
   'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr',
 ]
+const MONTHS_RU = [
+  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+]
+const MONTHS_EN = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 
 interface MonthlyStats {
   total: number
@@ -110,7 +118,7 @@ export default function ReportsPage() {
                              ? 'bg-blue-600 text-white'
                              : 'bg-dark-800 text-slate-400 hover:text-slate-200'}`}
               >
-                {t === 'monthly' ? 'Oylik' : 'Yillik'}
+                {t === 'monthly' ? formatDual("Oylik", "Ежемесячно", "Monthly") : formatDual("Yillik", "Ежегодно", "Yearly")}
               </button>
             ))}
           </div>
@@ -129,8 +137,10 @@ export default function ReportsPage() {
               value={month}
               onChange={(e) => setMonth(parseInt(e.target.value))}
             >
-              {MONTHS_UZ.map((m, i) => (
-                <option key={i + 1} value={i + 1}>{m}</option>
+              {MONTHS_UZ.map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {formatDual(MONTHS_UZ[i], MONTHS_RU[i], MONTHS_EN[i])}
+                </option>
               ))}
             </select>
           )}
@@ -149,6 +159,7 @@ export default function ReportsPage() {
 }
 
 function MonthlyReport({ data, year, month }: { data: MonthlyStats; year: number; month: number }) {
+  const { formatDual } = useLanguage()
   const acceptRate = data.total > 0 ? Math.round((data.accepted / data.total) * 100) : 0
 
   return (
@@ -158,25 +169,25 @@ function MonthlyReport({ data, year, month }: { data: MonthlyStats; year: number
         <div className="flex items-center gap-2 mb-1">
           <Calendar size={16} className="text-blue-400" />
           <h3 className="font-semibold text-white">
-            {MONTHS_UZ[month - 1]} {year} — Hisobot
+            {formatDual(MONTHS_UZ[month - 1], MONTHS_RU[month - 1], MONTHS_EN[month - 1])} {year} — {formatDual("Hisobot", "Отчет", "Report")}
           </h3>
         </div>
-        <p className="text-slate-400 text-sm">Jami {data.total} ta kiruvchi xomashyo akti</p>
+        <p className="text-slate-400 text-sm">{formatDual(`Jami ${data.total} ta kiruvchi xomashyo akti`, `Всего ${data.total} актов входящего сырья`, `Total ${data.total} incoming raw material acts`)}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatBox icon={<BarChart3 />} label="Jami aktlar" value={data.total} color="blue" />
-        <StatBox icon={<CheckCircle />} label="Qabul" value={data.accepted} color="emerald" />
-        <StatBox icon={<XCircle />} label="Rad etildi" value={data.rejected} color="red" />
-        <StatBox icon={<AlertTriangle />} label="Shartli" value={data.conditional} color="amber" />
+        <StatBox icon={<BarChart3 />} label={formatDual("Jami aktlar", "Всего актов", "Total acts")} value={data.total} color="blue" />
+        <StatBox icon={<CheckCircle />} label={formatDual("Qabul", "Принято", "Accepted")} value={data.accepted} color="emerald" />
+        <StatBox icon={<XCircle />} label={formatDual("Rad etildi", "Отклонено", "Rejected")} value={data.rejected} color="red" />
+        <StatBox icon={<AlertTriangle />} label={formatDual("Shartli", "Условно", "Conditional")} value={data.conditional} color="amber" />
       </div>
 
       {/* Accept rate bar */}
       {data.total > 0 && (
         <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-slate-300">Qabul qilish darajasi</span>
+            <span className="text-sm font-medium text-slate-300">{formatDual("Qabul qilish darajasi", "Уровень приемки", "Acceptance Rate")}</span>
             <span className="text-lg font-bold text-emerald-400">{acceptRate}%</span>
           </div>
           <div className="w-full bg-dark-900 rounded-full h-3 overflow-hidden">
@@ -198,7 +209,7 @@ function MonthlyReport({ data, year, month }: { data: MonthlyStats; year: number
           <div className="card p-5">
             <div className="flex items-center gap-2 mb-4">
               <Package size={16} className="text-purple-400" />
-              <h3 className="font-semibold text-white text-sm">Mahsulot bo'yicha</h3>
+              <h3 className="font-semibold text-white text-sm">{formatDual("Mahsulot bo'yicha", "По продуктам", "By Product")}</h3>
             </div>
             <div className="space-y-3">
               {data.byProduct.map((p) => {
@@ -207,7 +218,7 @@ function MonthlyReport({ data, year, month }: { data: MonthlyStats; year: number
                   <div key={p.productId}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-slate-300 truncate flex-1">{p.name}</span>
-                      <span className="text-slate-400 ml-2">{p.count} ta</span>
+                      <span className="text-slate-400 ml-2">{p.count} {formatDual("ta", "шт", "pcs")}</span>
                     </div>
                     <div className="w-full bg-dark-900 rounded-full h-1.5">
                       <div
@@ -227,7 +238,7 @@ function MonthlyReport({ data, year, month }: { data: MonthlyStats; year: number
           <div className="card p-5">
             <div className="flex items-center gap-2 mb-4">
               <Truck size={16} className="text-cyan-400" />
-              <h3 className="font-semibold text-white text-sm">Ta'minotchi bo'yicha</h3>
+              <h3 className="font-semibold text-white text-sm">{formatDual("Ta'minotchi bo'yicha", "По поставщикам", "By Supplier")}</h3>
             </div>
             <div className="space-y-3">
               {data.bySupplier.map((s) => {
@@ -236,7 +247,7 @@ function MonthlyReport({ data, year, month }: { data: MonthlyStats; year: number
                   <div key={s.supplierId}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-slate-300 truncate flex-1">{s.name}</span>
-                      <span className="text-slate-400 ml-2">{s.count} ta</span>
+                      <span className="text-slate-400 ml-2">{s.count} {formatDual("ta", "шт", "pcs")}</span>
                     </div>
                     <div className="w-full bg-dark-900 rounded-full h-1.5">
                       <div
@@ -256,6 +267,7 @@ function MonthlyReport({ data, year, month }: { data: MonthlyStats; year: number
 }
 
 function YearlyReport({ data }: { data: YearlyStats }) {
+  const { formatDual } = useLanguage()
   const max = Math.max(...data.monthlyData.map((m) => m.total), 1)
 
   return (
@@ -263,7 +275,7 @@ function YearlyReport({ data }: { data: YearlyStats }) {
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-5">
           <TrendingUp size={16} className="text-blue-400" />
-          <h3 className="font-semibold text-white text-sm">{data.year} — Oylik statistika</h3>
+          <h3 className="font-semibold text-white text-sm">{data.year} — {formatDual("Oylik statistika", "Ежемесячная статистика", "Monthly statistics")}</h3>
         </div>
 
         <div className="grid grid-cols-12 gap-1 items-end h-40">
@@ -275,20 +287,20 @@ function YearlyReport({ data }: { data: YearlyStats }) {
                     <div
                       className="w-full rounded-sm bg-emerald-500/70"
                       style={{ height: `${(m.accepted / max) * 100}%` }}
-                      title={`Qabul: ${m.accepted}`}
+                      title={`${formatDual("Qabul", "Принято", "Accepted")}: ${m.accepted}`}
                     />
                     {m.rejected > 0 && (
                       <div
                         className="w-full rounded-sm bg-red-500/70"
                         style={{ height: `${(m.rejected / max) * 100}%` }}
-                        title={`Rad: ${m.rejected}`}
+                        title={`${formatDual("Rad", "Отклонено", "Rejected")}: ${m.rejected}`}
                       />
                     )}
                     {m.conditional > 0 && (
                       <div
                         className="w-full rounded-sm bg-amber-500/70"
                         style={{ height: `${(m.conditional / max) * 100}%` }}
-                        title={`Shartli: ${m.conditional}`}
+                        title={`${formatDual("Shartli", "Условно", "Conditional")}: ${m.conditional}`}
                       />
                     )}
                   </>
@@ -297,7 +309,7 @@ function YearlyReport({ data }: { data: YearlyStats }) {
                 )}
               </div>
               <span className="text-[9px] text-slate-500">
-                {MONTHS_UZ[m.month - 1].slice(0, 3)}
+                {formatDual(MONTHS_UZ[m.month - 1].slice(0, 3), MONTHS_RU[m.month - 1].slice(0, 3), MONTHS_EN[m.month - 1].slice(0, 3))}
               </span>
               {m.total > 0 && (
                 <span className="text-[9px] text-slate-400 font-medium">{m.total}</span>
@@ -309,9 +321,9 @@ function YearlyReport({ data }: { data: YearlyStats }) {
         {/* Legend */}
         <div className="flex items-center gap-4 mt-4 pt-4 border-t border-dark-700">
           {[
-            { color: 'bg-emerald-500/70', label: 'Qabul' },
-            { color: 'bg-red-500/70', label: 'Rad' },
-            { color: 'bg-amber-500/70', label: 'Shartli' },
+            { color: 'bg-emerald-500/70', label: formatDual("Qabul", "Принято", "Accepted") },
+            { color: 'bg-red-500/70', label: formatDual("Rad", "Отклонено", "Rejected") },
+            { color: 'bg-amber-500/70', label: formatDual("Shartli", "Условно", "Conditional") },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded-sm ${item.color}`} />

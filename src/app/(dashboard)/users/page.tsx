@@ -31,21 +31,21 @@ const roleColors: Record<string, string> = {
   READONLY: 'badge-warning',
 }
 
-const roleLabels: Record<string, string> = {
-  DIRECTOR: 'Direktor (Boshqaruv)',
-  ADMIN: 'Administrator',
-  QUALITY_CONTROL: 'Bosh Sifat Nazorati (QC)',
-  INSPECTOR: 'Sex Nazoratchisi',
-  PRODUCTION: 'Ishlab Chiqarish',
-  TECHNOLOGY: 'Bosh Texnolog',
-  WAREHOUSE: 'Ombor (Sklad Mudiri)',
-  SUPPLY: "Ta'minot Bo'limi",
-  ACCOUNTING: 'Buxgalteriya',
-  HR: 'Kadrlar Bo\'limi (HR)',
-  KITCHEN: 'Xodimlar Oshxonasi',
-  SECURITY: 'Xavfsizlik Xizmati',
-  OPERATOR: 'Operator',
-  READONLY: "Faqat ko'rish",
+const roleLabelsMap: Record<string, { uz: string; ru: string; en: string }> = {
+  DIRECTOR: { uz: 'Direktor (Boshqaruv)', ru: 'Директор (Управление)', en: 'Director (Management)' },
+  ADMIN: { uz: 'Administrator', ru: 'Администратор', en: 'Administrator' },
+  QUALITY_CONTROL: { uz: 'Bosh Sifat Nazorati (QC)', ru: 'Главный контролер качества (ОТК)', en: 'Head of Quality (QC)' },
+  INSPECTOR: { uz: 'Sex Nazoratchisi', ru: 'Цеховой инспектор', en: 'Shop Inspector' },
+  PRODUCTION: { uz: 'Ishlab Chiqarish', ru: 'Производство', en: 'Production' },
+  TECHNOLOGY: { uz: 'Bosh Texnolog', ru: 'Главный технолог', en: 'Chief Technologist' },
+  WAREHOUSE: { uz: 'Ombor (Sklad Mudiri)', ru: 'Склад (Заведующий складом)', en: 'Warehouse Manager' },
+  SUPPLY: { uz: "Ta'minot Bo'limi", ru: 'Отдел снабжения', en: 'Supply Department' },
+  ACCOUNTING: { uz: 'Buxgalteriya', ru: 'Бухгалтерия', en: 'Accounting' },
+  HR: { uz: 'Kadrlar Bo\'limi (HR)', ru: 'Отдел кадров (HR)', en: 'Human Resources (HR)' },
+  KITCHEN: { uz: 'Xodimlar Oshxonasi', ru: 'Кухня персонала', en: 'Staff Kitchen' },
+  SECURITY: { uz: 'Xavfsizlik Xizmati', ru: 'Служба безопасности', en: 'Security Service' },
+  OPERATOR: { uz: 'Operator', ru: 'Оператор', en: 'Operator' },
+  READONLY: { uz: "Faqat ko'rish", ru: 'Только чтение', en: 'Read-only' },
 }
 
 const emptyForm = { name: '', username: '', password: '', role: 'OPERATOR' }
@@ -127,11 +127,11 @@ export default function UsersPage() {
     <div className="space-y-5 animate-enter">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="section-title">Foydalanuvchilar</h1>
-          <p className="section-subtitle">Tizim foydalanuvchilari va ruxsatlar</p>
+          <h1 className="section-title">{formatDual("Foydalanuvchilar", "Пользователи", "Users")}</h1>
+          <p className="section-subtitle">{formatDual("Tizim foydalanuvchilari va ruxsatlar", "Пользователи системы и права доступа", "System users and permissions")}</p>
         </div>
         <button onClick={openNew} className="btn-primary">
-          <Plus size={18} />Yangi foydalanuvchi
+          <Plus size={18} />{formatDual("Yangi foydalanuvchi", "Новый пользователь", "New User")}
         </button>
       </div>
 
@@ -142,12 +142,12 @@ export default function UsersPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Ism</th>
-                <th>Login</th>
-                <th>Rol</th>
-                <th>Holat</th>
-                <th>Yaratilgan</th>
-                <th className="text-right">Amallar</th>
+                <th>{formatDual("Ism", "Имя", "Name")}</th>
+                <th>{formatDual("Login", "Логин", "Username")}</th>
+                <th>{formatDual("Rol", "Роль", "Role")}</th>
+                <th>{formatDual("Holat", "Статус", "Status")}</th>
+                <th>{formatDual("Yaratilgan", "Создан", "Created")}</th>
+                <th className="text-right">{formatDual("Amallar", "Действия", "Actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -158,7 +158,7 @@ export default function UsersPage() {
                   <td>
                     <span className={roleColors[u.role] || 'badge-info'}>
                       <Shield size={10} />
-                      {roleLabels[u.role] || u.role}
+                      {roleLabelsMap[u.role] ? formatDual(roleLabelsMap[u.role].uz, roleLabelsMap[u.role].ru, roleLabelsMap[u.role].en) : u.role}
                     </span>
                   </td>
                   <td>
@@ -166,11 +166,11 @@ export default function UsersPage() {
                       onClick={() => toggleActive(u.id, u.isActive)}
                       className={u.isActive ? 'badge-success cursor-pointer' : 'badge-danger cursor-pointer'}
                     >
-                      {u.isActive ? 'Faol' : 'Nofaol'}
+                      {u.isActive ? formatDual("Faol", "Активен", "Active") : formatDual("Nofaol", "Неактивен", "Inactive")}
                     </button>
                   </td>
                   <td className="text-slate-400 text-sm">
-                    {new Date(u.createdAt).toLocaleDateString('uz-UZ')}
+                    {new Date(u.createdAt).toLocaleDateString(formatDual('uz-UZ', 'ru-RU', 'en-US'))}
                   </td>
                   <td>
                     <div className="flex items-center justify-end">
@@ -193,32 +193,32 @@ export default function UsersPage() {
           <div className="card p-6 max-w-md w-full animate-enter" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-white text-lg">
-                {editId ? 'Foydalanuvchini tahrirlash' : 'Yangi foydalanuvchi'}
+                {editId ? formatDual("Foydalanuvchini tahrirlash", "Редактирование пользователя", "Edit User") : formatDual("Yangi foydalanuvchi", "Новый пользователь", "New User")}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="label">To'liq ism *</label>
+                <label className="label">{formatDual("To'liq ism", "Ф.И.О / Полное имя", "Full Name")} *</label>
                 <input className="input-field" value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Abdullayev Jasur" />
               </div>
               <div>
-                <label className="label">Login *</label>
+                <label className="label">{formatDual("Login", "Логин", "Username")} *</label>
                 <input className="input-field" value={form.username}
                   onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
                   placeholder="jasur_op" />
               </div>
               <div>
-                <label className="label">{editId ? 'Yangi parol (ixtiyoriy)' : 'Parol *'}</label>
+                <label className="label">{editId ? formatDual("Yangi parol (ixtiyoriy)", "Новый пароль (необязательно)", "New password (optional)") : formatDual("Parol *", "Пароль *", "Password *")}</label>
                 <div className="relative">
                   <input
                     type={showPass ? 'text' : 'password'}
                     className="input-field pr-10"
                     value={form.password}
                     onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                    placeholder="Parol kiriting"
+                    placeholder={formatDual("Parol kiriting", "Введите пароль", "Enter password")}
                   />
                   <button
                     type="button"
@@ -233,28 +233,19 @@ export default function UsersPage() {
                 <label className="label">{formatDual("Lavozim / Rol", "Должность / Роль", "Position / Role")}</label>
                 <select className="input-field" value={form.role}
                   onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
-                  <option value="DIRECTOR">Direktor (Boshqaruv)</option>
-                  <option value="ADMIN">Administrator</option>
-                  <option value="QUALITY_CONTROL">Bosh Sifat Nazorati (QC)</option>
-                  <option value="INSPECTOR">Sex Nazoratchisi</option>
-                  <option value="PRODUCTION">Ishlab Chiqarish</option>
-                  <option value="TECHNOLOGY">Bosh Texnolog</option>
-                  <option value="WAREHOUSE">Ombor (Sklad Mudiri)</option>
-                  <option value="SUPPLY">Ta'minot Bo'limi</option>
-                  <option value="ACCOUNTING">Buxgalteriya</option>
-                  <option value="HR">Kadrlar Bo'limi (HR)</option>
-                  <option value="KITCHEN">Xodimlar Oshxonasi</option>
-                  <option value="SECURITY">Xavfsizlik Xizmati</option>
-                  <option value="OPERATOR">Operator</option>
-                  <option value="READONLY">Faqat ko'rish</option>
+                  {Object.entries(roleLabelsMap).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {formatDual(label.uz, label.ru, label.en)}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)} className="btn-secondary flex-1 justify-center">Bekor</button>
+              <button onClick={() => setShowModal(false)} className="btn-secondary flex-1 justify-center">{formatDual("Bekor", "Отмена", "Cancel")}</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                Saqlash
+                {formatDual("Saqlash", "Сохранить", "Save")}
               </button>
             </div>
           </div>

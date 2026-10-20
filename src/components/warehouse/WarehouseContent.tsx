@@ -719,7 +719,7 @@ export default function WarehouseContent() {
                       <th className="p-5">{l.colCurrent}</th>
                       <th className="p-5">{l.colBatches}</th>
                       <th className="p-5">{l.colStatus}</th>
-                      <th className="p-5 text-right">Chiqim Berish</th>
+                      <th className="p-5 text-right">{formatDual("Chiqim Berish", "Отпуск сырья", "Dispatch")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
@@ -806,7 +806,7 @@ export default function WarehouseContent() {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-800 hover:bg-emerald-600 text-slate-300 hover:text-white border border-dark-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             <Send size={14} />
-                            <span>Chiqarish</span>
+                            <span>{formatDual("Chiqarish", "Отпустить", "Dispatch")}</span>
                           </button>
                         </td>
                       </tr>
@@ -848,7 +848,7 @@ export default function WarehouseContent() {
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
             >
               <Plus size={18} />
-              <span>Yangi Chiqim Berish</span>
+              <span>{formatDual("Yangi Chiqim Berish", "Новый отпуск сырья", "New Dispatch")}</span>
             </button>
           </div>
 
@@ -857,25 +857,25 @@ export default function WarehouseContent() {
             {transfersLoading ? (
               <div className="p-12 flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
-                <p className="text-slate-400 text-sm font-medium">Chiqimlar yuklanmoqda...</p>
+                <p className="text-slate-400 text-sm font-medium">{formatDual("Chiqimlar yuklanmoqda...", "Загрузка перемещений...", "Loading dispatches...")}</p>
               </div>
             ) : transfers.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
                 <Scale size={48} className="mx-auto mb-3 opacity-20" />
-                <p className="text-base font-semibold text-slate-400">Hozircha chiqim transferlari yo'q</p>
+                <p className="text-base font-semibold text-slate-400">{formatDual("Hozircha chiqim transferlari yo'q", "Пока нет перемещений", "No dispatches yet")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="p-4">Hujjat Raqami & Sana</th>
-                      <th className="p-4">Mahsulot</th>
-                      <th className="p-4">Qayerga</th>
-                      <th className="p-4 text-center">Sklad Bergan</th>
-                      <th className="p-4 text-center">Qabul Qilingan (Tortilgan)</th>
-                      <th className="p-4 text-center">Farq / Yo'qotish</th>
-                      <th className="p-4">Holat / Izoh</th>
+                      <th className="p-4">{formatDual("Hujjat Raqami & Sana", "№ Документа & Дата", "Doc № & Date")}</th>
+                      <th className="p-4">{formatDual("Mahsulot", "Продукт", "Product")}</th>
+                      <th className="p-4">{formatDual("Qayerga", "Куда", "Destination")}</th>
+                      <th className="p-4 text-center">{formatDual("Sklad Bergan", "Отпущено со склада", "Warehouse Issued")}</th>
+                      <th className="p-4 text-center">{formatDual("Qabul Qilingan", "Принято", "Received")}</th>
+                      <th className="p-4 text-center">{formatDual("Farq / Yo'qotish", "Разница / Потери", "Difference / Loss")}</th>
+                      <th className="p-4">{formatDual("Holat / Izoh", "Статус / Примечание", "Status / Notes")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
@@ -889,7 +889,7 @@ export default function WarehouseContent() {
                           {t.product?.name}
                         </td>
                         <td className="p-4 text-slate-300 font-semibold text-xs">
-                          {t.targetLocation === 'OSHXONA' ? '🍲 Oshxona' : '🔪 Zagotovka'}
+                          {t.targetLocation === 'OSHXONA' ? formatDual("🍲 Oshxona", "🍲 Кухня", "🍲 Kitchen") : formatDual("🔪 Zagotovka", "🔪 Заготовка", "🔪 Preparation")}
                         </td>
                         <td className="p-4 text-center font-mono font-bold text-white">
                           {t.issuedQuantity} {t.issuedUnit}
@@ -898,7 +898,7 @@ export default function WarehouseContent() {
                           {t.receivedQuantity !== null && t.receivedQuantity !== undefined ? (
                             <span className="text-emerald-400">{t.receivedQuantity} {t.issuedUnit}</span>
                           ) : (
-                            <span className="text-amber-400 italic text-xs">Kutilmoqda...</span>
+                            <span className="text-amber-400 italic text-xs">{formatDual("Kutilmoqda...", "Ожидается...", "Pending...")}</span>
                           )}
                         </td>
                         <td className="p-4 text-center font-mono font-bold">
@@ -907,7 +907,7 @@ export default function WarehouseContent() {
                               -{t.discrepancy.toFixed(2)} {t.issuedUnit}
                             </span>
                           ) : t.receivedQuantity !== null ? (
-                            <span className="text-emerald-400">0.00 (Mos)</span>
+                            <span className="text-emerald-400">{formatDual("0.00 (Mos)", "0.00 (Совпадает)", "0.00 (Match)")}</span>
                           ) : (
                             <span className="text-slate-500">-</span>
                           )}
@@ -915,18 +915,18 @@ export default function WarehouseContent() {
                         <td className="p-4 text-xs">
                           {t.status === 'IN_TRANSIT' && (
                             <span className="px-2.5 py-1 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                              Tranzitda (Qabul kutilmoqda)
+                              {formatDual("Tranzitda (Qabul kutilmoqda)", "В пути (Ожидает приемки)", "In Transit (Awaiting)")}
                             </span>
                           )}
                           {t.status === 'ACCEPTED' && (
                             <span className="px-2.5 py-1 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                              To'liq qabul qilindi
+                              {formatDual("To'liq qabul qilindi", "Полностью принято", "Fully accepted")}
                             </span>
                           )}
                           {t.status === 'DISCREPANCY' && (
                             <div className="space-y-0.5">
                               <span className="px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                                Farq aniqlandi
+                                {formatDual("Farq aniqlandi", "Выявлена разница", "Discrepancy detected")}
                               </span>
                               {t.discrepancyReason && (
                                 <div className="text-slate-400 text-[11px]">{t.discrepancyReason}</div>
@@ -1068,8 +1068,8 @@ export default function WarehouseContent() {
                   <Send size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Skladdan Chiqim Berish</h3>
-                  <p className="text-xs text-slate-400">Oshxona yoki Zagotovkaga xomashyo o'tkazish</p>
+                  <h3 className="text-lg font-bold text-white">{formatDual("Skladdan Chiqim Berish", "Отпуск сырья со склада", "Warehouse Dispatch")}</h3>
+                  <p className="text-xs text-slate-400">{formatDual("Oshxona yoki Zagotovkaga xomashyo o'tkazish", "Перемещение сырья на кухню или в заготовку", "Transfer raw materials to Kitchen or Prep")}</p>
                 </div>
               </div>
               <button 
@@ -1083,7 +1083,7 @@ export default function WarehouseContent() {
             <form onSubmit={handleCreateTransfer} className="space-y-4 pt-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  Mahsulot <span className="text-red-400">*</span>
+                  {formatDual("Mahsulot", "Продукт", "Product")} <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={transferForm.productId}
@@ -1099,7 +1099,7 @@ export default function WarehouseContent() {
                   required
                   className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="">Tanlang...</option>
+                  <option value="">{formatDual("Tanlang...", "Выберите...", "Select...")}</option>
                   {inventory.map((p) => (
                     <option key={p.id} value={p.id}>{p.name} (Mavjud: {p.totalQuantity} {p.unit})</option>
                   ))}
@@ -1109,7 +1109,7 @@ export default function WarehouseContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    Qayerga <span className="text-red-400">*</span>
+                    {formatDual("Qayerga", "Куда", "Destination")} <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={transferForm.targetLocation}
@@ -1117,14 +1117,14 @@ export default function WarehouseContent() {
                     required
                     className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
                   >
-                    <option value="OSHXONA">🍲 Oshxona</option>
-                    <option value="ZAGOTOVKA">🔪 Zagotovka Sexi</option>
+                    <option value="OSHXONA">{formatDual("🍲 Oshxona", "🍲 Кухня", "🍲 Kitchen")}</option>
+                    <option value="ZAGOTOVKA">{formatDual("🔪 Zagotovka Sexi", "🔪 Цех заготовки", "🔪 Prep Shop")}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    Chiqariladigan Miqdor ({transferForm.issuedUnit}) <span className="text-red-400">*</span>
+                    {formatDual("Chiqariladigan Miqdor", "Отпускаемое количество", "Issue Quantity")} ({transferForm.issuedUnit}) <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="number"
@@ -1140,7 +1140,7 @@ export default function WarehouseContent() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  Izoh
+                  {formatDual("Izoh", "Примечание", "Notes")}
                 </label>
                 <input
                   type="text"
@@ -1157,7 +1157,7 @@ export default function WarehouseContent() {
                   onClick={() => setShowTransferModal(false)}
                   className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
                 >
-                  Bekor qilish
+                  {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1165,7 +1165,7 @@ export default function WarehouseContent() {
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
                 >
                   {savingTransfer && <Loader2 size={16} className="animate-spin" />}
-                  <span>Chiqimni Yuborish</span>
+                  <span>{formatDual("Chiqimni Yuborish", "Отправить", "Submit Dispatch")}</span>
                 </button>
               </div>
             </form>

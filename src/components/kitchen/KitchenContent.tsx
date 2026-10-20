@@ -175,14 +175,14 @@ export default function KitchenContent() {
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-600/30 active:scale-95"
           >
             <QrCode size={16} />
-            QR Kod Ko&apos;rish
+            {formatDual("QR Kod Ko'rish", "QR-код", "View QR")}
           </button>
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-orange-600/30 active:scale-95"
           >
             <Plus size={16} />
-            Yangi Jurnal
+            {formatDual("Yangi Jurnal", "Новая запись", "New Log")}
           </button>
         </div>
       </div>
@@ -191,26 +191,26 @@ export default function KitchenContent() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 shadow-sm">
           <div className="text-2xl font-black text-orange-600 dark:text-orange-400">{logs.length}</div>
-          <div className="text-xs text-slate-500 font-medium mt-0.5">Bugungi Ovqatlar</div>
+          <div className="text-xs text-slate-500 font-medium mt-0.5">{formatDual("Bugungi Ovqatlar", "Блюда за сегодня", "Today's Meals")}</div>
         </div>
         <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-4">
           <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{stats.good}</div>
           <div className="flex items-center gap-1 mt-0.5">
-            <span className="text-xs text-slate-500 font-medium">Yaxshi</span>
+            <span className="text-xs text-slate-500 font-medium">{formatDual("Yaxshi", "Хорошо", "Good")}</span>
             {stats.total > 0 && <span className="text-[10px] text-emerald-600 font-bold">{goodPct}%</span>}
           </div>
         </div>
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4">
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{stats.average}</div>
           <div className="flex items-center gap-1 mt-0.5">
-            <span className="text-xs text-slate-500 font-medium">O&apos;rtacha</span>
+            <span className="text-xs text-slate-500 font-medium">{formatDual("O'rtacha", "Средне", "Average")}</span>
             {stats.total > 0 && <span className="text-[10px] text-amber-600 font-bold">{avgPct}%</span>}
           </div>
         </div>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl p-4">
           <div className="text-2xl font-black text-red-600 dark:text-red-400">{stats.bad}</div>
           <div className="flex items-center gap-1 mt-0.5">
-            <span className="text-xs text-slate-500 font-medium">Yomon</span>
+            <span className="text-xs text-slate-500 font-medium">{formatDual("Yomon", "Плохо", "Poor")}</span>
             {stats.total > 0 && <span className="text-[10px] text-red-600 font-bold">{badPct}%</span>}
           </div>
         </div>
@@ -219,10 +219,10 @@ export default function KitchenContent() {
       {/* Tabs */}
       <div className="flex gap-2 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl w-fit">
         <button onClick={() => setActiveTab('journal')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'journal' ? 'bg-white dark:bg-dark-900 text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-          <UtensilsCrossed size={15} /> Ovqat Jurnali
+          <UtensilsCrossed size={15} /> {formatDual("Ovqat Jurnali", "Журнал питания", "Meal Journal")}
         </button>
         <button onClick={() => setActiveTab('stats')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'stats' ? 'bg-white dark:bg-dark-900 text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-          <BarChart3 size={15} /> Baholash
+          <BarChart3 size={15} /> {formatDual("Baholash", "Оценка", "Ratings")}
         </button>
       </div>
 
@@ -234,7 +234,7 @@ export default function KitchenContent() {
             className="bg-transparent outline-none text-sm font-medium text-slate-700 dark:text-slate-200" />
         </div>
         <button onClick={() => { fetchLogs(); fetchStats() }} className="flex items-center gap-1.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 shadow-sm transition-all">
-          <RefreshCw size={13} /> Yangilash
+          <RefreshCw size={13} /> {formatDual("Yangilash", "Обновить", "Refresh")}
         </button>
       </div>
 
@@ -248,9 +248,9 @@ export default function KitchenContent() {
           ) : logs.length === 0 ? (
             <div className="text-center p-16 bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
               <UtensilsCrossed size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-              <p className="text-slate-500 dark:text-slate-400 font-medium">Bu kunda hali ovqat jurnali yozilmagan</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">{formatDual("Bu kunda hali ovqat jurnali yozilmagan", "За этот день записей еще нет", "No meal log recorded for this date")}</p>
               <button onClick={() => setShowForm(true)} className="mt-4 inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg active:scale-95">
-                <Plus size={16} /> Birinchi jurnalni qo&apos;shing
+                <Plus size={16} /> {formatDual("Birinchi jurnalni qo'shing", "Добавить первую запись", "Add first meal log")}
               </button>
             </div>
           ) : (
@@ -264,13 +264,13 @@ export default function KitchenContent() {
                       <div className="flex items-center gap-3 mt-1 flex-wrap">
                         <span className="flex items-center gap-1 text-xs text-slate-500"><Clock size={11} />{log.shift}</span>
                         <span className="flex items-center gap-1 text-xs text-slate-500"><ChefHat size={11} />{log.preparedBy}</span>
-                        {log.servings && <span className="flex items-center gap-1 text-xs text-slate-500"><Users size={11} />{log.servings} kishi</span>}
+                        {log.servings && <span className="flex items-center gap-1 text-xs text-slate-500"><Users size={11} />{log.servings} {formatDual("kishi", "чел.", "people")}</span>}
                       </div>
                     </div>
                     <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-lg border border-orange-200 dark:border-orange-800/50 whitespace-nowrap">{log.cookedDate}</span>
                   </div>
                   <div className="border-t border-slate-100 dark:border-dark-750 pt-3">
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1"><Package size={11} /> MAHSULOTLAR:</p>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1"><Package size={11} /> {formatDual("MAHSULOTLAR:", "ИНГРЕДИЕНТЫ:", "INGREDIENTS:")}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {items.map((ing: Ingredient, idx: number) => (
                         <span key={idx} className="text-xs bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg font-medium border border-slate-200 dark:border-dark-700">
@@ -294,18 +294,18 @@ export default function KitchenContent() {
         <div className="space-y-4">
           {/* Progress bars */}
           <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-5 shadow-sm">
-            <h3 className="font-black text-slate-900 dark:text-white mb-4">Ovqat Baholash Natijalari</h3>
+            <h3 className="font-black text-slate-900 dark:text-white mb-4">{formatDual("Ovqat Baholash Natijalari", "Результаты оценки питания", "Meal Rating Results")}</h3>
             {stats.total === 0 ? (
               <div className="text-center py-8">
                 <BarChart3 size={36} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                <p className="text-sm text-slate-400 font-medium">Hali baholash yo&apos;q</p>
+                <p className="text-sm text-slate-400 font-medium">{formatDual("Hali baholash yo'q", "Оценок пока нет", "No ratings yet")}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between text-sm font-bold mb-1">
-                    <span className="text-emerald-600">✅ Yaxshi</span>
-                    <span className="text-emerald-600">{stats.good} ta ({goodPct}%)</span>
+                    <span className="text-emerald-600">✅ {formatDual("Yaxshi", "Хорошо", "Good")}</span>
+                    <span className="text-emerald-600">{stats.good} {formatDual("ta", "шт", "pcs")} ({goodPct}%)</span>
                   </div>
                   <div className="h-3 bg-slate-100 dark:bg-dark-800 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${goodPct}%` }} />
@@ -313,8 +313,8 @@ export default function KitchenContent() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm font-bold mb-1">
-                    <span className="text-amber-600">⚠️ O&apos;rtacha</span>
-                    <span className="text-amber-600">{stats.average} ta ({avgPct}%)</span>
+                    <span className="text-amber-600">⚠️ {formatDual("O'rtacha", "Средне", "Average")}</span>
+                    <span className="text-amber-600">{stats.average} {formatDual("ta", "шт", "pcs")} ({avgPct}%)</span>
                   </div>
                   <div className="h-3 bg-slate-100 dark:bg-dark-800 rounded-full overflow-hidden">
                     <div className="h-full bg-amber-500 rounded-full transition-all" style={{ width: `${avgPct}%` }} />
@@ -322,8 +322,8 @@ export default function KitchenContent() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm font-bold mb-1">
-                    <span className="text-red-600">❌ Yomon</span>
-                    <span className="text-red-600">{stats.bad} ta ({badPct}%)</span>
+                    <span className="text-red-600">❌ {formatDual("Yomon", "Плохо", "Poor")}</span>
+                    <span className="text-red-600">{stats.bad} {formatDual("ta", "шт", "pcs")} ({badPct}%)</span>
                   </div>
                   <div className="h-3 bg-slate-100 dark:bg-dark-800 rounded-full overflow-hidden">
                     <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${badPct}%` }} />
@@ -336,7 +336,7 @@ export default function KitchenContent() {
           {/* Comments */}
           {feedbacks.filter(f => f.comment).length > 0 && (
             <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-5 shadow-sm">
-              <h3 className="font-black text-slate-900 dark:text-white mb-3">Izohlar</h3>
+              <h3 className="font-black text-slate-900 dark:text-white mb-3">{formatDual("Izohlar", "Отзывы", "Comments")}</h3>
               <div className="space-y-2">
                 {feedbacks.filter(f => f.comment).map(f => (
                   <div key={f.id} className={`text-sm p-3 rounded-xl border ${f.rating === 'GOOD' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-300' : f.rating === 'AVERAGE' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30 text-amber-800 dark:text-amber-300' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30 text-red-800 dark:text-red-300'}`}>
@@ -354,8 +354,8 @@ export default function KitchenContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowQR(false)}>
           <div className="bg-white dark:bg-dark-900 rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-dark-700 text-center max-w-sm w-full" onClick={e => e.stopPropagation()}>
             <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700"><X size={20} /></button>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1">Ovqat Baholash QR Kodi</h2>
-            <p className="text-xs text-slate-500 mb-5">Xodimlar shu QR ni skanerlaydi va anonim baholaydi</p>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1">{formatDual("Ovqat Baholash QR Kodi", "QR-код оценки питания", "Meal Rating QR Code")}</h2>
+            <p className="text-xs text-slate-500 mb-5">{formatDual("Xodimlar shu QR ni skanerlaydi va anonim baholaydi", "Сотрудники сканируют этот QR для анонимной оценки", "Staff scans this QR to rate anonymously")}</p>
             {qrDataUrl && <img src={qrDataUrl} alt="QR Code" className="mx-auto rounded-2xl border-4 border-emerald-100 dark:border-emerald-900/30 w-64 h-64 object-contain" />}
             <p className="text-xs text-slate-400 mt-4 font-mono break-all">{baseUrl}/feedback/kitchen</p>
             <button
@@ -367,7 +367,7 @@ export default function KitchenContent() {
               }}
               className="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-sm transition-all"
             >
-              QR ni Yuklab Olish
+              {formatDual("QR ni Yuklab Olish", "Скачать QR-код", "Download QR")}
             </button>
           </div>
         </div>
@@ -379,7 +379,7 @@ export default function KitchenContent() {
           <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 dark:border-dark-700 overflow-hidden max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between sticky top-0 bg-white dark:bg-dark-900 z-10">
               <h2 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <UtensilsCrossed className="text-orange-500" size={18} /> Yangi Ovqat Jurnali
+                <UtensilsCrossed className="text-orange-500" size={18} /> {formatDual("Yangi Ovqat Jurnali", "Новая запись питания", "New Meal Log")}
               </h2>
               <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
@@ -387,24 +387,24 @@ export default function KitchenContent() {
               {/* Ovqat nomi */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Ovqat Nomi *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{formatDual("Ovqat Nomi", "Название блюда", "Meal Name")} *</label>
                   <input value={form.mealName} onChange={e => setForm(p => ({ ...p, mealName: e.target.value }))} placeholder="Masalan: Osh, Sho'rva..." required className="w-full border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Sana *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{formatDual("Sana", "Дата", "Date")} *</label>
                   <input type="date" value={form.cookedDate} onChange={e => setForm(p => ({ ...p, cookedDate: e.target.value }))} required className="w-full border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Smena</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{formatDual("Smena", "Смена", "Shift")}</label>
                   <select value={form.shift} onChange={e => setForm(p => ({ ...p, shift: e.target.value }))} className="w-full border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    <option>1-Smena</option>
-                    <option>2-Smena</option>
+                    <option value="1-Smena">{formatDual("1-Smena", "1-Смена", "1st Shift")}</option>
+                    <option value="2-Smena">{formatDual("2-Smena", "2-Смена", "2nd Shift")}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Necha kishiga</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{formatDual("Necha kishiga", "Кол-во персон", "Servings count")}</label>
                   <input type="number" value={form.servings} onChange={e => setForm(p => ({ ...p, servings: e.target.value }))} placeholder="Masalan: 150" min="1" className="w-full border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>
@@ -412,9 +412,9 @@ export default function KitchenContent() {
               {/* Mahsulotlar */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1"><Package size={12} /> Mahsulotlar *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1"><Package size={12} /> {formatDual("Mahsulotlar", "Ингредиенты", "Ingredients")} *</label>
                   <button type="button" onClick={addIngredient} className="flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-lg border border-orange-200 dark:border-orange-800/50 transition-all">
-                    <Plus size={12} /> Mahsulot qo&apos;shish
+                    <Plus size={12} /> {formatDual("Mahsulot qo'shish", "Добавить ингредиент", "Add ingredient")}
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -439,20 +439,20 @@ export default function KitchenContent() {
 
               {/* Povar ismi */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Kim tomonidan tayyorlandi *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{formatDual("Kim tomonidan tayyorlandi", "Кем приготовлено", "Prepared by")} *</label>
                 <input value={form.preparedBy} onChange={e => setForm(p => ({ ...p, preparedBy: e.target.value }))} placeholder="Povar FIO" required className="w-full border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
 
               {/* Izoh */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Izoh (ixtiyoriy)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{formatDual("Izoh (ixtiyoriy)", "Примечание (необязательно)", "Notes (optional)")}</label>
                 <textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Qo'shimcha ma'lumot..." rows={2} className="w-full border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none" />
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-dark-800 transition-all">Bekor qilish</button>
+                <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-dark-800 transition-all">{formatDual("Bekor qilish", "Отмена", "Cancel")}</button>
                 <button type="submit" disabled={saving} className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:opacity-60 text-white py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg">
-                  {saving ? <><Loader2 size={15} className="animate-spin" /> Saqlanmoqda...</> : <><CheckCircle2 size={15} /> Saqlash</>}
+                  {saving ? <><Loader2 size={15} className="animate-spin" /> {formatDual("Saqlanmoqda...", "Сохранение...", "Saving...")}</> : <><CheckCircle2 size={15} /> {formatDual("Saqlash", "Сохранить", "Save")}</>}
                 </button>
               </div>
             </form>
