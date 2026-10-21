@@ -1228,3 +1228,46 @@ model ShopExpense {
   balances     Json     @default("{}") // Raw material balances (start, end, arrival, expense)
   createdAt    DateTime @default(now())
 }
+
+
+// -----------------------------------------------------------------------------
+// INCOMING RAW MATERIAL ACTS (ВХОДНОЕ_СЫРЬЕ_АКТЫ)
+// -----------------------------------------------------------------------------
+
+model IncomingRawMaterialAct {
+  id                   Int      @id @default(autoincrement())
+  actNumber            String   // № п/п
+  actDate              String   // Sana (YYYY-MM-DD)
+  productName          String   // Xomashyo nomi (Aysberg, Tomat, Piyoz, etc.)
+  supplierName         String   // Ta'minotchi
+  temperature          String?  // Harorat (masalan, "8 °C", "22.6 °C")
+  transportCondition   Int      @default(1) // 1 = Qoniqarli, 0 = Qoniqarsiz
+  hasDocumentation     Int      @default(1) // 1 = Ha (Mavjud), 0 = Yo'q
+  structure            Int      @default(1) // 1 = Muvofiq (Zich, qarsildoq), 0 = Nomaqbul
+  leafColor            Int      @default(1) // 1 = Muvofiq (Och yashil, to'q yashil), 0 = Nomaqbul
+  tasteSmell           Int      @default(1) // 1 = Muvofiq (Toza, o'ziga xos), 0 = Nomaqbul
+  internalOxidation    Int      @default(0) // 0 = Yo'q / Otsutstvuyet (Norma), 1 = Mavjud / Qizarish (Brak)
+  insectTraces         Int      @default(0) // 0 = Yo'q / Otsutstvuyet (Norma), 1 = Mavjud (Brak)
+  rotDiseases          Int      @default(0) // 0 = Yo'q / Otsutstvuyet (Norma), 1 = Mavjud (Brak)
+  stemCut              Int      @default(1) // 1 = Muvofiq (Tog'ri kesilgan <=3cm), 0 = Nomaqbul
+  density              Int      @default(1) // 1 = Standart / O'rtacha zichlik, 0 = Nomaqbul
+  diameterWeight       String?  // Hajm/vazn (masalan, "400g-700g 12cm")
+  outerLeavesRemoved   Int      @default(1) // 1 = Ha (Barglari olingan), 0 = Yo'q
+  noMechanicalDamage   Int      @default(1) // 1 = Shikastlanmagan / Ha, 0 = Shikastlangan
+  batchNumber          String?  // Partiya raqami
+  decisionRating       Int      @default(4) // 2 = Rad etilgan, 3 = Shartli qabul, 4 = Yaxshi, 5 = Ideal
+  decisionText         String?  // Matnli xulosa (masalan, "Yaxshi", "Rad etilgan", "Допускается")
+  warehouseKg          Float?   // Qabul qilingan og'irlik (kg)
+  shopIssuedKg         String?  // Sexga berilgan miqdor (kg)
+  shopIssuedDate       String?  // Sexga berilgan sana
+  rejectionActNumber   String?  // Rad etish akt raqami (2 bo'lganda)
+  inspectorName        String?  // Mas'ul inspektor F.I.O
+  pricePerKg           Float?   // Narxi (so'm/kg)
+  notes                String?  // Qo'shimcha izoh
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([actDate])
+  @@index([productName])
+  @@index([supplierName])
+}
