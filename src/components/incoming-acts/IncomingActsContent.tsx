@@ -7,13 +7,9 @@ import {
   Upload,
   Download,
   Search,
-  Filter,
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  Clock,
-  Sparkles,
-  ChevronDown,
   RefreshCw,
   Eye,
   Edit2,
@@ -21,18 +17,19 @@ import {
   X,
   FileCheck,
   Scale,
-  Thermometer,
-  Truck,
-  FileText,
-  DollarSign,
-  User,
   Hash,
-  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
   Layers,
-  ArrowUpDown
+  FileText,
+  SlidersHorizontal,
+  Table as TableIcon,
+  Binary
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { PRODUCT_THEMES, getProductTheme } from '@/lib/incoming-acts/constants'
 
 interface IncomingAct {
   id: number
@@ -64,6 +61,7 @@ interface IncomingAct {
   inspectorName?: string | null
   pricePerKg?: number | null
   notes?: string | null
+  rawValues?: Record<string, any> | null
   createdAt: string
   updatedAt: string
 }
@@ -79,23 +77,14 @@ interface StatsData {
   products: string[]
 }
 
-const DEFAULT_PRODUCTS = [
-  'Салат Айсберг',
-  'Томат',
-  'Лук белый',
-  'Капуста белокочанная',
-  'Морковь',
-  'Лимон'
-]
-
-const DEFAULT_SUPPLIERS = [
-  'ECO GROW',
-  'AGRO EGZOTIKA',
-  'QIBRAY ARASHAN',
-  'Кибрай барака',
-  'Зокир енд груп',
-  'Назаров 22',
-  'Мадинабону органик'
+const PRODUCT_LIST = [
+  { id: 'all', label: 'Barchasi (All)', color: '#334155', bg: 'bg-slate-700 text-white' },
+  { id: 'ТОМАТ', label: 'ТОМАТ', color: '#FF3300', bg: 'bg-[#FF3300] text-black font-bold' },
+  { id: 'ЛУК БЕЛЫЙ', label: 'ЛУК БЕЛЫЙ', color: '#BFBFBF', bg: 'bg-[#BFBFBF] text-black font-bold' },
+  { id: 'САЛАТ АЙСБЕРГ', label: 'САЛАТ АЙСБЕРГ', color: '#92D050', bg: 'bg-[#92D050] text-black font-bold' },
+  { id: 'КАПУСТА БЕЛОКОЧАННАЯ', label: 'КАПУСТА', color: '#4BFF60', bg: 'bg-[#4BFF60] text-black font-bold' },
+  { id: 'МОРКОВЬ', label: 'МОРКОВЬ', color: '#FF5B11', bg: 'bg-[#FF5B11] text-black font-bold' },
+  { id: 'ОГУРЦЫ СВЕЖИЕ', label: 'ОГУРЦЫ', color: '#15803D', bg: 'bg-[#15803D] text-white font-bold' }
 ]
 
 export default function IncomingActsContent() {
@@ -118,12 +107,20 @@ export default function IncomingActsContent() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
-  // Filter state
-  const [search, setSearch] = useState('')
-  const [selectedProduct, setSelectedProduct] = useState('all')
+  // Filters & Tabs
+  const [selectedProduct, setSelectedProduct] = useState('ТОМАТ') // Default to ТОМАТ as in user's image
   const [selectedRating, setSelectedRating] = useState('all')
+  const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+
+  // View Mode: 'authentic' (Exact Excel appearance from screenshots) vs 'numeric' (1/0 numbers)
+  const [viewMode, setViewMode] = useState<'authentic' | 'numeric'>('authentic')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(50)
 
   // Modals state
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -139,11 +136,11 @@ export default function IncomingActsContent() {
   const [formData, setFormData] = useState({
     actNumber: '',
     actDate: new Date().toISOString().slice(0, 10),
-    productName: 'Салат Айсберг',
+    productName: 'ТОМАТ',
     supplierName: '',
-    temperature: '8 °C',
+    temperature: '18 с',
     transportCondition: 1,
-    hasDocumentation: 1,
+    hasDocumentation: 0,
     structure: 1,
     leafColor: 1,
     tasteSmell: 1,
@@ -152,173 +149,142 @@ export default function IncomingActsContent() {
     rotDiseases: 0,
     stemCut: 1,
     density: 1,
-    diameterWeight: '400г-700г 12см',
+    diameterWeight: '6-7 см',
     outerLeavesRemoved: 1,
     noMechanicalDamage: 1,
-    batchNumber: '',
-    decisionRating: 4, // 2, 3, 4, 5
+    batchNumber: '1',
+    decisionRating: 4,
     warehouseKg: '',
     shopIssuedKg: '',
     shopIssuedDate: '',
     rejectionActNumber: '',
     inspectorName: 'Камбарова А.М.',
-    pricePerKg: '',
+    pricePerKg: '26000',
     notes: ''
   })
 
-  // Translations dictionary
+  // Translations
   const t = {
     uz: {
       title: 'ВХОДНОЕ СЫРЬЕ (АКТЫ)',
-      subtitle: 'Xomashyo sifatini qabul qilish va nazorat qilish aktlari jurnali',
+      subtitle: 'Xomashyo sifatini qabul qilish va nazorat qilish aktlari jurnali (Mijozning asl Excel formati)',
       formCode: 'Forma: Ф-2/03 | ООО "GREEN PROCESSING"',
       newAct: 'Yangi akt yaratish',
       importExcel: 'Excel Import',
       exportExcel: 'Excel yuklab olish',
       refresh: 'Yangilash',
-      allRatings: 'Barchasi',
-      ideal: 'Ideal',
-      good: 'Yaxshi',
-      conditional: 'Shartli qabul (saralash va tozalash)',
-      rejected: 'Rad etilgan (Brak)',
+      authenticView: 'Asl Excel ko\'rinishi (Mijoz formati / Ranglar)',
+      numericView: 'Raqamli rejim (1 / 0 va 2-5 baholash)',
       totalActs: 'Jami aktlar',
       totalWeight: 'Jami qabul qilingan',
-      rejectionRate: 'Rad etish soni',
       searchPlaceholder: 'Partiya, ta\'minotchi, nazoratchi, akt №...',
       allProducts: 'Barcha mahsulotlar',
-      resetFilters: 'Filtrni tozalash',
-      number: '№',
-      date: 'Sana',
-      product: 'Xomashyo',
-      supplier: 'Ta\'minotchi',
-      temp: 'Harorat',
-      batch: 'Partiya №',
-      criteria: 'Mezonlar (Raqamda)',
-      rating: 'Baholash',
-      weightKg: 'Ombor (kg)',
-      issuedKg: 'Sexga (kg)',
-      inspector: 'Nazoratchi',
-      price: 'Narxi (so\'m)',
+      resetFilters: 'Tozalash',
+      number: '№ п/п',
+      date: 'Дата поступления и составления акта',
+      supplier: 'Наименование ПОСТАВЩИКА',
+      temp: 'Температура сырья',
+      transport: 'Оценка условий упаковки и транспортирования',
+      docs: 'Сопровождающая документация',
+      batch: '№ партии',
+      rating: 'Допуск',
+      issuedGroup: 'Отпущено в производство',
+      kgWarehouse: 'кг',
+      kgShop: 'КГ ЦЕХ',
+      shopDate: 'Дата',
+      rejectionNo: 'НЕДОПУСК № акта забраковки',
+      inspector: 'ФИО, Подпись ответственного',
+      price: 'цена',
       actions: 'Amallar',
       noData: 'Hech qanday akt topilmadi',
-      noDataDesc: 'Qidiruv parametrlarini o\'zgartiring yoki yangi akt kiriting / Exceldan import qiling.',
-      viewDetails: 'Batafsil',
-      edit: 'Tahrirlash',
-      delete: 'O\'chirish',
-      confirmDelete: 'Haqiqatan ham bu aktni o\'chirmoqchimisiz?',
-      importModalTitle: 'Exceldan Aktlarni Import Qilish',
-      importModalDesc: 'Mavjud "ВХОДНОЕ_СЫРЬЕ_АКТЫ" shablonidan yoki yangi yuklangan fayldan ma\'lumotlarni bazaga yuklang.',
-      fastImportBtn: '⚡ Shablon faylidan import qilish (templates/ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx)',
-      orUploadFile: 'Yoki kompyuterdan yangi .xlsx faylni tanlang:',
-      selectFile: 'Excel fayl tanlang',
-      importModeAppend: 'Mavjud ma\'lumotlarga qo\'shish (Append)',
-      importModeReplace: 'Eski ma\'lumotlarni tozalab, qayta yuklash (Replace)',
+      noDataDesc: 'Filtr parametrlarini o\'zgartiring yoki yangi akt kiriting.',
       close: 'Yopish',
       save: 'Saqlash',
       saving: 'Saqlanmoqda...',
-      legendText: 'Raqamlar ma\'nosi: 1 = Ha / Muvofiq / Qoniqarli; 0 = Yo\'q / Otsutstvuyet. Baholash: 5 = Ideal, 4 = Yaxshi, 3 = Shartli qabul, 2 = Rad etilgan.'
+      pageInfo: 'Sahifa:'
     },
     ru: {
       title: 'ВХОДНОЕ СЫРЬЕ (АКТЫ)',
-      subtitle: 'Журнал регистрации и контроля качества поступающего сырья',
+      subtitle: 'Журнал регистрации и контроля качества поступающего сырья (Оригинальный Excel формат)',
       formCode: 'Форма: Ф-2/03 | ООО "GREEN PROCESSING"',
       newAct: 'Создать новый акт',
       importExcel: 'Импорт из Excel',
       exportExcel: 'Экспорт в Excel',
       refresh: 'Обновить',
-      allRatings: 'Все',
-      ideal: 'Идеал',
-      good: 'Хорошо',
-      conditional: 'Условно принято (сортировка и очистка)',
-      rejected: 'Отклонено (Брак)',
+      authenticView: 'Оригинальный Excel вид (Формат клиента / Цвета)',
+      numericView: 'Цифровой режим (1 / 0 и оценка 2-5)',
       totalActs: 'Всего актов',
       totalWeight: 'Принято всего',
-      rejectionRate: 'Отклонено актов',
       searchPlaceholder: 'Партия, поставщик, контролёр, № акта...',
       allProducts: 'Все сырье',
-      resetFilters: 'Сбросить фильтры',
-      number: '№',
-      date: 'Дата',
-      product: 'Сырьё',
-      supplier: 'Поставщик',
-      temp: 'Темп.',
-      batch: 'Партия №',
-      criteria: 'Критерии (в числах)',
-      rating: 'Оценка',
-      weightKg: 'Склад (кг)',
-      issuedKg: 'Цех (кг)',
-      inspector: 'Контролёр',
-      price: 'Цена (сум)',
+      resetFilters: 'Сбросить',
+      number: '№ п/п',
+      date: 'Дата поступления и составления акта',
+      supplier: 'Наименование ПОСТАВЩИКА',
+      temp: 'Температура сырья при поступлении',
+      transport: 'Оценка условий упаковки и транспортирования',
+      docs: 'Сопровождающая документация',
+      batch: '№ партии',
+      rating: 'Допуск',
+      issuedGroup: 'Отпущено в производство',
+      kgWarehouse: 'кг',
+      kgShop: 'КГ ЦЕХ',
+      shopDate: 'Дата',
+      rejectionNo: 'НЕДОПУСК № акта забраковки',
+      inspector: 'ФИО, Подпись ответственного за контролем входного сырья',
+      price: 'цена',
       actions: 'Действия',
       noData: 'Акты не найдены',
-      noDataDesc: 'Измените параметры поиска или создайте новый акт / импортируйте из Excel.',
-      viewDetails: 'Просмотр',
-      edit: 'Редактировать',
-      delete: 'Удалить',
-      confirmDelete: 'Вы действительно хотите удалить этот акт?',
-      importModalTitle: 'Импорт актов из Excel',
-      importModalDesc: 'Загрузите данные из корпоративного файла "ВХОДНОЕ_СЫРЬЕ_АКТЫ" или пользовательского файла.',
-      fastImportBtn: '⚡ Импортировать из шаблона (templates/ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx)',
-      orUploadFile: 'Или выберите файл с компьютера (.xlsx):',
-      selectFile: 'Выбрать файл Excel',
-      importModeAppend: 'Добавить к существующим (Append)',
-      importModeReplace: 'Очистить базу и загрузить заново (Replace)',
+      noDataDesc: 'Измените параметры поиска или создайте новый акт.',
       close: 'Закрыть',
       save: 'Сохранить',
       saving: 'Сохранение...',
-      legendText: 'Обозначение чисел: 1 = Да / Соответствует / Удовлетворительно; 0 = Нет / Отсутствует. Оценка: 5 = Идеал, 4 = Хорошо, 3 = Условно принято, 2 = Отклонено.'
+      pageInfo: 'Страница:'
     },
     en: {
       title: 'INCOMING RAW MATERIAL ACTS',
-      subtitle: 'Inspection, quality assessment and receiving journal',
+      subtitle: 'Raw material inspection and quality acts journal (Original Excel Format & Colors)',
       formCode: 'Form: Ф-2/03 | LLC "GREEN PROCESSING"',
       newAct: 'Create New Act',
       importExcel: 'Excel Import',
       exportExcel: 'Export to Excel',
       refresh: 'Refresh',
-      allRatings: 'All',
-      ideal: 'Ideal',
-      good: 'Good',
-      conditional: 'Conditional Acceptance (sorting & cleaning)',
-      rejected: 'Rejected (Defect)',
+      authenticView: 'Authentic Excel View (Client Colors & Format)',
+      numericView: 'Numeric Mode (1 / 0 & 2-5 rating)',
       totalActs: 'Total Acts',
       totalWeight: 'Total Received',
-      rejectionRate: 'Rejected Acts',
       searchPlaceholder: 'Batch, supplier, inspector, act #...',
-      allProducts: 'All Raw Materials',
-      resetFilters: 'Reset filters',
-      number: '#',
-      date: 'Date',
-      product: 'Material',
-      supplier: 'Supplier',
-      temp: 'Temp',
+      allProducts: 'All materials',
+      resetFilters: 'Reset',
+      number: '№ p/p',
+      date: 'Arrival and Act Date',
+      supplier: 'Supplier Name',
+      temp: 'Temperature',
+      transport: 'Transport Condition',
+      docs: 'Accompanying Docs',
       batch: 'Batch #',
-      criteria: 'Criteria (Numeric)',
       rating: 'Verdict',
-      weightKg: 'Warehouse (kg)',
-      issuedKg: 'Shop (kg)',
-      inspector: 'Inspector',
-      price: 'Price (UZS)',
+      issuedGroup: 'Issued to Production',
+      kgWarehouse: 'kg',
+      kgShop: 'Shop (kg)',
+      shopDate: 'Date',
+      rejectionNo: 'Rejection Act #',
+      inspector: 'Inspector Name & Signature',
+      price: 'Price',
       actions: 'Actions',
-      noData: 'No inspection acts found',
-      noDataDesc: 'Change filters or create a new act / import from Excel.',
-      viewDetails: 'View Details',
-      edit: 'Edit',
-      delete: 'Delete',
-      confirmDelete: 'Are you sure you want to delete this act?',
-      importModalTitle: 'Import Acts from Excel',
-      importModalDesc: 'Load records from the official "ВХОДНОЕ_СЫРЬЕ_АКТЫ" workbook or upload any Excel file.',
-      fastImportBtn: '⚡ 1-Click Import from Company Template (templates/ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx)',
-      orUploadFile: 'Or choose a file from your computer (.xlsx):',
-      selectFile: 'Select Excel File',
-      importModeAppend: 'Append to existing records',
-      importModeReplace: 'Replace all records',
+      noData: 'No acts found',
+      noDataDesc: 'Change filters or create a new act.',
       close: 'Close',
       save: 'Save',
       saving: 'Saving...',
-      legendText: 'Numeric meanings: 1 = Yes / Satisfactory / Standard; 0 = No / Absent. Rating: 5 = Ideal, 4 = Good, 3 = Conditional, 2 = Rejected.'
+      pageInfo: 'Page:'
     }
   }[activeLang]
+
+  // Active product theme colors and column names
+  const activeTheme = useMemo(() => {
+    return getProductTheme(selectedProduct !== 'all' ? selectedProduct : 'ТОМАТ')
+  }, [selectedProduct])
 
   // Fetch acts from API
   const fetchActs = async () => {
@@ -330,6 +296,7 @@ export default function IncomingActsContent() {
       if (selectedRating && selectedRating !== 'all') params.append('rating', selectedRating)
       if (dateFrom) params.append('dateFrom', dateFrom)
       if (dateTo) params.append('dateTo', dateTo)
+      params.append('sort', sortOrder)
 
       const res = await fetch(`/api/incoming-acts?${params.toString()}`)
       const data = await res.json()
@@ -358,18 +325,27 @@ export default function IncomingActsContent() {
   }
 
   useEffect(() => {
+    setCurrentPage(1)
     fetchActs()
-  }, [selectedProduct, selectedRating, dateFrom, dateTo])
+  }, [selectedProduct, selectedRating, dateFrom, dateTo, sortOrder])
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
+      setCurrentPage(1)
       fetchActs()
     }, 350)
     return () => clearTimeout(timer)
   }, [search])
 
-  // Export to Excel handler
+  // Paginated acts
+  const paginatedActs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return acts.slice(start, start + pageSize)
+  }, [acts, currentPage, pageSize])
+
+  const totalPages = Math.ceil(acts.length / pageSize) || 1
+
+  // Export handler
   const handleExport = () => {
     const params = new URLSearchParams()
     params.append('lang', activeLang)
@@ -380,132 +356,10 @@ export default function IncomingActsContent() {
     if (dateTo) params.append('dateTo', dateTo)
 
     window.open(`/api/incoming-acts/export?${params.toString()}`, '_blank')
-    toast.success('Excel fayl yuklab olinmoqda...')
+    toast.success('Excel yuklab olinmoqda...')
   }
 
-  // Open Form for Create
-  const handleOpenCreate = () => {
-    setEditingAct(null)
-    setFormData({
-      actNumber: String(stats.totalActs + 1),
-      actDate: new Date().toISOString().slice(0, 10),
-      productName: selectedProduct !== 'all' ? selectedProduct : 'Салат Айсберг',
-      supplierName: '',
-      temperature: '8 °C',
-      transportCondition: 1,
-      hasDocumentation: 1,
-      structure: 1,
-      leafColor: 1,
-      tasteSmell: 1,
-      internalOxidation: 0,
-      insectTraces: 0,
-      rotDiseases: 0,
-      stemCut: 1,
-      density: 1,
-      diameterWeight: '400г-700г 12см',
-      outerLeavesRemoved: 1,
-      noMechanicalDamage: 1,
-      batchNumber: `${new Date().getDate()}.${new Date().getMonth() + 1}//${stats.totalActs + 1}`,
-      decisionRating: 4,
-      warehouseKg: '',
-      shopIssuedKg: '',
-      shopIssuedDate: '',
-      rejectionActNumber: '',
-      inspectorName: 'Камбарова А.М.',
-      pricePerKg: '',
-      notes: ''
-    })
-    setIsFormOpen(true)
-  }
-
-  // Open Form for Edit
-  const handleOpenEdit = (act: IncomingAct) => {
-    setEditingAct(act)
-    setFormData({
-      actNumber: act.actNumber || '',
-      actDate: act.actDate || new Date().toISOString().slice(0, 10),
-      productName: act.productName || 'Салат Айсберг',
-      supplierName: act.supplierName || '',
-      temperature: act.temperature || '',
-      transportCondition: act.transportCondition ?? 1,
-      hasDocumentation: act.hasDocumentation ?? 1,
-      structure: act.structure ?? 1,
-      leafColor: act.leafColor ?? 1,
-      tasteSmell: act.tasteSmell ?? 1,
-      internalOxidation: act.internalOxidation ?? 0,
-      insectTraces: act.insectTraces ?? 0,
-      rotDiseases: act.rotDiseases ?? 0,
-      stemCut: act.stemCut ?? 1,
-      density: act.density ?? 1,
-      diameterWeight: act.diameterWeight || '',
-      outerLeavesRemoved: act.outerLeavesRemoved ?? 1,
-      noMechanicalDamage: act.noMechanicalDamage ?? 1,
-      batchNumber: act.batchNumber || '',
-      decisionRating: act.decisionRating || 4,
-      warehouseKg: act.warehouseKg !== null && act.warehouseKg !== undefined ? String(act.warehouseKg) : '',
-      shopIssuedKg: act.shopIssuedKg || '',
-      shopIssuedDate: act.shopIssuedDate || '',
-      rejectionActNumber: act.rejectionActNumber || '',
-      inspectorName: act.inspectorName || 'Камбарова А.М.',
-      pricePerKg: act.pricePerKg !== null && act.pricePerKg !== undefined ? String(act.pricePerKg) : '',
-      notes: act.notes || ''
-    })
-    setIsFormOpen(true)
-  }
-
-  // Save Act Form (Create or Edit)
-  const handleSaveAct = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.productName.trim() || !formData.supplierName.trim()) {
-      toast.error('Xomashyo nomi va ta\'minotchi to\'ldirilishi shart!')
-      return
-    }
-
-    try {
-      setSubmitting(true)
-      const url = editingAct ? `/api/incoming-acts/${editingAct.id}` : '/api/incoming-acts'
-      const method = editingAct ? 'PUT' : 'POST'
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-
-      const data = await res.json()
-      if (data.success) {
-        toast.success(editingAct ? 'Akt yangilandi!' : 'Yangi akt muvaffaqiyatli saqlandi!')
-        setIsFormOpen(false)
-        fetchActs()
-      } else {
-        toast.error(data.error || 'Saqlashda xatolik yuz berdi')
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  // Delete Act
-  const handleDeleteAct = async (id: number) => {
-    if (!confirm(t.confirmDelete)) return
-    try {
-      const res = await fetch(`/api/incoming-acts/${id}`, { method: 'DELETE' })
-      const data = await res.json()
-      if (data.success) {
-        toast.success('Akt o\'chirildi')
-        fetchActs()
-        if (selectedActForView?.id === id) setSelectedActForView(null)
-      } else {
-        toast.error(data.error || 'O\'chirishda xatolik')
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Xatolik')
-    }
-  }
-
-  // 1-Click Template Import
+  // Fast 1-Click Template Import
   const handleDefaultTemplateImport = async () => {
     try {
       setImporting(true)
@@ -516,7 +370,7 @@ export default function IncomingActsContent() {
       })
       const data = await res.json()
       if (data.success) {
-        toast.success(data.message || 'Shablon muvaffaqiyatli yuklandi!')
+        toast.success(data.message || 'Barcha aktlar muvaffaqiyatli yuklandi!')
         setIsImportOpen(false)
         fetchActs()
       } else {
@@ -551,7 +405,7 @@ export default function IncomingActsContent() {
         if (fileInputRef.current) fileInputRef.current.value = ''
         fetchActs()
       } else {
-        toast.error(data.error || 'Faylni o\'qishda xatolik yuz berdi')
+        toast.error(data.error || 'Faylni o\'qishda xatolik')
       }
     } catch (err: any) {
       toast.error(err.message || 'Xatolik yuz berdi')
@@ -560,466 +414,849 @@ export default function IncomingActsContent() {
     }
   }
 
-  // Helper for Rating Badge
-  const renderRatingBadge = (rating: number) => {
-    switch (rating) {
-      case 5:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            5 - {t.ideal}
-          </span>
-        )
-      case 4:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
-            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-            4 - {t.good}
-          </span>
-        )
-      case 3:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-            3 - {t.conditional}
-          </span>
-        )
-      case 2:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300">
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-            2 - {t.rejected}
-          </span>
-        )
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {rating}
-          </span>
-        )
+  // Open Form Create
+  const handleOpenCreate = () => {
+    setEditingAct(null)
+    const prod = selectedProduct !== 'all' ? selectedProduct : 'ТОМАТ'
+    const theme = getProductTheme(prod)
+    setFormData({
+      actNumber: String(acts.length + 1),
+      actDate: new Date().toISOString().slice(0, 10),
+      productName: prod,
+      supplierName: '',
+      temperature: prod === 'ТОМАТ' ? '18 с' : '19 с',
+      transportCondition: 1,
+      hasDocumentation: 0,
+      structure: 1,
+      leafColor: 1,
+      tasteSmell: 1,
+      internalOxidation: 0,
+      insectTraces: 0,
+      rotDiseases: 0,
+      stemCut: 1,
+      density: 1,
+      diameterWeight: prod === 'ТОМАТ' ? '6-7 см' : '5-6 см',
+      outerLeavesRemoved: 1,
+      noMechanicalDamage: 1,
+      batchNumber: String(acts.length + 1),
+      decisionRating: 4,
+      warehouseKg: '',
+      shopIssuedKg: '',
+      shopIssuedDate: '',
+      rejectionActNumber: '',
+      inspectorName: 'Камбарова А.М.',
+      pricePerKg: prod === 'ТОМАТ' ? '26000' : '13500',
+      notes: ''
+    })
+    setIsFormOpen(true)
+  }
+
+  // Open Form Edit
+  const handleOpenEdit = (act: IncomingAct) => {
+    setEditingAct(act)
+    setFormData({
+      actNumber: act.actNumber || '',
+      actDate: act.actDate || new Date().toISOString().slice(0, 10),
+      productName: act.productName || 'ТОМАТ',
+      supplierName: act.supplierName || '',
+      temperature: act.temperature || '',
+      transportCondition: act.transportCondition ?? 1,
+      hasDocumentation: act.hasDocumentation ?? 1,
+      structure: act.structure ?? 1,
+      leafColor: act.leafColor ?? 1,
+      tasteSmell: act.tasteSmell ?? 1,
+      internalOxidation: act.internalOxidation ?? 0,
+      insectTraces: act.insectTraces ?? 0,
+      rotDiseases: act.rotDiseases ?? 0,
+      stemCut: act.stemCut ?? 1,
+      density: act.density ?? 1,
+      diameterWeight: act.diameterWeight || '',
+      outerLeavesRemoved: act.outerLeavesRemoved ?? 1,
+      noMechanicalDamage: act.noMechanicalDamage ?? 1,
+      batchNumber: act.batchNumber || '',
+      decisionRating: act.decisionRating || 4,
+      warehouseKg: act.warehouseKg !== null && act.warehouseKg !== undefined ? String(act.warehouseKg) : '',
+      shopIssuedKg: act.shopIssuedKg || '',
+      shopIssuedDate: act.shopIssuedDate || '',
+      rejectionActNumber: act.rejectionActNumber || '',
+      inspectorName: act.inspectorName || 'Камбарова А.М.',
+      pricePerKg: act.pricePerKg !== null && act.pricePerKg !== undefined ? String(act.pricePerKg) : '',
+      notes: act.notes || ''
+    })
+    setIsFormOpen(true)
+  }
+
+  // Save Form
+  const handleSaveAct = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.productName.trim() || !formData.supplierName.trim()) {
+      toast.error('Xomashyo nomi va ta\'minotchi to\'ldirilishi shart!')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const url = editingAct ? `/api/incoming-acts/${editingAct.id}` : '/api/incoming-acts'
+      const method = editingAct ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        toast.success(editingAct ? 'Akt yangilandi!' : 'Yangi akt saqlandi!')
+        setIsFormOpen(false)
+        fetchActs()
+      } else {
+        toast.error(data.error || 'Xatolik yuz berdi')
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Xatolik yuz berdi')
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  // Criteria summary tags helper
-  const renderCriteriaPills = (act: IncomingAct) => {
-    return (
-      <div className="flex flex-wrap items-center gap-1 text-[11px] font-mono">
+  // Delete Act
+  const handleDeleteAct = async (id: number) => {
+    if (!confirm('Haqiqatan ham bu aktni o\'chirmoqchimisiz?')) return
+    try {
+      const res = await fetch(`/api/incoming-acts/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Akt o\'chirildi')
+        fetchActs()
+        if (selectedActForView?.id === id) setSelectedActForView(null)
+      } else {
+        toast.error(data.error || 'O\'chirishda xatolik')
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Xatolik')
+    }
+  }
+
+  // Helper for cell value rendering based on viewMode
+  const renderCellText = (
+    rawVal: any,
+    numVal: number,
+    isDefect = false
+  ) => {
+    if (viewMode === 'numeric') {
+      return (
         <span
-          title="Transport sharoiti"
-          className={`px-1.5 py-0.5 rounded ${
-            act.transportCondition === 1 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
+          className={`font-mono font-bold px-1 rounded ${
+            isDefect
+              ? numVal === 0
+                ? 'text-emerald-700 bg-emerald-50'
+                : 'text-red-700 bg-red-100'
+              : numVal === 1
+              ? 'text-emerald-700 bg-emerald-50'
+              : 'text-red-700 bg-red-100'
           }`}
         >
-          Tr:{act.transportCondition}
+          {numVal}
         </span>
-        <span
-          title="Hujjatlar"
-          className={`px-1.5 py-0.5 rounded ${
-            act.hasDocumentation === 1 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-          }`}
-        >
-          Huj:{act.hasDocumentation}
-        </span>
-        <span
-          title="Tuzilishi / Barglar"
-          className={`px-1.5 py-0.5 rounded ${
-            act.structure === 1 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-          }`}
-        >
-          Tuz:{act.structure}
-        </span>
-        <span
-          title="Ichki oksidlanish / qizarish (0 = yo'q)"
-          className={`px-1.5 py-0.5 rounded ${
-            act.internalOxidation === 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-800 font-bold border border-red-300'
-          }`}
-        >
-          Oks:{act.internalOxidation}
-        </span>
-        <span
-          title="Hasharotlar izi (0 = yo'q)"
-          className={`px-1.5 py-0.5 rounded ${
-            act.insectTraces === 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-800 font-bold border border-red-300'
-          }`}
-        >
-          Hash:{act.insectTraces}
-        </span>
-        <span
-          title="Chirish va nuqsonlar (0 = yo'q)"
-          className={`px-1.5 py-0.5 rounded ${
-            act.rotDiseases === 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-800 font-bold border border-red-300'
-          }`}
-        >
-          Chir:{act.rotDiseases}
-        </span>
-      </div>
-    )
+      )
+    }
+
+    // Authentic text from rawValues or standard fallback
+    if (rawVal !== undefined && rawVal !== null && rawVal !== '') {
+      return <span>{String(rawVal)}</span>
+    }
+
+    if (isDefect) {
+      return <span>{numVal === 0 ? 'отсутствует' : 'есть'}</span>
+    }
+    return <span>{numVal === 1 ? 'да' : 'нет'}</span>
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
-      {/* Top Header Card */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800 relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-emerald-500/10 via-transparent to-transparent pointer-events-none"></div>
-
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-400">
-                <FileSpreadsheet className="w-8 h-8" />
+    <div className="p-3 md:p-6 space-y-4 max-w-[1900px] mx-auto font-sans">
+      {/* Top Banner */}
+      <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+              <FileSpreadsheet className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl md:text-2xl font-black tracking-tight">{t.title}</h1>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-medium">
+                  {t.formCode}
+                </span>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-black tracking-tight">{t.title}</h1>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
-                    {t.formCode}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-300 mt-1">{t.subtitle}</p>
-              </div>
+              <p className="text-xs text-slate-300 mt-1">{t.subtitle}</p>
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={() => {
-                setRefreshing(true)
-                fetchActs()
-              }}
-              disabled={refreshing}
-              className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition border border-slate-700"
-            >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              {t.refresh}
-            </button>
-
-            <button
-              onClick={() => setIsImportOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 rounded-xl text-sm font-semibold shadow-sm transition"
-            >
-              <Upload className="w-4 h-4 text-emerald-400" />
-              {t.importExcel}
-            </button>
-
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 rounded-xl text-sm font-semibold shadow-sm transition"
-            >
-              <Download className="w-4 h-4 text-sky-400" />
-              {t.exportExcel}
-            </button>
-
-            <button
-              onClick={handleOpenCreate}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-900/40 transition active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              {t.newAct}
-            </button>
-          </div>
         </div>
 
-        {/* Legend Notice Box */}
-        <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <span>{t.legendText}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* View Mode Toggle Button */}
+          <div className="bg-slate-800 p-1 rounded-xl border border-slate-700 flex items-center">
+            <button
+              onClick={() => setViewMode('authentic')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                viewMode === 'authentic'
+                  ? 'bg-amber-500 text-slate-950 shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+              title="Mijozning fotosuratidagi asl ranglar va matnlar"
+            >
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>{t.authenticView}</span>
+            </button>
+            <button
+              onClick={() => setViewMode('numeric')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                viewMode === 'numeric'
+                  ? 'bg-emerald-500 text-slate-950 shadow'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+              title="1 / 0 va 2-5 raqamli ko'rinish"
+            >
+              <Binary className="w-3.5 h-3.5" />
+              <span>{t.numericView}</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setRefreshing(true)
+              fetchActs()
+            }}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            {t.refresh}
+          </button>
+
+          <button
+            onClick={() => setIsImportOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-semibold"
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-400" />
+            {t.importExcel}
+          </button>
+
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold"
+          >
+            <Download className="w-3.5 h-3.5 text-sky-400" />
+            {t.exportExcel}
+          </button>
+
+          <button
+            onClick={handleOpenCreate}
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-900/40 active:scale-95 transition"
+          >
+            <Plus className="w-4 h-4" />
+            {t.newAct}
+          </button>
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-slate-500">{t.totalActs}</div>
-          <div className="text-2xl font-black text-slate-900 mt-2">{stats.totalActs}</div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">Baza jami</div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-slate-500">{t.totalWeight}</div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
-            {stats.totalKg ? stats.totalKg.toLocaleString('uz-UZ', { maximumFractionDigits: 1 }) : 0}{' '}
-            <span className="text-sm font-semibold text-slate-500">kg</span>
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">Omborga qabul</div>
-        </div>
-
-        <div
-          onClick={() => setSelectedRating(selectedRating === '5' ? 'all' : '5')}
-          className={`p-4 rounded-xl border shadow-sm cursor-pointer transition flex flex-col justify-between ${
-            selectedRating === '5'
-              ? 'bg-emerald-100 border-emerald-400 ring-2 ring-emerald-500'
-              : 'bg-emerald-50/60 border-emerald-200 hover:bg-emerald-100/60'
-          }`}
-        >
-          <div className="text-xs font-bold text-emerald-800 flex items-center justify-between">
-            <span>5 - {t.ideal}</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-2xl font-black text-emerald-950 mt-2">{stats.rating5}</div>
-          <div className="text-[11px] text-emerald-700 font-medium">A'lo sifat</div>
-        </div>
-
-        <div
-          onClick={() => setSelectedRating(selectedRating === '4' ? 'all' : '4')}
-          className={`p-4 rounded-xl border shadow-sm cursor-pointer transition flex flex-col justify-between ${
-            selectedRating === '4'
-              ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-500'
-              : 'bg-blue-50/60 border-blue-200 hover:bg-blue-100/60'
-          }`}
-        >
-          <div className="text-xs font-bold text-blue-800 flex items-center justify-between">
-            <span>4 - {t.good}</span>
-            <CheckCircle2 className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="text-2xl font-black text-blue-950 mt-2">{stats.rating4}</div>
-          <div className="text-[11px] text-blue-700 font-medium">Qabul qilingan</div>
-        </div>
-
-        <div
-          onClick={() => setSelectedRating(selectedRating === '3' ? 'all' : '3')}
-          className={`p-4 rounded-xl border shadow-sm cursor-pointer transition flex flex-col justify-between ${
-            selectedRating === '3'
-              ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-500'
-              : 'bg-amber-50/60 border-amber-200 hover:bg-amber-100/60'
-          }`}
-        >
-          <div className="text-xs font-bold text-amber-800 flex items-center justify-between">
-            <span>3 - Shartli</span>
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="text-2xl font-black text-amber-950 mt-2">{stats.rating3}</div>
-          <div className="text-[11px] text-amber-700 font-medium">Saralash/tozalash</div>
-        </div>
-
-        <div
-          onClick={() => setSelectedRating(selectedRating === '2' ? 'all' : '2')}
-          className={`p-4 rounded-xl border shadow-sm cursor-pointer transition flex flex-col justify-between ${
-            selectedRating === '2'
-              ? 'bg-red-100 border-red-400 ring-2 ring-red-500'
-              : 'bg-red-50/60 border-red-200 hover:bg-red-100/60'
-          }`}
-        >
-          <div className="text-xs font-bold text-red-800 flex items-center justify-between">
-            <span>2 - {t.rejected}</span>
-            <XCircle className="w-4 h-4 text-red-600" />
-          </div>
-          <div className="text-2xl font-black text-red-950 mt-2">{stats.rating2}</div>
-          <div className="text-[11px] text-red-700 font-medium">Brak / Rad</div>
-        </div>
-      </div>
-
-      {/* Filters Toolbar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          {/* Rating Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-            {[
-              { id: 'all', label: t.allRatings },
-              { id: '5', label: '5 - Ideal' },
-              { id: '4', label: '4 - Yaxshi' },
-              { id: '3', label: '3 - Shartli' },
-              { id: '2', label: '2 - Rad etilgan' }
-            ].map(tab => (
+      {/* Product Switcher Bar (Matching Real Colors) */}
+      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 flex items-center gap-1">
+            <Layers className="w-4 h-4 text-slate-400" />
+            Xomashyo:
+          </span>
+          {PRODUCT_LIST.map(prod => {
+            const isSelected = selectedProduct === prod.id
+            return (
               <button
-                key={tab.id}
-                onClick={() => setSelectedRating(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                  selectedRating === tab.id
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                key={prod.id}
+                onClick={() => setSelectedProduct(prod.id)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap border ${
+                  isSelected
+                    ? `${prod.bg} shadow-md ring-2 ring-slate-900/30 border-transparent scale-105`
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                 }`}
               >
-                {tab.label}
+                <span
+                  className="w-2.5 h-2.5 rounded-full border border-black/30"
+                  style={{ backgroundColor: prod.color }}
+                ></span>
+                {prod.label}
               </button>
-            ))}
+            )
+          })}
+        </div>
+
+        {/* Search & Date Filter */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px]">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+            <input
+              type="text"
+              placeholder={t.searchPlaceholder}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full text-xs pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            />
           </div>
 
-          {/* Product and Search Filters */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="relative min-w-[200px]">
-              <select
-                value={selectedProduct}
-                onChange={e => setSelectedProduct(e.target.value)}
-                className="w-full text-xs font-medium pl-3 pr-8 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
-              >
-                <option value="all">{t.allProducts}</option>
-                {Array.from(new Set([...DEFAULT_PRODUCTS, ...stats.products])).map(p => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
-            </div>
-
-            <div className="flex items-center gap-1 text-xs">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-              <span className="text-slate-400">-</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-
-            <div className="relative min-w-[220px]">
-              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
-              <input
-                type="text"
-                placeholder={t.searchPlaceholder}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-
-            {(selectedProduct !== 'all' || selectedRating !== 'all' || search || dateFrom || dateTo) && (
-              <button
-                onClick={() => {
-                  setSelectedProduct('all')
-                  setSelectedRating('all')
-                  setSearch('')
-                  setDateFrom('')
-                  setDateTo('')
-                }}
-                className="px-2.5 py-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg font-medium transition"
-              >
-                {t.resetFilters}
-              </button>
-            )}
+          <div className="flex items-center gap-1 text-xs">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700"
+            />
+            <span className="text-slate-400">-</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700"
+            />
           </div>
+
+          {(search || dateFrom || dateTo || selectedRating !== 'all') && (
+            <button
+              onClick={() => {
+                setSearch('')
+                setDateFrom('')
+                setDateTo('')
+                setSelectedRating('all')
+              }}
+              className="px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg font-medium"
+            >
+              {t.resetFilters}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                <th className="py-3 px-3 text-center w-12">{t.number}</th>
-                <th className="py-3 px-3 w-24">{t.date}</th>
-                <th className="py-3 px-3 w-40">{t.product}</th>
-                <th className="py-3 px-3 w-40">{t.supplier}</th>
-                <th className="py-3 px-2 text-center w-20">{t.temp}</th>
-                <th className="py-3 px-3 w-28">{t.batch}</th>
-                <th className="py-3 px-3">{t.criteria}</th>
-                <th className="py-3 px-3 text-center w-36">{t.rating}</th>
-                <th className="py-3 px-3 text-right w-28">{t.weightKg}</th>
-                <th className="py-3 px-3 text-right w-24">{t.issuedKg}</th>
-                <th className="py-3 px-3 w-32">{t.inspector}</th>
-                <th className="py-3 px-3 text-right w-28">{t.price}</th>
-                <th className="py-3 px-3 text-center w-24">{t.actions}</th>
+      {/* KPI Stats Mini-Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs">
+        <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
+          <span className="text-slate-500 font-medium">Jami aktlar:</span>
+          <span className="font-bold font-mono text-slate-900 text-sm">{acts.length}</span>
+        </div>
+        <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
+          <span className="text-slate-500 font-medium">Ombor (kg):</span>
+          <span className="font-bold font-mono text-emerald-700 text-sm">
+            {stats.totalKg ? stats.totalKg.toLocaleString('uz-UZ', { maximumFractionDigits: 1 }) : 0}
+          </span>
+        </div>
+        <div
+          onClick={() => setSelectedRating(selectedRating === '5' ? 'all' : '5')}
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
+            selectedRating === '5' ? 'bg-emerald-100 border-emerald-400 font-bold' : 'bg-emerald-50 border-emerald-200'
+          }`}
+        >
+          <span className="text-emerald-800">5 - Ideal:</span>
+          <span className="font-bold font-mono text-emerald-950">{stats.rating5}</span>
+        </div>
+        <div
+          onClick={() => setSelectedRating(selectedRating === '4' ? 'all' : '4')}
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
+            selectedRating === '4' ? 'bg-blue-100 border-blue-400 font-bold' : 'bg-blue-50 border-blue-200'
+          }`}
+        >
+          <span className="text-blue-800">4 - Yaxshi:</span>
+          <span className="font-bold font-mono text-blue-950">{stats.rating4}</span>
+        </div>
+        <div
+          onClick={() => setSelectedRating(selectedRating === '3' ? 'all' : '3')}
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
+            selectedRating === '3' ? 'bg-amber-100 border-amber-400 font-bold' : 'bg-amber-50 border-amber-200'
+          }`}
+        >
+          <span className="text-amber-800">3 - Shartli:</span>
+          <span className="font-bold font-mono text-amber-950">{stats.rating3}</span>
+        </div>
+        <div
+          onClick={() => setSelectedRating(selectedRating === '2' ? 'all' : '2')}
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
+            selectedRating === '2' ? 'bg-red-100 border-red-400 font-bold' : 'bg-red-50 border-red-200'
+          }`}
+        >
+          <span className="text-red-800">2 - Rad etilgan:</span>
+          <span className="font-bold font-mono text-red-950">{stats.rating2}</span>
+        </div>
+        <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center justify-between font-mono">
+          <span className="text-slate-500 font-medium">{t.pageInfo}</span>
+          <span className="font-bold text-slate-800">
+            {currentPage} / {totalPages}
+          </span>
+        </div>
+      </div>
+
+      {/* AUTHENTIC EXCEL GRID TABLE */}
+      <div className="bg-white rounded-xl border border-slate-300 shadow-md overflow-hidden">
+        <div className="overflow-x-auto max-h-[72vh] overflow-y-auto">
+          <table className="w-full text-left border-collapse border border-slate-400 text-[11px] leading-tight select-text">
+            {/* 2-TIER EXCEL HEADER WITH EXACT PRODUCT COLOR FROM SCREENSHOTS */}
+            <thead className="sticky top-0 z-20 shadow-sm">
+              {/* Row 1 of Header: Spanning 'Отпущено в производство' */}
+              <tr
+                className={`${activeTheme.bgHeader} ${activeTheme.textColor} border-b border-black font-bold`}
+                style={{ backgroundColor: activeTheme.color }}
+              >
+                <th
+                  rowSpan={2}
+                  onClick={() => setSortOrder(s => (s === 'asc' ? 'desc' : 'asc'))}
+                  className="border border-black/40 py-2.5 px-2 text-center w-12 align-middle cursor-pointer hover:bg-black/10 transition"
+                  title="Tartibni o'zgartirish (O'sish / Kamayish)"
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{t.number}</span>
+                    <span className="text-[9px] opacity-70">
+                      {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  </div>
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[95px] max-w-[110px] align-middle"
+                >
+                  {t.date}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[120px] align-middle"
+                >
+                  {`Наименование основного СЫРЬЯ - ${activeTheme.name}`}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[130px] align-middle"
+                >
+                  {t.supplier}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-1.5 text-center min-w-[85px] align-middle"
+                >
+                  {t.temp}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[120px] align-middle"
+                >
+                  {t.transport}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-1.5 text-center min-w-[95px] align-middle"
+                >
+                  {t.docs}
+                </th>
+
+                {/* 11 Product-specific criteria */}
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[120px] align-middle"
+                >
+                  {activeTheme.col9}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[110px] align-middle"
+                >
+                  {activeTheme.col10}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[120px] align-middle"
+                >
+                  {activeTheme.col11}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[120px] align-middle"
+                >
+                  {activeTheme.col12}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[110px] align-middle"
+                >
+                  {activeTheme.col13}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[130px] align-middle"
+                >
+                  {activeTheme.col14}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[110px] align-middle"
+                >
+                  {activeTheme.col15}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[110px] align-middle"
+                >
+                  {activeTheme.col16}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[100px] align-middle"
+                >
+                  {activeTheme.col17}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[100px] align-middle"
+                >
+                  {activeTheme.col18}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[110px] align-middle"
+                >
+                  {activeTheme.col19}
+                </th>
+
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[70px] align-middle"
+                >
+                  {t.batch}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[90px] align-middle"
+                >
+                  {t.rating}
+                </th>
+
+                {/* Grouped Header for 'Отпущено в производство' */}
+                <th
+                  colSpan={3}
+                  className="border border-black/40 py-1.5 px-2 text-center align-middle bg-black/10"
+                >
+                  {t.issuedGroup}
+                </th>
+
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[110px] align-middle"
+                >
+                  {t.rejectionNo}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[150px] align-middle"
+                >
+                  {t.inspector}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[80px] align-middle"
+                >
+                  {t.price}
+                </th>
+                <th
+                  rowSpan={2}
+                  className="border border-black/40 py-2.5 px-2 text-center min-w-[65px] align-middle"
+                >
+                  {t.actions}
+                </th>
+              </tr>
+
+              {/* Row 2 of Header: sub-columns for 'Отпущено в производство' */}
+              <tr
+                className={`${activeTheme.bgHeader} ${activeTheme.textColor} border-b border-black font-bold text-[10px]`}
+                style={{ backgroundColor: activeTheme.color }}
+              >
+                <th className="border border-black/40 py-1.5 px-2 text-center min-w-[75px]">
+                  {t.kgWarehouse}
+                </th>
+                <th className="border border-black/40 py-1.5 px-2 text-center min-w-[95px]">
+                  {t.kgShop}
+                </th>
+                <th className="border border-black/40 py-1.5 px-2 text-center min-w-[85px]">
+                  {t.shopDate}
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-800">
+
+            {/* Table Body with Authentic Excel Grid Cells & Highlights */}
+            <tbody className="divide-y divide-slate-300 text-slate-900 bg-white">
               {loading ? (
                 <tr>
-                  <td colSpan={13} className="py-12 text-center text-slate-400">
-                    <div className="inline-flex items-center gap-2">
+                  <td colSpan={27} className="py-16 text-center text-slate-500">
+                    <div className="inline-flex items-center gap-2 font-semibold">
                       <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
-                      <span>Ma'lumotlar yuklanmoqda...</span>
+                      <span>{activeTheme.name} ma'lumotlari yuklanmoqda...</span>
                     </div>
                   </td>
                 </tr>
-              ) : acts.length === 0 ? (
+              ) : paginatedActs.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="py-12 text-center">
-                    <FileSpreadsheet className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-700">{t.noData}</p>
+                  <td colSpan={27} className="py-16 text-center">
+                    <p className="font-bold text-slate-700 text-sm">{t.noData}</p>
                     <p className="text-xs text-slate-400 mt-1">{t.noDataDesc}</p>
-                    <div className="mt-4 flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => setIsImportOpen(true)}
-                        className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg font-semibold hover:bg-emerald-100 transition"
-                      >
-                        {t.fastImportBtn}
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ) : (
-                acts.map((act, index) => (
-                  <tr
-                    key={act.id}
-                    className={`hover:bg-slate-50 transition cursor-pointer ${
-                      act.decisionRating === 2 ? 'bg-red-50/30' : ''
-                    }`}
-                    onClick={() => setSelectedActForView(act)}
-                  >
-                    <td className="py-2.5 px-3 text-center font-mono font-medium text-slate-500">
-                      {act.actNumber || index + 1}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap font-medium text-slate-900">
-                      {act.actDate}
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">
-                      {act.productName}
-                    </td>
-                    <td className="py-2.5 px-3 font-medium text-slate-700">
-                      {act.supplierName}
-                    </td>
-                    <td className="py-2.5 px-2 text-center font-mono">
-                      {act.temperature || '-'}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600">
-                      {act.batchNumber || '-'}
-                    </td>
-                    <td className="py-2.5 px-3">{renderCriteriaPills(act)}</td>
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      {renderRatingBadge(act.decisionRating)}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
-                      {act.warehouseKg ? act.warehouseKg.toLocaleString('uz-UZ', { maximumFractionDigits: 1 }) : '-'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono text-slate-600">
-                      {act.shopIssuedKg || '-'}
-                    </td>
-                    <td className="py-2.5 px-3 truncate max-w-[120px] text-slate-600" title={act.inspectorName || ''}>
-                      {act.inspectorName || '-'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono text-slate-600">
-                      {act.pricePerKg ? `${act.pricePerKg.toLocaleString('uz-UZ')}` : '-'}
-                    </td>
-                    <td
-                      className="py-2.5 px-3 text-center"
-                      onClick={e => e.stopPropagation()}
+                paginatedActs.map((act, idx) => {
+                  const raw = act.rawValues || {}
+                  const isYellowRow =
+                    Boolean(raw.isYellow) ||
+                    (act.productName.toUpperCase().includes('ЛУК') &&
+                      (act.actNumber === '6' || act.actNumber === '9' || act.actNumber === '11'))
+
+                  return (
+                    <tr
+                      key={act.id}
+                      onClick={() => setSelectedActForView(act)}
+                      className={`hover:bg-sky-50/60 transition cursor-pointer ${
+                        isYellowRow
+                          ? 'bg-[#FFFF99] hover:bg-[#FFF566]' // Exact yellow highlight as in client's screenshot
+                          : act.decisionRating === 2
+                          ? 'bg-red-50 hover:bg-red-100/60'
+                          : idx % 2 === 1
+                          ? 'bg-slate-50/50'
+                          : 'bg-white'
+                      }`}
                     >
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => setSelectedActForView(act)}
-                          className="p-1 hover:bg-slate-200 text-slate-600 rounded"
-                          title={t.viewDetails}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenEdit(act)}
-                          className="p-1 hover:bg-slate-200 text-blue-600 rounded"
-                          title={t.edit}
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAct(act.id)}
-                          className="p-1 hover:bg-red-100 text-red-600 rounded"
-                          title={t.delete}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      {/* Col 2: № п/п */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono font-medium">
+                        {act.actNumber || (currentPage - 1) * pageSize + idx + 1}
+                      </td>
+
+                      {/* Col 3: Дата */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center whitespace-nowrap font-mono">
+                        {act.actDate}
+                      </td>
+
+                      {/* Col 4: Наименование сырья */}
+                      <td className="border border-slate-300 py-1.5 px-2 font-bold whitespace-nowrap">
+                        {act.productName}
+                      </td>
+
+                      {/* Col 5: Поставщик */}
+                      <td className="border border-slate-300 py-1.5 px-2 font-medium">
+                        {act.supplierName}
+                      </td>
+
+                      {/* Col 6: Температура */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono whitespace-nowrap">
+                        {act.temperature || raw.col6 || '-'}
+                      </td>
+
+                      {/* Col 7: Условия упаковки */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col7, act.transportCondition)}
+                      </td>
+
+                      {/* Col 8: Документация */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col8, act.hasDocumentation)}
+                      </td>
+
+                      {/* Col 9: Структура / Консистенция */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col9, act.structure)}
+                      </td>
+
+                      {/* Col 10: Цвет */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col10, act.leafColor)}
+                      </td>
+
+                      {/* Col 11: Вкус / Запах */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col11, act.tasteSmell)}
+                      </td>
+
+                      {/* Col 12: Окисление / Размер */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col12, act.internalOxidation, true)}
+                      </td>
+
+                      {/* Col 13: Следы насекомых */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col13, act.insectTraces, true)}
+                      </td>
+
+                      {/* Col 14: Слизь, разложение, гниль */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col14, act.rotDiseases, true)}
+                      </td>
+
+                      {/* Col 15: Кочерыжка / Дефекты */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col15, act.stemCut)}
+                      </td>
+
+                      {/* Col 16: Плотность / Трещины */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col16, act.density)}
+                      </td>
+
+                      {/* Col 17: Диаметр/Вес / Трещины */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center whitespace-nowrap">
+                        {raw.col17 || act.diameterWeight || '-'}
+                      </td>
+
+                      {/* Col 18: Покровные листья / Упаковка в ряд */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col18, act.outerLeavesRemoved)}
+                      </td>
+
+                      {/* Col 19: Отсутствие мех. повреждений */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                        {renderCellText(raw.col19, act.noMechanicalDamage)}
+                      </td>
+
+                      {/* Col 20: № партии */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono font-medium">
+                        {act.batchNumber || raw.col20 || '-'}
+                      </td>
+
+                      {/* Col 21: Допуск */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center font-semibold">
+                        {viewMode === 'numeric' ? (
+                          <span
+                            className={`px-2 py-0.5 rounded text-xs font-bold ${
+                              act.decisionRating === 5
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : act.decisionRating === 4
+                                ? 'bg-blue-100 text-blue-800'
+                                : act.decisionRating === 3
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {act.decisionRating}
+                          </span>
+                        ) : (
+                          <span
+                            className={`${
+                              act.decisionRating === 2 ? 'text-red-700 font-bold' : 'text-slate-800'
+                            }`}
+                          >
+                            {raw.col21 || act.decisionText || 'допускается'}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Col 22: кг (Приём склад) */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-right font-mono font-bold">
+                        {act.warehouseKg !== null && act.warehouseKg !== undefined
+                          ? act.warehouseKg.toLocaleString('uz-UZ', { maximumFractionDigits: 1 })
+                          : raw.col22 || '-'}
+                      </td>
+
+                      {/* Col 23: КГ ЦЕХ */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-right font-mono text-[10px]">
+                        {act.shopIssuedKg || raw.col23 || ''}
+                      </td>
+
+                      {/* Col 24: Дата цех */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono text-[10px] whitespace-nowrap">
+                        {act.shopIssuedDate || raw.col24 || ''}
+                      </td>
+
+                      {/* Col 25: НЕДОПУСК № акта забраковки */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-center font-bold text-red-600">
+                        {act.rejectionActNumber || raw.col25 || ''}
+                      </td>
+
+                      {/* Col 26: ФИО контролёра */}
+                      <td className="border border-slate-300 py-1.5 px-2 whitespace-nowrap text-slate-700">
+                        {act.inspectorName || raw.col26 || 'Камбарова А.М.'}
+                      </td>
+
+                      {/* Col 27: цена */}
+                      <td className="border border-slate-300 py-1.5 px-2 text-right font-mono font-medium">
+                        {act.pricePerKg ? act.pricePerKg.toLocaleString('uz-UZ') : raw.col27 || '-'}
+                      </td>
+
+                      {/* Actions */}
+                      <td
+                        className="border border-slate-300 py-1.5 px-1 text-center"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setSelectedActForView(act)}
+                            className="p-1 text-slate-600 hover:bg-slate-200 rounded"
+                            title="Batafsil"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenEdit(act)}
+                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                            title="Tahrirlash"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAct(act.id)}
+                            className="p-1 text-red-600 hover:bg-red-100 rounded"
+                            title="O'chirish"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Table Footer with Pagination Controls */}
+        <div className="p-3 bg-slate-100 border-t border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="text-slate-600 font-medium">
+            Ko'rsatilmoqda: <span className="font-bold text-slate-900">{paginatedActs.length}</span> ta akt (Jami{' '}
+            <span className="font-bold text-slate-900">{acts.length}</span> ta)
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={pageSize}
+              onChange={e => {
+                setPageSize(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              className="px-2 py-1 bg-white border border-slate-300 rounded text-xs font-medium"
+            >
+              <option value={25}>25 tadan</option>
+              <option value={50}>50 tadan</option>
+              <option value={100}>100 tadan</option>
+              <option value={500}>500 tadan</option>
+            </select>
+
+            <button
+              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <span className="font-mono font-bold text-slate-800">
+              {currentPage} / {totalPages}
+            </span>
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="p-1.5 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1033,7 +1270,6 @@ export default function IncomingActsContent() {
             className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150"
             onClick={e => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
@@ -1044,720 +1280,289 @@ export default function IncomingActsContent() {
                     {editingAct ? 'Aktni Tahrirlash' : 'Yangi Kiruvchi Xomashyo Akti'}
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Barcha sifat parametrlari raqamlar bilan kiritiladi (1 / 0 va 2-5 baho).
+                    Barcha sifat parametrlari raqamlar (1/0) va 2-5 baho bilan kiritiladi.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form onSubmit={handleSaveAct} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-              {/* Section 1: Main Identification */}
+            <form onSubmit={handleSaveAct} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto text-xs">
+              {/* Identification */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
                   <Hash className="w-4 h-4 text-emerald-600" />
-                  1. Asosiy identifikatsiya ma'lumotlari
+                  1. Asosiy ma'lumotlar
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Akt raqami (№ п/п)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">№ п/п</label>
                     <input
                       type="text"
                       value={formData.actNumber}
                       onChange={e => setFormData({ ...formData, actNumber: e.target.value })}
-                      placeholder="1, 2, 3..."
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
                       required
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Sana (Поступление)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">Дата составления</label>
                     <input
                       type="date"
                       value={formData.actDate}
                       onChange={e => setFormData({ ...formData, actDate: e.target.value })}
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg"
                       required
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Xomashyo nomi
-                    </label>
-                    <input
-                      type="text"
-                      list="product-suggestions"
+                    <label className="block text-slate-700 font-semibold mb-1">Наименование СЫРЬЯ</label>
+                    <select
                       value={formData.productName}
                       onChange={e => setFormData({ ...formData, productName: e.target.value })}
-                      placeholder="Masalan: Салат Айсберг"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                      required
-                    />
-                    <datalist id="product-suggestions">
-                      {DEFAULT_PRODUCTS.map(p => (
-                        <option key={p} value={p} />
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
+                    >
+                      {PRODUCT_LIST.filter(p => p.id !== 'all').map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.label}
+                        </option>
                       ))}
-                    </datalist>
+                    </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Ta'minotchi (Поставщик)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">Поставщик</label>
                     <input
                       type="text"
-                      list="supplier-suggestions"
                       value={formData.supplierName}
                       onChange={e => setFormData({ ...formData, supplierName: e.target.value })}
-                      placeholder="Masalan: ECO GROW"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Зокир енд груп / Кибрай барака..."
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg"
                       required
                     />
-                    <datalist id="supplier-suggestions">
-                      {DEFAULT_SUPPLIERS.map(s => (
-                        <option key={s} value={s} />
-                      ))}
-                    </datalist>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Partiya raqami (№ партии)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.batchNumber}
-                      onChange={e => setFormData({ ...formData, batchNumber: e.target.value })}
-                      placeholder="03.01//1"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Harorat (Температура при поступлении)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">Температура сырья</label>
                     <input
                       type="text"
                       value={formData.temperature}
                       onChange={e => setFormData({ ...formData, temperature: e.target.value })}
-                      placeholder="8 °C"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
+                      placeholder="18 с"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Nazoratchi F.I.O (Контролёр)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">№ партии</label>
+                    <input
+                      type="text"
+                      value={formData.batchNumber}
+                      onChange={e => setFormData({ ...formData, batchNumber: e.target.value })}
+                      placeholder="1, 2..."
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">ФИО контролёра</label>
                     <input
                       type="text"
                       value={formData.inspectorName}
                       onChange={e => setFormData({ ...formData, inspectorName: e.target.value })}
-                      placeholder="Камбарова А.М."
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Section 2: DECISION RATING (2 to 5) */}
+              {/* Rating Scale: 2 to 5 */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center justify-between">
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-emerald-600" />
-                    2. Yakuniy sifat bahosi (Допуск: 2 dan 5 gacha)
+                    2. Baholash shkalasi (Допуск: 2 dan 5 gacha)
                   </span>
-                  <span className="text-emerald-700 font-mono font-bold">
-                    Tanlangan: {formData.decisionRating}
-                  </span>
+                  <span className="font-mono font-bold text-emerald-700">Tanlangan: {formData.decisionRating}</span>
                 </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-3">
-                  {/* Rating 5 */}
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, decisionRating: 5 })}
-                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
-                      formData.decisionRating === 5
-                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-md ring-2 ring-emerald-500'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-black font-mono">5</span>
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                    <div className="mt-2">
-                      <div className="font-bold text-xs">{t.ideal}</div>
-                      <div className={`text-[10px] mt-0.5 ${formData.decisionRating === 5 ? 'text-emerald-100' : 'text-slate-400'}`}>
-                        Barcha talablarga to'liq muvofiq
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Rating 4 */}
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, decisionRating: 4 })}
-                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
-                      formData.decisionRating === 4
-                        ? 'bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-500'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-black font-mono">4</span>
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                    <div className="mt-2">
-                      <div className="font-bold text-xs">{t.good}</div>
-                      <div className={`text-[10px] mt-0.5 ${formData.decisionRating === 4 ? 'text-blue-100' : 'text-slate-400'}`}>
-                        Standart bo'yicha to'liq ruxsat etiladi
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Rating 3 */}
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, decisionRating: 3 })}
-                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
-                      formData.decisionRating === 3
-                        ? 'bg-amber-600 text-white border-amber-700 shadow-md ring-2 ring-amber-500'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-amber-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-black font-mono">3</span>
-                      <AlertTriangle className="w-4 h-4" />
-                    </div>
-                    <div className="mt-2">
-                      <div className="font-bold text-xs">Shartli qabul</div>
-                      <div className={`text-[10px] mt-0.5 ${formData.decisionRating === 3 ? 'text-amber-100' : 'text-slate-400'}`}>
-                        Saralash va tozalash talab etiladi
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Rating 2 */}
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, decisionRating: 2 })}
-                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
-                      formData.decisionRating === 2
-                        ? 'bg-red-600 text-white border-red-700 shadow-md ring-2 ring-red-500'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-red-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-black font-mono">2</span>
-                      <XCircle className="w-4 h-4" />
-                    </div>
-                    <div className="mt-2">
-                      <div className="font-bold text-xs">{t.rejected}</div>
-                      <div className={`text-[10px] mt-0.5 ${formData.decisionRating === 2 ? 'text-red-100' : 'text-slate-400'}`}>
-                        Rad etilgan, qabul qilinmaydi (Brak)
-                      </div>
-                    </div>
-                  </button>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {[
+                    { val: 5, label: '5 - Ideal', desc: "A'lo sifat", bg: 'bg-emerald-600' },
+                    { val: 4, label: '4 - Yaxshi', desc: 'Ruxsat beriladi', bg: 'bg-blue-600' },
+                    { val: 3, label: '3 - Shartli', desc: 'Saralash talab etiladi', bg: 'bg-amber-600' },
+                    { val: 2, label: '2 - Rad etilgan', desc: 'Brak / Qabul qilinmadi', bg: 'bg-red-600' }
+                  ].map(item => (
+                    <button
+                      key={item.val}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, decisionRating: item.val })}
+                      className={`p-3 rounded-xl border text-left transition ${
+                        formData.decisionRating === item.val
+                          ? `${item.bg} text-white shadow ring-2 ring-slate-900/30`
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="font-black text-sm">{item.label}</div>
+                      <div className="text-[10px] opacity-80 mt-0.5">{item.desc}</div>
+                    </button>
+                  ))}
                 </div>
 
                 {formData.decisionRating === 2 && (
                   <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
-                    <label className="block text-xs font-bold text-red-900 mb-1">
-                      Rad etish akt raqami (НЕДОПУСК № акта забраковки)
-                    </label>
+                    <label className="block text-red-900 font-bold mb-1">НЕДОПУСК № акта забраковки</label>
                     <input
                       type="text"
                       value={formData.rejectionActNumber}
                       onChange={e => setFormData({ ...formData, rejectionActNumber: e.target.value })}
-                      placeholder="Brak akti raqami (masalan: BR-045)"
-                      className="w-full text-xs p-2 bg-white border border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 font-mono"
-                      required={formData.decisionRating === 2}
+                      placeholder="Brak akti raqami"
+                      className="w-full p-2 bg-white border border-red-400 rounded-lg font-mono"
+                      required
                     />
                   </div>
                 )}
               </div>
 
-              {/* Section 3: NUMERICAL QUALITY CRITERIA (1 or 0) */}
+              {/* Quality Criteria (1 / 0) */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-emerald-600" />
-                    3. Laboratoriya va organoleptik tekshiruv mezonlari (Raqamlarda)
-                  </span>
-                  <span className="text-[11px] text-slate-400 lowercase">
-                    (1 = ha / muvofiq, 0 = yo'q / otsutstvuyet)
-                  </span>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center justify-between">
+                  <span>3. Sifat mezonlari (Raqamlarda: 1 / 0)</span>
+                  <span className="text-[11px] font-normal text-slate-500">1 = Ha, 0 = Yo'q/Otsutstvuyet</span>
                 </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  {/* Transport */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Transport va qadoqlash sharoiti</div>
-                      <div className="text-[11px] text-slate-400">Условия транспортировки</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                  {[
+                    { label: 'Условия транспортировки', state: formData.transportCondition, key: 'transportCondition' },
+                    { label: 'Сопровождающая документация', state: formData.hasDocumentation, key: 'hasDocumentation' },
+                    { label: activeTheme.col9, state: formData.structure, key: 'structure' },
+                    { label: activeTheme.col10, state: formData.leafColor, key: 'leafColor' },
+                    { label: activeTheme.col11, state: formData.tasteSmell, key: 'tasteSmell' },
+                    { label: `${activeTheme.col12} (0 = yo'q)`, state: formData.internalOxidation, key: 'internalOxidation', isDefect: true },
+                    { label: `${activeTheme.col13} (0 = yo'q)`, state: formData.insectTraces, key: 'insectTraces', isDefect: true },
+                    { label: `${activeTheme.col14} (0 = yo'q)`, state: formData.rotDiseases, key: 'rotDiseases', isDefect: true },
+                    { label: activeTheme.col15, state: formData.stemCut, key: 'stemCut' },
+                    { label: activeTheme.col16, state: formData.density, key: 'density' },
+                    { label: activeTheme.col18, state: formData.outerLeavesRemoved, key: 'outerLeavesRemoved' },
+                    { label: activeTheme.col19, state: formData.noMechanicalDamage, key: 'noMechanicalDamage' }
+                  ].map((field: any) => (
+                    <div
+                      key={field.key}
+                      className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between"
+                    >
+                      <span className="font-medium text-slate-800 truncate mr-2" title={field.label}>
+                        {field.label}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, [field.key]: 1 })}
+                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs ${
+                            formData[field.key as keyof typeof formData] === 1
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          1
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, [field.key]: 0 })}
+                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs ${
+                            formData[field.key as keyof typeof formData] === 0
+                              ? 'bg-red-600 text-white'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          0
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, transportCondition: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.transportCondition === 1
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Qoniqarli)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, transportCondition: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.transportCondition === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Yo'q)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Documents */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Kuzatuv hujjatlari</div>
-                      <div className="text-[11px] text-slate-400">Сопровождающая документация</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, hasDocumentation: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.hasDocumentation === 1
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Mavjud)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, hasDocumentation: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.hasDocumentation === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Yo'q)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Structure */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Tuzilishi: Zich, shirali, qarsildoq</div>
-                      <div className="text-[11px] text-slate-400">Структура и консистенция</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, structure: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.structure === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Muvofiq)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, structure: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.structure === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Brak)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Color */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Rangi: Och yashildan to'q yashilgacha</div>
-                      <div className="text-[11px] text-slate-400">Цвет листьев/плодов</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, leafColor: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.leafColor === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Muvofiq)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, leafColor: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.leafColor === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Brak)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Taste & Smell */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Ta'mi va hidi: Toza, begona hidsiz</div>
-                      <div className="text-[11px] text-slate-400">Вкус и запах свежий</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, tasteSmell: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.tasteSmell === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Muvofiq)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, tasteSmell: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.tasteSmell === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Brak)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Internal oxidation (0 = Otsutstvuyet) */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Ichki qizarish / Oksidlanish</div>
-                      <div className="text-[11px] text-slate-400">Внутреннее окисление (порозовение)</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, internalOxidation: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.internalOxidation === 0
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Otsutstvuyet)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, internalOxidation: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.internalOxidation === 1 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Mavjud - Brak)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Insects (0 = Otsutstvuyet) */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Hasharotlar va zararkunandalar</div>
-                      <div className="text-[11px] text-slate-400">Следы насекомых и вредителей</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, insectTraces: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.insectTraces === 0 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Otsutstvuyet)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, insectTraces: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.insectTraces === 1 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Mavjud - Brak)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Rot / Diseases (0 = Otsutstvuyet) */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Chirish, shilimshiq, kasalliklar</div>
-                      <div className="text-[11px] text-slate-400">Слизь, разложение, гниль</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, rotDiseases: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.rotDiseases === 0 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Otsutstvuyet)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, rotDiseases: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.rotDiseases === 1 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Mavjud - Brak)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Stem Cut */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Kesim: Tekis, &le; 3 sm balandlikda</div>
-                      <div className="text-[11px] text-slate-400">В разрезе кочерыжка ровная</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, stemCut: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.stemCut === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Muvofiq)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, stemCut: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.stemCut === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Nomaqbul)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Density */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Zichligi: O'rtacha zichlik</div>
-                      <div className="text-[11px] text-slate-400">Плотность средней плотности</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, density: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.density === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Standart)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, density: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.density === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Nomaqbul)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Outer Leaves */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Qoplama quyuq barglari olinganligi</div>
-                      <div className="text-[11px] text-slate-400">Удаленные покровные листья</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, outerLeavesRemoved: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.outerLeavesRemoved === 1
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Ha)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, outerLeavesRemoved: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.outerLeavesRemoved === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Yo'q)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* No mechanical damage */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800">Mexanik shikastlanish yo'qligi</div>
-                      <div className="text-[11px] text-slate-400">Отсутствие мех. повреждений</div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, noMechanicalDamage: 1 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.noMechanicalDamage === 1
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        1 (Shikast yo'q)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, noMechanicalDamage: 0 })}
-                        className={`px-3 py-1 rounded font-bold font-mono text-xs ${
-                          formData.noMechanicalDamage === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        0 (Shikastlangan)
-                      </button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
-                <div className="mt-3">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Диаметр кочана ва минимал вазн (Диаметр / вес)
+                <div className="mt-2.5">
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Размер плодов / Диаметр и вес
                   </label>
                   <input
                     type="text"
                     value={formData.diameterWeight}
                     onChange={e => setFormData({ ...formData, diameterWeight: e.target.value })}
-                    placeholder="Masalan: 400г-700г 12см"
-                    className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
+                    placeholder="6-7 см yoki 400г-700г 12см"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
                   />
                 </div>
               </div>
 
-              {/* Section 4: Warehouse, Price & Issue */}
+              {/* Warehouse & Price */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
                   <Scale className="w-4 h-4 text-emerald-600" />
-                  4. Ombor qabul vazni, sexga chiqim va narx
+                  4. Ombor qabul vazni, chiqim va narxi
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Qabul qilingan vazn (кг склад)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">Приём склад (кг)</label>
                     <input
                       type="number"
                       step="any"
                       value={formData.warehouseKg}
                       onChange={e => setFormData({ ...formData, warehouseKg: e.target.value })}
-                      placeholder="8081"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
+                      placeholder="872"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Sexga berildi (кг цех)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">КГ ЦЕХ</label>
                     <input
                       type="text"
                       value={formData.shopIssuedKg}
                       onChange={e => setFormData({ ...formData, shopIssuedKg: e.target.value })}
-                      placeholder="394.8 yoki 205.5+169.3"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
+                      placeholder="164,2+433,5"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Sexga berilgan sana
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">Дата цех</label>
                     <input
                       type="text"
                       value={formData.shopIssuedDate}
                       onChange={e => setFormData({ ...formData, shopIssuedDate: e.target.value })}
-                      placeholder="05.05.2025"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
+                      placeholder="03,05,2025"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Narxi (so'm / kg)
-                    </label>
+                    <label className="block text-slate-700 font-semibold mb-1">Цена (сум/кг)</label>
                     <input
                       type="number"
                       step="any"
                       value={formData.pricePerKg}
                       onChange={e => setFormData({ ...formData, pricePerKg: e.target.value })}
-                      placeholder="17500"
-                      className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono"
+                      placeholder="26000"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
                     />
                   </div>
                 </div>
-
-                <div className="mt-3">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Qo'shimcha izoh / xulosa
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.notes}
-                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Mahsulot holati bo'yicha maxsus ko'rsatma..."
-                    className="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
               </div>
 
-              {/* Form Actions */}
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2.5">
+              {/* Actions */}
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100"
                 >
                   {t.close}
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-900/30 transition disabled:opacity-50"
+                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow disabled:opacity-50"
                 >
                   {submitting ? t.saving : t.save}
                 </button>
@@ -1774,7 +1579,7 @@ export default function IncomingActsContent() {
           onClick={() => setIsImportOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            className="bg-white rounded-2xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
@@ -1783,78 +1588,76 @@ export default function IncomingActsContent() {
                   <Upload className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold">{t.importModalTitle}</h2>
-                  <p className="text-xs text-slate-400">{t.importModalDesc}</p>
+                  <h2 className="text-base font-bold">Excel Import (Barcha Xomashyolar)</h2>
+                  <p className="text-xs text-slate-400">
+                    Tomat, Piyoz, Aysberg, Karam, Sabzi va barcha bo'limlarni bazaga yuklash.
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsImportOpen(false)}
-                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
-              {/* Mode Select */}
+            <div className="p-6 space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">
-                  Import rejimi:
-                </label>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <label className="block font-bold text-slate-700 mb-2">Import rejimi:</label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setImportMode('append')}
-                    className={`p-3 rounded-xl border text-left font-medium transition ${
+                    className={`p-3 rounded-xl border text-left ${
                       importMode === 'append'
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-1 ring-emerald-500'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-1 ring-emerald-500'
+                        : 'bg-white border-slate-200 text-slate-600'
                     }`}
                   >
-                    <div className="font-bold text-slate-900">Qo'shish (Append)</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">Mavjud aktlar saqlanadi</div>
+                    <div className="font-bold">Qo'shish (Append)</div>
+                    <div className="text-[11px] text-slate-500">Mavjud aktlar saqlanadi</div>
                   </button>
-
                   <button
                     type="button"
                     onClick={() => setImportMode('replace')}
-                    className={`p-3 rounded-xl border text-left font-medium transition ${
+                    className={`p-3 rounded-xl border text-left ${
                       importMode === 'replace'
-                        ? 'bg-red-50 border-red-500 text-red-900 ring-1 ring-red-500'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-red-50 border-red-500 text-red-950 ring-1 ring-red-500'
+                        : 'bg-white border-slate-200 text-slate-600'
                     }`}
                   >
-                    <div className="font-bold text-slate-900">Almashtirish (Replace)</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">Eskilar o'chib yangidan yuklanadi</div>
+                    <div className="font-bold">Almashtirish (Replace)</div>
+                    <div className="text-[11px] text-slate-500">Qayta tozalab yuklash</div>
                   </button>
                 </div>
               </div>
 
-              {/* Option 1: 1-Click Fast Import from Template */}
+              {/* 1-Click Fast Import */}
               <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl space-y-2">
-                <div className="font-bold text-xs text-emerald-900 flex items-center gap-1.5">
+                <div className="font-bold text-emerald-900 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
-                  1-KLIK BILAN KORXONA SHABLONIDAN YUKLASH:
+                  1-KLIK BILAN BARCHA 1276 TA AKTLARNI YUKLASH:
                 </div>
-                <p className="text-xs text-emerald-800 leading-relaxed">
-                  Loyiha fayllaridagi <span className="font-mono font-semibold">templates/ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx</span> faylidan barcha aktlar va raqamli sifat ko'rsatkichlarini bir zumda bazaga yuklash.
+                <p className="text-emerald-800 leading-relaxed">
+                  Loyiha shablonidagi barcha Tomat (504 ta), Piyoz (48 ta), Aysberg (559 ta), Karam, Sabzi aktlarini asl ranglari bilan bazaga yuklash.
                 </p>
                 <button
                   type="button"
                   onClick={handleDefaultTemplateImport}
                   disabled={importing}
-                  className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {importing ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      Yuklanmoqda...
+                      Baza yangilanmoqda...
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Shablon faylini yuklash
+                      Shablon faylidan import qilish
                     </>
                   )}
                 </button>
@@ -1863,22 +1666,18 @@ export default function IncomingActsContent() {
               <div className="relative flex items-center justify-center">
                 <div className="border-t border-slate-200 w-full"></div>
                 <span className="bg-white px-3 text-[11px] uppercase font-bold text-slate-400 absolute">
-                  yoki
+                  yoki fayl tanlang
                 </span>
               </div>
 
-              {/* Option 2: Custom File Upload */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700">
-                  {t.orUploadFile}
-                </label>
+              <div>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept=".xlsx, .xls"
                   onChange={handleFileUploadImport}
                   disabled={importing}
-                  className="w-full text-xs p-2.5 bg-slate-50 border border-dashed border-slate-300 rounded-xl file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer"
+                  className="w-full p-2.5 bg-slate-50 border border-dashed border-slate-300 rounded-xl file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white cursor-pointer"
                 />
               </div>
 
@@ -1886,7 +1685,7 @@ export default function IncomingActsContent() {
                 <button
                   type="button"
                   onClick={() => setIsImportOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition"
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100"
                 >
                   {t.close}
                 </button>
@@ -1896,29 +1695,25 @@ export default function IncomingActsContent() {
         </div>
       )}
 
-      {/* VIEW DETAILS MODAL */}
+      {/* DETAIL VIEW MODAL */}
       {selectedActForView && (
         <div
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setSelectedActForView(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl">
                   <FileCheck className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold">
-                      Akt № {selectedActForView.actNumber} - {selectedActForView.productName}
-                    </h2>
-                    {renderRatingBadge(selectedActForView.decisionRating)}
-                  </div>
+                  <h2 className="text-lg font-bold">
+                    Akt № {selectedActForView.actNumber} - {selectedActForView.productName}
+                  </h2>
                   <p className="text-xs text-slate-400">
                     Sana: {selectedActForView.actDate} | Ta'minotchi: {selectedActForView.supplierName}
                   </p>
@@ -1927,116 +1722,58 @@ export default function IncomingActsContent() {
               <button
                 type="button"
                 onClick={() => setSelectedActForView(null)}
-                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto text-xs">
-              {/* Primary parameters grid */}
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[11px] text-slate-400 font-medium">Partiya raqami</div>
-                  <div className="text-sm font-bold font-mono text-slate-900 mt-1">
-                    {selectedActForView.batchNumber || '-'}
-                  </div>
+                  <span className="text-[11px] text-slate-400 block">Partiya №</span>
+                  <span className="text-sm font-bold font-mono">{selectedActForView.batchNumber || '-'}</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[11px] text-slate-400 font-medium">Harorat</div>
-                  <div className="text-sm font-bold font-mono text-slate-900 mt-1">
-                    {selectedActForView.temperature || '-'}
-                  </div>
+                  <span className="text-[11px] text-slate-400 block">Harorat</span>
+                  <span className="text-sm font-bold font-mono">{selectedActForView.temperature || '-'}</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[11px] text-slate-400 font-medium">Ombor qabul (kg)</div>
-                  <div className="text-sm font-bold font-mono text-emerald-700 mt-1">
+                  <span className="text-[11px] text-slate-400 block">Ombor (kg)</span>
+                  <span className="text-sm font-bold font-mono text-emerald-700">
                     {selectedActForView.warehouseKg ? selectedActForView.warehouseKg.toLocaleString('uz-UZ') : '-'}
-                  </div>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="text-[11px] text-slate-400 font-medium">Narxi (so'm/kg)</div>
-                  <div className="text-sm font-bold font-mono text-slate-900 mt-1">
-                    {selectedActForView.pricePerKg ? selectedActForView.pricePerKg.toLocaleString('uz-UZ') : '-'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Numerical inspection matrix */}
-              <div>
-                <h4 className="font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-2">
-                  Laboratoriya va sifat ko'rsatkichlari (Raqamli):
-                </h4>
-                <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
-                  <div className="grid grid-cols-12 p-2 bg-slate-100 font-bold text-slate-600">
-                    <div className="col-span-8">Tekshiruv parametri</div>
-                    <div className="col-span-4 text-center">Raqamli qiymat</div>
-                  </div>
-
-                  {[
-                    { label: 'Transport va qadoqlash sharoiti', val: selectedActForView.transportCondition, expected: 1 },
-                    { label: 'Kuzatuv hujjatlari', val: selectedActForView.hasDocumentation, expected: 1 },
-                    { label: 'Tuzilishi: Zich, shirali, qarsildoq', val: selectedActForView.structure, expected: 1 },
-                    { label: 'Rangi (Och yashildan to\'q yashilgacha)', val: selectedActForView.leafColor, expected: 1 },
-                    { label: 'Ta\'mi va hidi (Toza, begona hidsiz)', val: selectedActForView.tasteSmell, expected: 1 },
-                    { label: 'Ichki qizarish / Oksidlanish (0 = yo\'q)', val: selectedActForView.internalOxidation, expected: 0 },
-                    { label: 'Hasharotlar va zararkunandalar (0 = yo\'q)', val: selectedActForView.insectTraces, expected: 0 },
-                    { label: 'Chirish, shilimshiq, kasalliklar (0 = yo\'q)', val: selectedActForView.rotDiseases, expected: 0 },
-                    { label: 'Kesim ko\'rinishi (<= 3 sm)', val: selectedActForView.stemCut, expected: 1 },
-                    { label: 'Zichlik (O\'rtacha zichlik)', val: selectedActForView.density, expected: 1 },
-                    { label: 'Qoplama barglar olinganligi', val: selectedActForView.outerLeavesRemoved, expected: 1 },
-                    { label: 'Mexanik shikastlanish yo\'qligi', val: selectedActForView.noMechanicalDamage, expected: 1 }
-                  ].map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-12 p-2 items-center hover:bg-slate-50">
-                      <div className="col-span-8 font-medium text-slate-700">{item.label}</div>
-                      <div className="col-span-4 text-center">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded font-mono font-bold text-xs ${
-                            item.val === item.expected
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {item.val} ({item.val === 1 ? 'Ha / 1' : 'Yo\'q / 0'})
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Extra details */}
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div>
-                  <span className="text-slate-400 block text-[11px]">Диаметр / вес кочана:</span>
-                  <span className="font-semibold text-slate-800">{selectedActForView.diameterWeight || '-'}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[11px]">Sexga chiqarilgan (kg / sana):</span>
-                  <span className="font-semibold text-slate-800">
-                    {selectedActForView.shopIssuedKg || '-'} {selectedActForView.shopIssuedDate ? `(${selectedActForView.shopIssuedDate})` : ''}
                   </span>
                 </div>
-                <div>
-                  <span className="text-slate-400 block text-[11px]">Nazoratchi:</span>
-                  <span className="font-semibold text-slate-800">{selectedActForView.inspectorName || '-'}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[11px]">Brak akt raqami:</span>
-                  <span className="font-semibold text-red-700">{selectedActForView.rejectionActNumber || 'Mavjud emas'}</span>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-slate-400 block">Narxi (so'm)</span>
+                  <span className="text-sm font-bold font-mono">
+                    {selectedActForView.pricePerKg ? selectedActForView.pricePerKg.toLocaleString('uz-UZ') : '-'}
+                  </span>
                 </div>
               </div>
 
-              {selectedActForView.notes && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900">
-                  <div className="font-bold text-[11px] mb-0.5">Izoh:</div>
-                  <div>{selectedActForView.notes}</div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-600">Допуск (Baholash):</span>
+                  <span className="font-bold text-sm">{selectedActForView.decisionRating} - {selectedActForView.decisionText}</span>
                 </div>
-              )}
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-600">Отпущено в цех:</span>
+                  <span className="font-mono">{selectedActForView.shopIssuedKg || '-'} (Sana: {selectedActForView.shopIssuedDate || '-'})</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-600">Mas'ul nazoratchi:</span>
+                  <span>{selectedActForView.inspectorName || '-'}</span>
+                </div>
+                {selectedActForView.rejectionActNumber && (
+                  <div className="flex items-center justify-between text-red-600">
+                    <span className="font-bold">НЕДОПУСК № акта забраковки:</span>
+                    <span className="font-mono font-bold">{selectedActForView.rejectionActNumber}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Footer */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
               <button
                 type="button"
@@ -2045,16 +1782,15 @@ export default function IncomingActsContent() {
                   setSelectedActForView(null)
                   handleOpenEdit(act)
                 }}
-                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold flex items-center gap-1.5"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Tahrirlash
               </button>
-
               <button
                 type="button"
                 onClick={() => setSelectedActForView(null)}
-                className="px-4 py-1.5 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-bold hover:bg-slate-200"
               >
                 {t.close}
               </button>

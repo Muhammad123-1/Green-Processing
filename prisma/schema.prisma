@@ -1264,6 +1264,7 @@ model IncomingRawMaterialAct {
   inspectorName        String?  // Mas'ul inspektor F.I.O
   pricePerKg           Float?   // Narxi (so'm/kg)
   notes                String?  // Qo'shimcha izoh
+  rawValues            Json?    @default("{}") // Asl Excel matnlari va ranglari
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 

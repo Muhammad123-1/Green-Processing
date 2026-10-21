@@ -1,38 +1,15 @@
 import ExcelJS from 'exceljs'
 import path from 'path'
 import fs from 'fs'
+import {
+  IncomingActRecord,
+  PRODUCT_THEMES,
+  getProductTheme,
+  getRatingText
+} from './constants'
 
-export interface IncomingActRecord {
-  id?: number
-  actNumber: string
-  actDate: string
-  productName: string
-  supplierName: string
-  temperature?: string | null
-  transportCondition: number // 1 / 0
-  hasDocumentation: number // 1 / 0
-  structure: number // 1 / 0
-  leafColor: number // 1 / 0
-  tasteSmell: number // 1 / 0
-  internalOxidation: number // 0 / 1
-  insectTraces: number // 0 / 1
-  rotDiseases: number // 0 / 1
-  stemCut: number // 1 / 0
-  density: number // 1 / 0
-  diameterWeight?: string | null
-  outerLeavesRemoved: number // 1 / 0
-  noMechanicalDamage: number // 1 / 0
-  batchNumber?: string | null
-  decisionRating: number // 2, 3, 4, 5
-  decisionText?: string | null
-  warehouseKg?: number | null
-  shopIssuedKg?: string | null
-  shopIssuedDate?: string | null
-  rejectionActNumber?: string | null
-  inspectorName?: string | null
-  pricePerKg?: number | null
-  notes?: string | null
-}
+export type { IncomingActRecord }
+export { PRODUCT_THEMES, getProductTheme, getRatingText }
 
 function cleanText(val: any): string {
   if (val === null || val === undefined) return ''
@@ -78,8 +55,6 @@ function parseBoolNumber(val: any, defaultVal = 1): number {
 }
 
 function parseDefectNumber(val: any, defaultVal = 0): number {
-  // 0 = absent (norma/good)
-  // 1 = present (defect)
   const s = cleanText(val).toLowerCase()
   if (!s) return defaultVal
   if (
@@ -109,25 +84,6 @@ function parseDefectNumber(val: any, defaultVal = 0): number {
   return defaultVal
 }
 
-export function getRatingText(rating: number, lang: 'uz' | 'ru' | 'en' = 'uz'): string {
-  switch (rating) {
-    case 5:
-      return lang === 'ru' ? 'Идеал' : lang === 'en' ? 'Ideal' : 'Ideal'
-    case 4:
-      return lang === 'ru' ? 'Хорошо' : lang === 'en' ? 'Good' : 'Yaxshi'
-    case 3:
-      return lang === 'ru'
-        ? 'Условно принято (сортировка/очистка)'
-        : lang === 'en'
-        ? 'Conditional acceptance (sorting/cleaning required)'
-        : 'Shartli qabul (saralash va tozalash talab etiladi)'
-    case 2:
-      return lang === 'ru' ? 'Отклонено' : lang === 'en' ? 'Rejected' : 'Rad etilgan'
-    default:
-      return lang === 'ru' ? 'Хорошо' : lang === 'en' ? 'Good' : 'Yaxshi'
-  }
-}
-
 export function parseRating(val: any): number {
   const s = cleanText(val).toLowerCase()
   if (!s) return 4
@@ -142,7 +98,7 @@ export function parseRating(val: any): number {
 }
 
 /**
- * Parses an Excel file (.xlsx) into IncomingActRecord list
+ * Parses an Excel file (.xlsx) into IncomingActRecord list across ALL product sections
  */
 export async function parseIncomingActsFromBuffer(buffer: Buffer): Promise<IncomingActRecord[]> {
   const wb = new ExcelJS.Workbook()
@@ -155,24 +111,40 @@ export async function parseIncomingActsFromBuffer(buffer: Buffer): Promise<Incom
   }
 
   const records: IncomingActRecord[] = []
-  let currentCategory = 'Салат Айсберг'
+  let currentProductCategory = 'САЛАТ АЙСБЕРГ'
 
   for (let r = 8; r <= ws.rowCount; r++) {
     const row = ws.getRow(r)
-    const col4 = cleanText(row.getCell(4).value)
 
-    if (col4.includes('Наименование основного СЫРЬЯ')) {
-      const match = col4.match(/СЫРЬЯ\s*-\s*(.+)/i)
-      if (match) currentCategory = match[1].trim()
-      continue
+    // Check for product header markers in row
+    for (let c = 1; c <= 6; c++) {
+      const v = cleanText(row.getCell(c).value)
+      if (v.includes('Наименование основного СЫРЬЯ')) {
+        const m = v.match(/СЫРЬЯ\s*-\s*(.+)/i)
+        if (m) {
+          const rawProd = m[1].trim()
+          if (rawProd.includes('ТОМАТ')) currentProductCategory = 'ТОМАТ'
+          else if (rawProd.includes('ЛУК')) currentProductCategory = 'ЛУК БЕЛЫЙ'
+          else if (rawProd.includes('КАПУСТА')) currentProductCategory = 'КАПУСТА БЕЛОКОЧАННАЯ'
+          else if (rawProd.includes('МОРКОВЬ')) currentProductCategory = 'МОРКОВЬ'
+          else if (rawProd.includes('ОГУРЦ')) currentProductCategory = 'ОГУРЦЫ СВЕЖИЕ'
+          else if (rawProd.includes('АЙСБЕРГ') || rawProd.includes('САЛАТ')) currentProductCategory = 'САЛАТ АЙСБЕРГ'
+          else currentProductCategory = rawProd
+        }
+      }
     }
 
     const col2 = cleanText(row.getCell(2).value)
     const col3 = cleanText(row.getCell(3).value)
+    const col4 = cleanText(row.getCell(4).value)
     const col5 = cleanText(row.getCell(5).value)
+    const col22 = cleanText(row.getCell(22).value)
 
     // Skip headers or invalid rows
-    if (!col2 || col2.toLowerCase().includes('п/п') || !col3 || col3.toLowerCase().includes('дата')) {
+    if (!col2 || col2.toLowerCase().includes('п/п') || isNaN(parseInt(col2, 10))) {
+      continue
+    }
+    if (!col3 && !col4 && !col5 && !col22) {
       continue
     }
 
@@ -180,37 +152,100 @@ export async function parseIncomingActsFromBuffer(buffer: Buffer): Promise<Incom
     let actDate = col3
     if (actDate.length > 10) actDate = actDate.substring(0, 10)
 
-    const productName = col4 || currentCategory
+    let productName = currentProductCategory
+    if (col4 && !col4.includes('Наименование основного СЫРЬЯ')) {
+      const c4Upper = col4.toUpperCase()
+      if (c4Upper.includes('ТОМАТ')) productName = 'ТОМАТ'
+      else if (c4Upper.includes('ЛУК')) productName = 'ЛУК БЕЛЫЙ'
+      else if (c4Upper.includes('КАПУСТА')) productName = 'КАПУСТА БЕЛОКОЧАННАЯ'
+      else if (c4Upper.includes('МОРКОВ')) productName = 'МОРКОВЬ'
+      else if (c4Upper.includes('ОГУРЦ')) productName = 'ОГУРЦЫ СВЕЖИЕ'
+      else if (c4Upper.includes('АЙСБЕРГ') || c4Upper.includes('САЛАТ')) productName = 'САЛАТ АЙСБЕРГ'
+      else productName = col4.trim()
+    }
+
     const supplierName = col5 || "Noma'lum ta'minotchi"
-    const temperature = cleanText(row.getCell(6).value) || null
-    const transportCondition = parseBoolNumber(row.getCell(7).value, 1)
-    const hasDocumentation = parseBoolNumber(row.getCell(8).value, 0)
-    const structure = parseBoolNumber(row.getCell(9).value, 1)
-    const leafColor = parseBoolNumber(row.getCell(10).value, 1)
-    const tasteSmell = parseBoolNumber(row.getCell(11).value, 1)
-    const internalOxidation = parseDefectNumber(row.getCell(12).value, 0)
-    const insectTraces = parseDefectNumber(row.getCell(13).value, 0)
-    const rotDiseases = parseDefectNumber(row.getCell(14).value, 0)
-    const stemCut = parseBoolNumber(row.getCell(15).value, 1)
-    const density = parseBoolNumber(row.getCell(16).value, 1)
-    const diameterWeight = cleanText(row.getCell(17).value) || null
-    const outerLeavesRemoved = parseBoolNumber(row.getCell(18).value, 1)
-    const noMechanicalDamage = parseBoolNumber(row.getCell(19).value, 1)
-    const batchNumber = cleanText(row.getCell(20).value) || null
-    const decisionRating = parseRating(row.getCell(21).value)
-    const warehouseKg = parseFloat(cleanText(row.getCell(22).value).replace(',', '.')) || null
-    const shopIssuedKg = cleanText(row.getCell(23).value) || null
-    const shopIssuedDate = cleanText(row.getCell(24).value) || null
-    const rejectionActNumber = cleanText(row.getCell(25).value) || null
-    const inspectorName = cleanText(row.getCell(26).value) || 'Камбарова А.М.'
-    const pricePerKg = parseFloat(cleanText(row.getCell(27).value).replace(',', '.')) || null
+    const rawCol6 = cleanText(row.getCell(6).value)
+    const rawCol7 = cleanText(row.getCell(7).value)
+    const rawCol8 = cleanText(row.getCell(8).value)
+    const rawCol9 = cleanText(row.getCell(9).value)
+    const rawCol10 = cleanText(row.getCell(10).value)
+    const rawCol11 = cleanText(row.getCell(11).value)
+    const rawCol12 = cleanText(row.getCell(12).value)
+    const rawCol13 = cleanText(row.getCell(13).value)
+    const rawCol14 = cleanText(row.getCell(14).value)
+    const rawCol15 = cleanText(row.getCell(15).value)
+    const rawCol16 = cleanText(row.getCell(16).value)
+    const rawCol17 = cleanText(row.getCell(17).value)
+    const rawCol18 = cleanText(row.getCell(18).value)
+    const rawCol19 = cleanText(row.getCell(19).value)
+    const rawCol20 = cleanText(row.getCell(20).value)
+    const rawCol21 = cleanText(row.getCell(21).value)
+    const rawCol23 = cleanText(row.getCell(23).value)
+    const rawCol24 = cleanText(row.getCell(24).value)
+    const rawCol25 = cleanText(row.getCell(25).value)
+    const rawCol26 = cleanText(row.getCell(26).value)
+    const rawCol27 = cleanText(row.getCell(27).value)
+
+    const cell2Fill = row.getCell(2).fill as any
+    const cell3Fill = row.getCell(3).fill as any
+    const isYellow =
+      (cell2Fill?.fgColor?.argb === 'FFFFFF00' || cell2Fill?.fgColor?.indexed === 6) ||
+      (cell3Fill?.fgColor?.argb === 'FFFFFF00' || cell3Fill?.fgColor?.indexed === 6)
+
+    const transportCondition = parseBoolNumber(rawCol7, 1)
+    const hasDocumentation = parseBoolNumber(rawCol8, 0)
+    const structure = parseBoolNumber(rawCol9, 1)
+    const leafColor = parseBoolNumber(rawCol10, 1)
+    const tasteSmell = parseBoolNumber(rawCol11, 1)
+    const internalOxidation = parseDefectNumber(rawCol12, 0)
+    const insectTraces = parseDefectNumber(rawCol13, 0)
+    const rotDiseases = parseDefectNumber(rawCol14, 0)
+    const stemCut = parseBoolNumber(rawCol15, 1)
+    const density = parseBoolNumber(rawCol16, 1)
+    const diameterWeight = rawCol17 || null
+    const outerLeavesRemoved = parseBoolNumber(rawCol18, 1)
+    const noMechanicalDamage = parseBoolNumber(rawCol19, 1)
+    const batchNumber = rawCol20 || null
+    const decisionRating = parseRating(rawCol21)
+    const warehouseKg = parseFloat(col22.replace(',', '.')) || null
+    const shopIssuedKg = rawCol23 || null
+    const shopIssuedDate = rawCol24 || null
+    const rejectionActNumber = rawCol25 || null
+    const inspectorName = rawCol26 || 'Камбарова А.М.'
+    const pricePerKg = parseFloat(rawCol27.replace(',', '.')) || null
+
+    const rawValues = {
+      col6: rawCol6,
+      col7: rawCol7,
+      col8: rawCol8,
+      col9: rawCol9,
+      col10: rawCol10,
+      col11: rawCol11,
+      col12: rawCol12,
+      col13: rawCol13,
+      col14: rawCol14,
+      col15: rawCol15,
+      col16: rawCol16,
+      col17: rawCol17,
+      col18: rawCol18,
+      col19: rawCol19,
+      col20: rawCol20,
+      col21: rawCol21,
+      col23: rawCol23,
+      col24: rawCol24,
+      col25: rawCol25,
+      col26: rawCol26,
+      col27: rawCol27,
+      isYellow
+    }
 
     records.push({
       actNumber: actNum,
       actDate,
       productName,
       supplierName,
-      temperature,
+      temperature: rawCol6 || null,
       transportCondition,
       hasDocumentation,
       structure,
@@ -232,7 +267,8 @@ export async function parseIncomingActsFromBuffer(buffer: Buffer): Promise<Incom
       shopIssuedDate,
       rejectionActNumber,
       inspectorName,
-      pricePerKg
+      pricePerKg,
+      rawValues
     })
   }
 
@@ -252,7 +288,7 @@ export async function loadDefaultTemplateActs(): Promise<IncomingActRecord[]> {
 }
 
 /**
- * Generates official Excel workbook with numeric representation
+ * Generates official Excel workbook with authentic colors per product and numeric representation
  */
 export async function exportIncomingActsToExcel(
   acts: IncomingActRecord[],
@@ -272,27 +308,27 @@ export async function exportIncomingActsToExcel(
     { width: 8 }, // B № п/п
     { width: 14 }, // C Sana
     { width: 22 }, // D Xomashyo nomi
-    { width: 22 }, // E Ta'minotchi
+    { width: 24 }, // E Ta'minotchi
     { width: 14 }, // F Harorat
-    { width: 12 }, // G Transport (1/0)
-    { width: 12 }, // H Hujjatlar (1/0)
-    { width: 12 }, // I Tuzilishi (1/0)
-    { width: 12 }, // J Rangi (1/0)
-    { width: 12 }, // K Ta'mi/Hidi (1/0)
-    { width: 12 }, // L Qizarish/Oksidlanish (0/1)
-    { width: 12 }, // M Hasharotlar (0/1)
-    { width: 12 }, // N Chirish/Shilimshiq (0/1)
-    { width: 12 }, // O Kesim (1/0)
-    { width: 12 }, // P Zichlik (1/0)
-    { width: 16 }, // Q O'lchami/Vazni
-    { width: 12 }, // R Barglar (1/0)
-    { width: 12 }, // S Shikastlanish yo'qligi (1/0)
+    { width: 14 }, // G Transport
+    { width: 14 }, // H Hujjatlar
+    { width: 16 }, // I Tuzilishi
+    { width: 16 }, // J Rangi
+    { width: 16 }, // K Ta'mi/Hidi
+    { width: 14 }, // L Qizarish
+    { width: 14 }, // M Hasharotlar
+    { width: 14 }, // N Chirish
+    { width: 14 }, // O Kesim
+    { width: 14 }, // P Zichlik
+    { width: 18 }, // Q O'lchami/Vazni
+    { width: 14 }, // R Barglar
+    { width: 14 }, // S Shikast yo'qligi
     { width: 14 }, // T Partiya №
-    { width: 12 }, // U Baholash (2,3,4,5)
+    { width: 14 }, // U Baholash (2-5)
     { width: 14 }, // V Ombor (kg)
     { width: 16 }, // W Sexga berildi (kg)
     { width: 14 }, // X Berilgan sana
-    { width: 14 }, // Y Brak akti №
+    { width: 14 }, // Y Brak akt №
     { width: 20 }, // Z Mas'ul nazoratchi
     { width: 14 } // AA Narx (so'm/kg)
   ]
@@ -320,7 +356,7 @@ export async function exportIncomingActsToExcel(
       ? 'ВХОДНОЕ СЫРЬЕ - ЖУРНАЛ АКТОВ ПРИЁМКИ И БРАКЕРАЖА'
       : lang === 'en'
       ? 'INCOMING RAW MATERIAL INSPECTION & ACCEPTANCE JOURNAL'
-      : "KIRUVCHI XOMASHYO - QABUL QILISH VA SIFAT AKTLARI JURNALI"
+      : 'KIRUVCHI XOMASHYO - QABUL QILISH VA SIFAT AKTLARI JURNALI'
   titleCell.font = { bold: true, size: 14, color: { argb: 'FF1E3A8A' } }
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
 
@@ -329,10 +365,8 @@ export async function exportIncomingActsToExcel(
   const legendCell = ws.getCell('B7')
   legendCell.value =
     lang === 'ru'
-      ? 'BAHOLASH / ОЦЕНКА:  5 = Идеал (Отлично) | 4 = Хорошо | 3 = Условно принято (требуется сортировка и очистка) | 2 = Отклонено (Брак)   ///   КРИТЕРИИ / MEZONLAR: 1 = Да/Соответствует/Удовлетворительно, 0 = Нет/Отсутствует'
-      : lang === 'en'
-      ? 'RATING SCALE: 5 = Ideal (Excellent) | 4 = Good | 3 = Conditional acceptance (sorting/cleaning required) | 2 = Rejected (Defect)   ///   CRITERIA: 1 = Yes/Satisfactory/Standard, 0 = No/Absent'
-      : "BAHOLASH TIZIMI: 5 = Ideal | 4 = Yaxshi | 3 = Shartli qabul (saralash va tozalash talab etiladi) | 2 = Rad etilgan (Brak)   ///   MEZONLAR: 1 = Ha/Muvofiq/Qoniqarli, 0 = Yo'q/Mavjud emas"
+      ? 'BAHOLASH / ОЦЕНКА: 5 = Идеал | 4 = Хорошо | 3 = Условно принято (сортировка/очистка) | 2 = Отклонено   ///   КРИТЕРИИ: 1 = Да/Соответствует/Удовлетворительно, 0 = Нет/Отсутствует'
+      : 'BAHOLASH TIZIMI: 5 = Ideal | 4 = Yaxshi | 3 = Shartli qabul (saralash va tozalash) | 2 = Rad etilgan   ///   MEZONLAR: 1 = Ha/Muvofiq/Qoniqarli, 0 = Yo\'q/Mavjud emas'
   legendCell.font = { bold: true, size: 9, color: { argb: 'FF0F766E' } }
   legendCell.fill = {
     type: 'pattern',
@@ -347,38 +381,47 @@ export async function exportIncomingActsToExcel(
     right: { style: 'thin', color: { argb: 'FF0D9488' } }
   }
 
-  // Headers (Row 8-9)
+  // Multi-tier header:
+  // Row 8: Grouped header for 'Отпущено в производство'
+  ws.mergeCells('V8:X8')
+  const groupCell = ws.getCell('V8')
+  groupCell.value = 'Отпущено в производство'
+  groupCell.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
+  groupCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }
+  groupCell.alignment = { vertical: 'middle', horizontal: 'center' }
+
+  // Headers (Row 9)
   const headers = [
     { col: 2, label: '№ п/п' },
-    { col: 3, label: lang === 'ru' ? 'Дата' : lang === 'en' ? 'Date' : 'Sana' },
-    { col: 4, label: lang === 'ru' ? 'Сырьё' : lang === 'en' ? 'Product' : 'Xomashyo' },
-    { col: 5, label: lang === 'ru' ? 'Поставщик' : lang === 'en' ? 'Supplier' : "Ta'minotchi" },
-    { col: 6, label: lang === 'ru' ? 'Температура' : lang === 'en' ? 'Temp' : 'Harorat' },
-    { col: 7, label: lang === 'ru' ? 'Условия трансп. [1/0]' : lang === 'en' ? 'Transport [1/0]' : 'Transport [1/0]' },
-    { col: 8, label: lang === 'ru' ? 'Документы [1/0]' : lang === 'en' ? 'Docs [1/0]' : 'Hujjatlar [1/0]' },
-    { col: 9, label: lang === 'ru' ? 'Структура [1/0]' : lang === 'en' ? 'Structure [1/0]' : 'Tuzilishi [1/0]' },
-    { col: 10, label: lang === 'ru' ? 'Цвет листьев [1/0]' : lang === 'en' ? 'Color [1/0]' : 'Rangi [1/0]' },
-    { col: 11, label: lang === 'ru' ? 'Вкус/Запах [1/0]' : lang === 'en' ? 'Taste/Smell [1/0]' : "Ta'mi/Hidi [1/0]" },
-    { col: 12, label: lang === 'ru' ? 'Окисление [0/1]' : lang === 'en' ? 'Oxidation [0/1]' : 'Qizarish [0/1]' },
-    { col: 13, label: lang === 'ru' ? 'Насекомые [0/1]' : lang === 'en' ? 'Insects [0/1]' : 'Hasharot [0/1]' },
-    { col: 14, label: lang === 'ru' ? 'Слизь/Гниль [0/1]' : lang === 'en' ? 'Rot/Slime [0/1]' : 'Chirish [0/1]' },
-    { col: 15, label: lang === 'ru' ? 'Кочерыжка [1/0]' : lang === 'en' ? 'Stem cut [1/0]' : 'Kesim [1/0]' },
-    { col: 16, label: lang === 'ru' ? 'Плотность [1/0]' : lang === 'en' ? 'Density [1/0]' : 'Zichlik [1/0]' },
-    { col: 17, label: lang === 'ru' ? 'Диаметр/Вес' : lang === 'en' ? 'Diameter/Weight' : "Hajm/Og'irlik" },
-    { col: 18, label: lang === 'ru' ? 'Покр. листья [1/0]' : lang === 'en' ? 'Leaves [1/0]' : 'Barglar [1/0]' },
-    { col: 19, label: lang === 'ru' ? 'Без дефектов [1/0]' : lang === 'en' ? 'No damage [1/0]' : 'Shikast yo\'q [1/0]' },
-    { col: 20, label: lang === 'ru' ? '№ партии' : lang === 'en' ? 'Batch #' : 'Partiya №' },
-    { col: 21, label: lang === 'ru' ? 'Допуск [2-5]' : lang === 'en' ? 'Verdict [2-5]' : 'Baholash [2-5]' },
-    { col: 22, label: lang === 'ru' ? 'Приём склад (кг)' : lang === 'en' ? 'Warehouse (kg)' : 'Ombor (kg)' },
-    { col: 23, label: lang === 'ru' ? 'Отпущено в цех (кг)' : lang === 'en' ? 'Shop issued (kg)' : 'Sexga berildi (kg)' },
-    { col: 24, label: lang === 'ru' ? 'Дата цех' : lang === 'en' ? 'Shop date' : 'Sex sanasi' },
-    { col: 25, label: lang === 'ru' ? '№ забраковки' : lang === 'en' ? 'Rejection #' : 'Brak akt №' },
-    { col: 26, label: lang === 'ru' ? 'ФИО контролёра' : lang === 'en' ? 'Inspector' : "Nazoratchi F.I.O" },
-    { col: 27, label: lang === 'ru' ? 'Цена (сум/кг)' : lang === 'en' ? 'Price (uzs/kg)' : "Narx (so'm/kg)" }
+    { col: 3, label: lang === 'ru' ? 'Дата' : 'Sana' },
+    { col: 4, label: lang === 'ru' ? 'Наименование СЫРЬЯ' : 'Xomashyo nomi' },
+    { col: 5, label: lang === 'ru' ? 'Поставщик' : "Ta'minotchi" },
+    { col: 6, label: lang === 'ru' ? 'Температура' : 'Harorat' },
+    { col: 7, label: 'Условия трансп. [1/0]' },
+    { col: 8, label: 'Документы [1/0]' },
+    { col: 9, label: 'Структура [1/0]' },
+    { col: 10, label: 'Цвет [1/0]' },
+    { col: 11, label: 'Вкус/Запах [1/0]' },
+    { col: 12, label: 'Окисление [0/1]' },
+    { col: 13, label: 'Насекомые [0/1]' },
+    { col: 14, label: 'Слизь/Гниль [0/1]' },
+    { col: 15, label: 'Кочерыжка/Срез [1/0]' },
+    { col: 16, label: 'Плотность [1/0]' },
+    { col: 17, label: 'Диаметр/Вес' },
+    { col: 18, label: 'Покр. листья [1/0]' },
+    { col: 19, label: 'Без дефектов [1/0]' },
+    { col: 20, label: '№ партии' },
+    { col: 21, label: 'Допуск [2-5]' },
+    { col: 22, label: 'кг склад' },
+    { col: 23, label: 'КГ ЦЕХ' },
+    { col: 24, label: 'Дата' },
+    { col: 25, label: '№ забраковки' },
+    { col: 26, label: 'ФИО контролёра' },
+    { col: 27, label: 'Цена' }
   ]
 
   const headerRow = ws.getRow(9)
-  headerRow.height = 32
+  headerRow.height = 34
 
   headers.forEach(h => {
     const cell = headerRow.getCell(h.col)
@@ -435,7 +478,8 @@ export async function exportIncomingActsToExcel(
     row.getCell(26).value = act.inspectorName || ''
     row.getCell(27).value = act.pricePerKg ?? ''
 
-    // Alignments & numbers formatting
+    const isYellow = act.rawValues?.isYellow
+
     for (let c = 2; c <= 27; c++) {
       const cell = row.getCell(c)
       cell.font = { size: 9, name: 'Calibri' }
@@ -446,7 +490,10 @@ export async function exportIncomingActsToExcel(
         right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
       }
 
-      // Center numbers for criteria
+      if (isYellow && c !== 21) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }
+      }
+
       if (
         (c >= 7 && c <= 16) ||
         c === 18 ||
@@ -465,49 +512,33 @@ export async function exportIncomingActsToExcel(
       }
     }
 
-    // Rating cell style (Col 21)
     const ratingCell = row.getCell(21)
     ratingCell.font = { bold: true, size: 10, name: 'Calibri' }
     if (act.decisionRating === 5) {
-      // 5: Ideal (Emerald green)
       ratingCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } }
       ratingCell.font = { bold: true, color: { argb: 'FF065F46' } }
     } else if (act.decisionRating === 4) {
-      // 4: Yaxshi (Blue)
       ratingCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } }
       ratingCell.font = { bold: true, color: { argb: 'FF1E40AF' } }
     } else if (act.decisionRating === 3) {
-      // 3: Shartli qabul (Yellow/Amber)
       ratingCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } }
       ratingCell.font = { bold: true, color: { argb: 'FF92400E' } }
     } else if (act.decisionRating === 2) {
-      // 2: Rad etilgan (Red)
       ratingCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }
       ratingCell.font = { bold: true, color: { argb: 'FF991B1B' } }
     }
 
-    // Number formats
-    if (act.warehouseKg) {
-      row.getCell(22).numFmt = '#,##0.0'
-    }
-    if (act.pricePerKg) {
-      row.getCell(27).numFmt = '#,##0'
-    }
+    if (act.warehouseKg) row.getCell(22).numFmt = '#,##0.0'
+    if (act.pricePerKg) row.getCell(27).numFmt = '#,##0'
   })
 
-  // Summary Row
   const totalRowIdx = startRowIndex + acts.length
   const totalRow = ws.getRow(totalRowIdx)
   totalRow.height = 24
 
   ws.mergeCells(`B${totalRowIdx}:U${totalRowIdx}`)
   const totalLabel = totalRow.getCell(2)
-  totalLabel.value =
-    lang === 'ru'
-      ? `ИТОГО ПО ЖУРНАЛУ (Актов: ${acts.length})`
-      : lang === 'en'
-      ? `TOTAL (Acts: ${acts.length})`
-      : `JAMI AKT JURNALI (Aktlar: ${acts.length} ta)`
+  totalLabel.value = `JAMI AKT JURNALI (Aktlar: ${acts.length} ta)`
   totalLabel.font = { bold: true, size: 10 }
   totalLabel.alignment = { vertical: 'middle', horizontal: 'right' }
 
@@ -528,7 +559,6 @@ export async function exportIncomingActsToExcel(
     }
   }
 
-  // Generate buffer
   const buffer = await wb.xlsx.writeBuffer()
   return Buffer.from(buffer)
 }

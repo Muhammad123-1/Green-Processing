@@ -85,7 +85,8 @@ export async function POST(req: NextRequest) {
       rejectionActNumber: r.rejectionActNumber || null,
       inspectorName: r.inspectorName || 'Камбарова А.М.',
       pricePerKg: r.pricePerKg !== undefined && r.pricePerKg !== null ? r.pricePerKg : null,
-      notes: r.notes || null
+      notes: r.notes || null,
+      rawValues: (r.rawValues as any) || {}
     }))
 
     const result = await prisma.incomingRawMaterialAct.createMany({

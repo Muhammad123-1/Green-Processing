@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     const ratingStr = searchParams.get('rating')?.trim() || ''
     const dateFrom = searchParams.get('dateFrom')?.trim() || ''
     const dateTo = searchParams.get('dateTo')?.trim() || ''
+    const sort = searchParams.get('sort')?.trim() || 'asc'
 
     const where: any = {}
 
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
 
     const acts = await prisma.incomingRawMaterialAct.findMany({
       where,
-      orderBy: [{ actDate: 'desc' }, { id: 'desc' }]
+      orderBy: sort === 'desc' ? [{ actDate: 'desc' }, { id: 'desc' }] : [{ id: 'asc' }]
     })
 
     // Compute stats
@@ -168,7 +169,8 @@ export async function POST(req: NextRequest) {
         rejectionActNumber: rejectionActNumber ? String(rejectionActNumber) : null,
         inspectorName: inspectorName ? String(inspectorName).trim() : (session as any).name || 'Nazoratchi',
         pricePerKg: pricePerKg !== null && pricePerKg !== undefined && pricePerKg !== '' ? Number(pricePerKg) : null,
-        notes: notes ? String(notes).trim() : null
+        notes: notes ? String(notes).trim() : null,
+        rawValues: body.rawValues || {}
       }
     })
 
