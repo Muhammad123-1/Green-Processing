@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { BrakerageJournalModal } from './BrakerageJournalModal'
 
 // Types
 export interface IngredientItem {
@@ -199,6 +200,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
   // Modal State: Create / Edit Task
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [isBrakerageModalOpen, setIsBrakerageModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<KitchenTask | null>(null)
   const [savingTask, setSavingTask] = useState(false)
 
@@ -623,6 +625,15 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
           </button>
 
           <button
+            onClick={() => setIsBrakerageModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white rounded-xl text-xs md:text-sm font-black shadow-lg shadow-amber-500/25 active:scale-95 transition border border-amber-300/30"
+            title="SanPiN: Tayyor mahsulotlarni nazorat qilish jurnali (Brakeraj)"
+          >
+            <ShieldCheck size={16} />
+            <span>{formatDual("Tayyor Mahsulotlar Jurnali (Brakeraj)", "Журнал готовых блюд (Бракераж)", "Food Quality Inspection Log")}</span>
+          </button>
+
+          <button
             onClick={() => handleOpenNewTask('MEAL')}
             className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-orange-50 text-orange-900 rounded-xl text-xs md:text-sm font-black shadow-lg shadow-black/20 active:scale-95 transition"
           >
@@ -762,6 +773,14 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
           >
             <BarChart3 size={15} />
             {formatDual("Xodimlar Baholashi (Ovozlar)", "Оценки сотрудников", "Staff Feedback")}
+          </button>
+
+          <button
+            onClick={() => setIsBrakerageModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition whitespace-nowrap text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 shadow-2xs"
+          >
+            <ShieldCheck size={15} className="text-amber-600" />
+            {formatDual("Tayyor Mahsulotlar (Brakeraj)", "Контроль блюд (Бракераж)", "Ready Food QC")}
           </button>
         </div>
 
@@ -1888,6 +1907,14 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* TAYYOR MAHSULOTLARNI NAZORAT QILISH JURNALI (BRAKERAJ) MODAL */}
+      {/* ========================================================================= */}
+      <BrakerageJournalModal
+        isOpen={isBrakerageModalOpen}
+        onClose={() => setIsBrakerageModalOpen(false)}
+      />
     </div>
   )
 }
