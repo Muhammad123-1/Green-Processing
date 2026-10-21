@@ -28,7 +28,8 @@ import { Archive,
   Utensils,
   ClipboardCheck,
   CheckCircle2,
-  Table2
+  Table2,
+  FlaskConical
  } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -51,6 +52,7 @@ const navSections = [
       { key: 'newInspection', href: '/inspections/new', icon: ClipboardList, highlight: true, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'shopQC', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'dailyChecklist', href: '/inspector/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]

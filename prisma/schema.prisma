@@ -1339,3 +1339,39 @@ model KitchenBrakerageLog {
   @@index([date])
   @@index([status])
 }
+
+// -----------------------------------------------------------------------------
+// 15. DEZINFEKSIYA VA YUVISH VOSITALARI (Форма Ф-2/05)
+// Журнал регистрации поступления моющих и дезинфицирующих средств
+// -----------------------------------------------------------------------------
+model DisinfectionIncomingAct {
+  id                    Int      @id @default(autoincrement())
+  orderNumber           Int      @default(1) // № п/п
+  arrivalDate           String   // ДАТА ПОСТУПЛЕНИЯ
+  substanceName         String   // Наименование средства
+  productType           String?  // Вид изделия (ГОСТ/ТУ)
+  supplierName          String?  // Поставщик
+  batchNumber           String?  // № партии
+  accompanyingDoc       String?  // Сопровождающий документ
+  activeChlorinePercent Float?   // Содержание активного хлора, в %
+  quantityReceived      Float?   // Поступило
+  unit                  String   @default("кг") // кг, шт
+  manufactureDate       String?  // Дата изготовления
+  expiryDate            String?  // Годен до
+  transportCondition    String   @default("удовлетворительно") // Оценка условий транспортирования
+  accessPermit          String   @default("допущено") // Допуск
+  releasedKg            Float?   // Отпущено в производство: кг
+  releasedDate          String?  // Отпущено в производство: Дата
+  inspectorName         String?  // ФИО, Подпись ответственного за контролем входного сырья
+  pricePerKg            Float?   // цена кг\шт
+  registrationCert      String?  // Свидетельство о гос. Регистрации
+  conformityDeclaration String?  // Декларация о соответствии
+  category              String   @default("DEZ") // DEZ | MOYUSHIE
+  notes                 String?  // Izohlar
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([arrivalDate])
+  @@index([substanceName])
+  @@index([supplierName])
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
+import Link from 'next/link'
 import {
   FileSpreadsheet,
   Plus,
@@ -25,7 +26,8 @@ import {
   FileText,
   SlidersHorizontal,
   Table as TableIcon,
-  Binary
+  Binary,
+  FlaskConical
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -576,6 +578,26 @@ export default function IncomingActsContent() {
 
   return (
     <div className="p-3 md:p-6 space-y-4 max-w-[1900px] mx-auto font-sans">
+      {/* Top Section Switcher */}
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-2 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
+            <span>🥗</span>
+            <span>Xomashyolar (Asosiy xomashyo)</span>
+          </div>
+          <Link
+            href="/incoming-acts/disinfection"
+            className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300"
+          >
+            <FlaskConical className="w-4 h-4 text-teal-500" />
+            <span>Dezinfeksiya va yuvish vositalari</span>
+            <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-teal-500/20 text-teal-700 dark:text-teal-300 font-mono">
+              Ф-2/05
+            </span>
+          </Link>
+        </div>
+      </div>
+
       {/* Top Banner */}
       <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
