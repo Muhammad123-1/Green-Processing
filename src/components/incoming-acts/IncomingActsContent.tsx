@@ -1280,7 +1280,7 @@ export default function IncomingActsContent() {
           onClick={() => setIsFormOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150"
+            className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl max-w-4xl w-full border border-slate-200 dark:border-dark-750 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-200"
             onClick={e => e.stopPropagation()}
           >
             <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
@@ -1306,40 +1306,40 @@ export default function IncomingActsContent() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveAct} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto text-xs">
+            <form onSubmit={handleSaveAct} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto text-xs bg-slate-50/50 dark:bg-dark-900">
               {/* Identification */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
+              <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                   <Hash className="w-4 h-4 text-emerald-600" />
                   1. Asosiy ma'lumotlar
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">№ п/п</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">№ п/п</label>
                     <input
                       type="text"
                       value={formData.actNumber}
                       onChange={e => setFormData({ ...formData, actNumber: e.target.value })}
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Дата составления</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Дата составления</label>
                     <input
                       type="date"
                       value={formData.actDate}
                       onChange={e => setFormData({ ...formData, actDate: e.target.value })}
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Наименование СЫРЬЯ</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Наименование СЫРЬЯ</label>
                     <select
                       value={formData.productName}
                       onChange={e => setFormData({ ...formData, productName: e.target.value })}
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-bold"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-bold text-slate-900 dark:text-white"
                     >
                       {PRODUCT_LIST.filter(p => p.id !== 'all').map(p => (
                         <option key={p.id} value={p.id}>
@@ -1349,59 +1349,59 @@ export default function IncomingActsContent() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Поставщик</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Поставщик</label>
                     <input
                       type="text"
                       value={formData.supplierName}
                       onChange={e => setFormData({ ...formData, supplierName: e.target.value })}
                       placeholder="Зокир енд груп / Кибрай барака..."
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Температура сырья</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Температура сырья</label>
                     <input
                       type="text"
                       value={formData.temperature}
                       onChange={e => setFormData({ ...formData, temperature: e.target.value })}
                       placeholder="18 с"
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">№ партии</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">№ партии</label>
                     <input
                       type="text"
                       value={formData.batchNumber}
                       onChange={e => setFormData({ ...formData, batchNumber: e.target.value })}
                       placeholder="1, 2..."
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">ФИО контролёра</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">ФИО контролёра</label>
                     <input
                       type="text"
                       value={formData.inspectorName}
                       onChange={e => setFormData({ ...formData, inspectorName: e.target.value })}
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Rating Scale: 2 to 5 */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center justify-between">
+              <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-emerald-600" />
                     2. Baholash shkalasi (Допуск: 2 dan 5 gacha)
                   </span>
-                  <span className="font-mono font-bold text-emerald-700">Tanlangan: {formData.decisionRating}</span>
+                  <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">Tanlangan: {formData.decisionRating}</span>
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {[
@@ -1417,7 +1417,7 @@ export default function IncomingActsContent() {
                       className={`p-3 rounded-xl border text-left transition ${
                         formData.decisionRating === item.val
                           ? `${item.bg} text-white shadow ring-2 ring-slate-900/30`
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          : 'bg-slate-50 dark:bg-dark-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-100 dark:hover:bg-dark-800'
                       }`}
                     >
                       <div className="font-black text-sm">{item.label}</div>
@@ -1427,14 +1427,14 @@ export default function IncomingActsContent() {
                 </div>
 
                 {formData.decisionRating === 2 && (
-                  <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
-                    <label className="block text-red-900 font-bold mb-1">НЕДОПУСК № акта забраковки</label>
+                  <div className="mt-3 p-3 bg-red-100 dark:bg-red-950/40 border border-red-300 dark:border-red-900/60 rounded-xl">
+                    <label className="block text-red-900 dark:text-red-300 font-bold mb-1">НЕДОПУСК № акта забраковки</label>
                     <input
                       type="text"
                       value={formData.rejectionActNumber}
                       onChange={e => setFormData({ ...formData, rejectionActNumber: e.target.value })}
                       placeholder="Brak akti raqami"
-                      className="w-full p-2 bg-white border border-red-400 rounded-lg font-mono"
+                      className="w-full p-2 bg-white dark:bg-dark-900 border border-red-400 dark:border-red-800 rounded-lg font-mono text-slate-900 dark:text-white"
                       required
                     />
                   </div>
@@ -1442,10 +1442,10 @@ export default function IncomingActsContent() {
               </div>
 
               {/* Quality Criteria (1 / 0) */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center justify-between">
+              <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
                   <span>3. Sifat mezonlari (Raqamlarda: 1 / 0)</span>
-                  <span className="text-[11px] font-normal text-slate-500">1 = Ha, 0 = Yo'q/Otsutstvuyet</span>
+                  <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">1 = Ha, 0 = Yo'q/Otsutstvuyet</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                   {[
@@ -1464,19 +1464,19 @@ export default function IncomingActsContent() {
                   ].map((field: any) => (
                     <div
                       key={field.key}
-                      className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between"
+                      className="p-2.5 bg-slate-50 dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 flex items-center justify-between"
                     >
-                      <span className="font-medium text-slate-800 truncate mr-2" title={field.label}>
+                      <span className="font-medium text-slate-800 dark:text-slate-200 truncate mr-2" title={field.label}>
                         {field.label}
                       </span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, [field.key]: 1 })}
-                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs ${
+                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs transition ${
                             formData[field.key as keyof typeof formData] === 1
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-slate-200 text-slate-700'
+                              ? 'bg-emerald-600 text-white shadow'
+                              : 'bg-slate-200 dark:bg-dark-800 text-slate-700 dark:text-slate-300'
                           }`}
                         >
                           1
@@ -1484,10 +1484,10 @@ export default function IncomingActsContent() {
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, [field.key]: 0 })}
-                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs ${
+                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs transition ${
                             formData[field.key as keyof typeof formData] === 0
-                              ? 'bg-red-600 text-white'
-                              : 'bg-slate-200 text-slate-700'
+                              ? 'bg-red-600 text-white shadow'
+                              : 'bg-slate-200 dark:bg-dark-800 text-slate-700 dark:text-slate-300'
                           }`}
                         >
                           0
@@ -1498,7 +1498,7 @@ export default function IncomingActsContent() {
                 </div>
 
                 <div className="mt-2.5">
-                  <label className="block text-slate-700 font-semibold mb-1">
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
                     Размер плодов / Диаметр и вес
                   </label>
                   <input
@@ -1506,76 +1506,76 @@ export default function IncomingActsContent() {
                     value={formData.diameterWeight}
                     onChange={e => setFormData({ ...formData, diameterWeight: e.target.value })}
                     placeholder="6-7 см yoki 400г-700г 12см"
-                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                    className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {/* Warehouse & Price */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
+              <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                   <Scale className="w-4 h-4 text-emerald-600" />
                   4. Ombor qabul vazni, chiqim va narxi
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Приём склад (кг)</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Приём склад (кг)</label>
                     <input
                       type="number"
                       step="any"
                       value={formData.warehouseKg}
                       onChange={e => setFormData({ ...formData, warehouseKg: e.target.value })}
                       placeholder="872"
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">КГ ЦЕХ</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">КГ ЦЕХ</label>
                     <input
                       type="text"
                       value={formData.shopIssuedKg}
                       onChange={e => setFormData({ ...formData, shopIssuedKg: e.target.value })}
                       placeholder="164,2+433,5"
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Дата цех</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Дата цех</label>
                     <input
                       type="text"
                       value={formData.shopIssuedDate}
                       onChange={e => setFormData({ ...formData, shopIssuedDate: e.target.value })}
                       placeholder="03,05,2025"
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Цена (сум/кг)</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Цена (сум/кг)</label>
                     <input
                       type="number"
                       step="any"
                       value={formData.pricePerKg}
                       onChange={e => setFormData({ ...formData, pricePerKg: e.target.value })}
                       placeholder="26000"
-                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-200 dark:border-dark-700 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100"
+                  className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-dark-800 transition"
                 >
                   {t.close}
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow disabled:opacity-50"
+                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow transition disabled:opacity-50"
                 >
                   {submitting ? t.saving : t.save}
                 </button>
@@ -1592,7 +1592,7 @@ export default function IncomingActsContent() {
           onClick={() => setIsImportOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden"
+            className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 dark:border-dark-750 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
             onClick={e => e.stopPropagation()}
           >
             <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
@@ -1616,51 +1616,51 @@ export default function IncomingActsContent() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-xs">
+            <div className="p-6 space-y-4 text-xs bg-slate-50/50 dark:bg-dark-900">
               <div>
-                <label className="block font-bold text-slate-700 mb-2">Import rejimi:</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">Import rejimi:</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setImportMode('append')}
-                    className={`p-3 rounded-xl border text-left ${
+                    className={`p-3 rounded-xl border text-left transition ${
                       importMode === 'append'
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-1 ring-emerald-500'
-                        : 'bg-white border-slate-200 text-slate-600'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-950 dark:text-emerald-200 ring-1 ring-emerald-500'
+                        : 'bg-white dark:bg-dark-850 border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     <div className="font-bold">Qo'shish (Append)</div>
-                    <div className="text-[11px] text-slate-500">Mavjud aktlar saqlanadi</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Mavjud aktlar saqlanadi</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => setImportMode('replace')}
-                    className={`p-3 rounded-xl border text-left ${
+                    className={`p-3 rounded-xl border text-left transition ${
                       importMode === 'replace'
-                        ? 'bg-red-50 border-red-500 text-red-950 ring-1 ring-red-500'
-                        : 'bg-white border-slate-200 text-slate-600'
+                        ? 'bg-red-50 dark:bg-red-950/40 border-red-500 text-red-950 dark:text-red-200 ring-1 ring-red-500'
+                        : 'bg-white dark:bg-dark-850 border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     <div className="font-bold">Almashtirish (Replace)</div>
-                    <div className="text-[11px] text-slate-500">Qayta tozalab yuklash</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Qayta tozalab yuklash</div>
                   </button>
                 </div>
               </div>
 
               {/* 1-Click Fast Import */}
-              <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl space-y-2">
-                <div className="font-bold text-emerald-900 flex items-center gap-1.5">
+              <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl space-y-2">
+                <div className="font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
                   1-KLIK BILAN BARCHA 1276 TA AKTLARNI YUKLASH:
                 </div>
-                <p className="text-emerald-800 leading-relaxed">
+                <p className="text-emerald-800 dark:text-emerald-400 leading-relaxed">
                   Loyiha shablonidagi barcha Tomat (504 ta), Piyoz (48 ta), Aysberg (559 ta), Karam, Sabzi aktlarini asl ranglari bilan bazaga yuklash.
                 </p>
                 <button
                   type="button"
                   onClick={handleDefaultTemplateImport}
                   disabled={importing}
-                  className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 disabled:opacity-50 transition active:scale-95"
                 >
                   {importing ? (
                     <>
@@ -1677,8 +1677,8 @@ export default function IncomingActsContent() {
               </div>
 
               <div className="relative flex items-center justify-center">
-                <div className="border-t border-slate-200 w-full"></div>
-                <span className="bg-white px-3 text-[11px] uppercase font-bold text-slate-400 absolute">
+                <div className="border-t border-slate-200 dark:border-dark-700 w-full"></div>
+                <span className="bg-white dark:bg-dark-900 px-3 text-[11px] uppercase font-bold text-slate-400 absolute">
                   yoki fayl tanlang
                 </span>
               </div>
@@ -1690,15 +1690,15 @@ export default function IncomingActsContent() {
                   accept=".xlsx, .xls"
                   onChange={handleFileUploadImport}
                   disabled={importing}
-                  className="w-full p-2.5 bg-slate-50 border border-dashed border-slate-300 rounded-xl file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white cursor-pointer"
+                  className="w-full p-2.5 bg-slate-50 dark:bg-dark-850 border border-dashed border-slate-300 dark:border-dark-700 rounded-xl text-slate-800 dark:text-slate-200 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 dark:file:bg-slate-700 file:text-white cursor-pointer"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end">
+              <div className="pt-3 border-t border-slate-200 dark:border-dark-700 flex items-center justify-end">
                 <button
                   type="button"
                   onClick={() => setIsImportOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-100"
+                  className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-dark-800 transition"
                 >
                   {t.close}
                 </button>
@@ -1715,7 +1715,7 @@ export default function IncomingActsContent() {
           onClick={() => setSelectedActForView(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden"
+            className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 dark:border-dark-750 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
             onClick={e => e.stopPropagation()}
           >
             <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
@@ -1741,45 +1741,45 @@ export default function IncomingActsContent() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs bg-slate-50/50 dark:bg-dark-900">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700">
                   <span className="text-[11px] text-slate-400 block">Partiya №</span>
-                  <span className="text-sm font-bold font-mono">{selectedActForView.batchNumber || '-'}</span>
+                  <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">{selectedActForView.batchNumber || '-'}</span>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700">
                   <span className="text-[11px] text-slate-400 block">Harorat</span>
-                  <span className="text-sm font-bold font-mono">{selectedActForView.temperature || '-'}</span>
+                  <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">{selectedActForView.temperature || '-'}</span>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700">
                   <span className="text-[11px] text-slate-400 block">Ombor (kg)</span>
-                  <span className="text-sm font-bold font-mono text-emerald-700">
+                  <span className="text-sm font-bold font-mono text-emerald-700 dark:text-emerald-400">
                     {selectedActForView.warehouseKg ? selectedActForView.warehouseKg.toLocaleString('uz-UZ') : '-'}
                   </span>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700">
                   <span className="text-[11px] text-slate-400 block">Narxi (so'm)</span>
-                  <span className="text-sm font-bold font-mono">
+                  <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">
                     {selectedActForView.pricePerKg ? selectedActForView.pricePerKg.toLocaleString('uz-UZ') : '-'}
                   </span>
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-600">Допуск (Baholash):</span>
-                  <span className="font-bold text-sm">{selectedActForView.decisionRating} - {selectedActForView.decisionText}</span>
+                  <span className="font-semibold text-slate-600 dark:text-slate-400">Допуск (Baholash):</span>
+                  <span className="font-bold text-sm text-slate-900 dark:text-white">{selectedActForView.decisionRating} - {selectedActForView.decisionText}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-600">Отпущено в цех:</span>
-                  <span className="font-mono">{selectedActForView.shopIssuedKg || '-'} (Sana: {selectedActForView.shopIssuedDate || '-'})</span>
+                  <span className="font-semibold text-slate-600 dark:text-slate-400">Отпущено в цех:</span>
+                  <span className="font-mono text-slate-900 dark:text-white">{selectedActForView.shopIssuedKg || '-'} (Sana: {selectedActForView.shopIssuedDate || '-'})</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-600">Mas'ul nazoratchi:</span>
-                  <span>{selectedActForView.inspectorName || '-'}</span>
+                  <span className="font-semibold text-slate-600 dark:text-slate-400">Mas'ul nazoratchi:</span>
+                  <span className="text-slate-900 dark:text-white">{selectedActForView.inspectorName || '-'}</span>
                 </div>
                 {selectedActForView.rejectionActNumber && (
-                  <div className="flex items-center justify-between text-red-600">
+                  <div className="flex items-center justify-between text-red-600 dark:text-red-400">
                     <span className="font-bold">НЕДОПУСК № акта забраковки:</span>
                     <span className="font-mono font-bold">{selectedActForView.rejectionActNumber}</span>
                   </div>
@@ -1787,7 +1787,7 @@ export default function IncomingActsContent() {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="p-4 bg-slate-50 dark:bg-dark-850 border-t border-slate-200 dark:border-dark-700 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => {
@@ -1795,7 +1795,7 @@ export default function IncomingActsContent() {
                   setSelectedActForView(null)
                   handleOpenEdit(act)
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold flex items-center gap-1.5"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-1.5 transition active:scale-95"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Tahrirlash
@@ -1803,7 +1803,7 @@ export default function IncomingActsContent() {
               <button
                 type="button"
                 onClick={() => setSelectedActForView(null)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-bold hover:bg-slate-200"
+                className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-dark-800 transition"
               >
                 {t.close}
               </button>

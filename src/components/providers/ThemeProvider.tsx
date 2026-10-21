@@ -20,17 +20,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check local storage or system preference
-    const storedTheme = localStorage.getItem('theme') as Theme
-    if (storedTheme) {
-      setThemeState(storedTheme)
-      if (storedTheme === 'light') {
-        document.documentElement.classList.remove('dark')
-      } else {
-        document.documentElement.classList.add('dark')
-      }
+    const storedTheme = (localStorage.getItem('theme') as Theme) || 'dark'
+    setThemeState(storedTheme)
+    if (storedTheme === 'light') {
+      document.documentElement.classList.add('light')
+      document.documentElement.classList.remove('dark')
     } else {
-      setThemeState('dark')
       document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('light')
     }
 
     const storedFontSize = localStorage.getItem('fontSize') as FontSize

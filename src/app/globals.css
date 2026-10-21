@@ -243,48 +243,157 @@ body {
   @apply animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full;
 }
 
-/* Real Light Mode Support */
-html.light body {
-  background-color: #f1f5f9 !important;
+/* Universal Form Elements: inputs, selects, textareas and options */
+input:not([type="checkbox"]):not([type="radio"]), 
+select, 
+textarea {
+  color: #0f172a;
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* DARK MODE: Universal high-contrast inputs */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+html.dark input::placeholder, 
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Explicit Select Options styling across all browsers */
+option {
+  background-color: #ffffff;
+  color: #0f172a !important;
+}
+html.dark option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+html.light option {
+  background-color: #ffffff !important;
   color: #0f172a !important;
 }
 
-html.light .bg-dark-950 { background-color: #f8fafc !important; }
-html.light .bg-dark-900 { background-color: #ffffff !important; }
-html.light .bg-dark-800 { background-color: #ffffff !important; }
-html.light .bg-dark-700 { background-color: #e2e8f0 !important; }
-html.light .bg-dark-600 { background-color: #cbd5e1 !important; }
+/* ========================================================================= */
+/* LIGHT MODE: Comprehensive, Clean & Beautiful UI Contrast */
+/* ========================================================================= */
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
 
+/* Surface backgrounds in light mode */
+html.light .bg-dark-950 { background-color: #f1f5f9 !important; }
+html.light .bg-dark-900 { background-color: #ffffff !important; }
+html.light .bg-dark-850 { background-color: #ffffff !important; }
+html.light .bg-dark-800 { background-color: #ffffff !important; }
+html.light .bg-dark-700 { background-color: #f1f5f9 !important; }
+html.light .bg-dark-600 { background-color: #e2e8f0 !important; }
+
+/* Borders in light mode */
+html.light .border-dark-800,
+html.light .border-dark-750,
 html.light .border-dark-700 { border-color: #e2e8f0 !important; }
 html.light .border-dark-600 { border-color: #cbd5e1 !important; }
-html.light .border-white\/10 { border-color: rgba(0, 0, 0, 0.1) !important; }
-html.light .border-white\/5 { border-color: rgba(0, 0, 0, 0.05) !important; }
+html.light .border-white\/10 { border-color: #e2e8f0 !important; }
+html.light .border-white\/5 { border-color: #f1f5f9 !important; }
 
 html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
+html.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
 
-html.light .text-white { color: #0f172a !important; }
-html.light .text-slate-100 { color: #1e293b !important; }
-html.light .text-slate-200 { color: #334155 !important; }
-html.light .text-slate-300 { color: #475569 !important; }
-html.light .text-slate-400 { color: #64748b !important; }
-html.light .text-slate-500 { color: #94a3b8 !important; }
+/* Keep white text on solid colored action buttons, gradients and dark badges in light mode */
+html.light .btn-primary,
+html.light .btn-success,
+html.light .btn-danger,
+html.light [class*="bg-gradient-to-"],
+html.light button.bg-blue-600,
+html.light button.bg-blue-500,
+html.light button.bg-emerald-600,
+html.light button.bg-emerald-500,
+html.light button.bg-green-600,
+html.light button.bg-red-600,
+html.light button.bg-orange-600,
+html.light button.bg-orange-500,
+html.light button.bg-amber-600,
+html.light button.bg-indigo-600,
+html.light button.bg-purple-600,
+html.light a.bg-blue-600,
+html.light a.bg-emerald-600,
+html.light a.bg-orange-600,
+html.light .badge-solid {
+  color: #ffffff !important;
+}
 
-html.light .input-field {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #1e293b !important;
+html.light .btn-primary *,
+html.light .btn-success *,
+html.light .btn-danger *,
+html.light [class*="bg-gradient-to-"] *,
+html.light button.bg-blue-600 *,
+html.light button.bg-blue-500 *,
+html.light button.bg-emerald-600 *,
+html.light button.bg-emerald-500 *,
+html.light button.bg-green-600 *,
+html.light button.bg-red-600 *,
+html.light button.bg-orange-600 *,
+html.light button.bg-orange-500 *,
+html.light button.bg-amber-600 *,
+html.light button.bg-indigo-600 *,
+html.light button.bg-purple-600 *,
+html.light a.bg-blue-600 *,
+html.light a.bg-emerald-600 *,
+html.light a.bg-orange-600 * {
+  color: inherit !important;
+}
+
+/* Light mode text mappings for readable high-contrast dark text */
+html.light .text-slate-100:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #0f172a !important; }
+html.light .text-slate-200:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #1e293b !important; }
+html.light .text-slate-300:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #334155 !important; }
+html.light .text-slate-400:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #64748b !important; }
+html.light .text-slate-500:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #64748b !important; }
+
+/* In light mode, turn general white text to dark slate text (unless inside a colored button/gradient) */
+html.light h1.text-white:not([class*="bg-gradient-"]),
+html.light h2.text-white:not([class*="bg-gradient-"]),
+html.light h3.text-white:not([class*="bg-gradient-"]),
+html.light h4.text-white:not([class*="bg-gradient-"]),
+html.light span.text-white:not(button *):not([class*="bg-gradient-"] *):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]),
+html.light p.text-white:not([class*="bg-gradient-"] *),
+html.light div.text-white:not(button *):not([class*="bg-gradient-"] *):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]) {
+  color: #0f172a !important;
+}
+
+/* Header & Card styles in light mode */
+html.light header {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+html.light header h2 {
+  color: #0f172a !important;
 }
 
 html.light .card {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04) !important;
 }
 
 html.light .data-table th {
   background-color: #f8fafc !important;
   border-bottom-color: #e2e8f0 !important;
-  color: #64748b !important;
+  color: #475569 !important;
+}
+html.light .data-table td {
+  color: #1e293b !important;
 }
 html.light .table-row {
   border-bottom-color: #f1f5f9 !important;

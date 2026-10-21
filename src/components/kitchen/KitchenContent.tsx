@@ -879,10 +879,10 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                     key={task.id}
                     className={`bg-white dark:bg-dark-900 rounded-3xl border transition-all duration-200 shadow-sm hover:shadow-md flex flex-col justify-between overflow-hidden ${
                       task.status === 'REJECTED'
-                        ? 'border-red-300 bg-red-50/20 ring-1 ring-red-400'
+                        ? 'border-red-300 dark:border-red-800/60 bg-red-50/20 dark:bg-red-950/20 ring-1 ring-red-400'
                         : task.status === 'APPROVED'
-                        ? 'border-emerald-200'
-                        : 'border-slate-200'
+                        ? 'border-emerald-200 dark:border-emerald-800/40'
+                        : 'border-slate-200 dark:border-dark-750'
                     }`}
                   >
                     {/* Card Top: Staff & Time Info */}
@@ -897,7 +897,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                               {task.staffRole}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium mt-1">
+                          <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
                             <span className="flex items-center gap-1 font-mono">
                               <Clock size={12} className="text-orange-500" />
                               {task.timeFrom} - {task.timeTo}
@@ -912,15 +912,15 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                         {/* Status Badge */}
                         <div>
                           {task.status === 'APPROVED' ? (
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 flex items-center gap-1">
                               <CheckCircle2 size={12} /> {formatDual("Tasdiqlandi", "Одобрено", "Approved")}
                             </span>
                           ) : task.status === 'REJECTED' ? (
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 flex items-center gap-1">
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800/60 flex items-center gap-1">
                               <AlertTriangle size={12} /> {formatDual("E'tiroz bor", "Замечание", "Objection")}
                             </span>
                           ) : (
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60 flex items-center gap-1">
                               <Clock size={12} /> {formatDual("Kutilmoqda", "На проверке", "Pending")}
                             </span>
                           )}
@@ -933,11 +933,11 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                       {/* Category & Title */}
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-md border border-orange-200">
+                          <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2.5 py-0.5 rounded-md border border-orange-200 dark:border-orange-900/50">
                             {activeLang === 'ru' ? catBadge?.labelRu : activeLang === 'en' ? catBadge?.labelEn : catBadge?.labelUz}
                           </span>
                           {task.servings && (
-                            <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-dark-800 px-2 py-0.5 rounded-md">
                               {task.servings} {formatDual("kishiga", "порций", "servings")}
                             </span>
                           )}
@@ -955,7 +955,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                       {/* Ingredients used (if MEAL or SALAD) */}
                       {itemsList.length > 0 && (
                         <div className="bg-slate-50 dark:bg-dark-800/60 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700">
-                          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                          <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                             <UtensilsCrossed size={12} className="text-orange-500" />
                             {formatDual("Ishlatilgan masalliqlar (Retseptura):", "Использованные ингредиенты:", "Used ingredients:")}
                           </div>
@@ -976,13 +976,13 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                       {task.category === 'CLEANING' && (task.cleaningArea || task.cleaningAgent) && (
                         <div className="bg-blue-50/60 dark:bg-blue-950/20 p-2.5 rounded-xl border border-blue-200 dark:border-blue-800/40 text-xs">
                           {task.cleaningArea && (
-                            <div className="text-slate-700 font-medium">
-                              <span className="font-bold text-blue-900">Tozalangan joy:</span> {task.cleaningArea}
+                            <div className="text-slate-700 dark:text-slate-300 font-medium">
+                              <span className="font-bold text-blue-900 dark:text-blue-300">Tozalangan joy:</span> {task.cleaningArea}
                             </div>
                           )}
                           {task.cleaningAgent && (
-                            <div className="text-slate-600 mt-0.5 text-[11px]">
-                              <span className="font-bold text-blue-900">Ishlatilgan vosita:</span> {task.cleaningAgent}
+                            <div className="text-slate-600 dark:text-slate-400 mt-0.5 text-[11px]">
+                              <span className="font-bold text-blue-900 dark:text-blue-300">Ishlatilgan vosita:</span> {task.cleaningAgent}
                             </div>
                           )}
                         </div>
@@ -991,7 +991,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                       {/* Photo Evidence Gallery */}
                       {photosList.length > 0 && (
                         <div>
-                          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                          <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                             <span className="flex items-center gap-1">
                               <Camera size={12} className="text-emerald-600" />
                               {formatDual("Foto-Isbot:", "Фотоотчет:", "Photo Proof:")}
@@ -1003,7 +1003,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                               <div
                                 key={pIdx}
                                 onClick={() => setLightboxPhoto({ url, title: `${task.staffName} — ${task.title}` })}
-                                className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-100 group cursor-pointer shadow-xs hover:ring-2 hover:ring-orange-500 transition"
+                                className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-dark-700 bg-slate-100 dark:bg-dark-800 group cursor-pointer shadow-xs hover:ring-2 hover:ring-orange-500 transition"
                               >
                                 <img
                                   src={url}
@@ -1024,8 +1024,8 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                         <div
                           className={`p-2.5 rounded-xl text-xs border ${
                             task.status === 'REJECTED'
-                              ? 'bg-red-50 border-red-200 text-red-900'
-                              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                              ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-red-900 dark:text-red-300'
+                              : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-900 dark:text-emerald-300'
                           }`}
                         >
                           <div className="font-bold flex items-center gap-1">
@@ -1155,16 +1155,16 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 } catch {}
 
                 return (
-                  <div key={task.id} className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+                  <div key={task.id} className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <span className="text-[11px] font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+                        <span className="text-[11px] font-bold text-orange-600 bg-orange-50 dark:bg-orange-950/30 px-2.5 py-0.5 rounded-full border border-orange-200 dark:border-orange-900/50">
                           {task.category === 'MEAL' ? '🍲 Taom' : '🥗 Salat'}
                         </span>
                         <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
                           {task.title}
                         </h4>
-                        <div className="text-xs text-slate-500 font-medium">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                           {task.staffName} ({task.staffRole}) • {task.servings || '-'} {formatDual("kishiga", "порций", "servings")}
                         </div>
                       </div>
@@ -1173,22 +1173,22 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                           src={photos[0]}
                           alt={task.title}
                           onClick={() => setLightboxPhoto({ url: photos[0], title: task.title })}
-                          className="w-16 h-16 rounded-xl object-cover cursor-pointer hover:scale-105 transition border border-slate-200"
+                          className="w-16 h-16 rounded-xl object-cover cursor-pointer hover:scale-105 transition border border-slate-200 dark:border-dark-700"
                         />
                       )}
                     </div>
 
                     {/* Ingredients list */}
                     {items.length > 0 && (
-                      <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-dark-800">
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                           {formatDual("Masalliqlar ro'yxati:", "Раскладка сырья:", "Ingredients:")}
                         </div>
                         <div className="grid grid-cols-2 gap-1.5 text-xs">
                           {items.map((it, idx) => (
-                            <div key={idx} className="bg-slate-50 p-1.5 rounded-lg border border-slate-200 flex justify-between">
-                              <span className="text-slate-700 font-medium truncate mr-1">{it.name}</span>
-                              <span className="font-bold text-orange-700 shrink-0 font-mono">
+                            <div key={idx} className="bg-slate-50 dark:bg-dark-800 p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 flex justify-between">
+                              <span className="text-slate-700 dark:text-slate-300 font-medium truncate mr-1">{it.name}</span>
+                              <span className="font-bold text-orange-700 dark:text-orange-400 shrink-0 font-mono">
                                 {it.qty} {it.unit}
                               </span>
                             </div>
@@ -1209,13 +1209,13 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
       {/* ========================================================================= */}
       {activeTab === 'cleaning' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200">
+          <div className="flex items-center justify-between bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Sparkle className="text-blue-500" size={18} />
                 {formatDual("Sanitariya, Dezinfeksiya va Tozalash Nazorati", "Санитария, дезинфекция и уборка", "Sanitation, Disinfection & Cleaning QC")}
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {formatDual(
                   "Qaysi xodim qayerlarni qanday vositalar bilan tozalaganligi va tozalik fotosuratlari",
                   "Кто производил уборку, зоны обработки, дезинфицирующие средства и фотоотчет",
@@ -1225,7 +1225,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
             </div>
             <button
               onClick={() => handleOpenNewTask('CLEANING')}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition active:scale-95 shadow"
             >
               <Plus size={14} />
               {formatDual("Tozalash Hisobotini Joylash", "Добавить отчет об уборке", "Log Cleaning Proof")}
@@ -1234,9 +1234,9 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {cleaningTasks.length === 0 ? (
-              <div className="col-span-full p-12 text-center bg-white dark:bg-dark-900 rounded-3xl border border-slate-200">
-                <Sparkle size={36} className="text-slate-300 mx-auto mb-2" />
-                <p className="text-sm font-bold text-slate-600">
+              <div className="col-span-full p-12 text-center bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-750">
+                <Sparkle size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
                   {formatDual("Ushbu kunda tozalash hisoboti hali kiritilmagan", "Отчетов об уборке за этот день нет", "No cleaning logs for this date")}
                 </p>
               </div>
@@ -1248,35 +1248,35 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 } catch {}
 
                 return (
-                  <div key={task.id} className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+                  <div key={task.id} className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 dark:bg-blue-950/30 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-900/50">
                           🧹 Tozalash & Sanitariya
                         </span>
                         <h4 className="text-base font-black text-slate-900 dark:text-white mt-1.5">
                           {task.title}
                         </h4>
-                        <div className="text-xs text-slate-500 font-medium">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                           {task.staffName} ({task.staffRole}) • {task.timeFrom} - {task.timeTo}
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs space-y-1">
+                    <div className="bg-slate-50 dark:bg-dark-800 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700 text-xs space-y-1">
                       <div>
-                        <span className="font-bold text-slate-700">Tozalangan joy:</span>{' '}
-                        <span className="text-slate-900 font-medium">{task.cleaningArea || '-'}</span>
+                        <span className="font-bold text-slate-700 dark:text-slate-300">Tozalangan joy:</span>{' '}
+                        <span className="text-slate-900 dark:text-white font-medium">{task.cleaningArea || '-'}</span>
                       </div>
                       <div>
-                        <span className="font-bold text-slate-700">Ishlatilgan vosita:</span>{' '}
-                        <span className="text-slate-900 font-medium">{task.cleaningAgent || '-'}</span>
+                        <span className="font-bold text-slate-700 dark:text-slate-300">Ishlatilgan vosita:</span>{' '}
+                        <span className="text-slate-900 dark:text-white font-medium">{task.cleaningAgent || '-'}</span>
                       </div>
                     </div>
 
                     {photos.length > 0 && (
                       <div className="space-y-1">
-                        <div className="text-[11px] font-bold text-slate-500">Tozalik fotosuratlari:</div>
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Tozalik fotosuratlari:</div>
                         <div className="grid grid-cols-3 gap-2">
                           {photos.map((url, i) => (
                             <img
@@ -1284,7 +1284,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                               src={url}
                               alt="Cleaning proof"
                               onClick={() => setLightboxPhoto({ url, title: task.title })}
-                              className="w-full aspect-video object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition"
+                              className="w-full aspect-video object-cover rounded-lg border border-slate-200 dark:border-dark-700 cursor-pointer hover:scale-105 transition"
                             />
                           ))}
                         </div>
@@ -1303,12 +1303,12 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
       {/* ========================================================================= */}
       {activeTab === 'feedback' && (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-dark-900 p-5 rounded-2xl border border-slate-200">
+          <div className="bg-white dark:bg-dark-900 p-5 rounded-2xl border border-slate-200 dark:border-dark-750">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <BarChart3 className="text-emerald-500" size={18} />
               {formatDual("Xodimlarning Ovqatga Bergan Baholari", "Оценки сотрудников блюдам", "Staff Meal Feedback & Ratings")}
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {formatDual(
                 "Xodimlar har kuni tushlikdan so'ng anonim tarzda ovqat sifatiga (A'lo, O'rtacha, Yomon) ovoz berishadi",
                 "Сотрудники анонимно оценивают качество питания после обеда",
@@ -1318,17 +1318,17 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
             {/* Score Distribution */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
-                <div className="text-xs font-bold text-emerald-800">😋 A'lo / Mazali (Good)</div>
-                <div className="text-2xl font-black text-emerald-950 font-mono mt-1">{feedbackStats.good}</div>
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-800/40">
+                <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300">😋 A'lo / Mazali (Good)</div>
+                <div className="text-2xl font-black text-emerald-950 dark:text-emerald-200 font-mono mt-1">{feedbackStats.good}</div>
               </div>
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
-                <div className="text-xs font-bold text-amber-800">😐 O'rtacha (Average)</div>
-                <div className="text-2xl font-black text-amber-950 font-mono mt-1">{feedbackStats.average}</div>
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-800/40">
+                <div className="text-xs font-bold text-amber-800 dark:text-amber-300">😐 O'rtacha (Average)</div>
+                <div className="text-2xl font-black text-amber-950 dark:text-amber-200 font-mono mt-1">{feedbackStats.average}</div>
               </div>
-              <div className="p-4 bg-red-50 rounded-2xl border border-red-200">
-                <div className="text-xs font-bold text-red-800">😞 Yomon / E'tiroz (Bad)</div>
-                <div className="text-2xl font-black text-red-950 font-mono mt-1">{feedbackStats.bad}</div>
+              <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-200 dark:border-red-800/40">
+                <div className="text-xs font-bold text-red-800 dark:text-red-300">😞 Yomon / E'tiroz (Bad)</div>
+                <div className="text-2xl font-black text-red-950 dark:text-red-200 font-mono mt-1">{feedbackStats.bad}</div>
               </div>
             </div>
           </div>
@@ -1336,26 +1336,26 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
           {/* Feedback comments */}
           <div className="space-y-2">
             {feedbacks.length === 0 ? (
-              <div className="p-8 text-center bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 text-xs text-slate-500">
+              <div className="p-8 text-center bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 text-xs text-slate-500 dark:text-slate-400">
                 {formatDual("Ushbu kunda hali sharhlar qoldirilmagan", "Отзывов за этот день пока нет", "No feedback comments yet")}
               </div>
             ) : (
               feedbacks.map(fb => (
-                <div key={fb.id} className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between text-xs">
+                <div key={fb.id} className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-750 flex items-center justify-between text-xs">
                   <div>
                     <span
                       className={`font-bold px-2 py-0.5 rounded-md text-[10px] mr-2 ${
                         fb.rating === 'GOOD'
-                          ? 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40'
                           : fb.rating === 'AVERAGE'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40'
+                          : 'bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/40'
                       }`}
                     >
                       {fb.rating}
                     </span>
-                    <span className="font-semibold text-slate-800">{fb.mealName || 'Ovqat'}</span>
-                    {fb.comment && <span className="text-slate-600 ml-2 italic">«{fb.comment}»</span>}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{fb.mealName || 'Ovqat'}</span>
+                    {fb.comment && <span className="text-slate-600 dark:text-slate-400 ml-2 italic">«{fb.comment}»</span>}
                   </div>
                   <span className="text-slate-400 font-mono text-[10px]">{fb.createdAt?.slice(11, 16)}</span>
                 </div>
@@ -1369,8 +1369,14 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
       {/* MODAL: CREATE / EDIT TASK WITH PHOTO UPLOAD & INGREDIENTS */}
       {/* ========================================================================= */}
       {isTaskModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 md:p-6 overflow-y-auto">
-          <div className="bg-white dark:bg-dark-900 rounded-3xl max-w-3xl w-full border border-slate-200 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 md:p-6 overflow-y-auto"
+          onClick={() => setIsTaskModalOpen(false)}
+        >
+          <div 
+            className="bg-white dark:bg-dark-900 rounded-3xl max-w-3xl w-full border border-slate-200 dark:border-dark-750 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-150"
+            onClick={e => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="p-5 bg-gradient-to-r from-orange-600 to-amber-600 text-white flex items-center justify-between">
               <div>
@@ -1389,6 +1395,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setIsTaskModalOpen(false)}
                 className="p-2 hover:bg-white/20 rounded-full transition text-white"
               >
@@ -1397,9 +1404,9 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
             </div>
 
             {/* Modal Form Body */}
-            <form onSubmit={handleSaveTask} className="p-5 overflow-y-auto space-y-4 text-xs">
+            <form onSubmit={handleSaveTask} className="p-5 overflow-y-auto space-y-4 text-xs bg-slate-50/50 dark:bg-dark-900 text-slate-800 dark:text-slate-200">
               {/* Section 1: Staff Info & Work Time */}
-              <div className="p-4 bg-slate-50 dark:bg-dark-800 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
+              <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
                 <div className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                   <Users size={14} className="text-orange-600" />
                   1. Xodim ma'lumotlari va Ish vaqti
@@ -1407,23 +1414,23 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Xodim F.I.O. *</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Xodim F.I.O. *</label>
                     <input
                       type="text"
                       required
                       placeholder="Rahmonov Alisher"
                       value={taskForm.staffName}
                       onChange={e => setTaskForm({ ...taskForm, staffName: e.target.value })}
-                      className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-medium"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Lavozimi *</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Lavozimi *</label>
                     <select
                       value={taskForm.staffRole}
                       onChange={e => setTaskForm({ ...taskForm, staffRole: e.target.value })}
-                      className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-bold"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
                     >
                       {STAFF_ROLES.map(r => (
                         <option key={r.id} value={r.id}>
@@ -1434,11 +1441,11 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Smena</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Smena</label>
                     <select
                       value={taskForm.shift}
                       onChange={e => setTaskForm({ ...taskForm, shift: e.target.value })}
-                      className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-medium"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
                     >
                       <option value="1-Smena">1-Smena (07:00 - 16:30)</option>
                       <option value="2-Smena">2-Smena (16:30 - 23:00)</option>
@@ -1449,39 +1456,39 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Sana</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Sana</label>
                     <input
                       type="date"
                       value={taskForm.date}
                       onChange={e => setTaskForm({ ...taskForm, date: e.target.value })}
-                      className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Ish boshlanishi</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ish boshlanishi</label>
                     <input
                       type="time"
                       value={taskForm.timeFrom}
                       onChange={e => setTaskForm({ ...taskForm, timeFrom: e.target.value })}
-                      className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Ish tugashi</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ish tugashi</label>
                     <input
                       type="time"
                       value={taskForm.timeTo}
                       onChange={e => setTaskForm({ ...taskForm, timeTo: e.target.value })}
-                      className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-mono"
+                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Section 2: Task Category & Title */}
-              <div className="p-4 bg-slate-50 dark:bg-dark-800 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
+              <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
                 <div className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                   <Flame size={14} className="text-orange-600" />
                   2. Ish toifasi va Tavsifi
@@ -1507,7 +1514,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                         className={`p-2 rounded-xl border text-center transition font-bold text-xs ${
                           isSelected
                             ? 'bg-orange-600 text-white border-orange-600 shadow'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                            : 'bg-slate-50 dark:bg-dark-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-100 dark:hover:bg-dark-800'
                         }`}
                       >
                         {activeLang === 'ru' ? c.labelRu : activeLang === 'en' ? c.labelEn : c.labelUz}
@@ -1518,7 +1525,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
-                    <label className="block font-bold text-slate-700 mb-1">Qilingan ish / Taom nomi *</label>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Qilingan ish / Taom nomi *</label>
                     <input
                       type="text"
                       required
@@ -1531,32 +1538,32 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                       }
                       value={taskForm.title}
                       onChange={e => setTaskForm({ ...taskForm, title: e.target.value })}
-                      className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-bold"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
                     />
                   </div>
 
                   {(taskForm.category === 'MEAL' || taskForm.category === 'SALAD') && (
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">Necha kishiga (Porsiya)</label>
+                      <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Necha kishiga (Porsiya)</label>
                       <input
                         type="number"
                         placeholder="120"
                         value={taskForm.servings}
                         onChange={e => setTaskForm({ ...taskForm, servings: e.target.value })}
-                        className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl font-mono font-bold"
+                        className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono font-bold text-slate-900 dark:text-white"
                       />
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Batafsil ma'lumot / Izoh</label>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Batafsil ma'lumot / Izoh</label>
                   <textarea
                     rows={2}
                     placeholder="Qilingan ish haqida qo'shimcha ma'lumot..."
                     value={taskForm.description}
                     onChange={e => setTaskForm({ ...taskForm, description: e.target.value })}
-                    className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 rounded-xl"
+                    className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -1566,16 +1573,16 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 taskForm.category === 'SALAD' ||
                 taskForm.category === 'PREP' ||
                 taskForm.category === 'BAKERY') && (
-                <div className="p-4 bg-orange-50/50 rounded-2xl border border-orange-200 space-y-3">
+                <div className="p-4 bg-orange-50/70 dark:bg-orange-950/20 rounded-2xl border border-orange-200 dark:border-orange-900/40 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="font-bold text-orange-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <div className="font-bold text-orange-950 dark:text-orange-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                       <UtensilsCrossed size={14} className="text-orange-600" />
                       3. Ishlatilgan masalliqlar va Retseptura (Nima solindi, qancha)
                     </div>
                     <button
                       type="button"
                       onClick={addIngredient}
-                      className="flex items-center gap-1 text-[11px] font-bold text-orange-700 hover:text-orange-900 bg-orange-100 hover:bg-orange-200 px-2.5 py-1 rounded-lg"
+                      className="flex items-center gap-1 text-[11px] font-bold text-orange-700 dark:text-orange-300 hover:text-orange-900 bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-200 dark:hover:bg-orange-900/60 px-2.5 py-1 rounded-lg transition"
                     >
                       <Plus size={13} /> Masalliq qo'shish
                     </button>
@@ -1583,7 +1590,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
                   {/* Quick Click Ingredients */}
                   <div className="flex flex-wrap items-center gap-1">
-                    <span className="text-[10px] text-slate-500 font-bold mr-1">Tezkor tanlash:</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mr-1">Tezkor tanlash:</span>
                     {QUICK_INGREDIENTS.slice(0, 10).map((name, i) => (
                       <button
                         key={i}
@@ -1599,7 +1606,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                             ])
                           }
                         }}
-                        className="text-[10px] font-medium px-2 py-0.5 bg-white border border-orange-200 text-slate-700 rounded-md hover:bg-orange-100"
+                        className="text-[10px] font-medium px-2 py-0.5 bg-white dark:bg-dark-850 border border-orange-200 dark:border-orange-900/50 text-slate-700 dark:text-slate-300 rounded-md hover:bg-orange-100 dark:hover:bg-dark-750 transition"
                       >
                         + {name}
                       </button>
@@ -1616,19 +1623,19 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                           placeholder="Mahsulot nomi (Go'sht, Guruch...)"
                           value={item.name}
                           onChange={e => updateIngredient(item.id, 'name', e.target.value)}
-                          className="flex-1 p-2 bg-white border border-slate-300 rounded-xl font-medium"
+                          className="flex-1 p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
                         />
                         <input
                           type="text"
                           placeholder="Miqdori (15.5)"
                           value={item.qty}
                           onChange={e => updateIngredient(item.id, 'qty', e.target.value)}
-                          className="w-24 p-2 bg-white border border-slate-300 rounded-xl font-mono text-center"
+                          className="w-24 p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-center text-slate-900 dark:text-white"
                         />
                         <select
                           value={item.unit}
                           onChange={e => updateIngredient(item.id, 'unit', e.target.value)}
-                          className="w-20 p-2 bg-white border border-slate-300 rounded-xl font-bold"
+                          className="w-20 p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
                         >
                           <option value="kg">kg</option>
                           <option value="litr">litr</option>
@@ -1639,7 +1646,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                         <button
                           type="button"
                           onClick={() => removeIngredient(item.id)}
-                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -1651,21 +1658,21 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
               {/* Section 4: Cleaning Details (if CLEANING) */}
               {taskForm.category === 'CLEANING' && (
-                <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-200 space-y-3">
-                  <div className="font-bold text-blue-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <div className="p-4 bg-blue-50/70 dark:bg-blue-950/20 rounded-2xl border border-blue-200 dark:border-blue-900/40 space-y-3">
+                  <div className="font-bold text-blue-950 dark:text-blue-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                     <Sparkle size={14} className="text-blue-600" />
                     3. Sanitariya va Tozalash Joyi & Vositalari
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">Tozalangan joy / Hudud *</label>
+                      <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tozalangan joy / Hudud *</label>
                       <input
                         type="text"
                         placeholder="Qozonlar, plita va pollar..."
                         value={taskForm.cleaningArea}
                         onChange={e => setTaskForm({ ...taskForm, cleaningArea: e.target.value })}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium"
+                        className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
                       />
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {CLEANING_AREAS.slice(0, 4).map((a, i) => (
@@ -1673,7 +1680,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                             key={i}
                             type="button"
                             onClick={() => setTaskForm({ ...taskForm, cleaningArea: a })}
-                            className="text-[10px] px-2 py-0.5 bg-white border border-blue-200 text-blue-800 rounded hover:bg-blue-100"
+                            className="text-[10px] px-2 py-0.5 bg-white dark:bg-dark-900 border border-blue-200 dark:border-blue-900/50 text-blue-800 dark:text-blue-300 rounded hover:bg-blue-100 dark:hover:bg-dark-800 transition"
                           >
                             {a}
                           </button>
@@ -1682,13 +1689,13 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                     </div>
 
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">Ishlatilgan tozalash vositasi *</label>
+                      <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Ishlatilgan tozalash vositasi *</label>
                       <input
                         type="text"
                         placeholder="Fayri, Xlor 2%, Dezinfeksiya vositasi..."
                         value={taskForm.cleaningAgent}
                         onChange={e => setTaskForm({ ...taskForm, cleaningAgent: e.target.value })}
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-medium"
+                        className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
                       />
                     </div>
                   </div>
@@ -1696,13 +1703,13 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
               )}
 
               {/* Section 5: Photo Upload (Photo Evidence) */}
-              <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200 space-y-3">
+              <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-900/40 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="font-bold text-emerald-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <div className="font-bold text-emerald-950 dark:text-emerald-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                     <Camera size={14} className="text-emerald-600" />
                     4. Foto-Hisobot (Qilingan ish fotosuratlari) *
                   </div>
-                  <label className="cursor-pointer flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-xl transition">
+                  <label className="cursor-pointer flex items-center gap-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 px-3 py-1.5 rounded-xl transition">
                     <Camera size={14} />
                     <span>Foto yuklash</span>
                     <input
@@ -1717,7 +1724,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 </div>
 
                 {uploadingPhoto && (
-                  <div className="p-3 bg-white rounded-xl border border-emerald-300 flex items-center gap-2 text-emerald-700">
+                  <div className="p-3 bg-white dark:bg-dark-900 rounded-xl border border-emerald-300 dark:border-emerald-800 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
                     <Loader2 size={16} className="animate-spin" />
                     <span>Rasm serverga yuklanmoqda...</span>
                   </div>
@@ -1726,10 +1733,10 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 {formPhotos.length === 0 ? (
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-6 text-center bg-white rounded-2xl border-2 border-dashed border-emerald-300 hover:border-emerald-500 cursor-pointer transition"
+                    className="p-6 text-center bg-white dark:bg-dark-900 rounded-2xl border-2 border-dashed border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 cursor-pointer transition"
                   >
                     <ImageIcon size={32} className="mx-auto text-emerald-400 mb-2" />
-                    <p className="font-bold text-slate-700">Rasm biriktirish uchun shu yerni bosing</p>
+                    <p className="font-bold text-slate-700 dark:text-slate-300">Rasm biriktirish uchun shu yerni bosing</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">
                       Telefon kamerasidan rasmga olish yoki fayllardan tanlash mumkin (JPG, PNG)
                     </p>
@@ -1737,7 +1744,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {formPhotos.map((url, idx) => (
-                      <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-300 group">
+                      <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-300 dark:border-dark-700 group">
                         <img src={url} alt="Proof" className="w-full h-full object-cover" />
                         <button
                           type="button"
@@ -1748,7 +1755,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                         </button>
                       </div>
                     ))}
-                    <label className="aspect-video rounded-xl border-2 border-dashed border-emerald-300 hover:border-emerald-500 cursor-pointer flex flex-col items-center justify-center text-emerald-700 bg-white">
+                    <label className="aspect-video rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-800 hover:border-emerald-500 cursor-pointer flex flex-col items-center justify-center text-emerald-700 dark:text-emerald-300 bg-white dark:bg-dark-900 transition">
                       <Plus size={20} />
                       <span className="text-[10px] font-bold mt-1">Yana foto</span>
                       <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
@@ -1758,11 +1765,11 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
               </div>
 
               {/* Form Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setIsTaskModalOpen(false)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition"
                 >
                   Bekor qilish
                 </button>
@@ -1813,27 +1820,36 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
       {/* DIRECTOR REVIEW / OBJECTION MODAL */}
       {/* ========================================================================= */}
       {reviewModalTask && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-dark-900 rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-4">
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setReviewModalTask(null)}
+        >
+          <div 
+            className="bg-white dark:bg-dark-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-dark-750 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <ShieldCheck className="text-orange-600" size={20} />
                 {reviewActionType === 'APPROVED' ? "Tasdiqlash Xulosasi" : "E'tiroz Bildirish"}
               </h3>
-              <button onClick={() => setReviewModalTask(null)} className="p-1 text-slate-400 hover:text-slate-700">
+              <button 
+                onClick={() => setReviewModalTask(null)} 
+                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
-              <div className="font-bold text-slate-900">{reviewModalTask.title}</div>
-              <div className="text-slate-500 mt-0.5">
+            <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700 text-xs">
+              <div className="font-bold text-slate-900 dark:text-white">{reviewModalTask.title}</div>
+              <div className="text-slate-500 dark:text-slate-400 mt-0.5">
                 {reviewModalTask.staffName} ({reviewModalTask.staffRole}) • {reviewModalTask.date}
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                 {reviewActionType === 'APPROVED' ? "Direktor izohi (ixtiyoriy):" : "E'tiroz sababi (majburiy):"}
               </label>
               <textarea
@@ -1846,7 +1862,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 }
                 value={reviewCommentInput}
                 onChange={e => setReviewCommentInput(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium"
+                className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white"
               />
             </div>
 
@@ -1854,7 +1870,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
               <button
                 type="button"
                 onClick={() => setReviewModalTask(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                className="px-4 py-2 bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition"
               >
                 Bekor qilish
               </button>
@@ -1862,7 +1878,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 type="button"
                 disabled={submittingReview}
                 onClick={handleSaveReviewModal}
-                className={`px-5 py-2 text-white rounded-xl text-xs font-bold shadow ${
+                className={`px-5 py-2 text-white rounded-xl text-xs font-bold shadow transition active:scale-95 ${
                   reviewActionType === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-red-600 hover:bg-red-500'
                 }`}
               >
