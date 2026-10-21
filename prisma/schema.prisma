@@ -1061,7 +1061,49 @@ model MealLog {
   updatedAt   DateTime       @updatedAt
 
   feedbacks   MealFeedback[]
+  taskLogs    KitchenTaskLog[]
   @@index([cookedDate])
+}
+
+model KitchenTaskLog {
+  id              Int       @id @default(autoincrement())
+  date            String    // YYYY-MM-DD
+  staffName       String    // Xodim F.I.O.
+  staffRole       String    // Lavozimi (Bosh oshpaz, Yordamchi oshpaz, Salatchi, Qassob, Nonvoy, Idish yuvuvchi/Farrosh, Oshxona mudiri)
+  timeFrom        String    // Ish boshlanishi ("07:00")
+  timeTo          String    // Ish tugashi ("16:30")
+  shift           String    @default("1-Smena") // 1-Smena / 2-Smena / Tun
+  category        String    // MEAL (Taom) | SALAD (Salat) | CLEANING (Tozalash) | PREP (Go'sht/Tayyorgarlik) | BAKERY (Nonvoylik) | OTHER (Boshqa)
+  title           String    // Qilingan ish nomi
+  description     String?   @db.Text // Batafsil ma'lumot
+  
+  // Taom va salat parametrlari:
+  servings        Int?      // Necha kishiga / porsiya
+  itemsUsed       String?   @db.Text // JSON: [{name, qty, unit}]
+  
+  // Tozalash parametrlari:
+  cleaningArea    String?   // Qayer tozalandi
+  cleaningAgent   String?   // Ishlatilgan vosita
+  
+  // Foto hisobot:
+  photos          String?   @db.Text // JSON massiv: ["/uploads/img1.jpg", "/uploads/img2.jpg"]
+  
+  // Direktor va Sifat nazorati:
+  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedBy      String?   // Kim tekshirdi
+  reviewedAt      DateTime? 
+  reviewComment   String?   @db.Text // Izoh / e'tiroz
+  
+  mealLogId       Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  mealLog         MealLog?  @relation(fields: [mealLogId], references: [id])
+
+  @@index([date])
+  @@index([category])
+  @@index([staffName])
+  @@index([status])
 }
 
 model MealFeedback {
