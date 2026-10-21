@@ -84,7 +84,8 @@ const PRODUCT_LIST = [
   { id: 'САЛАТ АЙСБЕРГ', label: 'САЛАТ АЙСБЕРГ', color: '#92D050', bg: 'bg-[#92D050] text-black font-bold' },
   { id: 'КАПУСТА БЕЛОКОЧАННАЯ', label: 'КАПУСТА', color: '#4BFF60', bg: 'bg-[#4BFF60] text-black font-bold' },
   { id: 'МОРКОВЬ', label: 'МОРКОВЬ', color: '#FF5B11', bg: 'bg-[#FF5B11] text-black font-bold' },
-  { id: 'ОГУРЦЫ СВЕЖИЕ', label: 'ОГУРЦЫ', color: '#15803D', bg: 'bg-[#15803D] text-white font-bold' }
+  { id: 'ЛИМОН', label: 'ЛИМОН', color: '#FFFF00', bg: 'bg-[#FFFF00] text-black font-bold' },
+  { id: 'ОГУРЦЫ СВЕЖИЕ', label: 'ОГУРЦЫ', color: '#00B050', bg: 'bg-[#00B050] text-black font-bold' }
 ]
 
 export default function IncomingActsContent() {
@@ -825,7 +826,11 @@ export default function IncomingActsContent() {
                   rowSpan={2}
                   className="border border-black/40 py-2.5 px-2 text-center min-w-[120px] align-middle"
                 >
-                  {`Наименование основного СЫРЬЯ - ${activeTheme.name}`}
+                  {selectedProduct === 'all'
+                    ? 'Наименование основного СЫРЬЯ'
+                    : selectedProduct === 'ЛИМОН'
+                    ? 'ЛИМОН'
+                    : `Наименование основного СЫРЬЯ - ${activeTheme.name}`}
                 </th>
                 <th
                   rowSpan={2}
@@ -1008,7 +1013,15 @@ export default function IncomingActsContent() {
                   const isYellowRow =
                     Boolean(raw.isYellow) ||
                     (act.productName.toUpperCase().includes('ЛУК') &&
-                      (act.actNumber === '6' || act.actNumber === '9' || act.actNumber === '11'))
+                      (act.actNumber === '6' || act.actNumber === '9' || act.actNumber === '11')) ||
+                    (act.productName.toUpperCase().includes('ЛИМОН') &&
+                      (act.actDate.includes('2026-07-03') ||
+                        act.actDate.includes('7/3/2026') ||
+                        (act.actNumber === '1' && act.supplierName.toUpperCase().includes('ECO')))) ||
+                    (act.productName.toUpperCase().includes('ОГУРЦ') &&
+                      (act.actDate.includes('2026-07-23') ||
+                        act.actDate.includes('7/23/2026') ||
+                        act.actNumber === '1'))
 
                   return (
                     <tr
