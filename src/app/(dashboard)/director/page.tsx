@@ -99,6 +99,7 @@ export default function DirectorPage() {
   const [operationsTab, setOperationsTab] = useState<'prixod' | 'rasxod' | 'brak'>('prixod')
   const [selectedOperationItem, setSelectedOperationItem] = useState<any>(null)
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
+  const [selectedAuditAction, setSelectedAuditAction] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [archiveEvents, setArchiveEvents] = useState<any[]>([])
   const [loadingArchive, setLoadingArchive] = useState(false)
@@ -129,14 +130,20 @@ export default function DirectorPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (selectedAuditAction) {
+          setSelectedAuditAction(null)
+          return
+        }
         setActiveModal(null)
+        setSelectedEmployee(null)
+        setSelectedOperationItem(null)
         setShowSettingsModal(false)
         setShowSummaryReportModal(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [selectedAuditAction])
 
   // Fetch dashboard data
   const fetchData = async () => {
@@ -306,6 +313,8 @@ export default function DirectorPage() {
           date: c.createdAt || c.date,
           details: `${c.date} (Smena ${c.shift}) — Chiqish: ${c.totalOutputBox || 0} quti, Brak: ${c.rejectedKg || 0} kg`,
           badge: "bg-emerald-100 text-emerald-800",
+          category: 'checklist',
+          rawData: c,
         })
       }
     })
@@ -318,6 +327,8 @@ export default function DirectorPage() {
           date: insp.createdAt,
           details: `${insp.supplier?.name || "Ta'minotchi"} — ${insp.quantity} kg (${insp.status})`,
           badge: "bg-blue-100 text-blue-800",
+          category: 'inspection',
+          rawData: insp,
         })
       }
     })
@@ -330,6 +341,8 @@ export default function DirectorPage() {
           date: tr.createdAt,
           details: `${tr.product?.name || "Mahsulot"} — ${tr.issuedQuantity} ${tr.issuedUnit} chiqarildi -> ${tr.targetLocation}`,
           badge: "bg-amber-100 text-amber-800",
+          category: 'transfer_issued',
+          rawData: tr,
         })
       }
       if (tr.receivedById === uid || tr.receivedByName === uname) {
@@ -338,6 +351,36 @@ export default function DirectorPage() {
           date: tr.createdAt,
           details: `${tr.product?.name || "Mahsulot"} — ${tr.receivedQuantity} ${tr.issuedUnit} qabul qilindi (Farq: ${tr.discrepancy || 0})`,
           badge: "bg-purple-100 text-purple-800",
+          category: 'transfer_received',
+          rawData: tr,
+        })
+      }
+    })
+
+    // From shop arrivals
+    ;(details.recentShopArrivals || []).forEach((sa: any) => {
+      if (sa.createdById === uid || sa.receiverName === uname || sa.inspectorName === uname) {
+        actions.push({
+          type: "Tsexga kirim",
+          date: sa.createdAt,
+          details: `${sa.productName || "Xomashyo"} — ${sa.quantity} ${sa.unit || 'kg'} (${sa.sourceLocation || 'Ombor'})`,
+          badge: "bg-teal-100 text-teal-800",
+          category: 'transfer_received',
+          rawData: sa,
+        })
+      }
+    })
+
+    // From defect logs
+    ;(details.recentDefectLogs || []).forEach((df: any) => {
+      if (df.reportedById === uid || df.inspector === uname) {
+        actions.push({
+          type: "Brak / Yaroqsiz dalolatnomasi",
+          date: df.createdAt,
+          details: `${df.productName || "Mahsulot"} — ${df.rejectedQuantity || df.quantity || 0} kg (${df.reason || 'Sifatsiz'})`,
+          badge: "bg-rose-100 text-rose-800",
+          category: 'inspection',
+          rawData: df,
         })
       }
     })
@@ -575,30 +618,30 @@ export default function DirectorPage() {
           {/* PRIXOD CARD */}
           <div
             onClick={() => openOperationsModal('prixod')}
-            className="group relative overflow-hidden bg-gradient-to-br from-white to-emerald-50/50 dark:from-dark-900 dark:to-emerald-950/20 p-5 rounded-3xl border-2 border-emerald-500/20 hover:border-emerald-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+            className="group relative overflow-hidden bg-emerald-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-emerald-500/30 hover:border-emerald-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
                 <Truck size={24} />
               </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
+              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
                 {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
               </span>
             </div>
 
-            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+            <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider block">
               {formatDual("Kirim (Prixod)", "Приход", "Inbound")}
             </span>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
               {operationsSummary?.prixod?.totalKg ? `${(operationsSummary.prixod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
             </div>
-            <p className="text-xs text-slate-500 mt-1 font-medium">
+            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold">
               {operationsSummary?.prixod?.totalKg?.toLocaleString()} kg ({operationsSummary?.prixod?.totalCount || 0} {formatDual("partiya", "партий", "batches")})
             </p>
 
-            <div className="mt-4 pt-3 border-t border-emerald-500/15 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">{formatDual("Ta'minot:", "Поставка:", "Supply:")}</span>
-              <span className="font-bold text-emerald-700 dark:text-emerald-300">
+            <div className="mt-4 pt-3 border-t border-emerald-500/25 flex items-center justify-between text-xs">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Ta'minot:", "Поставка:", "Supply:")}</span>
+              <span className="font-bold text-emerald-800 dark:text-emerald-300">
                 100% {formatDual("Tekshirilgan", "Проверено", "Verified")}
               </span>
             </div>
@@ -607,30 +650,30 @@ export default function DirectorPage() {
           {/* RASXOD CARD */}
           <div
             onClick={() => openOperationsModal('rasxod')}
-            className="group relative overflow-hidden bg-gradient-to-br from-white to-blue-50/50 dark:from-dark-900 dark:to-blue-950/20 p-5 rounded-3xl border-2 border-blue-500/20 hover:border-blue-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+            className="group relative overflow-hidden bg-blue-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-blue-500/30 hover:border-blue-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
                 <ChefHat size={24} />
               </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
+              <span className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
                 {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
               </span>
             </div>
 
-            <span className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider block">
+            <span className="text-xs font-extrabold text-blue-800 dark:text-blue-400 uppercase tracking-wider block">
               {formatDual("Chiqim (Rasxod)", "Расход", "Outbound")}
             </span>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
               {operationsSummary?.rasxod?.totalKg ? `${(operationsSummary.rasxod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
             </div>
-            <p className="text-xs text-slate-500 mt-1 font-medium">
+            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold">
               {operationsSummary?.rasxod?.totalKg?.toLocaleString()} kg ({operationsSummary?.rasxod?.totalCount || 0} {formatDual("transfer", "перемещений", "transfers")})
             </p>
 
-            <div className="mt-4 pt-3 border-t border-blue-500/15 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">{formatDual("Sexlar:", "Цехи:", "Target:")}</span>
-              <span className="font-bold text-blue-700 dark:text-blue-300">
+            <div className="mt-4 pt-3 border-t border-blue-500/25 flex items-center justify-between text-xs">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Sexlar:", "Цехи:", "Target:")}</span>
+              <span className="font-bold text-blue-800 dark:text-blue-300">
                 Zagotovka, Oshxona, Sex
               </span>
             </div>
@@ -639,30 +682,30 @@ export default function DirectorPage() {
           {/* BRAK CARD */}
           <div
             onClick={() => openOperationsModal('brak')}
-            className="group relative overflow-hidden bg-gradient-to-br from-white to-rose-50/50 dark:from-dark-900 dark:to-rose-950/20 p-5 rounded-3xl border-2 border-rose-500/20 hover:border-rose-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+            className="group relative overflow-hidden bg-rose-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-rose-500/30 hover:border-rose-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold">
                 <AlertTriangle size={24} />
               </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 group-hover:translate-x-1 transition-transform">
+              <span className="flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:translate-x-1 transition-transform">
                 {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
               </span>
             </div>
 
-            <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider block">
+            <span className="text-xs font-extrabold text-rose-800 dark:text-rose-400 uppercase tracking-wider block">
               {formatDual("Brak mahsulot", "Брак", "Reject")}
             </span>
-            <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 mt-1">
+            <div className="text-2xl sm:text-3xl font-black text-rose-700 dark:text-rose-400 mt-1">
               {operationsSummary?.brak?.totalKg ? `${operationsSummary.brak.totalKg.toLocaleString()} kg` : "0 kg"}
             </div>
-            <p className="text-xs text-slate-500 mt-1 font-medium">
+            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold">
               {operationsSummary?.brak?.totalCount || 0} {formatDual("ta yaroqsiz", "брак", "defects")} ({operationsSummary?.brak?.defectRate || 0}%)
             </p>
 
-            <div className="mt-4 pt-3 border-t border-rose-500/15 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">{formatDual("Holati:", "Статус:", "Status:")}</span>
-              <span className="font-bold text-rose-700 dark:text-rose-300">
+            <div className="mt-4 pt-3 border-t border-rose-500/25 flex items-center justify-between text-xs">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Holati:", "Статус:", "Status:")}</span>
+              <span className="font-bold text-rose-800 dark:text-rose-300">
                 {formatDual("Rad etilgan", "Отклонено", "Rejected")}
               </span>
             </div>
@@ -1789,19 +1832,27 @@ export default function DirectorPage() {
                       ) : (
                         <div className="space-y-2.5">
                           {employeeActions.map((act: any, idx: number) => (
-                            <div key={idx} className="bg-slate-50 dark:bg-dark-800 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-700 flex items-center justify-between gap-4">
-                              <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${act.badge}`}>
+                            <div
+                              key={idx}
+                              onClick={() => setSelectedAuditAction(act)}
+                              className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-4 group"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${act.badge}`}>
                                     {act.type}
                                   </span>
-                                  <span className="text-[11px] text-slate-400">
+                                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                                     {new Date(act.date).toLocaleString(dateLocale)}
                                   </span>
                                 </div>
-                                <p className="font-bold text-slate-800 dark:text-slate-200">
+                                <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
                                   {act.details}
                                 </p>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 group-hover:translate-x-1 transition-transform">
+                                <span className="hidden sm:inline">{formatDual("Barcha ma'lumotlar", "Все данные", "Full details")}</span>
+                                <ChevronRight size={18} />
                               </div>
                             </div>
                           ))}
@@ -2473,6 +2524,337 @@ export default function DirectorPage() {
                 className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20"
               >
                 {formatDual("Saqlash va qo'llash", "Сохранить и применить", "Save and apply")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ========================================================================= */}
+      {/* 6.5 ACTION DETAIL POPUP MODAL (XODIMNING AMALLARI TO'LIQ MA'LUMOTI)       */}
+      {/* ========================================================================= */}
+      {mounted && selectedAuditAction && createPortal(
+        <div 
+          className="fixed inset-0 z-[120] w-screen h-screen flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto cursor-pointer animate-enter"
+          onClick={() => setSelectedAuditAction(null)}
+        >
+          <div 
+            className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-dark-750 overflow-hidden my-auto cursor-default flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between gap-3 bg-slate-50 dark:bg-dark-850">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  <FileText size={22} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${selectedAuditAction.badge}`}>
+                      {selectedAuditAction.type}
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      {new Date(selectedAuditAction.date).toLocaleString(dateLocale)}
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-0.5">
+                    {formatDual("Amal bo'yicha to'liq ma'lumot", "Полные данные операции", "Complete Action Record")}
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedAuditAction(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              {/* Responsible Employee Card */}
+              <div className="bg-indigo-50/80 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center text-sm shadow-sm">
+                    {(selectedEmployee?.name || 'X')[0]}
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-indigo-800 dark:text-indigo-300 font-bold block uppercase tracking-wider">
+                      {formatDual("Bajaruvchi mas'ul xodim:", "Ответственный сотрудник:", "Responsible employee:")}
+                    </span>
+                    <div className="font-black text-sm text-slate-900 dark:text-white">
+                      {selectedEmployee?.name || 'Xodim'}
+                      <span className="ml-2 text-xs font-bold text-slate-600 dark:text-slate-400">
+                        @{selectedEmployee?.username} ({selectedEmployee?.role})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                  {formatDual("Qayd sanasi:", "Дата:", "Date:")} {new Date(selectedAuditAction.date).toLocaleDateString(dateLocale)}
+                </span>
+              </div>
+
+              {/* Action Summary Banner */}
+              <div className="bg-slate-50 dark:bg-dark-800 p-4 rounded-2xl border border-slate-200 dark:border-dark-700">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  {formatDual("Amal mazmuni:", "Описание действия:", "Action summary:")}
+                </span>
+                <p className="text-sm font-black text-slate-900 dark:text-white">
+                  {selectedAuditAction.details}
+                </p>
+              </div>
+
+              {/* Dynamic Details: Inspection (Akt) */}
+              {selectedAuditAction.category === 'inspection' && selectedAuditAction.rawData && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {formatDual("Xomashyo tekshiruvi (Kirim akti) parametrlari:", "Параметры акта приемки сырья:", "Raw Inspection Act Parameters:")}
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Yetkazib beruvchi:", "Поставщик:", "Supplier:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.supplier?.name || selectedAuditAction.rawData.supplier || '-'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Mahsulot / Nomenklatura:", "Товар / Номенклатура:", "Product / Item:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.product?.name || selectedAuditAction.rawData.nomenclature || '-'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Umumiy miqdor:", "Общий объем:", "Total quantity:")}</span>
+                      <span className="text-xs font-bold font-mono text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.quantity ? `${selectedAuditAction.rawData.quantity} kg` : '-'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Qabul qilingan:", "Принято:", "Accepted:")}</span>
+                      <span className="text-xs font-bold font-mono text-emerald-600">
+                        {selectedAuditAction.rawData.acceptedQuantity ? `${selectedAuditAction.rawData.acceptedQuantity} kg` : selectedAuditAction.rawData.quantity ? `${selectedAuditAction.rawData.quantity} kg` : '-'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Rad etilgan (Brak):", "Брак / Отклонено:", "Rejected:")}</span>
+                      <span className={`text-xs font-bold font-mono ${selectedAuditAction.rawData.rejectedQuantity > 0 ? 'text-red-600' : 'text-slate-500'}`}>
+                        {selectedAuditAction.rawData.rejectedQuantity ? `${selectedAuditAction.rawData.rejectedQuantity} kg` : '0 kg'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Qabul holati:", "Статус:", "Status:")}</span>
+                      <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-black ${
+                        selectedAuditAction.rawData.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400' :
+                        selectedAuditAction.rawData.status === 'REJECTED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {selectedAuditAction.rawData.status || 'N/A'}
+                      </span>
+                    </div>
+
+                    {selectedAuditAction.rawData.carNumber && (
+                      <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                        <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Avtotransport №:", "Гос. номер авто:", "Vehicle plate:")}</span>
+                        <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
+                          {selectedAuditAction.rawData.carNumber}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedAuditAction.rawData.temperature && (
+                      <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                        <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Harorat:", "Температура:", "Temperature:")}</span>
+                        <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
+                          {selectedAuditAction.rawData.temperature} °C
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedAuditAction.rawData.batchNumber && (
+                      <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                        <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Partiya №:", "Номер партии:", "Batch №:")}</span>
+                        <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
+                          {selectedAuditAction.rawData.batchNumber}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedAuditAction.rawData.notes && (
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3.5 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Izoh / Sifat xulosasi:", "Примечание / Заключение:", "Quality inspection notes:")}</span>
+                      <p className="text-xs text-slate-800 dark:text-slate-200 mt-1 font-medium">
+                        {selectedAuditAction.rawData.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Dynamic Details: Checklist */}
+              {selectedAuditAction.category === 'checklist' && selectedAuditAction.rawData && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {formatDual("Smena QC Cheklisti parametrlari:", "Параметры сменного чек-листа QC:", "Shift QC Checklist Parameters:")}
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Sana & Smena:", "Дата & Смена:", "Date & Shift:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.date} • Smena {selectedAuditAction.rawData.shift || 1}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Chiqarilgan qutilar:", "Выпущено коробок:", "Boxes output:")}</span>
+                      <span className="text-xs font-bold text-emerald-600 font-mono">
+                        {selectedAuditAction.rawData.totalOutputBox || 0} {formatDual("quti", "кор.", "boxes")}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Brak miqdori:", "Количество брака:", "Reject weight:")}</span>
+                      <span className={`text-xs font-bold font-mono ${selectedAuditAction.rawData.rejectedKg > 0 ? 'text-rose-600' : 'text-slate-500'}`}>
+                        {selectedAuditAction.rawData.rejectedKg || 0} kg
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Xomashyo sarfi:", "Расход сырья:", "Raw consumption:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                        {selectedAuditAction.rawData.totalRawKg ? `${selectedAuditAction.rawData.totalRawKg} kg` : '-'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Chiqish (Yield):", "Выход (Yield):", "Yield rate:")}</span>
+                      <span className="text-xs font-bold text-blue-600 font-mono">
+                        {selectedAuditAction.rawData.yieldPercent ? `${selectedAuditAction.rawData.yieldPercent}%` : '-'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Sex / Liniya:", "Цех / Линия:", "Workshop / Line:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.line || selectedAuditAction.rawData.workshop || 'Sex 1'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedAuditAction.rawData.notes && (
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3.5 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Inspektor xulosasi:", "Заключение инспектора:", "Inspector remarks:")}</span>
+                      <p className="text-xs text-slate-800 dark:text-slate-200 mt-1 font-medium">
+                        {selectedAuditAction.rawData.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Dynamic Details: Transfer */}
+              {(selectedAuditAction.category === 'transfer_issued' || selectedAuditAction.category === 'transfer_received') && selectedAuditAction.rawData && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {formatDual("Ombor transferi va chiqim parametrlari:", "Параметры перемещения со склада:", "Warehouse Dispatch Transfer Details:")}
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Hujjat №:", "№ Документа:", "Document №:")}</span>
+                      <span className="text-xs font-mono font-bold text-emerald-600">
+                        {selectedAuditAction.rawData.transferNumber || '#' + selectedAuditAction.rawData.id}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Mahsulot:", "Продукт:", "Product:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.product?.name || selectedAuditAction.rawData.productName || '-'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Chiqarilgan miqdor:", "Отпущено со склада:", "Issued quantity:")}</span>
+                      <span className="text-xs font-bold font-mono text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.issuedQuantity} {selectedAuditAction.rawData.issuedUnit || 'kg'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Qabul qilingan:", "Принято в цеху:", "Received in workshop:")}</span>
+                      <span className="text-xs font-bold font-mono text-emerald-600">
+                        {selectedAuditAction.rawData.receivedQuantity !== null ? `${selectedAuditAction.rawData.receivedQuantity} ${selectedAuditAction.rawData.issuedUnit || 'kg'}` : formatDual("Kutilmoqda", "Ожидается", "Pending")}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Farq / Yo'qotish:", "Разница / Потери:", "Discrepancy:")}</span>
+                      <span className={`text-xs font-bold font-mono ${selectedAuditAction.rawData.discrepancy > 0 ? 'text-rose-600' : 'text-slate-500'}`}>
+                        {selectedAuditAction.rawData.discrepancy ? `-${selectedAuditAction.rawData.discrepancy} ${selectedAuditAction.rawData.issuedUnit || 'kg'}` : '0 (Farqsiz)'}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Qayerga yuborildi:", "Куда направлено:", "Destination:")}</span>
+                      <span className="text-xs font-bold text-indigo-600">
+                        {selectedAuditAction.rawData.targetLocation || 'Sex'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedAuditAction.rawData.discrepancyReason && (
+                    <div className="bg-rose-50 dark:bg-rose-950/20 p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/40">
+                      <span className="text-[10px] text-rose-700 dark:text-rose-400 block font-semibold">{formatDual("Farq sababi:", "Причина расхождения:", "Discrepancy reason:")}</span>
+                      <p className="text-xs text-rose-900 dark:text-rose-200 mt-1 font-medium">
+                        {selectedAuditAction.rawData.discrepancyReason}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Link button */}
+              <div className="pt-3 flex items-center justify-between border-t border-slate-200 dark:border-dark-750">
+                <span className="text-xs text-slate-500">
+                  {formatDual("Tizim ID:", "Системный ID:", "System ID:")} #{selectedAuditAction.rawData?.id || '-'}
+                </span>
+                {selectedAuditAction.category === 'inspection' && (
+                  <Link
+                    href="/incoming-acts"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-500 transition-colors shadow-sm"
+                  >
+                    <span>{formatDual("To'liq aktlar sahifasiga o'tish", "Перейти к актам", "Go to acts")}</span>
+                    <ArrowUpRight size={14} />
+                  </Link>
+                )}
+                {(selectedAuditAction.category === 'transfer_issued' || selectedAuditAction.category === 'transfer_received') && (
+                  <Link
+                    href="/warehouse"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition-colors shadow-sm"
+                  >
+                    <span>{formatDual("Ombor sahifasiga o'tish", "Перейти на склад", "Go to warehouse")}</span>
+                    <ArrowUpRight size={14} />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-850 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedAuditAction(null)}
+                className="px-5 py-2 rounded-xl font-bold text-xs bg-slate-200 hover:bg-slate-300 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 transition-all"
+              >
+                {formatDual("Yopish", "Закрыть", "Close")}
               </button>
             </div>
           </div>

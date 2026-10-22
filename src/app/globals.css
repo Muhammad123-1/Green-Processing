@@ -310,17 +310,20 @@ html.light .border-white\/5 { border-color: #f1f5f9 !important; }
 html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
 html.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
 
-/* Keep white text on solid colored action buttons, gradients and dark badges in light mode */
+/* Keep white text ONLY on solid colored action buttons, solid dark gradients and badges in light mode */
 html.light .btn-primary,
 html.light .btn-success,
 html.light .btn-danger,
-html.light [class*="bg-gradient-to-"],
+html.light button[class*="bg-gradient-to-"],
+html.light a[class*="bg-gradient-to-"],
+html.light .btn-gradient,
 html.light button.bg-blue-600,
 html.light button.bg-blue-500,
 html.light button.bg-emerald-600,
 html.light button.bg-emerald-500,
 html.light button.bg-green-600,
 html.light button.bg-red-600,
+html.light button.bg-rose-600,
 html.light button.bg-orange-600,
 html.light button.bg-orange-500,
 html.light button.bg-amber-600,
@@ -336,13 +339,16 @@ html.light .badge-solid {
 html.light .btn-primary *,
 html.light .btn-success *,
 html.light .btn-danger *,
-html.light [class*="bg-gradient-to-"] *,
+html.light button[class*="bg-gradient-to-"] *,
+html.light a[class*="bg-gradient-to-"] *,
+html.light .btn-gradient *,
 html.light button.bg-blue-600 *,
 html.light button.bg-blue-500 *,
 html.light button.bg-emerald-600 *,
 html.light button.bg-emerald-500 *,
 html.light button.bg-green-600 *,
 html.light button.bg-red-600 *,
+html.light button.bg-rose-600 *,
 html.light button.bg-orange-600 *,
 html.light button.bg-orange-500 *,
 html.light button.bg-amber-600 *,
@@ -354,21 +360,21 @@ html.light a.bg-orange-600 * {
   color: inherit !important;
 }
 
-/* Light mode text mappings for readable high-contrast dark text */
-html.light .text-slate-100:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #0f172a !important; }
-html.light .text-slate-200:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #1e293b !important; }
-html.light .text-slate-300:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #334155 !important; }
-html.light .text-slate-400:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #64748b !important; }
-html.light .text-slate-500:not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not([class*="bg-gradient-"] *) { color: #64748b !important; }
+/* Light mode text mappings for readable high-contrast dark text (WCAG AAA compliant for elderly / directors) */
+html.light .text-slate-100:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #0f172a !important; }
+html.light .text-slate-200:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #1e293b !important; }
+html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #334155 !important; }
+html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #475569 !important; }
+html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #475569 !important; }
 
-/* In light mode, turn general white text to dark slate text (unless inside a colored button/gradient) */
-html.light h1.text-white:not([class*="bg-gradient-"]),
-html.light h2.text-white:not([class*="bg-gradient-"]),
-html.light h3.text-white:not([class*="bg-gradient-"]),
-html.light h4.text-white:not([class*="bg-gradient-"]),
-html.light span.text-white:not(button *):not([class*="bg-gradient-"] *):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]),
-html.light p.text-white:not([class*="bg-gradient-"] *),
-html.light div.text-white:not(button *):not([class*="bg-gradient-"] *):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]) {
+/* In light mode, turn general white text to deep dark slate text (unless on solid colored pill/badge) */
+html.light h1.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
+html.light h2.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
+html.light h3.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
+html.light h4.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
+html.light span.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="bg-amber-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
+html.light p.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
+html.light div.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]) {
   color: #0f172a !important;
 }
 
