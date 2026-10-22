@@ -27,7 +27,8 @@ import {
   Camera,
   Image as ImageIcon,
   ExternalLink,
-  Upload
+  Upload,
+  ShoppingCart
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -289,6 +290,29 @@ export default function WarehouseContent() {
 
   const [receiveForm, setReceiveForm] = useState(initialReceiveForm)
 
+  // Order to Supply (Ta'minotga talabnoma / zakaz berish) states
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [orderingItem, setOrderingItem] = useState<ProductInventory | null>(null)
+  const [orderLoading, setOrderLoading] = useState(false)
+
+  const getTomorrowDateStr = () => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return d.toISOString().split('T')[0]
+  }
+
+  const initialOrderForm = {
+    productId: '',
+    productName: '',
+    supplierId: '',
+    quantity: '',
+    unit: 'kg',
+    expectedDate: getTomorrowDateStr(),
+    timeRange: '09:00 - 12:00',
+    notes: ''
+  }
+  const [orderForm, setOrderForm] = useState(initialOrderForm)
+
   useEffect(() => {
     fetchInventory()
     fetchTempLogs()
@@ -387,6 +411,81 @@ export default function WarehouseContent() {
       toast.error("Tarmoq xatosi")
     } finally {
       setReceiveLoading(false)
+    }
+  }
+
+  function handleOpenOrderModal(item: ProductInventory) {
+    setOrderingItem(item)
+    let suggestedQty = 20
+    if (item.minStockLevel > 0) {
+      if (item.minStockLevel > item.totalQuantity) {
+        suggestedQty = Math.max(item.minStockLevel * 2 - item.totalQuantity, item.minStockLevel)
+      } else {
+        suggestedQty = item.minStockLevel
+      }
+    }
+
+    const defaultNotes = item.status === 'red'
+      ? "Skladda kritik qoldiq tugagan! Zudlik bilan yetkazib berilishi lozim."
+      : item.status === 'yellow'
+      ? "Skladda qoldiq kamaymoqda. Zaxirani to'ldirish uchun buyurtma."
+      : "Zaxira uchun rejaviy buyurtma."
+
+    setOrderForm({
+      productId: item.id.toString(),
+      productName: item.name,
+      supplierId: '',
+      quantity: suggestedQty.toString(),
+      unit: item.unit || 'kg',
+      expectedDate: getTomorrowDateStr(),
+      timeRange: '09:00 - 12:00',
+      notes: defaultNotes
+    })
+    setShowOrderModal(true)
+  }
+
+  async function handleSaveOrder(e: React.FormEvent) {
+    e.preventDefault()
+    if (!orderForm.productId || !orderForm.quantity || parseFloat(orderForm.quantity) <= 0) {
+      toast.error(lang === 'ru' ? 'Укажите правильное количество' : "Miqdorni to'g'ri kiriting")
+      return
+    }
+
+    setOrderLoading(true)
+    try {
+      const selectedSup = suppliers.find(s => s.id === parseInt(orderForm.supplierId))
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: orderForm.productId,
+          supplierId: orderForm.supplierId ? parseInt(orderForm.supplierId) : null,
+          supplierName: selectedSup?.name || null,
+          quantity: parseFloat(orderForm.quantity),
+          unit: orderForm.unit,
+          expectedDate: orderForm.expectedDate,
+          timeRange: orderForm.timeRange,
+          notes: orderForm.notes,
+          status: 'PENDING'
+        })
+      })
+
+      if (res.ok) {
+        toast.success(
+          lang === 'ru' 
+            ? 'Заявка успешно отправлена в отдел снабжения и общий чат!' 
+            : "Ta'minot bo'limiga buyurtma muvaffaqiyatli yuborildi! Umumiy chatga xabarnoma jo'natildi."
+        )
+        setShowOrderModal(false)
+        setOrderForm(initialOrderForm)
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Buyurtma yuborishda xatolik")
+      }
+    } catch {
+      toast.error("Tarmoq xatosi")
+    } finally {
+      setOrderLoading(false)
     }
   }
 
@@ -666,6 +765,7 @@ export default function WarehouseContent() {
         setShowTempModal(false)
         setShowTransferModal(false)
         setShowReceiveModal(false)
+        setShowOrderModal(false)
         setPreviewPhotoModal(null)
       }
     }
@@ -806,13 +906,25 @@ export default function WarehouseContent() {
                 )}
               </p>
             </div>
-            <button
-              onClick={() => handleOpenReceiveModal()}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/30 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap"
-            >
-              <Plus size={18} />
-              <span>{formatDual("Yangi Kirim (Qabul Qilish)", "Принять сырье (Приход)", "New Intake")}</span>
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              {criticalItems > 0 && (
+                <button
+                  onClick={() => setStatusFilter(statusFilter === 'red' ? 'all' : 'red')}
+                  className="flex items-center gap-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all"
+                  title="Kritik qoldiqdagi mahsulotlarni ko'rish"
+                >
+                  <AlertTriangle size={16} />
+                  <span>{criticalItems} {formatDual("ta kritik qoldiq!", "критических позиций!", "critical items!")}</span>
+                </button>
+              )}
+              <button
+                onClick={() => handleOpenReceiveModal()}
+                className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/30 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap"
+              >
+                <Plus size={18} />
+                <span>{formatDual("Yangi Kirim (Qabul Qilish)", "Принять сырье (Приход)", "New Intake")}</span>
+              </button>
+            </div>
           </div>
 
           {/* Filters & Search */}
@@ -986,7 +1098,21 @@ export default function WarehouseContent() {
                           )}
                         </td>
                         <td className="p-5 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-2 flex-wrap">
+                            <button
+                              onClick={() => handleOpenOrderModal(item)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                item.status === 'red'
+                                  ? 'bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 shadow-sm shadow-rose-500/20 animate-pulse'
+                                  : item.status === 'yellow'
+                                  ? 'bg-amber-500/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/40'
+                                  : 'bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white border border-dark-700'
+                              }`}
+                              title={formatDual("Ta'minot bo'limiga buyurtma / talabnoma yuborish", "Отправить заявку в отдел снабжения", "Send purchase request to supply")}
+                            >
+                              <ShoppingCart size={14} />
+                              <span>{formatDual("Zakaz", "Заказ", "Order")}</span>
+                            </button>
                             <button
                               onClick={() => handleOpenReceiveModal(item)}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 transition-all"
@@ -1967,6 +2093,173 @@ export default function WarehouseContent() {
                 className="max-h-[70vh] w-auto max-w-full rounded-xl object-contain shadow-lg"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ORDER TO SUPPLY (TA'MINOTGA ZAYAVKA / BUYURTMA) */}
+      {showOrderModal && orderingItem && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter overflow-y-auto"
+          onClick={() => setShowOrderModal(false)}
+        >
+          <div 
+            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-3xl shadow-2xl p-6 overflow-hidden my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <ShoppingCart size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">
+                    {formatDual("Ta'minotga Zayavka (Buyurtma)", "Заявка в отдел снабжения", "Purchase Request")}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {formatDual("Kamaygan xomashyoni sotib olish uchun talabnoma yuborish", "Отправка заявки на закупку сырья в снабжение и общий чат", "Send order request to supply and chat")}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowOrderModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveOrder} className="space-y-4 pt-4">
+              {/* Product Info Card */}
+              <div className="p-4 bg-dark-800/80 rounded-2xl border border-dark-700 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Mahsulot</span>
+                  <h4 className="text-lg font-black text-white">{orderingItem.name}</h4>
+                  <span className="text-xs text-slate-400">{orderingItem.category || 'Xomashyo'}</span>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <span className="text-xs font-semibold text-slate-400">Joriy qoldiq:</span>
+                    <span className={`text-sm font-black ${orderingItem.totalQuantity === 0 ? 'text-rose-400' : 'text-amber-400'}`}>
+                      {orderingItem.totalQuantity} {orderingItem.unit}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Min. me'yor: {orderingItem.minStockLevel} {orderingItem.unit}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quantity to Order */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  {formatDual("Kerakli Buyurtma Miqdori", "Необходимое количество", "Required Quantity")} ({orderForm.unit}) <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    placeholder="Masalan: 100"
+                    value={orderForm.quantity}
+                    onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-4 pr-16 py-3 text-white text-lg font-mono font-bold focus:outline-none focus:border-amber-500"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                    {orderForm.unit}
+                  </span>
+                </div>
+              </div>
+
+              {/* Expected Date & Time Range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Qachonga Kerak (Sana)", "К какой дате (Срок)", "Needed By (Date)")} <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={orderForm.expectedDate}
+                    onChange={(e) => setOrderForm({ ...orderForm, expectedDate: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Vaqt Oralig'i", "Время доставки", "Time Range")}
+                  </label>
+                  <select
+                    value={orderForm.timeRange}
+                    onChange={(e) => setOrderForm({ ...orderForm, timeRange: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="09:00 - 12:00">09:00 - 12:00 (Ertalab)</option>
+                    <option value="12:00 - 15:00">12:00 - 15:00 (Tushdan keyin)</option>
+                    <option value="15:00 - 18:00">15:00 - 18:00 (Kechga)</option>
+                    <option value="Ixtiyoriy">Ixtiyoriy vaqtda</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Supplier Selection (Optional) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  {formatDual("Tavsiya Etilgan Ta'minotchi (Ixtiyoriy)", "Поставщик (Опционально)", "Supplier (Optional)")}
+                </label>
+                <select
+                  value={orderForm.supplierId}
+                  onChange={(e) => setOrderForm({ ...orderForm, supplierId: e.target.value })}
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                >
+                  <option value="">{formatDual("Ta'minotchi o'zi tanlasin...", "Отдел снабжения выберет сам...", "Supply team will choose...")}</option>
+                  {suppliers.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Notes / Reason */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  {formatDual("Izoh / Zudlik Sababi", "Примечание / Срочность", "Notes / Urgency")}
+                </label>
+                <input
+                  type="text"
+                  placeholder="Masalan: Zudlik bilan yetkazilsin, oshxonada bugun kerak..."
+                  value={orderForm.notes}
+                  onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center gap-2">
+                <ShoppingCart size={16} className="flex-shrink-0" />
+                <span>
+                  {formatDual(
+                    "Talabnoma yuborilgach, u Ta'minot (Snabjeniye) bo'limi va korxonaning Umumiy chatida darhol aks etadi.",
+                    "После отправки заявка сразу появится в отделе снабжения и в общем чате предприятия.",
+                    "After submitting, the order will immediately appear in the supply department and the team chat."
+                  )}
+                </span>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-dark-700">
+                <button
+                  type="button"
+                  onClick={() => setShowOrderModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                >
+                  {formatDual("Bekor qilish", "Отмена", "Cancel")}
+                </button>
+                <button
+                  type="submit"
+                  disabled={orderLoading}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/30 transition-all disabled:opacity-50"
+                >
+                  {orderLoading && <Loader2 size={16} className="animate-spin" />}
+                  <span>{formatDual("Ta'minotga Zayavka Yuborish", "Отправить заявку в снабжение", "Submit Purchase Request")}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
