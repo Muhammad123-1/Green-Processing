@@ -69,6 +69,10 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       title: t('orders'), 
       subtitle: t('ordersSub') 
     },
+    '/supply': { 
+      title: t('orders'), 
+      subtitle: t('ordersSub') 
+    },
     '/custom-tables': { 
       title: t('customTables'), 
       subtitle: t('customTablesSub') 

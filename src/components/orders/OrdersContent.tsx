@@ -25,7 +25,7 @@ import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export default function OrdersContent() {
-  const { lang } = useLanguage()
+  const { lang, formatDual } = useLanguage()
   const [activeTab, setActiveTab] = useState<'inventory' | 'orders'>('inventory')
 
   const [loading, setLoading] = useState(true)
@@ -156,7 +156,7 @@ export default function OrdersContent() {
       expectedDate: new Date().toISOString().split('T')[0],
       timeRange: '09:00 - 11:00',
       price: '',
-      notes: `Sklad qoldig'i: ${item.totalQuantity} ${item.unit}. Minimal: ${item.minStockLevel} ${item.unit}`
+      notes: `${formatDual("Sklad qoldig'i", "Остаток на складе", "Stock")}: ${item.totalQuantity} ${item.unit}. ${formatDual("Minimal", "Мин.", "Min")}: ${item.minStockLevel} ${item.unit}`
     })
     setShowOrderModal(true)
   }
@@ -178,7 +178,7 @@ export default function OrdersContent() {
   async function handleCreateOrder(e: React.FormEvent) {
     e.preventDefault()
     if (!form.productId || !form.quantity || !form.expectedDate) {
-      toast.error("Iltimos, barcha majburiy maydonlarni to'ldiring")
+      toast.error(formatDual("Iltimos, barcha majburiy maydonlarni to'ldiring", "Пожалуйста, заполните все обязательные поля", "Please fill all required fields"))
       return
     }
 
@@ -204,7 +204,7 @@ export default function OrdersContent() {
       })
 
       if (res.ok) {
-        toast.success("Buyurtma muvaffaqiyatli yaratildi")
+        toast.success(formatDual("Buyurtma muvaffaqiyatli yaratildi", "Заказ успешно создан", "Order created successfully"))
         setShowOrderModal(false)
         setForm({
           productId: '',
@@ -220,10 +220,10 @@ export default function OrdersContent() {
         refreshData()
         setActiveTab('orders')
       } else {
-        toast.error("Buyurtma yaratishda xatolik yuz berdi")
+        toast.error(formatDual("Buyurtma yaratishda xatolik yuz berdi", "Ошибка при создании заказа", "Error creating order"))
       }
     } catch {
-      toast.error("Tarmoq xatosi")
+      toast.error(formatDual("Tarmoq xatosi", "Ошибка сети", "Network error"))
     } finally {
       setSavingOrder(false)
     }
@@ -254,15 +254,15 @@ export default function OrdersContent() {
       })
 
       if (res.ok) {
-        toast.success("Yetkazib berish natijasi saqlandi va solishtirildi")
+        toast.success(formatDual("Yetkazib berish natijasi saqlandi va solishtirildi", "Результат поставки сохранен и сверен", "Reconciliation saved successfully"))
         setShowReconcileModal(false)
         setSelectedOrder(null)
         refreshData()
       } else {
-        toast.error("Solishtirishni saqlashda xatolik")
+        toast.error(formatDual("Solishtirishni saqlashda xatolik", "Ошибка при сохранении сверки", "Error saving reconciliation"))
       }
     } catch {
-      toast.error("Tarmoq xatosi")
+      toast.error(formatDual("Tarmoq xatosi", "Ошибка сети", "Network error"))
     } finally {
       setSavingReconcile(false)
     }
@@ -270,7 +270,7 @@ export default function OrdersContent() {
 
   // Cancel order
   async function handleCancelOrder(orderId: number) {
-    if (!confirm("Haqiqatan ham bu buyurtmani bekor qilmoqchimisiz?")) return
+    if (!confirm(formatDual("Haqiqatan ham bu buyurtmani bekor qilmoqchimisiz?", "Вы действительно хотите отменить этот заказ?", "Are you sure you want to cancel this order?"))) return
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
@@ -278,11 +278,11 @@ export default function OrdersContent() {
         body: JSON.stringify({ status: 'CANCELLED' })
       })
       if (res.ok) {
-        toast.success("Buyurtma bekor qilindi")
+        toast.success(formatDual("Buyurtma bekor qilindi", "Заказ отменен", "Order cancelled"))
         refreshData()
       }
     } catch {
-      toast.error("Xatolik yuz berdi")
+      toast.error(formatDual("Xatolik yuz berdi", "Произошла ошибка", "An error occurred"))
     }
   }
 
@@ -324,15 +324,19 @@ export default function OrdersContent() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              Ta'minot & Sklad Zanjiri
+              {formatDual("Ta'minot & Sklad Zanjiri", "Цепочка поставок и склад", "Supply & Warehouse Chain")}
             </span>
-            <span className="text-xs text-slate-500">Real-time Sklad & Solishtiruv</span>
+            <span className="text-xs text-slate-500">{formatDual("Real-time Sklad & Solishtiruv", "Склад в реальном времени & Сверка", "Real-time Stock & Reconciliation")}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Ta'minot va Buyurtmalar Markazi (Snabjenets)
+            {formatDual("Ta'minot va Buyurtmalar Markazi (Snabjenets)", "Центр снабжения и заказов (Снабженец)", "Supply & Purchase Orders Center")}
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Sklad real qoldig'iga qarab buyurtma berish, yetkazib beruvchilarni boshqarish va farqlarni solishtirish
+            {formatDual(
+              "Sklad real qoldig'iga qarab buyurtma berish, yetkazib beruvchilarni boshqarish va farqlarni solishtirish",
+              "Заказ сырья по реальным остаткам склада, управление поставщиками и сверка поставок",
+              "Order raw materials by real stock, manage suppliers, and reconcile deliveries"
+            )}
           </p>
         </div>
 
@@ -341,7 +345,7 @@ export default function OrdersContent() {
             onClick={refreshData}
             disabled={refreshing}
             className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white border border-dark-700 transition-colors"
-            title="Yangilash"
+            title={formatDual("Yangilash", "Обновить", "Refresh")}
           >
             <RefreshCw size={18} className={refreshing ? 'animate-spin text-blue-400' : ''} />
           </button>
@@ -363,7 +367,7 @@ export default function OrdersContent() {
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/25 transition-all"
           >
             <Plus size={18} />
-            <span>Yangi Buyurtma</span>
+            <span>{formatDual("Yangi Buyurtma", "Новый заказ", "New Order")}</span>
           </button>
         </div>
       </div>
@@ -376,11 +380,11 @@ export default function OrdersContent() {
           className={`card p-4 rounded-xl cursor-pointer transition-all border-l-4 border-l-red-500 ${stockFilter === 'RED' && activeTab === 'inventory' ? 'ring-2 ring-red-500/50 bg-red-500/10' : 'hover:bg-dark-800'}`}
         >
           <div className="flex items-center justify-between text-red-400 mb-2">
-            <span className="text-xs font-semibold uppercase">Tugagan</span>
+            <span className="text-xs font-semibold uppercase">{formatDual("Tugagan", "Закончилось", "Out of Stock")}</span>
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
           </div>
           <div className="text-2xl font-bold text-white">{metrics.outOfStockCount || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">0 kg qoldiq</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">{formatDual("0 kg qoldiq", "0 кг остаток", "0 stock")}</div>
         </div>
 
         {/* 2. Low stock (Yellow) */}
@@ -389,11 +393,11 @@ export default function OrdersContent() {
           className={`card p-4 rounded-xl cursor-pointer transition-all border-l-4 border-l-amber-500 ${stockFilter === 'YELLOW' && activeTab === 'inventory' ? 'ring-2 ring-amber-500/50 bg-amber-500/10' : 'hover:bg-dark-800'}`}
         >
           <div className="flex items-center justify-between text-amber-400 mb-2">
-            <span className="text-xs font-semibold uppercase">Kamaygan</span>
+            <span className="text-xs font-semibold uppercase">{formatDual("Kamaygan", "Мало", "Low Stock")}</span>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
           </div>
           <div className="text-2xl font-bold text-white">{metrics.lowStockCount || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">&lt; Minimal me'yor</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">&lt; {formatDual("Minimal me'yor", "Мин. норма", "Min stock")}</div>
         </div>
 
         {/* 3. Sufficient (Green) */}
@@ -402,11 +406,11 @@ export default function OrdersContent() {
           className={`card p-4 rounded-xl cursor-pointer transition-all border-l-4 border-l-emerald-500 ${stockFilter === 'GREEN' && activeTab === 'inventory' ? 'ring-2 ring-emerald-500/50 bg-emerald-500/10' : 'hover:bg-dark-800'}`}
         >
           <div className="flex items-center justify-between text-emerald-400 mb-2">
-            <span className="text-xs font-semibold uppercase">Yetarli</span>
+            <span className="text-xs font-semibold uppercase">{formatDual("Yetarli", "В норме", "Sufficient")}</span>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
           </div>
           <div className="text-2xl font-bold text-white">{metrics.sufficientCount || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">&gt;= Minimal zaxira</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">&gt;= {formatDual("Minimal zaxira", "Мин. запас", "Min reserve")}</div>
         </div>
 
         {/* 4. Order Needed */}
@@ -415,11 +419,11 @@ export default function OrdersContent() {
           className="card p-4 rounded-xl cursor-pointer hover:bg-dark-800 transition-all border-l-4 border-l-blue-500"
         >
           <div className="flex items-center justify-between text-blue-400 mb-2">
-            <span className="text-xs font-semibold uppercase">Ehtiyoj</span>
+            <span className="text-xs font-semibold uppercase">{formatDual("Ehtiyoj", "Потребность", "Needed")}</span>
             <ShoppingCart size={14} />
           </div>
           <div className="text-2xl font-bold text-white">{metrics.orderNeededCount || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Buyurtma kerak</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">{formatDual("Buyurtma kerak", "Нужен заказ", "Order needed")}</div>
         </div>
 
         {/* 5. Pending orders */}
@@ -428,11 +432,11 @@ export default function OrdersContent() {
           className={`card p-4 rounded-xl cursor-pointer transition-all border-l-4 border-l-indigo-500 ${orderFilter === 'PENDING' && activeTab === 'orders' ? 'ring-2 ring-indigo-500/50 bg-indigo-500/10' : 'hover:bg-dark-800'}`}
         >
           <div className="flex items-center justify-between text-indigo-400 mb-2">
-            <span className="text-xs font-semibold uppercase">Kutilmoqda</span>
+            <span className="text-xs font-semibold uppercase">{formatDual("Kutilmoqda", "Ожидается", "Pending")}</span>
             <Clock size={14} />
           </div>
           <div className="text-2xl font-bold text-white">{metrics.pendingOrdersCount || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Faol buyurtma</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">{formatDual("Faol buyurtma", "Активный заказ", "Active orders")}</div>
         </div>
 
         {/* 6. Today deliveries */}
@@ -441,11 +445,11 @@ export default function OrdersContent() {
           className={`card p-4 rounded-xl cursor-pointer transition-all border-l-4 border-l-cyan-500 ${orderFilter === 'TODAY' && activeTab === 'orders' ? 'ring-2 ring-cyan-500/50 bg-cyan-500/10' : 'hover:bg-dark-800'}`}
         >
           <div className="flex items-center justify-between text-cyan-400 mb-2">
-            <span className="text-xs font-semibold uppercase">Bugun</span>
+            <span className="text-xs font-semibold uppercase">{formatDual("Bugun", "Сегодня", "Today")}</span>
             <Truck size={14} />
           </div>
           <div className="text-2xl font-bold text-white">{metrics.todayDeliveriesCount || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Kelishi kerak</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">{formatDual("Kelishi kerak", "Ожидается привоз", "Expected today")}</div>
         </div>
 
         {/* 7. Delayed orders */}
@@ -454,11 +458,11 @@ export default function OrdersContent() {
           className={`card p-4 rounded-xl cursor-pointer transition-all border-l-4 border-l-rose-600 ${orderFilter === 'DELAYED' && activeTab === 'orders' ? 'ring-2 ring-rose-600/50 bg-rose-600/10' : 'hover:bg-dark-800'}`}
         >
           <div className="flex items-center justify-between text-rose-400 mb-2">
-            <span className="text-xs font-semibold uppercase">Kechikkan</span>
+            <span className="text-xs font-semibold uppercase">{formatDual("Kechikkan", "Просрочено", "Delayed")}</span>
             <AlertTriangle size={14} />
           </div>
           <div className="text-2xl font-bold text-rose-400">{metrics.delayedOrdersCount || 0}</div>
-          <div className="text-[11px] text-rose-500/80 mt-0.5">Yetkazilmadi</div>
+          <div className="text-[11px] text-rose-500/80 mt-0.5">{formatDual("Yetkazilmadi", "Не доставлено", "Not delivered")}</div>
         </div>
       </div>
 
@@ -474,7 +478,7 @@ export default function OrdersContent() {
             }`}
           >
             <Package size={16} />
-            <span>Sklad Qoldiqlari & Buyurtma Takliflari</span>
+            <span>{formatDual("Sklad Qoldiqlari & Buyurtma Takliflari", "Остатки на складе & Рекомендации заказов", "Stock & Reorder Suggestions")}</span>
             {metrics.orderNeededCount > 0 && (
               <span className="px-2 py-0.5 text-xs bg-red-500 text-white rounded-full font-bold">
                 {metrics.orderNeededCount}
@@ -491,7 +495,7 @@ export default function OrdersContent() {
             }`}
           >
             <Truck size={16} />
-            <span>Buyurtmalar & Solishtiruv (Reconciliation)</span>
+            <span>{formatDual("Buyurtmalar & Solishtiruv (Reconciliation)", "Заказы & Сверка поставок (Reconciliation)", "Orders & Reconciliation")}</span>
             <span className="px-2 py-0.5 text-xs bg-dark-700 text-slate-300 rounded-full">
               {orders.length}
             </span>
@@ -508,7 +512,7 @@ export default function OrdersContent() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input
                 type="text"
-                placeholder="Mahsulot nomi yoki kodi bo'yicha qidirish..."
+                placeholder={formatDual("Mahsulot nomi yoki kodi bo'yicha qidirish...", "Поиск по названию или коду товара...", "Search by product name or code...")}
                 value={stockSearch}
                 onChange={(e) => setStockSearch(e.target.value)}
                 className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
@@ -517,7 +521,7 @@ export default function OrdersContent() {
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs text-slate-400 flex items-center gap-1.5 whitespace-nowrap">
-                <SlidersHorizontal size={14} /> Holat:
+                <SlidersHorizontal size={14} /> {formatDual("Holat:", "Статус:", "Status:")}
               </span>
               <div className="flex bg-dark-800 p-1 rounded-xl border border-dark-700">
                 <button
@@ -526,7 +530,7 @@ export default function OrdersContent() {
                     stockFilter === 'ALL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  Barchasi
+                  {formatDual("Barchasi", "Все", "All")}
                 </button>
                 <button
                   onClick={() => setStockFilter('RED')}
@@ -534,7 +538,7 @@ export default function OrdersContent() {
                     stockFilter === 'RED' ? 'bg-red-500 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  🔴 Tugagan
+                  🔴 {formatDual("Tugagan", "Закончилось", "Out of stock")}
                 </button>
                 <button
                   onClick={() => setStockFilter('YELLOW')}
@@ -542,7 +546,7 @@ export default function OrdersContent() {
                     stockFilter === 'YELLOW' ? 'bg-amber-500 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  🟡 Kamaygan
+                  🟡 {formatDual("Kamaygan", "Мало", "Low")}
                 </button>
                 <button
                   onClick={() => setStockFilter('GREEN')}
@@ -550,7 +554,7 @@ export default function OrdersContent() {
                     stockFilter === 'GREEN' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  🟢 Yetarli
+                  🟢 {formatDual("Yetarli", "Достаточно", "Sufficient")}
                 </button>
               </div>
             </div>
@@ -561,25 +565,25 @@ export default function OrdersContent() {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <Loader2 className="animate-spin text-blue-500 mb-3" size={32} />
-                <p>Sklad qoldiqlari tahlil qilinmoqda...</p>
+                <p>{formatDual("Sklad qoldiqlari tahlil qilinmoqda...", "Анализ остатков на складе...", "Analyzing warehouse stock...")}</p>
               </div>
             ) : filteredInventory.length === 0 ? (
               <div className="text-center py-16 text-slate-500">
                 <Package size={40} className="mx-auto mb-3 text-slate-600" />
-                <p>Hech qanday mahsulot topilmadi</p>
+                <p>{formatDual("Hech qanday mahsulot topilmadi", "Товары не найдены", "No products found")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-dark-800/90 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase tracking-wider">
-                      <th className="py-3.5 px-4">Mahsulot</th>
-                      <th className="py-3.5 px-4">Kategoriya</th>
-                      <th className="py-3.5 px-4 text-center">Sklad Qoldig'i</th>
-                      <th className="py-3.5 px-4 text-center">Minimal Zaxira</th>
-                      <th className="py-3.5 px-4 text-center">Holat</th>
-                      <th className="py-3.5 px-4 text-center">Yetishmayotgan Miqdor</th>
-                      <th className="py-3.5 px-4 text-right">Tezkor Harakat</th>
+                      <th className="py-3.5 px-4">{formatDual("Mahsulot", "Товар / Сырье", "Product")}</th>
+                      <th className="py-3.5 px-4">{formatDual("Kategoriya", "Категория", "Category")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Sklad Qoldig'i", "Остаток на складе", "Warehouse Stock")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Minimal Zaxira", "Мин. остаток", "Min Stock")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Holat", "Статус", "Status")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Yetishmayotgan Miqdor", "Недостающее кол-во", "Shortage / Needed")}</th>
+                      <th className="py-3.5 px-4 text-right">{formatDual("Tezkor Harakat", "Действие", "Action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-700/50 text-sm">
@@ -603,7 +607,7 @@ export default function OrdersContent() {
                         </td>
 
                         <td className="py-3.5 px-4 text-slate-400">
-                          {item.category || 'Xomashyo'}
+                          {item.category || formatDual('Xomashyo', 'Сырьё', 'Raw material')}
                         </td>
 
                         <td className="py-3.5 px-4 text-center font-mono font-bold text-white">
@@ -623,17 +627,17 @@ export default function OrdersContent() {
                         <td className="py-3.5 px-4 text-center">
                           {item.status === 'red' && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
-                              <span className="w-2 h-2 rounded-full bg-red-500" /> Tugagan
+                              <span className="w-2 h-2 rounded-full bg-red-500" /> {formatDual("Tugagan", "Закончилось", "Out of stock")}
                             </span>
                           )}
                           {item.status === 'yellow' && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                              <span className="w-2 h-2 rounded-full bg-amber-500" /> Kamaygan
+                              <span className="w-2 h-2 rounded-full bg-amber-500" /> {formatDual("Kamaygan", "Мало", "Low")}
                             </span>
                           )}
                           {item.status === 'green' && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500" /> Yetarli
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" /> {formatDual("Yetarli", "Достаточно", "Sufficient")}
                             </span>
                           )}
                         </td>
@@ -660,7 +664,7 @@ export default function OrdersContent() {
                             }`}
                           >
                             <ShoppingCart size={14} />
-                            <span>Buyurtma Berish</span>
+                            <span>{formatDual("Buyurtma Berish", "Заказать", "Order")}</span>
                           </button>
                         </td>
                       </tr>
@@ -682,7 +686,7 @@ export default function OrdersContent() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input
                 type="text"
-                placeholder="Mahsulot yoki yetkazib beruvchi bo'yicha qidirish..."
+                placeholder={formatDual("Mahsulot yoki yetkazib beruvchi bo'yicha qidirish...", "Поиск по товару или поставщику...", "Search by product or supplier...")}
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
                 className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
@@ -697,7 +701,7 @@ export default function OrdersContent() {
                     orderFilter === 'ALL' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  Barchasi
+                  {formatDual("Barchasi", "Все", "All")}
                 </button>
                 <button
                   onClick={() => setOrderFilter('PENDING')}
@@ -705,7 +709,7 @@ export default function OrdersContent() {
                     orderFilter === 'PENDING' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  ⏳ Kutilmoqda
+                  ⏳ {formatDual("Kutilmoqda", "Ожидается", "Pending")}
                 </button>
                 <button
                   onClick={() => setOrderFilter('DELAYED')}
@@ -713,7 +717,7 @@ export default function OrdersContent() {
                     orderFilter === 'DELAYED' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  🔴 Kechikkan
+                  🔴 {formatDual("Kechikkan", "Просрочено", "Delayed")}
                 </button>
                 <button
                   onClick={() => setOrderFilter('DELIVERED')}
@@ -721,7 +725,7 @@ export default function OrdersContent() {
                     orderFilter === 'DELIVERED' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  🟢 Yetkazildi
+                  🟢 {formatDual("Yetkazildi", "Доставлено", "Delivered")}
                 </button>
                 <button
                   onClick={() => setOrderFilter('CANCELLED')}
@@ -729,7 +733,7 @@ export default function OrdersContent() {
                     orderFilter === 'CANCELLED' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  Bekor qilingan
+                  {formatDual("Bekor qilingan", "Отменено", "Cancelled")}
                 </button>
               </div>
             </div>
@@ -740,27 +744,27 @@ export default function OrdersContent() {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <Loader2 className="animate-spin text-blue-500 mb-3" size={32} />
-                <p>Buyurtmalar yuklanmoqda...</p>
+                <p>{formatDual("Buyurtmalar yuklanmoqda...", "Загрузка заказов...", "Loading orders...")}</p>
               </div>
             ) : filteredOrders.length === 0 ? (
               <div className="text-center py-16 text-slate-500">
                 <Truck size={40} className="mx-auto mb-3 text-slate-600" />
-                <p>Hech qanday buyurtma topilmadi</p>
+                <p>{formatDual("Hech qanday buyurtma topilmadi", "Заказов не найдено", "No orders found")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-dark-800/90 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase tracking-wider">
-                      <th className="py-3.5 px-4">Buyurtma & Sana</th>
-                      <th className="py-3.5 px-4">Mahsulot</th>
-                      <th className="py-3.5 px-4">Yetkazib Beruvchi</th>
-                      <th className="py-3.5 px-4 text-center">Buyurtma Miqdori</th>
-                      <th className="py-3.5 px-4 text-center">Kelgan Miqdor</th>
-                      <th className="py-3.5 px-4 text-center">Qabul Qilingan</th>
-                      <th className="py-3.5 px-4 text-center">Farq / Yetishmagan</th>
-                      <th className="py-3.5 px-4 text-center">Holat</th>
-                      <th className="py-3.5 px-4 text-right">Solishtirish / Amal</th>
+                      <th className="py-3.5 px-4">{formatDual("Buyurtma & Sana", "Заказ & Дата", "Order & Date")}</th>
+                      <th className="py-3.5 px-4">{formatDual("Mahsulot", "Товар", "Product")}</th>
+                      <th className="py-3.5 px-4">{formatDual("Yetkazib Beruvchi", "Поставщик", "Supplier")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Buyurtma Miqdori", "Кол-во заказа", "Ordered Qty")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Kelgan Miqdor", "Привезено", "Delivered Qty")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Qabul Qilingan", "Принято", "Accepted Qty")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Farq / Yetishmagan", "Разница / Недостача", "Shortage / Diff")}</th>
+                      <th className="py-3.5 px-4 text-center">{formatDual("Holat", "Статус", "Status")}</th>
+                      <th className="py-3.5 px-4 text-right">{formatDual("Solishtirish / Amal", "Сверка / Действие", "Reconcile / Action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-700/50 text-sm">
@@ -769,10 +773,10 @@ export default function OrdersContent() {
                         <td className="py-3.5 px-4 font-mono text-xs">
                           <div className="font-bold text-blue-400 mb-1">#{order.id}</div>
                           <div className="text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded inline-block mb-1">
-                            Zakaz: {new Date(order.createdAt).toLocaleString('uz-UZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            {formatDual("Zakaz", "Заказ", "Order")}: {new Date(order.createdAt).toLocaleString(lang === 'ru' ? 'ru-RU' : 'uz-UZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                           </div>
                           <div className="text-slate-400 flex items-center gap-1 mt-0.5 font-bold">
-                            <span className="text-[10px] bg-dark-700 px-1 py-0.5 rounded">Kelish:</span>
+                            <span className="text-[10px] bg-dark-700 px-1 py-0.5 rounded">{formatDual("Kelish:", "Привоз:", "Arrival:")}</span>
                             {order.expectedDateStr} {order.timeRange}
                           </div>
                         </td>
@@ -781,7 +785,7 @@ export default function OrdersContent() {
                           <span className="font-semibold text-white block">{order.productName}</span>
                           {order.price && (
                             <span className="text-[11px] text-slate-400">
-                              {order.price.toLocaleString()} so'm / {order.unit}
+                              {order.price.toLocaleString()} {formatDual("so'm", "сум", "UZS")} / {order.unit}
                             </span>
                           )}
                         </td>
@@ -805,7 +809,7 @@ export default function OrdersContent() {
                               {order.deliveredQuantity} {order.unit}
                             </span>
                           ) : (
-                            <span className="text-slate-500 italic">Kutilmoqda</span>
+                            <span className="text-slate-500 italic">{formatDual("Kutilmoqda", "Ожидается", "Pending")}</span>
                           )}
                         </td>
 
@@ -825,7 +829,7 @@ export default function OrdersContent() {
                               -{order.shortageQuantity} {order.unit}
                             </span>
                           ) : order.shortageQuantity === 0 ? (
-                            <span className="text-emerald-400">0 (To'liq)</span>
+                            <span className="text-emerald-400">{formatDual("0 (To'liq)", "0 (Полностью)", "0 (Full)")}</span>
                           ) : (
                             <span className="text-slate-500">-</span>
                           )}
@@ -834,22 +838,22 @@ export default function OrdersContent() {
                         <td className="py-3.5 px-4 text-center">
                           {order.status === 'DELAYED' && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                              <AlertTriangle size={12} /> Kechikdi
+                              <AlertTriangle size={12} /> {formatDual("Kechikdi", "Просрочен", "Delayed")}
                             </span>
                           )}
                           {order.status === 'PENDING' && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                              <Clock size={12} /> Kutilmoqda
+                              <Clock size={12} /> {formatDual("Kutilmoqda", "Ожидается", "Pending")}
                             </span>
                           )}
                           {order.status === 'DELIVERED' && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                              <CheckCircle2 size={12} /> Bajarildi
+                              <CheckCircle2 size={12} /> {formatDual("Bajarildi", "Выполнен", "Delivered")}
                             </span>
                           )}
                           {order.status === 'CANCELLED' && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-700 text-slate-400">
-                              <XCircle size={12} /> Bekor qilindi
+                              <XCircle size={12} /> {formatDual("Bekor qilindi", "Отменён", "Cancelled")}
                             </span>
                           )}
                         </td>
@@ -859,16 +863,16 @@ export default function OrdersContent() {
                             <button
                               onClick={() => handleOpenReconcile(order)}
                               className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 transition-colors"
-                              title="Yetkazib berilgan miqdorni kiritish va solishtirish"
+                              title={formatDual("Yetkazib berilgan miqdorni kiritish va solishtirish", "Ввести поставленное количество и сверить", "Enter delivered qty and reconcile")}
                             >
-                              Solishtirish
+                              {formatDual("Solishtirish", "Сверить", "Reconcile")}
                             </button>
 
                             {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && (
                               <button
                                 onClick={() => handleCancelOrder(order.id)}
                                 className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                                title="Bekor qilish"
+                                title={formatDual("Bekor qilish", "Отменить", "Cancel")}
                               >
                                 <XCircle size={16} />
                               </button>
@@ -903,8 +907,8 @@ export default function OrdersContent() {
                   <ShoppingCart size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Yangi Xarid Buyurtmasi</h3>
-                  <p className="text-xs text-slate-400">Yetkazib beruvchiga mahsulot buyurtma qilish</p>
+                  <h3 className="text-lg font-bold text-white">{formatDual("Yangi Xarid Buyurtmasi", "Новый заказ на закупку", "New Purchase Order")}</h3>
+                  <p className="text-xs text-slate-400">{formatDual("Yetkazib beruvchiga mahsulot buyurtma qilish", "Заказ сырья у поставщика", "Order supplies from vendor")}</p>
                 </div>
               </div>
               <button 
@@ -919,7 +923,7 @@ export default function OrdersContent() {
               {/* Product Selection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  Mahsulot <span className="text-red-400">*</span>
+                  {formatDual("Mahsulot", "Товар / Сырье", "Product")} <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={form.productId}
@@ -934,7 +938,7 @@ export default function OrdersContent() {
                   required
                   className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
                 >
-                  <option value="">Mahsulotni tanlang...</option>
+                  <option value="">{formatDual("Mahsulotni tanlang...", "Выберите товар...", "Select product...")}</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} ({p.unit || 'kg'}) {p.category ? `• ${p.category}` : ''}
@@ -947,12 +951,12 @@ export default function OrdersContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    Miqdor <span className="text-red-400">*</span>
+                    {formatDual("Miqdor", "Количество", "Quantity")} <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="number"
                     step="any"
-                    placeholder="Masalan: 100"
+                    placeholder={formatDual("Masalan: 100", "Например: 100", "e.g. 100")}
                     value={form.quantity}
                     onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                     required
@@ -961,7 +965,7 @@ export default function OrdersContent() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    O'lchov Birligi
+                    {formatDual("O'lchov Birligi", "Ед. изм.", "Unit")}
                   </label>
                   <input
                     type="text"
@@ -975,7 +979,7 @@ export default function OrdersContent() {
               {/* Supplier Selection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  Yetkazib Beruvchi (Supplier)
+                  {formatDual("Yetkazib Beruvchi (Supplier)", "Поставщик (Supplier)", "Supplier")}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <select
@@ -990,14 +994,14 @@ export default function OrdersContent() {
                     }}
                     className="bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                   >
-                    <option value="">Ro'yxatdan tanlash...</option>
+                    <option value="">{formatDual("Ro'yxatdan tanlash...", "Выбрать из списка...", "Select from list...")}</option>
                     {suppliers.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                   <input
                     type="text"
-                    placeholder="Yoki yangi nom yozing..."
+                    placeholder={formatDual("Yoki yangi nom yozing...", "Или введите название...", "Or enter new name...")}
                     value={form.supplierName}
                     onChange={(e) => setForm({ ...form, supplierName: e.target.value })}
                     className="bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
@@ -1009,7 +1013,7 @@ export default function OrdersContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    Kelishi Kerak Bo'lgan Sana <span className="text-red-400">*</span>
+                    {formatDual("Kelishi Kerak Bo'lgan Sana", "Ожидаемая дата поставки", "Expected Delivery Date")} <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="date"
@@ -1021,7 +1025,7 @@ export default function OrdersContent() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    Kelish Vaqti Oralig'i
+                    {formatDual("Kelish Vaqti Oralig'i", "Интервал времени поставки", "Delivery Time Window")}
                   </label>
                   <input
                     type="text"
@@ -1037,12 +1041,12 @@ export default function OrdersContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    Kelishilgan Narx (so'm / birlik)
+                    {formatDual("Kelishilgan Narx (so'm / birlik)", "Договорная цена (сум / ед)", "Agreed Price (UZS / unit)")}
                   </label>
                   <input
                     type="number"
                     step="any"
-                    placeholder="Masalan: 85000"
+                    placeholder={formatDual("Masalan: 85000", "Например: 85000", "e.g. 85000")}
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
                     className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 font-mono"
@@ -1050,11 +1054,11 @@ export default function OrdersContent() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    Izoh / Maxsus Talablar
+                    {formatDual("Izoh / Maxsus Talablar", "Примечание / Требования", "Notes / Special Requests")}
                   </label>
                   <input
                     type="text"
-                    placeholder="Harorat me'yori, sifat talabi..."
+                    placeholder={formatDual("Harorat me'yori, sifat talabi...", "Температурный режим, требования к качеству...", "Temperature, quality specs...")}
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
                     className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
@@ -1069,7 +1073,7 @@ export default function OrdersContent() {
                   onClick={() => setShowOrderModal(false)}
                   className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
                 >
-                  Bekor qilish
+                  {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1077,7 +1081,7 @@ export default function OrdersContent() {
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
                 >
                   {savingOrder && <Loader2 size={16} className="animate-spin" />}
-                  <span>Buyurtmani Tasdiqlash</span>
+                  <span>{formatDual("Buyurtmani Tasdiqlash", "Подтвердить заказ", "Confirm Order")}</span>
                 </button>
               </div>
             </form>
@@ -1103,9 +1107,9 @@ export default function OrdersContent() {
                   <FileCheck2 size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Buyurtma va Yetkazib Berishni Solishtirish</h3>
+                  <h3 className="text-lg font-bold text-white">{formatDual("Buyurtma va Yetkazib Berishni Solishtirish", "Сверка заказа и фактической поставки", "Reconcile Order & Delivery")}</h3>
                   <p className="text-xs text-slate-400">
-                    Buyurtma #{selectedOrder.id} • {selectedOrder.productName}
+                    {formatDual("Buyurtma", "Заказ", "Order")} #{selectedOrder.id} • {selectedOrder.productName}
                   </p>
                 </div>
               </div>
@@ -1121,13 +1125,13 @@ export default function OrdersContent() {
               {/* Reference Info Card */}
               <div className="bg-dark-800 p-3.5 rounded-xl border border-dark-700 grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-slate-500 block">Buyurtma miqdori:</span>
+                  <span className="text-slate-500 block">{formatDual("Buyurtma miqdori:", "Количество в заказе:", "Ordered quantity:")}</span>
                   <span className="text-base font-bold text-white font-mono">
                     {selectedOrder.quantity} {selectedOrder.unit}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Yetkazib beruvchi:</span>
+                  <span className="text-slate-500 block">{formatDual("Yetkazib beruvchi:", "Поставщик:", "Supplier:")}</span>
                   <span className="font-semibold text-slate-200 block truncate">
                     {selectedOrder.supplierName}
                   </span>
@@ -1138,7 +1142,7 @@ export default function OrdersContent() {
               <div className="grid grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
-                    Kelgan Miqdor
+                    {formatDual("Kelgan Miqdor", "Привезено", "Delivered Qty")}
                   </label>
                   <input
                     type="number"
@@ -1152,7 +1156,7 @@ export default function OrdersContent() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
-                    Qabul Qilingan
+                    {formatDual("Qabul Qilingan", "Принято", "Accepted Qty")}
                   </label>
                   <input
                     type="number"
@@ -1165,7 +1169,7 @@ export default function OrdersContent() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
-                    Qaytarilgan
+                    {formatDual("Qaytarilgan", "Возвращено (брак)", "Rejected Qty")}
                   </label>
                   <input
                     type="number"
@@ -1187,9 +1191,9 @@ export default function OrdersContent() {
                       ? 'bg-rose-500/10 border-rose-500/20 text-rose-300' 
                       : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
                   }`}>
-                    <span>Farq / Yetishmagan miqdor:</span>
+                    <span>{formatDual("Farq / Yetishmagan miqdor:", "Разница / Недостача:", "Difference / Shortage:")}</span>
                     <span className="font-bold text-sm font-mono">
-                      {shortage > 0 ? `-${shortage.toFixed(2)} ${selectedOrder.unit}` : '0 (To\'liq yetkazildi)'}
+                      {shortage > 0 ? `-${shortage.toFixed(2)} ${selectedOrder.unit}` : formatDual("0 (To'liq yetkazildi)", "0 (Полностью доставлено)", "0 (Fully delivered)")}
                     </span>
                   </div>
                 )
@@ -1198,28 +1202,28 @@ export default function OrdersContent() {
               {/* Status Selector */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  Buyurtma Holati
+                  {formatDual("Buyurtma Holati", "Статус заказа", "Order Status")}
                 </label>
                 <select
                   value={reconcileForm.status}
                   onChange={(e) => setReconcileForm({ ...reconcileForm, status: e.target.value })}
                   className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
                 >
-                  <option value="DELIVERED">Bajarildi (Qabul qilindi)</option>
-                  <option value="PENDING">Kutilmoqda</option>
-                  <option value="DELAYED">Kechikdi</option>
-                  <option value="CANCELLED">Bekor qilindi</option>
+                  <option value="DELIVERED">{formatDual("Bajarildi (Qabul qilindi)", "Выполнен (Принято)", "Delivered (Accepted)")}</option>
+                  <option value="PENDING">{formatDual("Kutilmoqda", "Ожидается", "Pending")}</option>
+                  <option value="DELAYED">{formatDual("Kechikdi", "Просрочен", "Delayed")}</option>
+                  <option value="CANCELLED">{formatDual("Bekor qilindi", "Отменён", "Cancelled")}</option>
                 </select>
               </div>
 
               {/* Notes */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  Izoh / Qabul Qilish Sababi
+                  {formatDual("Izoh / Qabul Qilish Sababi", "Примечание / Причина расхождения", "Notes / Reconcile Reason")}
                 </label>
                 <input
                   type="text"
-                  placeholder="Yetishmovchilik yoki sifat sababi..."
+                  placeholder={formatDual("Yetishmovchilik yoki sifat sababi...", "Причина недостачи или брака...", "Reason for shortage or defect...")}
                   value={reconcileForm.notes}
                   onChange={(e) => setReconcileForm({ ...reconcileForm, notes: e.target.value })}
                   className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
@@ -1233,7 +1237,7 @@ export default function OrdersContent() {
                   onClick={() => setShowReconcileModal(false)}
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
                 >
-                  Bekor qilish
+                  {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1241,7 +1245,7 @@ export default function OrdersContent() {
                   className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
                 >
                   {savingReconcile && <Loader2 size={16} className="animate-spin" />}
-                  <span>Solishtirishni Saqlash</span>
+                  <span>{formatDual("Solishtirishni Saqlash", "Сохранить сверку", "Save Reconciliation")}</span>
                 </button>
               </div>
             </form>
