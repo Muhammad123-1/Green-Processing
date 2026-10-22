@@ -184,7 +184,7 @@ const translations = {
     inspections: 'История актов',
     newInspection: 'Новый акт',
     incomingActs: 'Входное сырьё (Акты)',
-    disinfectionIncoming: 'Моющие и дезсредства (Ф-2/05)',
+    disinfectionIncoming: 'Моющие и дезинфицирующие средства',
     orders: 'Заказы',
     production: 'Производство',
     kitchen: 'Кухня персонала',

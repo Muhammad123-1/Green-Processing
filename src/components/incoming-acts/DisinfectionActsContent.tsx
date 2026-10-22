@@ -21,7 +21,8 @@ import {
   Check,
   Scale,
   DollarSign,
-  UserCheck
+  UserCheck,
+  TestTube2
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -291,9 +292,6 @@ export default function DisinfectionActsContent() {
           >
             <FlaskConical className="w-4 h-4 text-white" />
             <span>Dezinfeksiya va yuvish vositalari</span>
-            <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-teal-800/60 font-mono">
-              Ф-2/05
-            </span>
           </div>
         </div>
 
@@ -311,7 +309,7 @@ export default function DisinfectionActsContent() {
             className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
           >
             <Download className="w-4 h-4" />
-            <span>Excel (Ф-2/05)</span>
+            <span>Excel yuklab olish</span>
           </button>
           <button
             onClick={handleOpenCreate}
@@ -334,15 +332,12 @@ export default function DisinfectionActsContent() {
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40 uppercase tracking-wider">
                 SanPiN / QC Nazorati
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                Форма Ф-2/05
-              </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black text-white tracking-wide">
-              Журнал регистрации поступления моющих и дезинфицирующих средств
+              Журнал регистрации поступления моющих, дезинфицирующих и химических средств
             </h1>
             <p className="text-xs md:text-sm text-teal-200/80 mt-1">
-              Korxonaga qabul qilinayotgan barcha dezinfeksiya va yuvish vositalarining sifat, sertifikat va partiya nazorati
+              Korxonaga qabul qilinayotgan barcha dezinfeksiya, yuvish vositalari hamda kimyoviy qo'shimchalarning (kislota, konservantlar) sifat va partiya nazorati
             </p>
           </div>
 
@@ -357,12 +352,12 @@ export default function DisinfectionActsContent() {
               <span className="text-lg font-black text-emerald-400">{stats.totalReceivedKg.toLocaleString()} kg</span>
             </div>
             <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">Faol xlor %</span>
-              <span className="text-lg font-black text-cyan-300">12 %</span>
-            </div>
-            <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
               <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">Sexga berildi</span>
               <span className="text-lg font-black text-amber-300">{stats.totalReleasedKg.toLocaleString()} kg</span>
+            </div>
+            <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
+              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">Qoldiq omborda</span>
+              <span className="text-lg font-black text-cyan-300">{(stats.totalReceivedKg - stats.totalReleasedKg).toLocaleString()} kg</span>
             </div>
           </div>
         </div>
@@ -384,7 +379,7 @@ export default function DisinfectionActsContent() {
           </div>
 
           {/* Category Filter */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
             <button
               onClick={() => setCategoryFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
@@ -397,23 +392,36 @@ export default function DisinfectionActsContent() {
             </button>
             <button
               onClick={() => setCategoryFilter('DEZ')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
                 categoryFilter === 'DEZ'
                   ? 'bg-teal-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
-              🧪 Dezinfeksiya vositalari
+              <span>🧪</span>
+              <span>Dezinfeksiya</span>
             </button>
             <button
               onClick={() => setCategoryFilter('MOYUSHIE')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
                 categoryFilter === 'MOYUSHIE'
-                  ? 'bg-teal-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
-              🧼 Yuvish vositalari
+              <span>🧼</span>
+              <span>Yuvish vositalari</span>
+            </button>
+            <button
+              onClick={() => setCategoryFilter('XIMIYA')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                categoryFilter === 'XIMIYA'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              <span>⚗️</span>
+              <span>Kimyoviy moddalar (Konservantlar)</span>
             </button>
           </div>
 
@@ -456,7 +464,7 @@ export default function DisinfectionActsContent() {
             </span>
           </div>
           <span className="text-xs text-slate-400 font-mono">
-            Форма Ф-2/05 standart jadvali
+            Standart qabul jurnali
           </span>
         </div>
 
@@ -467,13 +475,13 @@ export default function DisinfectionActsContent() {
               <tr className="bg-slate-100 dark:bg-dark-800 text-slate-800 dark:text-slate-200 border-b border-slate-300 dark:border-dark-700 text-center font-bold">
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 w-10">№<br />п/п</th>
                 <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[100px]">ДАТА<br />ПОСТУПЛЕНИЯ</th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[180px] text-left">Наименование<br />средства</th>
+                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[190px] text-left">Наименование<br />средства</th>
                 <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[110px]">Вид<br />изделия</th>
                 <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[160px] text-left">Поставщик</th>
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[70px]">№<br />партии</th>
                 <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[140px]">Сопровождающий<br />документ</th>
-                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[95px] bg-cyan-50/50 dark:bg-cyan-950/20 text-cyan-800 dark:text-cyan-300">
-                  Активный<br />хлор, %
+                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[100px] bg-cyan-50/50 dark:bg-cyan-950/20 text-cyan-800 dark:text-cyan-300">
+                  Активный хлор /<br />Концентрация, %
                 </th>
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[85px] bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
                   Поступило<br />(кг)
@@ -533,6 +541,8 @@ export default function DisinfectionActsContent() {
                 acts.map((act, index) => {
                   const isPermitted = act.accessPermit?.toLowerCase().includes('допущ')
                   const isGoodTransport = act.transportCondition?.toLowerCase().includes('удовл')
+                  const isXimiya = act.category === 'XIMIYA'
+                  const isMoyushie = act.category === 'MOYUSHIE'
 
                   return (
                     <tr
@@ -552,8 +562,20 @@ export default function DisinfectionActsContent() {
                       {/* 3. Наименование средства */}
                       <td className="py-2 px-3 font-bold border-r border-slate-200 dark:border-dark-700 text-slate-900 dark:text-white">
                         <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${
+                            isXimiya ? 'bg-amber-500' : isMoyushie ? 'bg-indigo-500' : 'bg-teal-500'
+                          }`} />
                           <span>{act.substanceName}</span>
+                          {isXimiya && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-normal">
+                              Ximiya
+                            </span>
+                          )}
+                          {isMoyushie && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 font-normal">
+                              Yuvish
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -579,7 +601,7 @@ export default function DisinfectionActsContent() {
                         </span>
                       </td>
 
-                      {/* 8. Содержание активного хлора, в % */}
+                      {/* 8. Содержание активного хлора / Концентрация, в % */}
                       <td className="py-2 px-2 text-center font-bold border-r border-slate-200 dark:border-dark-700 bg-cyan-50/30 dark:bg-cyan-950/10">
                         {act.activeChlorinePercent !== null && act.activeChlorinePercent !== undefined ? (
                           <span className="px-1.5 py-0.5 rounded-md bg-cyan-100 text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-300 font-mono">
@@ -683,10 +705,10 @@ export default function DisinfectionActsContent() {
             <div className="p-5 bg-gradient-to-r from-teal-700 to-slate-800 text-white flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold">
-                  {editingAct ? "Qabul aktini tahrirlash" : "Yangi qabul aktini kiritish (Форма Ф-2/05)"}
+                  {editingAct ? "Qabul aktini tahrirlash" : "Yangi qabul aktini kiritish"}
                 </h3>
                 <p className="text-xs text-teal-200 mt-0.5">
-                  Dezinfeksiya va yuvish vositalari qabuli jurnali
+                  Dezinfeksiya, yuvish va kimyoviy vositalar qabuli jurnali
                 </p>
               </div>
               <button
@@ -737,8 +759,9 @@ export default function DisinfectionActsContent() {
                     onChange={e => setFormData({ ...formData, category: e.target.value })}
                     className="w-full p-2 text-xs bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
                   >
-                    <option value="DEZ">Dezinfeksiya vositalari</option>
-                    <option value="MOYUSHIE">Yuvish vositalari</option>
+                    <option value="DEZ">🧪 Dezinfeksiya vositalari</option>
+                    <option value="MOYUSHIE">🧼 Yuvish vositalari</option>
+                    <option value="XIMIYA">⚗️ Kimyoviy moddalar (Konservantlar)</option>
                   </select>
                 </div>
               </div>
@@ -753,7 +776,7 @@ export default function DisinfectionActsContent() {
                     type="text"
                     value={formData.substanceName}
                     onChange={e => setFormData({ ...formData, substanceName: e.target.value })}
-                    placeholder="Masalan: Гипохлорид натрия"
+                    placeholder="Masalan: Гипохлорид натрия, КИСЛОТА УКСУСНАЯ"
                     className="w-full p-2 text-xs bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white font-bold"
                     required
                   />
@@ -768,7 +791,7 @@ export default function DisinfectionActsContent() {
                     type="text"
                     value={formData.productType}
                     onChange={e => setFormData({ ...formData, productType: e.target.value })}
-                    placeholder="Masalan: ГОСТ 11086-76"
+                    placeholder="Masalan: ГОСТ 11086-76, ГОСТ 61-75"
                     className="w-full p-2 text-xs bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
                   />
                 </div>
@@ -784,7 +807,7 @@ export default function DisinfectionActsContent() {
                     type="text"
                     value={formData.supplierName}
                     onChange={e => setFormData({ ...formData, supplierName: e.target.value })}
-                    placeholder="Masalan: ЧП TURK SHANAY BIZNES"
+                    placeholder="Masalan: RENAISSANCE PRODUCTION, OT-CHEM MCHJ"
                     className="w-full p-2 text-xs bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
                   />
                 </div>
@@ -819,17 +842,17 @@ export default function DisinfectionActsContent() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* 8. Содержание активного хлора, в % */}
+                {/* 8. Содержание активного хлора / Концентрация, в % */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Faol xlor miqdori (Активный хлор, %)
+                    Faol xlor / Konsentratsiya, %
                   </label>
                   <input
                     type="number"
                     step="0.1"
                     value={formData.activeChlorinePercent}
                     onChange={e => setFormData({ ...formData, activeChlorinePercent: e.target.value })}
-                    placeholder="12"
+                    placeholder="12 yoki 99.9"
                     className="w-full p-2 text-xs bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white font-mono"
                   />
                 </div>
@@ -844,7 +867,7 @@ export default function DisinfectionActsContent() {
                     step="any"
                     value={formData.quantityReceived}
                     onChange={e => setFormData({ ...formData, quantityReceived: e.target.value })}
-                    placeholder="400"
+                    placeholder="100"
                     className="w-full p-2 text-xs bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white font-bold"
                   />
                 </div>

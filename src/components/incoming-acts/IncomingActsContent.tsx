@@ -591,9 +591,6 @@ export default function IncomingActsContent() {
           >
             <FlaskConical className="w-4 h-4 text-teal-500" />
             <span>Dezinfeksiya va yuvish vositalari</span>
-            <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded-md bg-teal-500/20 text-teal-700 dark:text-teal-300 font-mono">
-              Ф-2/05
-            </span>
           </Link>
         </div>
       </div>

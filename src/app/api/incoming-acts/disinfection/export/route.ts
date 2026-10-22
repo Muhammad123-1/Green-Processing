@@ -46,34 +46,27 @@ export async function GET(req: NextRequest) {
     })
 
     const workbook = new ExcelJS.Workbook()
-    const sheet = workbook.addWorksheet('ДЕЗСРЕДСТВА И МОЮЩИЕ', {
+    const sheet = workbook.addWorksheet('ДЕЗСРЕДСТВА И ХИМИЯ', {
       views: [{ showGridLines: true }]
     })
 
     // Title Row
-    sheet.mergeCells('H5:M5')
-    const titleCell = sheet.getCell('H5')
-    titleCell.value = 'Журнал регистрации поступления моющих и дезинфицирующих средств'
+    sheet.mergeCells('E5:N5')
+    const titleCell = sheet.getCell('E5')
+    titleCell.value = 'Журнал регистрации поступления моющих, дезинфицирующих и химических средств'
     titleCell.font = { name: 'Times New Roman', size: 14, bold: true }
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
-
-    // Form Code Row
-    sheet.mergeCells('K6:L6')
-    const formCell = sheet.getCell('K6')
-    formCell.value = 'Ф-2/05'
-    formCell.font = { name: 'Times New Roman', size: 12, bold: true }
-    formCell.alignment = { horizontal: 'center', vertical: 'middle' }
 
     // Headers Row 8 & 9
     const headerCols = [
       { key: 'orderNumber', title: '№\nп/п', sub: '1', width: 6 },
       { key: 'arrivalDate', title: 'ДАТА\nПОСТУПЛЕНИЯ', sub: '2', width: 14 },
-      { key: 'substanceName', title: 'Наименование\nсредства', sub: '3', width: 28 },
+      { key: 'substanceName', title: 'Наименование\nсредства', sub: '3', width: 30 },
       { key: 'productType', title: 'Вид\nизделия', sub: '4', width: 18 },
       { key: 'supplierName', title: 'Поставщик', sub: '5', width: 26 },
       { key: 'batchNumber', title: '№\nпартии', sub: '6', width: 10 },
       { key: 'accompanyingDoc', title: 'Сопровождающий\nдокумент', sub: '7', width: 22 },
-      { key: 'activeChlorinePercent', title: 'Содержание\nактивного\nхлора, в %', sub: '8', width: 14 },
+      { key: 'activeChlorinePercent', title: 'Активный хлор /\nКонцентрация, %', sub: '8', width: 16 },
       { key: 'quantityReceived', title: 'Поступило\n(кг)', sub: '9', width: 12 },
       { key: 'manufactureDate', title: 'Дата\nизготовления', sub: '10', width: 14 },
       { key: 'expiryDate', title: 'Годен\nдо', sub: '11', width: 14 },
@@ -172,7 +165,7 @@ export async function GET(req: NextRequest) {
     })
 
     const buffer = await workbook.xlsx.writeBuffer()
-    const filename = `Dezinfeksiya_va_yuvish_vositalari_F-2-05_${new Date().toISOString().slice(0, 10)}.xlsx`
+    const filename = `Dezinfeksiya_va_yuvish_vositalari_${new Date().toISOString().slice(0, 10)}.xlsx`
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
