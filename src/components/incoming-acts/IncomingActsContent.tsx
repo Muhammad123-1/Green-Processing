@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import { PRODUCT_THEMES, getProductTheme } from '@/lib/incoming-acts/constants'
 
 interface IncomingAct {
@@ -120,10 +121,6 @@ export default function IncomingActsContent() {
   // View Mode: 'authentic' (Exact Excel appearance from screenshots) vs 'numeric' (1/0 numbers)
   const [viewMode, setViewMode] = useState<'authentic' | 'numeric'>('authentic')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
 
   // Modals state
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -328,25 +325,24 @@ export default function IncomingActsContent() {
   }
 
   useEffect(() => {
-    setCurrentPage(1)
     fetchActs()
   }, [selectedProduct, selectedRating, dateFrom, dateTo, sortOrder])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurrentPage(1)
       fetchActs()
     }, 350)
     return () => clearTimeout(timer)
   }, [search])
 
-  // Paginated acts
-  const paginatedActs = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
-    return acts.slice(start, start + pageSize)
-  }, [acts, currentPage, pageSize])
-
-  const totalPages = Math.ceil(acts.length / pageSize) || 1
+  const actsPagination = useInfiniteTable(acts, 10, [
+    selectedProduct,
+    selectedRating,
+    search,
+    dateFrom,
+    dateTo,
+    sortOrder
+  ])
 
   // Export handler
   const handleExport = () => {
@@ -541,39 +537,46 @@ export default function IncomingActsContent() {
     }
   }
 
-  // Helper for cell value rendering based on viewMode
+  // Helper for cell value rendering - displays human-readable quality text, NEVER raw 0 and 1
   const renderCellText = (
     rawVal: any,
     numVal: number,
     isDefect = false
   ) => {
-    if (viewMode === 'numeric') {
-      return (
-        <span
-          className={`font-mono font-bold px-1 rounded ${
-            isDefect
-              ? numVal === 0
-                ? 'text-emerald-700 bg-emerald-50'
-                : 'text-red-700 bg-red-100'
-              : numVal === 1
-              ? 'text-emerald-700 bg-emerald-50'
-              : 'text-red-700 bg-red-100'
-          }`}
-        >
-          {numVal}
-        </span>
+    // If rawVal is a human-readable text (and not just raw numeric '0' or '1')
+    if (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== '') {
+      const s = String(rawVal).trim()
+      if (s === '1') {
+        return isDefect ? (
+          <span className="text-rose-600 dark:text-rose-400 font-semibold">есть</span>
+        ) : (
+          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">да</span>
+        )
+      }
+      if (s === '0') {
+        return isDefect ? (
+          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">отсутствует</span>
+        ) : (
+          <span className="text-rose-600 dark:text-rose-400 font-semibold">нет</span>
+        )
+      }
+      return <span className="font-medium text-slate-800 dark:text-slate-200">{s}</span>
+    }
+
+    // Default based on boolean/numeric field:
+    if (isDefect) {
+      return numVal === 0 ? (
+        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">отсутствует</span>
+      ) : (
+        <span className="text-rose-600 dark:text-rose-400 font-semibold">есть</span>
       )
     }
 
-    // Authentic text from rawValues or standard fallback
-    if (rawVal !== undefined && rawVal !== null && rawVal !== '') {
-      return <span>{String(rawVal)}</span>
-    }
-
-    if (isDefect) {
-      return <span>{numVal === 0 ? 'отсутствует' : 'есть'}</span>
-    }
-    return <span>{numVal === 1 ? 'да' : 'нет'}</span>
+    return numVal === 1 ? (
+      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">да</span>
+    ) : (
+      <span className="text-rose-600 dark:text-rose-400 font-semibold">нет</span>
+    )
   }
 
   return (
@@ -615,32 +618,12 @@ export default function IncomingActsContent() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* View Mode Toggle Button */}
-          <div className="bg-slate-800 p-1 rounded-xl border border-slate-700 flex items-center">
-            <button
-              onClick={() => setViewMode('authentic')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                viewMode === 'authentic'
-                  ? 'bg-amber-500 text-slate-950 shadow'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              title="Mijozning fotosuratidagi asl ranglar va matnlar"
-            >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>{t.authenticView}</span>
-            </button>
-            <button
-              onClick={() => setViewMode('numeric')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                viewMode === 'numeric'
-                  ? 'bg-emerald-500 text-slate-950 shadow'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              title="1 / 0 va 2-5 raqamli ko'rinish"
-            >
-              <Binary className="w-3.5 h-3.5" />
-              <span>{t.numericView}</span>
-            </button>
+          {/* Format Badge */}
+          <div className="bg-slate-800/90 px-3.5 py-2 rounded-xl border border-slate-700 flex items-center gap-2 text-xs">
+            <TableIcon className="w-3.5 h-3.5 text-amber-400" />
+            <span className="font-bold text-slate-200">
+              {t.authenticView}
+            </span>
           </div>
 
           <button
@@ -682,9 +665,9 @@ export default function IncomingActsContent() {
       </div>
 
       {/* Product Switcher Bar (Matching Real Colors) */}
-      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-dark-900 p-3 rounded-xl border border-slate-200 dark:border-dark-750 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 flex items-center gap-1">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
             <Layers className="w-4 h-4 text-slate-400" />
             Xomashyo:
           </span>
@@ -697,7 +680,7 @@ export default function IncomingActsContent() {
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap border ${
                   isSelected
                     ? `${prod.bg} shadow-md ring-2 ring-slate-900/30 border-transparent scale-105`
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
                 }`}
               >
                 <span
@@ -719,7 +702,7 @@ export default function IncomingActsContent() {
               placeholder={t.searchPlaceholder}
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full text-xs pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-xs pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -728,14 +711,14 @@ export default function IncomingActsContent() {
               type="date"
               value={dateFrom}
               onChange={e => setDateFrom(e.target.value)}
-              className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700"
+              className="px-2 py-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-xs text-slate-700 dark:text-slate-200"
             />
             <span className="text-slate-400">-</span>
             <input
               type="date"
               value={dateTo}
               onChange={e => setDateTo(e.target.value)}
-              className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700"
+              className="px-2 py-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-lg text-xs text-slate-700 dark:text-slate-200"
             />
           </div>
 
@@ -747,7 +730,7 @@ export default function IncomingActsContent() {
                 setDateTo('')
                 setSelectedRating('all')
               }}
-              className="px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg font-medium"
+              className="px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg font-medium"
             >
               {t.resetFilters}
             </button>
@@ -757,64 +740,72 @@ export default function IncomingActsContent() {
 
       {/* KPI Stats Mini-Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs">
-        <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
-          <span className="text-slate-500 font-medium">Jami aktlar:</span>
-          <span className="font-bold font-mono text-slate-900 text-sm">{acts.length}</span>
+        <div className="bg-white dark:bg-dark-900 p-2.5 rounded-lg border border-slate-200 dark:border-dark-750 flex items-center justify-between">
+          <span className="text-slate-500 dark:text-slate-400 font-medium">Jami aktlar:</span>
+          <span className="font-bold font-mono text-slate-900 dark:text-white text-sm">{acts.length}</span>
         </div>
-        <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
-          <span className="text-slate-500 font-medium">Ombor (kg):</span>
-          <span className="font-bold font-mono text-emerald-700 text-sm">
+        <div className="bg-white dark:bg-dark-900 p-2.5 rounded-lg border border-slate-200 dark:border-dark-750 flex items-center justify-between">
+          <span className="text-slate-500 dark:text-slate-400 font-medium">Ombor (kg):</span>
+          <span className="font-bold font-mono text-emerald-700 dark:text-emerald-400 text-sm">
             {stats.totalKg ? stats.totalKg.toLocaleString('uz-UZ', { maximumFractionDigits: 1 }) : 0}
           </span>
         </div>
         <div
           onClick={() => setSelectedRating(selectedRating === '5' ? 'all' : '5')}
-          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
-            selectedRating === '5' ? 'bg-emerald-100 border-emerald-400 font-bold' : 'bg-emerald-50 border-emerald-200'
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between transition ${
+            selectedRating === '5'
+              ? 'bg-emerald-100 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-600 font-bold'
+              : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40'
           }`}
         >
-          <span className="text-emerald-800">5 - Ideal:</span>
-          <span className="font-bold font-mono text-emerald-950">{stats.rating5}</span>
+          <span className="text-emerald-800 dark:text-emerald-300">5 - Ideal:</span>
+          <span className="font-bold font-mono text-emerald-950 dark:text-emerald-200">{stats.rating5}</span>
         </div>
         <div
           onClick={() => setSelectedRating(selectedRating === '4' ? 'all' : '4')}
-          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
-            selectedRating === '4' ? 'bg-blue-100 border-blue-400 font-bold' : 'bg-blue-50 border-blue-200'
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between transition ${
+            selectedRating === '4'
+              ? 'bg-blue-100 dark:bg-blue-950/50 border-blue-400 dark:border-blue-600 font-bold'
+              : 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40'
           }`}
         >
-          <span className="text-blue-800">4 - Yaxshi:</span>
-          <span className="font-bold font-mono text-blue-950">{stats.rating4}</span>
+          <span className="text-blue-800 dark:text-blue-300">4 - Yaxshi:</span>
+          <span className="font-bold font-mono text-blue-950 dark:text-blue-200">{stats.rating4}</span>
         </div>
         <div
           onClick={() => setSelectedRating(selectedRating === '3' ? 'all' : '3')}
-          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
-            selectedRating === '3' ? 'bg-amber-100 border-amber-400 font-bold' : 'bg-amber-50 border-amber-200'
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between transition ${
+            selectedRating === '3'
+              ? 'bg-amber-100 dark:bg-amber-950/50 border-amber-400 dark:border-amber-600 font-bold'
+              : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40'
           }`}
         >
-          <span className="text-amber-800">3 - Shartli:</span>
-          <span className="font-bold font-mono text-amber-950">{stats.rating3}</span>
+          <span className="text-amber-800 dark:text-amber-300">3 - Shartli:</span>
+          <span className="font-bold font-mono text-amber-950 dark:text-amber-200">{stats.rating3}</span>
         </div>
         <div
           onClick={() => setSelectedRating(selectedRating === '2' ? 'all' : '2')}
-          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between ${
-            selectedRating === '2' ? 'bg-red-100 border-red-400 font-bold' : 'bg-red-50 border-red-200'
+          className={`p-2.5 rounded-lg border cursor-pointer flex items-center justify-between transition ${
+            selectedRating === '2'
+              ? 'bg-red-100 dark:bg-red-950/50 border-red-400 dark:border-red-600 font-bold'
+              : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/40'
           }`}
         >
-          <span className="text-red-800">2 - Rad etilgan:</span>
-          <span className="font-bold font-mono text-red-950">{stats.rating2}</span>
+          <span className="text-red-800 dark:text-red-300">2 - Rad etilgan:</span>
+          <span className="font-bold font-mono text-red-950 dark:text-red-200">{stats.rating2}</span>
         </div>
-        <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center justify-between font-mono">
-          <span className="text-slate-500 font-medium">{t.pageInfo}</span>
-          <span className="font-bold text-slate-800">
-            {currentPage} / {totalPages}
+        <div className="bg-white dark:bg-dark-900 p-2.5 rounded-lg border border-slate-200 dark:border-dark-750 flex items-center justify-between font-mono">
+          <span className="text-slate-500 dark:text-slate-400 font-medium">Ko'rsatish:</span>
+          <span className="font-bold text-slate-800 dark:text-slate-200">
+            {actsPagination.visibleCount} / {acts.length}
           </span>
         </div>
       </div>
 
       {/* AUTHENTIC EXCEL GRID TABLE */}
-      <div className="bg-white rounded-xl border border-slate-300 shadow-md overflow-hidden">
-        <div className="overflow-x-auto max-h-[72vh] overflow-y-auto">
-          <table className="w-full text-left border-collapse border border-slate-400 text-[11px] leading-tight select-text">
+      <div className="bg-white dark:bg-dark-900 rounded-xl border border-slate-300 dark:border-dark-750 shadow-md overflow-hidden">
+        <div className="overflow-x-auto max-h-[72vh] overflow-y-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse border border-slate-400 dark:border-dark-700 text-[11px] leading-tight select-text">
             {/* 2-TIER EXCEL HEADER WITH EXACT PRODUCT COLOR FROM SCREENSHOTS */}
             <thead className="sticky top-0 z-20 shadow-sm">
               {/* Row 1 of Header: Spanning 'Отпущено в производство' */}
@@ -1009,25 +1000,25 @@ export default function IncomingActsContent() {
             </thead>
 
             {/* Table Body with Authentic Excel Grid Cells & Highlights */}
-            <tbody className="divide-y divide-slate-300 text-slate-900 bg-white">
+            <tbody className="divide-y divide-slate-300 dark:divide-dark-750 text-slate-900 dark:text-slate-100 bg-white dark:bg-dark-900">
               {loading ? (
                 <tr>
-                  <td colSpan={27} className="py-16 text-center text-slate-500">
+                  <td colSpan={27} className="py-16 text-center text-slate-500 dark:text-slate-400">
                     <div className="inline-flex items-center gap-2 font-semibold">
                       <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
                       <span>{activeTheme.name} ma'lumotlari yuklanmoqda...</span>
                     </div>
                   </td>
                 </tr>
-              ) : paginatedActs.length === 0 ? (
+              ) : actsPagination.displayedItems.length === 0 ? (
                 <tr>
                   <td colSpan={27} className="py-16 text-center">
-                    <p className="font-bold text-slate-700 text-sm">{t.noData}</p>
-                    <p className="text-xs text-slate-400 mt-1">{t.noDataDesc}</p>
+                    <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">{t.noData}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t.noDataDesc}</p>
                   </td>
                 </tr>
               ) : (
-                paginatedActs.map((act, idx) => {
+                actsPagination.displayedItems.map((act, idx) => {
                   const raw = act.rawValues || {}
                   const isYellowRow =
                     Boolean(raw.isYellow) ||
@@ -1046,193 +1037,183 @@ export default function IncomingActsContent() {
                     <tr
                       key={act.id}
                       onClick={() => setSelectedActForView(act)}
-                      className={`hover:bg-sky-50/60 transition cursor-pointer ${
+                      className={`hover:bg-sky-50/60 dark:hover:bg-dark-800/60 transition cursor-pointer ${
                         isYellowRow
-                          ? 'bg-[#FFFF99] hover:bg-[#FFF566]' // Exact yellow highlight as in client's screenshot
+                          ? 'bg-[#FFFF99] dark:bg-amber-950/40 text-slate-900 dark:text-amber-100 hover:bg-[#FFF566] dark:hover:bg-amber-950/60'
                           : act.decisionRating === 2
-                          ? 'bg-red-50 hover:bg-red-100/60'
+                          ? 'bg-red-50 dark:bg-red-950/30 hover:bg-red-100/60 dark:hover:bg-red-950/50'
                           : idx % 2 === 1
-                          ? 'bg-slate-50/50'
-                          : 'bg-white'
+                          ? 'bg-slate-50/50 dark:bg-dark-850/40'
+                          : 'bg-white dark:bg-dark-900'
                       }`}
                     >
                       {/* Col 2: № п/п */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono font-medium">
-                        {act.actNumber || (currentPage - 1) * pageSize + idx + 1}
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-mono font-medium text-slate-800 dark:text-slate-200">
+                        {act.actNumber || idx + 1}
                       </td>
 
                       {/* Col 3: Дата */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center whitespace-nowrap font-mono">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center whitespace-nowrap font-mono text-slate-800 dark:text-slate-200">
                         {act.actDate}
                       </td>
 
                       {/* Col 4: Наименование сырья */}
-                      <td className="border border-slate-300 py-1.5 px-2 font-bold whitespace-nowrap">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 font-bold whitespace-nowrap text-slate-900 dark:text-white">
                         {act.productName}
                       </td>
 
                       {/* Col 5: Поставщик */}
-                      <td className="border border-slate-300 py-1.5 px-2 font-medium">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 font-medium text-slate-800 dark:text-slate-200">
                         {act.supplierName}
                       </td>
 
                       {/* Col 6: Температура */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono whitespace-nowrap">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-mono whitespace-nowrap text-slate-800 dark:text-slate-200">
                         {act.temperature || raw.col6 || '-'}
                       </td>
 
                       {/* Col 7: Условия упаковки */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col7, act.transportCondition)}
                       </td>
 
                       {/* Col 8: Документация */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col8, act.hasDocumentation)}
                       </td>
 
                       {/* Col 9: Структура / Консистенция */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col9, act.structure)}
                       </td>
 
                       {/* Col 10: Цвет */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col10, act.leafColor)}
                       </td>
 
                       {/* Col 11: Вкус / Запах */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col11, act.tasteSmell)}
                       </td>
 
                       {/* Col 12: Окисление / Размер */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col12, act.internalOxidation, true)}
                       </td>
 
                       {/* Col 13: Следы насекомых */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col13, act.insectTraces, true)}
                       </td>
 
                       {/* Col 14: Слизь, разложение, гниль */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col14, act.rotDiseases, true)}
                       </td>
 
                       {/* Col 15: Кочерыжка / Дефекты */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col15, act.stemCut)}
                       </td>
 
                       {/* Col 16: Плотность / Трещины */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col16, act.density)}
                       </td>
 
                       {/* Col 17: Диаметр/Вес / Трещины */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center whitespace-nowrap">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center whitespace-nowrap text-slate-800 dark:text-slate-200 font-mono">
                         {raw.col17 || act.diameterWeight || '-'}
                       </td>
 
                       {/* Col 18: Покровные листья / Упаковка в ряд */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col18, act.outerLeavesRemoved)}
                       </td>
 
                       {/* Col 19: Отсутствие мех. повреждений */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center">
                         {renderCellText(raw.col19, act.noMechanicalDamage)}
                       </td>
 
                       {/* Col 20: № партии */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono font-medium">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-mono font-medium text-slate-800 dark:text-slate-200">
                         {act.batchNumber || raw.col20 || '-'}
                       </td>
 
                       {/* Col 21: Допуск */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center font-semibold">
-                        {viewMode === 'numeric' ? (
-                          <span
-                            className={`px-2 py-0.5 rounded text-xs font-bold ${
-                              act.decisionRating === 5
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : act.decisionRating === 4
-                                ? 'bg-blue-100 text-blue-800'
-                                : act.decisionRating === 3
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {act.decisionRating}
-                          </span>
-                        ) : (
-                          <span
-                            className={`${
-                              act.decisionRating === 2 ? 'text-red-700 font-bold' : 'text-slate-800'
-                            }`}
-                          >
-                            {raw.col21 || act.decisionText || 'допускается'}
-                          </span>
-                        )}
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-semibold">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold inline-block ${
+                            act.decisionRating === 5
+                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                              : act.decisionRating === 4
+                              ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
+                              : act.decisionRating === 3
+                              ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                              : 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800'
+                          }`}
+                        >
+                          {raw.col21 || act.decisionText || (act.decisionRating === 2 ? 'не допускается' : 'допускается')}
+                        </span>
                       </td>
 
                       {/* Col 22: кг (Приём склад) */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-right font-mono font-bold">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-right font-mono font-bold text-slate-900 dark:text-white">
                         {act.warehouseKg !== null && act.warehouseKg !== undefined
                           ? act.warehouseKg.toLocaleString('uz-UZ', { maximumFractionDigits: 1 })
                           : raw.col22 || '-'}
                       </td>
 
                       {/* Col 23: КГ ЦЕХ */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-right font-mono text-[10px]">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-right font-mono text-[10px] text-slate-700 dark:text-slate-300">
                         {act.shopIssuedKg || raw.col23 || ''}
                       </td>
 
                       {/* Col 24: Дата цех */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center font-mono text-[10px] whitespace-nowrap">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-mono text-[10px] whitespace-nowrap text-slate-700 dark:text-slate-300">
                         {act.shopIssuedDate || raw.col24 || ''}
                       </td>
 
                       {/* Col 25: НЕДОПУСК № акта забраковки */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-center font-bold text-red-600">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-bold text-red-600 dark:text-red-400">
                         {act.rejectionActNumber || raw.col25 || ''}
                       </td>
 
                       {/* Col 26: ФИО контролёра */}
-                      <td className="border border-slate-300 py-1.5 px-2 whitespace-nowrap text-slate-700">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 whitespace-nowrap text-slate-700 dark:text-slate-300">
                         {act.inspectorName || raw.col26 || 'Камбарова А.М.'}
                       </td>
 
                       {/* Col 27: цена */}
-                      <td className="border border-slate-300 py-1.5 px-2 text-right font-mono font-medium">
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-right font-mono font-medium text-slate-800 dark:text-slate-200">
                         {act.pricePerKg ? act.pricePerKg.toLocaleString('uz-UZ') : raw.col27 || '-'}
                       </td>
 
                       {/* Actions */}
                       <td
-                        className="border border-slate-300 py-1.5 px-1 text-center"
+                        className="border border-slate-300 dark:border-dark-750 py-1.5 px-1 text-center"
                         onClick={e => e.stopPropagation()}
                       >
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => setSelectedActForView(act)}
-                            className="p-1 text-slate-600 hover:bg-slate-200 rounded"
+                            className="p-1 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-dark-750 dark:hover:text-white rounded"
                             title="Batafsil"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleOpenEdit(act)}
-                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                            className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded"
                             title="Tahrirlash"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteAct(act.id)}
-                            className="p-1 text-red-600 hover:bg-red-100 rounded"
+                            className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 rounded"
                             title="O'chirish"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1247,49 +1228,18 @@ export default function IncomingActsContent() {
           </table>
         </div>
 
-        {/* Table Footer with Pagination Controls */}
-        <div className="p-3 bg-slate-100 border-t border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="text-slate-600 font-medium">
-            Ko'rsatilmoqda: <span className="font-bold text-slate-900">{paginatedActs.length}</span> ta akt (Jami{' '}
-            <span className="font-bold text-slate-900">{acts.length}</span> ta)
-          </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={pageSize}
-              onChange={e => {
-                setPageSize(Number(e.target.value))
-                setCurrentPage(1)
-              }}
-              className="px-2 py-1 bg-white border border-slate-300 rounded text-xs font-medium"
-            >
-              <option value={25}>25 tadan</option>
-              <option value={50}>50 tadan</option>
-              <option value={100}>100 tadan</option>
-              <option value={500}>500 tadan</option>
-            </select>
-
-            <button
-              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-1.5 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            <span className="font-mono font-bold text-slate-800">
-              {currentPage} / {totalPages}
-            </span>
-
-            <button
-              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="p-1.5 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-40"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        {/* Infinite Table Footer (10 ta 10 ta yuklash va Barchasini ko'rish) */}
+        <InfiniteTableFooter
+          currentCount={actsPagination.visibleCount}
+          totalCount={actsPagination.totalCount}
+          hasMore={actsPagination.hasMore}
+          showAll={actsPagination.showAll}
+          onLoadMore={actsPagination.loadMore}
+          onToggleShowAll={actsPagination.toggleShowAll}
+          sentinelRef={actsPagination.sentinelRef}
+          pageSize={10}
+          itemName={{ uz: 'akt', ru: 'актов', en: 'acts' }}
+        />
       </div>
 
       {/* CREATE / EDIT MODAL */}
@@ -1312,7 +1262,7 @@ export default function IncomingActsContent() {
                     {editingAct ? 'Aktni Tahrirlash' : 'Yangi Kiruvchi Xomashyo Akti'}
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Barcha sifat parametrlari raqamlar (1/0) va 2-5 baho bilan kiritiladi.
+                    Barcha sifat parametrlari mezonlar bo'yicha qulay kiritiladi.
                   </p>
                 </div>
               </div>
@@ -1460,11 +1410,11 @@ export default function IncomingActsContent() {
                 )}
               </div>
 
-              {/* Quality Criteria (1 / 0) */}
+              {/* Quality Criteria */}
               <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
-                  <span>3. Sifat mezonlari (Raqamlarda: 1 / 0)</span>
-                  <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">1 = Ha, 0 = Yo'q/Otsutstvuyet</span>
+                  <span>3. Sifat mezonlari (Muvofiqlik)</span>
+                  <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">Ha / Muvofiq yoki Yo'q / Nomaqbul</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                   {[
@@ -1473,47 +1423,56 @@ export default function IncomingActsContent() {
                     { label: activeTheme.col9, state: formData.structure, key: 'structure' },
                     { label: activeTheme.col10, state: formData.leafColor, key: 'leafColor' },
                     { label: activeTheme.col11, state: formData.tasteSmell, key: 'tasteSmell' },
-                    { label: `${activeTheme.col12} (0 = yo'q)`, state: formData.internalOxidation, key: 'internalOxidation', isDefect: true },
-                    { label: `${activeTheme.col13} (0 = yo'q)`, state: formData.insectTraces, key: 'insectTraces', isDefect: true },
-                    { label: `${activeTheme.col14} (0 = yo'q)`, state: formData.rotDiseases, key: 'rotDiseases', isDefect: true },
+                    { label: activeTheme.col12, state: formData.internalOxidation, key: 'internalOxidation', isDefect: true },
+                    { label: activeTheme.col13, state: formData.insectTraces, key: 'insectTraces', isDefect: true },
+                    { label: activeTheme.col14, state: formData.rotDiseases, key: 'rotDiseases', isDefect: true },
                     { label: activeTheme.col15, state: formData.stemCut, key: 'stemCut' },
                     { label: activeTheme.col16, state: formData.density, key: 'density' },
                     { label: activeTheme.col18, state: formData.outerLeavesRemoved, key: 'outerLeavesRemoved' },
                     { label: activeTheme.col19, state: formData.noMechanicalDamage, key: 'noMechanicalDamage' }
-                  ].map((field: any) => (
-                    <div
-                      key={field.key}
-                      className="p-2.5 bg-slate-50 dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 flex items-center justify-between"
-                    >
-                      <span className="font-medium text-slate-800 dark:text-slate-200 truncate mr-2" title={field.label}>
-                        {field.label}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, [field.key]: 1 })}
-                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs transition ${
-                            formData[field.key as keyof typeof formData] === 1
-                              ? 'bg-emerald-600 text-white shadow'
-                              : 'bg-slate-200 dark:bg-dark-800 text-slate-700 dark:text-slate-300'
-                          }`}
-                        >
-                          1
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, [field.key]: 0 })}
-                          className={`px-2.5 py-1 rounded font-bold font-mono text-xs transition ${
-                            formData[field.key as keyof typeof formData] === 0
-                              ? 'bg-red-600 text-white shadow'
-                              : 'bg-slate-200 dark:bg-dark-800 text-slate-700 dark:text-slate-300'
-                          }`}
-                        >
-                          0
-                        </button>
+                  ].map((field: any) => {
+                    const isPositive = field.isDefect
+                      ? formData[field.key as keyof typeof formData] === 0
+                      : formData[field.key as keyof typeof formData] === 1
+                    const isNegative = field.isDefect
+                      ? formData[field.key as keyof typeof formData] === 1
+                      : formData[field.key as keyof typeof formData] === 0
+
+                    return (
+                      <div
+                        key={field.key}
+                        className="p-2.5 bg-slate-50 dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 flex items-center justify-between"
+                      >
+                        <span className="font-medium text-slate-800 dark:text-slate-200 truncate mr-2" title={field.label}>
+                          {field.label}
+                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, [field.key]: field.isDefect ? 0 : 1 })}
+                            className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition ${
+                              isPositive
+                                ? 'bg-emerald-600 text-white shadow ring-1 ring-emerald-500'
+                                : 'bg-slate-200 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-dark-700'
+                            }`}
+                          >
+                            {field.isDefect ? "✓ Toza (Yo'q)" : '✓ Ha / Muvofiq'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, [field.key]: field.isDefect ? 1 : 0 })}
+                            className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition ${
+                              isNegative
+                                ? 'bg-rose-600 text-white shadow ring-1 ring-rose-500'
+                                : 'bg-slate-200 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-dark-700'
+                            }`}
+                          >
+                            {field.isDefect ? '✗ Brak (Mavjud)' : "✗ Yo'q"}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 <div className="mt-2.5">
