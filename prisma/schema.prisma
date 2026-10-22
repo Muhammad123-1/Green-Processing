@@ -348,6 +348,7 @@ model Product {
   gost               String?
   description        String?
   allergenInfo       String?
+  imageUrl           String?  // Mahsulot surati
   type               String   @default("RAW_MATERIAL") // RAW_MATERIAL, KITCHEN, FINISHED_GOOD
   isPerishable       Boolean  @default(true)
   minStockLevel      Float?   @default(0) // Svetofor tizimi uchun (Sariq/Qizil)

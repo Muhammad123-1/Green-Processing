@@ -2,7 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Plus, Search, Edit, Trash2, Package, X, Save, Loader2, RefreshCw } from 'lucide-react'
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Package,
+  X,
+  Save,
+  Loader2,
+  RefreshCw,
+  Camera,
+  UploadCloud,
+  Image as ImageIcon
+} from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface Product {
@@ -11,6 +24,7 @@ interface Product {
   code: string | null
   category: string | null
   unit: string
+  imageUrl?: string | null
   minTemperature: number | null
   maxTemperature: number | null
   defaultPackaging: string | null
@@ -25,15 +39,19 @@ const emptyForm = {
   code: '',
   category: '',
   unit: 'kg',
+  imageUrl: '',
   minTemperature: '',
   maxTemperature: '',
   defaultPackaging: '',
-  defaultConclusion: 'Мувофиқ / Muvofiq',
+  defaultConclusion: 'Muvofiq',
   storageCondition: '',
   shelfLife: '',
   gost: '',
   description: '',
   type: 'RAW_MATERIAL',
+  initialStock: '',
+  initialBatchNumber: '',
+  initialExpirationDate: '',
 }
 
 export default function ProductsPage() {
@@ -46,7 +64,9 @@ export default function ProductsPage() {
   const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -83,17 +103,47 @@ export default function ProductsPage() {
       code: p.code || '',
       category: p.category || '',
       unit: p.unit,
+      imageUrl: p.imageUrl || '',
       minTemperature: p.minTemperature != null ? String(p.minTemperature) : '',
       maxTemperature: p.maxTemperature != null ? String(p.maxTemperature) : '',
       defaultPackaging: p.defaultPackaging || '',
-      defaultConclusion: p.defaultConclusion || 'Мувофиқ / Muvofiq',
+      defaultConclusion: p.defaultConclusion || 'Muvofiq',
       storageCondition: '',
       shelfLife: '',
       gost: p.gost || '',
       description: '',
       type: p.type || 'RAW_MATERIAL',
+      initialStock: '',
+      initialBatchNumber: '',
+      initialExpirationDate: '',
     })
     setShowModal(true)
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setUploadingImage(true)
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: fd
+      })
+      const data = await res.json()
+      if (data.url) {
+        setForm(prev => ({ ...prev, imageUrl: data.url }))
+        toast.success('Rasm yuklandi!')
+      } else {
+        toast.error(data.error || 'Rasm yuklashda xatolik')
+      }
+    } catch {
+      toast.error('Rasm yuklashda tarmoq xatosi')
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   async function handleSave() {
@@ -132,8 +182,9 @@ export default function ProductsPage() {
           <h1 className="section-title">{t('products')}</h1>
           <p className="section-subtitle">{t('totalProducts')}: {products.length}</p>
         </div>
-        <button onClick={openNew} className="btn-primary">
-          <Plus size={18} />{t('newProduct')}
+        <button onClick={openNew} className="btn-primary flex items-center gap-2">
+          <Plus size={18} />
+          <span>{t('newProduct')}</span>
         </button>
       </div>
 
@@ -197,33 +248,48 @@ export default function ProductsPage() {
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} className="table-row">
-                  <td className="font-medium text-slate-100">{p.name}</td>
+                  <td className="font-medium text-slate-100">
+                    <div className="flex items-center gap-3">
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          onClick={() => setPreviewImage(p.imageUrl!)}
+                          className="w-10 h-10 rounded-lg object-cover border border-dark-700 cursor-pointer hover:opacity-80 transition shrink-0 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-dark-800 border border-dark-700 flex items-center justify-center text-slate-500 shrink-0">
+                          <Package size={18} />
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-bold text-slate-100 block">{p.name}</span>
+                        {p.imageUrl && (
+                          <span className="text-[10px] text-teal-400 font-semibold flex items-center gap-1">
+                            <Camera size={10} /> Rasmli
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
                   {activeTab === 'RAW_MATERIAL' && <td className="font-mono text-xs text-slate-400">{p.code || '—'}</td>}
-                  {activeTab === 'RAW_MATERIAL' && <td className="text-slate-400">{p.category || '—'}</td>}
-                  <td className="text-slate-300">{p.unit}</td>
+                  {activeTab === 'RAW_MATERIAL' && <td><span className="badge badge-blue">{p.category || '—'}</span></td>}
+                  <td className="font-mono text-sm">{p.unit}</td>
                   {activeTab === 'RAW_MATERIAL' && (
-                    <td className="text-slate-400 text-xs">
+                    <td className="font-mono text-xs text-slate-400">
                       {p.minTemperature != null && p.maxTemperature != null
                         ? `${p.minTemperature}°C — ${p.maxTemperature}°C`
                         : '—'}
                     </td>
                   )}
-                  {activeTab === 'RAW_MATERIAL' && <td className="text-slate-400 text-xs">{p.gost || '—'}</td>}
-                  <td>
+                  {activeTab === 'RAW_MATERIAL' && <td className="text-xs text-slate-400">{p.gost || '—'}</td>}
+                  <td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openEdit(p)}
-                        className="w-8 h-8 rounded-lg bg-dark-700 hover:bg-dark-600 border border-dark-600
-                                   flex items-center justify-center text-slate-400 hover:text-amber-400 transition-all"
-                      >
-                        <Edit size={13} />
+                      <button onClick={() => openEdit(p)} className="action-btn text-indigo-400 hover:text-indigo-300">
+                        <Edit size={15} />
                       </button>
-                      <button
-                        onClick={() => setDeleteId(p.id)}
-                        className="w-8 h-8 rounded-lg bg-dark-700 hover:bg-red-500/20 border border-dark-600 hover:border-red-500/30
-                                   flex items-center justify-center text-slate-400 hover:text-red-400 transition-all"
-                      >
-                        <Trash2 size={13} />
+                      <button onClick={() => setDeleteId(p.id)} className="action-btn text-red-400 hover:text-red-300">
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </td>
@@ -234,10 +300,10 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="card p-6 max-w-2xl w-full animate-enter max-h-[90vh] overflow-y-auto"
+          <div className="card p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto animate-enter"
                onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-white text-lg">
@@ -272,6 +338,47 @@ export default function ProductsPage() {
                   Jarayon uchun
                 </button>
               </div>
+
+              {/* Image Upload Area */}
+              <div className="col-span-2">
+                <label className="label flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <Camera size={14} className="text-teal-400" />
+                    <span>Mahsulot Rasmi (Foto)</span>
+                  </span>
+                  {uploadingImage && (
+                    <span className="text-xs text-teal-400 flex items-center gap-1">
+                      <Loader2 size={12} className="animate-spin" /> Yuklanmoqda...
+                    </span>
+                  )}
+                </label>
+                {form.imageUrl ? (
+                  <div className="relative w-full h-36 rounded-xl border border-dark-700 bg-dark-900 overflow-hidden group">
+                    <img src={form.imageUrl} alt="Preview" className="w-full h-full object-contain" />
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, imageUrl: '' }))}
+                      className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-rose-600 text-white rounded-lg transition"
+                      title="Rasmni o'chirish"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-dark-700 hover:border-teal-500 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer bg-dark-900/50 hover:bg-dark-900 transition">
+                    <UploadCloud size={24} className="text-slate-400 mb-1" />
+                    <span className="text-xs text-slate-300 font-medium">Rasm yuklash yoki suratga olish</span>
+                    <span className="text-[10px] text-slate-500 mt-0.5">JPG, PNG formatida</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
               
               <div className="col-span-2">
                 <label className="label">{t('name')} *</label>
@@ -292,7 +399,7 @@ export default function ProductsPage() {
                     <label className="label">{t('category')}</label>
                     <input className="input-field" value={form.category}
                       onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                      placeholder="Don mahsulotlari..." />
+                      placeholder="Sabzavot, meva, go'sht..." />
                   </div>
                 </>
               )}
@@ -334,12 +441,50 @@ export default function ProductsPage() {
                       onChange={(e) => setForm((f) => ({ ...f, defaultPackaging: e.target.value }))}
                       placeholder="Qop (50 kg)" />
                   </div>
-                  <div className="col-span-2">
-                    <label className="label">{t('defaultConclusion')}</label>
-                    <input className="input-field" value={form.defaultConclusion}
-                      onChange={(e) => setForm((f) => ({ ...f, defaultConclusion: e.target.value }))}
-                      placeholder="Мувофиқ / Muvofiq ГОСТ..." />
-                  </div>
+
+                  {/* INITIAL WAREHOUSE STOCK SECTION */}
+                  {!editId && (
+                    <div className="col-span-2 p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-xl space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Package size={16} className="text-emerald-400" />
+                        <span className="text-xs font-bold text-emerald-300">
+                          Omborga boshlang'ich qoldiq kiritish (Ixtiyoriy)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Qoldiq ({form.unit})</label>
+                          <input
+                            type="number"
+                            step="any"
+                            placeholder="Masalan: 500"
+                            value={form.initialStock}
+                            onChange={(e) => setForm(f => ({ ...f, initialStock: e.target.value }))}
+                            className="input-field text-xs font-bold font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Partiya №</label>
+                          <input
+                            type="text"
+                            placeholder="P-2026-001"
+                            value={form.initialBatchNumber}
+                            onChange={(e) => setForm(f => ({ ...f, initialBatchNumber: e.target.value }))}
+                            className="input-field text-xs font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Yaroqlilik muddati</label>
+                          <input
+                            type="date"
+                            value={form.initialExpirationDate}
+                            onChange={(e) => setForm(f => ({ ...f, initialExpirationDate: e.target.value }))}
+                            className="input-field text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -366,6 +511,21 @@ export default function ProductsPage() {
               <button onClick={() => setDeleteId(null)} className="btn-secondary flex-1 justify-center">Bekor</button>
               <button onClick={() => handleDelete(deleteId)} className="btn-danger flex-1 justify-center bg-red-600/30">O'chirish</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview Lightbox */}
+      {previewImage && (
+        <div className="modal-backdrop z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-2xl w-full bg-dark-900 border border-dark-700 rounded-2xl p-3 overflow-hidden" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-4 right-4 p-2 bg-black/70 hover:bg-rose-600 text-white rounded-xl transition z-10"
+            >
+              <X size={20} />
+            </button>
+            <img src={previewImage} alt="Mahsulot surati" className="w-full h-auto max-h-[75vh] object-contain rounded-xl" />
           </div>
         </div>
       )}

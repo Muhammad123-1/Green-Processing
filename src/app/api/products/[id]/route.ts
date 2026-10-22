@@ -25,6 +25,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         code: body.code || null,
         category: body.category || null,
         unit: body.unit || 'kg',
+        imageUrl: body.imageUrl !== undefined ? body.imageUrl : undefined,
         defaultTemperature: body.defaultTemperature || null,
         minTemperature: body.minTemperature ? parseFloat(body.minTemperature) : null,
         maxTemperature: body.maxTemperature ? parseFloat(body.maxTemperature) : null,

@@ -23,7 +23,11 @@ import {
   Building2,
   X,
   History,
-  QrCode
+  QrCode,
+  Camera,
+  Image as ImageIcon,
+  ExternalLink,
+  Upload
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -162,7 +166,13 @@ type InventoryBatch = {
   quantity: number
   receivedAt: string
   expirationDate: string | null
+  arrivalPhotoUrl?: string | null
+  arrivalTemperature?: number | null
+  supplierBatchNumber?: string | null
+  cost?: number | null
+  zoneId?: number | null
   zone?: { id: number, name: string } | null
+  supplier?: { id: number, name: string } | null
 }
 
 type ProductInventory = {
@@ -171,6 +181,7 @@ type ProductInventory = {
   code: string | null
   category: string | null
   unit: string
+  imageUrl?: string | null
   minStockLevel: number
   totalQuantity: number
   status: 'red' | 'yellow' | 'green'
@@ -250,12 +261,134 @@ export default function WarehouseContent() {
   const [zones, setZones] = useState<any[]>([])
   const [showZoneModal, setShowZoneModal] = useState<{batchId: number, currentZoneId: number | null} | null>(null)
 
+  // Direct Warehouse Intake (Kirim qilish) states
+  const [suppliers, setSuppliers] = useState<any[]>([])
+  const [showReceiveModal, setShowReceiveModal] = useState(false)
+  const [uploadingReceivePhoto, setUploadingReceivePhoto] = useState(false)
+  const [receiveLoading, setReceiveLoading] = useState(false)
+  const [previewPhotoModal, setPreviewPhotoModal] = useState<{ url: string, title: string } | null>(null)
+
+  const initialReceiveForm = {
+    isNewProduct: false,
+    productId: '',
+    newProductName: '',
+    category: 'Xomashyo',
+    unit: 'kg',
+    batchNumber: '',
+    quantity: '',
+    cost: '',
+    receivedAt: new Date().toISOString().split('T')[0],
+    expirationDate: '',
+    zoneId: '',
+    supplierId: '',
+    supplierBatchNumber: '',
+    arrivalPhotoUrl: '',
+    arrivalTemperature: '',
+    notes: ''
+  }
+
+  const [receiveForm, setReceiveForm] = useState(initialReceiveForm)
+
   useEffect(() => {
     fetchInventory()
     fetchTempLogs()
     fetchTransfers()
     fetchZones()
+    fetchSuppliers()
   }, [])
+
+  async function fetchSuppliers() {
+    try {
+      const res = await fetch('/api/suppliers')
+      if (res.ok) {
+        const data = await res.json()
+        setSuppliers(Array.isArray(data) ? data : [])
+      }
+    } catch {
+      console.error('Fetch suppliers error')
+    }
+  }
+
+  function handleOpenReceiveModal(item?: ProductInventory) {
+    if (item) {
+      setReceiveForm({
+        ...initialReceiveForm,
+        isNewProduct: false,
+        productId: item.id.toString(),
+        unit: item.unit || 'kg',
+        category: item.category || 'Xomashyo',
+      })
+    } else {
+      setReceiveForm(initialReceiveForm)
+    }
+    setShowReceiveModal(true)
+  }
+
+  async function handleReceivePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setUploadingReceivePhoto(true)
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: fd
+      })
+      const data = await res.json()
+      if (data.url) {
+        setReceiveForm(prev => ({ ...prev, arrivalPhotoUrl: data.url }))
+        toast.success(lang === 'ru' ? 'Фото партии загружено!' : 'Partiya rasmi yuklandi!')
+      } else {
+        toast.error(data.error || 'Rasm yuklashda xatolik')
+      }
+    } catch {
+      toast.error('Tarmoq xatosi')
+    } finally {
+      setUploadingReceivePhoto(false)
+    }
+  }
+
+  async function handleSaveReceive(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!receiveForm.isNewProduct && !receiveForm.productId) {
+      toast.error(lang === 'ru' ? 'Выберите продукт' : "Mahsulotni tanlang")
+      return
+    }
+    if (receiveForm.isNewProduct && !receiveForm.newProductName.trim()) {
+      toast.error(lang === 'ru' ? 'Введите название продукта' : "Yangi mahsulot nomini kiriting")
+      return
+    }
+    if (!receiveForm.quantity || parseFloat(receiveForm.quantity) <= 0) {
+      toast.error(lang === 'ru' ? 'Укажите количество больше 0' : "Miqdorni 0 dan katta qilib kiriting")
+      return
+    }
+
+    setReceiveLoading(true)
+    try {
+      const res = await fetch('/api/warehouse/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(receiveForm)
+      })
+
+      if (res.ok) {
+        toast.success(lang === 'ru' ? 'Партия успешно принята на склад!' : 'Omborga kirim muvaffaqiyatli saqlandi!')
+        setShowReceiveModal(false)
+        setReceiveForm(initialReceiveForm)
+        fetchInventory()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || 'Kirim qilishda xatolik yuz berdi')
+      }
+    } catch {
+      toast.error("Tarmoq xatosi")
+    } finally {
+      setReceiveLoading(false)
+    }
+  }
 
   async function fetchZones() {
     try {
@@ -532,6 +665,8 @@ export default function WarehouseContent() {
       if (e.key === 'Escape') {
         setShowTempModal(false)
         setShowTransferModal(false)
+        setShowReceiveModal(false)
+        setPreviewPhotoModal(null)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -566,41 +701,51 @@ export default function WarehouseContent() {
             </p>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="flex items-center bg-dark-800/80 p-1.5 rounded-2xl border border-dark-700/80 backdrop-blur-md overflow-x-auto">
+          {/* Action & Navigation Tabs */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button
-              onClick={() => setActiveTab('inventory')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'inventory'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={() => handleOpenReceiveModal()}
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/30 px-5 py-2.5 rounded-2xl font-bold text-xs md:text-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap"
             >
-              <Package size={16} />
-              <span>{l.tabStock}</span>
+              <Plus size={18} />
+              <span>{formatDual("+ Yangi Kirim (Qabul Qilish)", "+ Принять сырье (Приход)", "+ New Intake")}</span>
             </button>
-            <button
-              onClick={() => setActiveTab('transfers')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'transfers'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Scale size={16} />
-              <span>{l.tabTransfers}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('temperature')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'temperature'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Thermometer size={16} />
-              <span>{l.tabTemp}</span>
-            </button>
+
+            <div className="flex items-center bg-dark-800/80 p-1.5 rounded-2xl border border-dark-700/80 backdrop-blur-md overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('inventory')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                  activeTab === 'inventory'
+                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Package size={16} />
+                <span>{l.tabStock}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('transfers')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                  activeTab === 'transfers'
+                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Scale size={16} />
+                <span>{l.tabTransfers}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('temperature')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                  activeTab === 'temperature'
+                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Thermometer size={16} />
+                <span>{l.tabTemp}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -654,6 +799,30 @@ export default function WarehouseContent() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Quick Intake Banner */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-5 rounded-3xl shadow-xl">
+            <div>
+              <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2.5">
+                <Package className="text-emerald-400" size={22} />
+                <span>{formatDual("Omborga Mahsulot Qabul Qilish (Kirim)", "Приемка сырья на склад (Приход)", "Warehouse Stock Intake")}</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                {formatDual(
+                  "Skladchilar uchun partiya va mahsulotlarni rasmi, hujjati va muddati bilan to'g'ridan-to'g'ri qabul qilish",
+                  "Приемка партий и продуктов с фото, сроками годности и зонами хранения",
+                  "Direct intake of products and batches with photo, expiry dates and storage zones"
+                )}
+              </p>
+            </div>
+            <button
+              onClick={() => handleOpenReceiveModal()}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/30 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap"
+            >
+              <Plus size={18} />
+              <span>{formatDual("+ Yangi Kirim (Qabul Qilish)", "+ Принять сырье (Приход)", "+ New Intake")}</span>
+            </button>
           </div>
 
           {/* Filters & Search */}
@@ -719,15 +888,33 @@ export default function WarehouseContent() {
                       <th className="p-5">{l.colCurrent}</th>
                       <th className="p-5">{l.colBatches}</th>
                       <th className="p-5">{l.colStatus}</th>
-                      <th className="p-5 text-right">{formatDual("Chiqim Berish", "Отпуск сырья", "Dispatch")}</th>
+                      <th className="p-5 text-right">{formatDual("Amallar (Kirim / Chiqim)", "Действия (Приход / Расход)", "Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
                     {filteredInventory.map((item) => (
                       <tr key={item.id} className="hover:bg-dark-800/30 transition-colors group">
                         <td className="p-5">
-                          <div className="font-bold text-white text-base group-hover:text-emerald-400 transition-colors">
-                            {item.name}
+                          <div className="flex items-center gap-3">
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.name}
+                                onClick={() => setPreviewPhotoModal({ url: item.imageUrl!, title: item.name })}
+                                className="w-11 h-11 rounded-xl object-cover border border-dark-700 cursor-pointer hover:border-emerald-500 hover:scale-105 transition-all flex-shrink-0 shadow-sm"
+                                title="Rasmni kattalashtirish"
+                              />
+                            ) : (
+                              <div className="w-11 h-11 rounded-xl bg-dark-800 border border-dark-750 flex items-center justify-center text-slate-500 flex-shrink-0">
+                                <Package size={20} />
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-bold text-white text-base group-hover:text-emerald-400 transition-colors">
+                                {item.name}
+                              </div>
+                              <span className="text-xs text-slate-500">{item.category || 'Xomashyo'}</span>
+                            </div>
                           </div>
                         </td>
                         <td className="p-5">
@@ -751,7 +938,7 @@ export default function WarehouseContent() {
                           {item.batches.length === 0 ? (
                             <span className="text-xs text-slate-400 font-medium bg-dark-800 px-2 py-1 rounded-md">{l.noBatches}</span>
                           ) : (
-                            <div className="flex flex-col gap-1.5 max-w-[200px]">
+                            <div className="flex flex-col gap-1.5 max-w-[220px]">
                               {item.batches.slice(0, 3).map((b) => (
                                 <div key={b.id} className="flex items-center justify-between bg-dark-800 border border-dark-700 rounded-lg px-2.5 py-1 text-xs">
                                   <div className="flex flex-col">
@@ -763,7 +950,16 @@ export default function WarehouseContent() {
                                       {b.zone ? b.zone.name : "+ Zona qo'shish"}
                                     </button>
                                   </div>
-                                  <div className="flex gap-1 items-center">
+                                  <div className="flex gap-1.5 items-center">
+                                    {b.arrivalPhotoUrl && (
+                                      <button 
+                                        onClick={() => setPreviewPhotoModal({ url: b.arrivalPhotoUrl!, title: `${item.name} (#${b.batchNumber})` })}
+                                        className="text-emerald-400 hover:text-emerald-300 p-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20" 
+                                        title="Partiya rasmini ko'rish"
+                                      >
+                                        <Camera size={13} />
+                                      </button>
+                                    )}
                                     <button onClick={() => handlePrintQR(b.id)} className="text-slate-400 hover:text-white p-0.5" title="Print QR">
                                       <QrCode size={12} />
                                     </button>
@@ -800,14 +996,24 @@ export default function WarehouseContent() {
                           )}
                         </td>
                         <td className="p-5 text-right">
-                          <button
-                            onClick={() => handleOpenQuickTransfer(item)}
-                            disabled={item.totalQuantity <= 0}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-800 hover:bg-emerald-600 text-slate-300 hover:text-white border border-dark-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            <Send size={14} />
-                            <span>{formatDual("Chiqarish", "Отпустить", "Dispatch")}</span>
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenReceiveModal(item)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 transition-all"
+                              title="Ushbu mahsulotga yangi partiya kirim qilish"
+                            >
+                              <Plus size={14} />
+                              <span>{formatDual("Kirim", "Приход", "Intake")}</span>
+                            </button>
+                            <button
+                              onClick={() => handleOpenQuickTransfer(item)}
+                              disabled={item.totalQuantity <= 0}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-800 hover:bg-emerald-600 text-slate-300 hover:text-white border border-dark-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Send size={14} />
+                              <span>{formatDual("Chiqarish", "Отпустить", "Dispatch")}</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1366,6 +1572,411 @@ export default function WarehouseContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: DIRECT WAREHOUSE INTAKE (KIRIM QILISH) */}
+      {showReceiveModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter overflow-y-auto"
+          onClick={() => setShowReceiveModal(false)}
+        >
+          <div 
+            className="w-full max-w-2xl bg-dark-900 border border-dark-700 rounded-3xl shadow-2xl p-6 overflow-hidden my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Package size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">
+                    {formatDual("Omborga Mahsulot Kirim Qilish", "Приемка сырья на склад", "Warehouse Stock Intake")}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {formatDual("Partiya, yetkazib beruvchi, muddat va rasm bilan qabul qilish", "Приход с партией, поставщиком, сроком и фото", "Intake with batch, supplier, expiry and photo")}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowReceiveModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveReceive} className="space-y-4 pt-4 max-h-[75vh] overflow-y-auto pr-1">
+              {/* Toggle: Existing vs New Product */}
+              <div className="flex rounded-xl bg-dark-800 p-1 border border-dark-700">
+                <button
+                  type="button"
+                  onClick={() => setReceiveForm({ ...receiveForm, isNewProduct: false })}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                    !receiveForm.isNewProduct ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {formatDual("Mavjud Mahsulotni Tanlash", "Выбрать существующий", "Select Existing")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReceiveForm({ ...receiveForm, isNewProduct: true, productId: '' })}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                    receiveForm.isNewProduct ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {formatDual("+ Yangi Mahsulot Ochish", "+ Новый продукт", "+ Create New Product")}
+                </button>
+              </div>
+
+              {/* Product Selection / Creation */}
+              {!receiveForm.isNewProduct ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Mahsulot", "Продукт", "Product")} <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    required
+                    value={receiveForm.productId}
+                    onChange={(e) => {
+                      const p = inventory.find(i => i.id === parseInt(e.target.value))
+                      setReceiveForm({
+                        ...receiveForm,
+                        productId: e.target.value,
+                        unit: p?.unit || 'kg',
+                        category: p?.category || 'Xomashyo'
+                      })
+                    }}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="">{formatDual("Mahsulotni tanlang...", "Выберите продукт...", "Select product...")}</option>
+                    {inventory.map(item => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} {item.code ? `(${item.code})` : ''} - Joriy: {item.totalQuantity} {item.unit}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-3 p-4 bg-dark-800/60 rounded-2xl border border-dark-700">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      {formatDual("Yangi Mahsulot Nomi", "Название нового продукта", "New Product Name")} <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Masalan: Go'sht (Mol lahm), Pomidor, Un..."
+                      value={receiveForm.newProductName}
+                      onChange={(e) => setReceiveForm({ ...receiveForm, newProductName: e.target.value })}
+                      className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-semibold"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                        {formatDual("Kategoriya", "Категория", "Category")}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Xomashyo, Sabzavot, Go'sht..."
+                        value={receiveForm.category}
+                        onChange={(e) => setReceiveForm({ ...receiveForm, category: e.target.value })}
+                        className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                        {formatDual("Birlik", "Единица", "Unit")}
+                      </label>
+                      <select
+                        value={receiveForm.unit}
+                        onChange={(e) => setReceiveForm({ ...receiveForm, unit: e.target.value })}
+                        className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                      >
+                        <option value="kg">kg (Kilogramm)</option>
+                        <option value="dona">dona (Штук)</option>
+                        <option value="litr">litr (Литр)</option>
+                        <option value="gramm">gramm (Грамм)</option>
+                        <option value="qop">qop (Мешок)</option>
+                        <option value="karobka">karobka (Коробка)</option>
+                        <option value="metr">metr (Метр)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Batch & Quantity */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Kirim Miqdori", "Количество", "Quantity")} ({receiveForm.unit}) <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    placeholder="Masalan: 50"
+                    value={receiveForm.quantity}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, quantity: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-base focus:outline-none focus:border-emerald-500 font-mono font-bold"
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Partiya Raqami", "Номер партии", "Batch Number")}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Avto-generatsiya..."
+                    value={receiveForm.batchNumber}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, batchNumber: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono"
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Yaroqlilik muddati (FEFO)", "Срок годности (FEFO)", "Expiry Date")}
+                  </label>
+                  <input
+                    type="date"
+                    value={receiveForm.expirationDate}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, expirationDate: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Supplier & Zone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Yetkazib Beruvchi", "Поставщик", "Supplier")}
+                  </label>
+                  <select
+                    value={receiveForm.supplierId}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, supplierId: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="">{formatDual("Tanlang (Ixtiyoriy)...", "Выберите (Опционально)...", "Select (Optional)...")}</option>
+                    {suppliers.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Saqlash Zonasi", "Зона хранения", "Storage Zone")}
+                  </label>
+                  <select
+                    value={receiveForm.zoneId}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, zoneId: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="">{formatDual("Zonani tanlang...", "Выберите зону...", "Select zone...")}</option>
+                    {zones.map(z => (
+                      <option key={z.id} value={z.id}>{z.name} ({z.warehouse?.name || 'Ombor'})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Cost, Temp, Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Ta'minotchi Hujjati / Nakladnoy", "Номер накладной / партии", "Supplier Batch / Doc")}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="M: N-4819"
+                    value={receiveForm.supplierBatchNumber}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, supplierBatchNumber: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Kelish Harorati (°C)", "Температура привоза (°C)", "Arrival Temp (°C)")}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="Masalan: 3.5"
+                    value={receiveForm.arrivalTemperature}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, arrivalTemperature: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                    {formatDual("Kirim Sanasi", "Дата прихода", "Intake Date")}
+                  </label>
+                  <input
+                    type="date"
+                    value={receiveForm.receivedAt}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, receivedAt: e.target.value })}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Photo Upload Section */}
+              <div className="p-4 bg-dark-800/80 rounded-2xl border border-dark-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-200 uppercase flex items-center gap-2">
+                    <Camera size={16} className="text-emerald-400" />
+                    <span>{formatDual("Partiya / Mahsulot Rasmi", "Фото партии / сырья", "Batch / Product Photo")}</span>
+                  </label>
+                  {receiveForm.arrivalPhotoUrl && (
+                    <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                      <CheckCircle size={14} /> {formatDual("Rasm biriktirildi", "Фото прикреплено", "Photo attached")}
+                    </span>
+                  )}
+                </div>
+
+                <input
+                  type="file"
+                  id="warehouse-receive-photo-input"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleReceivePhotoUpload}
+                  className="hidden"
+                />
+
+                {receiveForm.arrivalPhotoUrl ? (
+                  <div className="flex items-center gap-4 bg-dark-900 p-3 rounded-xl border border-dark-750">
+                    <img
+                      src={receiveForm.arrivalPhotoUrl}
+                      alt="Partiya rasmi"
+                      onClick={() => setPreviewPhotoModal({ url: receiveForm.arrivalPhotoUrl, title: "Kirim rasmi" })}
+                      className="w-20 h-20 rounded-xl object-cover border border-emerald-500/40 cursor-pointer hover:opacity-90 shadow"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-300 font-medium truncate mb-1">
+                        {receiveForm.arrivalPhotoUrl.split('/').pop()}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <label
+                          htmlFor="warehouse-receive-photo-input"
+                          className="px-3 py-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
+                        >
+                          {formatDual("O'zgartirish", "Изменить", "Change")}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setReceiveForm({ ...receiveForm, arrivalPhotoUrl: '' })}
+                          className="px-3 py-1 text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                        >
+                          {formatDual("O'chirish", "Удалить", "Remove")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="warehouse-receive-photo-input"
+                    className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-dark-600 hover:border-emerald-500/50 rounded-2xl cursor-pointer bg-dark-900/40 hover:bg-dark-900 transition-all text-center group"
+                  >
+                    {uploadingReceivePhoto ? (
+                      <div className="flex items-center gap-2 text-emerald-400 py-3">
+                        <Loader2 size={24} className="animate-spin" />
+                        <span className="text-sm font-semibold">{formatDual("Rasm yuklanmoqda...", "Загрузка фото...", "Uploading photo...")}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 group-hover:bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2 transition-colors">
+                          <Camera size={24} />
+                        </div>
+                        <p className="text-xs font-bold text-slate-200">
+                          {formatDual("Kamera orqali rasmga oling yoki fayl tanlang", "Сфотографировать на камеру или выбрать файл", "Take photo with camera or choose file")}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          {formatDual("Skladchilar telefonidan bevosita rasmga olib yuklashi mumkin", "Складчик может сразу сделать фото с телефона", "Warehouse staff can take photos directly from smartphone")}
+                        </p>
+                      </>
+                    )}
+                  </label>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  {formatDual("Izoh / Holati", "Примечание / Состояние", "Notes / Condition")}
+                </label>
+                <input
+                  type="text"
+                  placeholder="Masalan: Mahsulot sifatli yetib keldi, qadoqlari butun..."
+                  value={receiveForm.notes}
+                  onChange={(e) => setReceiveForm({ ...receiveForm, notes: e.target.value })}
+                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700">
+                <button
+                  type="button"
+                  onClick={() => setShowReceiveModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                >
+                  {formatDual("Bekor qilish", "Отмена", "Cancel")}
+                </button>
+                <button
+                  type="submit"
+                  disabled={receiveLoading || uploadingReceivePhoto}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
+                >
+                  {receiveLoading && <Loader2 size={16} className="animate-spin" />}
+                  <span>{formatDual("Omborga Qabul Qilish & Saqlash", "Принять на склад и сохранить", "Receive & Save Intake")}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PREVIEW PHOTO LIGHTBOX */}
+      {previewPhotoModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-enter"
+          onClick={() => setPreviewPhotoModal(null)}
+        >
+          <div 
+            className="relative max-w-2xl w-full bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl p-4 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 px-2 border-b border-dark-800">
+              <div className="flex items-center gap-2">
+                <Camera className="text-emerald-400" size={18} />
+                <h3 className="text-sm font-bold text-white">{previewPhotoModal.title}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewPhotoModal.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 text-xs flex items-center gap-1"
+                  title="Asl o'lchamda ochish"
+                >
+                  <ExternalLink size={16} />
+                </a>
+                <button 
+                  onClick={() => setPreviewPhotoModal(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="p-2 flex items-center justify-center max-h-[75vh] overflow-hidden bg-dark-950/60 rounded-2xl my-2">
+              <img
+                src={previewPhotoModal.url}
+                alt={previewPhotoModal.title}
+                className="max-h-[70vh] w-auto max-w-full rounded-xl object-contain shadow-lg"
+              />
+            </div>
           </div>
         </div>
       )}
