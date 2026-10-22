@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import ShopReportDayForm from './ShopReportDayForm'
 import {
   EXPENSE_FIELDS,
@@ -37,9 +38,6 @@ const todayStr = () => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-
-const ARRIVAL_PAGE = 300
-const EXPENSE_PAGE = 200
 
 // number <-> input helper: keep the raw string while typing (so "0.75" can be typed)
 const inputVal = (v: any) => (v === 0 || v === null || v === undefined ? '' : v)
@@ -360,33 +358,40 @@ export default function ShopReportContent() {
     setActiveTab(type)
   }
 
-  const filteredHistory = history.filter((h) => {
-    if (historyType !== h.type) return false
-    if (historyFilterDate && h.date !== historyFilterDate) return false
-    return true
-  })
+  const filteredHistory = useMemo(() => {
+    return history.filter((h) => {
+      if (historyType !== h.type) return false
+      if (historyFilterDate && h.date !== historyFilterDate) return false
+      return true
+    })
+  }, [history, historyType, historyFilterDate])
+
+  const historyPagination = useInfiniteTable(filteredHistory, 12, [historyType, historyFilterDate])
 
   // Visible rows (keep original index so edits always hit the right row)
-  const visibleArrivals = useMemo(() => {
-    const list = arrivals
+  const filteredArrivals = useMemo(() => {
+    return arrivals
       .map((row, idx) => ({ row, idx }))
       .filter(({ row }) => !arrFilter || row.date === arrFilter || !row.date)
-    return arrFilter ? list : list.slice(0, ARRIVAL_PAGE + dirtyArrivals)
-  }, [arrivals, arrFilter, dirtyArrivals])
+  }, [arrivals, arrFilter])
 
-  const visibleExpenses = useMemo(() => {
-    const list = expenses
+  const arrivalsPagination = useInfiniteTable(filteredArrivals, 10, [arrFilter])
+
+  const filteredExpenses = useMemo(() => {
+    return expenses
       .map((row, idx) => ({ row, idx }))
       .filter(({ row }) => !expFilter || row.date === expFilter || !row.date)
-    return expFilter ? list : list.slice(0, EXPENSE_PAGE + dirtyExpenses)
-  }, [expenses, expFilter, dirtyExpenses])
+  }, [expenses, expFilter])
 
-  const visibleGP = useMemo(() => {
-    const list = gpList
+  const expensesPagination = useInfiniteTable(filteredExpenses, 10, [expFilter])
+
+  const filteredGP = useMemo(() => {
+    return gpList
       .map((row, idx) => ({ row, idx }))
       .filter(({ row }) => !gpFilter || row.date === gpFilter || !row.date)
-    return gpFilter ? list : list.slice(0, EXPENSE_PAGE + dirtyGP)
-  }, [gpList, gpFilter, dirtyGP])
+  }, [gpList, gpFilter])
+
+  const gpPagination = useInfiniteTable(filteredGP, 10, [gpFilter])
 
   const dateFilterInput = (value: string, onChange: (v: string) => void) => (
     <div className="flex items-center gap-1.5">
@@ -567,14 +572,14 @@ export default function ShopReportContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
-                {visibleArrivals.length === 0 && (
+                {arrivalsPagination.displayedItems.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-sm text-slate-500">
                       {arrFilter ? "Bu sanada kirim yo'q. \"+ Qo'shish\" orqali yangi kirim kiriting." : "Ma'lumot yo'q"}
                     </td>
                   </tr>
                 )}
-                {visibleArrivals.map(({ row, idx }) => (
+                {arrivalsPagination.displayedItems.map(({ row, idx }) => (
                   <tr
                     key={row.id ?? `new-${idx}`}
                     className={`hover:bg-slate-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-50 dark:bg-amber-500/10' : ''}`}
@@ -658,11 +663,18 @@ export default function ShopReportContent() {
                 ))}
               </tbody>
             </table>
-            {!arrFilter && arrivals.length > visibleArrivals.length && (
-              <div className="p-3 text-center text-xs font-semibold text-slate-500 bg-slate-50 dark:bg-dark-800">
-                Oxirgi {visibleArrivals.length} ta qator ko'rsatilmoqda (jami {arrivals.length}). Boshqa kunni ko'rish uchun yuqoridan sanani tanlang.
-              </div>
-            )}
+
+            <InfiniteTableFooter
+              currentCount={arrivalsPagination.visibleCount}
+              totalCount={arrivalsPagination.totalCount}
+              hasMore={arrivalsPagination.hasMore}
+              showAll={arrivalsPagination.showAll}
+              onLoadMore={arrivalsPagination.loadMore}
+              onToggleShowAll={arrivalsPagination.toggleShowAll}
+              sentinelRef={arrivalsPagination.sentinelRef}
+              pageSize={10}
+              itemName={{ uz: 'kirim qatori', ru: 'строк прихода', en: 'arrival rows' }}
+            />
           </div>
         </div>
       )}
@@ -708,14 +720,14 @@ export default function ShopReportContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-[#FFFBF0] dark:bg-transparent">
-                {visibleExpenses.length === 0 && (
+                {expensesPagination.displayedItems.length === 0 && (
                   <tr>
                     <td colSpan={EXPENSE_FIELDS.length + 2} className="p-8 text-center text-sm text-slate-500">
                       {expFilter ? "Bu sanada chiqim yo'q. \"+ Qo'shish\" orqali yangi kun kiriting." : "Ma'lumot yo'q"}
                     </td>
                   </tr>
                 )}
-                {visibleExpenses.map(({ row, idx }) => (
+                {expensesPagination.displayedItems.map(({ row, idx }) => (
                   <tr
                     key={row._new ? `new-${idx}` : row.date}
                     className={`hover:bg-amber-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-100/70 dark:bg-amber-500/10' : ''}`}
@@ -767,11 +779,18 @@ export default function ShopReportContent() {
                 ))}
               </tbody>
             </table>
-            {!expFilter && expenses.length > visibleExpenses.length && (
-              <div className="p-3 text-center text-xs font-semibold text-slate-500 bg-slate-50 dark:bg-dark-800">
-                Oxirgi {visibleExpenses.length} ta kun ko'rsatilmoqda (jami {expenses.length}). Boshqa kunni ko'rish uchun yuqoridan sanani tanlang.
-              </div>
-            )}
+
+            <InfiniteTableFooter
+              currentCount={expensesPagination.visibleCount}
+              totalCount={expensesPagination.totalCount}
+              hasMore={expensesPagination.hasMore}
+              showAll={expensesPagination.showAll}
+              onLoadMore={expensesPagination.loadMore}
+              onToggleShowAll={expensesPagination.toggleShowAll}
+              sentinelRef={expensesPagination.sentinelRef}
+              pageSize={10}
+              itemName={{ uz: 'chiqim kuni', ru: 'дней расхода', en: 'expense days' }}
+            />
           </div>
         </div>
       )}
@@ -816,14 +835,14 @@ export default function ShopReportContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-white dark:bg-transparent">
-                {visibleGP.length === 0 && (
+                {gpPagination.displayedItems.length === 0 && (
                   <tr>
                     <td colSpan={GP_FIELDS.length + 3} className="p-8 text-center text-sm text-slate-500">
                       {gpFilter ? "Bu sanada ГП yozuvi yo'q. \"+ Qo'shish\" orqali yangi kun kiriting." : "Ma'lumot yo'q"}
                     </td>
                   </tr>
                 )}
-                {visibleGP.map(({ row, idx }) => {
+                {gpPagination.displayedItems.map(({ row, idx }) => {
                   const rowSum = GP_FIELDS.reduce((acc, f) => acc + toNum(row[f.field]), 0)
                   return (
                     <tr
@@ -874,11 +893,18 @@ export default function ShopReportContent() {
                 })}
               </tbody>
             </table>
-            {!gpFilter && gpList.length > visibleGP.length && (
-              <div className="p-3 text-center text-xs font-semibold text-slate-500 bg-slate-50 dark:bg-dark-800">
-                Oxirgi {visibleGP.length} ta kun ko&apos;rsatilmoqda (jami {gpList.length}). Boshqa kunni ko&apos;rish uchun yuqoridan sanani tanlang.
-              </div>
-            )}
+
+            <InfiniteTableFooter
+              currentCount={gpPagination.visibleCount}
+              totalCount={gpPagination.totalCount}
+              hasMore={gpPagination.hasMore}
+              showAll={gpPagination.showAll}
+              onLoadMore={gpPagination.loadMore}
+              onToggleShowAll={gpPagination.toggleShowAll}
+              sentinelRef={gpPagination.sentinelRef}
+              pageSize={10}
+              itemName={{ uz: 'GP kuni', ru: 'дней ГП', en: 'GP days' }}
+            />
           </div>
         </div>
       )}
@@ -942,12 +968,12 @@ export default function ShopReportContent() {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredHistory.length === 0 ? (
+              {historyPagination.displayedItems.length === 0 ? (
                 <div className="col-span-full py-10 text-center text-slate-500 dark:text-slate-400 font-medium">
                   Bu turdagi yoki sanadagi arxiv topilmadi.
                 </div>
               ) : (
-                filteredHistory.map((h) => (
+                historyPagination.displayedItems.map((h) => (
                   <div
                     key={h.key}
                     className="border border-slate-200 dark:border-dark-750 rounded-xl p-4 hover:border-amber-400 dark:hover:border-amber-500/50 hover:shadow-md transition-all cursor-pointer group bg-slate-50/50 dark:bg-dark-800/50"
@@ -1000,6 +1026,18 @@ export default function ShopReportContent() {
                 ))
               )}
             </div>
+
+            <InfiniteTableFooter
+              currentCount={historyPagination.visibleCount}
+              totalCount={historyPagination.totalCount}
+              hasMore={historyPagination.hasMore}
+              showAll={historyPagination.showAll}
+              onLoadMore={historyPagination.loadMore}
+              onToggleShowAll={historyPagination.toggleShowAll}
+              sentinelRef={historyPagination.sentinelRef}
+              pageSize={12}
+              itemName={{ uz: 'arxiv hujjati', ru: 'архивных документов', en: 'archive records' }}
+            />
           </div>
         </div>
       )}

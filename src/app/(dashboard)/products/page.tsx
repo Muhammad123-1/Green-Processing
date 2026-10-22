@@ -17,6 +17,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 interface Product {
   id: number
@@ -89,6 +90,8 @@ export default function ProductsPage() {
        p.category?.toLowerCase().includes(search.toLowerCase()) ||
        p.code?.toLowerCase().includes(search.toLowerCase()))
   )
+
+  const productsPagination = useInfiniteTable(filtered, 10, [search, activeTab])
 
   function openNew() {
     setEditId(null)
@@ -246,7 +249,7 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
+              {productsPagination.displayedItems.map((p) => (
                 <tr key={p.id} className="table-row">
                   <td className="font-medium text-slate-100">
                     <div className="flex items-center gap-3">
@@ -298,6 +301,18 @@ export default function ProductsPage() {
             </tbody>
           </table>
         )}
+
+        <InfiniteTableFooter
+          currentCount={productsPagination.visibleCount}
+          totalCount={productsPagination.totalCount}
+          hasMore={productsPagination.hasMore}
+          showAll={productsPagination.showAll}
+          onLoadMore={productsPagination.loadMore}
+          onToggleShowAll={productsPagination.toggleShowAll}
+          sentinelRef={productsPagination.sentinelRef}
+          pageSize={10}
+          itemName={{ uz: 'mahsulot', ru: 'товаров', en: 'products' }}
+        />
       </div>
 
       {/* Modal */}

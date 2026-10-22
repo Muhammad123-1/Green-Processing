@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Search, FileText, RefreshCw, Download, ArrowDownToLine, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, RefreshCw, Download, ArrowDownToLine } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 interface Arrival {
   id: number
@@ -55,58 +56,46 @@ const tBase = {
   }
 }
 
-type LangType = 'uz' | 'ru' | 'en'
-
 export default function ArrivalsContent() {
-  const { t, lang, formatDual } = useLanguage()
+  const { t, formatDual } = useLanguage()
   
   const l = {} as typeof tBase.uz;
   for (const key in tBase.uz) {
     (l as any)[key] = formatDual((tBase.uz as any)[key] || '', (tBase.ru as any)[key] || '', (tBase.en as any)[key] || '');
   }
 
-
   const [arrivals, setArrivals] = useState<Arrival[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
   const fetchArrivals = useCallback(async () => {
     setLoading(true)
     try {
-      // By default, maybe we only want to show ACCEPTED goods in the arrivals list? 
-      // The image doesn't show status, it just shows what arrived. Let's show all or only accepted?
-      // Since it's "Приход" usually it means accepted to inventory. We'll show all but can filter.
-      // For now, let's just fetch all like in the inspections but simplify the UI.
       const params = new URLSearchParams({
-        page: String(page),
-        limit: '20',
+        page: '1',
+        limit: '200',
         ...(search && { search }),
-        status: 'ACCEPTED' // Assuming 'Приход' only contains accepted items
+        status: 'ACCEPTED'
       })
       const res = await fetch(`/api/inspections?${params}`)
       if (res.ok) {
         const data = await res.json()
-        setArrivals(data.data)
-        setTotal(data.total)
-        setTotalPages(data.totalPages)
+        setArrivals(data.data || [])
       }
-    } catch (err) {
+    } catch {
       toast.error('Ma\'lumotlar yuklanmadi')
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [search])
 
   useEffect(() => {
     fetchArrivals()
   }, [fetchArrivals])
 
+  const arrivalsPagination = useInfiniteTable(arrivals, 10, [search])
+
   const exportToExcel = () => {
-    // Generate simple excel from the table data
-    // In a real app we might call a backend endpoint for this
     toast.success(l.featureDev)
   }
 
@@ -136,7 +125,7 @@ export default function ArrivalsContent() {
               placeholder={l.search}
               className="input-field pl-10"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
@@ -148,7 +137,7 @@ export default function ArrivalsContent() {
       </div>
 
       {/* Table */}
-      <div className="card overflow-hidden">
+      <div className="card overflow-hidden p-0">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="spinner" />
@@ -171,7 +160,7 @@ export default function ArrivalsContent() {
                 </tr>
               </thead>
               <tbody>
-                {arrivals.map((item) => (
+                {arrivalsPagination.displayedItems.map((item) => (
                   <tr key={item.id} className="table-row hover:bg-dark-700/50">
                     <td className="text-slate-300 whitespace-nowrap">
                       {new Date(item.inspectionDate).toLocaleDateString('ru-RU')}
@@ -195,33 +184,17 @@ export default function ArrivalsContent() {
           </div>
         )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-dark-700">
-            <p className="text-sm text-slate-400">
-              {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} / {total}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="btn-secondary py-1.5 px-3"
-              >
-                <ChevronLeft size={15} />
-              </button>
-              <span className="text-sm text-slate-300">
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="btn-secondary py-1.5 px-3"
-              >
-                <ChevronRight size={15} />
-              </button>
-            </div>
-          </div>
-        )}
+        <InfiniteTableFooter
+          currentCount={arrivalsPagination.visibleCount}
+          totalCount={arrivalsPagination.totalCount}
+          hasMore={arrivalsPagination.hasMore}
+          showAll={arrivalsPagination.showAll}
+          onLoadMore={arrivalsPagination.loadMore}
+          onToggleShowAll={arrivalsPagination.toggleShowAll}
+          sentinelRef={arrivalsPagination.sentinelRef}
+          pageSize={10}
+          itemName={{ uz: 'kirim hujjati', ru: 'поступлений', en: 'arrivals' }}
+        />
       </div>
     </div>
   )

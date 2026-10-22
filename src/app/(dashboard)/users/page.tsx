@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
-import { Plus, Users, Edit, Shield, Eye, EyeOff, Save, Loader2, X, RefreshCw, UserCheck } from 'lucide-react'
+import { Plus, Users, Edit, Shield, Eye, EyeOff, Save, Loader2, X, RefreshCw, UserCheck, Search } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 interface User {
   id: number
@@ -58,6 +59,7 @@ export default function UsersPage() {
   const [editId, setEditId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
   const [showPass, setShowPass] = useState(false)
 
   const fetchUsers = useCallback(async () => {
@@ -69,6 +71,16 @@ export default function UsersPage() {
   }, [])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) =>
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.username.toLowerCase().includes(search.toLowerCase()) ||
+      u.role.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [users, search])
+
+  const usersPagination = useInfiniteTable(filteredUsers, 10, [search])
 
   function openNew() {
     setEditId(null)
@@ -135,9 +147,32 @@ export default function UsersPage() {
         </button>
       </div>
 
+      <div className="card p-4">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder={formatDual("Foydalanuvchi ismi, logini yoki roli bo'yicha qidirish...", "Поиск по имени, логину или роли...", "Search by name, username, or role...")}
+              className="input-field pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button onClick={fetchUsers} className="btn-secondary" title={formatDual("Yangilash", "Обновить", "Refresh")}>
+            <RefreshCw size={15} />
+          </button>
+        </div>
+      </div>
+
       <div className="card overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20"><div className="spinner" /></div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+            <Users size={40} className="mb-3 opacity-30" />
+            <p className="font-medium">{formatDual("Foydalanuvchilar topilmadi", "Пользователи не найдены", "No users found")}</p>
+          </div>
         ) : (
           <table className="data-table">
             <thead>
@@ -151,7 +186,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
+              {usersPagination.displayedItems.map((u) => (
                 <tr key={u.id} className="table-row">
                   <td className="font-medium text-slate-100">{u.name}</td>
                   <td className="font-mono text-sm text-slate-400">{u.username}</td>
@@ -186,6 +221,18 @@ export default function UsersPage() {
             </tbody>
           </table>
         )}
+
+        <InfiniteTableFooter
+          currentCount={usersPagination.visibleCount}
+          totalCount={usersPagination.totalCount}
+          hasMore={usersPagination.hasMore}
+          showAll={usersPagination.showAll}
+          onLoadMore={usersPagination.loadMore}
+          onToggleShowAll={usersPagination.toggleShowAll}
+          sentinelRef={usersPagination.sentinelRef}
+          pageSize={10}
+          itemName={{ uz: 'foydalanuvchi', ru: 'пользователей', en: 'users' }}
+        />
       </div>
 
       {showModal && (

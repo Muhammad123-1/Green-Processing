@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 export default function ProductionContent({ isKitchen = true }: { isKitchen?: boolean } = {}) {
   const { lang } = useLanguage()
@@ -298,6 +299,10 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
       item.code?.toLowerCase().includes(stockSearch.toLowerCase())
     )
   }, [dashboardData.multiLocationStock, stockSearch])
+
+  const multiStockPagination = useInfiniteTable(filteredMultiStock, 10, [stockSearch, activeTab])
+  const transfersPagination = useInfiniteTable(dashboardData.completedTransfers || [], 10, [dashboardData.completedTransfers, activeTab])
+  const historyPagination = useInfiniteTable(productionHistory || [], 10, [productionHistory, activeTab])
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-enter">
@@ -591,7 +596,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                         </td>
                       </tr>
                     ) : (
-                      (dashboardData.completedTransfers || []).map((t: any) => (
+                      transfersPagination.displayedItems.map((t: any) => (
                         <tr key={t.id} className="hover:bg-dark-800/50">
                           <td className="py-3 px-4 font-mono text-xs text-slate-300">
                             <div className="font-bold text-blue-400">{t.transferNumber}</div>
@@ -638,6 +643,18 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                   </tbody>
                 </table>
               </div>
+
+              <InfiniteTableFooter
+                currentCount={transfersPagination.visibleCount}
+                totalCount={transfersPagination.totalCount}
+                hasMore={transfersPagination.hasMore}
+                showAll={transfersPagination.showAll}
+                onLoadMore={transfersPagination.loadMore}
+                onToggleShowAll={transfersPagination.toggleShowAll}
+                sentinelRef={transfersPagination.sentinelRef}
+                pageSize={10}
+                itemName={{ uz: 'transfer', ru: 'перемещений', en: 'transfers' }}
+              />
             </div>
           </div>
         </div>
@@ -682,7 +699,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                       </td>
                     </tr>
                   ) : (
-                    filteredMultiStock.map((item: any) => (
+                    multiStockPagination.displayedItems.map((item: any) => (
                       <tr key={item.id} className="hover:bg-dark-800/50">
                         <td className="py-3.5 px-4 font-semibold text-white">
                           <div>{item.name}</div>
@@ -711,6 +728,18 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                 </tbody>
               </table>
             </div>
+
+            <InfiniteTableFooter
+              currentCount={multiStockPagination.visibleCount}
+              totalCount={multiStockPagination.totalCount}
+              hasMore={multiStockPagination.hasMore}
+              showAll={multiStockPagination.showAll}
+              onLoadMore={multiStockPagination.loadMore}
+              onToggleShowAll={multiStockPagination.toggleShowAll}
+              sentinelRef={multiStockPagination.sentinelRef}
+              pageSize={10}
+              itemName={{ uz: 'mahsulot zaxirasi', ru: 'остатков сырья', en: 'stock items' }}
+            />
           </div>
         </div>
       )}
@@ -792,7 +821,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                       </td>
                     </tr>
                   ) : (
-                    productionHistory.map((order: any) => (
+                    historyPagination.displayedItems.map((order: any) => (
                       <tr key={order.id} className="hover:bg-dark-800/50">
                         <td className="py-3.5 px-4 font-mono text-xs text-slate-300">
                           <div className="font-bold text-blue-400">#ORD-{order.id}</div>
@@ -815,6 +844,18 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                 </tbody>
               </table>
             </div>
+
+            <InfiniteTableFooter
+              currentCount={historyPagination.visibleCount}
+              totalCount={historyPagination.totalCount}
+              hasMore={historyPagination.hasMore}
+              showAll={historyPagination.showAll}
+              onLoadMore={historyPagination.loadMore}
+              onToggleShowAll={historyPagination.toggleShowAll}
+              sentinelRef={historyPagination.sentinelRef}
+              pageSize={10}
+              itemName={{ uz: 'buyurtma', ru: 'заказов', en: 'orders' }}
+            />
           </div>
         </div>
       )}

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import {
   Plus,
   Search,
@@ -211,6 +212,9 @@ export default function InspectionsContent() {
     if (activeTab === 'defects') fetchDefects()
     if (activeTab === 'sqs') fetchSQS()
   }, [activeTab, fetchDefects, fetchSQS])
+
+  const defectsPagination = useInfiniteTable(defects, 10, [defectFilterLoc, activeTab])
+  const sqsPagination = useInfiniteTable(supplierScores, 10, [activeTab])
 
   async function handleDelete(id: number) {
     try {
@@ -665,7 +669,7 @@ export default function InspectionsContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
-                    {defects.map((d) => (
+                    {defectsPagination.displayedItems.map((d) => (
                       <tr key={d.id} className="hover:bg-dark-800/30 transition-colors">
                         <td className="p-4 font-mono text-xs">
                           <div className="font-bold text-rose-400">{d.defectNumber}</div>
@@ -701,6 +705,18 @@ export default function InspectionsContent() {
                 </table>
               </div>
             )}
+
+            <InfiniteTableFooter
+              currentCount={defectsPagination.visibleCount}
+              totalCount={defectsPagination.totalCount}
+              hasMore={defectsPagination.hasMore}
+              showAll={defectsPagination.showAll}
+              onLoadMore={defectsPagination.loadMore}
+              onToggleShowAll={defectsPagination.toggleShowAll}
+              sentinelRef={defectsPagination.sentinelRef}
+              pageSize={10}
+              itemName={{ uz: 'brak yozuvi', ru: 'записей брака', en: 'defect records' }}
+            />
           </div>
         </div>
       )}
@@ -778,7 +794,7 @@ export default function InspectionsContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
-                    {supplierScores.map((s: any) => (
+                    {sqsPagination.displayedItems.map((s: any) => (
                       <tr key={s.supplierId} className="hover:bg-dark-800/30 transition-colors">
                         <td className="p-4">
                           <div className="font-bold text-white">{s.name}</div>
@@ -826,6 +842,18 @@ export default function InspectionsContent() {
                 </table>
               </div>
             )}
+
+            <InfiniteTableFooter
+              currentCount={sqsPagination.visibleCount}
+              totalCount={sqsPagination.totalCount}
+              hasMore={sqsPagination.hasMore}
+              showAll={sqsPagination.showAll}
+              onLoadMore={sqsPagination.loadMore}
+              onToggleShowAll={sqsPagination.toggleShowAll}
+              sentinelRef={sqsPagination.sentinelRef}
+              pageSize={10}
+              itemName={{ uz: "ta'minotchi", ru: 'поставщиков', en: 'suppliers' }}
+            />
           </div>
         </div>
       )}
