@@ -701,51 +701,41 @@ export default function WarehouseContent() {
             </p>
           </div>
 
-          {/* Action & Navigation Tabs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {/* Navigation Tabs */}
+          <div className="flex items-center bg-dark-800/80 p-1.5 rounded-2xl border border-dark-700/80 backdrop-blur-md overflow-x-auto">
             <button
-              onClick={() => handleOpenReceiveModal()}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/30 px-5 py-2.5 rounded-2xl font-bold text-xs md:text-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap"
+              onClick={() => setActiveTab('inventory')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'inventory'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
             >
-              <Plus size={18} />
-              <span>{formatDual("+ Yangi Kirim (Qabul Qilish)", "+ Принять сырье (Приход)", "+ New Intake")}</span>
+              <Package size={16} />
+              <span>{l.tabStock}</span>
             </button>
-
-            <div className="flex items-center bg-dark-800/80 p-1.5 rounded-2xl border border-dark-700/80 backdrop-blur-md overflow-x-auto">
-              <button
-                onClick={() => setActiveTab('inventory')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                  activeTab === 'inventory'
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Package size={16} />
-                <span>{l.tabStock}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('transfers')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                  activeTab === 'transfers'
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Scale size={16} />
-                <span>{l.tabTransfers}</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('temperature')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                  activeTab === 'temperature'
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Thermometer size={16} />
-                <span>{l.tabTemp}</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('transfers')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'transfers'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Scale size={16} />
+              <span>{l.tabTransfers}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('temperature')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'temperature'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Thermometer size={16} />
+              <span>{l.tabTemp}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -821,7 +811,7 @@ export default function WarehouseContent() {
               className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/30 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap"
             >
               <Plus size={18} />
-              <span>{formatDual("+ Yangi Kirim (Qabul Qilish)", "+ Принять сырье (Приход)", "+ New Intake")}</span>
+              <span>{formatDual("Yangi Kirim (Qabul Qilish)", "Принять сырье (Приход)", "New Intake")}</span>
             </button>
           </div>
 
