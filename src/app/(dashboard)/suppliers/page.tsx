@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Plus, Search, Edit, Trash2, Truck, X, Save, Loader2, RefreshCw, Phone, MapPin, Mail, Award, Building2 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 interface Supplier {
   id: number
@@ -76,6 +77,9 @@ export default function SuppliersPage() {
       (s.email && s.email.toLowerCase().includes(q))
     )
   })
+
+  // 10 tadan yuklash (Infinite Scroll & Show All)
+  const suppliersPagination = useInfiniteTable(filtered, 10, [search])
 
   function openNew() {
     setEditId(null)
@@ -225,7 +229,7 @@ export default function SuppliersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-750">
-                {filtered.map((s) => (
+                {suppliersPagination.displayedItems.map((s) => (
                   <tr key={s.id} className="hover:bg-dark-800/40 transition-colors">
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
@@ -285,6 +289,21 @@ export default function SuppliersPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
+        {!loading && filtered.length > 0 && (
+          <InfiniteTableFooter
+            currentCount={suppliersPagination.visibleCount}
+            totalCount={suppliersPagination.totalCount}
+            hasMore={suppliersPagination.hasMore}
+            showAll={suppliersPagination.showAll}
+            onLoadMore={suppliersPagination.loadMore}
+            onToggleShowAll={suppliersPagination.toggleShowAll}
+            sentinelRef={suppliersPagination.sentinelRef}
+            pageSize={10}
+            itemName={{ uz: "ta'minotchi", ru: 'поставщиков', en: 'suppliers' }}
+          />
         )}
       </div>
 

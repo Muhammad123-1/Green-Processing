@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 export default function OrdersContent() {
   const { lang, formatDual } = useLanguage()
@@ -317,6 +318,10 @@ export default function OrdersContent() {
     })
   }, [orders, orderSearch, orderFilter])
 
+  // 10 tadan yuklash (Infinite Scroll & Show All)
+  const inventoryPagination = useInfiniteTable(filteredInventory, 10, [stockSearch, stockFilter])
+  const ordersPagination = useInfiniteTable(filteredOrders, 10, [orderSearch, orderFilter])
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-enter">
       {/* Header */}
@@ -587,7 +592,7 @@ export default function OrdersContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-700/50 text-sm">
-                    {filteredInventory.map((item) => (
+                    {inventoryPagination.displayedItems.map((item) => (
                       <tr key={item.id} className="hover:bg-dark-800/50 transition-colors">
                         <td className="py-3.5 px-4 font-semibold text-white">
                           <div className="flex items-center gap-2.5">
@@ -672,6 +677,21 @@ export default function OrdersContent() {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
+            {!loading && filteredInventory.length > 0 && (
+              <InfiniteTableFooter
+                currentCount={inventoryPagination.visibleCount}
+                totalCount={inventoryPagination.totalCount}
+                hasMore={inventoryPagination.hasMore}
+                showAll={inventoryPagination.showAll}
+                onLoadMore={inventoryPagination.loadMore}
+                onToggleShowAll={inventoryPagination.toggleShowAll}
+                sentinelRef={inventoryPagination.sentinelRef}
+                pageSize={10}
+                itemName={{ uz: 'mahsulot', ru: 'товаров', en: 'products' }}
+              />
             )}
           </div>
         </div>
@@ -768,7 +788,7 @@ export default function OrdersContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-700/50 text-sm">
-                    {filteredOrders.map((order) => (
+                    {ordersPagination.displayedItems.map((order) => (
                       <tr key={order.id} className="hover:bg-dark-800/50 transition-colors">
                         <td className="py-3.5 px-4 font-mono text-xs">
                           <div className="font-bold text-blue-400 mb-1">#{order.id}</div>
@@ -884,6 +904,21 @@ export default function OrdersContent() {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
+            {!loading && filteredOrders.length > 0 && (
+              <InfiniteTableFooter
+                currentCount={ordersPagination.visibleCount}
+                totalCount={ordersPagination.totalCount}
+                hasMore={ordersPagination.hasMore}
+                showAll={ordersPagination.showAll}
+                onLoadMore={ordersPagination.loadMore}
+                onToggleShowAll={ordersPagination.toggleShowAll}
+                sentinelRef={ordersPagination.sentinelRef}
+                pageSize={10}
+                itemName={{ uz: 'buyurtma', ru: 'заказов', en: 'orders' }}
+              />
             )}
           </div>
         </div>

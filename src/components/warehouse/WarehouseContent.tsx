@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 const tBase = {
   uz: {
@@ -759,6 +760,11 @@ export default function WarehouseContent() {
     )
   })
 
+  // 10 tadan yuklash (Infinite Scroll & Show All)
+  const warehousePagination = useInfiniteTable(filteredInventory, 10, [search, statusFilter])
+  const transfersPagination = useInfiniteTable(transfers, 10)
+  const tempLogsPagination = useInfiniteTable(filteredTempLogs, 10, [tempSearchQuery])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -994,7 +1000,7 @@ export default function WarehouseContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
-                    {filteredInventory.map((item) => (
+                    {warehousePagination.displayedItems.map((item) => (
                       <tr key={item.id} className="hover:bg-dark-800/30 transition-colors group">
                         <td className="p-5">
                           <div className="flex items-center gap-3">
@@ -1137,6 +1143,21 @@ export default function WarehouseContent() {
                 </table>
               </div>
             )}
+
+            {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
+            {!loading && filteredInventory.length > 0 && (
+              <InfiniteTableFooter
+                currentCount={warehousePagination.visibleCount}
+                totalCount={warehousePagination.totalCount}
+                hasMore={warehousePagination.hasMore}
+                showAll={warehousePagination.showAll}
+                onLoadMore={warehousePagination.loadMore}
+                onToggleShowAll={warehousePagination.toggleShowAll}
+                sentinelRef={warehousePagination.sentinelRef}
+                pageSize={10}
+                itemName={{ uz: 'mahsulot', ru: 'товаров', en: 'products' }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1201,7 +1222,7 @@ export default function WarehouseContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
-                    {transfers.map((t) => (
+                    {transfersPagination.displayedItems.map((t) => (
                       <tr key={t.id} className="hover:bg-dark-800/30 transition-colors">
                         <td className="p-4 font-mono text-xs text-slate-300">
                           <div className="font-bold text-emerald-400">{t.transferNumber}</div>
@@ -1261,6 +1282,21 @@ export default function WarehouseContent() {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
+            {!loading && transfers.length > 0 && (
+              <InfiniteTableFooter
+                currentCount={transfersPagination.visibleCount}
+                totalCount={transfersPagination.totalCount}
+                hasMore={transfersPagination.hasMore}
+                showAll={transfersPagination.showAll}
+                onLoadMore={transfersPagination.loadMore}
+                onToggleShowAll={transfersPagination.toggleShowAll}
+                sentinelRef={transfersPagination.sentinelRef}
+                pageSize={10}
+                itemName={{ uz: 'chiqim hujjati', ru: 'документов', en: 'documents' }}
+              />
             )}
           </div>
         </div>
@@ -1339,7 +1375,7 @@ export default function WarehouseContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
-                    {filteredTempLogs.map((log) => (
+                    {tempLogsPagination.displayedItems.map((log) => (
                       <tr key={log.id} className="hover:bg-dark-800/30 transition-colors">
                         <td className="p-4 font-mono font-bold text-white">{log.date}</td>
                         <td className="p-4 font-semibold text-emerald-400">{log.time}</td>
@@ -1369,6 +1405,21 @@ export default function WarehouseContent() {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
+            {!tempLoading && filteredTempLogs.length > 0 && (
+              <InfiniteTableFooter
+                currentCount={tempLogsPagination.visibleCount}
+                totalCount={tempLogsPagination.totalCount}
+                hasMore={tempLogsPagination.hasMore}
+                showAll={tempLogsPagination.showAll}
+                onLoadMore={tempLogsPagination.loadMore}
+                onToggleShowAll={tempLogsPagination.toggleShowAll}
+                sentinelRef={tempLogsPagination.sentinelRef}
+                pageSize={10}
+                itemName={{ uz: 'harorat yozuvi', ru: 'записей', en: 'logs' }}
+              />
             )}
           </div>
         </div>
