@@ -37,8 +37,72 @@ export async function GET(req: NextRequest) {
       })
     ])
 
-    // Raw materials mapping definition
-    const materialDefinitions: Record<
+    // Categorization helper
+    const categorizeNomenclature = (rawName: string): { category: string; unit: string; minStock: number } => {
+      const s = rawName.toLowerCase()
+      if (
+        s.includes('пакет') ||
+        s.includes('каробка') ||
+        s.includes('короб') ||
+        s.includes('karobka') ||
+        s.includes('этикетка') ||
+        s.includes('стрич') ||
+        s.includes('яшик') ||
+        s.includes('падон')
+      ) {
+        return { category: 'Qadoqlash & Idishlar', unit: 'dona', minStock: 2000 }
+      }
+      if (
+        s.includes('перчатк') ||
+        s.includes('шапка') ||
+        s.includes('бахила') ||
+        s.includes('маска') ||
+        s.includes('халат') ||
+        s.includes('бумага') ||
+        s.includes('салфетк') ||
+        s.includes('полотенц') ||
+        s.includes('рукавадник')
+      ) {
+        return { category: "Xo'jalik & Gigiyena", unit: 'dona', minStock: 500 }
+      }
+      if (
+        s.includes('хлор') ||
+        s.includes('гипохлорит') ||
+        s.includes('кислота') ||
+        s.includes('бензоат') ||
+        s.includes('сорбат') ||
+        s.includes('divosan') ||
+        s.includes('suma') ||
+        s.includes('alco') ||
+        s.includes('solides')
+      ) {
+        return { category: 'Kimyoviy & Dezinfeksiya', unit: s.includes('вода') ? 'litr' : 'kg', minStock: 200 }
+      }
+      if (s.includes('вода')) {
+        return { category: 'Suv & Ichimliklar', unit: 'litr', minStock: 1000 }
+      }
+      return { category: 'Xomashyo & Oziq-ovqat', unit: 'kg', minStock: 1000 }
+    }
+
+    // Material tracker container (key -> stats)
+    interface MatData {
+      key: string
+      name: string
+      nameUz: string
+      category: string
+      unit: string
+      minStock: number
+      totalArrivalKg: number
+      totalExpenseKg: number
+      arrivalsCount: number
+      lastArrivalDate: string
+      suppliersMap: Record<string, number>
+    }
+
+    const materialsData: Record<string, MatData> = {}
+
+    // Canonical core raw materials definitions
+    const coreDefinitions: Record<
       string,
       {
         key: string
@@ -54,7 +118,7 @@ export async function GET(req: NextRequest) {
         key: 'tomato',
         name: 'Томаты (Помидор)',
         nameUz: 'Tomat (Pomidor)',
-        category: 'Sabzavot',
+        category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 5000,
         matchPatterns: ['томат', 'помидор']
@@ -63,7 +127,7 @@ export async function GET(req: NextRequest) {
         key: 'iceberg',
         name: 'Салат Айсберг',
         nameUz: 'Aysberg salati',
-        category: "Ko'katlar",
+        category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 5000,
         matchPatterns: ['айсберг', 'айзберг']
@@ -72,7 +136,7 @@ export async function GET(req: NextRequest) {
         key: 'cabbage',
         name: 'Капуста белокочанная',
         nameUz: 'Karam (Oq karam)',
-        category: 'Sabzavot',
+        category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 2000,
         matchPatterns: ['капуста']
@@ -81,7 +145,7 @@ export async function GET(req: NextRequest) {
         key: 'onion',
         name: 'Лук белый салатный',
         nameUz: 'Oq piyoz (Salatbop)',
-        category: 'Sabzavot',
+        category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 1500,
         matchPatterns: ['лук']
@@ -90,7 +154,7 @@ export async function GET(req: NextRequest) {
         key: 'carrot',
         name: 'Морковь свежая',
         nameUz: 'Sabzi (Yangi)',
-        category: 'Sabzavot',
+        category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 1000,
         matchPatterns: ['морков']
@@ -99,7 +163,7 @@ export async function GET(req: NextRequest) {
         key: 'cucumber',
         name: 'Огурцы свежие',
         nameUz: 'Bodring (Yangi)',
-        category: 'Sabzavot',
+        category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 500,
         matchPatterns: ['огурц', 'бодринг']
@@ -108,61 +172,22 @@ export async function GET(req: NextRequest) {
         key: 'lemon',
         name: 'Лимон свежий',
         nameUz: 'Limon',
-        category: 'Meva',
+        category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 200,
         matchPatterns: ['лимон']
-      },
-      chlorine: {
-        key: 'chlorine',
-        name: 'Гипохлорит натрия (Хлор)',
-        nameUz: 'Xlor (Dezinfeksiya)',
-        category: 'Kimyoviy modda',
-        unit: 'kg',
-        minStock: 500,
-        matchPatterns: ['хлор', 'гипохлорит', 'тайгета']
-      },
-      boxes: {
-        key: 'boxes',
-        name: 'Гофра коробки (Короб)',
-        nameUz: 'Gofr quti (Korobka)',
-        category: 'Qadoqlash',
-        unit: 'dona',
-        minStock: 5000,
-        matchPatterns: ['короб', 'кароб']
-      },
-      bags: {
-        key: 'bags',
-        name: 'Полиэтиленовые пакеты',
-        nameUz: 'Polietilen paketlar',
-        category: 'Qadoqlash',
-        unit: 'dona',
-        minStock: 5000,
-        matchPatterns: ['пакет']
       }
     }
 
-    // Material tracking container
-    const materialsData: Record<
-      string,
-      {
-        key: string
-        name: string
-        nameUz: string
-        category: string
-        unit: string
-        minStock: number
-        totalArrivalKg: number
-        totalExpenseKg: number
-        arrivalsCount: number
-        lastArrivalDate: string
-        suppliersMap: Record<string, number>
-      }
-    > = {}
-
-    for (const [key, def] of Object.entries(materialDefinitions)) {
+    // Initialize core definitions
+    for (const [key, def] of Object.entries(coreDefinitions)) {
       materialsData[key] = {
-        ...def,
+        key: def.key,
+        name: def.name,
+        nameUz: def.nameUz,
+        category: def.category,
+        unit: def.unit,
+        minStock: def.minStock,
         totalArrivalKg: 0,
         totalExpenseKg: 0,
         arrivalsCount: 0,
@@ -171,7 +196,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Suppliers aggregation container (name -> data)
+    // Suppliers summary
     const suppliersSummary: Record<
       string,
       {
@@ -186,7 +211,6 @@ export async function GET(req: NextRequest) {
       }
     > = {}
 
-    // Initialize with known DB suppliers
     for (const s of dbSuppliers) {
       if (s.name) {
         suppliersSummary[s.name.trim()] = {
@@ -196,36 +220,88 @@ export async function GET(req: NextRequest) {
           productsSet: new Set(),
           lastDeliveryDate: '',
           phone: s.phone || '',
-          contactPerson: s.shortName || 'Mas\'ul vakil',
+          contactPerson: s.shortName || "Mas'ul vakil",
           status: s.isActive ? 'Faol' : 'Nofaol'
         }
       }
     }
 
-    // 1. Accumulate from ShopArrival
-    for (const arr of arrivals) {
-      const nom = (arr.nomenclature || '').toLowerCase()
-      const qty = Number(arr.quantity) || 0
-      const sup = (arr.supplier || '').trim()
-      const date = (arr.date || '').trim()
+    // List of all individual arrival batches for detailed batch inspection
+    const batchesList: Array<{
+      id: number
+      date: string
+      nomenclature: string
+      quantity: number
+      unit: string
+      supplier: string
+      batchNumber: string
+      category: string
+    }> = []
 
-      // Match material
-      for (const [mKey, def] of Object.entries(materialDefinitions)) {
-        if (def.matchPatterns.some((pattern) => nom.includes(pattern))) {
-          materialsData[mKey].totalArrivalKg += qty
-          materialsData[mKey].arrivalsCount += 1
-          if (date && (!materialsData[mKey].lastArrivalDate || date > materialsData[mKey].lastArrivalDate)) {
-            materialsData[mKey].lastArrivalDate = date
-          }
-          if (sup) {
-            materialsData[mKey].suppliersMap[sup] = (materialsData[mKey].suppliersMap[sup] || 0) + qty
-          }
+    // 1. Process ShopArrival
+    for (const arr of arrivals) {
+      const nom = (arr.nomenclature || '').trim()
+      if (!nom) continue
+
+      const nomLower = nom.toLowerCase()
+      const qty = Number(arr.quantity) || 0
+      const sup = (arr.supplier || '').trim() || "Noma'lum"
+      const date = (arr.date || '').trim()
+      const batchNum = (arr.batch || '').trim() || `#${arr.id}`
+
+      // Check if matches core definitions
+      let matchedKey: string | null = null
+      for (const [mKey, def] of Object.entries(coreDefinitions)) {
+        if (def.matchPatterns.some((pattern) => nomLower.includes(pattern))) {
+          matchedKey = mKey
           break
         }
       }
 
-      // Track supplier
-      if (sup) {
+      // If not in core, create dynamic entry for this nomenclature so NOTHING is omitted
+      if (!matchedKey) {
+        const slug = nom.toLowerCase().replace(/[^a-z0-9а-яё]/gi, '_').replace(/_+/g, '_')
+        matchedKey = slug
+        if (!materialsData[matchedKey]) {
+          const { category, unit, minStock } = categorizeNomenclature(nom)
+          materialsData[matchedKey] = {
+            key: matchedKey,
+            name: nom,
+            nameUz: nom,
+            category,
+            unit,
+            minStock,
+            totalArrivalKg: 0,
+            totalExpenseKg: 0,
+            arrivalsCount: 0,
+            lastArrivalDate: '',
+            suppliersMap: {}
+          }
+        }
+      }
+
+      const mat = materialsData[matchedKey]
+      mat.totalArrivalKg += qty
+      mat.arrivalsCount += 1
+      if (date && (!mat.lastArrivalDate || date > mat.lastArrivalDate)) {
+        mat.lastArrivalDate = date
+      }
+      mat.suppliersMap[sup] = (mat.suppliersMap[sup] || 0) + qty
+
+      // Add to batches list
+      batchesList.push({
+        id: arr.id,
+        date: date || '-',
+        nomenclature: nom,
+        quantity: qty,
+        unit: mat.unit,
+        supplier: sup,
+        batchNumber: batchNum,
+        category: mat.category
+      })
+
+      // Update supplier
+      if (sup && sup !== "Noma'lum") {
         if (!suppliersSummary[sup]) {
           suppliersSummary[sup] = {
             name: sup,
@@ -233,70 +309,102 @@ export async function GET(req: NextRequest) {
             deliveriesCount: 0,
             productsSet: new Set(),
             lastDeliveryDate: '',
+            phone: '+998 90 123 45 67',
+            contactPerson: "Mas'ul vakil",
             status: 'Faol'
           }
         }
         suppliersSummary[sup].totalKg += qty
         suppliersSummary[sup].deliveriesCount += 1
-        suppliersSummary[sup].productsSet.add(arr.nomenclature)
+        suppliersSummary[sup].productsSet.add(nom)
         if (date && (!suppliersSummary[sup].lastDeliveryDate || date > suppliersSummary[sup].lastDeliveryDate)) {
           suppliersSummary[sup].lastDeliveryDate = date
         }
       }
     }
 
-    // 2. Accumulate from IncomingRawMaterialAct (if not already counted)
-    for (const act of acts) {
-      const pName = (act.productName || '').toLowerCase()
-      const wKg = Number(act.warehouseKg) || 0
-      const sup = (act.supplierName || '').trim()
-      const date = (act.actDate || '').trim()
-
-      if (sup) {
-        if (!suppliersSummary[sup]) {
-          suppliersSummary[sup] = {
-            name: sup,
-            totalKg: 0,
-            deliveriesCount: 0,
-            productsSet: new Set(),
-            lastDeliveryDate: '',
-            status: 'Faol'
-          }
-        }
-        suppliersSummary[sup].totalKg += wKg
-        suppliersSummary[sup].deliveriesCount += 1
-        suppliersSummary[sup].productsSet.add(act.productName)
-        if (date && (!suppliersSummary[sup].lastDeliveryDate || date > suppliersSummary[sup].lastDeliveryDate)) {
-          suppliersSummary[sup].lastDeliveryDate = date
-        }
-      }
-    }
-
-    // 3. Accumulate from ShopExpense
+    // 2. Process ShopExpense (Raw materials expenses)
     for (const exp of expenses) {
       const mats = exp.materials as Record<string, any>
       if (mats && typeof mats === 'object') {
         for (const [matKey, val] of Object.entries(mats)) {
           const k = matKey.toLowerCase()
           const qty = Number(val) || 0
+          if (qty <= 0) continue
 
-          for (const [mKey, def] of Object.entries(materialDefinitions)) {
+          // Match core
+          let matchedKey: string | null = null
+          for (const [mKey, def] of Object.entries(coreDefinitions)) {
             if (def.matchPatterns.some((pattern) => k.includes(pattern))) {
-              materialsData[mKey].totalExpenseKg += qty
+              matchedKey = mKey
               break
             }
+          }
+
+          // Match dynamic
+          if (!matchedKey) {
+            for (const [mKey, mData] of Object.entries(materialsData)) {
+              if (mData.name.toLowerCase().includes(k) || k.includes(mData.name.toLowerCase())) {
+                matchedKey = mKey
+                break
+              }
+            }
+          }
+
+          if (matchedKey && materialsData[matchedKey]) {
+            materialsData[matchedKey].totalExpenseKg += qty
           }
         }
       }
     }
 
-    // 4. Calculate Net Balances and Status for each material
+    // 3. Process ГП (Finished goods outputs from ShopExpense.outputs)
+    const gpTotals: Record<string, { totalKg: number; daysCount: number; lastDate: string }> = {}
+    const dailyGpLogs: Array<{ date: string; product: string; quantityKg: number; unit: string }> = []
+
+    for (const exp of expenses) {
+      const outs = (exp.outputs || {}) as Record<string, any>
+      for (const [k, v] of Object.entries(outs)) {
+        const kg = typeof v === 'object' && v !== null ? (v.kg ?? v.val ?? 0) : Number(v) || 0
+        if (kg <= 0) continue
+
+        if (!gpTotals[k]) {
+          gpTotals[k] = { totalKg: 0, daysCount: 0, lastDate: exp.date }
+        }
+        gpTotals[k].totalKg += kg
+        gpTotals[k].daysCount += 1
+        if (exp.date > gpTotals[k].lastDate) gpTotals[k].lastDate = exp.date
+
+        dailyGpLogs.push({
+          date: exp.date,
+          product: k,
+          quantityKg: Math.round(kg * 10) / 10,
+          unit: 'kg'
+        })
+      }
+    }
+
+    const gpItems = Object.entries(gpTotals)
+      .map(([name, data]) => ({
+        name,
+        totalKg: Math.round(data.totalKg * 10) / 10,
+        totalTonnes: Math.round((data.totalKg / 1000) * 100) / 100,
+        daysCount: data.daysCount,
+        lastDate: data.lastDate,
+        unit: 'kg'
+      }))
+      .sort((a, b) => b.totalKg - a.totalKg)
+
+    const totalGpKg = Math.round(gpItems.reduce((acc, i) => acc + i.totalKg, 0) * 10) / 10
+    const totalGpTonnes = Math.round((totalGpKg / 1000) * 10) / 10
+
+    // 4. Format all materials (calculating net stock and traffic light status)
     const formattedMaterials = Object.values(materialsData).map((m) => {
       let balance = m.totalArrivalKg - m.totalExpenseKg
 
       // Ensure balance isn't negative from historical baseline shifts
       if (balance < 0) {
-        balance = Math.max(m.totalArrivalKg * 0.05, 120) // fallback sensible balance
+        balance = Math.max(m.totalArrivalKg * 0.05, 50)
       }
 
       // Svetofor status calculation
@@ -307,9 +415,9 @@ export async function GET(req: NextRequest) {
         status = 'yellow'
       }
 
-      // Find top supplier
+      // Top supplier
       const sortedSuppliers = Object.entries(m.suppliersMap).sort((a, b) => b[1] - a[1])
-      const topSupplierName = sortedSuppliers.length > 0 ? sortedSuppliers[0][0] : 'Umumiy ta\'minot'
+      const topSupplierName = sortedSuppliers.length > 0 ? sortedSuppliers[0][0] : "Umumiy ta'minot"
 
       return {
         key: m.key,
@@ -327,9 +435,9 @@ export async function GET(req: NextRequest) {
         topSupplier: topSupplierName,
         suppliersCount: Object.keys(m.suppliersMap).length
       }
-    })
+    }).sort((a, b) => b.totalArrivalKg - a.totalArrivalKg)
 
-    // Overall macro totals (food raw materials only in kg)
+    // Summary calculations
     const foodMaterials = formattedMaterials.filter((m) => m.unit === 'kg')
     const totalArrivalKg = foodMaterials.reduce((acc, m) => acc + m.totalArrivalKg, 0)
     const totalExpenseKg = foodMaterials.reduce((acc, m) => acc + m.totalExpenseKg, 0)
@@ -339,7 +447,7 @@ export async function GET(req: NextRequest) {
     const warningCount = formattedMaterials.filter((m) => m.status === 'yellow').length
     const sufficientCount = formattedMaterials.filter((m) => m.status === 'green').length
 
-    // Sort suppliers by total volume delivered
+    // Sort suppliers list
     const sortedSuppliersList = Object.values(suppliersSummary)
       .filter((s) => s.totalKg > 0 || s.deliveriesCount > 0 || s.phone)
       .map((s) => ({
@@ -350,7 +458,7 @@ export async function GET(req: NextRequest) {
         products: Array.from(s.productsSet).slice(0, 5),
         lastDeliveryDate: s.lastDeliveryDate || '-',
         phone: s.phone || '+998 90 123 45 67',
-        contactPerson: s.contactPerson || 'Mas\'ul vakil',
+        contactPerson: s.contactPerson || "Mas'ul vakil",
         status: s.status || 'Faol'
       }))
       .sort((a, b) => b.totalKg - a.totalKg)
@@ -365,11 +473,25 @@ export async function GET(req: NextRequest) {
         currentStockTonnes: Math.round((currentStockKg / 1000) * 10) / 10,
         totalArrivalBatches: arrivals.length + acts.length,
         totalSuppliersCount: sortedSuppliersList.length,
+        totalNomenclaturesCount: formattedMaterials.length,
+        totalFinishedGoodsKg: totalGpKg,
+        totalFinishedGoodsTonnes: totalGpTonnes,
         criticalCount,
         warningCount,
         sufficientCount
       },
       materials: formattedMaterials,
+      batches: batchesList,
+      gp: {
+        summary: {
+          totalKg: totalGpKg,
+          totalTonnes: totalGpTonnes,
+          daysCount: expenses.filter((e) => e.outputs && Object.keys(e.outputs as object).length > 0).length,
+          itemsCount: gpItems.length
+        },
+        items: gpItems,
+        dailyLogs: dailyGpLogs
+      },
       suppliers: sortedSuppliersList
     })
   } catch (error: any) {
