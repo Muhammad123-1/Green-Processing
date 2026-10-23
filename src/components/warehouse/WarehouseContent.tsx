@@ -28,7 +28,15 @@ import {
   Image as ImageIcon,
   ExternalLink,
   Upload,
-  ShoppingCart
+  ShoppingCart,
+  Truck,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  ArrowDownRight,
+  ArrowUpRight,
+  Phone,
+  ShieldCheck
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -41,6 +49,7 @@ const tBase = {
     tabStock: "Xomashyolar Qoldig'i (FEFO)",
     tabTransfers: "Sklad Chiqimi & Transfer (Handshake)",
     tabTemp: "Harorat Nazorati Jurnali (Ombor)",
+    tabSuppliers: "Ta'minotchilar (Yetkazib Beruvchilar)",
     totalItems: "Jami xomashyolar",
     criticalItems: "Kritik qoldiq (Qizil)",
     warningItems: "Kamaygan (Sariq)",
@@ -82,6 +91,7 @@ const tBase = {
     tabStock: "Остатки сырья (FEFO)",
     tabTransfers: "Отпуск сырья & Перемещения (Handshake)",
     tabTemp: "Журнал температурного режима (Склад)",
+    tabSuppliers: "Поставщики сырья (Снабжение)",
     totalItems: "Всего позиций",
     criticalItems: "Критично (Красный)",
     warningItems: "Мало (Желтый)",
@@ -123,6 +133,7 @@ const tBase = {
     tabStock: "Stock Inventory (FEFO)",
     tabTransfers: "Stock Dispatches (Two-Way Handshake)",
     tabTemp: "Temperature Log (Warehouse)",
+    tabSuppliers: "Suppliers & Sources",
     totalItems: "Total Items",
     criticalItems: "Critical Stock (Red)",
     warningItems: "Low Stock (Yellow)",
@@ -205,6 +216,53 @@ interface TemperatureLog {
   notes?: string | null
 }
 
+type MacroMaterial = {
+  key: string
+  name: string
+  nameUz: string
+  category: string
+  unit: string
+  totalArrivalKg: number
+  totalExpenseKg: number
+  currentStockKg: number
+  minStock: number
+  status: 'green' | 'yellow' | 'red'
+  arrivalsCount: number
+  lastArrivalDate: string
+  topSupplier: string
+  suppliersCount: number
+}
+
+type MacroSupplier = {
+  name: string
+  totalKg: number
+  totalTonnes: number
+  deliveriesCount: number
+  products: string[]
+  lastDeliveryDate: string
+  phone: string
+  contactPerson: string
+  status: string
+}
+
+type MacroStatsData = {
+  summary: {
+    totalArrivalKg: number
+    totalArrivalTonnes: number
+    totalExpenseKg: number
+    totalExpenseTonnes: number
+    currentStockKg: number
+    currentStockTonnes: number
+    totalArrivalBatches: number
+    totalSuppliersCount: number
+    criticalCount: number
+    warningCount: number
+    sufficientCount: number
+  }
+  materials: MacroMaterial[]
+  suppliers: MacroSupplier[]
+}
+
 export default function WarehouseContent() {
   const { lang, formatDual } = useLanguage()
   
@@ -213,8 +271,13 @@ export default function WarehouseContent() {
     (l as any)[key] = formatDual((tBase.uz as any)[key] || '', (tBase.ru as any)[key] || '', (tBase.en as any)[key] || '');
   }
 
+  const [activeTab, setActiveTab] = useState<'inventory' | 'transfers' | 'temperature' | 'suppliers'>('inventory')
 
-  const [activeTab, setActiveTab] = useState<'inventory' | 'transfers' | 'temperature'>('inventory')
+  // Macro Statistics (Executive & Shop Report aggregated data)
+  const [macroData, setMacroData] = useState<MacroStatsData | null>(null)
+  const [macroLoading, setMacroLoading] = useState(true)
+  const [macroSearch, setMacroSearch] = useState('')
+  const [supplierSearch, setSupplierSearch] = useState('')
 
   // Inventory states
   const [inventory, setInventory] = useState<ProductInventory[]>([])
@@ -320,7 +383,90 @@ export default function WarehouseContent() {
     fetchTransfers()
     fetchZones()
     fetchSuppliers()
+    fetchMacroStats()
   }, [])
+
+  async function fetchMacroStats() {
+    setMacroLoading(true)
+    try {
+      const res = await fetch('/api/warehouse/macro-stats')
+      if (res.ok) {
+        const data = await res.json()
+        setMacroData(data)
+      }
+    } catch (err) {
+      console.error('Fetch macro stats error:', err)
+    } finally {
+      setMacroLoading(false)
+    }
+  }
+
+  function handleOpenMacroOrder(m: MacroMaterial) {
+    const match = inventory.find(
+      (p) =>
+        p.name.toLowerCase().includes(m.key) ||
+        p.name.toLowerCase().includes(m.nameUz.toLowerCase().split(' ')[0]) ||
+        m.name.toLowerCase().includes(p.name.toLowerCase())
+    )
+
+    const targetItem: ProductInventory = match || {
+      id: inventory.length > 0 ? inventory[0].id : 1,
+      name: m.nameUz,
+      code: m.key.toUpperCase(),
+      category: m.category,
+      unit: m.unit,
+      minStockLevel: m.minStock,
+      totalQuantity: m.currentStockKg,
+      status: m.status,
+      batches: []
+    }
+
+    setOrderingItem(targetItem)
+    const suggestedQty = m.minStock > 0 ? Math.max(m.minStock, 1000) : 500
+
+    setOrderForm({
+      productId: targetItem.id.toString(),
+      productName: m.nameUz,
+      supplierId: '',
+      quantity: suggestedQty.toString(),
+      unit: m.unit,
+      expectedDate: getTomorrowDateStr(),
+      timeRange: '09:00 - 12:00',
+      notes: `${m.nameUz} uchun zaxirani to'ldirish buyurtmasi. Skladdagi joriy qoldiq: ${m.currentStockKg.toLocaleString()} ${m.unit}. Asosiy ta'minotchi: ${m.topSupplier}.`
+    })
+    setShowOrderModal(true)
+  }
+
+  function handleOpenSupplierOrder(sup: MacroSupplier) {
+    const firstProdName = sup.products[0] || 'Xomashyo'
+    const match = inventory.find((p) => p.name.toLowerCase().includes(firstProdName.toLowerCase()))
+    const targetItem: ProductInventory = match || (inventory.length > 0 ? inventory[0] : {
+      id: 1,
+      name: firstProdName,
+      code: 'RAW',
+      category: 'Xomashyo',
+      unit: 'kg',
+      minStockLevel: 1000,
+      totalQuantity: 0,
+      status: 'yellow',
+      batches: []
+    })
+
+    const matchingSup = suppliers.find((s) => s.name?.toLowerCase().trim() === sup.name.toLowerCase().trim())
+
+    setOrderingItem(targetItem)
+    setOrderForm({
+      productId: targetItem.id.toString(),
+      productName: firstProdName,
+      supplierId: matchingSup ? matchingSup.id.toString() : '',
+      quantity: '1000',
+      unit: 'kg',
+      expectedDate: getTomorrowDateStr(),
+      timeRange: '09:00 - 12:00',
+      notes: `${sup.name} yetkazib beruvchisiga buyurtma. Mas'ul: ${sup.contactPerson}, Tel: ${sup.phone}`
+    })
+    setShowOrderModal(true)
+  }
 
   async function fetchSuppliers() {
     try {
@@ -784,6 +930,28 @@ export default function WarehouseContent() {
   const criticalItems = inventory.filter(i => i.status === 'red').length
   const warningItems = inventory.filter(i => i.status === 'yellow').length
 
+  const filteredMacroMaterials = (macroData?.materials || []).filter((m) => {
+    if (!macroSearch) return true
+    const q = macroSearch.toLowerCase()
+    return (
+      m.name.toLowerCase().includes(q) ||
+      m.nameUz.toLowerCase().includes(q) ||
+      m.category.toLowerCase().includes(q) ||
+      m.topSupplier.toLowerCase().includes(q)
+    )
+  })
+
+  const filteredSuppliers = (macroData?.suppliers || []).filter((s) => {
+    if (!supplierSearch) return true
+    const q = supplierSearch.toLowerCase()
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.contactPerson.toLowerCase().includes(q) ||
+      s.phone.toLowerCase().includes(q) ||
+      s.products.some((p) => p.toLowerCase().includes(q))
+    )
+  })
+
   return (
     <div className="flex flex-col min-h-full animate-enter space-y-6">
       {/* Premium Header */}
@@ -842,59 +1010,408 @@ export default function WarehouseContent() {
               <Thermometer size={16} />
               <span>{l.tabTemp}</span>
             </button>
+            <button
+              onClick={() => setActiveTab('suppliers')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'suppliers'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Truck size={16} />
+              <span>{l.tabSuppliers}</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* TAB 1: INVENTORY (FEFO / TRAFFIC LIGHT) */}
+      {/* TAB 1: INVENTORY (FEFO / TRAFFIC LIGHT & MACRO-STATS) */}
       {activeTab === 'inventory' && (
         <div className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-dark-900 p-6 rounded-3xl border border-dark-700 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/10 transition-colors" />
-              <div className="relative z-10 flex items-center justify-between">
+          {/* 1. Director-Style Executive KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Jami Kirim */}
+            <div className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors" />
+              <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1">{l.totalItems}</p>
-                  <h3 className="text-3xl font-black text-white">{totalItems}</h3>
+                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
+                    {formatDual("Jami Kirim (Kelgan)", "Всего приход сырья", "Total Arrivals")}
+                  </span>
+                  <div className="text-2xl md:text-3xl font-black text-white">
+                    {macroLoading ? (
+                      <span className="text-slate-500 text-base">...</span>
+                    ) : (
+                      `${macroData?.summary.totalArrivalTonnes.toLocaleString() || '0'} tn`
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-300">
+                      {macroData?.summary.totalArrivalKg.toLocaleString() || 0} kg
+                    </span>
+                    <span>·</span>
+                    <span className="text-slate-500">
+                      {macroData?.summary.totalArrivalBatches || 0} ta kirim / akt
+                    </span>
+                  </div>
                 </div>
-                <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 shadow-inner">
-                  <Package size={28} />
+                <div className="w-12 h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <ArrowDownRight size={24} />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>{formatDual("Sex Hisoboti & Aktlar", "Отчет цеха и акты", "Shop report & acts")}</span>
+                <span className="text-emerald-400 font-bold">100% kirim</span>
+              </div>
+            </div>
+
+            {/* Card 2: Jami Rasxod */}
+            <div className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition-all">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/20 transition-colors" />
+              <div className="relative z-10 flex items-start justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+                    {formatDual("Jami Rasxod (Sexga)", "Расход в производство", "Total Expensed")}
+                  </span>
+                  <div className="text-2xl md:text-3xl font-black text-white">
+                    {macroLoading ? (
+                      <span className="text-slate-500 text-base">...</span>
+                    ) : (
+                      `${macroData?.summary.totalExpenseTonnes.toLocaleString() || '0'} tn`
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-300">
+                      {macroData?.summary.totalExpenseKg.toLocaleString() || 0} kg
+                    </span>
+                    <span>·</span>
+                    <span className="text-slate-500">
+                      {formatDual("Sexga berilgan", "Передано в цех", "Sent to shop")}
+                    </span>
+                  </div>
+                </div>
+                <div className="w-12 h-12 bg-amber-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-center text-amber-400 flex-shrink-0">
+                  <ArrowUpRight size={24} />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>{formatDual("Sex Ishlab Chiqarish Rasxodi", "Расход производства", "Shop expense journal")}</span>
+                <span className="text-amber-400 font-bold">
+                  {macroData && macroData.summary.totalArrivalKg > 0
+                    ? `${Math.round((macroData.summary.totalExpenseKg / macroData.summary.totalArrivalKg) * 100)}% sarflandi`
+                    : '0%'}
+                </span>
+              </div>
+            </div>
+
+            {/* Card 3: Joriy Sklad Qoldig'i */}
+            <div className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
+              <div className="relative z-10 flex items-start justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">
+                    {formatDual("Skladdagi Joriy Qoldiq", "Текущий остаток склада", "Net Warehouse Stock")}
+                  </span>
+                  <div className="text-2xl md:text-3xl font-black text-cyan-400">
+                    {macroLoading ? (
+                      <span className="text-slate-500 text-base">...</span>
+                    ) : (
+                      `${macroData?.summary.currentStockTonnes.toLocaleString() || '0'} tn`
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-300">
+                      {macroData?.summary.currentStockKg.toLocaleString() || 0} kg
+                    </span>
+                    <span>·</span>
+                    <span className="text-emerald-400 font-bold">
+                      {macroData?.summary.sufficientCount || 0} me'yorda
+                    </span>
+                  </div>
+                </div>
+                <div className="w-12 h-12 bg-cyan-500/15 border border-cyan-500/30 rounded-2xl flex items-center justify-center text-cyan-400 flex-shrink-0">
+                  <BarChart3 size={24} />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>{formatDual("Sof mavjud zaxira", "Чистый резерв", "Net reserve")}</span>
+                <div className="flex items-center gap-1 text-[10px]">
+                  {(macroData?.summary.criticalCount || 0) > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">
+                      {macroData?.summary.criticalCount} kritik
+                    </span>
+                  )}
+                  {(macroData?.summary.warningCount || 0) > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold">
+                      {macroData?.summary.warningCount} kam
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-            
+
+            {/* Card 4: Ta'minotchilar */}
             <div 
-              onClick={() => setStatusFilter(statusFilter === 'red' ? 'all' : 'red')}
-              className="bg-gradient-to-br from-red-900/10 to-dark-900 p-6 rounded-3xl border border-red-900/30 shadow-sm relative overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all group"
+              onClick={() => setActiveTab('suppliers')}
+              className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group cursor-pointer hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
             >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-red-500/20 transition-colors" />
-              <div className="relative z-10 flex items-center justify-between">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/25 transition-colors" />
+              <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-1">{l.criticalItems}</p>
-                  <h3 className="text-3xl font-black text-red-500">{criticalItems}</h3>
+                  <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
+                    {formatDual("Yetkazib Beruvchilar", "Поставщики сырья", "Suppliers")}
+                  </span>
+                  <div className="text-2xl md:text-3xl font-black text-white">
+                    {macroLoading ? (
+                      <span className="text-slate-500 text-base">...</span>
+                    ) : (
+                      `${macroData?.summary.totalSuppliersCount || 0} ta`
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1">
+                    {formatDual("Faol hamkorlar bazasi", "Активные партнеры", "Active supplier partners")}
+                  </div>
                 </div>
-                <div className="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center text-red-400 shadow-inner">
-                  <AlertTriangle size={28} />
+                <div className="w-12 h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 flex-shrink-0">
+                  <Truck size={24} />
                 </div>
               </div>
-            </div>
-            
-            <div 
-              onClick={() => setStatusFilter(statusFilter === 'yellow' ? 'all' : 'yellow')}
-              className="bg-gradient-to-br from-yellow-900/10 to-dark-900 p-6 rounded-3xl border border-yellow-900/30 shadow-sm relative overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all group"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-yellow-500/20 transition-colors" />
-              <div className="relative z-10 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-yellow-500 uppercase tracking-wider mb-1">{l.warningItems}</p>
-                  <h3 className="text-3xl font-black text-yellow-500">{warningItems}</h3>
-                </div>
-                <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center text-yellow-400 shadow-inner">
-                  <Clock size={28} />
-                </div>
+              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-indigo-400 font-bold flex items-center justify-between group-hover:text-indigo-300">
+                <span>{formatDual("Ta'minotchilarni ko'rish", "Посмотреть поставщиков", "View suppliers")}</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
+          </div>
+
+          {/* 2. Executive Macro Balance Table (Kirim - Chiqim = Qoldiq) */}
+          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-dark-750 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-dark-850 to-dark-900">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
+                    {formatDual("Sex Hisoboti & Sklad Integratsiyasi", "Отчет цеха и интеграция склада", "Shop & Warehouse Integration")}
+                  </span>
+                </div>
+                <h3 className="text-lg md:text-xl font-black text-white flex items-center gap-2.5">
+                  <BarChart3 className="text-emerald-400" size={22} />
+                  <span>{formatDual("Umumiy Xomashyolar Balansi & Qoldiq Statistikasi", "Сводный баланс и статистика остатков сырья", "Aggregated Raw Material Balance & Stock")}</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                  {formatDual(
+                    "Sex Ishlab Chiqarish Hisoboti va qabul aktlari bo'yicha jami kelgan, sexga rasxod qilingan va skladdagi sof qoldiq balansi (Kirim - Rasxod = Qoldiq)",
+                    "Сводка по отчетам цеха и актам приемки: общий приход, списание в цех и фактический чистый остаток на складе",
+                    "Aggregated shop arrival and expense balance for all primary raw materials"
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input
+                    type="text"
+                    placeholder={formatDual("Xomashyo nomi bo'yicha...", "Поиск сырья...", "Search material...")}
+                    value={macroSearch}
+                    onChange={(e) => setMacroSearch(e.target.value)}
+                    className="pl-9 pr-3 py-2 bg-dark-800 border border-dark-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-emerald-500 w-48 sm:w-60"
+                  />
+                </div>
+                <button
+                  onClick={() => fetchMacroStats()}
+                  disabled={macroLoading}
+                  className="p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-slate-300 hover:text-white hover:border-emerald-500/40 transition-all disabled:opacity-50"
+                  title={formatDual("Yangilash", "Обновить", "Refresh")}
+                >
+                  <RefreshCw size={16} className={macroLoading ? 'animate-spin text-emerald-400' : ''} />
+                </button>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <th className="p-4">{formatDual("Xomashyo Nomi", "Сырье", "Raw Material")}</th>
+                    <th className="p-4 text-center">{formatDual("Jami Kirim", "Всего Приход", "Total Arrival")}</th>
+                    <th className="p-4 text-center">{formatDual("Jami Rasxod (Sexga)", "Всего Расход (Цех)", "Total Expensed")}</th>
+                    <th className="p-4 text-center">{formatDual("Skladdagi Qoldiq", "Остаток на складе", "Current Stock")}</th>
+                    <th className="p-4 text-center">{formatDual("Zaxira Holati", "Уровень запаса", "Stock Level")}</th>
+                    <th className="p-4 text-center">{formatDual("Status (Svetofor)", "Светофор", "Status")}</th>
+                    <th className="p-4">{formatDual("Asosiy Yetkazib Beruvchi", "Главный поставщик", "Primary Supplier")}</th>
+                    <th className="p-4 text-right">{formatDual("Tezkor Harakat", "Действие", "Action")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dark-750">
+                  {macroLoading && !macroData ? (
+                    <tr>
+                      <td colSpan={8} className="p-12 text-center text-slate-400">
+                        <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={28} />
+                        <span>{formatDual("Xomashyo balansi hisoblanmoqda...", "Расчет баланса сырья...", "Calculating material balances...")}</span>
+                      </td>
+                    </tr>
+                  ) : filteredMacroMaterials.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-10 text-center text-slate-500">
+                        {formatDual("Qidiruv bo'yicha xomashyo topilmadi", "Ничего не найдено", "No materials found")}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredMacroMaterials.map((m) => {
+                      const stockPercent = m.totalArrivalKg > 0 ? Math.min(100, Math.round((m.currentStockKg / m.totalArrivalKg) * 100)) : 0
+                      return (
+                        <tr key={m.key} className="hover:bg-dark-800/40 transition-colors">
+                          {/* Material Name */}
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-emerald-400 font-bold flex-shrink-0 shadow-sm">
+                                <Package size={18} />
+                              </div>
+                              <div>
+                                <div className="font-extrabold text-white text-base leading-tight">
+                                  {m.nameUz}
+                                </div>
+                                <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                  <span>{m.name}</span>
+                                  <span>·</span>
+                                  <span className="px-1.5 py-0.2 rounded bg-dark-800 text-[10px] text-slate-300 font-medium">
+                                    {m.category}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Total Arrival */}
+                          <td className="p-4 text-center">
+                            <div className="font-black text-white text-base">
+                              {m.unit === 'kg'
+                                ? (m.totalArrivalKg >= 1000
+                                    ? `${(m.totalArrivalKg / 1000).toFixed(1)} tn`
+                                    : `${m.totalArrivalKg.toLocaleString()} kg`)
+                                : `${m.totalArrivalKg.toLocaleString()} ${m.unit}`}
+                            </div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">
+                              {m.totalArrivalKg.toLocaleString()} {m.unit} ({m.arrivalsCount} ta partiya)
+                            </div>
+                          </td>
+
+                          {/* Total Expense */}
+                          <td className="p-4 text-center">
+                            <div className="font-black text-amber-400 text-base">
+                              {m.unit === 'kg'
+                                ? (m.totalExpenseKg >= 1000
+                                    ? `${(m.totalExpenseKg / 1000).toFixed(1)} tn`
+                                    : `${m.totalExpenseKg.toLocaleString()} kg`)
+                                : `${m.totalExpenseKg.toLocaleString()} ${m.unit}`}
+                            </div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">
+                              {m.totalExpenseKg.toLocaleString()} {m.unit} sexga berilgan
+                            </div>
+                          </td>
+
+                          {/* Current Stock */}
+                          <td className="p-4 text-center">
+                            <div className={`inline-block px-3 py-1.5 rounded-xl border font-black text-base ${
+                              m.status === 'green'
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                                : m.status === 'yellow'
+                                ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300'
+                                : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                            }`}>
+                              {m.unit === 'kg'
+                                ? (m.currentStockKg >= 1000
+                                    ? `${(m.currentStockKg / 1000).toFixed(1)} tn`
+                                    : `${m.currentStockKg.toLocaleString()} kg`)
+                                : `${m.currentStockKg.toLocaleString()} ${m.unit}`}
+                            </div>
+                            <div className="text-[11px] text-slate-400 mt-1 font-mono">
+                              {m.currentStockKg.toLocaleString()} {m.unit}
+                            </div>
+                          </td>
+
+                          {/* Stock Level Progress */}
+                          <td className="p-4 text-center min-w-[130px]">
+                            <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                              <span>{stockPercent}% qoldi</span>
+                              <span className="font-mono text-[10px]">min: {m.minStock}</span>
+                            </div>
+                            <div className="w-full bg-dark-800 rounded-full h-2 overflow-hidden border border-dark-700">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  m.status === 'green'
+                                    ? 'bg-emerald-500'
+                                    : m.status === 'yellow'
+                                    ? 'bg-yellow-500'
+                                    : 'bg-rose-500'
+                                }`}
+                                style={{ width: `${Math.max(5, stockPercent)}%` }}
+                              />
+                            </div>
+                          </td>
+
+                          {/* Status (Svetofor) */}
+                          <td className="p-4 text-center">
+                            {m.status === 'green' && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                <CheckCircle size={14} />
+                                <span>{formatDual("Yetarli (Yashil)", "В норме (Зеленый)", "Sufficient")}</span>
+                              </span>
+                            )}
+                            {m.status === 'yellow' && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
+                                <Clock size={14} />
+                                <span>{formatDual("Kamaygan (Sariq)", "Мало (Желтый)", "Low")}</span>
+                              </span>
+                            )}
+                            {m.status === 'red' && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                <AlertTriangle size={14} />
+                                <span>{formatDual("Kritik (Qizil)", "Критично (Красный)", "Critical")}</span>
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Top Supplier */}
+                          <td className="p-4">
+                            <div className="font-bold text-white text-xs truncate max-w-[160px]" title={m.topSupplier}>
+                              {m.topSupplier}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-0.5">
+                              {m.suppliersCount > 1
+                                ? `+ yana ${m.suppliersCount - 1} ta ta'minotchi`
+                                : "Yagona yetkazib beruvchi"}
+                            </div>
+                          </td>
+
+                          {/* Action: Quick Order */}
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => handleOpenMacroOrder(m)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all shadow hover:shadow-amber-500/10"
+                              title="Ta'minot bo'limiga buyurtma berish"
+                            >
+                              <ShoppingCart size={13} />
+                              <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 3. Section Divider: Detailed batches */}
+          <div className="flex items-center gap-3 pt-4">
+            <div className="h-px bg-dark-750 flex-1" />
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-dark-800/80 border border-dark-700 text-xs font-bold text-slate-300 uppercase tracking-widest shadow-sm">
+              <Layers size={14} className="text-emerald-400" />
+              <span>{formatDual("Batafsil Mahsulotlar & Partiyalar Nazorati (FEFO & Zonalash)", "Детальный контроль партий (FEFO и зоны)", "Detailed Batches Control (FEFO & Zones)")}</span>
+            </div>
+            <div className="h-px bg-dark-750 flex-1" />
           </div>
 
           {/* Quick Intake Banner */}
@@ -1421,6 +1938,234 @@ export default function WarehouseContent() {
                 itemName={{ uz: 'harorat yozuvi', ru: 'записей', en: 'logs' }}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: SUPPLIERS (YETKAZIB BERUVCHILAR / PASTAFSHIKLAR) */}
+      {activeTab === 'suppliers' && (
+        <div className="space-y-6">
+          {/* Header Banner */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-6 rounded-3xl shadow-xl">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Truck size={14} />
+                  {formatDual("Ta'minot Boshqaruvi", "Управление поставками", "Supply Management")}
+                </span>
+              </div>
+              <h3 className="text-xl font-black text-white flex items-center gap-2.5">
+                <span>{formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и статистика поставщиков сырья", "Suppliers Registry & Analytics")}</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                {formatDual(
+                  "Korxonaga xomashyo yetkazib bergan barcha pastafshiklar, yetkazilgan umumiy hajmlar, partiyalar soni va zudlik bilan yangi buyurtma yuborish",
+                  "Все поставщики сырья, общий объем поставок, количество партий и быстрая отправка заказов",
+                  "All raw material suppliers, delivered volumes, delivery count, and fast ordering"
+                )}
+              </p>
+            </div>
+
+            <button
+              onClick={() => fetchMacroStats()}
+              disabled={macroLoading}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700 text-slate-200 hover:text-white font-bold text-xs transition-all shadow hover:border-emerald-500/40"
+            >
+              <RefreshCw size={14} className={macroLoading ? 'animate-spin text-emerald-400' : ''} />
+              <span>{formatDual("Yangilash", "Обновить", "Refresh")}</span>
+            </button>
+          </div>
+
+          {/* Supplier KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+              <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
+                {formatDual("Jami Hamkorlar", "Всего поставщиков", "Total Suppliers")}
+              </span>
+              <div className="text-2xl md:text-3xl font-black text-white">
+                {macroData?.suppliers.length || 0} ta
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {formatDual("Doimiy ro'yxatdan o'tgan pastafshiklar", "Зарегистрированные поставщики", "Registered suppliers")}
+              </p>
+            </div>
+
+            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
+                {formatDual("Jami Keltirilgan Yuk", "Общий объем поставок", "Total Delivered Volume")}
+              </span>
+              <div className="text-2xl md:text-3xl font-black text-emerald-400">
+                {macroData?.summary.totalArrivalTonnes || 0} tn
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {macroData?.summary.totalArrivalKg.toLocaleString() || 0} kg {formatDual("xomashyo qabul qilingan", "сырья принято", "raw materials received")}
+              </p>
+            </div>
+
+            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+              <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+                {formatDual("Eng Yirik Hamkor", "Главный поставщик", "Top Supplier Partner")}
+              </span>
+              <div className="text-xl md:text-2xl font-black text-white truncate" title={macroData?.suppliers[0]?.name || '-'}>
+                {macroData?.suppliers[0]?.name || '-'}
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {macroData?.suppliers[0]?.totalTonnes || 0} tn {formatDual("yetkazib bergan", "поставлено", "delivered")}
+              </p>
+            </div>
+          </div>
+
+          {/* Suppliers Table Container */}
+          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-5 border-b border-dark-750 flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-850/50">
+              <div className="relative flex-1 w-full sm:max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input
+                  type="text"
+                  placeholder={formatDual(
+                    "Ta'minotchi nomi, mahsuloti yoki telefoni bo'yicha...",
+                    "Поиск по поставщику, продукту или телефону...",
+                    "Search supplier, product or phone..."
+                  )}
+                  value={supplierSearch}
+                  onChange={(e) => setSupplierSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div className="text-xs text-slate-400 font-semibold">
+                {formatDual(
+                  `Topildi: ${filteredSuppliers.length} ta ta'minotchi`,
+                  `Найдено: ${filteredSuppliers.length} поставщиков`,
+                  `Found: ${filteredSuppliers.length} suppliers`
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <th className="p-4">{formatDual("Ta'minotchi (Korxona)", "Поставщик / Организация", "Supplier Organization")}</th>
+                    <th className="p-4">{formatDual("Keltirgan Mahsulotlari", "Поставляемая продукция", "Supplied Products")}</th>
+                    <th className="p-4 text-center">{formatDual("Jami Yetkazilgan Yuk", "Общий объем", "Total Volume")}</th>
+                    <th className="p-4 text-center">{formatDual("Partiyalar", "Партий", "Batches")}</th>
+                    <th className="p-4 text-center">{formatDual("Oxirgi Yetkazish", "Посл. поставка", "Last Delivery")}</th>
+                    <th className="p-4">{formatDual("Aloqa / Telefon", "Контакты", "Contact")}</th>
+                    <th className="p-4 text-center">{formatDual("Holat", "Статус", "Status")}</th>
+                    <th className="p-4 text-right">{formatDual("Buyurtma", "Заказ", "Order")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dark-750">
+                  {macroLoading && !macroData ? (
+                    <tr>
+                      <td colSpan={8} className="p-12 text-center text-slate-400">
+                        <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={28} />
+                        <span>{formatDual("Ta'minotchilar yuklanmoqda...", "Загрузка поставщиков...", "Loading suppliers...")}</span>
+                      </td>
+                    </tr>
+                  ) : filteredSuppliers.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-12 text-center text-slate-500">
+                        <Truck size={36} className="mx-auto mb-2 opacity-30" />
+                        <p>{formatDual("Ta'minotchi topilmadi", "Поставщики не найдены", "No suppliers found")}</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredSuppliers.map((s, idx) => (
+                      <tr key={idx} className="hover:bg-dark-800/30 transition-colors">
+                        {/* Supplier Info */}
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold flex-shrink-0">
+                              <Building2 size={18} />
+                            </div>
+                            <div>
+                              <div className="font-extrabold text-white text-sm">
+                                {s.name}
+                              </div>
+                              <div className="text-xs text-slate-400 mt-0.5">
+                                {s.contactPerson}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Products tags */}
+                        <td className="p-4 max-w-[240px]">
+                          <div className="flex flex-wrap gap-1">
+                            {s.products.length > 0 ? (
+                              s.products.map((p, pIdx) => (
+                                <span
+                                  key={pIdx}
+                                  className="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-[11px] font-medium text-emerald-300"
+                                >
+                                  {p}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-slate-500">-</span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Total Volume */}
+                        <td className="p-4 text-center">
+                          <div className="font-black text-white text-base">
+                            {s.totalTonnes >= 1 ? `${s.totalTonnes} tn` : `${s.totalKg.toLocaleString()} kg`}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                            {s.totalKg.toLocaleString()} kg
+                          </div>
+                        </td>
+
+                        {/* Deliveries Count */}
+                        <td className="p-4 text-center">
+                          <span className="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200">
+                            {s.deliveriesCount} ta
+                          </span>
+                        </td>
+
+                        {/* Last Delivery Date */}
+                        <td className="p-4 text-center text-xs font-mono text-slate-300">
+                          {s.lastDeliveryDate}
+                        </td>
+
+                        {/* Contact */}
+                        <td className="p-4">
+                          <a
+                            href={`tel:${s.phone.replace(/\s+/g, '')}`}
+                            className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-400 hover:text-indigo-300 transition-colors"
+                          >
+                            <Phone size={13} />
+                            <span>{s.phone}</span>
+                          </a>
+                        </td>
+
+                        {/* Status */}
+                        <td className="p-4 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            <ShieldCheck size={12} />
+                            <span>{s.status}</span>
+                          </span>
+                        </td>
+
+                        {/* Action */}
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => handleOpenSupplierOrder(s)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all shadow hover:shadow-amber-500/10"
+                            title="Ushbu ta'minotchiga yangi buyurtma yuborish"
+                          >
+                            <ShoppingCart size={13} />
+                            <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
