@@ -1414,42 +1414,6 @@ export default function WarehouseContent() {
             <div className="h-px bg-dark-750 flex-1" />
           </div>
 
-          {/* Quick Intake Banner */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-5 rounded-3xl shadow-xl">
-            <div>
-              <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2.5">
-                <Package className="text-emerald-400" size={22} />
-                <span>{formatDual("Omborga Mahsulot Qabul Qilish (Kirim)", "Приемка сырья на склад (Приход)", "Warehouse Stock Intake")}</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                {formatDual(
-                  "Skladchilar uchun partiya va mahsulotlarni rasmi, hujjati va muddati bilan to'g'ridan-to'g'ri qabul qilish",
-                  "Приемка партий и продуктов с фото, сроками годности и зонами хранения",
-                  "Direct intake of products and batches with photo, expiry dates and storage zones"
-                )}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {criticalItems > 0 && (
-                <button
-                  onClick={() => setStatusFilter(statusFilter === 'red' ? 'all' : 'red')}
-                  className="flex items-center gap-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all"
-                  title="Kritik qoldiqdagi mahsulotlarni ko'rish"
-                >
-                  <AlertTriangle size={16} />
-                  <span>{criticalItems} {formatDual("ta kritik qoldiq!", "критических позиций!", "critical items!")}</span>
-                </button>
-              )}
-              <button
-                onClick={() => handleOpenReceiveModal()}
-                className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/30 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap"
-              >
-                <Plus size={18} />
-                <span>{formatDual("Yangi Kirim (Qabul Qilish)", "Принять сырье (Приход)", "New Intake")}</span>
-              </button>
-            </div>
-          </div>
-
           {/* Filters & Search */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
