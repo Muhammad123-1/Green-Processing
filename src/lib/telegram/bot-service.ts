@@ -1,9 +1,9 @@
 import { Telegraf } from 'telegraf'
 import { prisma } from '@/lib/prisma'
-import { TOPIC_RULES, TopicRule } from './topics-config'
+import { TOPIC_RULES, EMPLOYEE_DEDICATED_TOPICS, findTopicRule, TopicRule } from './topics-config'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8654592033:AAHgeJbEh9u3oz7D3sWvRD-nk9osktWZIog'
-const GROUP_ID = process.env.TELEGRAM_GROUP_ID || ''
+const GROUP_ID = process.env.TELEGRAM_GROUP_ID || '-1003860991313'
 
 export const bot = new Telegraf(BOT_TOKEN)
 
@@ -18,7 +18,7 @@ export interface AuthUser {
   loggedInAt: Date
 }
 
-// In-memory session store (and can be synced with DB)
+// In-memory session store (telegramId -> user)
 export const authUsersMap = new Map<number, AuthUser>()
 
 // Default roles auto-provision for offline/demo logins
@@ -38,7 +38,7 @@ const DEFAULT_ROLES_MAP: Record<string, { name: string; role: string }> = {
 }
 
 /**
- * 1. SHAXSIY CHAT BUYRUQLARI (/start, /login, /status, /logout)
+ * 1. SHAXSIY CHAT BUYRUQLARI (/start, /login, /status, /logout, /topics)
  */
 bot.start(async (ctx) => {
   if (ctx.chat.type !== 'private') return
@@ -49,7 +49,8 @@ bot.start(async (ctx) => {
       `👋 Assalomu alaykum, *${user.name}*!\n\n` +
       `Siz tizimga kirmisiz.\n` +
       `Sizning rolingiz: \`${user.role}\`\n\n` +
-      `Guruhdagi mavzularda bemalol xabar yozishingiz va yangiliklarni qabul qilishingiz mumkin.`,
+      `Guruhdagi o'zingizga ruxsat etilgan mavzularda bemalol xabar yozishingiz va yangiliklarni qabul qilishingiz mumkin.\n\n` +
+      `Mavzular ro'yxatini ko'rish uchun: /topics`,
       { parse_mode: 'Markdown' }
     )
   }
@@ -58,7 +59,8 @@ bot.start(async (ctx) => {
     `👋 Assalomu alaykum, *Green Processing* korxona botiga xush kelibsiz!\n\n` +
     `Korxona guruhidagi maxsus topiklarda ishlash va o'zingizga tegishli xabarnomalarni olish uchun ERP login-parolingiz bilan kiring:\n\n` +
     `👉 Format: \`/login [login] [parol]\`\n\n` +
-    `_Masalan:_ \`/login warehouse 123\` yoki \`/login supply 123\``,
+    `_Masalan:_ \`/login warehouse 123\` yoki \`/login director 123\`\n\n` +
+    `Mavzular ro'yxatini ko'rish: /topics`,
     { parse_mode: 'Markdown' }
   )
 })
@@ -120,16 +122,22 @@ bot.command('login', async (ctx) => {
     authUsersMap.set(ctx.from.id, authData)
 
     // Allowed topics list for this user
-    const allowedTopics = Object.values(TOPIC_RULES)
-      .filter(t => !t.requireLogin || t.allowedRoles.includes('ALL') || t.allowedRoles.includes(dbUser!.role))
-      .map(t => `• ${t.name}`)
+    const allTopics = [...Object.values(TOPIC_RULES), ...Object.values(EMPLOYEE_DEDICATED_TOPICS)]
+    const allowedTopics = allTopics
+      .filter((t) => {
+        if (!t.requireLogin) return true
+        if (t.dedicatedUser && (t.dedicatedUser === dbUser!.username || ['DIRECTOR', 'ADMIN'].includes(dbUser!.role))) return true
+        if (t.allowedRoles.includes('ALL') || t.allowedRoles.includes(dbUser!.role)) return true
+        return false
+      })
+      .map((t) => `• ${t.name}`)
       .join('\n')
 
     return ctx.reply(
       `✅ *Xush kelibsiz, ${dbUser.name}!*\n\n` +
       `Siz tizimga muvaffaqiyatli kirdingiz.\n` +
       `Sizning lavozimingiz: *${dbUser.role}*\n\n` +
-      `*Siz yoza oladigan bo'limlar:*\n${allowedTopics}\n\n` +
+      `*Siz ruxsat olgan bo'limlar:*\n${allowedTopics}\n\n` +
       `Endi korxona guruhidagi tegishli topiklarda bemalol xabar qoldira olasiz.`,
       { parse_mode: 'Markdown' }
     )
@@ -162,6 +170,19 @@ bot.command('logout', async (ctx) => {
   return ctx.reply('🚪 Tizimdan muvaffaqiyatli chiqdingiz.')
 })
 
+bot.command('topics', async (ctx) => {
+  const allTopics = Object.values(TOPIC_RULES)
+  let text = `📋 *KORXONA TOPIKLARI VA XAVFSIZLIK QOIDALARI:*\n\n`
+
+  allTopics.forEach((t) => {
+    const lock = t.requireLogin ? '🔒 Himoyalangan' : '🔓 Ochiq'
+    const threadStr = t.threadId ? `ID: ${t.threadId}` : 'Asosiy chat'
+    text += `*${t.name}* (${threadStr})\n  └ ${lock} | Rollar: \`${t.allowedRoles.join(', ')}\`\n\n`
+  })
+
+  return ctx.reply(text, { parse_mode: 'Markdown' })
+})
+
 /**
  * 2. TOPIK ID RAQAMINI BILISH BUYRUQLARI (/id yoki /topic)
  */
@@ -170,12 +191,15 @@ bot.command(['id', 'topic'], async (ctx) => {
   const chatId = ctx.chat.id
   const chatTitle = 'title' in ctx.chat ? ctx.chat.title : 'Shaxsiy chat'
 
+  const matched = findTopicRule(threadId)
+  const matchedInfo = matched ? `\n• Tanilgan bo'lim: *${matched.name}*` : ''
+
   return ctx.reply(
     `📌 *Ushbu joy ma'lumotlari:*\n\n` +
     `• Guruh nomi: *${chatTitle}*\n` +
     `• Guruh ID (chatId): \`${chatId}\`\n` +
-    `• Topik ID (threadId): \`${threadId ? threadId : 'Asosiy chat (Topik emas)'}\`\n\n` +
-    `_Ushbu raqamni \`topics-config.ts\` dagi mos bo'limning threadId ga qo'yishingiz mumkin._`,
+    `• Topik ID (threadId): \`${threadId ? threadId : 'Asosiy chat (Topik emas)'}\`${matchedInfo}\n\n` +
+    `_Ushbu raqam topics-config.ts fayliga biriktirilgan._`,
     { parse_mode: 'Markdown' }
   )
 })
@@ -189,10 +213,8 @@ bot.on('message', async (ctx, next) => {
 
   const currentThreadId = ctx.message.message_thread_id || null
 
-  // Ushbu xabar qaysi topikda yozilganini topamiz
-  const activeRule = Object.values(TOPIC_RULES).find(
-    (rule) => rule.threadId === currentThreadId
-  )
+  // Ushbu xabar qaysi topikda yozilganini aniqlaymiz
+  const activeRule = findTopicRule(currentThreadId)
 
   // Agar bu topik sozlamalarda bo'lmasa yoki login talab qilinmasa -> ruxsat
   if (!activeRule || !activeRule.requireLogin) {
@@ -225,7 +247,24 @@ bot.on('message', async (ctx, next) => {
     return
   }
 
-  // 2-Tekshiruv: Foydalanuvchi roli ushbu bo'limga to'g'ri keladimi?
+  // 2-Tekshiruv: Agar bu xodimning shaxsiy individual topigi bo'lsa
+  if (activeRule.dedicatedUser) {
+    const isOwner = user.username === activeRule.dedicatedUser
+    const isBoss = ['DIRECTOR', 'ADMIN'].includes(user.role)
+    if (!isOwner && !isBoss) {
+      await ctx.deleteMessage().catch(() => {})
+      const warning = await ctx.reply(
+        `⛔ [${user.name}](tg://user?id=${senderId}), «*${activeRule.name}*» bo'limi faqat o'z egasi va rahbarlar uchun mo'ljallangan.`,
+        { parse_mode: 'Markdown' }
+      )
+      setTimeout(() => {
+        ctx.telegram.deleteMessage(ctx.chat.id, warning.message_id).catch(() => {})
+      }, 8000)
+      return
+    }
+  }
+
+  // 3-Tekshiruv: Foydalanuvchi roli ushbu bo'limga to'g'ri keladimi?
   const hasAccess =
     activeRule.allowedRoles.includes('ALL') ||
     activeRule.allowedRoles.includes(user.role)
@@ -280,19 +319,47 @@ export async function sendTopicNotification(
 }
 
 /**
- * 5. XODIMNING SHAXSIY TELEGRAMIGA XABAR YUBORISH
+ * 5. XODIMGA SHAXSAN XABAR YUBORISH (Dedicated Topic YOKI Direct Telegram)
  */
-export async function sendDirectNotification(
-  telegramId: number,
+export async function sendEmployeeNotification(
+  username: string,
   message: string
 ) {
-  try {
-    const sent = await bot.telegram.sendMessage(telegramId, message, {
-      parse_mode: 'HTML'
-    })
-    return { success: true, messageId: sent.message_id }
-  } catch (error: any) {
-    console.error(`Shaxsiy xabar yuborishda xatolik (${telegramId}):`, error)
-    return { success: false, error: error.message }
+  let topicSent = false
+  let directSent = false
+
+  // 1) Check if employee has a dedicated topic in the group
+  const dedicatedTopic = Object.values({ ...TOPIC_RULES, ...EMPLOYEE_DEDICATED_TOPICS }).find(
+    (t) => t.dedicatedUser === username
+  )
+
+  if (dedicatedTopic && dedicatedTopic.threadId) {
+    try {
+      await bot.telegram.sendMessage(GROUP_ID, message, {
+        message_thread_id: dedicatedTopic.threadId,
+        parse_mode: 'HTML'
+      })
+      topicSent = true
+    } catch (e) {
+      console.warn(`Dedicated topic xabarida xatolik (${username}):`, e)
+    }
   }
+
+  // 2) Check if employee is logged in to the bot personally
+  const authUser = Array.from(authUsersMap.values()).find(
+    (u) => u.username.toLowerCase() === username.toLowerCase()
+  )
+
+  if (authUser) {
+    try {
+      await bot.telegram.sendMessage(authUser.telegramId, message, {
+        parse_mode: 'HTML'
+      })
+      directSent = true
+    } catch (e) {
+      console.warn(`Direct Telegram xabarida xatolik (${username}):`, e)
+    }
+  }
+
+  return { success: topicSent || directSent, topicSent, directSent }
 }
