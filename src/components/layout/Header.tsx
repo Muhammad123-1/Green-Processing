@@ -6,6 +6,7 @@ import { Bell, Sun, Moon, Globe, Menu, Type, Check, ChevronDown, Search } from '
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { useLanguage, LANGUAGE_OPTIONS, DIRECTOR_LANGUAGE_OPTIONS, Language, DirectorLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
+import NotificationCenter from './NotificationCenter'
 
 const getPageInfo = (pathname: string, t: any, formatDual: any) => {
   const map: Record<string, { title: string; subtitle: string }> = {
@@ -278,11 +279,7 @@ export default function Header() {
           )}
         </div>
 
-        <button className="w-9 h-9 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600 
-                          flex items-center justify-center text-slate-400 hover:text-slate-200 
-                          transition-all duration-200">
-          <Bell size={16} />
-        </button>
+        <NotificationCenter />
 
         <button 
           onClick={() => {
