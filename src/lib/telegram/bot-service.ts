@@ -56,6 +56,40 @@ export async function initTelegramSessions() {
   }
 }
 
+/**
+ * Foydalanuvchi sessiyasini olish (Cache yoki PostgreSQL bazasidan)
+ */
+export async function getAuthenticatedUser(telegramId: number): Promise<AuthUser | null> {
+  const cached = authUsersMap.get(telegramId)
+  if (cached) return cached
+
+  try {
+    const dbSession: any = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "TelegramSession" WHERE "telegramId" = $1 LIMIT 1`,
+      telegramId
+    ).catch(() => [])
+
+    if (dbSession && dbSession.length > 0) {
+      const s = dbSession[0]
+      const user: AuthUser = {
+        telegramId: Number(s.telegramId),
+        telegramUsername: s.telegramUsername || undefined,
+        erpUserId: Number(s.erpUserId),
+        username: s.username,
+        name: s.name,
+        role: s.role,
+        loggedInAt: new Date(s.updatedAt || Date.now())
+      }
+      authUsersMap.set(telegramId, user)
+      return user
+    }
+  } catch (err) {
+    console.warn('Session check DB error:', err)
+  }
+
+  return null
+}
+
 // Xatoliklarni ushlash (crash bo'lmasligi uchun)
 bot.catch((err: any, ctx) => {
   console.error(`❌ Bot xatolik yuz berdi (${ctx?.updateType}):`, err?.message || err)
@@ -92,7 +126,7 @@ const DEFAULT_ROLES_MAP: Record<string, { name: string; role: string }> = {
 bot.start(async (ctx) => {
   if (ctx.chat.type !== 'private') return
 
-  const user = authUsersMap.get(ctx.from.id)
+  const user = await getAuthenticatedUser(ctx.from.id)
   if (user) {
     return ctx.reply(
       `👋 Assalomu alaykum, *${user.name}*!\n\n` +
@@ -227,7 +261,7 @@ bot.command('login', async (ctx) => {
 })
 
 bot.command('status', async (ctx) => {
-  const user = authUsersMap.get(ctx.from.id)
+  const user = await getAuthenticatedUser(ctx.from.id)
   if (!user) {
     return ctx.reply('Siz hali tizimga kirmagansiz. Kirish uchun: `/login [login] [parol]`', {
       parse_mode: 'Markdown'
@@ -303,7 +337,7 @@ bot.on('message', async (ctx, next) => {
 
   // Agar ushbu topikga LOGIN TALAB QILINSA:
   const senderId = ctx.from.id
-  const user = authUsersMap.get(senderId)
+  const user = await getAuthenticatedUser(senderId)
 
   // 1-Tekshiruv: Xodim botda login qilganmi?
   if (!user) {
