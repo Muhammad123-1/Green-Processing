@@ -7,9 +7,12 @@
   },
   "files": [
     "main.js",
+    "preload.js",
     "package.json",
     "icon.png",
+    "icon_badge.png",
     "icon.ico",
+    "icon_badge.ico",
     "red_dot.png"
   ],
   "win": {

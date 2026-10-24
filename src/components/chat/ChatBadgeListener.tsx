@@ -1,8 +1,17 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useChatBadge } from '@/store/chatBadge'
+
+declare global {
+  interface Window {
+    electronAPI?: {
+      setBadge: (count: number) => void
+      notify: (title: string, body: string) => void
+    }
+  }
+}
 
 function playChime() {
   try {
@@ -27,13 +36,15 @@ function playChime() {
   } catch {}
 }
 
+const DISMISSED_KEY = 'gp_dismissed_notifications_v1'
+
 export default function ChatBadgeListener() {
   const pathname = usePathname()
-  const { unreadCount, setUnreadCount } = useChatBadge()
-  const prevCountRef = useRef<number>(0)
+  const { setUnreadCount } = useChatBadge()
+  const prevCountRef = useRef<number>(-1)
   const isChatPage = pathname?.startsWith('/chat')
 
-  // Request native notification permission on user interaction
+  // Request browser notification permission
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'default') {
@@ -42,58 +53,97 @@ export default function ChatBadgeListener() {
     }
   }, [])
 
-  // Check unread count
+  // Sync unread chat + notifications
   useEffect(() => {
     let isMounted = true
 
-    const checkUnread = async () => {
+    const syncBadges = async () => {
       try {
-        const res = await fetch('/api/chat/unread', { cache: 'no-store' })
-        if (!res.ok) return
-        const data = await res.json()
-        const count = typeof data.unreadCount === 'number' ? data.unreadCount : 0
+        let chatCount = 0
+        let latestMsg: any = null
 
-        if (isMounted) {
-          setUnreadCount(count)
-
-          // If new unread message arrived and user is NOT on chat page
-          if (count > prevCountRef.current && prevCountRef.current >= 0 && !isChatPage) {
-            playChime()
-
-            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-              const sender = data.latestMessage?.sender || 'Xodim'
-              const text = data.latestMessage?.text || 'Yangi xabar yuborildi'
-              new Notification(`Green Processing: ${sender}`, {
-                body: text,
-                icon: '/icon.png'
-              })
-            }
+        // 1. Fetch unread chat
+        try {
+          const chatRes = await fetch('/api/chat/unread', { cache: 'no-store' })
+          if (chatRes.ok) {
+            const d = await chatRes.json()
+            chatCount = typeof d.unreadCount === 'number' ? d.unreadCount : 0
+            latestMsg = d.latestMessage
           }
+        } catch {}
 
-          prevCountRef.current = count
+        // 2. Fetch active notification center items
+        let notifCount = 0
+        try {
+          const notifRes = await fetch('/api/notifications', { cache: 'no-store' })
+          if (notifRes.ok) {
+            const nd = await notifRes.json()
+            const items: any[] = nd.notifications || []
+            let dismissedIds: string[] = []
+            try {
+              const saved = localStorage.getItem(DISMISSED_KEY)
+              if (saved) dismissedIds = JSON.parse(saved)
+            } catch {}
+            const active = items.filter((n) => !dismissedIds.includes(n.id))
+            notifCount = active.length
+          }
+        } catch {}
+
+        if (!isMounted) return
+
+        // Update Zustand store for Sidebar Chat link
+        setUnreadCount(chatCount)
+
+        // Total count for Taskbar and Title
+        const totalCount = chatCount + notifCount
+
+        // Update document title
+        if (totalCount > 0) {
+          document.title = `(${totalCount}) 🔴 Green Processing ERP`
+        } else {
+          document.title = 'Green Processing ERP'
         }
+
+        // Send to Electron app directly via IPC (Guaranteed taskbar red dot!)
+        if (typeof window !== 'undefined' && window.electronAPI?.setBadge) {
+          window.electronAPI.setBadge(totalCount)
+        }
+
+        // Chime and notifications on new unread
+        if (prevCountRef.current !== -1 && totalCount > prevCountRef.current && !isChatPage) {
+          playChime()
+
+          const notifyTitle = latestMsg?.sender 
+            ? `Green Processing: ${latestMsg.sender}` 
+            : 'Green Processing ERP'
+          const notifyBody = latestMsg?.text 
+            ? latestMsg.text 
+            : `${totalCount} ta yangi bildirishnoma mavjud`
+
+          if (typeof window !== 'undefined' && window.electronAPI?.notify) {
+            window.electronAPI.notify(notifyTitle, notifyBody)
+          } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification(notifyTitle, {
+              body: notifyBody,
+              icon: '/icon.png'
+            })
+          }
+        }
+
+        prevCountRef.current = totalCount
       } catch {
         // silent fail
       }
     }
 
-    checkUnread()
-    const interval = setInterval(checkUnread, 5000)
+    syncBadges()
+    const timer = setInterval(syncBadges, 4000)
 
     return () => {
       isMounted = false
-      clearInterval(interval)
+      clearInterval(timer)
     }
   }, [isChatPage, setUnreadCount])
-
-  // Update document.title
-  useEffect(() => {
-    if (unreadCount > 0) {
-      document.title = `(${unreadCount}) 🔴 Green Processing ERP`
-    } else {
-      document.title = 'Green Processing ERP'
-    }
-  }, [unreadCount])
 
   return null
 }
