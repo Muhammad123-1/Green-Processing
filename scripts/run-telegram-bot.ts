@@ -1,10 +1,13 @@
-import { bot } from '../src/lib/telegram/bot-service'
+import { bot, initTelegramSessions } from '../src/lib/telegram/bot-service'
 import { TOPIC_RULES } from '../src/lib/telegram/topics-config'
 
 async function main() {
   console.log('----------------------------------------------------')
   console.log('🤖 GREEN PROCESSING TELEGRAM BOT ISHGA TUSHMOQDA...')
   console.log('----------------------------------------------------')
+
+  // Baza orqali avval kiritilgan Telegram sessiyalarni tiklash
+  await initTelegramSessions()
 
   const botInfo = await bot.telegram.getMe()
   console.log(`✅ Bot topildi: @${botInfo.username} (${botInfo.first_name})`)

@@ -21,6 +21,55 @@ export interface AuthUser {
 // In-memory session store (telegramId -> user)
 export const authUsersMap = new Map<number, AuthUser>()
 
+/**
+ * PostgreSQL bazasidagi Telegram sessiyalarini initsializatsiya qilish
+ */
+export async function initTelegramSessions() {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "TelegramSession" (
+        "telegramId" BIGINT PRIMARY KEY,
+        "telegramUsername" TEXT,
+        "erpUserId" INT NOT NULL,
+        "username" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "role" TEXT NOT NULL,
+        "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `)
+
+    const sessions: any = await prisma.$queryRawUnsafe(`SELECT * FROM "TelegramSession"`).catch(() => [])
+    for (const s of sessions) {
+      authUsersMap.set(Number(s.telegramId), {
+        telegramId: Number(s.telegramId),
+        telegramUsername: s.telegramUsername || undefined,
+        erpUserId: Number(s.erpUserId),
+        username: s.username,
+        name: s.name,
+        role: s.role,
+        loggedInAt: new Date(s.updatedAt || Date.now())
+      })
+    }
+    console.log(`📦 Baza orqali ${sessions.length} ta Telegram xodim sessiyasi tiklandi`)
+  } catch (err) {
+    console.warn('TelegramSession init xatosi:', err)
+  }
+}
+
+// Xatoliklarni ushlash (crash bo'lmasligi uchun)
+bot.catch((err: any, ctx) => {
+  console.error(`❌ Bot xatolik yuz berdi (${ctx?.updateType}):`, err?.message || err)
+})
+
+// Barcha xabarlarni terminalda ko'rsatish (monitoring)
+bot.use(async (ctx, next) => {
+  if (ctx.message && 'text' in ctx.message) {
+    const thread = ctx.message.message_thread_id ? ` (topic=${ctx.message.message_thread_id})` : ''
+    console.log(`📩 [${ctx.chat?.type}${thread}] @${ctx.from?.username || ctx.from?.first_name || 'anon'} (${ctx.from?.id}): ${ctx.message.text}`)
+  }
+  return next()
+})
+
 // Default roles auto-provision for offline/demo logins
 const DEFAULT_ROLES_MAP: Record<string, { name: string; role: string }> = {
   director: { name: 'Direktor', role: 'DIRECTOR' },
@@ -66,21 +115,22 @@ bot.start(async (ctx) => {
 })
 
 bot.command('login', async (ctx) => {
-  if (ctx.chat.type !== 'private') {
-    ctx.deleteMessage().catch(() => {})
-    return ctx.reply(
-      '⚠️ Xavfsizlik yuzasidan login va parolingizni faqat botning shaxsiy chatiga yuboring!'
-    )
-  }
+  const isPrivate = ctx.chat.type === 'private'
+  const text = ctx.message.text || ''
+  const parts = text.trim().split(/\s+/)
 
-  const parts = ctx.message.text.split(' ')
   if (parts.length < 3) {
     return ctx.reply(
       '⚠️ Noto\'g\'ri format. Iltimos quyidagicha yozing:\n\n' +
       '`/login [login] [parol]`\n\n' +
-      'Masalan: `/login warehouse 123`',
+      'Masalan: `/login director 123` yoki `/login warehouse 123`',
       { parse_mode: 'Markdown' }
     )
+  }
+
+  // Agar guruhda yozilgan bo'lsa, xavfsizlik uchun parolli xabarni o'chirib tashlaymiz
+  if (!isPrivate) {
+    ctx.deleteMessage().catch(() => {})
   }
 
   const username = parts[1].trim()
@@ -88,8 +138,10 @@ bot.command('login', async (ctx) => {
   const lowerUser = username.toLowerCase()
 
   try {
-    let dbUser = await prisma.user.findUnique({
-      where: { username }
+    let dbUser = await prisma.user.findFirst({
+      where: {
+        username: { equals: lowerUser, mode: 'insensitive' }
+      }
     })
 
     // If not found, check auto-provision defaults
@@ -109,7 +161,7 @@ bot.command('login', async (ctx) => {
       return ctx.reply('❌ Login yoki parol noto\'g\'ri! Iltimos qaytadan tekshirib ko\'ring.')
     }
 
-    // Save session
+    // Save session in memory
     const authData: AuthUser = {
       telegramId: ctx.from.id,
       telegramUsername: ctx.from.username,
@@ -121,12 +173,39 @@ bot.command('login', async (ctx) => {
     }
     authUsersMap.set(ctx.from.id, authData)
 
-    // Allowed topics list for this user
+    // Save session permanently into PostgreSQL DB
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "TelegramSession" ("telegramId", "telegramUsername", "erpUserId", "username", "name", "role", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      ON CONFLICT ("telegramId") DO UPDATE SET
+        "telegramUsername" = EXCLUDED."telegramUsername",
+        "erpUserId" = EXCLUDED."erpUserId",
+        "username" = EXCLUDED."username",
+        "name" = EXCLUDED."name",
+        "role" = EXCLUDED."role",
+        "updatedAt" = NOW();
+    `, ctx.from.id, ctx.from.username || null, dbUser.id, dbUser.username, dbUser.name, dbUser.role).catch((err) => {
+      console.warn('TelegramSession DB saqlash xatosi:', err)
+    })
+
+    console.log(`✅ [Login Success] ${dbUser.name} (@${dbUser.username}) TelegramID=${ctx.from.id}`)
+
+    // Agar guruhda login qilingan bo'lsa
+    if (!isPrivate) {
+      return ctx.reply(
+        `✅ [${dbUser.name}](tg://user?id=${ctx.from.id}), tizimga muvaffaqiyatli kirdingiz!\n\n` +
+        `Lavozimingiz: *${dbUser.role}*\n` +
+        `_Xavfsizlik uchun parolingiz o'chirildi._ Endi ushbu guruh va ruxsat berilgan topiklarda bemalol xabar qoldirishingiz mumkin.`,
+        { parse_mode: 'Markdown' }
+      )
+    }
+
+    // Allowed topics list for this user (shaxsiy chatda)
     const allTopics = [...Object.values(TOPIC_RULES), ...Object.values(EMPLOYEE_DEDICATED_TOPICS)]
     const allowedTopics = allTopics
       .filter((t) => {
         if (!t.requireLogin) return true
-        if (t.dedicatedUser && (t.dedicatedUser === dbUser!.username || ['DIRECTOR', 'ADMIN'].includes(dbUser!.role))) return true
+        if (t.dedicatedUser && (t.dedicatedUser.toLowerCase() === dbUser!.username.toLowerCase() || ['DIRECTOR', 'ADMIN'].includes(dbUser!.role))) return true
         if (t.allowedRoles.includes('ALL') || t.allowedRoles.includes(dbUser!.role)) return true
         return false
       })
@@ -167,6 +246,7 @@ bot.command('status', async (ctx) => {
 
 bot.command('logout', async (ctx) => {
   authUsersMap.delete(ctx.from.id)
+  await prisma.$executeRawUnsafe(`DELETE FROM "TelegramSession" WHERE "telegramId" = $1;`, ctx.from.id).catch(() => {})
   return ctx.reply('🚪 Tizimdan muvaffaqiyatli chiqdingiz.')
 })
 
