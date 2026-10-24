@@ -260,11 +260,15 @@ type MacroBatch = {
 
 type GPItem = {
   name: string
+  category?: string
   totalKg: number
   totalTonnes: number
   daysCount: number
+  avgPerDayKg?: number
+  sharePercent?: number
   lastDate: string
   unit: string
+  status?: string
 }
 
 type DailyGPLog = {
@@ -299,6 +303,7 @@ type MacroStatsData = {
       totalTonnes: number
       daysCount: number
       itemsCount: number
+      avgDailyKg?: number
     }
     items: GPItem[]
     dailyLogs: DailyGPLog[]
@@ -323,6 +328,7 @@ export default function WarehouseContent() {
   const [macroCategoryFilter, setMacroCategoryFilter] = useState<'all' | 'raw' | 'packaging' | 'hygiene' | 'chemicals'>('all')
   const [batchSearch, setBatchSearch] = useState('')
   const [gpSearch, setGpSearch] = useState('')
+  const [gpCategory, setGpCategory] = useState<string>('all')
   const [supplierSearch, setSupplierSearch] = useState('')
   const [batchesView, setBatchesView] = useState<'prihod' | 'fefo'>('prihod')
 
@@ -1012,9 +1018,10 @@ export default function WarehouseContent() {
   const batchesPagination = useInfiniteTable(filteredBatches, 15, [batchSearch])
 
   const filteredGpItems = (macroData?.gp?.items || []).filter((g) => {
+    if (gpCategory !== 'all' && g.category !== gpCategory) return false
     if (!gpSearch) return true
     const q = gpSearch.toLowerCase()
-    return g.name.toLowerCase().includes(q)
+    return g.name.toLowerCase().includes(q) || (g.category && g.category.toLowerCase().includes(q))
   })
 
   const filteredGpLogs = (macroData?.gp?.dailyLogs || []).filter((g) => {
@@ -2114,42 +2121,80 @@ export default function WarehouseContent() {
           </div>
 
           {/* GP Summary KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="bg-dark-900/90 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
               <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
-                {formatDual("Jami Chiqarilgan ГП (Tayyor Mahsulot)", "Всего выпущено ГП", "Total Finished Goods")}
+                {formatDual("Jami Chiqarilgan ГП", "Всего выпущено ГП", "Total Finished Goods")}
               </span>
-              <div className="text-xl sm:text-2xl md:text-3xl font-black text-emerald-400">
+              <div className="text-lg sm:text-2xl md:text-3xl font-black text-emerald-400">
                 {macroData?.gp?.summary?.totalTonnes || 0} tn
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {(macroData?.gp?.summary?.totalKg || 0).toLocaleString()} kg {formatDual("tayyor mahsulot qabul qilingan", "готовой продукции принято", "finished goods received")}
+              <p className="text-[11px] text-slate-400 mt-1">
+                {(macroData?.gp?.summary?.totalKg || 0).toLocaleString()} kg {formatDual("qabul qilingan", "принято", "received")}
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
-              <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">
-                {formatDual("Ishlab Chiqarish Kunlari", "Дней выработки", "Production Days")}
-              </span>
-              <div className="text-xl sm:text-2xl md:text-3xl font-black text-white">
-                {macroData?.gp?.summary?.daysCount || 0} kun
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {formatDual("Sex hisobotida qayd etilgan", "Зафиксировано в отчете цеха", "Recorded in shop report")}
-              </p>
-            </div>
-
-            <div className="bg-dark-900/90 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
+            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
               <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
                 {formatDual("Mahsulot Turlari (SKU)", "Номенклатура ГП", "Finished SKU Count")}
               </span>
-              <div className="text-xl sm:text-2xl md:text-3xl font-black text-white">
-                {macroData?.gp?.summary?.itemsCount || 0} ta tur
+              <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+                {macroData?.gp?.summary?.itemsCount || 17} ta tur
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {formatDual("Aysberg, Tomat, Coleslaw, Piyoz va b.", "Айсберг, Томат, Коул Слоу, Лук и др.", "Iceberg, Tomato, Coleslaw, Onion...")}
+              <p className="text-[11px] text-slate-400 mt-1">
+                {formatDual("17 xil tayyor mahsulot", "17 наименований ГП", "17 finished items")}
               </p>
             </div>
+
+            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+              <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">
+                {formatDual("Ishlab Chiqarish Kunlari", "Дней выработки", "Production Days")}
+              </span>
+              <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+                {macroData?.gp?.summary?.daysCount || 0} kun
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {formatDual("Sex hisobotida qayd etilgan", "В отчете цеха", "Recorded in shop report")}
+              </p>
+            </div>
+
+            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+              <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
+                {formatDual("O'rtacha Kunlik Chiqarish", "Среднесуточный выпуск", "Avg Daily Output")}
+              </span>
+              <div className="text-lg sm:text-2xl md:text-3xl font-black text-indigo-400">
+                {(macroData?.gp?.summary?.avgDailyKg || 0).toLocaleString()} kg
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {formatDual("Bir smenada o'rtacha", "В среднем за смену", "Avg per shift")}
+              </p>
+            </div>
+          </div>
+
+          {/* GP Category Filter Pills */}
+          <div className="flex items-center gap-2 p-1.5 bg-dark-900 border border-dark-750 rounded-2xl overflow-x-auto no-scrollbar shadow-sm">
+            {[
+              { id: 'all', uz: `Barchasi (${macroData?.gp?.items?.length || 17})`, ru: `Все (${macroData?.gp?.items?.length || 17})`, en: `All (${macroData?.gp?.items?.length || 17})` },
+              { id: 'Salatlar', uz: '🥗 Salatlar', ru: '🥗 Салаты', en: '🥗 Salads' },
+              { id: 'Sabzavotlar', uz: '🍅 Sabzavotlar', ru: '🍅 Овощи', en: '🍅 Vegetables' },
+              { id: "Ko'katlar & Boshqa", uz: '🌿 Ko\'katlar & Boshqa', ru: '🌿 Зелень & др.', en: '🌿 Herbs & other' },
+              { id: 'Qadoqlash', uz: '📦 Qadoqlash', ru: '📦 Упаковка', en: '📦 Packaging' },
+            ].map((cat) => {
+              const isSel = gpCategory === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setGpCategory(cat.id)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    isSel 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm' 
+                      : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  }`}
+                >
+                  {formatDual(cat.uz, cat.ru, cat.en)}
+                </button>
+              )
+            })}
           </div>
 
           {/* GP Items Aggregated Table */}
@@ -2158,7 +2203,7 @@ export default function WarehouseContent() {
               <div className="flex items-center gap-2">
                 <Boxes className="text-emerald-400 shrink-0" size={20} />
                 <h4 className="font-extrabold text-white text-sm sm:text-base">
-                  {formatDual("Tayyor Mahsulotlar Bo'yicha Umumiy Hajm", "Сводка выпуска по видам продукции", "Summary by Finished Products")}
+                  {formatDual("17 ta Tayyor Mahsulot Bo'yicha Umumiy Hajm & Balans", "Сводка выпуска и баланс 17 видов ГП", "Summary & Balance of 17 FG Items")}
                 </h4>
               </div>
 
@@ -2174,107 +2219,162 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            {/* Mobile View: GP Item Cards */}
-            <div className="block sm:hidden divide-y divide-dark-750">
-              {filteredGpItems.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 text-xs">
-                  {formatDual("Tayyor mahsulotlar topilmadi", "Ничего не найдено", "No finished goods found")}
-                </div>
-              ) : (
-                filteredGpItems.map((g, idx) => (
-                  <div key={idx} className="p-3.5 space-y-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-mono font-bold shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span className="font-bold text-white text-xs truncate">{g.name}</span>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 whitespace-nowrap">
-                        ✓ Mavjud
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2.5 rounded-xl border border-dark-700/60 text-center">
-                      <div>
-                        <div className="text-[10px] uppercase font-bold text-slate-400">Jami Hajm</div>
-                        <div className="font-black text-emerald-400 text-xs mt-0.5">
-                          {g.totalTonnes >= 1 ? `${g.totalTonnes} tn` : `${g.totalKg.toLocaleString()} kg`}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase font-bold text-slate-400">Ish Kunlari</div>
-                        <div className="font-bold text-slate-200 text-xs mt-0.5">
-                          {g.daysCount} kun
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase font-bold text-slate-400">Oxirgi Sana</div>
-                        <div className="font-mono text-[10px] text-slate-300 mt-0.5">
-                          {g.lastDate}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Desktop View: GP Items Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    <th className="p-4">{formatDual("Tayyor Mahsulot Nomi", "Готовая продукция", "Product Name")}</th>
-                    <th className="p-4 text-center">{formatDual("Jami Ishlab Chiqarilgan", "Всего выработано", "Total Produced")}</th>
-                    <th className="p-4 text-center">{formatDual("Ishlab Chiqarish Kunlari", "Дней производства", "Days Count")}</th>
-                    <th className="p-4 text-center">{formatDual("Oxirgi Chiqarilgan Sana", "Последняя дата", "Last Date")}</th>
-                    <th className="p-4 text-center">{formatDual("Holati", "Статус", "Status")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-dark-750">
+            {/* Loading Indicator */}
+            {macroLoading && !macroData ? (
+              <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+                <Loader2 className="animate-spin text-emerald-500" size={32} />
+                <span className="font-bold text-slate-300 text-sm">
+                  {formatDual("Tayyor mahsulotlar (ГП) statistikasi yuklanmoqda...", "Загрузка статистики ГП...", "Loading finished goods statistics...")}
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* Mobile View: GP Item Cards */}
+                <div className="block sm:hidden divide-y divide-dark-750">
                   {filteredGpItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-10 text-center text-slate-500">
-                        {formatDual("Tayyor mahsulotlar topilmadi", "Ничего не найдено", "No finished goods found")}
-                      </td>
-                    </tr>
+                    <div className="p-8 text-center text-slate-500 text-xs">
+                      {formatDual("Tayyor mahsulotlar topilmadi", "Ничего не найдено", "No finished goods found")}
+                    </div>
                   ) : (
                     filteredGpItems.map((g, idx) => (
-                      <tr key={idx} className="hover:bg-dark-800/30 transition-colors">
-                        <td className="p-4 font-black text-white text-base flex items-center gap-2.5">
-                          <span className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-mono font-bold">
-                            {idx + 1}
-                          </span>
-                          <span>{g.name}</span>
-                        </td>
-                        <td className="p-4 text-center">
-                          <div className="font-black text-emerald-400 text-base">
-                            {g.totalTonnes >= 1 ? `${g.totalTonnes} tn` : `${g.totalKg.toLocaleString()} kg`}
+                      <div key={idx} className="p-3.5 space-y-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-mono font-bold shrink-0">
+                              {idx + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <span className="font-bold text-white text-xs truncate block">{g.name}</span>
+                              {g.category && (
+                                <span className="text-[10px] text-slate-400 block">{g.category}</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                            {g.totalKg.toLocaleString()} kg
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 whitespace-nowrap">
+                            ✓ Mavjud
+                          </span>
+                        </div>
+
+                        {/* Progress Bar for Share % */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-slate-400">
+                            <span>Umumiy hajmdagi ulushi:</span>
+                            <span className="font-bold text-emerald-400 font-mono">{g.sharePercent || 0}%</span>
                           </div>
-                        </td>
-                        <td className="p-4 text-center">
-                          <span className="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200">
-                            {g.daysCount} kun
-                          </span>
-                        </td>
-                        <td className="p-4 text-center font-mono text-xs text-slate-300">
-                          {g.lastDate}
-                        </td>
-                        <td className="p-4 text-center">
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                            ✓ Omborda mavjud
-                          </span>
-                        </td>
-                      </tr>
+                          <div className="w-full h-1.5 rounded-full bg-dark-800 overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(Math.max(g.sharePercent || 0, 3), 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2.5 rounded-xl border border-dark-700/60 text-center">
+                          <div>
+                            <div className="text-[10px] uppercase font-bold text-slate-400">Jami Hajm</div>
+                            <div className="font-black text-emerald-400 text-xs mt-0.5">
+                              {g.totalTonnes >= 1 ? `${g.totalTonnes} tn` : `${g.totalKg.toLocaleString()} ${g.unit}`}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase font-bold text-slate-400">Ish Kunlari</div>
+                            <div className="font-bold text-slate-200 text-xs mt-0.5">
+                              {g.daysCount} kun
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase font-bold text-slate-400">O'rtacha/kun</div>
+                            <div className="font-mono text-[10px] text-cyan-300 mt-0.5">
+                              {g.avgPerDayKg ? `${g.avgPerDayKg} kg` : '-'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     ))
                   )}
-                </tbody>
-              </table>
-            </div>
+                </div>
+
+                {/* Desktop View: GP Items Table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                        <th className="p-4">{formatDual("Tayyor Mahsulot Nomi", "Готовая продукция", "Product Name")}</th>
+                        <th className="p-4">{formatDual("Kategoriya", "Категория", "Category")}</th>
+                        <th className="p-4 text-center">{formatDual("Jami Ishlab Chiqarilgan", "Всего выработано", "Total Produced")}</th>
+                        <th className="p-4 text-center">{formatDual("Hajmdagi Ulushi (%)", "Доля в выпуске (%)", "Share (%)")}</th>
+                        <th className="p-4 text-center">{formatDual("Ish Kunlari", "Дней производства", "Days Count")}</th>
+                        <th className="p-4 text-center">{formatDual("O'rtacha / Kun", "В среднем / день", "Avg / Day")}</th>
+                        <th className="p-4 text-center">{formatDual("Oxirgi Chiqarilgan Sana", "Последняя дата", "Last Date")}</th>
+                        <th className="p-4 text-center">{formatDual("Holati", "Статус", "Status")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-dark-750">
+                      {filteredGpItems.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-10 text-center text-slate-500">
+                            {formatDual("Tayyor mahsulotlar topilmadi", "Ничего не найдено", "No finished goods found")}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredGpItems.map((g, idx) => (
+                          <tr key={idx} className="hover:bg-dark-800/30 transition-colors">
+                            <td className="p-4 font-black text-white text-base flex items-center gap-2.5">
+                              <span className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-mono font-bold">
+                                {idx + 1}
+                              </span>
+                              <span>{g.name}</span>
+                            </td>
+                            <td className="p-4">
+                              <span className="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-xs font-semibold text-slate-300">
+                                {g.category || 'GP'}
+                              </span>
+                            </td>
+                            <td className="p-4 text-center">
+                              <div className="font-black text-emerald-400 text-base">
+                                {g.totalTonnes >= 1 ? `${g.totalTonnes} tn` : `${g.totalKg.toLocaleString()} ${g.unit}`}
+                              </div>
+                              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                {g.totalKg.toLocaleString()} {g.unit}
+                              </div>
+                            </td>
+                            <td className="p-4 text-center">
+                              <div className="w-28 mx-auto space-y-1">
+                                <div className="text-xs font-mono font-bold text-emerald-400 text-right">
+                                  {g.sharePercent || 0}%
+                                </div>
+                                <div className="w-full h-1.5 rounded-full bg-dark-800 overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full"
+                                    style={{ width: `${Math.min(Math.max(g.sharePercent || 0, 3), 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200">
+                                {g.daysCount} kun
+                              </span>
+                            </td>
+                            <td className="p-4 text-center font-mono text-xs font-bold text-cyan-300">
+                              {g.avgPerDayKg ? `${g.avgPerDayKg} kg` : '-'}
+                            </td>
+                            <td className="p-4 text-center font-mono text-xs text-slate-300">
+                              {g.lastDate}
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                ✓ Omborda mavjud
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Daily Output Logs */}

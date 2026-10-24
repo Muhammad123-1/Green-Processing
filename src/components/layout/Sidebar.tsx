@@ -62,6 +62,7 @@ const navSections = [
     title: 'Ombor va Ishlab chiqarish',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'SUPPLY', 'QUALITY_CONTROL'] },
       { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'arrivals', href: '/arrivals', icon: ArrowDownToLine, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
@@ -78,7 +79,7 @@ const navSections = [
       { key: 'sales', href: '/sales', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SALES'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'SALES', 'SUPPLY'] },
       { key: 'orders', href: '/orders', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'WAREHOUSE'] },
-      { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
+      { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
     ]
   },
@@ -155,6 +156,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
                 'director',
                 'archive',
                 'warehouse',
+                'suppliers',
                 'kitchen',
                 'surveys',
                 'accounting',

@@ -433,6 +433,24 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Helper to categorize finished goods (GP)
+    const categorizeGP = (name: string): string => {
+      const s = name.toLowerCase()
+      if (s.includes('салат') || s.includes('айсберг') || s.includes('коул') || s.includes('микс')) {
+        return 'Salatlar'
+      }
+      if (s.includes('томат') || s.includes('лук') || s.includes('морков') || s.includes('капуст') || s.includes('огурц') || s.includes('лимон')) {
+        return 'Sabzavotlar'
+      }
+      if (s.includes('мята') || s.includes('сельдерей') || s.includes('зелен')) {
+        return "Ko'katlar & Boshqa"
+      }
+      if (s.includes('пакет') || s.includes('короб') || s.includes('упаковк')) {
+        return 'Qadoqlash'
+      }
+      return 'Boshqa GP'
+    }
+
     // 3. Process ГП (Finished goods outputs from ShopExpense.outputs)
     const gpTotals: Record<string, { totalKg: number; daysCount: number; lastDate: string }> = {}
     const dailyGpLogs: Array<{ date: string; product: string; quantityKg: number; unit: string }> = []
@@ -459,19 +477,30 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const gpItems = Object.entries(gpTotals)
-      .map(([name, data]) => ({
-        name,
-        totalKg: Math.round(data.totalKg * 10) / 10,
-        totalTonnes: Math.round((data.totalKg / 1000) * 100) / 100,
-        daysCount: data.daysCount,
-        lastDate: data.lastDate,
-        unit: 'kg'
-      }))
-      .sort((a, b) => b.totalKg - a.totalKg)
-
-    const totalGpKg = Math.round(gpItems.reduce((acc, i) => acc + i.totalKg, 0) * 10) / 10
+    const totalGpKg = Math.round(Object.values(gpTotals).reduce((acc, d) => acc + d.totalKg, 0) * 10) / 10
     const totalGpTonnes = Math.round((totalGpKg / 1000) * 10) / 10
+    const gpDistinctDays = expenses.filter((e) => e.outputs && Object.keys(e.outputs as object).length > 0).length
+    const avgDailyKg = gpDistinctDays > 0 ? Math.round((totalGpKg / gpDistinctDays) * 10) / 10 : 0
+
+    const gpItems = Object.entries(gpTotals)
+      .map(([name, data]) => {
+        const kg = Math.round(data.totalKg * 10) / 10
+        const sharePercent = totalGpKg > 0 ? Math.round((kg / totalGpKg) * 1000) / 10 : 0
+        const avgPerDayKg = data.daysCount > 0 ? Math.round((kg / data.daysCount) * 10) / 10 : 0
+        return {
+          name,
+          category: categorizeGP(name),
+          totalKg: kg,
+          totalTonnes: Math.round((kg / 1000) * 100) / 100,
+          daysCount: data.daysCount,
+          avgPerDayKg,
+          sharePercent,
+          lastDate: data.lastDate,
+          unit: name.toLowerCase().includes('пакет') ? 'dona' : 'kg',
+          status: 'Omborda mavjud'
+        }
+      })
+      .sort((a, b) => b.totalKg - a.totalKg)
 
     // 4. Format all materials (calculating net stock and traffic light status)
     const formattedMaterials = Object.values(materialsData).map((m) => {
@@ -561,8 +590,9 @@ export async function GET(req: NextRequest) {
         summary: {
           totalKg: totalGpKg,
           totalTonnes: totalGpTonnes,
-          daysCount: expenses.filter((e) => e.outputs && Object.keys(e.outputs as object).length > 0).length,
-          itemsCount: gpItems.length
+          daysCount: gpDistinctDays,
+          itemsCount: gpItems.length,
+          avgDailyKg: avgDailyKg
         },
         items: gpItems,
         dailyLogs: dailyGpLogs

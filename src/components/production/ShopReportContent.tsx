@@ -44,7 +44,7 @@ const inputVal = (v: any) => (v === 0 || v === null || v === undefined ? '' : v)
 
 export default function ShopReportContent() {
   const { lang } = useLanguage()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [activeTab, setActiveTab] = useState<'arrival' | 'expense' | 'gp' | 'report' | 'history'>('arrival')
@@ -134,6 +134,7 @@ export default function ShopReportContent() {
   }
 
   const loadData = useCallback(async () => {
+    setIsLoading(true)
     try {
       const res = await fetch('/api/shop-report', { cache: 'no-store' })
       const data = await res.json()
@@ -145,6 +146,8 @@ export default function ShopReportContent() {
       buildHistory(data)
     } catch (e: any) {
       toast.error(e?.message || "Ma'lumotlarni yuklashda xatolik")
+    } finally {
+      setIsLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -572,13 +575,27 @@ export default function ShopReportContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
-                {arrivalsPagination.displayedItems.length === 0 && (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="p-12 text-center text-sm text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="animate-spin text-amber-500" size={32} />
+                        <span className="font-bold text-slate-300 text-sm">
+                          {lang === 'ru' ? 'Загрузка данных прихода...' : "Kirim ma'lumotlari yuklanmoqda..."}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {lang === 'ru' ? 'Пожалуйста, подождите...' : "Iltimos, kuting..."}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : arrivalsPagination.displayedItems.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-sm text-slate-500">
                       {arrFilter ? "Bu sanada kirim yo'q. \"+ Qo'shish\" orqali yangi kirim kiriting." : "Ma'lumot yo'q"}
                     </td>
                   </tr>
-                )}
+                ) : null}
                 {arrivalsPagination.displayedItems.map(({ row, idx }) => (
                   <tr
                     key={row.id ?? `new-${idx}`}
@@ -720,13 +737,27 @@ export default function ShopReportContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-[#FFFBF0] dark:bg-transparent">
-                {expensesPagination.displayedItems.length === 0 && (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={EXPENSE_FIELDS.length + 2} className="p-12 text-center text-sm text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="animate-spin text-amber-500" size={32} />
+                        <span className="font-bold text-slate-300 text-sm">
+                          {lang === 'ru' ? 'Загрузка данных расхода...' : "Chiqim ma'lumotlari yuklanmoqda..."}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {lang === 'ru' ? 'Пожалуйста, подождите...' : "Iltimos, kuting..."}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : expensesPagination.displayedItems.length === 0 ? (
                   <tr>
                     <td colSpan={EXPENSE_FIELDS.length + 2} className="p-8 text-center text-sm text-slate-500">
                       {expFilter ? "Bu sanada chiqim yo'q. \"+ Qo'shish\" orqali yangi kun kiriting." : "Ma'lumot yo'q"}
                     </td>
                   </tr>
-                )}
+                ) : null}
                 {expensesPagination.displayedItems.map(({ row, idx }) => (
                   <tr
                     key={row._new ? `new-${idx}` : row.date}
@@ -835,13 +866,27 @@ export default function ShopReportContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-white dark:bg-transparent">
-                {gpPagination.displayedItems.length === 0 && (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={GP_FIELDS.length + 3} className="p-12 text-center text-sm text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="animate-spin text-emerald-500" size={32} />
+                        <span className="font-bold text-slate-300 text-sm">
+                          {lang === 'ru' ? 'Загрузка данных выпуска ГП...' : "ГП (tayyor mahsulot) ma'lumotlari yuklanmoqda..."}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {lang === 'ru' ? 'Пожалуйста, подождите...' : "Iltimos, kuting..."}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : gpPagination.displayedItems.length === 0 ? (
                   <tr>
                     <td colSpan={GP_FIELDS.length + 3} className="p-8 text-center text-sm text-slate-500">
                       {gpFilter ? "Bu sanada ГП yozuvi yo'q. \"+ Qo'shish\" orqali yangi kun kiriting." : "Ma'lumot yo'q"}
                     </td>
                   </tr>
-                )}
+                ) : null}
                 {gpPagination.displayedItems.map(({ row, idx }) => {
                   const rowSum = GP_FIELDS.reduce((acc, f) => acc + toNum(row[f.field]), 0)
                   return (
@@ -968,7 +1013,17 @@ export default function ShopReportContent() {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {historyPagination.displayedItems.length === 0 ? (
+              {isLoading ? (
+                <div className="col-span-full py-16 flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <Loader2 className="animate-spin text-amber-500" size={36} />
+                  <span className="font-bold text-slate-300 text-sm">
+                    {lang === 'ru' ? 'Загрузка архива...' : "Arxiv ma'lumotlari yuklanmoqda..."}
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {lang === 'ru' ? 'Пожалуйста, подождите...' : "Iltimos, kuting..."}
+                  </span>
+                </div>
+              ) : historyPagination.displayedItems.length === 0 ? (
                 <div className="col-span-full py-10 text-center text-slate-500 dark:text-slate-400 font-medium">
                   Bu turdagi yoki sanadagi arxiv topilmadi.
                 </div>
