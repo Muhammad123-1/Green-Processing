@@ -147,6 +147,10 @@ export default function ChatContent({
   const [showMobileChat, setShowMobileChat] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const lastMessageIdRef = useRef<number | null>(null)
+  const lastGroupIdRef = useRef<string>('')
+  const lastMobileOpenRef = useRef<boolean>(false)
 
   // 1. Fetch Users List
   const fetchUsers = async () => {
@@ -230,10 +234,24 @@ export default function ChatContent({
     return () => clearInterval(interval)
   }, [activeGroupId])
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom ONLY when conversation changes, mobile chat opens, or a genuinely new message arrives
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    const latestId = messages.length > 0 ? messages[messages.length - 1].id : null
+    const groupChanged = lastGroupIdRef.current !== activeGroupId
+    const newMsgArrived = latestId !== lastMessageIdRef.current
+    const mobileJustOpened = showMobileChat && !lastMobileOpenRef.current
+
+    lastGroupIdRef.current = activeGroupId
+    lastMessageIdRef.current = latestId
+    lastMobileOpenRef.current = showMobileChat
+
+    if ((groupChanged || newMsgArrived || mobileJustOpened) && messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight
+      })
+    }
+  }, [messages, activeGroupId, showMobileChat])
 
   // Send Message Handler
   async function handleSendMessage(e: React.FormEvent) {
@@ -572,7 +590,7 @@ export default function ChatContent({
           </div>
 
           {/* Messages Feed */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-slate-50/60 dark:bg-dark-950/40">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-slate-50/60 dark:bg-dark-950/40">
             {messagesLoading && messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <Loader2 size={32} className="animate-spin mb-2 text-emerald-500" />
