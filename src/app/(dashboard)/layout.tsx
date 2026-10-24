@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
+import MobileNav from '@/components/layout/MobileNav'
 import { getSession } from '@/app/actions/auth'
 
 export const metadata: Metadata = {
@@ -20,9 +21,10 @@ export default async function DashboardLayout({
       <Sidebar userRole={session?.role} userName={session?.name} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 pb-24 md:pb-6">
           {children}
         </main>
+        <MobileNav userRole={session?.role} />
       </div>
     </div>
   )

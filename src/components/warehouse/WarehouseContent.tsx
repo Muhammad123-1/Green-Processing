@@ -1060,60 +1060,60 @@ export default function WarehouseContent() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center bg-dark-800/80 p-1.5 rounded-2xl border border-dark-700/80 backdrop-blur-md overflow-x-auto">
+          <div className="flex items-center bg-dark-800/80 p-1 rounded-2xl border border-dark-700/80 backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
             <button
               onClick={() => setActiveTab('inventory')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'inventory'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Package size={16} />
+              <Package size={15} />
               <span>{l.tabStock}</span>
             </button>
             <button
               onClick={() => setActiveTab('gp')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'gp'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Boxes size={16} />
+              <Boxes size={15} />
               <span>{formatDual("ГП (Tayyor mahsulot)", "ГП (Готовая продукция)", "Finished Goods (FG)")}</span>
             </button>
             <button
               onClick={() => setActiveTab('transfers')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'transfers'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Scale size={16} />
+              <Scale size={15} />
               <span>{l.tabTransfers}</span>
             </button>
             <button
               onClick={() => setActiveTab('temperature')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'temperature'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Thermometer size={16} />
+              <Thermometer size={15} />
               <span>{l.tabTemp}</span>
             </button>
             <button
               onClick={() => setActiveTab('suppliers')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'suppliers'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Truck size={16} />
+              <Truck size={15} />
               <span>{l.tabSuppliers}</span>
             </button>
           </div>
@@ -1122,122 +1122,125 @@ export default function WarehouseContent() {
 
       {/* TAB 1: INVENTORY (FEFO / TRAFFIC LIGHT & MACRO-STATS) */}
       {activeTab === 'inventory' && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* 1. Director-Style Executive KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {/* Card 1: Jami Kirim */}
-            <div className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+            <div className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-all">
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
-                    {formatDual("Jami Kirim (Kelgan)", "Всего приход сырья", "Total Arrivals")}
+                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                    {formatDual("Jami Kirim", "Всего приход", "Total Arrivals")}
                   </span>
-                  <div className="text-2xl md:text-3xl font-black text-white">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-base">...</span>
+                      <span className="text-slate-500 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.totalArrivalTonnes.toLocaleString() || '0'} tn`
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
                     <span className="font-semibold text-slate-300">
                       {macroData?.summary.totalArrivalKg.toLocaleString() || 0} kg
                     </span>
-                    <span>·</span>
-                    <span className="text-slate-500">
-                      {macroData?.summary.totalArrivalBatches || 0} ta kirim / akt
+                    <span className="hidden sm:inline">·</span>
+                    <span className="text-slate-500 text-[10px] sm:text-xs">
+                      {macroData?.summary.totalArrivalBatches || 0} ta kirim
                     </span>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 flex-shrink-0">
-                  <ArrowDownRight size={24} />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <ArrowDownRight size={18} className="sm:hidden" />
+                  <ArrowDownRight size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-slate-400 flex items-center justify-between">
-                <span>{formatDual("Sex Hisoboti & Aktlar", "Отчет цеха и акты", "Shop report & acts")}</span>
-                <span className="text-emerald-400 font-bold">100% kirim</span>
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+                <span className="truncate">{formatDual("Sex Hisoboti", "Отчет цеха", "Shop report")}</span>
+                <span className="text-emerald-400 font-bold whitespace-nowrap">100% kirim</span>
               </div>
             </div>
 
             {/* Card 2: Jami Rasxod */}
-            <div className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition-all">
+            <div className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition-all">
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
-                    {formatDual("Jami Rasxod (Sexga)", "Расход в производство", "Total Expensed")}
+                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                    {formatDual("Jami Rasxod", "Расход в цех", "Total Expensed")}
                   </span>
-                  <div className="text-2xl md:text-3xl font-black text-white">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-base">...</span>
+                      <span className="text-slate-500 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.totalExpenseTonnes.toLocaleString() || '0'} tn`
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
                     <span className="font-semibold text-slate-300">
                       {macroData?.summary.totalExpenseKg.toLocaleString() || 0} kg
                     </span>
-                    <span>·</span>
-                    <span className="text-slate-500">
-                      {formatDual("Sexga berilgan", "Передано в цех", "Sent to shop")}
+                    <span className="hidden sm:inline">·</span>
+                    <span className="text-slate-500 text-[10px] sm:text-xs">
+                      {formatDual("Sexga", "В цех", "Shop")}
                     </span>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-amber-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-center text-amber-400 flex-shrink-0">
-                  <ArrowUpRight size={24} />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-500/15 border border-amber-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-400 flex-shrink-0">
+                  <ArrowUpRight size={18} className="sm:hidden" />
+                  <ArrowUpRight size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-slate-400 flex items-center justify-between">
-                <span>{formatDual("Sex Ishlab Chiqarish Rasxodi", "Расход производства", "Shop expense journal")}</span>
-                <span className="text-amber-400 font-bold">
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+                <span className="truncate">{formatDual("Sex Rasxodi", "Расход", "Shop expense")}</span>
+                <span className="text-amber-400 font-bold whitespace-nowrap">
                   {macroData && macroData.summary.totalArrivalKg > 0
-                    ? `${Math.round((macroData.summary.totalExpenseKg / macroData.summary.totalArrivalKg) * 100)}% sarflandi`
+                    ? `${Math.round((macroData.summary.totalExpenseKg / macroData.summary.totalArrivalKg) * 100)}%`
                     : '0%'}
                 </span>
               </div>
             </div>
 
             {/* Card 3: Joriy Sklad Qoldig'i */}
-            <div className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+            <div className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition-all">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">
-                    {formatDual("Skladdagi Joriy Qoldiq", "Текущий остаток склада", "Net Warehouse Stock")}
+                  <span className="text-[10px] sm:text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                    {formatDual("Sklad Qoldig'i", "Остаток склада", "Net Stock")}
                   </span>
-                  <div className="text-2xl md:text-3xl font-black text-cyan-400">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-cyan-400">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-base">...</span>
+                      <span className="text-slate-500 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.currentStockTonnes.toLocaleString() || '0'} tn`
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
                     <span className="font-semibold text-slate-300">
                       {macroData?.summary.currentStockKg.toLocaleString() || 0} kg
                     </span>
-                    <span>·</span>
-                    <span className="text-emerald-400 font-bold">
+                    <span className="hidden sm:inline">·</span>
+                    <span className="text-emerald-400 font-bold text-[10px] sm:text-xs">
                       {macroData?.summary.sufficientCount || 0} me'yorda
                     </span>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-cyan-500/15 border border-cyan-500/30 rounded-2xl flex items-center justify-center text-cyan-400 flex-shrink-0">
-                  <BarChart3 size={24} />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-cyan-500/15 border border-cyan-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-cyan-400 flex-shrink-0">
+                  <BarChart3 size={18} className="sm:hidden" />
+                  <BarChart3 size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-slate-400 flex items-center justify-between">
-                <span>{formatDual("Sof mavjud zaxira", "Чистый резерв", "Net reserve")}</span>
-                <div className="flex items-center gap-1 text-[10px]">
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+                <span className="truncate">{formatDual("Sof zaxira", "Резерв", "Reserve")}</span>
+                <div className="flex items-center gap-1 text-[9px] sm:text-[10px]">
                   {(macroData?.summary.criticalCount || 0) > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">
+                    <span className="px-1 sm:px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold whitespace-nowrap">
                       {macroData?.summary.criticalCount} kritik
                     </span>
                   )}
                   {(macroData?.summary.warningCount || 0) > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold">
+                    <span className="px-1 sm:px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold whitespace-nowrap">
                       {macroData?.summary.warningCount} kam
                     </span>
                   )}
@@ -1248,32 +1251,33 @@ export default function WarehouseContent() {
             {/* Card 4: Ta'minotchilar */}
             <div 
               onClick={() => setActiveTab('suppliers')}
-              className="bg-dark-900/90 backdrop-blur-md p-5 rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group cursor-pointer hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
+              className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group cursor-pointer hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/25 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
-                    {formatDual("Yetkazib Beruvchilar", "Поставщики сырья", "Suppliers")}
+                  <span className="text-[10px] sm:text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                    {formatDual("Ta'minotchilar", "Поставщики", "Suppliers")}
                   </span>
-                  <div className="text-2xl md:text-3xl font-black text-white">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-base">...</span>
+                      <span className="text-slate-500 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.totalSuppliersCount || 0} ta`
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    {formatDual("Faol hamkorlar bazasi", "Активные партнеры", "Active supplier partners")}
+                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 truncate">
+                    {formatDual("Faol hamkorlar", "Активные партнеры", "Active partners")}
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 flex-shrink-0">
-                  <Truck size={24} />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-indigo-400 flex-shrink-0">
+                  <Truck size={18} className="sm:hidden" />
+                  <Truck size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-dark-800 text-[11px] text-indigo-400 font-bold flex items-center justify-between group-hover:text-indigo-300">
-                <span>{formatDual("Ta'minotchilarni ko'rish", "Посмотреть поставщиков", "View suppliers")}</span>
-                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-indigo-400 font-bold flex items-center justify-between group-hover:text-indigo-300">
+                <span className="truncate">{formatDual("Ko'rish", "Смотреть", "View")}</span>
+                <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform sm:w-3.5 sm:h-3.5" />
               </div>
             </div>
           </div>
@@ -1323,10 +1327,10 @@ export default function WarehouseContent() {
             </div>
 
             {/* Category Filter Pills */}
-            <div className="px-6 py-3 border-b border-dark-750 bg-dark-850/40 flex items-center gap-2 overflow-x-auto">
+            <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-dark-750 bg-dark-850/40 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setMacroCategoryFilter('all')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'all'
                     ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
@@ -1336,7 +1340,7 @@ export default function WarehouseContent() {
               </button>
               <button
                 onClick={() => setMacroCategoryFilter('raw')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'raw'
                     ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
@@ -1346,7 +1350,7 @@ export default function WarehouseContent() {
               </button>
               <button
                 onClick={() => setMacroCategoryFilter('packaging')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'packaging'
                     ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
@@ -1356,7 +1360,7 @@ export default function WarehouseContent() {
               </button>
               <button
                 onClick={() => setMacroCategoryFilter('hygiene')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'hygiene'
                     ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
@@ -1366,7 +1370,7 @@ export default function WarehouseContent() {
               </button>
               <button
                 onClick={() => setMacroCategoryFilter('chemicals')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'chemicals'
                     ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
@@ -1376,8 +1380,105 @@ export default function WarehouseContent() {
               </button>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
+            {/* Mobile Material Cards View (Smartphones: block sm:hidden) */}
+            <div className="block sm:hidden divide-y divide-dark-750/70">
+              {macroLoading && !macroData ? (
+                <div className="p-8 text-center text-slate-400">
+                  <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={24} />
+                  <p className="text-xs">{formatDual("Xomashyo balansi hisoblanmoqda...", "Расчет баланса...", "Calculating...")}</p>
+                </div>
+              ) : filteredMacroMaterials.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-xs">
+                  {formatDual("Qidiruv bo'yicha xomashyo topilmadi", "Ничего не найдено", "No materials found")}
+                </div>
+              ) : (
+                filteredMacroMaterials.map((m) => {
+                  const stockPercent = m.totalArrivalKg > 0 ? Math.min(100, Math.round((m.currentStockKg / m.totalArrivalKg) * 100)) : 0
+                  return (
+                    <div key={m.key} className="p-3.5 hover:bg-dark-800/30 transition-colors space-y-2.5">
+                      {/* Name & Status */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-emerald-400 font-bold flex-shrink-0 shadow-sm">
+                            <Package size={17} />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-extrabold text-white text-sm leading-tight truncate">{m.nameUz}</h4>
+                            <p className="text-[11px] text-slate-400 truncate">{m.name} · <span className="text-slate-300 font-medium">{m.category}</span></p>
+                          </div>
+                        </div>
+
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 flex-shrink-0 ${
+                          m.status === 'green' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                          m.status === 'yellow' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                          'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'green' ? 'bg-emerald-400' : m.status === 'yellow' ? 'bg-amber-400' : 'bg-rose-400'}`} />
+                          {m.status === 'green' ? formatDual("Yetarli", "В норме", "Sufficient") :
+                           m.status === 'yellow' ? formatDual("Kam", "Мало", "Low") :
+                           formatDual("Kritik", "Критично", "Critical")}
+                        </span>
+                      </div>
+
+                      {/* 3 Metrics Box */}
+                      <div className="grid grid-cols-3 gap-1.5 bg-dark-850/80 p-2 rounded-xl border border-dark-750 text-center">
+                        <div>
+                          <span className="text-[9px] text-slate-400 block">{formatDual("Kirim", "Приход", "Arrival")}</span>
+                          <span className="text-xs font-bold text-white leading-tight">{m.totalArrivalKg.toLocaleString()}</span>
+                          <span className="text-[8px] text-slate-500 block">{m.unit}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-amber-400/90 block">{formatDual("Sexga", "В цех", "Shop")}</span>
+                          <span className="text-xs font-bold text-amber-400 leading-tight">{m.totalExpenseKg.toLocaleString()}</span>
+                          <span className="text-[8px] text-slate-500 block">{m.unit}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-emerald-400/90 block">{formatDual("Qoldiq", "Остаток", "Stock")}</span>
+                          <span className="text-xs font-black text-emerald-400 leading-tight">{m.currentStockKg.toLocaleString()}</span>
+                          <span className="text-[8px] text-slate-500 block">{m.unit}</span>
+                        </div>
+                      </div>
+
+                      {/* Stock Level Progress */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] text-slate-400">
+                          <span>{formatDual("Zaxira me'yori", "Запас", "Level")}</span>
+                          <span className="font-bold text-slate-300">{stockPercent}%</span>
+                        </div>
+                        <div className="w-full bg-dark-800 h-1.5 rounded-full overflow-hidden border border-dark-750">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              m.status === 'green' ? 'bg-gradient-to-r from-emerald-500 to-teal-400' :
+                              m.status === 'yellow' ? 'bg-gradient-to-r from-amber-500 to-yellow-400' :
+                              'bg-gradient-to-r from-rose-500 to-red-400'
+                            }`}
+                            style={{ width: `${Math.max(4, Math.min(100, stockPercent))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Supplier & Action */}
+                      <div className="pt-1.5 border-t border-dark-800/80 flex items-center justify-between gap-2 text-xs">
+                        <div className="truncate text-slate-400 text-[11px] min-w-0">
+                          <span className="text-slate-500">{formatDual("Ta'minotchi: ", "Пост.: ", "Sup: ")}</span>
+                          <span className="text-slate-300 font-medium truncate">{m.topSupplier}</span>
+                        </div>
+                        <button
+                          onClick={() => handleOpenMacroOrder(m)}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 text-[11px] font-bold flex items-center gap-1 transition-all flex-shrink-0"
+                        >
+                          <ShoppingCart size={11} />
+                          <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Desktop Table (hidden sm:block) */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
@@ -1627,7 +1728,47 @@ export default function WarehouseContent() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Mobile Batches Cards (Visible on phones: block sm:hidden) */}
+              <div className="block sm:hidden divide-y divide-dark-750/70">
+                {macroLoading && !macroData ? (
+                  <div className="p-8 text-center text-slate-400">
+                    <Loader2 className="animate-spin text-amber-500 mx-auto mb-2" size={24} />
+                    <p className="text-xs">{formatDual("Partiyalar yuklanmoqda...", "Загрузка партий...", "Loading...")}</p>
+                  </div>
+                ) : batchesPagination.displayedItems.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-xs">
+                    <Tag size={28} className="mx-auto mb-2 opacity-30" />
+                    <p>{formatDual("Partiya topilmadi", "Партии не найдены", "No batches found")}</p>
+                  </div>
+                ) : (
+                  batchesPagination.displayedItems.map((b) => (
+                    <div key={b.id} className="p-3.5 hover:bg-dark-800/30 transition-colors space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-mono font-bold text-slate-300">
+                          📅 {b.date}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/30 font-black text-amber-300 text-[11px]">
+                          <Tag size={10} />
+                          <span>{b.batchNumber}</span>
+                        </span>
+                      </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-extrabold text-white text-sm leading-tight truncate">{b.nomenclature}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5 truncate">{b.supplier} · <span className="text-slate-500">{b.category}</span></div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <span className="text-sm font-black text-amber-400">{b.quantity.toLocaleString()}</span>
+                          <span className="text-[10px] text-slate-400 block">{b.unit}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop Table (hidden sm:block) */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-dark-750 bg-amber-500/10 text-amber-300 text-xs font-black uppercase tracking-wider">
@@ -1973,12 +2114,12 @@ export default function WarehouseContent() {
           </div>
 
           {/* GP Summary KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="bg-dark-900/90 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
               <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
                 {formatDual("Jami Chiqarilgan ГП (Tayyor Mahsulot)", "Всего выпущено ГП", "Total Finished Goods")}
               </span>
-              <div className="text-2xl md:text-3xl font-black text-emerald-400">
+              <div className="text-xl sm:text-2xl md:text-3xl font-black text-emerald-400">
                 {macroData?.gp?.summary?.totalTonnes || 0} tn
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -1986,11 +2127,11 @@ export default function WarehouseContent() {
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+            <div className="bg-dark-900/90 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
               <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">
                 {formatDual("Ishlab Chiqarish Kunlari", "Дней выработки", "Production Days")}
               </span>
-              <div className="text-2xl md:text-3xl font-black text-white">
+              <div className="text-xl sm:text-2xl md:text-3xl font-black text-white">
                 {macroData?.gp?.summary?.daysCount || 0} kun
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -1998,11 +2139,11 @@ export default function WarehouseContent() {
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+            <div className="bg-dark-900/90 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
               <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
                 {formatDual("Mahsulot Turlari (SKU)", "Номенклатура ГП", "Finished SKU Count")}
               </span>
-              <div className="text-2xl md:text-3xl font-black text-white">
+              <div className="text-xl sm:text-2xl md:text-3xl font-black text-white">
                 {macroData?.gp?.summary?.itemsCount || 0} ta tur
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -2012,11 +2153,11 @@ export default function WarehouseContent() {
           </div>
 
           {/* GP Items Aggregated Table */}
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-dark-750 flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-850/50">
+          <div className="bg-dark-900 border border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-4 sm:p-5 border-b border-dark-750 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 bg-dark-850/50">
               <div className="flex items-center gap-2">
-                <Boxes className="text-emerald-400" size={20} />
-                <h4 className="font-extrabold text-white text-base">
+                <Boxes className="text-emerald-400 shrink-0" size={20} />
+                <h4 className="font-extrabold text-white text-sm sm:text-base">
                   {formatDual("Tayyor Mahsulotlar Bo'yicha Umumiy Hajm", "Сводка выпуска по видам продукции", "Summary by Finished Products")}
                 </h4>
               </div>
@@ -2033,7 +2174,54 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile View: GP Item Cards */}
+            <div className="block sm:hidden divide-y divide-dark-750">
+              {filteredGpItems.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-xs">
+                  {formatDual("Tayyor mahsulotlar topilmadi", "Ничего не найдено", "No finished goods found")}
+                </div>
+              ) : (
+                filteredGpItems.map((g, idx) => (
+                  <div key={idx} className="p-3.5 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-mono font-bold shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span className="font-bold text-white text-xs truncate">{g.name}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 whitespace-nowrap">
+                        ✓ Mavjud
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2.5 rounded-xl border border-dark-700/60 text-center">
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Jami Hajm</div>
+                        <div className="font-black text-emerald-400 text-xs mt-0.5">
+                          {g.totalTonnes >= 1 ? `${g.totalTonnes} tn` : `${g.totalKg.toLocaleString()} kg`}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Ish Kunlari</div>
+                        <div className="font-bold text-slate-200 text-xs mt-0.5">
+                          {g.daysCount} kun
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Oxirgi Sana</div>
+                        <div className="font-mono text-[10px] text-slate-300 mt-0.5">
+                          {g.lastDate}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View: GP Items Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
@@ -2090,11 +2278,11 @@ export default function WarehouseContent() {
           </div>
 
           {/* Daily Output Logs */}
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-dark-750 flex items-center justify-between gap-4 bg-dark-850/50">
+          <div className="bg-dark-900 border border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-4 sm:p-5 border-b border-dark-750 flex items-center justify-between gap-4 bg-dark-850/50">
               <div className="flex items-center gap-2">
-                <Calendar className="text-cyan-400" size={20} />
-                <h4 className="font-extrabold text-white text-base">
+                <Calendar className="text-cyan-400 shrink-0" size={20} />
+                <h4 className="font-extrabold text-white text-sm sm:text-base">
                   {formatDual("Kunlik Ishlab Chiqarish Jurnali (Выпуск ГП)", "Журнал ежедневного выпуска ГП", "Daily Finished Goods Logs")}
                 </h4>
               </div>
@@ -2103,7 +2291,34 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile View: Daily Logs Cards */}
+            <div className="block sm:hidden divide-y divide-dark-750">
+              {gpLogsPagination.displayedItems.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-xs">
+                  {formatDual("Yozuvlar topilmadi", "Записи не найдены", "No records found")}
+                </div>
+              ) : (
+                gpLogsPagination.displayedItems.map((log, lIdx) => (
+                  <div key={lIdx} className="p-3 flex items-center justify-between gap-3">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="font-bold text-white text-xs truncate">{log.product}</div>
+                      <div className="font-mono text-[11px] text-slate-400">{log.date}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-black text-cyan-400 text-xs sm:text-sm">
+                        {log.quantityKg.toLocaleString()} {log.unit}
+                      </div>
+                      <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        Qabul
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View: Daily Logs Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
@@ -2522,7 +2737,99 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile View: Supplier Cards */}
+            <div className="block sm:hidden divide-y divide-dark-750">
+              {macroLoading && !macroData ? (
+                <div className="p-10 text-center text-slate-400">
+                  <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={24} />
+                  <span className="text-xs">{formatDual("Ta'minotchilar yuklanmoqda...", "Загрузка поставщиков...", "Loading suppliers...")}</span>
+                </div>
+              ) : filteredSuppliers.length === 0 ? (
+                <div className="p-10 text-center text-slate-500">
+                  <Truck size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">{formatDual("Ta'minotchi topilmadi", "Поставщики не найдены", "No suppliers found")}</p>
+                </div>
+              ) : (
+                filteredSuppliers.map((s, idx) => (
+                  <div key={idx} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold shrink-0">
+                          <Building2 size={16} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-extrabold text-white text-xs truncate">
+                            {s.name}
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate">
+                            {s.contactPerson}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                        <ShieldCheck size={11} />
+                        <span>{s.status}</span>
+                      </span>
+                    </div>
+
+                    {s.products.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {s.products.map((p, pIdx) => (
+                          <span
+                            key={pIdx}
+                            className="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-[10px] font-medium text-emerald-300"
+                          >
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2.5 rounded-xl border border-dark-700/60 text-center">
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Jami Yuk</div>
+                        <div className="font-black text-white text-xs mt-0.5">
+                          {s.totalTonnes >= 1 ? `${s.totalTonnes} tn` : `${s.totalKg.toLocaleString()} kg`}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Partiyalar</div>
+                        <div className="font-bold text-slate-200 text-xs mt-0.5">
+                          {s.deliveriesCount} ta
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Oxirgi Yuk</div>
+                        <div className="font-mono text-[10px] text-slate-300 mt-0.5">
+                          {s.lastDeliveryDate}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <a
+                        href={`tel:${s.phone.replace(/\s+/g, '')}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-400 hover:text-indigo-300 py-1"
+                      >
+                        <Phone size={13} />
+                        <span>{s.phone}</span>
+                      </a>
+
+                      <button
+                        onClick={() => handleOpenSupplierOrder(s)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all shadow hover:shadow-amber-500/10"
+                      >
+                        <ShoppingCart size={13} />
+                        <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View: Suppliers Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
