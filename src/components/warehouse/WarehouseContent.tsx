@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import {
   Package,
   AlertTriangle,
@@ -1245,17 +1246,6 @@ export default function WarehouseContent() {
               <span>{l.tabStock}</span>
             </button>
             <button
-              onClick={() => setActiveTab('movement')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'movement'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <ClipboardList size={15} />
-              <span>{formatDual("Xomashyo Harakati (Sexga Chiqim)", "Журнал перемещения сырья", "Raw Material Movement")}</span>
-            </button>
-            <button
               onClick={() => setActiveTab('gp')}
               className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'gp'
@@ -1278,17 +1268,6 @@ export default function WarehouseContent() {
               <span>{l.tabTransfers}</span>
             </button>
             <button
-              onClick={() => setActiveTab('temperature')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'temperature'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Thermometer size={15} />
-              <span>{l.tabTemp}</span>
-            </button>
-            <button
               onClick={() => setActiveTab('suppliers')}
               className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'suppliers'
@@ -1299,6 +1278,22 @@ export default function WarehouseContent() {
               <Truck size={15} />
               <span>{l.tabSuppliers}</span>
             </button>
+            <Link
+              href="/raw-movement"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-300 hover:text-white bg-dark-750/60 hover:bg-emerald-600/20 border border-dark-700 hover:border-emerald-500/40 transition-all whitespace-nowrap ml-1"
+            >
+              <ClipboardList size={15} className="text-emerald-400" />
+              <span>{formatDual("Xomashyo harakati (alohida)", "Журнал сырья на пр-во", "Raw Movement")}</span>
+              <ExternalLink size={12} className="opacity-60 text-slate-400" />
+            </Link>
+            <Link
+              href="/temperature-logs"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-300 hover:text-white bg-dark-750/60 hover:bg-cyan-600/20 border border-dark-700 hover:border-cyan-500/40 transition-all whitespace-nowrap"
+            >
+              <Thermometer size={15} className="text-cyan-400" />
+              <span>{formatDual("Harorat nazorati (F-01)", "Контроль температур Ф-01", "Temp Logs")}</span>
+              <ExternalLink size={12} className="opacity-60 text-slate-400" />
+            </Link>
           </div>
         </div>
       </div>
@@ -1463,6 +1458,61 @@ export default function WarehouseContent() {
                 <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform sm:w-3.5 sm:h-3.5" />
               </div>
             </div>
+          </div>
+
+          {/* Quick Access to Dedicated Standalone Journals */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            <Link
+              href="/raw-movement"
+              className="bg-gradient-to-r from-emerald-950/40 via-dark-900 to-dark-850 border border-emerald-500/30 hover:border-emerald-500/70 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg flex items-center justify-between group transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                  <ClipboardList size={22} />
+                </div>
+                <div>
+                  <div className="text-[10px] sm:text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+                    {formatDual("Alohida Jurnal Sahifasi", "Отдельная страница журнала", "Dedicated Journal")}
+                  </div>
+                  <div className="text-sm sm:text-base font-black text-white group-hover:text-emerald-300 transition-colors">
+                    {formatDual("Xomashyoni Sexga Berish Jurnali", "Журнал регистрации и перемещения сырья", "Raw Material Movement Log")}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
+                    {formatDual("12 ustunli partiya, harorat (8:10/17:00), chiqim va kunlik qoldiq", "12 граф: партия, темп-ра, расход, остаток", "12-column batch, temperature & balance")}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white transition-all flex-shrink-0 ml-2">
+                <span>{formatDual("Ochish", "Открыть", "Open")}</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            <Link
+              href="/temperature-logs"
+              className="bg-gradient-to-r from-cyan-950/40 via-dark-900 to-dark-850 border border-cyan-500/30 hover:border-cyan-500/70 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg flex items-center justify-between group transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                  <Thermometer size={22} />
+                </div>
+                <div>
+                  <div className="text-[10px] sm:text-[11px] font-bold text-cyan-400 uppercase tracking-wider">
+                    {formatDual("Alohida Jurnal Sahifasi", "Отдельная страница журнала", "Dedicated Journal")}
+                  </div>
+                  <div className="text-sm sm:text-base font-black text-white group-hover:text-cyan-300 transition-colors">
+                    {formatDual("Harorat Nazorati Chek-listi (F-01)", "Контроль температуры сырья при хранении (Ф-01)", "Storage Temperature Log (F-01)")}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
+                    {formatDual("2°C–5°C me'yor: Aysberg, Piyoz, Pomidor, Sabzi, Karam nazorati", "Норма 2°C–5°C: Айсберг, Лук, Томаты, Морковь, Капуста", "2°C–5°C norm validation for 5 vegetables")}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1.5 rounded-xl border border-cyan-500/20 group-hover:bg-cyan-500 group-hover:text-white transition-all flex-shrink-0 ml-2">
+                <span>{formatDual("Ochish", "Открыть", "Open")}</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
           </div>
 
           {/* 2. Executive Macro Balance Table (Kirim - Chiqim = Qoldiq) */}
