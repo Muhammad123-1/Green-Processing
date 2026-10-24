@@ -11,3 +11,7 @@ uploads/
 *.log
 dist-electron/
 dist-desktop/
+android-app/build/
+android-app/*.jks
+android-app/*.idsig
+android-app/*.apk

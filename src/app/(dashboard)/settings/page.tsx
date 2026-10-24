@@ -59,7 +59,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-enter">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="section-title">
             {formatDual("Tizim Sozlamalari", "Настройки системы", "System Settings")}
@@ -116,7 +116,7 @@ export default function SettingsPage() {
           <h3 className="font-semibold text-white text-sm">{formatDual("Akt raqamlash", "Нумерация актов", "Act Numbering")}</h3>
         </div>
         <div className="divider !mt-2" />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{formatDual("Prefiks", "Префикс", "Prefix")}</label>
             <input className="input-field" value={getSetting('act_number_prefix')}

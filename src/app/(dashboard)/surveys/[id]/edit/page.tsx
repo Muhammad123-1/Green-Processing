@@ -113,7 +113,7 @@ export default function SurveyBuilderPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-dark-950 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <Link href="/surveys" className="flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
             <ArrowLeft size={20} />
             Ortga
@@ -155,7 +155,7 @@ export default function SurveyBuilderPage() {
 
         {/* Questions */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-bold text-lg text-slate-900 dark:text-white">Savollar ({questions.length})</h2>
             <button 
               onClick={addQuestion}
@@ -167,7 +167,7 @@ export default function SurveyBuilderPage() {
           </div>
 
           {questions.map((q, i) => (
-            <div key={i} className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 p-6 shadow-sm flex gap-4">
+            <div key={i} className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 p-4 sm:p-6 shadow-sm flex gap-2.5 sm:gap-4">
               <div className="mt-2 text-slate-300 dark:text-dark-600 cursor-move">
                 <GripVertical size={20} />
               </div>

@@ -372,7 +372,7 @@ export default function FactoryProductionContent() {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button 
               onClick={() => setShowBomModal(true)}
               className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-white px-4 py-2.5 rounded-xl border border-dark-600 transition-all text-sm font-semibold"
@@ -392,7 +392,7 @@ export default function FactoryProductionContent() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-dark-900/90 p-1.5 rounded-2xl border border-dark-700/80 w-max overflow-x-auto">
+      <div className="flex bg-dark-900/90 p-1.5 rounded-2xl border border-dark-700/80 w-full sm:w-max max-w-full overflow-x-auto">
         <button
           onClick={() => setActiveTab('orders')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
@@ -520,7 +520,7 @@ export default function FactoryProductionContent() {
           </div>
         ) : activeTab === 'processQC' ? (
           <div className="space-y-4">
-            <div className="flex justify-between items-center bg-dark-900 border border-dark-750 p-4 rounded-2xl">
+            <div className="flex flex-wrap gap-3 justify-between items-center bg-dark-900 border border-dark-750 p-4 rounded-2xl">
               <div>
                 <h3 className="font-bold text-white text-base flex items-center gap-2">
                   <Thermometer className="text-indigo-400" size={18} />
@@ -656,10 +656,10 @@ export default function FactoryProductionContent() {
           onClick={() => setShowProdModal(false)}
         >
           <div 
-            className="bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-dark-700 flex flex-col overflow-hidden"
+            className="bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-5 border-b border-dark-800 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Factory className="text-indigo-400" size={20} /> {l.modalProdTitle}
               </h2>
@@ -668,7 +668,7 @@ export default function FactoryProductionContent() {
               </button>
             </div>
             
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.selectBOM} <span className="text-indigo-400">*</span></label>
                 <select 
@@ -681,7 +681,7 @@ export default function FactoryProductionContent() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.planQty} <span className="text-indigo-400">*</span></label>
                   <input 
@@ -705,7 +705,7 @@ export default function FactoryProductionContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.lineSelect}</label>
                   <select 
@@ -811,10 +811,10 @@ export default function FactoryProductionContent() {
           onClick={() => setShowProcessModal(false)}
         >
           <div 
-            className="bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-dark-700 flex flex-col overflow-hidden"
+            className="bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-5 border-b border-dark-800 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Thermometer className="text-indigo-400" size={20} /> Sex Texnologik Parametrlarini Kiritish
               </h2>
@@ -823,8 +823,8 @@ export default function FactoryProductionContent() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveProcessQC} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveProcessQC} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Sana</label>
                   <input 
@@ -848,7 +848,7 @@ export default function FactoryProductionContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Toza Zona Harorati (°C)</label>
                   <input 
@@ -869,7 +869,7 @@ export default function FactoryProductionContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">P/F Айсберг № Partiya</label>
                   <input 
@@ -911,10 +911,10 @@ export default function FactoryProductionContent() {
           onClick={() => setShowBomModal(false)}
         >
           <div 
-            className="bg-dark-900 rounded-[2rem] w-full max-w-2xl shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-hidden"
+            className="bg-dark-900 rounded-[2rem] w-full max-w-2xl shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 border-b border-dark-800 flex items-center justify-between bg-dark-900/50">
+            <div className="px-4 sm:px-6 py-6 border-b border-dark-800 flex items-center justify-between bg-dark-900/50">
               <div>
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Settings2 className="text-indigo-400" /> {l.modalBOMTitle}
@@ -924,8 +924,8 @@ export default function FactoryProductionContent() {
               <button onClick={() => setShowBomModal(false)} className="text-slate-500 hover:text-white transition-colors"><X size={20} /></button>
             </div>
             
-            <div className="p-8 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
-              <div className="grid grid-cols-2 gap-6">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-bold text-slate-300 mb-2">{l.outProduct}</label>
                   <select 
@@ -952,7 +952,7 @@ export default function FactoryProductionContent() {
               <div className="h-px w-full bg-dark-800" />
               
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-wrap gap-2 items-center justify-between mb-4">
                   <label className="block text-sm font-bold text-slate-300">{l.reqMaterials}</label>
                   <button 
                     onClick={addMatRow} 
@@ -964,7 +964,7 @@ export default function FactoryProductionContent() {
                 
                 <div className="space-y-3">
                   {bomForm.ingredients.map((ing, idx) => (
-                    <div key={idx} className="flex gap-3 items-center bg-dark-800 p-3 rounded-2xl border border-dark-700">
+                    <div key={idx} className="flex flex-wrap sm:flex-nowrap gap-3 items-center bg-dark-800 p-3 rounded-2xl border border-dark-700">
                       <div className="w-8 h-8 rounded-full bg-dark-700 flex items-center justify-center text-xs font-bold text-slate-400">{idx + 1}</div>
                       <select 
                         className="flex-1 bg-dark-900 border border-dark-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-white"
@@ -993,7 +993,7 @@ export default function FactoryProductionContent() {
               </div>
             </div>
 
-            <div className="px-8 py-5 border-t border-dark-800 flex justify-end gap-3 bg-dark-900/50">
+            <div className="px-4 sm:px-6 py-5 border-t border-dark-800 flex justify-end gap-3 bg-dark-900/50">
               <button onClick={() => setShowBomModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-dark-800 transition-colors">{l.cancel}</button>
               <button onClick={handleSaveBOM} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {l.save}

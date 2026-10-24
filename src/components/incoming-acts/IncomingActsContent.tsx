@@ -583,7 +583,7 @@ export default function IncomingActsContent() {
     <div className="p-3 md:p-6 space-y-4 max-w-[1900px] mx-auto font-sans">
       {/* Top Section Switcher */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-2 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
             <span>🥗</span>
             <span>Xomashyolar (Asosiy xomashyo)</span>
@@ -606,7 +606,7 @@ export default function IncomingActsContent() {
               <FileSpreadsheet className="w-7 h-7" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl md:text-2xl font-black tracking-tight">{t.title}</h1>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-medium">
                   {t.formCode}
@@ -1252,7 +1252,7 @@ export default function IncomingActsContent() {
             className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl max-w-4xl w-full border border-slate-200 dark:border-dark-750 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-200"
             onClick={e => e.stopPropagation()}
           >
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
                   <FileText className="w-5 h-5" />
@@ -1275,7 +1275,7 @@ export default function IncomingActsContent() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveAct} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto text-xs bg-slate-50/50 dark:bg-dark-900">
+            <form onSubmit={handleSaveAct} className="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto text-xs bg-slate-50/50 dark:bg-dark-900">
               {/* Identification */}
               <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
@@ -1441,7 +1441,7 @@ export default function IncomingActsContent() {
                     return (
                       <div
                         key={field.key}
-                        className="p-2.5 bg-slate-50 dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 flex items-center justify-between"
+                        className="p-2.5 bg-slate-50 dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 flex flex-wrap gap-2 items-center justify-between"
                       >
                         <span className="font-medium text-slate-800 dark:text-slate-200 truncate mr-2" title={field.label}>
                           {field.label}
@@ -1597,7 +1597,7 @@ export default function IncomingActsContent() {
             <div className="p-6 space-y-4 text-xs bg-slate-50/50 dark:bg-dark-900">
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">Import rejimi:</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setImportMode('append')}
@@ -1744,20 +1744,20 @@ export default function IncomingActsContent() {
               </div>
 
               <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700 space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-1 items-center justify-between">
                   <span className="font-semibold text-slate-600 dark:text-slate-400">Допуск (Baholash):</span>
                   <span className="font-bold text-sm text-slate-900 dark:text-white">{selectedActForView.decisionRating} - {selectedActForView.decisionText}</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-1 items-center justify-between">
                   <span className="font-semibold text-slate-600 dark:text-slate-400">Отпущено в цех:</span>
                   <span className="font-mono text-slate-900 dark:text-white">{selectedActForView.shopIssuedKg || '-'} (Sana: {selectedActForView.shopIssuedDate || '-'})</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-1 items-center justify-between">
                   <span className="font-semibold text-slate-600 dark:text-slate-400">Mas'ul nazoratchi:</span>
                   <span className="text-slate-900 dark:text-white">{selectedActForView.inspectorName || '-'}</span>
                 </div>
                 {selectedActForView.rejectionActNumber && (
-                  <div className="flex items-center justify-between text-red-600 dark:text-red-400">
+                  <div className="flex flex-wrap gap-1 items-center justify-between text-red-600 dark:text-red-400">
                     <span className="font-bold">НЕДОПУСК № акта забраковки:</span>
                     <span className="font-mono font-bold">{selectedActForView.rejectionActNumber}</span>
                   </div>

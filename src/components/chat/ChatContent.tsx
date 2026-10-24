@@ -507,7 +507,7 @@ export default function ChatContent({
         <div className={`flex-1 bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 flex flex-col overflow-hidden shadow-md ${!showMobileChat ? 'hidden md:flex' : 'flex'}`}>
           
           {/* Chat Header */}
-          <div className="p-3.5 px-5 border-b border-slate-200 dark:border-dark-750 bg-slate-50/90 dark:bg-dark-900/90 flex items-center justify-between shrink-0">
+          <div className="p-3.5 px-3 sm:px-5 gap-2 border-b border-slate-200 dark:border-dark-750 bg-slate-50/90 dark:bg-dark-900/90 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               {/* Mobile Back Button */}
               <button
@@ -527,7 +527,7 @@ export default function ChatContent({
                     <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-dark-900 ${selectedUser.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-sm font-black text-slate-900 dark:text-white">
                         {selectedUser.name}
                       </h3>
@@ -535,7 +535,7 @@ export default function ChatContent({
                         {getRoleLabel(selectedUser.role)}
                       </span>
                     </div>
-                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 flex-wrap">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       {lang === 'ru' ? 'Личный диалог (1-на-1)' : lang === 'en' ? 'Direct 1-on-1 Message' : 'Shaxsiy yozishma (1-ga-1 muloqot)'} • @{selectedUser.username}
                     </p>
@@ -671,7 +671,7 @@ export default function ChatContent({
           <div className="p-3 sm:p-4 bg-white dark:bg-dark-900 border-t border-slate-200 dark:border-dark-750 shrink-0">
             {/* Selected Image Attachment Preview */}
             {selectedImage && (
-              <div className="mb-3 flex items-center gap-3 bg-emerald-50 dark:bg-dark-800 p-2.5 rounded-xl border border-emerald-200 dark:border-dark-600 w-max shadow-sm animate-enter">
+              <div className="mb-3 flex items-center gap-3 bg-emerald-50 dark:bg-dark-800 p-2.5 rounded-xl border border-emerald-200 dark:border-dark-600 w-max max-w-full shadow-sm animate-enter">
                 <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-dark-900 overflow-hidden relative border border-slate-300 dark:border-dark-700">
                   <img src={URL.createObjectURL(selectedImage)} className="w-full h-full object-cover" alt="Preview" />
                 </div>

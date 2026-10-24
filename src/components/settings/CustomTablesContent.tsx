@@ -224,7 +224,7 @@ export default function CustomTablesContent() {
                   </div>
                   <button
                     onClick={() => handleDelete(t.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -259,7 +259,7 @@ export default function CustomTablesContent() {
       {/* Upload Modal */}
       {uploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-dark-750">
+          <div className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-dark-750">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-dark-750">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center">
@@ -365,7 +365,7 @@ export default function CustomTablesContent() {
             <p className="text-xs text-slate-500 dark:text-slate-400">{records.length} ta yozuv • {activeColumns.length} ta ustun</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button onClick={handleExport} disabled={exporting}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 disabled:opacity-60">
             {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}

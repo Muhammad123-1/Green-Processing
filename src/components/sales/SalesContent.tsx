@@ -194,7 +194,7 @@ export default function SalesContent() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-3 border-b border-dark-700 pb-2">
+      <div className="flex flex-wrap items-center gap-3 border-b border-dark-700 pb-2">
         <button
           onClick={() => setActiveTab('customers')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
@@ -271,49 +271,51 @@ export default function SalesContent() {
         </div>
       ) : (
         <div className="card border border-dark-700 bg-dark-900/50 rounded-2xl overflow-hidden p-0">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-dark-800/90 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
-                <th className="p-4">Hujjat</th>
-                <th className="p-4">Mijoz</th>
-                <th className="p-4">Sana</th>
-                <th className="p-4">Mahsulotlar</th>
-                <th className="p-4">Jami Summa</th>
-                <th className="p-4">Holati</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-700/50 text-sm">
-              {filteredOrders.length === 0 ? (
-                <tr><td colSpan={6} className="p-10 text-center text-slate-500">Sotuvlar topilmadi</td></tr>
-              ) : ordersPagination.displayedItems.map(order => (
-                <tr key={order.id} className="hover:bg-dark-800/50">
-                  <td className="p-4 font-mono font-bold text-emerald-400">{order.orderNumber}</td>
-                  <td className="p-4">
-                    <span className="text-white font-semibold block">{order.customer?.name}</span>
-                    <span className="text-xs text-slate-500">{order.customer?.phone}</span>
-                  </td>
-                  <td className="p-4 text-slate-400">{new Date(order.orderDate).toLocaleDateString()}</td>
-                  <td className="p-4">
-                    <div className="flex flex-col gap-1 text-xs">
-                      {order.items?.map((item: any, i: number) => (
-                        <div key={i} className="text-slate-300">
-                          • {item.product?.name} <span className="text-slate-500">({item.quantity} x {item.unitPrice})</span>
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4 font-bold text-white bg-emerald-500/5 rounded-lg border-l border-emerald-500/10">
-                    {order.totalAmount.toLocaleString()} UZS
-                  </td>
-                  <td className="p-4">
-                    <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      {order.status}
-                    </span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-dark-800/90 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
+                  <th className="p-4">Hujjat</th>
+                  <th className="p-4">Mijoz</th>
+                  <th className="p-4">Sana</th>
+                  <th className="p-4">Mahsulotlar</th>
+                  <th className="p-4">Jami Summa</th>
+                  <th className="p-4">Holati</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-dark-700/50 text-sm">
+                {filteredOrders.length === 0 ? (
+                  <tr><td colSpan={6} className="p-10 text-center text-slate-500">Sotuvlar topilmadi</td></tr>
+                ) : ordersPagination.displayedItems.map(order => (
+                  <tr key={order.id} className="hover:bg-dark-800/50">
+                    <td className="p-4 font-mono font-bold text-emerald-400">{order.orderNumber}</td>
+                    <td className="p-4">
+                      <span className="text-white font-semibold block">{order.customer?.name}</span>
+                      <span className="text-xs text-slate-500">{order.customer?.phone}</span>
+                    </td>
+                    <td className="p-4 text-slate-400">{new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-1 text-xs">
+                        {order.items?.map((item: any, i: number) => (
+                          <div key={i} className="text-slate-300">
+                            • {item.product?.name} <span className="text-slate-500">({item.quantity} x {item.unitPrice})</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4 font-bold text-white bg-emerald-500/5 rounded-lg border-l border-emerald-500/10">
+                      {order.totalAmount.toLocaleString()} UZS
+                    </td>
+                    <td className="p-4">
+                      <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <InfiniteTableFooter
             currentCount={ordersPagination.visibleCount}
@@ -332,7 +334,7 @@ export default function SalesContent() {
       {/* CUSTOMER MODAL */}
       {showCustomerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+          <div className="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-800/50">
               <h2 className="text-xl font-bold text-white">Yangi Mijoz Qo'shish</h2>
               <button onClick={() => setShowCustomerModal(false)} className="text-slate-400 hover:text-white">&times;</button>
@@ -346,7 +348,7 @@ export default function SalesContent() {
                 <label className="text-xs text-slate-400 mb-1 block">Kompaniya nomi</label>
                 <input value={customerForm.companyName} onChange={e => setCustomerForm({...customerForm, companyName: e.target.value})} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-white focus:border-emerald-500" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-400 mb-1 block">Telefon</label>
                   <input value={customerForm.phone} onChange={e => setCustomerForm({...customerForm, phone: e.target.value})} className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-white focus:border-emerald-500" />
@@ -377,7 +379,7 @@ export default function SalesContent() {
             </div>
             
             <form onSubmit={handleCreateSalesOrder} className="flex-1 overflow-y-auto p-5 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-400 mb-1 block">Xaridor (Mijoz) *</label>
                   <select 
@@ -463,7 +465,7 @@ export default function SalesContent() {
                   )}
                 </div>
                 
-                <div className="flex justify-between items-center bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/20">
+                <div className="flex flex-wrap gap-2 justify-between items-center bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/20">
                   <span className="text-slate-400">Jami hisoblangan summa:</span>
                   <span className="text-xl font-bold text-emerald-400 font-mono">
                     {totalOrderSum.toLocaleString()} UZS
@@ -483,7 +485,7 @@ export default function SalesContent() {
 
             </form>
             
-            <div className="p-5 border-t border-dark-700 bg-dark-800/80 flex justify-end gap-3">
+            <div className="p-5 border-t border-dark-700 bg-dark-800/80 flex flex-wrap gap-2 justify-end">
               <button type="button" onClick={() => setShowOrderModal(false)} className="px-5 py-2.5 bg-dark-700 text-slate-300 rounded-xl hover:bg-dark-600 font-medium transition-colors">
                 Bekor qilish
               </button>

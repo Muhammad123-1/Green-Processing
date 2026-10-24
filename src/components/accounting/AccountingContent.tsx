@@ -135,10 +135,10 @@ export default function AccountingContent() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-3 border-b border-dark-700 pb-2">
+      <div className="flex items-center gap-3 border-b border-dark-700 pb-2 overflow-x-auto flex-wrap sm:flex-nowrap">
         <button
           onClick={() => setActiveTab('accounts')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
             activeTab === 'accounts'
               ? 'bg-violet-600/20 text-violet-400 border border-violet-500/30'
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
@@ -148,7 +148,7 @@ export default function AccountingContent() {
         </button>
         <button
           onClick={() => setActiveTab('transactions')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
             activeTab === 'transactions'
               ? 'bg-violet-600/20 text-violet-400 border border-violet-500/30'
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
@@ -158,7 +158,7 @@ export default function AccountingContent() {
         </button>
         <button
           onClick={() => setActiveTab('invoices')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
             activeTab === 'invoices'
               ? 'bg-violet-600/20 text-violet-400 border border-violet-500/30'
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
@@ -201,6 +201,7 @@ export default function AccountingContent() {
         </div>
       ) : activeTab === 'transactions' ? (
         <div className="card border border-dark-700 bg-dark-900/50 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-dark-800/90 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
@@ -239,6 +240,7 @@ export default function AccountingContent() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         <div className="card border border-dark-700 bg-dark-900/50 rounded-2xl overflow-hidden p-10 text-center text-slate-500">
@@ -251,7 +253,7 @@ export default function AccountingContent() {
       {/* NEW TRANSACTION MODAL */}
       {showTxModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+          <div className="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
             <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-800/50">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Wallet className="text-violet-500" /> {formatDual("Yangi Tranzaksiya", "Новая транзакция", "New Transaction")}
@@ -262,7 +264,7 @@ export default function AccountingContent() {
             <form onSubmit={handleCreateTx} className="p-5 space-y-4">
               <div>
                 <label className="text-xs text-slate-400 mb-1 block">{formatDual("Turi", "Тип", "Type")}</label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => setTxForm({...txForm, type: 'INCOME'})} className={`flex-1 py-2 rounded-lg font-bold border transition-colors ${txForm.type === 'INCOME' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-dark-800 text-slate-500 border-dark-700 hover:bg-dark-700'}`}>{formatDual("Tushum (Kirim)", "Доход (Приход)", "Income (Inflow)")}</button>
                   <button type="button" onClick={() => setTxForm({...txForm, type: 'EXPENSE'})} className={`flex-1 py-2 rounded-lg font-bold border transition-colors ${txForm.type === 'EXPENSE' ? 'bg-red-500/20 text-red-400 border-red-500/50' : 'bg-dark-800 text-slate-500 border-dark-700 hover:bg-dark-700'}`}>{formatDual("Xarajat (Chiqim)", "Расход (Убыток)", "Expense (Outflow)")}</button>
                 </div>

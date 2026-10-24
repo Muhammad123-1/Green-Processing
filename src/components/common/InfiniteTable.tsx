@@ -111,7 +111,7 @@ export function InfiniteTableFooter({
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
         {/* Chap tomon: Qatorlar soni va progress */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
           <div className="text-slate-300 font-medium flex items-center gap-1.5">
             <span>{formatDual("Ko'rsatilmoqda:", "Показано:", "Showing:")}</span>
             <span className="font-bold text-white px-2 py-0.5 rounded-md bg-dark-750 border border-dark-700 font-mono">
@@ -139,7 +139,7 @@ export function InfiniteTableFooter({
         </div>
 
         {/* O'ng tomon: Tugmalar */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
           {/* Scroll hint indikatori */}
           {hasMore && (
             <span className="hidden md:flex items-center gap-1 text-[11px] text-slate-400 bg-dark-800/80 px-2.5 py-1 rounded-lg border border-dark-700">

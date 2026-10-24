@@ -288,26 +288,28 @@ export default function ArchiveContent() {
               </button>
             </div>
 
-            {/* Meta: who / when */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-5 pb-0">
-              <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><UserIcon size={12} /> {formatDual("Kim kiritgan", "Кто внес", "Author")}</div>
-                <div className="font-bold text-slate-900 dark:text-white text-sm mt-1 break-words">{selected.author}</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><CalendarIcon size={12} /> {formatDual("Hisobot sanasi", "Дата отчета", "Report date")}</div>
-                <div className="font-bold text-slate-900 dark:text-white text-sm mt-1">{selected.date}</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
-                <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><Clock size={12} /> {formatDual("Tizimga kiritilgan", "Внесено в систему", "Created at")}</div>
-                <div className="font-bold text-slate-900 dark:text-white text-sm mt-1">{formatDateTime(selected.createdAt)}</div>
-              </div>
-            </div>
-
             {/* Full contents */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
-              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-3">{selected.desc}</p>
-              <DataView data={selected.payload} />
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-5 custom-scrollbar">
+              {/* Meta: who / when */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
+                  <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><UserIcon size={12} /> {formatDual("Kim kiritgan", "Кто внес", "Author")}</div>
+                  <div className="font-bold text-slate-900 dark:text-white text-sm mt-1 break-words">{selected.author}</div>
+                </div>
+                <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
+                  <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><CalendarIcon size={12} /> {formatDual("Hisobot sanasi", "Дата отчета", "Report date")}</div>
+                  <div className="font-bold text-slate-900 dark:text-white text-sm mt-1">{selected.date}</div>
+                </div>
+                <div className="rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 p-3">
+                  <div className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><Clock size={12} /> {formatDual("Tizimga kiritilgan", "Внесено в систему", "Created at")}</div>
+                  <div className="font-bold text-slate-900 dark:text-white text-sm mt-1">{formatDateTime(selected.createdAt)}</div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-3">{selected.desc}</p>
+                <DataView data={selected.payload} />
+              </div>
             </div>
 
             <div className="p-4 border-t border-slate-200 dark:border-dark-750 flex justify-end">

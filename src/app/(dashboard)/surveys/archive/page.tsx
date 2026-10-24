@@ -43,7 +43,7 @@ export default function SurveysArchivePage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-dark-950 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-slate-200 dark:bg-dark-800 rounded-xl flex items-center justify-center text-slate-500">
               <Archive size={24} />
@@ -84,12 +84,12 @@ export default function SurveysArchivePage() {
                     className="p-5 cursor-pointer hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors"
                     onClick={() => setExpandedId(isExpanded ? null : s.id)}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div>
                         <h3 className="font-bold text-slate-900 dark:text-white text-lg">{s.title}</h3>
                         <p className="text-xs text-slate-500 mt-1">{new Date(s.createdAt).toLocaleDateString('uz-UZ')} da yaratilgan</p>
                         
-                        <div className="flex items-center gap-4 mt-3 text-sm text-slate-600 dark:text-slate-400">
+                        <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-slate-600 dark:text-slate-400">
                           <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-dark-800 rounded-lg font-medium"><Users size={14} className="text-blue-500"/> {s.responses.length} ta javob</span>
                           <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-dark-800 rounded-lg"><BarChart2 size={14} /> Statistika</span>
                         </div>
@@ -363,7 +363,7 @@ function ResponseViewer({
                             </span>
                           </div>
                         </div>
-                        <div className="text-xs text-slate-400 flex flex-col items-end">
+                        <div className="text-xs text-slate-400 flex flex-col items-start sm:items-end">
                           <span className="font-medium text-slate-500 dark:text-slate-400">Topshirildi:</span>
                           <span>{new Date(resp.submittedAt).toLocaleString('uz-UZ')}</span>
                         </div>

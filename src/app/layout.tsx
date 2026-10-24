@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
@@ -6,9 +6,23 @@ import { AppProviders } from '@/components/providers/AppProviders'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+  themeColor: '#070C16',
+}
+
 export const metadata: Metadata = {
-  title: 'Kiruvchi Xomashyo Nazorati',
-  description: 'Kiruvchi xom ashyo qabul qilish nazorat tizimi',
+  title: 'Green Processing ERP',
+  description: 'Green Processing Korporativ ERP Boshqaruv Tizimi',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Green Processing ERP',
+  },
 }
 
 export default function RootLayout({

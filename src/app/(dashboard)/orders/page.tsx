@@ -2,7 +2,7 @@ import OrdersContent from '@/components/orders/OrdersContent'
 
 export default function OrdersPage() {
   return (
-    <div className="p-6">
+    <div className="p-0 sm:p-2">
       <div className="max-w-7xl mx-auto">
         <OrdersContent />
       </div>

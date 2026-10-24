@@ -423,7 +423,7 @@ export default function OrdersContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={refreshData}
             disabled={refreshing}
@@ -553,7 +553,7 @@ export default function OrdersContent() {
 
       {/* Tabs Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dark-700/80 pb-3">
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={() => setActiveTab('inventory')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all ${
@@ -643,7 +643,7 @@ export default function OrdersContent() {
             </div>
 
             {/* Svetofor Status Filter */}
-            <div className="flex items-center gap-1.5 bg-dark-800 p-1 rounded-xl border border-dark-700 shrink-0">
+            <div className="flex flex-wrap items-center gap-1.5 bg-dark-800 p-1 rounded-xl border border-dark-700 shrink-0">
               <button
                 onClick={() => setStockFilter('ALL')}
                 className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
@@ -828,7 +828,7 @@ export default function OrdersContent() {
                       {inventoryPagination.displayedItems.map((item) => (
                         <tr key={item.id} className="hover:bg-dark-800/40 transition-colors">
                           <td className="py-4 px-4 font-semibold text-white">
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
                               <div className={`w-3 h-3 rounded-full shrink-0 ${
                                 item.status === 'red' ? 'bg-red-500 animate-pulse shadow-lg shadow-red-500/50' :
                                 item.status === 'yellow' ? 'bg-amber-500 shadow-md shadow-amber-500/30' : 'bg-emerald-500'
@@ -961,10 +961,10 @@ export default function OrdersContent() {
             </div>
 
             <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-              <div className="flex bg-dark-800 p-1 rounded-xl border border-dark-700">
+              <div className="flex bg-dark-800 p-1 rounded-xl border border-dark-700 overflow-x-auto max-w-full">
                 <button
                   onClick={() => setOrderFilter('ALL')}
-                  className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
+                  className={`px-3 py-1 text-xs rounded-lg font-bold whitespace-nowrap shrink-0 transition-all ${
                     orderFilter === 'ALL' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -972,7 +972,7 @@ export default function OrdersContent() {
                 </button>
                 <button
                   onClick={() => setOrderFilter('PENDING')}
-                  className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
+                  className={`px-3 py-1 text-xs rounded-lg font-bold whitespace-nowrap shrink-0 transition-all ${
                     orderFilter === 'PENDING' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -980,7 +980,7 @@ export default function OrdersContent() {
                 </button>
                 <button
                   onClick={() => setOrderFilter('TODAY')}
-                  className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
+                  className={`px-3 py-1 text-xs rounded-lg font-bold whitespace-nowrap shrink-0 transition-all ${
                     orderFilter === 'TODAY' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -988,7 +988,7 @@ export default function OrdersContent() {
                 </button>
                 <button
                   onClick={() => setOrderFilter('DELAYED')}
-                  className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
+                  className={`px-3 py-1 text-xs rounded-lg font-bold whitespace-nowrap shrink-0 transition-all ${
                     orderFilter === 'DELAYED' ? 'bg-rose-600 text-white shadow' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -996,7 +996,7 @@ export default function OrdersContent() {
                 </button>
                 <button
                   onClick={() => setOrderFilter('DELIVERED')}
-                  className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
+                  className={`px-3 py-1 text-xs rounded-lg font-bold whitespace-nowrap shrink-0 transition-all ${
                     orderFilter === 'DELIVERED' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -1004,7 +1004,7 @@ export default function OrdersContent() {
                 </button>
                 <button
                   onClick={() => setOrderFilter('CANCELLED')}
-                  className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
+                  className={`px-3 py-1 text-xs rounded-lg font-bold whitespace-nowrap shrink-0 transition-all ${
                     orderFilter === 'CANCELLED' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -1308,12 +1308,12 @@ export default function OrdersContent() {
           onClick={() => setShowOrderModal(false)}
         >
           <div 
-            className="w-full max-w-xl bg-dark-900 border border-dark-750 rounded-3xl shadow-2xl p-6 overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-xl bg-dark-900 border border-dark-750 rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-dark-750">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-lg">
                   <ShoppingCart size={20} />
                 </div>
@@ -1366,8 +1366,8 @@ export default function OrdersContent() {
               </div>
 
               {/* Quantity & Unit */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
                     {formatDual("Buyurtma Miqdori", "Количество заказа", "Quantity")} <span className="text-red-400">*</span>
                   </label>
@@ -1442,7 +1442,7 @@ export default function OrdersContent() {
               </div>
 
               {/* Date & Time Window */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
                     {formatDual("Kelishi Kerak Bo'lgan Sana", "Ожидаемая дата", "Expected Delivery Date")} <span className="text-red-400">*</span>
@@ -1470,7 +1470,7 @@ export default function OrdersContent() {
               </div>
 
               {/* Price & Notes */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
                     {formatDual("Kelishilgan Narx (so'm / birlik)", "Договорная цена (сум / ед)", "Price (UZS / unit)")}
@@ -1545,7 +1545,7 @@ export default function OrdersContent() {
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-dark-750">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg">
                   <FileCheck2 size={20} />
                 </div>
@@ -1626,7 +1626,7 @@ export default function OrdersContent() {
               </div>
 
               {/* Quantities input: Delivered, Accepted, Rejected */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
                     {formatDual("Kelgan Miqdor", "Привезено", "Delivered")}
@@ -1673,7 +1673,7 @@ export default function OrdersContent() {
                 const del = parseFloat(reconcileForm.deliveredQuantity) || 0
                 const shortage = selectedOrder.quantity - del
                 return (
-                  <div className={`p-3 rounded-2xl border flex items-center justify-between text-xs ${
+                  <div className={`p-3 rounded-2xl border flex flex-wrap gap-1 items-center justify-between text-xs ${
                     shortage > 0 
                       ? 'bg-rose-500/10 border-rose-500/25 text-rose-300' 
                       : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'

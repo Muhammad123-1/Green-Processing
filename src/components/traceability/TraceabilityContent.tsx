@@ -81,7 +81,7 @@ export default function TraceabilityContent() {
       </div>
 
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex gap-4">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
@@ -157,7 +157,7 @@ export default function TraceabilityContent() {
             </div>
             
             {(treeData.batch.supplierBatchNumber || treeData.batch.certificateNumber) && (
-              <div className="flex gap-4 p-3 bg-dark-800/50 rounded-xl border border-dark-700 text-sm">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 p-3 bg-dark-800/50 rounded-xl border border-dark-700 text-sm">
                 {treeData.batch.supplierBatchNumber && (
                   <p><span className="text-slate-400">Ta'minotchi Partiyasi:</span> <span className="font-mono text-white">{treeData.batch.supplierBatchNumber}</span></p>
                 )}

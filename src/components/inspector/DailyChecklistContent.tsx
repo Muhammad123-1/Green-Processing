@@ -645,7 +645,7 @@ export default function DailyChecklistContent() {
             <span>📘 Qo'llanma</span>
           </button>
 
-          <div className="flex bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 shadow-inner">
+          <div className="flex flex-wrap bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 shadow-inner">
             <button
               onClick={() => setView('form')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
@@ -863,7 +863,7 @@ export default function DailyChecklistContent() {
                   {packagingItems.length} та маҳсулот
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {packagingItems.length > 6 && (
                   <button
                     type="button"
@@ -1106,7 +1106,7 @@ export default function DailyChecklistContent() {
           {/* SECTION 2: PROCESS & SAFETY CHECKLIST (Excel rows 16-31, Image 3) */}
           {/* ========================================================================= */}
           <div className="border-b border-slate-300 dark:border-dark-700">
-            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex items-center justify-between">
+            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex flex-wrap gap-2 items-center justify-between">
               <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
                 2. ТЕХНОЛОГИК ЖАРАЁН ВА ХАВФСИЗЛИК ЧЕК-ЛИСТИ / ТЕХНОЛОГИЧЕСКИЙ ПРОЦЕСС И БЕЗОПАСНОСТЬ / PROCESS &amp; SAFETY CHECKLIST
               </h3>
@@ -2425,7 +2425,7 @@ export default function DailyChecklistContent() {
               <span>Янгидан тўлдириш</span>
             </button>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => window.print()}
@@ -2452,7 +2452,7 @@ export default function DailyChecklistContent() {
         /* ARCHIVE VIEW */
         /* ========================================================================= */
         <div className="space-y-4">
-          <div className="flex justify-between items-center bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+          <div className="flex flex-wrap gap-3 justify-between items-center bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
             <div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
                 Архив: Сақланган Кунлик Чек-листлар

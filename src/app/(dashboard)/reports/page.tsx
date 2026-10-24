@@ -302,7 +302,7 @@ function MonthlyReport({
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard
           icon={<BarChart3 className="text-blue-500" size={20} />}
           label={formatDual("Jami aktlar", "Всего актов", "Total acts")}
@@ -399,7 +399,7 @@ function MonthlyReport({
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex items-center gap-3 text-xs font-semibold mt-2">
+          <div className="flex flex-wrap justify-center items-center gap-3 text-xs font-semibold mt-2">
             <span className="flex items-center gap-1 text-emerald-600">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> {formatDual("Qabul", "Принято", "Accepted")} ({data.accepted})
             </span>
@@ -417,7 +417,7 @@ function MonthlyReport({
 
       {/* SECTION 1: KIM TOMONIDAN QABUL QILINYAPTI (INSPECTORS ANALYTICS) */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-dark-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-dark-800">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
               <Users size={16} />
@@ -682,7 +682,7 @@ function YearlyReport({
   return (
     <div className="space-y-6">
       {/* Annual KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard
           icon={<BarChart3 className="text-blue-500" size={20} />}
           label={formatDual("Yillik Jami Aktlar", "Всего актов за год", "Total Annual Acts")}
@@ -749,7 +749,7 @@ function YearlyReport({
       {/* SECTION: YILLIK KIM TOMONIDAN QABUL QILINDI */}
       {data.byInspector && data.byInspector.length > 0 && (
         <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-dark-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-dark-800">
             <div className="flex items-center gap-2">
               <Users size={16} className="text-blue-500" />
               <h3 className="font-black text-slate-900 dark:text-white text-sm">
@@ -785,7 +785,7 @@ function YearlyReport({
       {/* SECTION: YILLIK RAD ETILGAN PARTIYALAR */}
       {data.rejectedInspections && data.rejectedInspections.length > 0 && (
         <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-dark-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-dark-800">
             <div className="flex items-center gap-2">
               <XCircle size={16} className="text-red-500" />
               <h3 className="font-black text-slate-900 dark:text-white text-sm">

@@ -609,7 +609,7 @@ export default function ProductsPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter" onClick={() => setShowModal(false)}>
-          <div className="bg-dark-900 border border-dark-700 rounded-3xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dark-900 border border-dark-700 rounded-3xl p-4 sm:p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-4 border-b border-dark-700 mb-5">
               <h3 className="font-bold text-white text-lg">
                 {editId ? formatDual("Mahsulotni tahrirlash", "Редактировать продукт", "Edit Product") : formatDual("Yangi mahsulot qo'shish", "Новый продукт", "New Product")}
@@ -630,7 +630,7 @@ export default function ProductsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Kodi</label>
                   <input
@@ -651,7 +651,7 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Birlik</label>
                   <select

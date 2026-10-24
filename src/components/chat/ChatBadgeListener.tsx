@@ -10,6 +10,10 @@ declare global {
       setBadge: (count: number) => void
       notify: (title: string, body: string) => void
     }
+    AndroidBridge?: {
+      setBadge: (count: number) => void
+      notify: (title: string, body: string) => void
+    }
   }
 }
 
@@ -104,9 +108,14 @@ export default function ChatBadgeListener() {
           document.title = 'Green Processing ERP'
         }
 
-        // Send to Electron app directly via IPC (Guaranteed taskbar red dot!)
-        if (typeof window !== 'undefined' && window.electronAPI?.setBadge) {
-          window.electronAPI.setBadge(totalCount)
+        // Send to Electron / Android app directly via bridge
+        if (typeof window !== 'undefined') {
+          if (window.electronAPI?.setBadge) {
+            window.electronAPI.setBadge(totalCount)
+          }
+          if (window.AndroidBridge?.setBadge) {
+            window.AndroidBridge.setBadge(totalCount)
+          }
         }
 
         // Chime and notifications on new unread
@@ -122,6 +131,8 @@ export default function ChatBadgeListener() {
 
           if (typeof window !== 'undefined' && window.electronAPI?.notify) {
             window.electronAPI.notify(notifyTitle, notifyBody)
+          } else if (typeof window !== 'undefined' && window.AndroidBridge?.notify) {
+            window.AndroidBridge.notify(notifyTitle, notifyBody)
           } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
             new Notification(notifyTitle, {
               body: notifyBody,

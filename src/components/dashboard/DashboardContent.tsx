@@ -169,7 +169,7 @@ export default function DashboardContent() {
 
       {/* Recent Inspections */}
       <div className="card">
-        <div className="flex items-center justify-between p-5 border-b border-dark-700">
+        <div className="flex flex-wrap gap-2 items-center justify-between p-4 sm:p-5 border-b border-dark-700">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
               <Activity size={16} className="text-blue-400" />

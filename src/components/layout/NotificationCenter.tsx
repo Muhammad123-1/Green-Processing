@@ -232,7 +232,7 @@ export default function NotificationCenter() {
 
       {/* Notification Dropdown Modal */}
       {isOpen && (
-        <div className="absolute right-0 sm:right-0 top-12 w-[340px] sm:w-[420px] max-w-[94vw] bg-dark-900/95 backdrop-blur-2xl border border-dark-750 rounded-2xl sm:rounded-3xl shadow-2xl z-50 overflow-hidden animate-enter">
+        <div className="fixed inset-x-2.5 top-16 w-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[420px] max-w-[96vw] bg-dark-900/95 backdrop-blur-2xl border border-dark-750 rounded-2xl sm:rounded-3xl shadow-2xl z-50 overflow-hidden animate-enter">
           {/* Header */}
           <div className="p-3.5 sm:p-4 border-b border-dark-750 flex items-center justify-between gap-2 bg-dark-850/60">
             <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ export default function NotificationCenter() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-2 border-b border-dark-750/80 bg-dark-800/40 text-[11px] font-bold">
+          <div className="flex flex-wrap items-center gap-1.5 p-2 border-b border-dark-750/80 bg-dark-800/40 text-[11px] font-bold">
             <button
               onClick={() => setActiveTab('all')}
               className={`px-3 py-1 rounded-lg transition-all ${

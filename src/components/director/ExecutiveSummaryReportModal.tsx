@@ -180,7 +180,7 @@ export default function ExecutiveSummaryReportModal({
           <div>
             {/* 1. OFFICIAL HEADER */}
             <div className="border-b-2 border-slate-900 pb-3 mb-4">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col sm:flex-row print:flex-row items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xl tracking-tighter print:border print:border-slate-900">
                     GP
@@ -231,7 +231,7 @@ export default function ExecutiveSummaryReportModal({
             </div>
 
             {/* 2. 2x2 BALANCED CORE SECTIONS */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3 sm:gap-4 mb-4 text-[11px]">
               {/* SECTION 1: XOMASHYO VA TA'MINOT */}
               <div className="border border-slate-300 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between">
                 <div>
@@ -377,7 +377,7 @@ export default function ExecutiveSummaryReportModal({
 
             {/* 3. FSSC 22000 & HACCP CRITICAL CONTROL POINTS (CCP) STATUS STRIP */}
             <div className="border border-slate-300 rounded-xl p-2.5 bg-slate-50 mb-4 text-[10px]">
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex flex-wrap gap-1 items-center justify-between mb-1.5">
                 <span className="font-black text-slate-900 uppercase flex items-center gap-1.5">
                   <ShieldCheck size={14} className="text-emerald-600" />
                   {formatDual(
@@ -391,7 +391,7 @@ export default function ExecutiveSummaryReportModal({
                 </span>
               </div>
 
-              <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-2 text-center">
                 <div className="bg-white p-1.5 rounded-lg border border-slate-200">
                   <span className="text-slate-500 block text-[9px]">{formatDual("Harorat nazorati", "Температурный режим", "Temp control")}</span>
                   <b className="text-slate-900 font-bold block text-[10px] mt-0.5">+2°C ... +6°C</b>
@@ -432,7 +432,7 @@ export default function ExecutiveSummaryReportModal({
 
           {/* 5. OFFICIAL SIGNATURE AND STAMP BOX */}
           <div className="border-t-2 border-slate-900 pt-3 mt-auto">
-            <div className="grid grid-cols-3 gap-6 text-[10px]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-6 text-[10px]">
               <div>
                 <span className="font-black text-slate-900 block uppercase">
                   {formatDual("Bosh Direktor:", "Генеральный директор:", "General Director:")}
@@ -465,7 +465,7 @@ export default function ExecutiveSummaryReportModal({
               </div>
             </div>
 
-            <div className="mt-3 pt-1.5 border-t border-slate-200 flex items-center justify-between text-[8.5px] text-slate-400">
+            <div className="mt-3 pt-1.5 border-t border-slate-200 flex flex-wrap gap-1 items-center justify-between text-[8.5px] text-slate-400">
               <span>Green Processing Enterprise ERP &bull; Rasmiy Boshqaruv Audit Hujjati</span>
               <span>Generatsiya sanasi: {formattedToday} {formattedTime} &bull; Tizim id: #GP-EXEC-DIR</span>
             </div>

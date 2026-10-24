@@ -768,7 +768,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
                              }`}
                 >
                   {option.icon}
-                  <span className="hidden sm:block">{option.label}</span>
+                  <span className="text-xs block">{option.label}</span>
                 </button>
               ))}
             </div>
@@ -848,7 +848,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       {/* Action Buttons */}
       <div className="space-y-3 pb-6">
         {form.quantity && !qtyValidation.isValid && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center justify-between">
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold flex flex-wrap gap-2 items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldAlert size={16} className="text-rose-400 shrink-0" />
               <span>⛔ Miqdor noto'g'ri kiritilgan. Xatoni to'g'irlamaguningizcha saqlash taqiqlanadi (Direktor talabi)!</span>
@@ -863,7 +863,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
           </div>
         )}
 
-        <div className="flex items-center gap-3 justify-end">
+        <div className="flex flex-wrap items-center gap-3 justify-end">
           <Link href="/inspections" className="btn-secondary">
             <ArrowLeft size={16} />
             Bekor qilish

@@ -1411,15 +1411,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       {/* Modal 1: FSSC 22000 */}
       {modalType === 'fssc' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setModalType(null)}>
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-dark-700" onClick={e => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <ClipboardCheck className="text-emerald-600 dark:text-emerald-400" /> {d.tabFssc}
               </h2>
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveFssc} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveFssc} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.timeLine} (Sana)</label>
                   <input type="date" value={fsscForm.date} onChange={e => setFsscForm({...fsscForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1431,7 +1431,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex flex-wrap gap-1 items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">{d.productBatch}</label>
                   <button
                     type="button"
@@ -1476,7 +1476,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Partiya Raqami</label>
                   <input type="text" value={fsscForm.batchNumber} onChange={e => setFsscForm({...fsscForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
@@ -1487,7 +1487,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Nominal Vazn (g)</label>
                   <input
@@ -1501,7 +1501,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   />
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex flex-wrap gap-1 items-center justify-between mb-1">
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Haqiqiy Vazn (g)</label>
                     <button
                       type="button"
@@ -1550,7 +1550,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-2 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
                 <label className="flex items-center gap-2 bg-slate-50 dark:bg-dark-800 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700 cursor-pointer text-xs">
                   <input type="checkbox" checked={fsscForm.sealIntegrityOk} onChange={e => setFsscForm({...fsscForm, sealIntegrityOk: e.target.checked})} />
                   <span className="text-slate-800 dark:text-slate-200 font-semibold">{d.seal}</span>
@@ -1605,15 +1605,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       {/* Modal 2: Disinfection KKT-1 */}
       {modalType === 'disinfection' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setModalType(null)}>
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-dark-700" onClick={e => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <FlaskConical className="text-cyan-600 dark:text-cyan-400" /> {d.tabDez}
               </h2>
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveDez} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveDez} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
                   <input type="date" value={dezForm.date} onChange={e => setDezForm({...dezForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1629,7 +1629,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 <input type="text" value={dezForm.vannaNumber} onChange={e => setDezForm({...dezForm, vannaNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.concPpm}</label>
                   <input type="number" step="0.1" value={dezForm.concentrationPpm} onChange={e => setDezForm({...dezForm, concentrationPpm: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold" placeholder="50-100" required />
@@ -1644,7 +1644,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.corrAction}</label>
                   <input type="text" value={dezForm.correctiveAction} onChange={e => setDezForm({...dezForm, correctiveAction: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
@@ -1674,15 +1674,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       {/* Modal 3: Calibration */}
       {modalType === 'calibration' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setModalType(null)}>
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-dark-700" onClick={e => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Ruler className="text-purple-600 dark:text-purple-400" /> {d.tabCal}
               </h2>
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveCal} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveCal} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
                   <input type="date" value={calForm.date} onChange={e => setCalForm({...calForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1692,7 +1692,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   <input type="time" value={calForm.time} onChange={e => setCalForm({...calForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.productBatch}</label>
                   <input type="text" value={calForm.productName} onChange={e => setCalForm({...calForm, productName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1703,7 +1703,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.dimMm}</label>
                   <input type="number" step="0.1" value={calForm.diameterMm} onChange={e => setCalForm({...calForm, diameterMm: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-purple-600 dark:text-purple-400 text-xs font-mono font-bold" />
@@ -1742,15 +1742,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       {/* Modal 4: Degustation */}
       {modalType === 'degustation' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setModalType(null)}>
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-dark-700" onClick={e => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <UtensilsCrossed className="text-pink-600 dark:text-pink-400" /> {d.tabDeg}
               </h2>
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveDeg} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveDeg} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
                   <input type="date" value={degForm.date} onChange={e => setDegForm({...degForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1760,7 +1760,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   <input type="time" value={degForm.time} onChange={e => setDegForm({...degForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Mahsulot Turi</label>
                   <select 
@@ -1780,7 +1780,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 bg-slate-50 dark:bg-dark-800 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700 cursor-pointer text-xs">
                   <input type="checkbox" checked={degForm.colorOk} onChange={e => setDegForm({...degForm, colorOk: e.target.checked})} />
                   <span className="text-slate-800 dark:text-slate-200 font-medium">{d.color} (OK)</span>
@@ -1799,7 +1799,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </label>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.conclusion}</label>
                   <input type="text" value={degForm.conclusion} onChange={e => setDegForm({...degForm, conclusion: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
@@ -1829,15 +1829,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       {/* Modal 5: Process Temp */}
       {modalType === 'temperature' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setModalType(null)}>
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-dark-700" onClick={e => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Thermometer className="text-blue-600 dark:text-blue-400" /> {d.tabProc}
               </h2>
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveProc} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveProc} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
                   <input type="date" value={procForm.date} onChange={e => setProcForm({...procForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1847,7 +1847,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   <input type="time" value={procForm.time} onChange={e => setProcForm({...procForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.cleanZone}</label>
                   <input type="number" step="0.1" value={procForm.cleanZoneTemp} onChange={e => setProcForm({...procForm, cleanZoneTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-blue-600 dark:text-blue-400 text-xs font-mono font-bold" />
@@ -1858,7 +1858,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-3 p-3 bg-slate-50 dark:bg-dark-800 rounded-xl border border-slate-200 dark:border-dark-700">
                   <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-dark-700 pb-1">Yarim tayyor mahsulot (PF) Partiya №</h4>
                   
@@ -1934,15 +1934,15 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
       {/* Modal 6-7: Receiving */}
       {modalType === 'receiving' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setModalType(null)}>
-          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-dark-700" onClick={e => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Truck className="text-amber-600 dark:text-amber-400" /> {d.tabRcv}
               </h2>
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveRcv} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveRcv} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
                   <input type="date" value={rcvForm.date} onChange={e => setRcvForm({...rcvForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1952,7 +1952,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   <input type="time" value={rcvForm.time} onChange={e => setRcvForm({...rcvForm, time: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.supplier}</label>
                   <input type="text" value={rcvForm.supplierName} onChange={e => setRcvForm({...rcvForm, supplierName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
@@ -1963,7 +1963,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Partiya Raqami</label>
                   <input type="text" value={rcvForm.batchNumber} onChange={e => setRcvForm({...rcvForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" required />
@@ -1974,7 +1974,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.cargoTemp} (°C)</label>
                   <input type="number" step="0.1" value={rcvForm.cargoTemp} onChange={e => setRcvForm({...rcvForm, cargoTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
@@ -1985,7 +1985,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
                 <label className="flex items-center gap-2 bg-slate-50 dark:bg-dark-800 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700 cursor-pointer text-xs">
                   <input type="checkbox" checked={rcvForm.vehicleCleanOk} onChange={e => setRcvForm({...rcvForm, vehicleCleanOk: e.target.checked})} />
                   <span className="text-slate-800 dark:text-slate-200 font-medium">{d.vehClean} (OK)</span>

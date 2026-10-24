@@ -64,7 +64,7 @@ export default function MonitoringContent() {
         
         {/* Filters Toolbar */}
         <div className="p-4 border-b border-slate-200 dark:border-dark-750 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50/50 dark:bg-dark-900/50">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
               <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
@@ -75,7 +75,7 @@ export default function MonitoringContent() {
               />
             </div>
             <div className="h-8 w-px bg-slate-300 dark:bg-dark-700 mx-1 hidden sm:block"></div>
-            <div className="relative hidden sm:block">
+            <div className="relative block">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <select 
                 value={regionFilter}
@@ -113,7 +113,7 @@ export default function MonitoringContent() {
                 </span>
               </div>
               
-              <div className="border border-slate-200 dark:border-dark-750 rounded-xl overflow-hidden shadow-sm">
+              <div className="border border-slate-200 dark:border-dark-750 rounded-xl overflow-x-auto shadow-sm">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-100 dark:bg-dark-800 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-dark-750">
@@ -178,7 +178,7 @@ export default function MonitoringContent() {
                 </span>
               </div>
               
-              <div className="w-full sm:w-1/2 border border-slate-200 dark:border-dark-750 rounded-xl overflow-hidden shadow-sm">
+              <div className="w-full sm:w-1/2 border border-slate-200 dark:border-dark-750 rounded-xl overflow-x-auto shadow-sm">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-100 dark:bg-dark-800 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-dark-750">

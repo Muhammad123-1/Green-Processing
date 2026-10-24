@@ -234,7 +234,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           >
             <ChevronLeft size={16} />
           </button>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <input
               type="date"
               value={date}

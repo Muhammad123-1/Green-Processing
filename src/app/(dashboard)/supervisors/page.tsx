@@ -149,7 +149,7 @@ export default function SupervisorsPage() {
     <div className="space-y-6 animate-enter">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Nazoratchilar</h1>
           <p className="section-subtitle">
@@ -162,7 +162,7 @@ export default function SupervisorsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: 'Jami nazoratchilar', value: supervisors.length, icon: Users, color: 'blue' },
           { label: 'Faol nazoratchilar', value: active.length, icon: UserCheck, color: 'emerald' },
@@ -402,7 +402,7 @@ export default function SupervisorsPage() {
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="card p-6 max-w-lg w-full animate-enter space-y-5" onClick={(e) => e.stopPropagation()}>
+          <div className="card max-h-[90vh] overflow-y-auto p-4 sm:p-6 max-w-lg w-full animate-enter space-y-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
@@ -438,7 +438,7 @@ export default function SupervisorsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Lavozimi</label>
                   <input
@@ -461,7 +461,7 @@ export default function SupervisorsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Telefon raqami</label>
                   <input

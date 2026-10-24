@@ -142,7 +142,7 @@ export default function SurveysPage() {
               )}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={fetchSurveys}
               className="p-2.5 rounded-xl border border-slate-200 dark:border-dark-700 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
@@ -176,7 +176,7 @@ export default function SurveysPage() {
         {/* Create Modal */}
         {showCreate && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-dark-750">
+            <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-dark-750">
               <div className="p-6 border-b border-slate-100 dark:border-dark-800">
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                   {formatDual(
@@ -327,7 +327,7 @@ export default function SurveysPage() {
                   className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm overflow-hidden"
                 >
                   <div className="p-5">
-                    <div className="flex items-start gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-bold text-slate-900 dark:text-white text-sm">
@@ -344,7 +344,7 @@ export default function SurveysPage() {
                             {s.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                        <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-400">
                           <span className="flex items-center gap-1">
                             <Users size={11} /> {s.responses.length}{" "}
                             {formatDual("ta javob", "ответов", "answers")}
@@ -363,7 +363,7 @@ export default function SurveysPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => toggleActive(s)}
                           title={s.isActive ? "O'chirish" : "Yoqish"}
@@ -596,7 +596,7 @@ function ResponseViewer({
             </h4>
 
             {/* View Mode Switcher */}
-            <div className="flex items-center bg-slate-200/70 dark:bg-dark-750 p-1 rounded-xl">
+            <div className="flex flex-wrap items-center bg-slate-200/70 dark:bg-dark-750 p-1 rounded-xl">
               <button
                 onClick={() => setViewTab('questions')}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
@@ -622,7 +622,7 @@ function ResponseViewer({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <a
               href={`/api/surveys/${surveyId}/export`}
               download
@@ -737,7 +737,7 @@ function ResponseViewer({
                   {/* Progress Bar / Info */}
                   {totalCount > 0 && (
                     isOpinion ? (
-                      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1.5">
                           <MessageSquare size={12} className="text-blue-500" />
                           {formatDual("Erkin fikr-mulohazalar (ijobiy/salbiyga ajratilmagan)", "Свободные мнения респондентов", "Open respondent opinions")}

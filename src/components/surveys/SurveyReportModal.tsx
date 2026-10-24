@@ -245,7 +245,7 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-dark-800 px-3 py-2 rounded-xl border border-slate-200 dark:border-dark-700 cursor-pointer">
               <input
                 type="checkbox"
@@ -301,9 +301,9 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
               {/* OFFICIAL COMPANY DOCUMENT HEADER */}
               {/* ===================================================================== */}
               <div className="border-b-2 border-slate-900 print:border-black pb-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row print:flex-row items-start justify-between gap-4">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-sm print:bg-black">
                         GP
                       </div>
@@ -403,7 +403,7 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                   </div>
                 </div>
 
-                <div className="border border-slate-300 dark:border-dark-700 print:border-slate-400 rounded-2xl overflow-hidden shadow-sm">
+                <div className="border border-slate-300 dark:border-dark-700 print:border-slate-400 rounded-2xl overflow-x-auto print:overflow-visible shadow-sm">
                   <table className="w-full text-xs text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-800 text-white print:bg-slate-100 print:text-black font-bold border-b border-slate-300 print:border-black">
@@ -581,7 +581,7 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
               {/* OFFICIAL SIGNATURES & STAMP AREA */}
               {/* ===================================================================== */}
               <div className="pt-6 border-t border-slate-300 print:border-black mt-8 page-break-inside-avoid">
-                <div className="grid grid-cols-2 gap-8 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-8 text-xs">
                   <div className="space-y-4">
                     <p className="font-bold text-slate-800 dark:text-slate-200 print:text-black">
                       Sifat nazorati bo'limi boshlig'i (QC Manager):
@@ -605,7 +605,7 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-6 text-[10px] text-slate-400 print:text-slate-600">
+                <div className="flex flex-wrap gap-2 items-center justify-between mt-6 text-[10px] text-slate-400 print:text-slate-600">
                   <p>OOO "GREEN PROCESSING" sifat menejmenti tizimi (FSSC 22000 / ISO 9001)</p>
                   <p>Hujjat nusxasi chop etilgan sana: {new Date().toLocaleString('uz-UZ')}</p>
                 </div>

@@ -969,9 +969,9 @@ export default function ShopReportContent() {
       {activeTab === 'history' && (
         <div className="flex-1 min-h-0 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col p-4 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-3 gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mr-4">Saqlangan Arxivlar</h2>
-              <div className="flex bg-slate-100 dark:bg-dark-800 rounded-xl p-1">
+              <div className="flex overflow-x-auto max-w-full bg-slate-100 dark:bg-dark-800 rounded-xl p-1">
                 <button
                   onClick={() => setHistoryType('arrival')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${historyType === 'arrival' ? 'bg-white dark:bg-dark-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}

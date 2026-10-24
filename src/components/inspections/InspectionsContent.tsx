@@ -392,7 +392,7 @@ export default function InspectionsContent() {
         <div className="space-y-5">
           {/* Actions & Filters */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto flex-1">
               <div className="relative flex-1 max-w-md">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
@@ -540,7 +540,7 @@ export default function InspectionsContent() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-dark-750">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 flex-wrap gap-2 border-t border-dark-750">
                 <p className="text-xs text-slate-400">
                   {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} / {total} ta akt
                 </p>
@@ -619,14 +619,14 @@ export default function InspectionsContent() {
 
           {/* Action Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-4 rounded-2xl">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-400 uppercase">Bo'lim:</span>
-              <div className="flex bg-dark-800 p-1 rounded-xl border border-dark-700">
+            <div className="flex items-center gap-2 max-w-full">
+              <span className="text-xs font-bold text-slate-400 uppercase shrink-0">Bo'lim:</span>
+              <div className="flex bg-dark-800 p-1 rounded-xl border border-dark-700 overflow-x-auto max-w-full">
                 {['ALL', 'INSPECTION', 'WAREHOUSE', 'WORKSHOP', 'KITCHEN'].map((loc) => (
                   <button
                     key={loc}
                     onClick={() => setDefectFilterLoc(loc)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                       defectFilterLoc === loc ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -865,7 +865,7 @@ export default function InspectionsContent() {
           onClick={() => setShowDefectModal(false)}
         >
           <div 
-            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-dark-700">
@@ -887,7 +887,7 @@ export default function InspectionsContent() {
             </div>
 
             <form onSubmit={handleSaveDefect} className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
                     Mahsulot <span className="text-rose-400">*</span>
@@ -923,7 +923,7 @@ export default function InspectionsContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
                     Brak Turi <span className="text-rose-400">*</span>
@@ -973,7 +973,7 @@ export default function InspectionsContent() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
                     Ko'rilgan Chora

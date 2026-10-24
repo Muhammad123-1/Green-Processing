@@ -294,7 +294,7 @@ export function BrakerageJournalModal({ isOpen, onClose }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleOpenCreate}
               className="flex items-center gap-1.5 px-3.5 py-2 bg-white text-orange-900 hover:bg-orange-50 rounded-xl text-xs font-black shadow-lg transition active:scale-95"
@@ -353,7 +353,7 @@ export function BrakerageJournalModal({ isOpen, onClose }: Props) {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 font-medium">
+          <div className="flex flex-wrap items-center gap-2 font-medium">
             <span className="px-2.5 py-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-lg text-slate-600 dark:text-slate-400">
               Jami taomlar: <strong className="text-slate-900 dark:text-white font-mono">{logs.length} ta</strong>
             </span>
@@ -682,7 +682,7 @@ export function BrakerageJournalModal({ isOpen, onClose }: Props) {
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Изоҳлар (Хулоса / Рухсат)
                 </label>
-                <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                   <button
                     type="button"
                     onClick={() =>

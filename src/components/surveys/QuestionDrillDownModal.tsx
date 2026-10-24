@@ -563,7 +563,7 @@ export default function QuestionDrillDownModal({
               </div>
 
               {/* Filter Buttons */}
-              <div className="flex items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
+              <div className="flex flex-wrap items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
                 <button
                   onClick={() => setActiveTab('all')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -797,7 +797,7 @@ export default function QuestionDrillDownModal({
         {/* ===================================================================== */}
         {/* FOOTER */}
         {/* ===================================================================== */}
-        <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-dark-800 bg-slate-50 dark:bg-dark-850 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-dark-800 bg-slate-50 dark:bg-dark-850 flex flex-wrap gap-2 items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
             {isOpinionQuestion ? (
               <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 font-medium">
@@ -950,7 +950,7 @@ function RespondentCard({
       }`}
     >
       {/* Top: Restaurant & Date */}
-      <div className="flex items-start justify-between gap-3 mb-2">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <Building2

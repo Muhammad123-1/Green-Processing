@@ -50,7 +50,7 @@ export default function BatchQRScanner({ onScan, buttonText = "Skanerlash" }: Ba
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-enter">
           <div className="bg-dark-900 rounded-3xl w-full max-w-sm shadow-2xl border border-dark-700 flex flex-col overflow-hidden">
-            <div className="px-6 py-4 border-b border-dark-800 flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-4 border-b border-dark-800 flex items-center justify-between">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <QrCode size={18} className="text-emerald-400" /> Kameradan skanerlash
               </h2>

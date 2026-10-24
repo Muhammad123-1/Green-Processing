@@ -323,7 +323,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={refreshDashboard}
             disabled={refreshing}
@@ -359,7 +359,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
       {/* Handshake Alert Banner (If pending shipments from Sklad) */}
       {(dashboardData.pendingHandshakes || []).length > 0 && (
         <div className="bg-gradient-to-r from-amber-950/60 via-amber-900/40 to-dark-900 border-2 border-amber-500/40 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
               <Scale size={24} />
             </div>
@@ -383,7 +383,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div 
           onClick={() => setActiveTab('handshake')}
           className="card p-5 rounded-2xl cursor-pointer hover:bg-dark-800 transition-all border-l-4 border-l-amber-500"
@@ -527,7 +527,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                     key={transfer.id}
                     className="card p-5 bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 border-2 border-amber-500/50 rounded-2xl shadow-xl space-y-4"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-wrap gap-2 items-start justify-between">
                       <div>
                         <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                           {transfer.transferNumber}
@@ -548,7 +548,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-dark-700/80 flex items-center justify-between gap-3">
+                    <div className="pt-2 border-t border-dark-700/80 flex flex-wrap gap-2 items-center justify-between">
                       <span className="text-xs text-slate-400">
                         Manzil: <strong className="text-white">{transfer.targetLocation}</strong>
                       </span>
@@ -749,7 +749,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
       {/* ========================================================================= */}
       {activeTab === 'recipes' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center justify-between">
             <h2 className="text-lg font-bold text-white">Standart Retseptlar (BOM)</h2>
             <button
               onClick={() => setShowRecipeModal(true)}
@@ -869,11 +869,11 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           onClick={() => setShowHandshakeModal(false)}
         >
           <div 
-            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-dark-700">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
                   <Scale size={22} />
                 </div>
@@ -892,7 +892,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
 
             <form onSubmit={handleSubmitHandshake} className="space-y-4 pt-4">
               {/* Product Info */}
-              <div className="bg-dark-800 p-3.5 rounded-xl border border-dark-700 grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-dark-800 p-3.5 rounded-xl border border-dark-700 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
                   <span className="text-slate-500 block">Mahsulot:</span>
                   <span className="font-bold text-white text-sm">{selectedTransfer.product?.name}</span>
@@ -926,7 +926,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                 const rec = parseFloat(handshakeForm.receivedQuantity) || 0
                 const diff = selectedTransfer.issuedQuantity - rec
                 return (
-                  <div className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+                  <div className={`p-3.5 rounded-xl border flex flex-wrap gap-2 items-center justify-between text-xs ${
                     Math.abs(diff) > 0.001 
                       ? 'bg-rose-500/10 border-rose-500/30 text-rose-300' 
                       : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
@@ -1017,11 +1017,11 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           onClick={() => setShowProduceModal(false)}
         >
           <div 
-            className="w-full max-w-md bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            className="w-full max-w-md bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-dark-700">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <ChefHat size={22} />
                 </div>
@@ -1089,11 +1089,11 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           onClick={() => setShowRequestModal(false)}
         >
           <div 
-            className="w-full max-w-md bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            className="w-full max-w-md bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-dark-700">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <ShoppingCart size={22} />
                 </div>
@@ -1135,7 +1135,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
                     Miqdor <span className="text-red-400">*</span>

@@ -184,7 +184,7 @@ export default function Header() {
   }
 
   return (
-    <header className="h-16 border-b border-dark-700 bg-dark-900/80 backdrop-blur-sm flex items-center px-4 md:px-6 gap-3 md:gap-4 flex-shrink-0 z-30">
+    <header className="h-16 border-b border-dark-700 bg-dark-900/80 backdrop-blur-sm flex items-center px-2.5 sm:px-4 md:px-6 gap-1.5 sm:gap-3 md:gap-4 flex-shrink-0 z-30">
       <button 
         onClick={toggle}
         className="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-dark-700 transition-colors"
@@ -193,8 +193,8 @@ export default function Header() {
       </button>
 
       <div className="flex-1 min-w-0 flex items-center gap-4">
-        <div>
-          <h2 className="font-bold text-white text-base leading-tight truncate">{pageInfo.title}</h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">{pageInfo.title}</h2>
           <p className="text-xs text-slate-500 hidden md:block truncate">{pageInfo.subtitle}</p>
         </div>
 
@@ -224,13 +224,13 @@ export default function Header() {
         <span className="capitalize">{mounted ? dateStr : ''}</span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         {/* Til tanlash tugmasi va Dropdown */}
         <div className="relative" ref={langMenuRef}>
           <div className="flex items-center rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600 overflow-hidden shadow-sm">
             <button 
               onClick={handleCycleLang}
-              className="h-9 px-3 flex items-center justify-center gap-2 text-slate-300 hover:text-white 
+              className="h-9 px-2 sm:px-3 flex items-center justify-center gap-2 text-slate-300 hover:text-white 
                         transition-all duration-200 text-xs font-bold whitespace-nowrap active:scale-95"
               title="Tilni almashtirish (Bosganda keyingisiga o'tadi)"
             >
@@ -287,7 +287,7 @@ export default function Header() {
             setFontSize(nextSize)
           }}
           className="h-9 px-2 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600 
-                    flex items-center justify-center text-slate-400 hover:text-indigo-400 
+                    hidden sm:flex items-center justify-center text-slate-400 hover:text-indigo-400 
                     transition-all duration-200 gap-1"
           title="Shrift o'lchamini o'zgartirish"
         >

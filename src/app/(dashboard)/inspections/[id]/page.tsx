@@ -137,7 +137,7 @@ export default function InspectionDetailPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5 animate-enter">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           <Link
             href="/inspections"
@@ -147,7 +147,7 @@ export default function InspectionDetailPage() {
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h1 className="section-title font-mono">{inspection.actNumber}</h1>
               <span className={status.className}>
                 <status.icon size={10} />
@@ -165,7 +165,7 @@ export default function InspectionDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             onClick={handleDownloadExcel}
             disabled={generating}
@@ -248,7 +248,7 @@ export default function InspectionDetailPage() {
       {(inspection.color || inspection.smell || inspection.appearance) && (
         <div className="card p-5">
           <h3 className="font-semibold text-white text-sm mb-4">Organoleptik ko'rsatkichlar</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {inspection.color && <InfoItem label="Rangi" value={inspection.color} />}
             {inspection.smell && <InfoItem label="Hidi" value={inspection.smell} />}
             {inspection.appearance && <InfoItem label="Ko'rinishi" value={inspection.appearance} />}
@@ -281,7 +281,7 @@ export default function InspectionDetailPage() {
 
       {/* Meta */}
       <div className="card p-4">
-        <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
           <span>
             Yaratildi: {new Date(inspection.createdAt).toLocaleString('uz-UZ')}
           </span>

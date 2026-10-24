@@ -299,7 +299,7 @@ export default function RawMovementContent() {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <input
             type="date"
             value={dateFilter}
@@ -441,7 +441,7 @@ export default function RawMovementContent() {
                   key={log.id}
                   className="bg-dark-850/70 border border-dark-750 rounded-2xl p-4 shadow-lg space-y-3"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-2 items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-slate-500 bg-dark-800 px-2 py-0.5 rounded">
                         #{idx + 1}
@@ -550,7 +550,7 @@ export default function RawMovementContent() {
           onClick={() => setShowModal(false)}
         >
           <div 
-            className="w-full max-w-2xl bg-dark-900 border border-dark-750 rounded-3xl shadow-2xl p-6 overflow-hidden max-h-[92vh] overflow-y-auto"
+            className="w-full max-w-2xl bg-dark-900 border border-dark-750 rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-dark-750">
@@ -578,7 +578,7 @@ export default function RawMovementContent() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 pt-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     {formatDual("Qabul Sanasi", "Дата поступления", "Arrival Date")} <span className="text-red-400">*</span>
@@ -618,7 +618,7 @@ export default function RawMovementContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     {formatDual("Xomashyo Nomi", "Наименование сырья", "Raw Material Name")} <span className="text-red-400">*</span>
@@ -671,7 +671,7 @@ export default function RawMovementContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     {formatDual("Kirim Og'irligi (kg)", "Вес прихода (кг)", "Intake Weight (kg)")} <span className="text-red-400">*</span>
@@ -714,7 +714,7 @@ export default function RawMovementContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     {formatDual("Sexga Berilgan (kg)", "Отпущено в цех (кг)", "Issued to Shop (kg)")}
@@ -769,7 +769,7 @@ export default function RawMovementContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     {formatDual("Javobgar Shaxs (F.I.Sh)", "Ответственный (ФИО)", "Responsible Person")} <span className="text-red-400">*</span>

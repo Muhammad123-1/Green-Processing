@@ -503,7 +503,7 @@ export default function DirectorPage() {
         </div>
 
         {period === 'custom' && (
-          <div className="flex items-center gap-2 px-2 py-1 bg-white dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 text-xs">
+          <div className="flex flex-wrap items-center gap-2 px-2 py-1 bg-white dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 text-xs">
             <span className="text-slate-400 text-[11px]">{formatDual("Dan:", "С:", "From:")}</span>
             <input
               type="date"
@@ -527,7 +527,7 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       {alerts.length > 0 && (
         <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-3xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
                 <AlertTriangle size={18} />
@@ -814,7 +814,7 @@ export default function DirectorPage() {
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
             {formatDual("Ombor zaxirasi", "Складские остатки", "Stock balance")}
           </span>
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex flex-wrap items-center gap-3 mt-1.5">
             <span className="flex items-center gap-1 text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span> {kpis?.warehouse?.sufficientCount || 0} {formatDual("yetarli", "в норме", "sufficient")}
             </span>
@@ -975,7 +975,7 @@ export default function DirectorPage() {
                   {formatDual("Xomashyo (kg), quti va brak (kg)", "Сырье (кг), коробки и брак (кг)", "Raw (kg), boxes and reject (kg)")}
                 </p>
               </div>
-              <div className="flex items-center gap-3 text-xs">
+              <div className="flex flex-wrap items-center gap-3 text-xs">
                 <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                   {formatDual("Kirim (kg)", "Прием (кг)", "Arrivals (kg)")}
@@ -1548,7 +1548,7 @@ export default function DirectorPage() {
             className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-6xl shadow-2xl border border-slate-200 dark:border-dark-750 flex flex-col max-h-[92vh] overflow-hidden my-auto cursor-default"
           >
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between gap-4 bg-slate-50 dark:bg-dark-850">
+            <div className="p-3.5 sm:p-5 flex-wrap gap-2 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between bg-slate-50 dark:bg-dark-850">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold ${
                   activeModal === 'operations'
@@ -1626,7 +1626,7 @@ export default function DirectorPage() {
                     <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-3">
                       {formatDual("Mahsulotlar qoldig'i (Svetofor)", "Остатки продукции (Светофор)", "Stock balances (Traffic light)")}:
                     </h4>
-                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
                       <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
                           <tr>
@@ -1667,7 +1667,7 @@ export default function DirectorPage() {
                     {filteredTransfers.length === 0 ? (
                       <p className="text-slate-400 italic p-4 text-center">{formatDual("Transferlar yozuvi topilmadi", "Записи перемещений не найдены", "No transfer records found")}</p>
                     ) : (
-                      <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-hidden shadow-sm">
+                      <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
                         <table className="w-full text-left">
                           <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
                             <tr>
@@ -1717,7 +1717,7 @@ export default function DirectorPage() {
                   {filteredChecklists.length === 0 ? (
                     <p className="text-slate-400 italic p-4 text-center">{formatDual("Cheklistlar topilmadi", "Чек-листы не найдены", "No checklists found")}</p>
                   ) : (
-                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
                       <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
                           <tr>
@@ -1762,7 +1762,7 @@ export default function DirectorPage() {
                   {filteredInspections.length === 0 ? (
                     <p className="text-slate-400 italic p-4 text-center">{formatDual("Qabul yozuvlari topilmadi", "Записи приемок не найдены", "No arrival records found")}</p>
                   ) : (
-                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
                       <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
                           <tr>
@@ -1807,7 +1807,7 @@ export default function DirectorPage() {
                 <div className="space-y-6">
                   {selectedEmployee ? (
                     <div>
-                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-dark-700">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-dark-700">
                         <div>
                           <button
                             onClick={() => setSelectedEmployee(null)}
@@ -1936,7 +1936,7 @@ export default function DirectorPage() {
                         <p className="text-xs text-slate-600 dark:text-slate-300">
                           {al.description}
                         </p>
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-dark-700 text-[11px]">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-dark-700 text-[11px]">
                           <span className="text-slate-500">
                             Mas'ul shaxs: <b className="text-slate-800 dark:text-slate-200">{al.responsiblePerson}</b>
                           </span>
@@ -1980,7 +1980,7 @@ export default function DirectorPage() {
               {/* SECTION: ARCHIVE */}
               {activeModal === 'archive' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
                       {formatDual("Zavod amaliyotlari xronologik lentasi", "Хронологическая лента операций завода", "Plant operations timeline feed")}
                     </h4>
@@ -2055,7 +2055,7 @@ export default function DirectorPage() {
                     <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
                       <button
                         onClick={() => { setOperationsTab('prixod'); setSelectedOperationItem(null); }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
                           operationsTab === 'prixod'
                             ? 'bg-emerald-600 text-white shadow-md'
                             : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:border-emerald-500'
@@ -2072,7 +2072,7 @@ export default function DirectorPage() {
 
                       <button
                         onClick={() => { setOperationsTab('rasxod'); setSelectedOperationItem(null); }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
                           operationsTab === 'rasxod'
                             ? 'bg-blue-600 text-white shadow-md'
                             : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:border-blue-500'
@@ -2089,7 +2089,7 @@ export default function DirectorPage() {
 
                       <button
                         onClick={() => { setOperationsTab('brak'); setSelectedOperationItem(null); }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
                           operationsTab === 'brak'
                             ? 'bg-rose-600 text-white shadow-md'
                             : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:border-rose-500'
@@ -2544,7 +2544,7 @@ export default function DirectorPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between gap-3 bg-slate-50 dark:bg-dark-850">
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between gap-3 bg-slate-50 dark:bg-dark-850">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                   <FileText size={22} />
@@ -2573,9 +2573,9 @@ export default function DirectorPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+            <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
               {/* Responsible Employee Card */}
-              <div className="bg-indigo-50/80 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between gap-3">
+              <div className="bg-indigo-50/80 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center text-sm shadow-sm">
                     {(selectedEmployee?.name || 'X')[0]}
@@ -2613,7 +2613,7 @@ export default function DirectorPage() {
                   <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                     {formatDual("Xomashyo tekshiruvi (Kirim akti) parametrlari:", "Параметры акта приемки сырья:", "Raw Inspection Act Parameters:")}
                   </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
                       <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Yetkazib beruvchi:", "Поставщик:", "Supplier:")}</span>
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
@@ -2705,7 +2705,7 @@ export default function DirectorPage() {
                   <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                     {formatDual("Smena QC Cheklisti parametrlari:", "Параметры сменного чек-листа QC:", "Shift QC Checklist Parameters:")}
                   </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
                       <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Sana & Smena:", "Дата & Смена:", "Date & Shift:")}</span>
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
@@ -2766,7 +2766,7 @@ export default function DirectorPage() {
                   <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                     {formatDual("Ombor transferi va chiqim parametrlari:", "Параметры перемещения со склада:", "Warehouse Dispatch Transfer Details:")}
                   </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
                       <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Hujjat №:", "№ Документа:", "Document №:")}</span>
                       <span className="text-xs font-mono font-bold text-emerald-600">
@@ -2822,7 +2822,7 @@ export default function DirectorPage() {
               )}
 
               {/* Action Link button */}
-              <div className="pt-3 flex items-center justify-between border-t border-slate-200 dark:border-dark-750">
+              <div className="pt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 dark:border-dark-750">
                 <span className="text-xs text-slate-500">
                   {formatDual("Tizim ID:", "Системный ID:", "System ID:")} #{selectedAuditAction.rawData?.id || '-'}
                 </span>

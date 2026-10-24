@@ -2,7 +2,7 @@ import SalesContent from '@/components/sales/SalesContent'
 
 export default function SalesPage() {
   return (
-    <div className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
+    <div className="p-0 sm:p-4 lg:p-6 w-full max-w-7xl mx-auto">
       <SalesContent />
     </div>
   )

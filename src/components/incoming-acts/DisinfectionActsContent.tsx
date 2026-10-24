@@ -279,7 +279,7 @@ export default function DisinfectionActsContent() {
     <div className="space-y-6">
       {/* Top Navigation Tabs */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-2 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/incoming-acts"
             className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300"
@@ -295,7 +295,7 @@ export default function DisinfectionActsContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -426,7 +426,7 @@ export default function DisinfectionActsContent() {
           </div>
 
           {/* Dates & Sort */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="date"
               value={dateFrom}
@@ -719,7 +719,7 @@ export default function DisinfectionActsContent() {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+            <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* 1. № п/п */}
                 <div>

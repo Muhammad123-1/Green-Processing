@@ -1,0 +1,18 @@
+{
+  "name": "Green Processing ERP",
+  "short_name": "Green ERP",
+  "description": "Green Processing Korporativ ERP Boshqaruv Tizimi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070C16",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

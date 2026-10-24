@@ -102,7 +102,7 @@ export default function ArrivalsContent() {
   return (
     <div className="space-y-5 animate-enter">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="section-title">{t('arrivals')}</h1>
           <p className="section-subtitle">{t('arrivalsSub')}</p>

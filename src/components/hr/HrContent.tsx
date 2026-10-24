@@ -120,10 +120,10 @@ export default function HrContent() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-3 border-b border-dark-700 pb-2">
+      <div className="flex items-center gap-3 border-b border-dark-700 pb-2 overflow-x-auto flex-wrap sm:flex-nowrap">
         <button
           onClick={() => setActiveTab('employees')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
             activeTab === 'employees'
               ? 'bg-orange-600/20 text-orange-400 border border-orange-500/30'
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
@@ -133,7 +133,7 @@ export default function HrContent() {
         </button>
         <button
           onClick={() => setActiveTab('attendance')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
             activeTab === 'attendance'
               ? 'bg-orange-600/20 text-orange-400 border border-orange-500/30'
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
@@ -143,7 +143,7 @@ export default function HrContent() {
         </button>
         <button
           onClick={() => setActiveTab('payroll')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
             activeTab === 'payroll'
               ? 'bg-orange-600/20 text-orange-400 border border-orange-500/30'
               : 'bg-dark-800/80 text-slate-400 hover:text-white'
@@ -191,7 +191,7 @@ export default function HrContent() {
         </div>
       ) : activeTab === 'payroll' ? (
         <div className="card border border-dark-700 bg-dark-900/50 rounded-2xl overflow-hidden">
-          <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-800/30">
+          <div className="p-5 border-b border-dark-700 flex flex-wrap gap-3 justify-between items-center bg-dark-800/30">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Calculator className="text-orange-500" size={20} /> Oylik va Avanslar (Joriy oy)
             </h3>
@@ -199,6 +199,7 @@ export default function HrContent() {
               <FileCheck size={16} /> Oylikni hisoblash
             </button>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-dark-800/90 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
@@ -231,6 +232,7 @@ export default function HrContent() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         <div className="card border border-dark-700 bg-dark-900/50 rounded-2xl overflow-hidden p-10 text-center text-slate-500">
@@ -243,7 +245,7 @@ export default function HrContent() {
       {/* NEW EMPLOYEE MODAL */}
       {showEmployeeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
             <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-800/50">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <UserPlus className="text-orange-500" /> Yangi Xodim Qo'shish
@@ -252,7 +254,7 @@ export default function HrContent() {
             </div>
             
             <form onSubmit={handleCreateEmployee} className="flex-1 overflow-y-auto p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-400 mb-1 block">Ismi *</label>
                   <input 
@@ -273,7 +275,7 @@ export default function HrContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-400 mb-1 block">Lavozimi *</label>
                   <input 
@@ -314,7 +316,7 @@ export default function HrContent() {
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs text-slate-400 mb-1 block">Maosh to'lash turi</label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button type="button" onClick={() => setEmployeeForm({...employeeForm, salaryType: 'FIXED'})} className={`flex-1 py-2 text-xs rounded-lg font-bold border transition-colors ${employeeForm.salaryType === 'FIXED' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' : 'bg-dark-800 text-slate-500 border-dark-700 hover:bg-dark-700'}`}>Oklad (Oyiga)</button>
                       <button type="button" onClick={() => setEmployeeForm({...employeeForm, salaryType: 'HOURLY'})} className={`flex-1 py-2 text-xs rounded-lg font-bold border transition-colors ${employeeForm.salaryType === 'HOURLY' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' : 'bg-dark-800 text-slate-500 border-dark-700 hover:bg-dark-700'}`}>Soatbay</button>
                       <button type="button" onClick={() => setEmployeeForm({...employeeForm, salaryType: 'PIECEWORK'})} className={`flex-1 py-2 text-xs rounded-lg font-bold border transition-colors ${employeeForm.salaryType === 'PIECEWORK' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' : 'bg-dark-800 text-slate-500 border-dark-700 hover:bg-dark-700'}`}>Ishibay (Sdelno)</button>

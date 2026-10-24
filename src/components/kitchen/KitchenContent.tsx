@@ -1057,7 +1057,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                     </div>
 
                     {/* Card Footer: Action & Review Controls */}
-                    <div className="p-3 bg-slate-50 dark:bg-dark-800/80 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between gap-2">
+                    <div className="p-3 bg-slate-50 dark:bg-dark-800/80 border-t border-slate-100 dark:border-dark-800 flex flex-wrap gap-2 items-center justify-between">
                       {/* Left: QR Voting link if mealLog exists */}
                       <div>
                         {task.mealLog?.token && (
@@ -1077,7 +1077,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                       </div>
 
                       {/* Right: Director / Inspector approval or edit/delete */}
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex flex-wrap gap-2 items-center">
                         {isInspectorOrDirector && (
                           <>
                             {task.status !== 'APPROVED' && (
@@ -1130,7 +1130,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
       {/* ========================================================================= */}
       {activeTab === 'meals' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200">
+          <div className="flex flex-wrap gap-2 items-center justify-between bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Flame className="text-orange-500" size={18} />
@@ -1203,7 +1203,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                         <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                           {formatDual("Masalliqlar ro'yxati:", "Раскладка сырья:", "Ingredients:")}
                         </div>
-                        <div className="grid grid-cols-2 gap-1.5 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
                           {items.map((it, idx) => (
                             <div key={idx} className="bg-slate-50 dark:bg-dark-800 p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 flex justify-between">
                               <span className="text-slate-700 dark:text-slate-300 font-medium truncate mr-1">{it.name}</span>
@@ -1228,7 +1228,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
       {/* ========================================================================= */}
       {activeTab === 'cleaning' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750">
+          <div className="flex flex-wrap gap-2 items-center justify-between bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Sparkle className="text-blue-500" size={18} />
@@ -1360,7 +1360,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
               </div>
             ) : (
               feedbacks.map(fb => (
-                <div key={fb.id} className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-750 flex items-center justify-between text-xs">
+                <div key={fb.id} className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-750 flex flex-wrap gap-2 items-center justify-between text-xs">
                   <div>
                     <span
                       className={`font-bold px-2 py-0.5 rounded-md text-[10px] mr-2 ${
@@ -1593,7 +1593,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 taskForm.category === 'PREP' ||
                 taskForm.category === 'BAKERY') && (
                 <div className="p-4 bg-orange-50/70 dark:bg-orange-950/20 rounded-2xl border border-orange-200 dark:border-orange-900/40 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-2 items-center justify-between">
                     <div className="font-bold text-orange-950 dark:text-orange-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                       <UtensilsCrossed size={14} className="text-orange-600" />
                       3. Ishlatilgan masalliqlar va Retseptura (Nima solindi, qancha)
@@ -1635,7 +1635,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                   {/* Dynamic Ingredient Rows */}
                   <div className="space-y-2">
                     {formIngredients.map((item, idx) => (
-                      <div key={item.id} className="flex items-center gap-2">
+                      <div key={item.id} className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                         <span className="text-[11px] font-mono text-slate-400 w-4">{idx + 1}.</span>
                         <input
                           type="text"
@@ -1723,7 +1723,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
               {/* Section 5: Photo Upload (Photo Evidence) */}
               <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-900/40 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-2 items-center justify-between">
                   <div className="font-bold text-emerald-950 dark:text-emerald-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                     <Camera size={14} className="text-emerald-600" />
                     4. Foto-Hisobot (Qilingan ish fotosuratlari) *
@@ -1784,7 +1784,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
               </div>
 
               {/* Form Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-dark-700">
+              <div className="flex flex-wrap gap-2 items-center justify-end pt-3 border-t border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setIsTaskModalOpen(false)}
@@ -1844,7 +1844,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
           onClick={() => setReviewModalTask(null)}
         >
           <div 
-            className="bg-white dark:bg-dark-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-dark-750 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            className="bg-white dark:bg-dark-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-dark-750 shadow-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">

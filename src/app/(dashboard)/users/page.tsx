@@ -137,7 +137,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-5 animate-enter">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="section-title">{formatDual("Foydalanuvchilar", "Пользователи", "Users")}</h1>
           <p className="section-subtitle">{formatDual("Tizim foydalanuvchilari va ruxsatlar", "Пользователи системы и права доступа", "System users and permissions")}</p>
@@ -174,52 +174,54 @@ export default function UsersPage() {
             <p className="font-medium">{formatDual("Foydalanuvchilar topilmadi", "Пользователи не найдены", "No users found")}</p>
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>{formatDual("Ism", "Имя", "Name")}</th>
-                <th>{formatDual("Login", "Логин", "Username")}</th>
-                <th>{formatDual("Rol", "Роль", "Role")}</th>
-                <th>{formatDual("Holat", "Статус", "Status")}</th>
-                <th>{formatDual("Yaratilgan", "Создан", "Created")}</th>
-                <th className="text-right">{formatDual("Amallar", "Действия", "Actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usersPagination.displayedItems.map((u) => (
-                <tr key={u.id} className="table-row">
-                  <td className="font-medium text-slate-100">{u.name}</td>
-                  <td className="font-mono text-sm text-slate-400">{u.username}</td>
-                  <td>
-                    <span className={roleColors[u.role] || 'badge-info'}>
-                      <Shield size={10} />
-                      {roleLabelsMap[u.role] ? formatDual(roleLabelsMap[u.role].uz, roleLabelsMap[u.role].ru, roleLabelsMap[u.role].en) : u.role}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => toggleActive(u.id, u.isActive)}
-                      className={u.isActive ? 'badge-success cursor-pointer' : 'badge-danger cursor-pointer'}
-                    >
-                      {u.isActive ? formatDual("Faol", "Активен", "Active") : formatDual("Nofaol", "Неактивен", "Inactive")}
-                    </button>
-                  </td>
-                  <td className="text-slate-400 text-sm">
-                    {new Date(u.createdAt).toLocaleDateString(formatDual('uz-UZ', 'ru-RU', 'en-US'))}
-                  </td>
-                  <td>
-                    <div className="flex items-center justify-end">
-                      <button onClick={() => openEdit(u)}
-                        className="w-8 h-8 rounded-lg bg-dark-700 hover:bg-dark-600 border border-dark-600
-                                   flex items-center justify-center text-slate-400 hover:text-amber-400 transition-all">
-                        <Edit size={13} />
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{formatDual("Ism", "Имя", "Name")}</th>
+                  <th>{formatDual("Login", "Логин", "Username")}</th>
+                  <th>{formatDual("Rol", "Роль", "Role")}</th>
+                  <th>{formatDual("Holat", "Статус", "Status")}</th>
+                  <th>{formatDual("Yaratilgan", "Создан", "Created")}</th>
+                  <th className="text-right">{formatDual("Amallar", "Действия", "Actions")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {usersPagination.displayedItems.map((u) => (
+                  <tr key={u.id} className="table-row">
+                    <td className="font-medium text-slate-100">{u.name}</td>
+                    <td className="font-mono text-sm text-slate-400">{u.username}</td>
+                    <td>
+                      <span className={roleColors[u.role] || 'badge-info'}>
+                        <Shield size={10} />
+                        {roleLabelsMap[u.role] ? formatDual(roleLabelsMap[u.role].uz, roleLabelsMap[u.role].ru, roleLabelsMap[u.role].en) : u.role}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => toggleActive(u.id, u.isActive)}
+                        className={u.isActive ? 'badge-success cursor-pointer' : 'badge-danger cursor-pointer'}
+                      >
+                        {u.isActive ? formatDual("Faol", "Активен", "Active") : formatDual("Nofaol", "Неактивен", "Inactive")}
+                      </button>
+                    </td>
+                    <td className="text-slate-400 text-sm">
+                      {new Date(u.createdAt).toLocaleDateString(formatDual('uz-UZ', 'ru-RU', 'en-US'))}
+                    </td>
+                    <td>
+                      <div className="flex items-center justify-end">
+                        <button onClick={() => openEdit(u)}
+                          className="w-8 h-8 rounded-lg bg-dark-700 hover:bg-dark-600 border border-dark-600
+                                     flex items-center justify-center text-slate-400 hover:text-amber-400 transition-all">
+                          <Edit size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         <InfiniteTableFooter
@@ -237,7 +239,7 @@ export default function UsersPage() {
 
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="card p-6 max-w-md w-full animate-enter" onClick={(e) => e.stopPropagation()}>
+          <div className="card max-h-[90vh] overflow-y-auto p-4 sm:p-6 max-w-md w-full animate-enter" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-white text-lg">
                 {editId ? formatDual("Foydalanuvchini tahrirlash", "Редактирование пользователя", "Edit User") : formatDual("Yangi foydalanuvchi", "Новый пользователь", "New User")}

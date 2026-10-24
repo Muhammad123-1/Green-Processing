@@ -2,7 +2,7 @@ import HrContent from '@/components/hr/HrContent'
 
 export default function HrPage() {
   return (
-    <div className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
+    <div className="p-0 sm:p-4 lg:p-6 w-full max-w-7xl mx-auto">
       <HrContent />
     </div>
   )

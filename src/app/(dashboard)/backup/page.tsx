@@ -62,7 +62,7 @@ export default function BackupPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-enter">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Zaxira nusxa</h1>
           <p className="section-subtitle">Ma'lumotlar bazasini saqlash va tiklash</p>
@@ -103,44 +103,46 @@ export default function BackupPage() {
             <p className="text-sm mt-1">Birinchi zaxirani yarating</p>
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Fayl nomi</th>
-                <th>Hajm</th>
-                <th>Sana</th>
-                <th>Yaratuvchi</th>
-                <th className="text-right">Amallar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {backups.map((b) => (
-                <tr key={b.id} className="table-row">
-                  <td className="font-mono text-xs text-slate-300">{b.filename}</td>
-                  <td className="text-slate-400 text-sm">
-                    <span className="flex items-center gap-1">
-                      <HardDrive size={11} />{formatSize(b.sizeBytes)}
-                    </span>
-                  </td>
-                  <td className="text-slate-400 text-sm">
-                    {new Date(b.createdAt).toLocaleString('uz-UZ')}
-                  </td>
-                  <td className="text-slate-400 text-sm">{b.createdBy || '—'}</td>
-                  <td>
-                    <div className="flex items-center justify-end">
-                      <button
-                        onClick={() => handleDownload(b.id, b.filename)}
-                        className="w-8 h-8 rounded-lg bg-dark-700 hover:bg-dark-600 border border-dark-600
-                                   flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all"
-                      >
-                        <Download size={13} />
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Fayl nomi</th>
+                  <th>Hajm</th>
+                  <th>Sana</th>
+                  <th>Yaratuvchi</th>
+                  <th className="text-right">Amallar</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {backups.map((b) => (
+                  <tr key={b.id} className="table-row">
+                    <td className="font-mono text-xs text-slate-300">{b.filename}</td>
+                    <td className="text-slate-400 text-sm">
+                      <span className="flex items-center gap-1">
+                        <HardDrive size={11} />{formatSize(b.sizeBytes)}
+                      </span>
+                    </td>
+                    <td className="text-slate-400 text-sm">
+                      {new Date(b.createdAt).toLocaleString('uz-UZ')}
+                    </td>
+                    <td className="text-slate-400 text-sm">{b.createdBy || '—'}</td>
+                    <td>
+                      <div className="flex items-center justify-end">
+                        <button
+                          onClick={() => handleDownload(b.id, b.filename)}
+                          className="w-8 h-8 rounded-lg bg-dark-700 hover:bg-dark-600 border border-dark-600
+                                     flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all"
+                        >
+                          <Download size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

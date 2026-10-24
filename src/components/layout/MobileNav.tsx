@@ -63,7 +63,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 relative ${
+              className={`flex flex-col items-center justify-center py-1 px-1.5 sm:px-3 min-w-0 flex-1 rounded-2xl transition-all duration-200 relative ${
                 item.active 
                   ? 'text-emerald-400 font-extrabold scale-105' 
                   : 'text-slate-400 hover:text-slate-200 active:scale-95'
@@ -76,7 +76,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
               }`}>
                 <Icon size={19} className={item.active ? 'text-emerald-400' : 'text-slate-400'} />
               </div>
-              <span className="text-[10px] mt-0.5 tracking-tight font-medium leading-none">
+              <span className="text-[10px] mt-0.5 tracking-tight font-medium leading-none truncate max-w-[64px] text-center">
                 {item.label}
               </span>
               {item.active && (
@@ -91,7 +91,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
           onClick={toggle}
           type="button"
           aria-label="Barcha bo'limlar menyusi"
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 active:scale-95 ${
+          className={`flex flex-col items-center justify-center py-1 px-1.5 sm:px-3 min-w-0 flex-1 rounded-2xl transition-all duration-200 active:scale-95 ${
             isOpen 
               ? 'text-emerald-400 font-extrabold' 
               : 'text-slate-400 hover:text-slate-200'

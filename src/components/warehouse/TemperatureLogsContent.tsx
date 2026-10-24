@@ -315,7 +315,7 @@ export default function TemperatureLogsContent() {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <input
             type="date"
             value={dateFilter}
@@ -473,7 +473,7 @@ export default function TemperatureLogsContent() {
                     key={log.id}
                     className="bg-dark-850/70 border border-dark-750 rounded-2xl p-4 shadow-lg space-y-3"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap gap-2 items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-white">
                           {log.date}
@@ -583,7 +583,7 @@ export default function TemperatureLogsContent() {
           onClick={() => setShowModal(false)}
         >
           <div 
-            className="w-full max-w-xl bg-dark-900 border border-dark-750 rounded-3xl shadow-2xl p-6 overflow-hidden max-h-[92vh] overflow-y-auto"
+            className="w-full max-w-xl bg-dark-900 border border-dark-750 rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-dark-750">
@@ -611,7 +611,7 @@ export default function TemperatureLogsContent() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     {formatDual("Sana", "Дата", "Date")} <span className="text-red-400">*</span>
@@ -641,7 +641,7 @@ export default function TemperatureLogsContent() {
               </div>
 
               {/* Temperatures for 5 raw materials */}
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     Айсберг (°C)
