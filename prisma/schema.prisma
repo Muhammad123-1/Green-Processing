@@ -1376,3 +1376,32 @@ model DisinfectionIncomingAct {
   @@index([substanceName])
   @@index([supplierName])
 }
+
+// -----------------------------------------------------------------------------
+// 16. ASOSIY XOMASHYO HARAKATI VA SEXGA CHIQIM JURNALI
+// Журнал регистрации и перемещения основного сырья на производство
+// -----------------------------------------------------------------------------
+model RawMaterialMovementLog {
+  id                       Int      @id @default(autoincrement())
+  orderNumber              Int      @default(1) // № п/п
+  arrivalDate              String   // Дата поступления / ХОМ АШЁ ҚАБУЛ ҚИЛИНГАН
+  deliveryTime             String?  // Время поставки / КЕЛГАН ВАҚТИ
+  productName              String   // Наименование / НОМИ
+  supplierName             String   // Поставщик / ЕТКАЗИБ БЕРУВЧИНИ НОМИ
+  batchNumber              String   // № ПАРТИИ / партия рақами
+  receivedWeightKg         Float    // Вес / ОҒИРЛИГИ, КГ
+  storageTemp810           Float?   // Температура 8:10 (°C)
+  storageTemp1700          Float?   // Температура 17:00 (°C)
+  issuedToProduction       String?  // Отпущено в производство / ЦЕХГА БЕРИЛГАН ҲАЖМИ, КГ/ПОДДОН
+  issuedKg                 Float?   @default(0) // Chiqim kg
+  returnedFromProductionKg Float?   @default(0) // Возврат из производства / ЦЕХДАН ҚАЙТГАНИ, КГ
+  endOfDayBalanceKg        Float?   @default(0) // Остаток к концу дня / КУН ОХИРИДАГИ ЖАМИ, КГ
+  responsiblePerson        String   // ФИО Ответственного / ЖАВОБГАР ШАХСНИ ФИШ
+  notes                    String?  // Izoh
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@index([arrivalDate])
+  @@index([productName])
+  @@index([supplierName])
+}
