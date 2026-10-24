@@ -7,7 +7,7 @@ import {
   ShieldCheck,
   Award,
   Factory,
-  Snowflake,
+  Thermometer,
   Globe2,
   CheckCircle2,
   ArrowRight,
@@ -23,7 +23,11 @@ import {
   Building2,
   Users2,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Utensils,
+  Layers,
+  Boxes,
+  Package
 } from 'lucide-react'
 
 type Lang = 'uz' | 'ru'
@@ -32,111 +36,123 @@ const content = {
   uz: {
     nav: {
       about: 'Kompaniya haqida',
-      products: 'Mahsulotlar',
+      products: 'Mahsulotlarimiz',
       technology: 'Texnologiya va Sifat',
       certificates: 'Sertifikatlar',
       contact: 'Aloqa',
       staffPortal: 'Xodimlar portali (ERP)',
     },
     hero: {
-      badge: 'Xalqaro FSSC 22000 & ISO Sifat Standartlari',
-      title1: 'Tabiiy mahsulotlarni',
-      titleHighlight: 'innovatsion qayta ishlash',
-      title2: 'va eksport markazi',
+      badge: 'FSSC 22000 & HACCP Xalqaro Standartlari',
+      title1: 'Professional oshxona va HoReCa uchun',
+      titleHighlight: 'tozalangan va qirqilgan sabzavotlar',
+      title2: 'hamda sarxil salatlar',
       subtitle:
-        '"GREEN PROCESSING" MChJ — meva, rezavor va sabzavotlarni yuqori texnologiyali IQF (tez muzlatish), saralash hamda qadoqlashga ixtisoslashgan zamonaviy agrosanoat majmuasi.',
+        '"GREEN PROCESSING" MChJ — Aysberg salati, tozalangan piyoz, pomidor, sabzi va karamni sanoat usulida yuvish, saralash, qirqish hamda modifikatsiyalangan gaz (MAP) va vakuumda qadoqlovchi zamonaviy agrosanoat majmuasi.',
       ctaPrimary: 'Mahsulotlar katalogi',
       ctaSecondary: 'Xodimlar tizimiga kirish',
       stats: [
-        { value: '15,000+', label: 'Yillik ishlab chiqarish quvvati (tonna)' },
-        { value: '100%', label: 'Tabiiy va GMO siz xomashyo' },
-        { value: '-40°C', label: 'IQF shok-muzlatish texnologiyasi' },
-        { value: '24/7', label: 'Raqamli laboratoriya va sifat nazorati' },
+        { value: '50+ t', label: 'Kunlik xomashyo qayta ishlash quvvati' },
+        { value: '+2°C..+5°C', label: 'Uzluksiz sovuq zanjir (Cold Chain)' },
+        { value: '100%', label: 'Yuvilgan va tayyor (Ready-to-Eat)' },
+        { value: 'FSSC 22000', label: 'Xalqaro oziq-ovqat xavfsizligi' },
       ],
     },
     about: {
       tag: 'BIZ HAQIMIZDA',
-      title: "O'zbekistonning sarxil ne'matlarini dunyo bozoriga yetkazamiz",
-      desc: "Kompaniyamiz qishloq xo'jaligi mahsulotlarini daladan to iste'molchi dasturxonigacha bo'lgan barcha bosqichlarda to'liq raqamlashtirilgan ERP va Traceability (kuzatuvchanlik) tizimi orqali nazorat qiladi. Har bir partiya ko'p bosqichli laboratoriya tekshiruvidan o'tkaziladi.",
+      title: 'Restoran va fastfud tarmoqlari uchun eng ishonchli Fresh-Cut hamkor',
+      desc: "Kompaniyamiz yetakchi xalqaro va mahalliy fastfud, restoran tarmoqlari (burger, pitsa, sendvich), oshpazlik markazlari hamda supermarketlar uchun tozalangan, to'g'ralgan va yuvilgan sabzavotlarni yetkazib beradi. Oshxonadagi ortiqcha mehnat, isrof va chiqindilarni nolga tushiramiz.",
       features: [
         {
-          title: 'To‘liq partiya kuzatuvi (Traceability)',
-          desc: 'Xomashyo qabul qilishdan tortib tayyor mahsulot yuklanishigacha QR-kodli raqamli pasportlashtirish.',
+          title: 'Isteʼmolga tayyor (Ready-to-Eat)',
+          desc: 'Maxsus tozalash vannalarida yuvilgan, quritilgan va darhol burger yoki salatga ishlatishga tayyor.',
         },
         {
-          title: 'Zamonaviy IQF liniyalari',
-          desc: 'Hujayra tuzilishi, vitaminlar va tabiiy ta’mni 98% gacha saqlab qoluvchi Yevropa uskunalari.',
+          title: 'Uzluksiz Sovuq Zanjir (+2°C..+5°C)',
+          desc: 'Daladan qabul qilish, saqlash, sexda qirqish va avtorefrijeratorlarda yetkazib berishgacha qatʼiy termonazorat (Forma F-01).',
         },
         {
-          title: 'FSSC 22000 & HACCP',
-          desc: 'Oziq-ovqat xavfsizligi bo‘yicha eng qat’iy xalqaro reglamentlar asosida sanitariya va sifat nazorati.',
+          title: 'Urschel & Kronen liniyalari',
+          desc: 'Burger va sendvichlar uchun millimetrigacha aniq shaklda qirqish (6mm/10mm shredding, slays, kubik, solomka).',
         },
         {
-          title: 'Ekologik toza hudud',
-          desc: 'Quyoshli iqlimda yetishtirilgan sarxil meva va sabzavotlarni bevosita fermer xo‘jaliklaridan qabul qilish.',
+          title: 'MAP va Vakuum qadoqlash',
+          desc: 'Kimyoviy konservantlarsiz, modifikatsiyalangan gaz muhiti orqali tabiiy qarsildoq va yangi holatini 7-10 kungacha saqlaydi.',
         },
       ],
     },
     products: {
       tag: 'MAHSULOTLARIMIZ',
-      title: 'Eksportbop muzlatilgan va qayta ishlangan mahsulotlar',
-      subtitle: 'HoReCa, chakana savdo tarmoqlari va sanoat korxonalari uchun individual kalibrovka hamda qadoqlash.',
+      title: 'HoReCa va savdo tarmoqlari uchun sarxil mahsulotlar',
+      subtitle: 'Burger, sendvich, pitsa va tayyor salat ishlab chiqaruvchilari uchun standartlashtirilgan qadoqlar.',
       items: [
         {
-          category: 'Rezavor mevalar',
-          name: 'Qulupnay, Malina, Olcha va Maymunjon (IQF)',
-          specs: 'Kalibr: 15-25mm / 25-35mm • Brix: 8-12% • Qadoq: 10kg / 2.5kg',
-          badge: 'Top Eksport',
+          category: 'Salatlar va Ko‘katlar',
+          name: 'Salat Aysberg (Shredded & Chopped / Burger Cut)',
+          specs: 'Kesim: 6mm / 10mm / Butun barg • Yuvilgan, quritilgan • Qadoq: 1kg, 2.5kg, 5kg MAP gas-flush',
+          badge: 'Top Sotuv (Burgerlar uchun)',
         },
         {
-          category: 'Danakli mevalar',
-          name: "O'rik (yarimtalik/kubik), Shaftoli va Olxo'ri",
-          specs: 'Mashina va qo‘l kesimi • Danaksiz • Yuqori organoleptik ko‘rsatkich',
-          badge: 'Premium Sifat',
+          category: 'Piyoz mahsulotlari',
+          name: 'Tozalangan Piyoz (Butun, Halqa / Slays, Mayda Kubik)',
+          specs: 'Oq va sariq navlar • Qo‘l mehnatisiz • 100% vakuum qadoq: 5kg / 10kg • Ko‘z yoshsiz va hidsiz',
+          badge: 'Oshxona tejamkori',
         },
         {
-          category: 'Sabzavotlar va Ko‘katlar',
-          name: 'Brokkoli, Gulkaram, Bulgor qalampiri, Qovoq',
-          specs: 'Blanshirlangan • Rang va tekstura saqlangan • Sanoat qadog‘i',
-          badge: 'Sanoat standarti',
+          category: 'Pomidor mahsulotlari',
+          name: 'Saralangan va Slays Pomidor (Burger Slices & Diced)',
+          specs: 'Kalibr: 55-65mm, 65-75mm • Qalinlik: 4-5mm bir xil kesim • Zich go‘shtli, oqmaydigan maxsus nav',
+          badge: 'Fastfud standarti',
         },
         {
-          category: 'Meva pyure va yarim tayyor mahsulotlar',
-          name: 'Aseptik va muzlatilgan meva kontsentratlari',
-          specs: 'Qand qo‘shilmagan 100% tabiiy • Konditer va sharbat sanoati uchun',
-          badge: 'B2B Yechim',
+          category: 'Sabzi va Ildizmevalar',
+          name: 'Tozalangan Sabzi (Solomka / Koreyscha, Kubik, Butun)',
+          specs: 'Kesim: 2x2mm, 3x3mm solomka, 10x10mm kubik • 100% tozalangan, vakuum qadoq: 3kg / 5kg',
+          badge: 'Tayyor yarimfabrikat',
+        },
+        {
+          category: 'Karam mahsulotlari',
+          name: 'Oq Boshli Karam (Yupqa Shinkovka / Coleslaw Cut)',
+          specs: 'Kesim: 1.5 - 2.5mm mayda to‘g‘ralgan • Coleslaw va yangi salatlar uchun • Qadoq: 3kg / 5kg vakuum',
+          badge: 'Salatbop',
+        },
+        {
+          category: 'Maxsus Aralashmalar',
+          name: 'Mualliflik Salat Mixlari (Aysberg + Karam + Sabzi)',
+          specs: 'Buyurtmachi retsepti bo‘yicha proporsional aralashma • Sous qo‘shilsa tayyor salat • MAP qadoq',
+          badge: 'Tayyor Yechim',
         },
       ],
     },
     tech: {
-      tag: 'TEXNOLOGIYA VA LABORATORIYA',
-      title: '6 bosqichli uzluksiz sifat va xavfsizlik zanjiri',
+      tag: 'TEXNOLOGIYA VA SANITARIYA',
+      title: '6 bosqichli yuqori gigiyenik xavfsizlik zanjiri',
       steps: [
-        { num: '01', title: 'Kiruvchi xomashyo nazorati', desc: 'Fizik-kimyoviy, organoleptik tahlil, Brix va harorat o‘lchovi, dalolatnoma (Akt) rasmiylashtirish.' },
-        { num: '02', title: 'Yuvish va dezinfeksiya', desc: 'Ko‘p bosqichli barbotajli yuvish, suv konsentratsiyasi va sanitariya ko‘rsatkichlari monitoringi.' },
-        { num: '03', title: 'Optik saralash va kalibrovka', desc: 'Begona jismlar, nuqsonli mevalarni avtomatik ajratish hamda o‘lcham bo‘yicha aniq tasniflash.' },
-        { num: '04', title: 'IQF Shok-muzlatish (-35°C..-40°C)', desc: 'Mahsulot markaziy haroratini daqiqalar ichida -18°C ga tushirish orqali muz kristallari hosil bo‘lishini oldini olish.' },
-        { num: '05', title: 'Metallodetektor va Qadoqlash', desc: 'Har bir qadoqni Fe, Non-Fe va SUS metall zarrachalariga tekshirish hamda markirovkalash.' },
-        { num: '06', title: 'Sovuq zanjir logistikasi', desc: '-18°C..-22°C rejimli zamonaviy omborxonalar va termograf nazoratidagi eksport yuk tashish.' },
+        { num: '01', title: 'Qat’iy kirish nazorati', desc: 'Xomashyo harorati (2°C-5°C), vazni, organoleptikasi va qabul akti (Forma F-01 va qabul jurnali).' },
+        { num: '02', title: 'Ko‘p bosqichli dezinfeksiyali yuvish', desc: 'Suv oqimida qum va zarrachalarni ajratish, ruxsat etilgan xavfsiz sanitariya eritmalari bilan tozalash.' },
+        { num: '03', title: 'Sentrifugada quritish (Dewatering)', desc: 'Barglar va sabzavotlar yuzasidagi namlikni mahsulot to‘qimasini shikastlamasdan muloyim quritish.' },
+        { num: '04', title: 'Urschel & Kronen nozik qirqish', desc: 'Yuqori tezlikdagi pichoqlarda silliq, bir xil geometriyada qirqish — xomashyo suvini yo‘qotmaydi.' },
+        { num: '05', title: 'MAP & Vakuum qadoqlash', desc: 'Kislorodni haydab, himoya gaz muhitini yaratish orqali ximiyaviy konservantlarsiz yangilikni saqlash.' },
+        { num: '06', title: 'Metallodetektor va Sovuq logistika', desc: 'Har bir qutini metall zarrachalariga tekshirish, QR-pasport berish va refrijeratorlarda yetkazish.' },
       ],
     },
     erpBanner: {
-      badge: 'KORPORATIV RAQAMLI EKOTIZIM',
-      title: 'Green Processing ERP — Xodimlar va Boshqaruv Portali',
-      desc: 'Korxonaning barcha bo‘limlari: Rahbariyat, Sifat nazorati (QC), Sex nazoratchilari, Ishlab chiqarish, Texnologiya, Ombor, Ta’minot, Buxgalteriya va Kadrlar bo‘limi yagona raqamli tizimda ishlaydi.',
-      btn: 'Xodimlar kabinetiga kirish',
+      badge: 'RAQAMLI KORXONA BOSHQARUVI',
+      title: 'Green Processing ERP — Ishlab Chiqarish va Xodimlar Tizimi',
+      desc: 'Barcha jarayonlar: Omborxona qoldiqlari (FEFO), Kirim aktlari, Sex hisoboti va sarfi, F-01 harorat nazorati hamda Savdo buyurtmalari yagona avtomatlashtirilgan tizimda boshqariladi.',
+      btn: 'Xodimlar tizimiga kirish',
     },
     contact: {
       tag: 'BOG‘LANISH',
-      title: 'Hamkorlik va buyurtmalar uchun aloqa',
+      title: 'HoReCa va ulgurji yetkazib berish bo‘yicha hamkorlik',
       addressTitle: 'Manzilimiz',
-      address: "O'zbekiston Respublikasi, Toshkent viloyati, Sanoat hududi",
+      address: "O'zbekiston Respublikasi, Toshkent viloyati, Qibray / Zangiota sanoat zonasi",
       phoneTitle: 'Telefon raqamlar',
-      phone: '+998 (71) 200-00-00 / +998 (90) 123-45-67',
+      phone: '+998 (71) 200-00-00 / +998 (90) 000-00-00',
       emailTitle: 'Elektron pochta',
-      email: 'info@greenprocessing.uz • export@greenprocessing.uz',
+      email: 'info@greenprocessing.uz • sales@greenprocessing.uz',
       hoursTitle: 'Ish vaqti',
-      hours: 'Dushanba - Shanba: 08:00 – 19:00 (Ishlab chiqarish: 24/7)',
+      hours: 'Ofis: 08:30 – 18:00 (Ishlab chiqarish va jo‘natish: 24/7)',
     },
   },
   ru: {
@@ -149,104 +165,116 @@ const content = {
       staffPortal: 'Портал сотрудников (ERP)',
     },
     hero: {
-      badge: 'Международные стандарты FSSC 22000 & ISO',
-      title1: 'Инновационная переработка',
-      titleHighlight: 'натуральных продуктов',
-      title2: 'и экспортный хаб',
+      badge: 'Международные стандарты FSSC 22000 & HACCP',
+      title1: 'Свежие нарезанные овощи и салаты',
+      titleHighlight: 'категории Fresh-Cut',
+      title2: 'для HoReCa и ритейла',
       subtitle:
-        'ООО «GREEN PROCESSING» — современный агропромышленный комплекс, специализирующийся на высокотехнологичной IQF (шоковой) заморозке, калибровке и упаковке фруктов, ягод и овощей.',
+        'ООО «GREEN PROCESSING» — современный агропромышленный комплекс по промышленной мойке, калибровке, нарезке и упаковке салата Айсберг, лука, томатов, моркови и капусты в модифицированной газовой среде (МГС) и вакууме.',
       ctaPrimary: 'Каталог продукции',
       ctaSecondary: 'Вход для сотрудников',
       stats: [
-        { value: '15,000+', label: 'Годовая мощность производства (тонн)' },
-        { value: '100%', label: 'Натуральное сырье без ГМО' },
-        { value: '-40°C', label: 'Технология шоковой заморозки IQF' },
-        { value: '24/7', label: 'Цифровая лаборатория и контроль качества' },
+        { value: '50+ т', label: 'Суточная мощность переработки сырья' },
+        { value: '+2°C..+5°C', label: 'Непрерывная холодовая цепь (Cold Chain)' },
+        { value: '100%', label: 'Чистые и готовые к подаче (Ready-to-Eat)' },
+        { value: 'FSSC 22000', label: 'Сертифицированная безопасность' },
       ],
     },
     about: {
       tag: 'О КОМПАНИИ',
-      title: 'Доставляем отборные дары природы Узбекистана на мировой рынок',
-      desc: 'Наша компания контролирует сельхозпродукцию на всех этапах — от поля до отгрузки клиенту с помощью полностью оцифрованной системы ERP и Traceability (прослеживаемости). Каждая партия проходит многоступенчатый лабораторный контроль.',
+      title: 'Главный поставщик fresh-cut овощей для сетей ресторанов и фастфуда',
+      desc: 'Мы обеспечиваем ведущие сети быстрого питания, бургерные, рестораны, фабрики-кухни и супермаркеты готовыми очищенными и нарезанными овощами ресторанного стандарта. Полностью исключаем ручной труд на кухне, списания и отходы.',
       features: [
         {
-          title: 'Полная прослеживаемость (Traceability)',
-          desc: 'Цифровая паспортизация с QR-кодами от приемки сырья до погрузки готовой продукции.',
+          title: 'Готово к использованию (Ready-to-Eat)',
+          desc: 'Тщательно промыто в барботажных ваннах с озонированием и дезинфекцией, просушено и сразу готово к сборке блюд.',
         },
         {
-          title: 'Современные линии IQF',
-          desc: 'Европейское оборудование, сохраняющее клеточную структуру, витамины и вкус до 98%.',
+          title: 'Строгий холод (+2°C..+5°C)',
+          desc: 'Беспрерывная холодильная цепь: приемка, хранение, цех нарезки и доставка в собственных рефрижераторах (Форма Ф-01).',
         },
         {
-          title: 'FSSC 22000 & HACCP',
-          desc: 'Санитарный и качественный контроль по строжайшим международным регламентам пищевой безопасности.',
+          title: 'Немецкое оборудование Urschel & Kronen',
+          desc: 'Идеальная геометрия нарезки для бургеров и сэндвичей (шреддинг 6мм/10мм, точные слайсы, кубики и соломка).',
         },
         {
-          title: 'Экологически чистый регион',
-          desc: 'Прямые поставки спелых фруктов и овощей, выращенных под щедрым солнцем, от проверенных хозяйств.',
+          title: 'Упаковка МГС (Газомодификация) и Вакуум',
+          desc: 'Без капли химии и консервантов сохраняет хруст, цвет, витамины и свежесть продукции от 7 до 10 суток.',
         },
       ],
     },
     products: {
       tag: 'НАША ПРОДУКЦИЯ',
-      title: 'Экспортные замороженные и переработанные продукты',
-      subtitle: 'Индивидуальная калибровка, нарезка и фасовка для сегментов HoReCa, ритейла и пищевой промышленности.',
+      title: 'Профессиональная продукция для HoReCa и пищевых производств',
+      subtitle: 'Стандартизированные фасовки для бургеров, пиццы, сэндвичей, кулинарии и ресторанных сетей.',
       items: [
         {
-          category: 'Ягоды (IQF)',
-          name: 'Клубника, Малина, Вишня и Ежевика',
-          specs: 'Калибр: 15-25мм / 25-35мм • Brix: 8-12% • Упаковка: 10кг / 2.5кг',
-          badge: 'Топ Экспорт',
+          category: 'Салаты и Зелень',
+          name: 'Салат Айсберг (Шреддинг, Нарезка для бургеров, Цельный)',
+          specs: 'Резка: 6мм / 10мм / Burger Cut • Промыт, просушен • Упаковка: 1кг, 2.5кг, 5кг МГС (Gas-Flush)',
+          badge: 'Хит продаж для бургеров',
         },
         {
-          category: 'Косточковые фрукты',
-          name: 'Абрикос (половинки/кубик), Персик и Слива',
-          specs: 'Машинная и ручная резка • Без косточки • Высокая органолептика',
-          badge: 'Премиум Качество',
+          category: 'Луковая продукция',
+          name: 'Лук репчатый очищенный (Кольца, Кубик, Целый очищенный)',
+          specs: 'Сорта: белый и желтый • 100% вакуумная упаковка 5кг / 10кг • Без слез, без запаха и без отходов',
+          badge: 'Экономия труда 100%',
         },
         {
-          category: 'Овощи и Зелень',
-          name: 'Брокколи, Цветная капуста, Перец сладкий, Тыква',
-          specs: 'Бланшированные • Сохранение цвета и текстуры • Промышленная тара',
-          badge: 'Индустриальный стандарт',
+          category: 'Томатная продукция',
+          name: 'Томаты свежие калиброванные (Слайсы для бургеров, Кубик)',
+          specs: 'Калибр: 55-65мм, 65-75мм • Толщина: 4-5мм • Мясистые плотные сорта, не текут в бургере',
+          badge: 'Стандарт фастфуда',
         },
         {
-          category: 'Фруктовые пюре и полуфабрикаты',
-          name: 'Асептические и замороженные концентраты',
-          specs: '100% натуральные без сахара • Для кондитерской и соковой индустрии',
-          badge: 'B2B Решение',
+          category: 'Морковь и Корнеплоды',
+          name: 'Морковь очищенная (Соломка, Корейская, Кубик, Свежая)',
+          specs: 'Резка: соломка 2x2мм, 3x3мм, кубик 10x10мм • 100% очищенная • Вакуум: 3кг / 5кг',
+          badge: 'Готовый полуфабрикат',
+        },
+        {
+          category: 'Капуста свежая',
+          name: 'Капуста белокочанная (Тонкая шинковка / Коул-слоу)',
+          specs: 'Нарезка: 1.5 - 2.5мм • Для салатов, коул-слоу и горячих блюд • Вакуум / МГС: 3кг / 5кг',
+          badge: 'Салатный хит',
+        },
+        {
+          category: 'Фирменные миксы',
+          name: 'Салатные смеси под ключ (Айсберг + Капуста + Морковь)',
+          specs: 'Смешивание по рецептуре заказчика • Добавьте соус и блюдо готово • Защитная среда МГС',
+          badge: 'Готовое решение',
         },
       ],
     },
     tech: {
-      tag: 'ТЕХНОЛОГИИ И ЛАБОРАТОРИЯ',
-      title: '6 ступеней непрерывного контроля качества и безопасности',
+      tag: 'ТЕХНОЛОГИИ И САНИТАРИЯ',
+      title: '6 ступеней безупречной гигиены и безопасности продукта',
       steps: [
-        { num: '01', title: 'Входной контроль сырья', desc: 'Физико-химический и органолептический анализ, замер Brix и температуры, оформление актов приемки.' },
-        { num: '02', title: 'Мойка и дезинфекция', desc: 'Многоступенчатая барботажная мойка, мониторинг концентрации растворов и санитарных норм.' },
-        { num: '03', title: 'Оптическая сортировка и калибровка', desc: 'Автоматическое отделение инородных тел, дефектов и точная классификация по размерам.' },
-        { num: '04', title: 'Шоковая заморозка IQF (-35°C..-40°C)', desc: 'Быстрое снижение температуры в центре продукта до -18°C без разрушения структуры клеток.' },
-        { num: '05', title: 'Металлодетекция и Упаковка', desc: 'Проверка каждой коробки на частицы Fe, Non-Fe и SUS металлов, автоматическая маркировка.' },
-        { num: '06', title: 'Логистика холодовой цепи', desc: 'Современные склады с режимом -18°C..-22°C и экспортные отгрузки под контролем термографов.' },
+        { num: '01', title: 'Входной контроль сырья', desc: 'Замер температуры (2°C-5°C), калибра, плотности и оформление акта приемки в системе ERP.' },
+        { num: '02', title: 'Многоступенчатая мойка и санация', desc: 'Барботажная гидромойка с отделением песка и безопасной дезинфекцией пищевыми растворами.' },
+        { num: '03', title: 'Бережная сушка (Dewatering)', desc: 'Центробежная сушка в деликатном режиме без травмирования нежной структуры листьев.' },
+        { num: '04', title: 'Точная нарезка Urschel & Kronen', desc: 'Сверхострые высокоскоростные ножи — чистый срез без сминания и выделения клеточного сока.' },
+        { num: '05', title: 'Упаковка в МГС и вакуум', desc: 'Замещение кислорода инертной газовой смесью — натуральная свежесть без химии до 10 дней.' },
+        { num: '06', title: 'Рентген-детекция и термологистика', desc: '100% сканирование на инородные включения, QR-паспортизация и развоз в авторефрижераторах.' },
       ],
     },
     erpBanner: {
-      badge: 'КОРПОРАТИВНАЯ ЦИФРОВАЯ ЭКОСИСТЕМА',
-      title: 'Green Processing ERP — Портал сотрудников и управления',
-      desc: 'Все подразделения предприятия: Дирекция, Контроль качества (ОТК), Инспекторы цеха, Производство, Технологи, Склад, Снабжение, Бухгалтерия и HR работают в единой цифровой системе.',
-      btn: 'Войти в кабинет сотрудника',
+      badge: 'ЦИФРОВОЕ ПРЕДПРИЯТИЕ',
+      title: 'Green Processing ERP — Производственная экосистема',
+      desc: 'Все процессы фабрики: складской учет сырья (FEFO), акты приемки, отчеты цеха, чек-лист температур Ф-01 и журнал перемещения сырья работают в режиме реального времени.',
+      btn: 'Войти в систему ERP',
     },
     contact: {
       tag: 'КОНТАКТЫ',
-      title: 'Свяжитесь с нами для сотрудничества и заказов',
+      title: 'Сотрудничество для сетей HoReCa и оптовых клиентов',
       addressTitle: 'Наш адрес',
-      address: 'Республика Узбекистан, Ташкентская область, Промышленная зона',
+      address: 'Республика Узбекистан, Ташкентская область, Промзона Кибрай / Зангиота',
       phoneTitle: 'Телефоны',
-      phone: '+998 (71) 200-00-00 / +998 (90) 123-45-67',
+      phone: '+998 (71) 200-00-00 / +998 (90) 000-00-00',
       emailTitle: 'Электронная почта',
-      email: 'info@greenprocessing.uz • export@greenprocessing.uz',
+      email: 'info@greenprocessing.uz • sales@greenprocessing.uz',
       hoursTitle: 'Режим работы',
-      hours: 'Понедельник - Суббота: 08:00 – 19:00 (Производство: 24/7)',
+      hours: 'Офис: 08:30 – 18:00 (Производство и отгрузки: 24/7)',
     },
   },
 }
@@ -279,7 +307,7 @@ export default function CompanyLandingPage() {
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium tracking-wider uppercase">
-                Agro-Industrial Complex
+                Fresh-Cut Salads & Vegetables
               </p>
             </div>
           </a>
@@ -394,7 +422,7 @@ export default function CompanyLandingPage() {
                     </div>
                     <div>
                       <h3 className="text-sm font-extrabold text-white">OOO &quot;GREEN PROCESSING&quot;</h3>
-                      <p className="text-xs text-slate-400">FSSC 22000 • IQF Processing Plant</p>
+                      <p className="text-xs text-slate-400">FSSC 22000 • Fresh-Cut Plant</p>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5">
@@ -407,55 +435,57 @@ export default function CompanyLandingPage() {
                 <div className="space-y-3.5">
                   <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-4">
                     <div className="w-11 h-11 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
-                      <Snowflake className="w-5 h-5" />
+                      <Thermometer className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-300">IQF Tunnel Freezer</span>
-                        <span className="text-xs font-black text-cyan-400">-38.5 °C</span>
+                        <span className="text-xs font-bold text-slate-300">
+                          {lang === 'uz' ? 'Sovuq zanjir (F-01 nazorati)' : 'Холодовая цепь (Контроль Ф-01)'}
+                        </span>
+                        <span className="text-xs font-black text-cyan-400">+2.0°C .. +4.0°C</span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">
                         {lang === 'uz'
-                          ? 'Uzluksiz shok-muzlatish va harorat monitoringi'
-                          : 'Непрерывная шоковая заморозка и мониторинг'}
+                          ? 'Aysberg, piyoz, pomidor, sabzi va karam doimiy harorat rejimida'
+                          : 'Постоянный температурный режим хранения сырья и готовой продукции'}
                       </p>
                     </div>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-4">
                     <div className="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
-                      <Microscope className="w-5 h-5" />
+                      <Utensils className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-300">
-                          {lang === 'uz' ? 'Sifat va Laboratoriya (QC)' : 'Лаборатория и ОТК'}
+                          {lang === 'uz' ? 'Sanoat qirqish liniyasi' : 'Промышленная линия нарезки'}
                         </span>
-                        <span className="text-xs font-black text-emerald-400">ISO / FSSC</span>
+                        <span className="text-xs font-black text-emerald-400">Burger Cut / Shred</span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">
                         {lang === 'uz'
-                          ? 'Fizik-kimyoviy, Brix, mikrobiologik va metall nazorati'
-                          : 'Физико-химический, Brix, микробиологический контроль'}
+                          ? 'Urschel & Kronen uskunalarida 6mm va 10mm aniq geometriya'
+                          : 'Сверхострая нарезка шреддинг, слайсы и кубик на Urschel & Kronen'}
                       </p>
                     </div>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-4">
                     <div className="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
-                      <Globe2 className="w-5 h-5" />
+                      <ShieldCheck className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-300">
-                          {lang === 'uz' ? 'Eksport Geografiyasi' : 'География экспорта'}
+                          {lang === 'uz' ? 'MAP va Vakuum Qadoqlash' : 'Упаковка МГС и Вакуум'}
                         </span>
-                        <span className="text-xs font-black text-amber-400">10+ {lang === 'uz' ? 'Davlatlar' : 'Стран'}</span>
+                        <span className="text-xs font-black text-amber-400">100% Ready-to-Eat</span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">
                         {lang === 'uz'
-                          ? 'MDH, Yevropa va Osiyo bozorlariga xalqaro logistika'
-                          : 'Международная логистика в страны СНГ, Европы и Азии'}
+                          ? 'Kimyoviy moddalarsiz tabiiy yangilik va qarsildoq ta’m'
+                          : 'Натуральная свежесть без консервантов со сроком 7-10 суток'}
                       </p>
                     </div>
                   </div>
@@ -542,24 +572,26 @@ export default function CompanyLandingPage() {
             <p className="text-slate-400 text-sm max-w-md">{t.products.subtitle}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {t.products.items.map((item, idx) => (
               <div
                 key={idx}
-                className="group p-7 rounded-3xl bg-gradient-to-br from-slate-900/80 to-slate-950/90 border border-white/10 hover:border-emerald-500/40 transition-all"
+                className="group p-7 rounded-3xl bg-gradient-to-br from-slate-900/80 to-slate-950/90 border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between gap-2 mb-4">
-                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                    {item.category}
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold">
-                    {item.badge}
-                  </span>
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                      {item.category}
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold whitespace-nowrap">
+                      {item.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-black text-white mb-3 group-hover:text-emerald-300 transition-colors">
+                    {item.name}
+                  </h3>
                 </div>
-                <h3 className="text-xl font-black text-white mb-3 group-hover:text-emerald-300 transition-colors">
-                  {item.name}
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-400 font-medium bg-black/30 p-3.5 rounded-xl border border-white/5">
+                <p className="text-xs sm:text-sm text-slate-400 font-medium bg-black/30 p-3.5 rounded-xl border border-white/5 mt-4">
                   {item.specs}
                 </p>
               </div>
@@ -628,7 +660,7 @@ export default function CompanyLandingPage() {
               </div>
               <div>
                 <h4 className="text-base font-black text-white">HACCP & HALAL</h4>
-                <p className="text-xs text-slate-400">100% Certified Production Lines</p>
+                <p className="text-xs text-slate-400">100% Certified Clean Production</p>
               </div>
             </div>
           </div>
