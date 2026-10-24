@@ -98,8 +98,8 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setSupportZoom(false);
-        settings.setBuiltInZoomControls(false);
+        settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(true);
         settings.setDisplayZoomControls(false);
         settings.setTextZoom(100);
         settings.setMediaPlaybackRequiresUserGesture(false);

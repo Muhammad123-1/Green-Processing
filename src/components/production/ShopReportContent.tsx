@@ -574,13 +574,13 @@ export default function ShopReportContent() {
                   <th className="p-2 sm:p-3 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
+              <tbody className="divide-y divide-slate-200 bg-white text-slate-900">
                 {isLoading ? (
                   <tr>
                     <td colSpan={6} className="p-12 text-center text-sm text-slate-400">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Loader2 className="animate-spin text-amber-500" size={32} />
-                        <span className="font-bold text-slate-300 text-sm">
+                        <span className="font-bold text-slate-500 text-sm">
                           {lang === 'ru' ? 'Загрузка данных прихода...' : "Kirim ma'lumotlari yuklanmoqda..."}
                         </span>
                         <span className="text-xs text-slate-400">
@@ -599,23 +599,23 @@ export default function ShopReportContent() {
                 {arrivalsPagination.displayedItems.map(({ row, idx }) => (
                   <tr
                     key={row.id ?? `new-${idx}`}
-                    className={`hover:bg-slate-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-50 dark:bg-amber-500/10' : ''}`}
+                    className={`hover:bg-amber-50/40 ${row._dirty ? 'bg-amber-50' : 'bg-white'}`}
                   >
-                    <td className="sticky left-0 z-10 bg-amber-50/95 dark:bg-dark-900 p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="sticky left-0 z-10 bg-amber-50 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0]">
                       {row._new ? (
                         <input
                           type="date"
                           value={row.date || ''}
                           onChange={(e) => updateArrival(idx, { date: e.target.value })}
-                          className="w-full bg-white dark:bg-dark-800 border border-amber-300 dark:border-dark-700 rounded px-1.5 py-1 text-[11px] sm:text-xs text-slate-900 dark:text-white outline-none"
+                          className="excel-input w-full px-1.5 py-1 text-[11px] sm:text-xs font-semibold outline-none"
                         />
                       ) : (
-                        <div className="flex items-center justify-between gap-1 px-1.5 py-1 group rounded hover:bg-amber-100/50 dark:hover:bg-dark-800 transition-colors">
-                          <span className="text-[11px] sm:text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        <div className="flex items-center justify-between gap-1 px-1.5 py-1 group rounded hover:bg-amber-100/70 transition-colors">
+                          <span className="text-[11px] sm:text-xs font-semibold text-slate-900 whitespace-nowrap">
                             {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
                           </span>
                           <label
-                            className="relative cursor-pointer p-1 rounded hover:bg-amber-200/60 dark:hover:bg-amber-900/40 text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+                            className="relative cursor-pointer p-1 rounded hover:bg-amber-200/60 text-slate-500 hover:text-amber-700 transition-colors"
                             title={lang === 'ru' ? 'Изменить дату' : "Sanani o'zgartirish"}
                           >
                             <Calendar size={12} />
@@ -629,40 +629,40 @@ export default function ShopReportContent() {
                         </div>
                       )}
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-1 border-r border-slate-200">
                       <input
                         type="text"
                         placeholder="Томат..."
                         value={row.nomenclature || ''}
                         onChange={(e) => updateArrival(idx, { nomenclature: e.target.value })}
-                        className="w-full min-w-[140px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-1.5 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                        className="excel-input w-full min-w-[140px] px-2 py-1.5 text-xs font-medium outline-none"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-1 border-r border-slate-200">
                       <input
                         type="number"
                         step="any"
                         value={inputVal(row.quantity)}
                         onChange={(e) => updateArrival(idx, { quantity: e.target.value })}
-                        className="w-full min-w-[75px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 dark:text-amber-500 outline-none focus:border-amber-500"
+                        className="excel-input w-full min-w-[75px] px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 outline-none"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-1 border-r border-slate-200">
                       <input
                         type="text"
                         placeholder="Turk shanay biznes"
                         value={row.supplier || ''}
                         onChange={(e) => updateArrival(idx, { supplier: e.target.value })}
-                        className="w-full min-w-[125px] bg-blue-50/70 dark:bg-blue-900/20 border border-blue-200/70 dark:border-dark-700 rounded px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                        className="excel-input w-full min-w-[125px] px-2 py-1.5 text-xs outline-none"
                       />
                     </td>
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="p-1 border-r border-slate-200">
                       <input
                         type="text"
                         placeholder="Партия"
                         value={row.batch || ''}
                         onChange={(e) => updateArrival(idx, { batch: e.target.value })}
-                        className="w-full min-w-[90px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-1.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-amber-500"
+                        className="excel-input w-full min-w-[90px] px-2 py-1.5 text-xs font-mono outline-none"
                       />
                     </td>
                     <td className="p-1 text-center">
@@ -716,9 +716,9 @@ export default function ShopReportContent() {
           </div>
           <div className="flex-1 overflow-auto max-h-[72vh] md:max-h-none custom-scrollbar p-0">
             <table className="w-full text-left border-collapse min-w-[1400px]">
-              <thead className="bg-[#FFE699] dark:bg-amber-900/40 text-slate-900 dark:text-amber-100 text-[10px] font-bold uppercase sticky top-0 z-20 border-b border-amber-300 dark:border-amber-700">
+              <thead className="bg-[#FFE699] text-slate-900 text-[10px] font-bold uppercase sticky top-0 z-20 border-b border-amber-300">
                 <tr>
-                  <th className="sticky left-0 z-20 p-2 border-r border-amber-300 dark:border-amber-700/50 w-[92px] min-w-[92px] sm:min-w-[125px] bg-amber-200 dark:bg-amber-800">
+                  <th className="sticky left-0 z-20 p-2 border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d] w-[92px] min-w-[92px] sm:min-w-[125px] bg-amber-200 text-slate-900">
                     {dateFormatMode === 'long'
                       ? (lang === 'ru' ? 'Число (мес.)' : 'Sana (oy)')
                       : (lang === 'ru' ? 'Число' : 'Sana')}
@@ -726,7 +726,7 @@ export default function ShopReportContent() {
                   {EXPENSE_FIELDS.map((f) => (
                     <th
                       key={f.field}
-                      className={`p-1.5 sm:p-2 border-r border-amber-300 dark:border-amber-700/50 min-w-[78px] sm:min-w-[90px] text-center leading-tight ${f.field === 'ses' || f.field === 'kitchen' ? 'bg-[#92D050] text-black' : ''}`}
+                      className={`p-1.5 sm:p-2 border-r border-amber-300 min-w-[78px] sm:min-w-[90px] text-center leading-tight ${f.field === 'ses' || f.field === 'kitchen' ? 'bg-[#92D050] text-black' : 'text-slate-900'}`}
                     >
                       {f.label}
                       <br />
@@ -736,13 +736,13 @@ export default function ShopReportContent() {
                   <th className="p-2 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-[#FFFBF0] dark:bg-transparent">
+              <tbody className="divide-y divide-amber-200/70 bg-[#FFFBF0] text-slate-900">
                 {isLoading ? (
                   <tr>
                     <td colSpan={EXPENSE_FIELDS.length + 2} className="p-12 text-center text-sm text-slate-400">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Loader2 className="animate-spin text-amber-500" size={32} />
-                        <span className="font-bold text-slate-300 text-sm">
+                        <span className="font-bold text-slate-500 text-sm">
                           {lang === 'ru' ? 'Загрузка данных расхода...' : "Chiqim ma'lumotlari yuklanmoqda..."}
                         </span>
                         <span className="text-xs text-slate-400">
@@ -761,18 +761,18 @@ export default function ShopReportContent() {
                 {expensesPagination.displayedItems.map(({ row, idx }) => (
                   <tr
                     key={row._new ? `new-${idx}` : row.date}
-                    className={`hover:bg-amber-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-100/70 dark:bg-amber-500/10' : ''}`}
+                    className={`hover:bg-amber-100/50 ${row._dirty ? 'bg-amber-100/80' : 'bg-[#FFFBF0]'}`}
                   >
-                    <td className="sticky left-0 z-10 p-1 border-r border-slate-200 dark:border-dark-750 bg-[#FFF3CD] dark:bg-dark-800">
+                    <td className="sticky left-0 z-10 p-1 border-r border-amber-200 shadow-[inset_-1px_0_0_#fde68a] bg-[#FFF3CD] text-slate-900">
                       {row._new ? (
                         <input
                           type="date"
                           value={row.date || ''}
                           onChange={(e) => updateExpense(idx, { date: e.target.value })}
-                          className="w-full bg-white dark:bg-dark-900 border border-amber-300 dark:border-dark-700 rounded px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
+                          className="excel-input w-full px-1 py-1 text-[11px] font-bold outline-none"
                         />
                       ) : (
-                        <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                        <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 whitespace-nowrap">
                           {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
                         </div>
                       )}
@@ -783,14 +783,14 @@ export default function ShopReportContent() {
                       return (
                         <td
                           key={f.field}
-                          className={`p-1 border-r border-slate-200 dark:border-dark-750 ${defect ? 'bg-red-50 dark:bg-red-900/10' : ''} ${green ? 'bg-green-50 dark:bg-green-900/10' : ''}`}
+                          className={`p-1 border-r border-amber-200/70 ${defect ? 'bg-red-50' : ''} ${green ? 'bg-green-50' : ''}`}
                         >
                           <input
                             type="number"
                             step="any"
                             value={inputVal(row[f.field])}
                             onChange={(e) => updateExpense(idx, { [f.field]: e.target.value })}
-                            className={`w-full min-w-[68px] bg-white/90 dark:bg-dark-800/90 border border-amber-200/80 dark:border-dark-700 rounded px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none focus:border-amber-500 ${defect ? 'text-red-600' : 'text-slate-800 dark:text-slate-200'}`}
+                            className={`excel-input w-full min-w-[68px] px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none ${defect ? 'text-red-600' : 'text-slate-900'}`}
                           />
                         </td>
                       )
@@ -865,13 +865,13 @@ export default function ShopReportContent() {
                   <th className="p-2 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-white dark:bg-transparent">
+              <tbody className="divide-y divide-slate-200 bg-white text-slate-900">
                 {isLoading ? (
                   <tr>
                     <td colSpan={GP_FIELDS.length + 3} className="p-12 text-center text-sm text-slate-400">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Loader2 className="animate-spin text-emerald-500" size={32} />
-                        <span className="font-bold text-slate-300 text-sm">
+                        <span className="font-bold text-slate-500 text-sm">
                           {lang === 'ru' ? 'Загрузка данных выпуска ГП...' : "ГП (tayyor mahsulot) ma'lumotlari yuklanmoqda..."}
                         </span>
                         <span className="text-xs text-slate-400">
@@ -892,34 +892,34 @@ export default function ShopReportContent() {
                   return (
                     <tr
                       key={row._new ? `new-${idx}` : row.date}
-                      className={`hover:bg-emerald-50/50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-emerald-100/60 dark:bg-emerald-500/10' : ''}`}
+                      className={`hover:bg-emerald-50/50 ${row._dirty ? 'bg-emerald-100/60' : 'bg-white'}`}
                     >
-                      <td className="sticky left-0 z-10 p-1 border-r border-slate-200 dark:border-dark-750 bg-emerald-50 dark:bg-dark-800">
+                      <td className="sticky left-0 z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] bg-emerald-50 text-slate-900">
                         {row._new ? (
                           <input
                             type="date"
                             value={row.date || ''}
                             onChange={(e) => updateGP(idx, { date: e.target.value })}
-                            className="w-full bg-white dark:bg-dark-900 border border-emerald-300 dark:border-dark-700 rounded px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
+                            className="excel-input w-full px-1 py-1 text-[11px] font-bold outline-none"
                           />
                         ) : (
-                          <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                          <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 whitespace-nowrap">
                             {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
                           </div>
                         )}
                       </td>
                       {GP_FIELDS.map((f) => (
-                        <td key={f.field} className="p-1 border-r border-slate-200 dark:border-dark-750">
+                        <td key={f.field} className="p-1 border-r border-slate-200">
                           <input
                             type="number"
                             step="any"
                             value={inputVal(row[f.field])}
                             onChange={(e) => updateGP(idx, { [f.field]: e.target.value })}
-                            className="w-full min-w-[68px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-200"
+                            className="excel-input w-full min-w-[68px] px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none text-slate-900"
                           />
                         </td>
                       ))}
-                      <td className="p-1 border-r border-slate-200 dark:border-dark-750 text-right font-mono font-bold text-[11px] text-emerald-700 dark:text-emerald-400 bg-emerald-50/40 dark:bg-emerald-900/20 pr-2">
+                      <td className="p-1 border-r border-slate-200 text-right font-mono font-bold text-[11px] text-emerald-700 bg-emerald-50/60 pr-2">
                         {rowSum > 0 ? rowSum.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
                       </td>
                       <td className="p-1 text-center">

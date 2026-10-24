@@ -256,17 +256,85 @@ input::placeholder, textarea::placeholder {
   color: #94a3b8;
 }
 
-/* DARK MODE: Universal high-contrast inputs */
-html.dark input:not([type="checkbox"]):not([type="radio"]),
-html.dark select,
-html.dark textarea {
-  background-color: #0f172a !important;
+/* DARK MODE: Universal high-contrast inputs (excluding transparent & Excel spreadsheet cells) */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not(.bg-transparent):not(.excel-input):not(.excel-cell-input),
+html.dark select:not(.bg-transparent):not(.excel-input),
+html.dark textarea:not(.bg-transparent):not(.excel-input) {
+  background-color: #1e293b !important;
   color: #f8fafc !important;
-  border-color: #334155 !important;
+  border-color: #475569 !important;
 }
 html.dark input::placeholder, 
 html.dark textarea::placeholder {
   color: #64748b !important;
+}
+
+/* Excel spreadsheet cell inputs (always crisp light/transparent, never black in dark mode) */
+input.excel-cell-input,
+html.dark input.excel-cell-input,
+html.light input.excel-cell-input {
+  background-color: transparent !important;
+  color: #0f172a !important;
+  border: none !important;
+  border-radius: 0 !important;
+  min-width: 60px !important;
+  height: 30px !important;
+  padding: 2px 4px !important;
+  font-size: 12px !important;
+  box-shadow: none !important;
+}
+
+input.excel-cell-input::placeholder,
+html.dark input.excel-cell-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+input.excel-cell-input.text-red-600,
+html.dark input.excel-cell-input.text-red-600,
+html.light input.excel-cell-input.text-red-600 {
+  color: #dc2626 !important;
+}
+
+input.excel-cell-input:focus,
+html.dark input.excel-cell-input:focus,
+html.light input.excel-cell-input:focus {
+  background-color: rgba(56, 189, 248, 0.22) !important;
+  box-shadow: inset 0 0 0 2px #0284c7 !important;
+  outline: none !important;
+}
+
+input.excel-input,
+html.dark input.excel-input,
+html.light input.excel-input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+input.excel-input::placeholder,
+html.dark input.excel-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+input.excel-input.text-red-600,
+html.dark input.excel-input.text-red-600 {
+  color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+input.excel-input.text-amber-700,
+html.dark input.excel-input.text-amber-700 {
+  color: #b45309 !important;
+}
+
+input.excel-input:focus,
+html.dark input.excel-input:focus,
+html.light input.excel-input:focus {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
+  outline: none !important;
 }
 
 /* Explicit Select Options styling across all browsers */
@@ -477,17 +545,17 @@ html.light .section-subtitle { color: #64748b !important; }
     word-break: break-word;
   }
 
-  table td,
-  .data-table td {
+  table td:not(.p-0),
+  .data-table td:not(.p-0) {
     font-size: 11px !important;
     line-height: 1.25 !important;
     padding: 5px 6px !important;
   }
 
   /* Make all inputs, selects, and textareas inside tables clearly visible & easy to tap on mobile */
-  table td input:not([type="checkbox"]):not([type="radio"]):not(.opacity-0):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14),
-  table td select,
-  table td textarea {
+  table td input:not([type="checkbox"]):not([type="radio"]):not(.opacity-0):not(.excel-cell-input):not(.bg-transparent):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14),
+  table td select:not(.bg-transparent),
+  table td textarea:not(.bg-transparent) {
     min-width: 68px !important;
     min-height: 30px !important;
     font-size: 12px !important;
@@ -496,13 +564,13 @@ html.light .section-subtitle { color: #64748b !important; }
     border: 1px solid rgba(148, 163, 184, 0.55) !important;
   }
 
-  html.dark table td input:not([type="checkbox"]):not([type="radio"]):not(.opacity-0):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14),
-  html.dark table td select,
-  html.dark table td textarea {
+  html.dark table td input:not([type="checkbox"]):not([type="radio"]):not(.opacity-0):not(.excel-cell-input):not(.excel-input):not(.bg-transparent):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14),
+  html.dark table td select:not(.bg-transparent),
+  html.dark table td textarea:not(.bg-transparent) {
     border-color: rgba(71, 85, 105, 0.8) !important;
   }
 
-  table td input[type="text"]:not(.opacity-0):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14) {
+  table td input[type="text"]:not(.opacity-0):not(.excel-cell-input):not(.bg-transparent):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14) {
     min-width: 105px !important;
   }
 
@@ -510,7 +578,7 @@ html.light .section-subtitle { color: #64748b !important; }
     min-width: 115px !important;
   }
 
-  table td input:focus:not(.opacity-0),
+  table td input:focus:not(.opacity-0):not(.excel-cell-input),
   table td select:focus,
   table td textarea:focus {
     border-color: #f59e0b !important;

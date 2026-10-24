@@ -191,7 +191,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
       value={cells[key] ?? ''}
       placeholder={opts?.placeholder}
       onChange={(e) => setCell(key, e.target.value)}
-      className={`w-full min-w-[64px] h-7 sm:h-8 px-1 text-center text-[11px] sm:text-xs outline-none bg-transparent placeholder:text-slate-300 focus:bg-sky-50 focus:ring-1 focus:ring-blue-500 ${
+      className={`excel-cell-input w-full min-w-[64px] h-7 sm:h-8 px-1 text-center text-[11px] sm:text-xs font-mono outline-none bg-transparent placeholder:text-slate-300 ${
         opts?.highlight ? 'font-bold text-red-600' : ''
       } ${opts?.red ? 'text-red-600 font-bold' : ''} ${opts?.bold ? 'font-bold' : ''}`}
     />
@@ -284,13 +284,13 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
             <table className="w-full text-left border-collapse text-[10px] min-w-[760px]">
               <thead className="bg-slate-50 text-slate-900 font-bold text-center">
                 <tr>
-                  <th className="sticky left-0 z-10 p-1.5 border border-[#8EA9DB] min-w-[115px] max-w-[135px] sm:min-w-[144px] sm:max-w-none text-left bg-white" rowSpan={2}>Наименование сырья</th>
+                  <th className="sticky left-0 z-10 p-1.5 border border-[#8EA9DB] shadow-[inset_-1px_0_0_#8EA9DB] min-w-[115px] max-w-[135px] sm:min-w-[144px] sm:max-w-none text-left bg-white" rowSpan={2}>Наименование сырья</th>
                   <th className="p-1.5 border border-[#8EA9DB] bg-white min-w-[70px] w-20" rowSpan={2}>Приход в цех</th>
-                  <th className="p-1.5 border border-[#8EA9DB]" colSpan={MATRIX_COLS.length - 1}>Расход</th>
+                  <th className="p-1.5 border border-[#8EA9DB] bg-[#D9E1F2] text-slate-900" colSpan={MATRIX_COLS.length - 1}>Расход</th>
                 </tr>
                 <tr>
                   {MATRIX_COLS.slice(1).map((c) => (
-                    <th key={c.key} className={`p-1.5 border border-[#8EA9DB] min-w-[72px] w-20 ${c.green ? 'bg-[#92D050]' : ''}`}>
+                    <th key={c.key} className={`p-1.5 border border-[#8EA9DB] min-w-[72px] w-20 ${c.green ? 'bg-[#92D050]' : 'bg-slate-50'}`}>
                       {c.label}
                     </th>
                   ))}
@@ -299,11 +299,11 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
               <tbody className="bg-white text-slate-900 font-mono">
                 {RAW_ROWS.map((row) => (
                   <tr key={row} className="hover:bg-slate-50">
-                    <td className="sticky left-0 z-10 bg-white p-1 border border-[#8EA9DB] font-sans font-bold text-[10px] sm:text-[11px] leading-tight">{row}</td>
+                    <td className="sticky left-0 z-10 bg-white p-1 border border-[#8EA9DB] shadow-[inset_-1px_0_0_#8EA9DB] font-sans font-bold text-[10px] sm:text-[11px] leading-tight">{row}</td>
                     {MATRIX_COLS.map((c) => {
                       const hl = (MATRIX_HIGHLIGHT[row] || []).includes(c.key)
                       return (
-                        <td key={c.key} className={`p-0 border border-[#8EA9DB] ${hl ? 'bg-[#FFFF00]' : ''}`}>
+                        <td key={c.key} className={`p-0 border border-[#8EA9DB] ${hl ? 'bg-[#FFFF00]' : 'bg-white'}`}>
                           {numInput(keyM(row, c.key), { highlight: hl })}
                         </td>
                       )
@@ -325,7 +325,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
               <table className="w-full text-center border-collapse text-[10px] min-w-[460px]">
                 <thead className="bg-slate-50 text-slate-900 font-bold">
                   <tr>
-                    <th className="sticky left-0 z-10 p-1 border border-slate-300 bg-white min-w-[125px] text-left">Наименование ГП</th>
+                    <th className="sticky left-0 z-10 p-1 border border-slate-300 shadow-[inset_-1px_0_0_#cbd5e1] bg-white min-w-[125px] text-left">Наименование ГП</th>
                     {OUTPUT_FIELDS.map((f) => (
                       <th key={f.key} className={`p-1 border border-slate-300 min-w-[72px] ${'green' in f && f.green ? 'bg-[#92D050]' : ''}`}>
                         {f.label}
@@ -336,16 +336,16 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                 <tbody className="bg-white text-slate-900 font-mono">
                   {OUTPUT_ROWS.map((name) => (
                     <tr key={name} className="hover:bg-slate-50">
-                      <td className="sticky left-0 z-10 bg-white p-1 border border-slate-300 font-sans text-left text-[10px] sm:text-[11px] leading-tight">{name}</td>
+                      <td className="sticky left-0 z-10 bg-white p-1 border border-slate-300 shadow-[inset_-1px_0_0_#cbd5e1] font-sans text-left text-[10px] sm:text-[11px] leading-tight">{name}</td>
                       {OUTPUT_FIELDS.map((f) => (
-                        <td key={f.key} className={`p-0 border border-slate-300 ${f.key === 'kg' ? 'bg-[#FFFF00]' : ''}`}>
+                        <td key={f.key} className={`p-0 border border-slate-300 ${f.key === 'kg' ? 'bg-[#FFFF00]' : 'bg-white'}`}>
                           {numInput(keyO(name, f.key), { highlight: f.key === 'kg' })}
                         </td>
                       ))}
                     </tr>
                   ))}
                   <tr className="bg-slate-50 font-bold">
-                    <td className="sticky left-0 z-10 bg-slate-50 p-1 border border-slate-300 font-sans text-left">Итого</td>
+                    <td className="sticky left-0 z-10 bg-slate-50 p-1 border border-slate-300 shadow-[inset_-1px_0_0_#cbd5e1] font-sans text-left">Итого</td>
                     {OUTPUT_FIELDS.map((f) => (
                       <td key={f.key} className="p-1 border border-slate-300">{colTotal(f.key) || ''}</td>
                     ))}
@@ -373,7 +373,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
               <table className="w-full text-center border-collapse text-[10px] min-w-[460px]">
                 <thead className="bg-slate-50 text-slate-900 font-bold">
                   <tr>
-                    <th className="sticky left-0 z-10 p-1 border border-slate-300 min-w-[100px] w-28 bg-white">{date}</th>
+                    <th className="sticky left-0 z-10 p-1 border border-slate-300 shadow-[inset_-1px_0_0_#cbd5e1] min-w-[100px] w-28 bg-white">{date}</th>
                     {BALANCE_COLS.map((c) => (
                       <th key={c.key} className="p-1 border border-slate-300 min-w-[72px]">{c.label}</th>
                     ))}
@@ -384,8 +384,8 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                     const isEnd = r.key === 'end'
                     const isStart = r.key === 'start'
                     return (
-                      <tr key={r.key} className={isEnd ? 'bg-[#D9E1F2]' : ''}>
-                        <td className={`sticky left-0 z-10 ${isEnd ? 'bg-[#D9E1F2]' : 'bg-white'} p-1 border border-slate-300 font-sans text-left text-[10px] sm:text-[11px] leading-tight ${isStart ? 'text-red-600' : ''} ${isEnd ? 'font-bold' : ''}`}>
+                      <tr key={r.key} className={isEnd ? 'bg-[#D9E1F2]' : 'bg-white'}>
+                        <td className={`sticky left-0 z-10 ${isEnd ? 'bg-[#D9E1F2]' : 'bg-white'} p-1 border border-slate-300 shadow-[inset_-1px_0_0_#cbd5e1] font-sans text-left text-[10px] sm:text-[11px] leading-tight ${isStart ? 'text-red-600' : ''} ${isEnd ? 'font-bold' : ''}`}>
                           {r.label}
                         </td>
                         {BALANCE_COLS.map((c) => (
@@ -421,7 +421,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
             <table className="w-full text-center border-collapse text-[10px] min-w-[640px]">
               <thead className="bg-slate-50 text-slate-900 font-bold">
                 <tr>
-                  <th className="sticky left-0 z-10 p-1 border border-[#8EA9DB] min-w-[130px] w-48 text-left bg-white">Наименование Сырья</th>
+                  <th className="sticky left-0 z-10 p-1 border border-[#8EA9DB] shadow-[inset_-1px_0_0_#8EA9DB] min-w-[130px] w-48 text-left bg-white">Наименование Сырья</th>
                   <th className="p-1 border border-[#8EA9DB] min-w-[70px] w-20">Норма не более %</th>
                   {PERCENT_COLS.map((c) => (
                     <th key={c} className="p-1 border border-[#8EA9DB] min-w-[68px] w-20">{c}</th>
@@ -433,7 +433,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                   const normMax = parseFloat((r.norm.match(/(\d+(?:\.\d+)?)\s*$/) || [])[1] || '')
                   return (
                     <tr key={r.name} className="hover:bg-slate-50">
-                      <td className="sticky left-0 z-10 bg-white p-1 border border-[#8EA9DB] font-sans text-left text-[10px] sm:text-[11px] leading-tight">{r.name}</td>
+                      <td className="sticky left-0 z-10 bg-white p-1 border border-[#8EA9DB] shadow-[inset_-1px_0_0_#8EA9DB] font-sans text-left text-[10px] sm:text-[11px] leading-tight">{r.name}</td>
                       <td className="p-1 border border-[#8EA9DB]">{r.norm}</td>
                       {r.values.map((v, i) => {
                         const over = v !== null && Number.isFinite(normMax) && v > normMax
