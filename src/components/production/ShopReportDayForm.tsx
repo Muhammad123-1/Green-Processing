@@ -191,7 +191,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
       value={cells[key] ?? ''}
       placeholder={opts?.placeholder}
       onChange={(e) => setCell(key, e.target.value)}
-      className={`w-full h-full p-1 text-center outline-none bg-transparent placeholder:text-slate-300 focus:bg-sky-50 ${
+      className={`w-full min-w-[64px] h-7 sm:h-8 px-1 text-center text-[11px] sm:text-xs outline-none bg-transparent placeholder:text-slate-300 focus:bg-sky-50 focus:ring-1 focus:ring-blue-500 ${
         opts?.highlight ? 'font-bold text-red-600' : ''
       } ${opts?.red ? 'text-red-600 font-bold' : ''} ${opts?.bold ? 'font-bold' : ''}`}
     />
@@ -203,14 +203,14 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
   const hasPrevEnd = !!prevEnd && Object.keys(prevEnd).length > 0
 
   return (
-    <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-y-auto custom-scrollbar flex flex-col p-4 space-y-6">
+    <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-y-auto custom-scrollbar flex flex-col p-3 sm:p-4 space-y-4 sm:space-y-6">
       {/* Header: title + date + save */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-200 dark:border-dark-750 pb-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3 border-b border-slate-200 dark:border-dark-750 pb-3">
         <div>
-          <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase">
+          <h2 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white uppercase">
             Производственный отчет ЦЕХ (Kunlik kiritish)
           </h2>
-          <div className="mt-1 text-xs font-semibold">
+          <div className="mt-1 text-[11px] sm:text-xs font-semibold">
             {saved?.updatedAt ? (
               <span className="inline-flex items-center gap-1.5 text-emerald-600">
                 <CheckCircle2 size={13} /> Saqlangan: {saved.updatedBy || '—'} · {fmtTime(saved.updatedAt)}
@@ -220,16 +220,16 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                 <Info size={13} /> Bu kun uchun hisobot hali saqlanmagan
               </span>
             )}
-            {dirty && <span className="ml-3 text-amber-600">● Saqlanmagan o'zgarishlar bor</span>}
+            {dirty && <span className="ml-3 text-amber-600">● Saqlanmagan o&apos;zgarishlar bor</span>}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-slate-500">Sana:</span>
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span className="text-xs sm:text-sm font-bold text-slate-500">Sana:</span>
           <button
             type="button"
             onClick={() => changeDate(shiftDate(date, -1))}
-            className="p-2 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700"
+            className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700"
             title="Oldingi kun"
           >
             <ChevronLeft size={16} />
@@ -239,16 +239,16 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
               type="date"
               value={date}
               onChange={(e) => changeDate(e.target.value)}
-              className="bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none"
+              className="bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none"
             />
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-sm">
+            <span className="text-[11px] sm:text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg whitespace-nowrap shadow-sm">
               {formatLongDate(date, lang)}
             </span>
           </div>
           <button
             type="button"
             onClick={() => changeDate(shiftDate(date, 1))}
-            className="p-2 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700"
+            className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700"
             title="Keyingi kun"
           >
             <ChevronRight size={16} />
@@ -257,7 +257,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
             type="button"
             onClick={handleReset}
             disabled={!dirty || saving}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 disabled:opacity-40"
+            className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 disabled:opacity-40"
             title="O'zgarishlarni bekor qilish"
           >
             <RotateCcw size={14} /> Bekor
@@ -266,31 +266,31 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
             type="button"
             onClick={handleSave}
             disabled={saving || !date}
-            className="flex items-center gap-2 bg-amber-600 text-white hover:bg-amber-500 px-4 py-2 rounded-lg font-bold text-xs transition-colors shadow-md shadow-amber-600/20 disabled:opacity-50"
+            className="flex items-center gap-1.5 bg-amber-600 text-white hover:bg-amber-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold text-xs transition-colors shadow-md shadow-amber-600/20 disabled:opacity-50"
           >
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            <span>Hisobotni saqlash</span>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            <span>Saqlash</span>
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5 sm:gap-6">
         {/* Table 1: Расход сырья и материалов на выпуск ГП */}
         <div className="border border-[#8EA9DB] rounded-lg overflow-hidden shadow-sm">
           <div className="bg-[#B4C6E7] p-2 text-center text-[11px] font-black text-slate-900 uppercase tracking-tight">
             Расход сырья и материалов на выпуск ГП
           </div>
           <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse text-[10px] min-w-[800px]">
+            <table className="w-full text-left border-collapse text-[10px] min-w-[760px]">
               <thead className="bg-slate-50 text-slate-900 font-bold text-center">
                 <tr>
-                  <th className="p-1.5 border border-[#8EA9DB] w-36 text-left bg-white" rowSpan={2}>Наименование сырья</th>
-                  <th className="p-1.5 border border-[#8EA9DB] bg-white w-20" rowSpan={2}>Приход в цех</th>
+                  <th className="sticky left-0 z-10 p-1.5 border border-[#8EA9DB] min-w-[115px] max-w-[135px] sm:min-w-[144px] sm:max-w-none text-left bg-white" rowSpan={2}>Наименование сырья</th>
+                  <th className="p-1.5 border border-[#8EA9DB] bg-white min-w-[70px] w-20" rowSpan={2}>Приход в цех</th>
                   <th className="p-1.5 border border-[#8EA9DB]" colSpan={MATRIX_COLS.length - 1}>Расход</th>
                 </tr>
                 <tr>
                   {MATRIX_COLS.slice(1).map((c) => (
-                    <th key={c.key} className={`p-1.5 border border-[#8EA9DB] w-20 ${c.green ? 'bg-[#92D050]' : ''}`}>
+                    <th key={c.key} className={`p-1.5 border border-[#8EA9DB] min-w-[72px] w-20 ${c.green ? 'bg-[#92D050]' : ''}`}>
                       {c.label}
                     </th>
                   ))}
@@ -299,7 +299,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
               <tbody className="bg-white text-slate-900 font-mono">
                 {RAW_ROWS.map((row) => (
                   <tr key={row} className="hover:bg-slate-50">
-                    <td className="p-1 border border-[#8EA9DB] font-sans font-bold">{row}</td>
+                    <td className="sticky left-0 z-10 bg-white p-1 border border-[#8EA9DB] font-sans font-bold text-[10px] sm:text-[11px] leading-tight">{row}</td>
                     {MATRIX_COLS.map((c) => {
                       const hl = (MATRIX_HIGHLIGHT[row] || []).includes(c.key)
                       return (
@@ -315,19 +315,19 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
           {/* Table 2: Выход ГП KFC */}
           <div className="border border-slate-300 rounded-lg overflow-hidden shadow-sm">
             <div className="bg-slate-100 p-1.5 text-center text-[11px] font-black text-slate-900 uppercase border-b border-slate-300">
               Выход ГП КФС
             </div>
             <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-center border-collapse text-[10px] min-w-[500px]">
+              <table className="w-full text-center border-collapse text-[10px] min-w-[460px]">
                 <thead className="bg-slate-50 text-slate-900 font-bold">
                   <tr>
-                    <th className="p-1 border border-slate-300 bg-white">Наименование ГП</th>
+                    <th className="sticky left-0 z-10 p-1 border border-slate-300 bg-white min-w-[125px] text-left">Наименование ГП</th>
                     {OUTPUT_FIELDS.map((f) => (
-                      <th key={f.key} className={`p-1 border border-slate-300 ${'green' in f && f.green ? 'bg-[#92D050]' : ''}`}>
+                      <th key={f.key} className={`p-1 border border-slate-300 min-w-[72px] ${'green' in f && f.green ? 'bg-[#92D050]' : ''}`}>
                         {f.label}
                       </th>
                     ))}
@@ -336,7 +336,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                 <tbody className="bg-white text-slate-900 font-mono">
                   {OUTPUT_ROWS.map((name) => (
                     <tr key={name} className="hover:bg-slate-50">
-                      <td className="p-1 border border-slate-300 font-sans text-left">{name}</td>
+                      <td className="sticky left-0 z-10 bg-white p-1 border border-slate-300 font-sans text-left text-[10px] sm:text-[11px] leading-tight">{name}</td>
                       {OUTPUT_FIELDS.map((f) => (
                         <td key={f.key} className={`p-0 border border-slate-300 ${f.key === 'kg' ? 'bg-[#FFFF00]' : ''}`}>
                           {numInput(keyO(name, f.key), { highlight: f.key === 'kg' })}
@@ -345,7 +345,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                     </tr>
                   ))}
                   <tr className="bg-slate-50 font-bold">
-                    <td className="p-1 border border-slate-300 font-sans text-left">Итого</td>
+                    <td className="sticky left-0 z-10 bg-slate-50 p-1 border border-slate-300 font-sans text-left">Итого</td>
                     {OUTPUT_FIELDS.map((f) => (
                       <td key={f.key} className="p-1 border border-slate-300">{colTotal(f.key) || ''}</td>
                     ))}
@@ -365,17 +365,17 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                   onClick={fillStartFromPrev}
                   className="normal-case text-[10px] font-bold text-blue-600 hover:underline px-2"
                 >
-                  Oldingi kun qoldig'ini olish
+                  Oldingi kun qoldig&apos;ini olish
                 </button>
               )}
             </div>
             <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-center border-collapse text-[10px] min-w-[500px]">
+              <table className="w-full text-center border-collapse text-[10px] min-w-[460px]">
                 <thead className="bg-slate-50 text-slate-900 font-bold">
                   <tr>
-                    <th className="p-1 border border-slate-300 w-28 bg-white">{date}</th>
+                    <th className="sticky left-0 z-10 p-1 border border-slate-300 min-w-[100px] w-28 bg-white">{date}</th>
                     {BALANCE_COLS.map((c) => (
-                      <th key={c.key} className="p-1 border border-slate-300">{c.label}</th>
+                      <th key={c.key} className="p-1 border border-slate-300 min-w-[72px]">{c.label}</th>
                     ))}
                   </tr>
                 </thead>
@@ -385,7 +385,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                     const isStart = r.key === 'start'
                     return (
                       <tr key={r.key} className={isEnd ? 'bg-[#D9E1F2]' : ''}>
-                        <td className={`p-1 border border-slate-300 font-sans text-left ${isStart ? 'text-red-600' : ''} ${isEnd ? 'font-bold' : ''}`}>
+                        <td className={`sticky left-0 z-10 ${isEnd ? 'bg-[#D9E1F2]' : 'bg-white'} p-1 border border-slate-300 font-sans text-left text-[10px] sm:text-[11px] leading-tight ${isStart ? 'text-red-600' : ''} ${isEnd ? 'font-bold' : ''}`}>
                           {r.label}
                         </td>
                         {BALANCE_COLS.map((c) => (
@@ -418,13 +418,13 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
             % расхода сырья и материалов на выпуск ГП
           </div>
           <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-center border-collapse text-[10px] min-w-[700px]">
+            <table className="w-full text-center border-collapse text-[10px] min-w-[640px]">
               <thead className="bg-slate-50 text-slate-900 font-bold">
                 <tr>
-                  <th className="p-1 border border-[#8EA9DB] w-48 text-left bg-white">Наименование Сырья</th>
-                  <th className="p-1 border border-[#8EA9DB] w-20">Норма не более %</th>
+                  <th className="sticky left-0 z-10 p-1 border border-[#8EA9DB] min-w-[130px] w-48 text-left bg-white">Наименование Сырья</th>
+                  <th className="p-1 border border-[#8EA9DB] min-w-[70px] w-20">Норма не более %</th>
                   {PERCENT_COLS.map((c) => (
-                    <th key={c} className="p-1 border border-[#8EA9DB] w-20">{c}</th>
+                    <th key={c} className="p-1 border border-[#8EA9DB] min-w-[68px] w-20">{c}</th>
                   ))}
                 </tr>
               </thead>
@@ -433,7 +433,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
                   const normMax = parseFloat((r.norm.match(/(\d+(?:\.\d+)?)\s*$/) || [])[1] || '')
                   return (
                     <tr key={r.name} className="hover:bg-slate-50">
-                      <td className="p-1 border border-[#8EA9DB] font-sans text-left">{r.name}</td>
+                      <td className="sticky left-0 z-10 bg-white p-1 border border-[#8EA9DB] font-sans text-left text-[10px] sm:text-[11px] leading-tight">{r.name}</td>
                       <td className="p-1 border border-[#8EA9DB]">{r.norm}</td>
                       {r.values.map((v, i) => {
                         const over = v !== null && Number.isFinite(normMax) && v > normMax
@@ -450,7 +450,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
             </table>
           </div>
           <p className="px-2 py-1.5 text-[10px] text-slate-500 bg-slate-50 border-t border-slate-200">
-            Avtomatik hisoblanadi: (xomashyo sarfi − tayyor mahsulot kg) / xomashyo sarfi × 100. Norma oshsa qizil rangda ko'rinadi.
+            Avtomatik hisoblanadi: (xomashyo sarfi − tayyor mahsulot kg) / xomashyo sarfi × 100. Norma oshsa qizil rangda ko&apos;rinadi.
           </p>
         </div>
       </div>

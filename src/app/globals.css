@@ -425,13 +425,21 @@ html.light .section-title { color: #0f172a !important; }
 html.light .section-subtitle { color: #64748b !important; }
 
 /* ========================================================================= */
-/* MOBILE RESPONSIVENESS SAFEGUARDS (Phone / APK WebView < 640px)             */
+/* MOBILE RESPONSIVENESS SAFEGUARDS (Phone / APK WebView <= 768px)            */
 /* ========================================================================= */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   html, body {
     max-width: 100vw;
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Never trap page content in a fixed h-full flex column on mobile screens;
+     let <main> scroll naturally so headers scroll away and tables get full height */
+  main > div.h-full,
+  main > div > div.h-full {
+    height: auto !important;
+    min-height: 100% !important;
   }
 
   /* Prevent w-max tab/pill bars from overflowing phone screens */
@@ -440,18 +448,81 @@ html.light .section-subtitle { color: #64748b !important; }
     overflow-x: auto !important;
   }
 
-  /* Ensure tables inside cards can always scroll horizontally instead of crushing */
-  .card:has(> table),
-  div:has(> table.data-table),
-  div:has(> table.w-full) {
+  /* Smooth touch scrolling for all scrollable table containers */
+  .overflow-x-auto,
+  .overflow-auto,
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure legacy .card > table.data-table wrappers can scroll horizontally */
+  .card:has(> table.data-table) {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Keep table headers & cells readable on narrow screens */
+  /* Compact, readable mobile table typography & spacing */
+  table,
+  .data-table {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+
   table th,
-  table td {
-    min-width: max-content;
+  .data-table th {
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    padding: 6px 6px !important;
+    white-space: normal !important;
+    word-break: break-word;
+  }
+
+  table td,
+  .data-table td {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    padding: 5px 6px !important;
+  }
+
+  /* Make all inputs, selects, and textareas inside tables clearly visible & easy to tap on mobile */
+  table td input:not([type="checkbox"]):not([type="radio"]):not(.opacity-0):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14),
+  table td select,
+  table td textarea {
+    min-width: 68px !important;
+    min-height: 30px !important;
+    font-size: 12px !important;
+    padding: 4px 6px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(148, 163, 184, 0.55) !important;
+  }
+
+  html.dark table td input:not([type="checkbox"]):not([type="radio"]):not(.opacity-0):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14),
+  html.dark table td select,
+  html.dark table td textarea {
+    border-color: rgba(71, 85, 105, 0.8) !important;
+  }
+
+  table td input[type="text"]:not(.opacity-0):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14) {
+    min-width: 105px !important;
+  }
+
+  table td input[type="date"]:not(.opacity-0) {
+    min-width: 115px !important;
+  }
+
+  table td input:focus:not(.opacity-0),
+  table td select:focus,
+  table td textarea:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
+    outline: none !important;
+  }
+
+  /* Make visible horizontal/vertical scrollbars on mobile tables so users know they can swipe */
+  .overflow-x-auto::-webkit-scrollbar,
+  .overflow-auto::-webkit-scrollbar {
+    height: 5px;
+    width: 5px;
   }
 
   /* Ensure modals fit comfortably inside phone viewports */

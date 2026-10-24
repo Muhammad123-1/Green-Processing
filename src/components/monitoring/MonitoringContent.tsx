@@ -29,9 +29,9 @@ export default function MonitoringContent() {
   const totalExport = demoData.export.reduce((acc, curr) => acc + curr.total, 0)
 
   return (
-    <div className="flex flex-col h-full space-y-5 animate-enter">
+    <div className="flex flex-col min-h-full space-y-3 sm:space-y-5 animate-enter">
       {/* Top Header Card */}
-      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center shadow-sm dark:shadow-inner">
             <BarChart3Icon size={26} />

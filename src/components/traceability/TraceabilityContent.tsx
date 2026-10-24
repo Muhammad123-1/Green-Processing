@@ -63,7 +63,7 @@ export default function TraceabilityContent() {
   }, [])
 
   return (
-    <div className="flex flex-col h-full animate-enter space-y-6">
+    <div className="flex flex-col min-h-full animate-enter space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-950 via-dark-900 to-indigo-950 rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">

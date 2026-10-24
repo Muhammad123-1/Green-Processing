@@ -315,7 +315,7 @@ export default function ChatContent({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-105px)] animate-enter relative text-slate-900 dark:text-white">
+    <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-105px)] animate-enter relative text-slate-900 dark:text-white">
       
       {/* Outer Card Container */}
       <div className="flex flex-1 gap-4 overflow-hidden rounded-2xl">

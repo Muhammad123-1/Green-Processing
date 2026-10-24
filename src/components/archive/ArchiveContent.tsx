@@ -141,23 +141,23 @@ export default function ArchiveContent() {
   }
 
   return (
-    <div className="flex flex-col h-full space-y-5 animate-enter p-2 md:p-4">
+    <div className="flex flex-col min-h-full md:h-full space-y-3 md:space-y-5 animate-enter p-1 sm:p-2 md:p-4">
       {/* Header */}
-      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center">
-            <Archive size={26} />
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center shrink-0">
+            <Archive size={22} />
           </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight">
                 {formatDual("Umumiy Arxiv (Lenta)", "Общий архив (Лента)", "Global Archive (Feed)")}
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">
                 {events.length} ta amal
               </span>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+            <p className="hidden sm:block text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
               {formatDual(
                 "Direktor va boshqaruv uchun zavoddagi barcha amaliyotlar xronologik tarixi",
                 "Хронологическая лента всех операций завода для директора и руководства",
@@ -167,18 +167,18 @@ export default function ArchiveContent() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Link
             href="/director"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-dark-700"
+            className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-dark-700"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={15} />
             <span>{formatDual("Direktor paneli", "Панель директора", "Director panel")}</span>
           </Link>
           <select
             value={typeFilter}
             onChange={e => setTypeFilter(e.target.value)}
-            className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
+            className="flex-1 sm:flex-none min-w-[140px] bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
           >
             <option value="ALL">{formatDual("Barcha turlar", "Все типы", "All types")}</option>
             <option value="ARRIVAL">{formatDual("Xomashyo kirimlari", "Приходы сырья", "Raw arrivals")}</option>
@@ -190,12 +190,12 @@ export default function ArchiveContent() {
             type="date"
             value={filterDate}
             onChange={e => setFilterDate(e.target.value)}
-            className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
+            className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
           />
           {filterDate && (
             <button
               onClick={() => setFilterDate('')}
-              className="bg-red-50 text-red-600 hover:bg-red-100 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors"
+              className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors"
             >
               {formatDual("Tozalash", "Сброс", "Clear")}
             </button>
@@ -204,7 +204,7 @@ export default function ArchiveContent() {
       </div>
 
       {/* Timeline / List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6">
+      <div className="flex-1 md:overflow-y-auto custom-scrollbar bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm p-3 sm:p-4 md:p-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-400 space-y-3">
             <Loader2 className="animate-spin text-indigo-600" size={32} />
@@ -216,15 +216,15 @@ export default function ArchiveContent() {
             <p className="font-bold">{formatDual("Hech qanday ma'lumot topilmadi", "Ничего не найдено", "No records found")}</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredEvents.map((evt, idx) => (
-              <div key={evt.id} className="flex gap-4 group">
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
+              <div key={evt.id} className="flex gap-2.5 sm:gap-4 group">
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
                     {getIcon(evt.type)}
                   </div>
                   {idx !== filteredEvents.length - 1 && (
-                    <div className="w-px h-full bg-slate-200 dark:bg-dark-700 mt-2"></div>
+                    <div className="w-px h-full bg-slate-200 dark:bg-dark-700 mt-1.5"></div>
                   )}
                 </div>
                 
@@ -233,21 +233,25 @@ export default function ArchiveContent() {
                   tabIndex={0}
                   onClick={() => setSelected(evt)}
                   onKeyDown={(e) => { if (e.key === 'Enter') setSelected(evt) }}
-                  className="flex-1 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 mb-4 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all"
+                  className="flex-1 min-w-0 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-750 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-2 sm:mb-4 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all"
                 >
-                  <div className="flex justify-between items-start mb-2 gap-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${getBadgeColor(evt.type)}`}>
-                        {typeLabel(evt.type)}
-                      </span>
-                      <h3 className="font-bold text-slate-900 dark:text-white text-base">{evt.title}</h3>
-                    </div>
-                    <span className="text-xs font-bold text-slate-500 bg-white dark:bg-dark-900 px-2 py-1 rounded-md border border-slate-200 dark:border-dark-700 shrink-0">{evt.date}</span>
+                  <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${getBadgeColor(evt.type)}`}>
+                      {typeLabel(evt.type)}
+                    </span>
+                    <span className="text-[11px] sm:text-xs font-bold text-slate-500 bg-white dark:bg-dark-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-dark-700 shrink-0">
+                      {evt.date}
+                    </span>
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{evt.desc}</p>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200 dark:border-dark-700 text-xs text-slate-500">
-                    <span className="flex items-center gap-1.5"><UserIcon size={13} /> {evt.author}</span>
-                    <span className="flex items-center gap-1 text-indigo-500 font-bold">{formatDual("Batafsil", "Подробнее", "Details")} <ChevronRight size={13} /></span>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug mb-1 break-words">
+                    {evt.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed break-words">
+                    {evt.desc}
+                  </p>
+                  <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-slate-200 dark:border-dark-700 text-[11px] sm:text-xs text-slate-500 gap-2">
+                    <span className="flex items-center gap-1.5 truncate"><UserIcon size={13} className="shrink-0" /> <span className="truncate">{evt.author}</span></span>
+                    <span className="flex items-center gap-1 text-indigo-500 font-bold shrink-0">{formatDual("Batafsil", "Подробнее", "Details")} <ChevronRight size={13} /></span>
                   </div>
                 </div>
               </div>

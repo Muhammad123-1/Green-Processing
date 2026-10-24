@@ -689,7 +689,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
   const isInspector = userRole === 'INSPECTOR'
 
   return (
-    <div className="flex flex-col h-full space-y-5 animate-enter">
+    <div className="flex flex-col min-h-full space-y-3 sm:space-y-5 animate-enter">
       
       {/* Top Header Card - Crisp Light & Dark Mode */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">

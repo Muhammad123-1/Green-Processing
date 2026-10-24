@@ -1210,7 +1210,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.rawMaterialDisc}
                         onChange={(e) => handleChange('rawMaterialDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1219,7 +1219,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.rawMaterialAct}
                         onChange={(e) => handleChange('rawMaterialAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1276,7 +1276,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.cleaningDisc}
                         onChange={(e) => handleChange('cleaningDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1285,7 +1285,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.cleaningAct}
                         onChange={(e) => handleChange('cleaningAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1342,7 +1342,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.cuttingDisc}
                         onChange={(e) => handleChange('cuttingDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1351,7 +1351,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.cuttingAct}
                         onChange={(e) => handleChange('cuttingAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1422,7 +1422,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.dezTempDisc}
                         onChange={(e) => handleChange('dezTempDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1431,7 +1431,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.dezTempAct}
                         onChange={(e) => handleChange('dezTempAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
@@ -1502,7 +1502,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.dezChlorineDisc}
                         onChange={(e) => handleChange('dezChlorineDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1511,7 +1511,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.dezChlorineAct}
                         onChange={(e) => handleChange('dezChlorineAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
@@ -1568,7 +1568,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.preservativeDisc}
                         onChange={(e) => handleChange('preservativeDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1577,7 +1577,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.preservativeAct}
                         onChange={(e) => handleChange('preservativeAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1645,7 +1645,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.residualChlorineDisc}
                         onChange={(e) => handleChange('residualChlorineDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1654,7 +1654,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.residualChlorineAct}
                         onChange={(e) => handleChange('residualChlorineAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1722,7 +1722,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.dryingDisc}
                         onChange={(e) => handleChange('dryingDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1731,7 +1731,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.dryingAct}
                         onChange={(e) => handleChange('dryingAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1799,7 +1799,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.inspectionDisc}
                         onChange={(e) => handleChange('inspectionDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1808,7 +1808,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.inspectionAct}
                         onChange={(e) => handleChange('inspectionAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1892,7 +1892,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.weightDisc}
                         onChange={(e) => handleChange('weightDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1901,7 +1901,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.weightAct}
                         onChange={(e) => handleChange('weightAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -1969,7 +1969,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.sealingDisc}
                         onChange={(e) => handleChange('sealingDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1978,7 +1978,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.sealingAct}
                         onChange={(e) => handleChange('sealingAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -2055,7 +2055,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.metalDisc}
                         onChange={(e) => handleChange('metalDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2064,7 +2064,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.metalAct}
                         onChange={(e) => handleChange('metalAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-red-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
@@ -2134,7 +2134,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.fgStoreDisc}
                         onChange={(e) => handleChange('fgStoreDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2143,7 +2143,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.fgStoreAct}
                         onChange={(e) => handleChange('fgStoreAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -2211,7 +2211,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.hygieneDisc}
                         onChange={(e) => handleChange('hygieneDisc', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2220,7 +2220,7 @@ export default function DailyChecklistContent() {
                         placeholder="—"
                         value={form.hygieneAct}
                         onChange={(e) => handleChange('hygieneAct', e.target.value)}
-                        className="w-full bg-slate-50/50 dark:bg-dark-800/50 border border-transparent hover:border-slate-300 dark:hover:border-dark-700 focus:border-blue-500 focus:bg-white dark:focus:bg-dark-900 px-2 py-1 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                        className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 hover:border-slate-300 dark:hover:border-dark-600 focus:border-blue-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
                     <td className="p-3 text-center">

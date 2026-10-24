@@ -429,23 +429,23 @@ export default function ShopReportContent() {
   )
 
   return (
-    <div className="flex flex-col h-full space-y-5 animate-enter">
+    <div className="flex flex-col min-h-full md:h-full space-y-3 md:space-y-4 animate-enter">
       {/* Top Header Card */}
-      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center shadow-sm dark:shadow-inner">
-            <ClipboardListIcon size={26} />
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl sm:rounded-2xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center shadow-sm dark:shadow-inner shrink-0">
+            <ClipboardListIcon size={22} />
           </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-300 text-[10px] font-extrabold uppercase tracking-wider border border-amber-300 dark:border-amber-500/30">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-300 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider border border-amber-300 dark:border-amber-500/30">
                 {lang === 'ru' ? 'Ежедневный журнал' : 'Kunlik jurnal'}
               </span>
             </div>
-            <h1 className="text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
               {lang === 'ru' ? 'Производственный отчет ЦЕХ' : 'Sex Ishlab Chiqarish Hisoboti'}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-snug line-clamp-1 font-semibold">
+            <p className="hidden sm:block text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-snug line-clamp-1 font-semibold">
               {lang === 'ru'
                 ? 'Формы ввода прихода, расхода и ежедневный отчет по выходу ГП'
                 : "Kirim, chiqim jadvallari va tayyor mahsulot (GP) hisobotini to'ldirish"}
@@ -453,21 +453,21 @@ export default function ShopReportContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
           <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="flex items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm disabled:opacity-50"
           >
-            {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+            {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
             <span>{lang === 'ru' ? 'Импорт Excel' : 'Excel Import'}</span>
           </button>
           <button
             onClick={exportToExcelReal}
-            className="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm"
+            className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm"
           >
-            <Download size={15} />
+            <Download size={14} />
             <span>{lang === 'ru' ? 'Экспорт Excel' : 'Excel Export'}</span>
           </button>
           <button
@@ -478,7 +478,7 @@ export default function ShopReportContent() {
                 localStorage.setItem('shop_report_date_mode', next)
               } catch {}
             }}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all border shadow-sm ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-all border shadow-sm ${
               dateFormatMode === 'long'
                 ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-amber-500/20'
                 : 'bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-750'
@@ -489,89 +489,89 @@ export default function ShopReportContent() {
                 : (lang === 'ru' ? 'Переключить на краткий формат (ДД.ММ.ГГГГ)' : "Qisqa sana formatiga o'tish (03.08.2026)")
             }
           >
-            <Calendar size={15} />
-            <span>{lang === 'ru' ? 'Вид даты:' : "Sana ko'rinishi:"}</span>
+            <Calendar size={14} />
+            <span className="hidden xs:inline">{lang === 'ru' ? 'Вид даты:' : "Sana:"}</span>
             <span
-              className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-extrabold ${
                 dateFormatMode === 'long'
                   ? 'bg-white text-amber-700'
                   : 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300'
               }`}
             >
               {dateFormatMode === 'short'
-                ? (lang === 'ru' ? 'Краткая (03.08)' : 'Qisqa (03.08)')
-                : (lang === 'ru' ? 'Длинная (август)' : 'Uzun (avgust)')}
+                ? (lang === 'ru' ? '03.08' : 'Qisqa (03.08)')
+                : (lang === 'ru' ? 'Август' : 'Uzun (avgust)')}
             </span>
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 bg-white dark:bg-dark-900 p-2 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm overflow-x-auto custom-scrollbar">
+      <div className="flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-dark-900 p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab('arrival')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'arrival' ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'arrival' ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <ArrowDownToLine size={16} /> 1. Приход (Kirim)
+          <ArrowDownToLine size={14} /> 1. Приход (Kirim)
         </button>
         <button
           onClick={() => setActiveTab('expense')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'expense' ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'expense' ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <ArrowUpFromLine size={16} /> 2. Расход (Chiqim)
+          <ArrowUpFromLine size={14} /> 2. Расход (Chiqim)
         </button>
         <button
           onClick={() => setActiveTab('gp')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'gp' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'gp' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <Package size={16} /> 3. ГП (Tayyor mahsulot)
+          <Package size={14} /> 3. ГП (Tayyor mahsulot)
         </button>
         <button
           onClick={() => setActiveTab('report')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'report' ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'report' ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <Calculator size={16} /> 4. Отчет ЦЕХ (Hisobot)
+          <Calculator size={14} /> 4. Отчет ЦЕХ (Hisobot)
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'history' ? 'bg-slate-800 text-white dark:bg-dark-700' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'history' ? 'bg-slate-800 text-white dark:bg-dark-700' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <FileSpreadsheet size={16} /> 5. Arxiv (Tarix)
+          <FileSpreadsheet size={14} /> 5. Arxiv (Tarix)
         </button>
       </div>
 
       {/* Tab 1: Приход (Incoming) */}
       {activeTab === 'arrival' && (
-        <div className="flex-1 min-h-0 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-3 bg-amber-500/10">
-            <h2 className="text-base font-black text-amber-600 uppercase tracking-tight">
+        <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
+          <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-amber-500/10">
+            <h2 className="text-xs sm:text-base font-black text-amber-600 uppercase tracking-tight">
               Приход (Kirim qilinayotgan mahsulotlar)
             </h2>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(arrFilter, setArrFilter)}
               <button
                 onClick={addArrival}
-                className="text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 border border-amber-200 dark:border-amber-900 px-3 py-1.5 rounded-lg hover:bg-amber-50"
+                className="text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 border border-amber-200 dark:border-amber-900 px-2.5 py-1.5 rounded-lg hover:bg-amber-50"
               >
-                + Qo'shish
+                + Qo&apos;shish
               </button>
               {saveButton(dirtyArrivals, savingArrivals, saveArrivals)}
             </div>
           </div>
-          <div className="flex-1 overflow-auto custom-scrollbar p-0">
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead className="bg-amber-500 text-white text-xs font-bold uppercase sticky top-0 z-10">
+          <div className="flex-1 overflow-auto max-h-[72vh] md:max-h-none custom-scrollbar p-0">
+            <table className="w-full text-left border-collapse min-w-[660px] sm:min-w-[800px]">
+              <thead className="bg-amber-500 text-white text-[10px] sm:text-xs font-bold uppercase sticky top-0 z-20">
                 <tr>
-                  <th className="p-3 border-r border-amber-600 min-w-[130px]">
+                  <th className="sticky left-0 z-20 bg-amber-600 p-2 sm:p-3 border-r border-amber-700 w-[96px] min-w-[96px] sm:min-w-[130px]">
                     {dateFormatMode === 'long'
-                      ? (lang === 'ru' ? 'Дата (месяц)' : 'Sana (oy nomi)')
+                      ? (lang === 'ru' ? 'Дата (мес.)' : 'Sana (oy)')
                       : (lang === 'ru' ? 'Дата' : 'Sana')}
                   </th>
-                  <th className="p-3 border-r border-amber-600">Номенклатура</th>
-                  <th className="p-3 border-r border-amber-600 text-right">Количество</th>
-                  <th className="p-3 border-r border-amber-600">Поставщик</th>
-                  <th className="p-3 border-r border-amber-600">Партии</th>
-                  <th className="p-3 w-10"></th>
+                  <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[160px] sm:min-w-[220px]">Номенклатура</th>
+                  <th className="p-2 sm:p-3 border-r border-amber-600 text-right min-w-[90px] sm:min-w-[115px]">Количество</th>
+                  <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[140px] sm:min-w-[180px]">Поставщик</th>
+                  <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[100px] sm:min-w-[130px]">Партии</th>
+                  <th className="p-2 sm:p-3 w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
@@ -601,24 +601,24 @@ export default function ShopReportContent() {
                     key={row.id ?? `new-${idx}`}
                     className={`hover:bg-slate-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-50 dark:bg-amber-500/10' : ''}`}
                   >
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750">
+                    <td className="sticky left-0 z-10 bg-amber-50/95 dark:bg-dark-900 p-1 border-r border-slate-200 dark:border-dark-750">
                       {row._new ? (
                         <input
                           type="date"
                           value={row.date || ''}
                           onChange={(e) => updateArrival(idx, { date: e.target.value })}
-                          className="w-full bg-transparent px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none"
+                          className="w-full bg-white dark:bg-dark-800 border border-amber-300 dark:border-dark-700 rounded px-1.5 py-1 text-[11px] sm:text-xs text-slate-900 dark:text-white outline-none"
                         />
                       ) : (
-                        <div className="flex items-center justify-between gap-1 px-2 py-1 group rounded hover:bg-amber-100/50 dark:hover:bg-dark-800 transition-colors">
-                          <span className="text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        <div className="flex items-center justify-between gap-1 px-1.5 py-1 group rounded hover:bg-amber-100/50 dark:hover:bg-dark-800 transition-colors">
+                          <span className="text-[11px] sm:text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">
                             {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
                           </span>
                           <label
                             className="relative cursor-pointer p-1 rounded hover:bg-amber-200/60 dark:hover:bg-amber-900/40 text-slate-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
                             title={lang === 'ru' ? 'Изменить дату' : "Sanani o'zgartirish"}
                           >
-                            <Calendar size={13} />
+                            <Calendar size={12} />
                             <input
                               type="date"
                               value={row.date || ''}
@@ -635,7 +635,7 @@ export default function ShopReportContent() {
                         placeholder="Томат..."
                         value={row.nomenclature || ''}
                         onChange={(e) => updateArrival(idx, { nomenclature: e.target.value })}
-                        className="w-full bg-transparent px-2 py-1.5 text-xs font-medium text-slate-900 dark:text-white outline-none"
+                        className="w-full min-w-[140px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-1.5 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-amber-500"
                       />
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
@@ -644,7 +644,7 @@ export default function ShopReportContent() {
                         step="any"
                         value={inputVal(row.quantity)}
                         onChange={(e) => updateArrival(idx, { quantity: e.target.value })}
-                        className="w-full bg-transparent px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 dark:text-amber-500 outline-none"
+                        className="w-full min-w-[75px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 dark:text-amber-500 outline-none focus:border-amber-500"
                       />
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
@@ -653,7 +653,7 @@ export default function ShopReportContent() {
                         placeholder="Turk shanay biznes"
                         value={row.supplier || ''}
                         onChange={(e) => updateArrival(idx, { supplier: e.target.value })}
-                        className="w-full bg-blue-100/50 dark:bg-blue-900/20 px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none"
+                        className="w-full min-w-[125px] bg-blue-50/70 dark:bg-blue-900/20 border border-blue-200/70 dark:border-dark-700 rounded px-2 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-amber-500"
                       />
                     </td>
                     <td className="p-1 border-r border-slate-200 dark:border-dark-750">
@@ -662,7 +662,7 @@ export default function ShopReportContent() {
                         placeholder="Партия"
                         value={row.batch || ''}
                         onChange={(e) => updateArrival(idx, { batch: e.target.value })}
-                        className="w-full bg-transparent px-2 py-1.5 text-xs font-mono text-slate-900 dark:text-white outline-none"
+                        className="w-full min-w-[90px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-1.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-amber-500"
                       />
                     </td>
                     <td className="p-1 text-center">
@@ -698,35 +698,35 @@ export default function ShopReportContent() {
 
       {/* Tab 2: Расход (Expense) */}
       {activeTab === 'expense' && (
-        <div className="flex-1 min-h-0 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-3 bg-amber-500/10">
-            <h2 className="text-base font-black text-amber-600 uppercase tracking-tight">
+        <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
+          <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-amber-500/10">
+            <h2 className="text-xs sm:text-base font-black text-amber-600 uppercase tracking-tight">
               Расход (Ishlatilgan xomashyo va materiallar)
             </h2>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(expFilter, setExpFilter)}
               <button
                 onClick={addExpense}
-                className="text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 border border-amber-200 dark:border-amber-900 px-3 py-1.5 rounded-lg hover:bg-amber-50"
+                className="text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 border border-amber-200 dark:border-amber-900 px-2.5 py-1.5 rounded-lg hover:bg-amber-50"
               >
-                + Qo'shish
+                + Qo&apos;shish
               </button>
               {saveButton(dirtyExpenses, savingExpenses, saveExpenses)}
             </div>
           </div>
-          <div className="flex-1 overflow-auto custom-scrollbar p-0">
-            <table className="w-full text-left border-collapse min-w-[1500px]">
-              <thead className="bg-[#FFE699] dark:bg-amber-900/40 text-slate-900 dark:text-amber-100 text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-amber-300 dark:border-amber-700">
+          <div className="flex-1 overflow-auto max-h-[72vh] md:max-h-none custom-scrollbar p-0">
+            <table className="w-full text-left border-collapse min-w-[1400px]">
+              <thead className="bg-[#FFE699] dark:bg-amber-900/40 text-slate-900 dark:text-amber-100 text-[10px] font-bold uppercase sticky top-0 z-20 border-b border-amber-300 dark:border-amber-700">
                 <tr>
-                  <th className="p-2 border-r border-amber-300 dark:border-amber-700/50 min-w-[130px] bg-amber-200 dark:bg-amber-800">
+                  <th className="sticky left-0 z-20 p-2 border-r border-amber-300 dark:border-amber-700/50 w-[92px] min-w-[92px] sm:min-w-[125px] bg-amber-200 dark:bg-amber-800">
                     {dateFormatMode === 'long'
-                      ? (lang === 'ru' ? 'Число (месяц)' : 'Sana (oy nomi)')
+                      ? (lang === 'ru' ? 'Число (мес.)' : 'Sana (oy)')
                       : (lang === 'ru' ? 'Число' : 'Sana')}
                   </th>
                   {EXPENSE_FIELDS.map((f) => (
                     <th
                       key={f.field}
-                      className={`p-2 border-r border-amber-300 dark:border-amber-700/50 ${f.field === 'ses' || f.field === 'kitchen' ? 'bg-[#92D050] text-black' : ''}`}
+                      className={`p-1.5 sm:p-2 border-r border-amber-300 dark:border-amber-700/50 min-w-[78px] sm:min-w-[90px] text-center leading-tight ${f.field === 'ses' || f.field === 'kitchen' ? 'bg-[#92D050] text-black' : ''}`}
                     >
                       {f.label}
                       <br />
@@ -763,16 +763,16 @@ export default function ShopReportContent() {
                     key={row._new ? `new-${idx}` : row.date}
                     className={`hover:bg-amber-50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-amber-100/70 dark:bg-amber-500/10' : ''}`}
                   >
-                    <td className="p-1 border-r border-slate-200 dark:border-dark-750 bg-amber-100/50 dark:bg-amber-900/20">
+                    <td className="sticky left-0 z-10 p-1 border-r border-slate-200 dark:border-dark-750 bg-[#FFF3CD] dark:bg-dark-800">
                       {row._new ? (
                         <input
                           type="date"
                           value={row.date || ''}
                           onChange={(e) => updateExpense(idx, { date: e.target.value })}
-                          className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
+                          className="w-full bg-white dark:bg-dark-900 border border-amber-300 dark:border-dark-700 rounded px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
                         />
                       ) : (
-                        <div className="px-2 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                        <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
                           {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
                         </div>
                       )}
@@ -790,7 +790,7 @@ export default function ShopReportContent() {
                             step="any"
                             value={inputVal(row[f.field])}
                             onChange={(e) => updateExpense(idx, { [f.field]: e.target.value })}
-                            className={`w-full bg-transparent px-1 py-1 text-[11px] font-mono text-right outline-none ${defect ? 'text-red-600' : 'text-slate-800 dark:text-slate-300'}`}
+                            className={`w-full min-w-[68px] bg-white/90 dark:bg-dark-800/90 border border-amber-200/80 dark:border-dark-700 rounded px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none focus:border-amber-500 ${defect ? 'text-red-600' : 'text-slate-800 dark:text-slate-200'}`}
                           />
                         </td>
                       )
@@ -828,40 +828,40 @@ export default function ShopReportContent() {
 
       {/* Tab GP: Выпуск готовой продукции (ГП) */}
       {activeTab === 'gp' && (
-        <div className="flex-1 min-h-0 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-3 bg-emerald-500/10">
-            <h2 className="text-base font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight flex items-center gap-2">
-              <Package size={18} />
+        <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
+          <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-emerald-500/10">
+            <h2 className="text-xs sm:text-base font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight flex items-center gap-1.5">
+              <Package size={16} />
               <span>ГП (Выпуск готовой продукции)</span>
             </h2>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(gpFilter, setGpFilter)}
               <button
                 onClick={addGP}
-                className="text-xs font-bold bg-white dark:bg-dark-800 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 px-3 py-1.5 rounded-lg hover:bg-emerald-50"
+                className="text-xs font-bold bg-white dark:bg-dark-800 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 px-2.5 py-1.5 rounded-lg hover:bg-emerald-50"
               >
                 + Qo&apos;shish
               </button>
               {saveButton(dirtyGP, savingGP, saveGP)}
             </div>
           </div>
-          <div className="flex-1 overflow-auto custom-scrollbar p-0">
-            <table className="w-full text-left border-collapse min-w-[1200px]">
-              <thead className="bg-[#70AD47] text-white text-[10px] font-bold uppercase sticky top-0 z-10 border-b border-emerald-600">
+          <div className="flex-1 overflow-auto max-h-[72vh] md:max-h-none custom-scrollbar p-0">
+            <table className="w-full text-left border-collapse min-w-[1100px]">
+              <thead className="bg-[#70AD47] text-white text-[10px] font-bold uppercase sticky top-0 z-20 border-b border-emerald-600">
                 <tr>
-                  <th className="p-2 border-r border-emerald-600 min-w-[130px] bg-[#548235] text-white">
+                  <th className="sticky left-0 z-20 p-2 border-r border-emerald-600 w-[92px] min-w-[92px] sm:min-w-[125px] bg-[#548235] text-white">
                     {dateFormatMode === 'long'
-                      ? (lang === 'ru' ? 'Дата (месяц)' : 'Sana (oy nomi)')
+                      ? (lang === 'ru' ? 'Дата (мес.)' : 'Sana (oy)')
                       : (lang === 'ru' ? 'Дата' : 'Sana')}
                   </th>
                   {GP_FIELDS.map((f) => (
-                    <th key={f.field} className="p-2 border-r border-emerald-600/80 text-center">
+                    <th key={f.field} className="p-1.5 sm:p-2 border-r border-emerald-600/80 text-center min-w-[82px] sm:min-w-[95px] leading-tight">
                       {f.label}
                       <br />
                       <span className="font-normal text-[8px]">({f.unit})</span>
                     </th>
                   ))}
-                  <th className="p-2 border-r border-emerald-600/80 text-center bg-[#548235] text-white">ИТОГО</th>
+                  <th className="p-2 border-r border-emerald-600/80 text-center min-w-[78px] bg-[#548235] text-white">ИТОГО</th>
                   <th className="p-2 w-10"></th>
                 </tr>
               </thead>
@@ -894,16 +894,16 @@ export default function ShopReportContent() {
                       key={row._new ? `new-${idx}` : row.date}
                       className={`hover:bg-emerald-50/50 dark:hover:bg-dark-800/50 ${row._dirty ? 'bg-emerald-100/60 dark:bg-emerald-500/10' : ''}`}
                     >
-                      <td className="p-1 border-r border-slate-200 dark:border-dark-750 bg-emerald-50/60 dark:bg-emerald-900/10">
+                      <td className="sticky left-0 z-10 p-1 border-r border-slate-200 dark:border-dark-750 bg-emerald-50 dark:bg-dark-800">
                         {row._new ? (
                           <input
                             type="date"
                             value={row.date || ''}
                             onChange={(e) => updateGP(idx, { date: e.target.value })}
-                            className="w-full bg-transparent px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
+                            className="w-full bg-white dark:bg-dark-900 border border-emerald-300 dark:border-dark-700 rounded px-1 py-1 text-[11px] font-bold text-slate-900 dark:text-white outline-none"
                           />
                         ) : (
-                          <div className="px-2 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                          <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 dark:text-white whitespace-nowrap">
                             {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
                           </div>
                         )}
@@ -915,7 +915,7 @@ export default function ShopReportContent() {
                             step="any"
                             value={inputVal(row[f.field])}
                             onChange={(e) => updateGP(idx, { [f.field]: e.target.value })}
-                            className="w-full bg-transparent px-1 py-1 text-[11px] font-mono text-right outline-none text-slate-800 dark:text-slate-300"
+                            className="w-full min-w-[68px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-200"
                           />
                         </td>
                       ))}
@@ -967,7 +967,7 @@ export default function ShopReportContent() {
 
       {/* Tab 4: Arxiv (History) */}
       {activeTab === 'history' && (
-        <div className="flex-1 min-h-0 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col p-4 space-y-4">
+        <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col p-3 sm:p-4 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-3 gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mr-4">Saqlangan Arxivlar</h2>
