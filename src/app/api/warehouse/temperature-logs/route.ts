@@ -23,6 +23,32 @@ async function ensureTable() {
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `)
+
+    await prisma.$executeRawUnsafe(`ALTER TABLE "TemperatureLog" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;`).catch(() => {})
+
+    // Check count and seed if empty
+    const countRes: any = await prisma.$queryRawUnsafe(`SELECT COUNT(*)::int as count FROM "TemperatureLog"`)
+    const count = countRes?.[0]?.count || 0
+
+    if (count === 0) {
+      const sampleTempRows = [
+        { date: '2025-06-02', time: '8:00', icebergTemp: 3.2, onionTemp: 3.5, tomatoTemp: 4.1, carrotTemp: 3.8, cabbageTemp: 3.0, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+        { date: '2025-06-02', time: '17:00', icebergTemp: 3.5, onionTemp: 3.8, tomatoTemp: 4.2, carrotTemp: 4.0, cabbageTemp: 3.2, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+        { date: '2025-06-03', time: '8:00', icebergTemp: 3.1, onionTemp: 3.6, tomatoTemp: 3.9, carrotTemp: 3.7, cabbageTemp: 3.1, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+        { date: '2025-06-03', time: '17:00', icebergTemp: 3.4, onionTemp: 4.0, tomatoTemp: 4.3, carrotTemp: 3.9, cabbageTemp: 3.4, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+        { date: '2025-06-04', time: '8:00', icebergTemp: 3.0, onionTemp: 3.4, tomatoTemp: 3.8, carrotTemp: 3.5, cabbageTemp: 3.0, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+        { date: '2025-06-04', time: '17:00', icebergTemp: 3.3, onionTemp: 3.9, tomatoTemp: 4.1, carrotTemp: 3.8, cabbageTemp: 3.3, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+        { date: '2025-06-05', time: '8:00', icebergTemp: 3.2, onionTemp: 3.7, tomatoTemp: 4.0, carrotTemp: 3.6, cabbageTemp: 3.2, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+        { date: '2025-06-05', time: '17:00', icebergTemp: 3.6, onionTemp: 4.1, tomatoTemp: 4.4, carrotTemp: 4.1, cabbageTemp: 3.5, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
+      ]
+
+      for (const row of sampleTempRows) {
+        await prisma.$executeRawUnsafe(`
+          INSERT INTO "TemperatureLog" ("date", "time", "icebergTemp", "onionTemp", "tomatoTemp", "carrotTemp", "cabbageTemp", "deviation", "correctiveAction", "responsible")
+          VALUES ('${row.date}', '${row.time}', ${row.icebergTemp}, ${row.onionTemp}, ${row.tomatoTemp}, ${row.carrotTemp}, ${row.cabbageTemp}, '${row.deviation}', '${row.correctiveAction}', '${row.responsible}')
+        `)
+      }
+    }
   } catch (err) {
     console.error('Error ensuring TemperatureLog table:', err)
   }

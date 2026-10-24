@@ -27,6 +27,8 @@ async function ensureTableAndSeed() {
       );
     `)
 
+    await prisma.$executeRawUnsafe(`ALTER TABLE "RawMaterialMovementLog" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;`).catch(() => {})
+
     // Check count and seed if empty
     const countRes: any = await prisma.$queryRawUnsafe(`SELECT COUNT(*)::int as count FROM "RawMaterialMovementLog"`)
     const count = countRes?.[0]?.count || 0
@@ -343,7 +345,7 @@ export async function POST(request: NextRequest) {
 
     const insertQuery = `
       INSERT INTO "RawMaterialMovementLog" 
-      ("orderNumber", "arrivalDate", "deliveryTime", "productName", "supplierName", "batchNumber", "receivedWeightKg", "storageTemp810", "storageTemp1700", "issuedToProduction", "issuedKg", "returnedFromProductionKg", "endOfDayBalanceKg", "responsiblePerson", "notes")
+      ("orderNumber", "arrivalDate", "deliveryTime", "productName", "supplierName", "batchNumber", "receivedWeightKg", "storageTemp810", "storageTemp1700", "issuedToProduction", "issuedKg", "returnedFromProductionKg", "endOfDayBalanceKg", "responsiblePerson", "notes", "updatedAt")
       VALUES (
         ${parseInt(orderNumber) || 1},
         '${arrivalDate.replace(/'/g, "''")}',
@@ -359,7 +361,8 @@ export async function POST(request: NextRequest) {
         ${retKg},
         ${balance},
         '${resp.replace(/'/g, "''")}',
-        ${notes ? `'${notes.replace(/'/g, "''")}'` : 'NULL'}
+        ${notes ? `'${notes.replace(/'/g, "''")}'` : 'NULL'},
+        NOW()
       )
       RETURNING *;
     `
