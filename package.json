@@ -1,6 +1,8 @@
 {
-  "name": "kiruvchi-xomashyo-nazorat",
-  "version": "0.1.0",
+  "name": "green-processing-erp",
+  "version": "1.0.0",
+  "description": "Green Processing ERP Desktop Application",
+  "author": "Green Processing LLC",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -8,8 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "electron:dev": "electron .",
-    "electron:build": "set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win --x64",
+    "desktop:build": "cd desktop && npx electron-builder --config electron-builder.json",
+    "desktop:dev": "electron desktop",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",

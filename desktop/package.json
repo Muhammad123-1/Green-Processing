@@ -1,0 +1,7 @@
+{
+  "name": "green-processing-erp",
+  "version": "1.0.0",
+  "description": "Green Processing ERP Desktop Client",
+  "author": "Green Processing LLC",
+  "main": "main.js"
+}

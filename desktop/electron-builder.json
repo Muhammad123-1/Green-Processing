@@ -1,0 +1,29 @@
+{
+  "appId": "uz.greenprocessing.erp",
+  "productName": "Green Processing ERP",
+  "electronVersion": "43.1.0",
+  "directories": {
+    "output": "../dist-desktop"
+  },
+  "files": [
+    "main.js",
+    "package.json"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Green Processing ERP"
+  }
+}
