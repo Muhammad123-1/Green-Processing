@@ -209,6 +209,7 @@ public class MainActivity extends Activity {
         });
 
         if (savedInstanceState == null) {
+            webView.clearCache(true);
             webView.loadUrl(APP_URL);
         }
     }
