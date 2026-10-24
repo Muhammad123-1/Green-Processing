@@ -227,26 +227,42 @@ export async function POST(req: NextRequest) {
     let updatedDaysCount = 0
     let newArrivalsCount = 0
 
-    // Save Arrivals: only add rows that are not already in the DB (no duplicates)
+    // Save Arrivals: update existing rows if quantity changed, insert new rows (no duplicates)
     if (arrivals.length > 0) {
       const rowKey = (a: any) =>
-        [a.date, (a.nomenclature || '').trim(), Number(a.quantity) || 0, (a.supplier || '').trim(), (a.batch || '').trim()].join('|')
+        [
+          a.date,
+          (a.nomenclature || '').trim().toLowerCase(),
+          (a.supplier || '').trim().toLowerCase(),
+          (a.batch || '').trim().toLowerCase(),
+        ].join('|')
 
-      const existing = await prisma.shopArrival.findMany({
-        select: { date: true, nomenclature: true, quantity: true, supplier: true, batch: true },
-      })
-      const existingCounts = new Map<string, number>()
-      existing.forEach((a) => existingCounts.set(rowKey(a), (existingCounts.get(rowKey(a)) || 0) + 1))
+      const existingArrivals = await prisma.shopArrival.findMany()
+      const existingMap = new Map<string, (typeof existingArrivals)[0]>()
+      existingArrivals.forEach((a) => existingMap.set(rowKey(a), a))
 
       const toInsert: any[] = []
       for (const a of arrivals) {
+        if (!a.nomenclature) continue
         const k = rowKey(a)
-        const left = existingCounts.get(k) || 0
-        if (left > 0) existingCounts.set(k, left - 1)
-        else toInsert.push(a)
+        const match = existingMap.get(k)
+        if (match) {
+          if (Math.abs(match.quantity - a.quantity) > 0.001) {
+            await prisma.shopArrival.update({
+              where: { id: match.id },
+              data: { quantity: a.quantity },
+            })
+          }
+        } else {
+          if (a.quantity > 0) {
+            toInsert.push(a)
+          }
+        }
       }
-      if (toInsert.length > 0) await prisma.shopArrival.createMany({ data: toInsert })
-      newArrivalsCount = toInsert.length
+      if (toInsert.length > 0) {
+        await prisma.shopArrival.createMany({ data: toInsert })
+        newArrivalsCount = toInsert.length
+      }
     }
 
     // Collect all dates that have data

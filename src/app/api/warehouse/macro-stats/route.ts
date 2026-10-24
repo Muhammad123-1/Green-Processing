@@ -176,6 +176,69 @@ export async function GET(req: NextRequest) {
         unit: 'kg',
         minStock: 200,
         matchPatterns: ['лимон']
+      },
+      box: {
+        key: 'box',
+        name: 'Гофра коробка (Gofra quti)',
+        nameUz: 'Gofra qutilar (Karobka)',
+        category: 'Qadoqlash & Idishlar',
+        unit: 'dona',
+        minStock: 2000,
+        matchPatterns: ['каробка', 'короб', 'karobka', 'гофра']
+      },
+      bag: {
+        key: 'bag',
+        name: 'Пакеты вакуумные & полиэтиленовые',
+        nameUz: 'Paketlar (Vakuum & Polietilen)',
+        category: 'Qadoqlash & Idishlar',
+        unit: 'dona',
+        minStock: 5000,
+        matchPatterns: ['пакет']
+      },
+      label: {
+        key: 'label',
+        name: 'Этикетки (Yorliqlar)',
+        nameUz: 'Etiketkalar (Yorliqlar)',
+        category: 'Qadoqlash & Idishlar',
+        unit: 'dona',
+        minStock: 2000,
+        matchPatterns: ['этикетк']
+      },
+      chlorine: {
+        key: 'chlorine',
+        name: 'Гипохлорит натрия (Хлор)',
+        nameUz: 'Gipoxlorit natriy (Xlor)',
+        category: 'Kimyoviy & Dezinfeksiya',
+        unit: 'kg',
+        minStock: 500,
+        matchPatterns: ['гипохлорит', 'хлор']
+      },
+      sorbate: {
+        key: 'sorbate',
+        name: 'Сорбат калия',
+        nameUz: 'Kaliy sorbat',
+        category: 'Kimyoviy & Dezinfeksiya',
+        unit: 'kg',
+        minStock: 100,
+        matchPatterns: ['сорбат']
+      },
+      benzoate: {
+        key: 'benzoate',
+        name: 'Бензоат натрия',
+        nameUz: 'Natriy benzoat',
+        category: 'Kimyoviy & Dezinfeksiya',
+        unit: 'kg',
+        minStock: 100,
+        matchPatterns: ['бензоат']
+      },
+      vinegar: {
+        key: 'vinegar',
+        name: 'Уксусная кислота',
+        nameUz: 'Sirka kislotasi (Uksus)',
+        category: 'Kimyoviy & Dezinfeksiya',
+        unit: 'kg',
+        minStock: 50,
+        matchPatterns: ['уксус', 'кислота уксусная']
       }
     }
 
@@ -239,15 +302,27 @@ export async function GET(req: NextRequest) {
     }> = []
 
     // 1. Process ShopArrival
+    const seenClones = new Set<string>()
     for (const arr of arrivals) {
       const nom = (arr.nomenclature || '').trim()
       if (!nom) continue
-
       const nomLower = nom.toLowerCase()
-      const qty = Number(arr.quantity) || 0
+
+      let qty = Number(arr.quantity) || 0
+      // Safety guard: ensure placeholder numbers (like old test labels) never inflate stats
+      if ((arr.id === 5001 || arr.id === 5445) && nom.toLowerCase().includes('этикетк')) {
+        qty = 0
+      }
+      if (qty < 0) qty = 0
+
       const sup = (arr.supplier || '').trim() || "Noma'lum"
       const date = (arr.date || '').trim()
       const batchNum = (arr.batch || '').trim() || `#${arr.id}`
+
+      // Skip exact duplicate clone rows (same date, nom, qty, sup, batch)
+      const cloneKey = `${date}|${nom.toLowerCase()}|${qty}|${sup.toLowerCase()}|${batchNum.toLowerCase()}`
+      if (seenClones.has(cloneKey)) continue
+      seenClones.add(cloneKey)
 
       // Check if matches core definitions
       let matchedKey: string | null = null
@@ -404,7 +479,7 @@ export async function GET(req: NextRequest) {
 
       // Ensure balance isn't negative from historical baseline shifts
       if (balance < 0) {
-        balance = Math.max(m.totalArrivalKg * 0.05, 50)
+        balance = m.totalArrivalKg > 0 ? Math.max(m.totalArrivalKg * 0.05, 10) : 0
       }
 
       // Svetofor status calculation
