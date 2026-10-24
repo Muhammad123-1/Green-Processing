@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useChatBadge } from '@/store/chatBadge'
 
 export interface UserItem {
   id: number
@@ -119,6 +120,7 @@ export default function ChatContent({
   userName?: string
 }) {
   const { lang } = useLanguage()
+  const setUnreadCount = useChatBadge((s) => s.setUnreadCount)
 
   // Navigation: 'users' (DMs) | 'channels' (Groups)
   const [navTab, setNavTab] = useState<'users' | 'channels'>('users')
@@ -208,6 +210,13 @@ export default function ChatContent({
       if (res.ok) {
         const data = await res.json()
         setMessages(data)
+        // Refresh unread count
+        fetch('/api/chat/unread')
+          .then((r) => r.json())
+          .then((d) => {
+            if (typeof d.unreadCount === 'number') setUnreadCount(d.unreadCount)
+          })
+          .catch(() => {})
       }
     } catch {
       // ignore

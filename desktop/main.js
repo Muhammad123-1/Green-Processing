@@ -1,17 +1,32 @@
-const { app, BrowserWindow, shell, Menu } = require('electron')
+const { app, BrowserWindow, shell, Menu, nativeImage } = require('electron')
 const path = require('path')
 
 const APP_URL = 'https://green-processing.vercel.app'
 
 let mainWindow = null
+let redDotIcon = null
+
+function getIcons() {
+  const iconPath = path.join(__dirname, 'icon.png')
+  const redDotPath = path.join(__dirname, 'red_dot.png')
+  try {
+    redDotIcon = nativeImage.createFromPath(redDotPath)
+  } catch (err) {
+    console.warn('Could not load red dot overlay icon:', err)
+  }
+  return iconPath
+}
 
 function createWindow() {
+  const appIconPath = getIcons()
+
   mainWindow = new BrowserWindow({
     width: 1366,
     height: 850,
     minWidth: 1024,
     minHeight: 700,
     title: 'Green Processing ERP',
+    icon: appIconPath,
     backgroundColor: '#070C16',
     autoHideMenuBar: true,
     show: false,
@@ -23,18 +38,44 @@ function createWindow() {
     }
   })
 
-  // Prevent title flashing
   mainWindow.setTitle('Green Processing ERP')
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
 
-  mainWindow.on('page-title-updated', (e) => {
-    e.preventDefault()
+  // Listen to document.title updates from the web app
+  mainWindow.on('page-title-updated', (event, title) => {
+    event.preventDefault()
+
+    const hasUnread = /\(\d+\)/.test(title) || title.includes('🔴') || (title.startsWith('(') && title.includes(')'))
+
+    if (hasUnread) {
+      mainWindow.setTitle(title)
+
+      // Set red dot badge on Windows Taskbar icon
+      if (process.platform === 'win32' && redDotIcon && !redDotIcon.isEmpty()) {
+        mainWindow.setOverlayIcon(redDotIcon, 'Yangi xabar keldi')
+      }
+
+      // Flash taskbar button if app is in background or minimized
+      if (!mainWindow.isFocused()) {
+        mainWindow.flashFrame(true)
+      }
+    } else {
+      mainWindow.setTitle('Green Processing ERP')
+      if (process.platform === 'win32') {
+        mainWindow.setOverlayIcon(null, '')
+      }
+      mainWindow.flashFrame(false)
+    }
   })
 
-  // Safe external links - open standard external sites in default browser
+  mainWindow.on('focus', () => {
+    mainWindow.flashFrame(false)
+  })
+
+  // Safe external links - open external sites in default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://green-processing.vercel.app')) {
       return { action: 'allow' }
@@ -56,7 +97,7 @@ function createWindow() {
   })
 }
 
-// Single instance lock - prevent opening multiple conflicting windows
+// Single instance lock
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
@@ -70,7 +111,11 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(() => {
-    // Basic application menu with keyboard shortcuts (Reload, DevTools, Fullscreen)
+    // Set AppUserModelId for clean Windows taskbar notification grouping
+    if (process.platform === 'win32') {
+      app.setAppUserModelId('uz.greenprocessing.erp')
+    }
+
     const template = [
       {
         label: 'View',

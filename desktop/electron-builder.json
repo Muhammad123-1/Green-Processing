@@ -7,9 +7,13 @@
   },
   "files": [
     "main.js",
-    "package.json"
+    "package.json",
+    "icon.png",
+    "icon.ico",
+    "red_dot.png"
   ],
   "win": {
+    "icon": "icon.ico",
     "target": [
       {
         "target": "nsis",

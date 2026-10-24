@@ -35,6 +35,7 @@ import { Archive,
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
+import { useChatBadge } from '@/store/chatBadge'
 
 const navSections = [
   {
@@ -113,6 +114,7 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
   const pathname = usePathname()
   const { t, formatDual, lang } = useLanguage()
   const { isOpen, close } = useSidebar()
+  const unreadCount = useChatBadge((s) => s.unreadCount)
 
   const translate = t
   const formatText = formatDual
@@ -185,6 +187,9 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
                   (item.href !== '/dashboard' && pathname.startsWith(item.href)) ||
                   (item.href === '/orders' && pathname.startsWith('/supply'))
 
+                const isChat = item.key === 'chat'
+                const hasChatBadge = isChat && unreadCount > 0
+
                 if ((item as any).highlight) {
                   return (
                     <Link
@@ -196,7 +201,13 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
                                  transition-all duration-200 my-2"
                     >
                       <Icon size={18} />
-                      <span>{translate(item.key)}</span>
+                      <span className="flex-1">{translate(item.key)}</span>
+                      {hasChatBadge && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black shadow-md shadow-rose-500/40 animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                          <span>{unreadCount}</span>
+                        </span>
+                      )}
                     </Link>
                   )
                 }
@@ -208,8 +219,22 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
                     onClick={close}
                     className={`sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${isActive ? 'bg-dark-800 text-white' : 'text-slate-400 hover:bg-dark-800 hover:text-white'}`}
                   >
-                    <Icon size={18} className={isActive ? 'text-blue-400' : ''} />
+                    <div className="relative">
+                      <Icon size={18} className={isActive ? 'text-blue-400' : ''} />
+                      {hasChatBadge && (
+                        <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                        </span>
+                      )}
+                    </div>
                     <span className="flex-1">{translate(item.key)}</span>
+                    {hasChatBadge && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black shadow-md shadow-rose-500/30 animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                        <span>{unreadCount}</span>
+                      </span>
+                    )}
                     {isActive && <ChevronRight size={14} className="text-blue-400" />}
                   </Link>
                 )

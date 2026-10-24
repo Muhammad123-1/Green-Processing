@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import MobileNav from '@/components/layout/MobileNav'
+import ChatBadgeListener from '@/components/chat/ChatBadgeListener'
 import { getSession } from '@/app/actions/auth'
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default async function DashboardLayout({
   
   return (
     <div className="flex h-screen bg-dark-950 overflow-hidden">
+      <ChatBadgeListener />
       <Sidebar userRole={session?.role} userName={session?.name} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />

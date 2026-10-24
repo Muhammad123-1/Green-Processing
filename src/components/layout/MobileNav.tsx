@@ -13,11 +13,13 @@ import {
 } from 'lucide-react'
 import { useSidebar } from '@/store/sidebar'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useChatBadge } from '@/store/chatBadge'
 
 export default function MobileNav({ userRole }: { userRole?: string }) {
   const pathname = usePathname()
   const { toggle, isOpen } = useSidebar()
   const { formatDual } = useLanguage()
+  const unreadCount = useChatBadge((s) => s.unreadCount)
 
   const isDirector = userRole === 'DIRECTOR'
   const homeHref = isDirector ? '/director' : '/dashboard'
@@ -95,10 +97,16 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <div className={`w-9 h-8 flex items-center justify-center rounded-xl transition-all ${
+          <div className={`relative w-9 h-8 flex items-center justify-center rounded-xl transition-all ${
             isOpen ? 'bg-emerald-500/20 border border-emerald-500/40' : 'bg-transparent'
           }`}>
             <Menu size={19} className={isOpen ? 'text-emerald-400' : 'text-slate-400'} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+              </span>
+            )}
           </div>
           <span className="text-[10px] mt-0.5 tracking-tight font-medium leading-none">
             {formatDual('Menyu', 'Меню', 'Menu')}
