@@ -51,6 +51,34 @@ export async function PUT(request: NextRequest, { params }: Params) {
       data: updateData,
       include: { product: true }
     })
+
+    // If syncArrival is requested and quantity is delivered, record into ShopArrival if not exists
+    if (body.syncArrival && updateData.deliveredQuantity && updateData.deliveredQuantity > 0) {
+      try {
+        const batchTag = body.arrivalBatch?.trim() || `PRX-ORD-${order.id}`
+        const existingArr = await prisma.shopArrival.findFirst({
+          where: {
+            batch: batchTag,
+            nomenclature: order.product.name
+          }
+        })
+        if (!existingArr) {
+          const today = new Date().toISOString().split('T')[0]
+          await prisma.shopArrival.create({
+            data: {
+              date: today,
+              nomenclature: order.product.name,
+              quantity: updateData.deliveredQuantity,
+              supplier: order.supplierName || 'Ta\'minotchi',
+              batch: batchTag
+            }
+          })
+        }
+      } catch (arrErr) {
+        console.warn('Sync to shop arrival error:', arrErr)
+      }
+    }
+
     return NextResponse.json(order)
   } catch (error: any) {
     console.error('Update order error:', error)
