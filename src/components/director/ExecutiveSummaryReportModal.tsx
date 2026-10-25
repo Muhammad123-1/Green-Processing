@@ -103,39 +103,52 @@ export default function ExecutiveSummaryReportModal({
 
   const modalContent = (
     <div
+      id="executive-report-portal-root"
       onClick={onClose}
       className="fixed inset-0 z-[100] w-screen h-screen flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto cursor-pointer"
     >
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body {
+          @page {
+            size: A4 portrait;
+            margin: 6mm 8mm;
+          }
+          html, body {
             background: #ffffff !important;
             color: #0f172a !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
-          body * {
-            visibility: hidden !important;
+          body > *:not(#executive-report-portal-root) {
+            display: none !important;
           }
-          #executive-report-a4, #executive-report-a4 * {
-            visibility: visible !important;
-          }
-          #executive-report-a4 {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
+          #executive-report-portal-root {
+            display: block !important;
+            position: static !important;
             width: 100% !important;
             max-width: 100% !important;
-            min-height: 100% !important;
             height: auto !important;
             margin: 0 !important;
-            padding: 6mm 8mm !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+          }
+          #executive-report-a4 {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
             background: #ffffff !important;
-            z-index: 999999 !important;
-          }
-          @page {
-            size: A4 portrait;
-            margin: 0;
           }
           .no-print {
             display: none !important;

@@ -280,7 +280,10 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
   })
 
   const modalContent = (
-    <div className="survey-printable-portal survey-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+    <div
+      id="survey-print-portal-root"
+      className="survey-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+    >
       {/* PRINT-SPECIFIC CSS INJECTION */}
       <style
         dangerouslySetInnerHTML={{
@@ -295,52 +298,64 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
             color: #0f172a !important;
             margin: 0 !important;
             padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
+            overflow: visible !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          body * {
-            visibility: hidden !important;
+          /* 1. Remove background webpage from print flow completely (fixes the 9 blank pages!) */
+          body > *:not(#survey-print-portal-root) {
+            display: none !important;
           }
-          .survey-printable-portal, .survey-printable-portal * {
-            visibility: visible !important;
+          /* 2. Make report portal root the only visible, natural document block */
+          #survey-print-portal-root {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+            inset: auto !important;
           }
-          .survey-printable-portal {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+          #survey-print-portal-root .survey-modal-card {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            max-height: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          #survey-print-portal-root .survey-printable-scroll {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #ffffff !important;
+          }
+          #survey-printable-area {
+            display: block !important;
+            position: static !important;
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
             background: #ffffff !important;
-            box-sizing: border-box !important;
-            inset: auto !important;
-          }
-          .survey-modal-overlay {
-            position: static !important;
-            overflow: visible !important;
-            background: transparent !important;
-            padding: 0 !important;
-            display: block !important;
-            inset: auto !important;
-            width: 100% !important;
-            height: auto !important;
-          }
-          .survey-modal-card {
-            border: none !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            max-height: none !important;
-            overflow: visible !important;
-            background: transparent !important;
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-          .survey-printable-scroll {
-            overflow: visible !important;
-            padding: 0 !important;
           }
           .no-print {
             display: none !important;
