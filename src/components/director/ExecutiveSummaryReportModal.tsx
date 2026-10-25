@@ -80,7 +80,7 @@ export default function ExecutiveSummaryReportModal({
   const arrivalAcceptedPct = totalArrivalKg > 0 ? ((acceptedKg / totalArrivalKg) * 100).toFixed(1) : '100'
 
   const totalBoxes = production.totalOutputBoxes || 0
-  const yieldPct = production.avgYieldPercent ? production.avgYieldPercent.toFixed(1) : '91.5'
+  const yieldPct = production.avgYieldPercent != null ? production.avgYieldPercent.toFixed(1) : '-'
   const shiftsCount = production.checklistsCount || 0
   const prodRejectKg = production.rejectedKg || 0
 
@@ -92,11 +92,11 @@ export default function ExecutiveSummaryReportModal({
   const activeStaff = employees.activeUsersWithActions || 0
   const totalStaff = employees.totalUsers || 0
   const mealName = kitchen.latestMeal?.mealName || formatDual("Issiq tushlik ovqati", "Горячий обед", "Hot lunch meal")
-  const mealServings = kitchen.latestMeal?.servings || 45
+  const mealServings = kitchen.latestMeal?.servings || 0
   const chefName = kitchen.latestMeal?.preparedBy || formatDual("Sex oshpazi", "Шеф-повар", "Head Chef")
-  const mealRating = kitchen.satisfactionPercent || 96
-  const surveySatisfaction = surveys.satisfactionPercent ? surveys.satisfactionPercent.toFixed(1) : '96.4'
-  const surveyAvg = surveys.avgRating ? surveys.avgRating.toFixed(2) : '4.82'
+  const mealRating = kitchen.satisfactionPercent != null ? kitchen.satisfactionPercent : 100
+  const surveySatisfaction = surveys.satisfactionPercent != null ? surveys.satisfactionPercent.toFixed(1) : '-'
+  const surveyAvg = surveys.avgRating ? surveys.avgRating.toFixed(2) : '-'
 
   const handlePrint = () => {
     window.print()

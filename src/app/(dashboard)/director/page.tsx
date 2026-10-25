@@ -71,7 +71,7 @@ export default function DirectorPage() {
   const dateLocale: string = directorLang === 'ru' ? 'ru-RU' : directorLang === 'en' ? 'en-US' : 'uz-UZ'
 
   // Period state
-  const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('month')
+  const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('all')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
 
@@ -775,23 +775,23 @@ export default function DirectorPage() {
             {formatDual("Ishlab chiqarish", "Производство", "Production")}
           </span>
           <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-            {kpis?.production?.totalOutputBoxes ? `${kpis.production.totalOutputBoxes} ${formatDual("quti", "кор.", "boxes")}` : `${kpis?.production?.checklistsCount || 0} ${formatDual("smena", "смен", "shifts")}`}
+            {kpis?.production?.totalOutputBoxes ? `${kpis.production.totalOutputBoxes.toLocaleString()} ${formatDual("quti", "кор.", "boxes")}` : `${kpis?.production?.checklistsCount || 0} ${formatDual("smena", "смен", "shifts")}`}
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            {kpis?.production?.checklistsCount || 0} {formatDual("ta smena cheklisti", "чек-листов смен", "shift checklists")}
+            {kpis?.production?.totalOutputKg ? `${kpis.production.totalOutputKg.toLocaleString()} kg ${formatDual("tayyor mahsulot", "готовой прод.", "finished product")}` : `${kpis?.production?.checklistsCount || 0} ${formatDual("ta smena", "смен", "shifts")}`}
           </p>
 
           <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs">
             <div>
               <span className="text-[10px] text-slate-400 block">{formatDual("Brak:", "Брак:", "Defect:")}</span>
               <span className={`font-bold ${kpis?.production?.rejectedKg > 0 ? 'text-amber-600' : 'text-slate-500'}`}>
-                {kpis?.production?.rejectedKg || 0} kg
+                {kpis?.production?.rejectedKg ? `${kpis.production.rejectedKg.toLocaleString()} kg` : '0 kg'}
               </span>
             </div>
             <div>
               <span className="text-[10px] text-slate-400 block">{formatDual("Chiqish:", "Выход:", "Yield:")}</span>
               <span className="font-bold text-emerald-600">
-                {kpis?.production?.avgYieldPercent ? `${kpis.production.avgYieldPercent.toFixed(1)}%` : 'Standard'}
+                {kpis?.production?.avgYieldPercent ? `${kpis.production.avgYieldPercent.toFixed(1)}%` : '-'}
               </span>
             </div>
           </div>
@@ -826,7 +826,7 @@ export default function DirectorPage() {
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-2">
-            {formatDual("Jami", "Всего", "Total")} {kpis?.warehouse?.totalProductsCount || 0} {formatDual("xil mahsulot", "вид. прод.", "product types")}
+            {kpis?.warehouse?.totalInventoryKg ? `${kpis.warehouse.totalInventoryKg.toLocaleString()} kg (${kpis?.warehouse?.totalProductsCount || 0} ${formatDual("xil xomashyo", "вид. сырья", "raw materials")})` : `${formatDual("Jami", "Всего", "Total")} ${kpis?.warehouse?.totalProductsCount || 0} ${formatDual("xil mahsulot", "вид. прод.", "product types")}`}
           </p>
 
           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs">
@@ -895,16 +895,16 @@ export default function DirectorPage() {
             {formatDual("Mijozlar bahosi", "Оценка клиентов", "Customer feedback")}
           </span>
           <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-            {kpis?.surveys?.satisfactionPercent ? `${kpis.surveys.satisfactionPercent.toFixed(1)}%` : '96.4%'}
+            {kpis?.surveys?.satisfactionPercent != null ? `${kpis.surveys.satisfactionPercent.toFixed(1)}%` : '-'}
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            {kpis?.surveys?.responsesCount || 0} {formatDual("ta anketadan", "из анкет", "from responses")}
+            {kpis?.surveys?.responsesCount || 0} {formatDual("ta qabul va bahodan", "из оценок и приемок", "from receipts & reviews")}
           </p>
 
           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
             <span className="text-slate-400">{formatDual("O'rtacha baho:", "Средняя оценка:", "Average score:")}</span>
             <span className="font-bold text-blue-600">
-              {kpis?.surveys?.avgRating ? `${kpis.surveys.avgRating.toFixed(2)} / 5.0` : '4.82 / 5'}
+              {kpis?.surveys?.avgRating ? `${kpis.surveys.avgRating.toFixed(2)} / 5.0` : '-'}
             </span>
           </div>
         </div>
@@ -1126,7 +1126,7 @@ export default function DirectorPage() {
                     {formatDual("Yetarli", "В норме", "Sufficiency")}
                   </span>
                   <span className="text-xl font-black text-emerald-500">
-                    {kpis?.warehouse?.sufficiencyRate || 100}%
+                    {kpis?.warehouse?.sufficiencyRate != null ? `${kpis.warehouse.sufficiencyRate}%` : '-'}
                   </span>
                 </div>
               </div>
