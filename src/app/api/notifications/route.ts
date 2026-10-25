@@ -80,7 +80,30 @@ export async function GET(req: NextRequest) {
       management: { uz: 'Rahbariyat & Direktor Chati', ru: 'Чат руководства и директора', category: 'Direktor' }
     }
 
+    const currentUserId = session?.id || 0
+
     for (const msg of recentMessages) {
+      // Skip own messages
+      if (msg.sender === userName || msg.sender === userRole || msg.sender === String(currentUserId)) {
+        continue
+      }
+
+      // Skip already read messages
+      if (
+        msg.readBy.includes(userName) ||
+        msg.readBy.includes(userRole) ||
+        msg.readBy.includes(String(currentUserId))
+      ) {
+        continue
+      }
+
+      // Skip private DMs if current user is not a participant
+      if (msg.groupId.startsWith('dm_')) {
+        const parts = msg.groupId.replace('dm_', '').split('_')
+        const participantIds = parts.map((p) => parseInt(p, 10)).filter((n) => !isNaN(n))
+        if (!participantIds.includes(currentUserId)) continue
+      }
+
       const ch = channelNames[msg.groupId] || { uz: 'Zavod Chati', ru: 'Чат завода', category: 'Chat' }
       const isDirectorMsg = msg.groupId === 'management' || msg.sender.toLowerCase().includes('direktor')
 

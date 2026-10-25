@@ -39,12 +39,16 @@ export async function GET(req: NextRequest) {
 
     const unreadList = recentMessages.filter((msg) => {
       // 1. Skip own messages
-      if (msg.sender === userName || msg.sender === userRole) {
+      if (msg.sender === userName || msg.sender === userRole || msg.sender === String(userId)) {
         return false
       }
 
       // 2. Skip already read
-      if (msg.readBy.includes(userName) || msg.readBy.includes(userRole)) {
+      if (
+        msg.readBy.includes(userName) ||
+        msg.readBy.includes(userRole) ||
+        msg.readBy.includes(String(userId))
+      ) {
         return false
       }
 
@@ -52,7 +56,8 @@ export async function GET(req: NextRequest) {
       if (msg.groupId.startsWith('dm_')) {
         const parts = msg.groupId.replace('dm_', '').split('_')
         const participantIds = parts.map((p) => parseInt(p, 10)).filter((n) => !isNaN(n))
-        if (!participantIds.includes(userId) && !isAdminOrDirector) {
+        // Direct messages are private: ONLY notify the actual participants in this DM!
+        if (!participantIds.includes(userId)) {
           return false
         }
       } else if (msg.groupId === 'management') {

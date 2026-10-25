@@ -24,7 +24,8 @@ import {
   Truck,
   ShieldAlert,
   Sliders,
-  DollarSign
+  DollarSign,
+  Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -351,6 +352,44 @@ export default function ChatContent({
       }
     } catch {
       toast.error(lang === 'ru' ? 'Сообщение не отправлено' : 'Xabar yuborilmadi')
+    }
+  }
+
+  // Delete Message Handler
+  const handleDeleteMessage = async (msgId: number) => {
+    const confirmText = lang === 'ru' ? 'Удалить это сообщение?' : "Ushbu xabarni o'chirmoqchimisiz?"
+    if (!window.confirm(confirmText)) return
+
+    try {
+      const res = await fetch(`/api/chat?id=${msgId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== msgId))
+        toast.success(lang === 'ru' ? 'Сообщение удалено' : "Xabar o'chirildi")
+        fetchUnread()
+      } else {
+        toast.error(lang === 'ru' ? 'Ошибка при удалении' : "O'chirishda xatolik")
+      }
+    } catch {
+      toast.error(lang === 'ru' ? 'Ошибка при удалении' : "O'chirishda xatolik")
+    }
+  }
+
+  // Mark all as read handler
+  const handleMarkAllRead = async () => {
+    try {
+      const res = await fetch('/api/chat/read-all', { method: 'POST' })
+      if (res.ok) {
+        setUnreadCount(0)
+        setUnreadByGroup({})
+        setUnreadByUser({})
+        toast.success(
+          lang === 'ru'
+            ? 'Все сообщения отмечены как прочитанные'
+            : "Barcha xabarlar o'qilgan deb belgilandi"
+        )
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -683,9 +722,18 @@ export default function ChatContent({
               )}
             </div>
 
-            {/* Quick Status / Help */}
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+            {/* Quick Status / Mark All Read */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold transition-all shadow-xs"
+                title={lang === 'ru' ? 'Отметить все сообщения как прочитанные' : "Barcha xabarlarni o'qilgan deb belgilash"}
+              >
+                <CheckCheck size={14} />
+                <span>{lang === 'ru' ? 'Прочитать всё' : "Barchasini o'qildi qilish"}</span>
+              </button>
+              <span className="hidden sm:inline-block text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
                 🔒 {lang === 'ru' ? 'Шифрованный канал ERP' : 'ERP Himoyalangan Aloqa'}
               </span>
             </div>
@@ -722,7 +770,7 @@ export default function ChatContent({
                 return (
                   <div
                     key={msg.id}
-                    className={`flex flex-col max-w-[85%] sm:max-w-[72%] ${
+                    className={`group flex flex-col max-w-[85%] sm:max-w-[72%] ${
                       isMe ? 'ml-auto items-end' : 'mr-auto items-start'
                     }`}
                   >
@@ -762,7 +810,7 @@ export default function ChatContent({
                       )}
                     </div>
 
-                    {/* Meta info: Timestamp & Seen status */}
+                    {/* Meta info: Timestamp & Seen status & Delete */}
                     <div className="flex items-center gap-1.5 mt-1 mx-1.5">
                       <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -778,6 +826,21 @@ export default function ChatContent({
                             <Check size={12} className="text-slate-400" />
                           )}
                         </span>
+                      )}
+
+                      {/* Delete Message Button */}
+                      {(userRole === 'ADMIN' || userRole === 'DIRECTOR' || isMe) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteMessage(msg.id)
+                          }}
+                          className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 rounded-md transition-all ml-1 cursor-pointer"
+                          title={lang === 'ru' ? 'Удалить сообщение' : "Xabarni o'chirish"}
+                        >
+                          <Trash2 size={12} />
+                        </button>
                       )}
                     </div>
                   </div>

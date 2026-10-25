@@ -19,29 +19,76 @@ export async function GET(request: NextRequest) {
 
     // Mark unread messages as read by the current user
     const unreadMessagesIds = messages
-      .filter(msg => msg.sender !== userIdentifier && !msg.readBy.includes(userIdentifier) && !msg.readBy.includes(session.role))
+      .filter(
+        msg =>
+          msg.sender !== userIdentifier &&
+          msg.sender !== session.role &&
+          msg.sender !== String(session.id) &&
+          !msg.readBy.includes(userIdentifier) &&
+          !msg.readBy.includes(session.role) &&
+          !msg.readBy.includes(String(session.id))
+      )
       .map(msg => msg.id)
 
     if (unreadMessagesIds.length > 0) {
-      await prisma.chatMessage.updateMany({
-        where: { id: { in: unreadMessagesIds } },
-        data: {
-          readBy: {
-            push: userIdentifier
-          }
+      for (const id of unreadMessagesIds) {
+        const msg = messages.find(m => m.id === id)
+        const updatedReadBy = Array.from(
+          new Set([...(msg?.readBy || []), userIdentifier, session.role, String(session.id)])
+        ).filter(Boolean)
+        await prisma.chatMessage.update({
+          where: { id },
+          data: { readBy: updatedReadBy }
+        })
+        if (msg) {
+          msg.readBy = updatedReadBy
         }
-      })
-      
-      messages.forEach(msg => {
-        if (unreadMessagesIds.includes(msg.id)) {
-          msg.readBy.push(userIdentifier)
-        }
-      })
+      }
     }
     
     return NextResponse.json(messages)
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { searchParams } = new URL(request.url)
+    const idParam = searchParams.get('id')
+    const groupId = searchParams.get('groupId')
+    const userIdentifier = session.name || session.role
+    const isAdminOrDirector = session.role === 'ADMIN' || session.role === 'DIRECTOR'
+
+    if (idParam) {
+      const msgId = parseInt(idParam, 10)
+      if (isNaN(msgId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
+
+      const msg = await prisma.chatMessage.findUnique({ where: { id: msgId } })
+      if (!msg) return NextResponse.json({ error: 'Message not found' }, { status: 404 })
+
+      // Can delete if Admin/Director OR if the message is by this sender
+      if (!isAdminOrDirector && msg.sender !== userIdentifier && msg.sender !== session.role) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+
+      await prisma.chatMessage.delete({ where: { id: msgId } })
+      return NextResponse.json({ success: true, deletedId: msgId })
+    }
+
+    // Clear group messages (Admin or Director only)
+    if (groupId && isAdminOrDirector) {
+      await prisma.chatMessage.deleteMany({ where: { groupId } })
+      return NextResponse.json({ success: true, clearedGroupId: groupId })
+    }
+
+    return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
+  } catch (error) {
+    console.error('Delete chat error:', error)
+    return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 })
   }
 }
 
