@@ -85,7 +85,6 @@ export default function ExecutiveSummaryReportModal({
   const prodRejectKg = production.rejectedKg || 0
 
   const totalBrakKg = financialLoss.totalBrakKg || (rejectedArrivalKg + prodRejectKg)
-  const lossUzs = financialLoss.estimatedLossUzs || (totalBrakKg * 13500)
   const discrepancyKg = warehouse.transfersDiscrepancyKg || 0
   const totalStockKg = warehouse.totalInventoryKg || 0
 
@@ -308,9 +307,9 @@ export default function ExecutiveSummaryReportModal({
                   <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 mb-2">
                     <span className="font-black text-slate-900 text-xs uppercase flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-rose-600"></span>
-                      3. {formatDual("Yo'qotish va Zarar Tahlili", "Анализ потерь и ущерба", "Waste & Financial Loss")}
+                      3. {formatDual("Yo'qotish va Chiqindi Tahlili", "Анализ потерь и брака", "Waste & Scrap Analysis")}
                     </span>
-                    <span className="text-[10px] font-bold text-rose-700">{formatDual("Moliyaviy baho", "Финоценка", "Financial est.")}</span>
+                    <span className="text-[10px] font-bold text-rose-700">{formatDual("Texnologik chiqindi", "Техбрак", "Scrap analysis")}</span>
                   </div>
 
                   <div className="space-y-1.5">
@@ -323,10 +322,6 @@ export default function ExecutiveSummaryReportModal({
                       <b className={discrepancyKg > 0 ? "text-rose-600 font-bold" : "text-emerald-700 font-bold"}>
                         {discrepancyKg > 0 ? `${discrepancyKg} kg nomuvofiqlik` : "0 kg (Muvofiq)"}
                       </b>
-                    </div>
-                    <div className="flex justify-between items-center bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 mt-1">
-                      <span className="text-rose-900 font-bold text-[10px]">{formatDual("Brakdan baholangan zarar:", "Оценка ущерба от брака:", "Est. financial loss:")}</span>
-                      <b className="text-rose-700 font-black text-xs">~{lossUzs.toLocaleString()} so'm</b>
                     </div>
                   </div>
                 </div>
@@ -422,9 +417,9 @@ export default function ExecutiveSummaryReportModal({
               </span>
               <p className="text-slate-700 text-[10.5px]">
                 {formatDual(
-                  `Hisobot davrida ishlab chiqarish unumdorligi ${yieldPct}% ko'rsatkich bilan belgilangan texnologik me'yordan oshiq bajarildi. Xomashyo kirimi va ombor zaxiralari o'rtasida uzluksiz transfer ta'minlangan. Jami aniqlangan texnologik va saralash chiqindisi ${totalBrakKg} kg ni tashkil etib, baholangan yo'qotish ~${lossUzs.toLocaleString()} so'm doirasida saqlanmoqda. Barcha FSSC 22000 me'yorlari buzilishlarsiz bajarildi. Xodimlar va mijozlar qoniqish darajasi yuqori ijobiy baholangan.`,
-                  `За отчетный период производительность выпуска составила ${yieldPct}%, что превышает установленную норму. Обеспечено непрерывное перемещение сырья и готовой продукции. Суммарный объем технологического брака и сортировки составил ${totalBrakKg} кг с расчетной оценкой ~${lossUzs.toLocaleString()} сум. Критические контрольные точки FSSC 22000 соблюдены без отклонений. Удовлетворенность персонала и клиентов оценивается на высоком уровне.`,
-                  `During the reporting period, manufacturing yield was maintained at ${yieldPct}%, exceeding operational benchmark. Raw material receiving and internal stock transfers operated without critical delays. Total sorting and process scrap was recorded at ${totalBrakKg} kg with an estimated financial impact of ~${lossUzs.toLocaleString()} UZS. All FSSC 22000 and HACCP control points were strictly adhered to. Overall staff and customer satisfaction metrics remain in the upper tier.`
+                  `Hisobot davrida ishlab chiqarish unumdorligi ${yieldPct}% ko'rsatkich bilan belgilangan texnologik me'yordan oshiq bajarildi. Xomashyo kirimi va ombor zaxiralari o'rtasida uzluksiz transfer ta'minlangan. Jami aniqlangan texnologik va saralash chiqindisi ${totalBrakKg.toLocaleString()} kg ni tashkil etdi. Barcha FSSC 22000 me'yorlari buzilishlarsiz bajarildi. Xodimlar va mijozlar qoniqish darajasi yuqori ijobiy baholangan.`,
+                  `За отчетный период производительность выпуска составила ${yieldPct}%, что превышает установленную норму. Обеспечено непрерывное перемещение сырья и готовой продукции. Суммарный объем технологического брака и сортировки составил ${totalBrakKg.toLocaleString()} кг. Критические контрольные точки FSSC 22000 соблюдены без отклонений. Удовлетворенность персонала и клиентов оценивается на высоком уровне.`,
+                  `During the reporting period, manufacturing yield was maintained at ${yieldPct}%, exceeding operational benchmark. Raw material receiving and internal stock transfers operated without critical delays. Total sorting and process scrap was recorded at ${totalBrakKg.toLocaleString()} kg. All FSSC 22000 and HACCP control points were strictly adhered to. Overall staff and customer satisfaction metrics remain in the upper tier.`
                 )}
               </p>
             </div>
