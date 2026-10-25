@@ -146,6 +146,18 @@ export default function ChatContent({
   // Mobile sidebar toggle
   const [showMobileChat, setShowMobileChat] = useState(false)
 
+  // Unread indicators per group & per user
+  const [unreadByGroup, setUnreadByGroup] = useState<Record<string, number>>({})
+  const [unreadByUser, setUnreadByUser] = useState<Record<number, number>>({})
+
+  const totalDmUnread = useMemo(() => {
+    return Object.values(unreadByUser).reduce((sum, val) => sum + (val || 0), 0)
+  }, [unreadByUser])
+
+  const totalChannelsUnread = useMemo(() => {
+    return CHANNELS.reduce((sum, ch) => sum + (unreadByGroup[ch.id] || 0), 0)
+  }, [unreadByGroup])
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const lastMessageIdRef = useRef<number | null>(null)
@@ -189,12 +201,43 @@ export default function ChatContent({
     return `dm_user_${otherId}`
   }
 
+  // Fetch Unread details per group and per sender/user
+  const fetchUnread = async () => {
+    try {
+      const res = await fetch('/api/chat/unread', { cache: 'no-store' })
+      if (res.ok) {
+        const d = await res.json()
+        if (typeof d.unreadCount === 'number') setUnreadCount(d.unreadCount)
+        if (d.unreadByGroup) setUnreadByGroup(d.unreadByGroup)
+        if (d.unreadByUser) setUnreadByUser(d.unreadByUser)
+      }
+    } catch {}
+  }
+
+  // Periodic unread check across all conversations
+  useEffect(() => {
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 2500)
+    return () => clearInterval(interval)
+  }, [])
+
   // Switch to Direct Message with a User
   const selectUserDirectChat = (user: UserItem, openMobile = true) => {
     setSelectedUser(user)
     setSelectedChannel(null)
     const dmId = computeDmGroupId(currentUserId, user.id)
     setActiveGroupId(dmId)
+    // Clear unread immediately for this user in local state
+    setUnreadByUser((prev) => {
+      const copy = { ...prev }
+      delete copy[user.id]
+      return copy
+    })
+    setUnreadByGroup((prev) => {
+      const copy = { ...prev }
+      delete copy[dmId]
+      return copy
+    })
     if (openMobile) setShowMobileChat(true)
   }
 
@@ -203,6 +246,12 @@ export default function ChatContent({
     setSelectedChannel(channel)
     setSelectedUser(null)
     setActiveGroupId(channel.id)
+    // Clear unread immediately for this channel in local state
+    setUnreadByGroup((prev) => {
+      const copy = { ...prev }
+      delete copy[channel.id]
+      return copy
+    })
     if (openMobile) setShowMobileChat(true)
   }
 
@@ -214,13 +263,8 @@ export default function ChatContent({
       if (res.ok) {
         const data = await res.json()
         setMessages(data)
-        // Refresh unread count
-        fetch('/api/chat/unread')
-          .then((r) => r.json())
-          .then((d) => {
-            if (typeof d.unreadCount === 'number') setUnreadCount(d.unreadCount)
-          })
-          .catch(() => {})
+        // Refresh unread details
+        fetchUnread()
       }
     } catch {
       // ignore
@@ -367,7 +411,7 @@ export default function ChatContent({
             <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-200/70 dark:bg-dark-800 rounded-xl">
               <button
                 onClick={() => setNavTab('users')}
-                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                className={`relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                   navTab === 'users'
                     ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -375,14 +419,20 @@ export default function ChatContent({
               >
                 <UserIcon size={14} />
                 <span>{lang === 'ru' ? 'Сотрудники' : lang === 'en' ? 'Colleagues' : 'Xodimlar'}</span>
-                <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500 text-white font-black">
-                  {usersList.length}
-                </span>
+                {totalDmUnread > 0 ? (
+                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black animate-pulse shadow-sm">
+                    {totalDmUnread}
+                  </span>
+                ) : (
+                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500 text-white font-black">
+                    {usersList.length}
+                  </span>
+                )}
               </button>
 
               <button
                 onClick={() => setNavTab('channels')}
-                className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                className={`relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                   navTab === 'channels'
                     ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -390,9 +440,15 @@ export default function ChatContent({
               >
                 <Layers size={14} />
                 <span>{lang === 'ru' ? 'Группы' : lang === 'en' ? 'Channels' : 'Guruhlar'}</span>
-                <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500 text-white font-black">
-                  {CHANNELS.length}
-                </span>
+                {totalChannelsUnread > 0 ? (
+                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black animate-pulse shadow-sm">
+                    {totalChannelsUnread}
+                  </span>
+                ) : (
+                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500 text-white font-black">
+                    {CHANNELS.length}
+                  </span>
+                )}
               </button>
             </div>
 
@@ -433,6 +489,9 @@ export default function ChatContent({
                 filteredUsers.map((u) => {
                   const isCurrent = u.name === userName || u.id === currentUserId
                   const isSelected = selectedUser?.id === u.id
+                  const dmId = computeDmGroupId(currentUserId, u.id)
+                  const unreadCount = unreadByUser[u.id] || unreadByGroup[dmId] || 0
+                  const hasUnread = unreadCount > 0 && !isSelected
                   const roleConfig = ROLE_INFO[u.role] || ROLE_INFO.OPERATOR
                   const initials = u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
@@ -440,26 +499,44 @@ export default function ChatContent({
                     <button
                       key={u.id}
                       onClick={() => selectUserDirectChat(u)}
-                      className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all border ${
+                      className={`relative w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all border ${
                         isSelected
                           ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500/50 shadow-sm'
+                          : hasUnread
+                          ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-400 dark:border-rose-800 shadow-sm'
                           : 'bg-slate-50/80 dark:bg-dark-850 hover:bg-slate-100 dark:hover:bg-dark-800 border-slate-200/80 dark:border-dark-750 text-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      {/* Avatar with status dot */}
+                      {/* Avatar with status dot and pulsating red unread badge */}
                       <div className="relative shrink-0">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-900 dark:from-dark-700 dark:to-dark-600 flex items-center justify-center text-white font-extrabold text-xs shadow-sm border border-slate-300/30">
                           {initials || <UserIcon size={16} />}
                         </div>
+                        {/* Active online dot */}
                         <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-dark-900 ${u.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+
+                        {/* Red pulsating unread dot on avatar corner */}
+                        {hasUnread && (
+                          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-600 border-2 border-white dark:border-dark-900 shadow-sm"></span>
+                          </span>
+                        )}
                       </div>
 
                       {/* User details */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className={`text-xs font-black truncate ${isSelected ? 'text-emerald-900 dark:text-emerald-300' : 'text-slate-900 dark:text-white'}`}>
+                          <h4 className={`text-xs font-black truncate ${isSelected ? 'text-emerald-900 dark:text-emerald-300' : hasUnread ? 'text-rose-900 dark:text-rose-300 font-extrabold' : 'text-slate-900 dark:text-white'}`}>
                             {u.name} {isCurrent && <span className="text-[10px] text-emerald-600 font-bold">(Siz)</span>}
                           </h4>
+                          {/* Corner Red SMS Indicator */}
+                          {hasUnread && (
+                            <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] shadow-sm animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                              {unreadCount} SMS
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${roleConfig.bg} ${roleConfig.color} truncate max-w-[170px]`}>
@@ -476,28 +553,47 @@ export default function ChatContent({
               CHANNELS.map((ch) => {
                 const Icon = ch.icon
                 const isSelected = selectedChannel?.id === ch.id
+                const unreadCount = unreadByGroup[ch.id] || 0
+                const hasUnread = unreadCount > 0 && !isSelected
 
                 return (
                   <button
                     key={ch.id}
                     onClick={() => selectChannelChat(ch)}
-                    className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all border ${
+                    className={`relative w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all border ${
                       isSelected
                         ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500/50 shadow-sm'
+                        : hasUnread
+                        ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-400 dark:border-rose-800 shadow-sm'
                         : 'bg-slate-50/80 dark:bg-dark-850 hover:bg-slate-100 dark:hover:bg-dark-800 border-slate-200/80 dark:border-dark-750 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${ch.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
-                      <Icon size={18} />
+                    <div className="relative shrink-0">
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${ch.color} flex items-center justify-center text-white shadow-sm`}>
+                        <Icon size={18} />
+                      </div>
+                      {hasUnread && (
+                        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-600 border-2 border-white dark:border-dark-900 shadow-sm"></span>
+                        </span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h4 className={`text-xs font-black truncate ${isSelected ? 'text-blue-900 dark:text-blue-300' : 'text-slate-900 dark:text-white'}`}>
+                      <div className="flex items-center justify-between gap-1">
+                        <h4 className={`text-xs font-black truncate ${isSelected ? 'text-blue-900 dark:text-blue-300' : hasUnread ? 'text-rose-900 dark:text-rose-300 font-extrabold' : 'text-slate-900 dark:text-white'}`}>
                           {ch.name}
                         </h4>
-                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-300">
-                          {ch.badge}
-                        </span>
+                        {hasUnread ? (
+                          <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] shadow-sm animate-pulse">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                            {unreadCount} SMS
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-300">
+                            {ch.badge}
+                          </span>
+                        )}
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                         {ch.desc}
@@ -527,12 +623,18 @@ export default function ChatContent({
           {/* Chat Header */}
           <div className="p-3.5 px-3 sm:px-5 gap-2 border-b border-slate-200 dark:border-dark-750 bg-slate-50/90 dark:bg-dark-900/90 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              {/* Mobile Back Button */}
+              {/* Mobile Back Button with unread notification dot */}
               <button
                 onClick={() => setShowMobileChat(false)}
-                className="md:hidden p-2 -ml-2 rounded-lg hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-600 dark:text-slate-300"
+                className="relative md:hidden p-2 -ml-2 rounded-lg hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-600 dark:text-slate-300"
               >
                 <ArrowLeft size={18} />
+                {(totalDmUnread + totalChannelsUnread) > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600 border border-white dark:border-dark-900 shadow-sm"></span>
+                  </span>
+                )}
               </button>
 
               {selectedUser ? (
