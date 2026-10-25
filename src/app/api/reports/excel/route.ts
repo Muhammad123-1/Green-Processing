@@ -212,6 +212,45 @@ function detectRejectionCategory(conclusion: string | null | undefined, notes: s
   return t.defectBoshqa
 }
 
+function parseActDate(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null
+  const clean = dateStr.trim().replace(/,/g, '.').replace(/\//g, '.')
+  if (/^\d{4}-\d{2}-\d{2}/.test(clean)) {
+    return new Date(clean)
+  }
+  const parts = clean.split('.')
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10)
+    const month = parseInt(parts[1], 10)
+    const year = parseInt(parts[2], 10)
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      return new Date(year, month - 1, day)
+    }
+  }
+  return null
+}
+
+function parseActStatus(act: any): 'ACCEPTED' | 'REJECTED' | 'CONDITIONAL' {
+  const dec = (act.decisionText || '').toLowerCase()
+  if (
+    act.rejectionActNumber ||
+    (act.decisionRating && act.decisionRating <= 2) ||
+    dec.includes('rad') ||
+    dec.includes('брак') ||
+    dec.includes('yomon')
+  ) {
+    return 'REJECTED'
+  }
+  if (
+    act.decisionRating === 3 ||
+    dec.includes('shartli') ||
+    dec.includes('qoniqarli')
+  ) {
+    return 'CONDITIONAL'
+  }
+  return 'ACCEPTED'
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -219,13 +258,31 @@ export async function GET(request: NextRequest) {
     const lang: SupportedLang = (rawLang === 'ru' || rawLang === 'en') ? rawLang : 'uz'
     const t = DICT[lang]
 
-    const inspections = await prisma.inspection.findMany({
-      orderBy: { inspectionDate: 'desc' },
-      include: {
-        supplier: true,
-        product: true,
-        user: true,
-      },
+    // Load real incoming raw material acts
+    const rawActs = await prisma.incomingRawMaterialAct.findMany({
+      orderBy: { actDate: 'desc' },
+    })
+
+    const inspections = rawActs.map((a) => {
+      const d = parseActDate(a.actDate) || new Date()
+      const status = parseActStatus(a)
+      return {
+        id: a.id,
+        inspectionDate: d,
+        invoiceNumber: a.actNumber || `ACT-${a.id}`,
+        batchNumber: a.batchNumber || a.actNumber || '-',
+        product: { name: a.productName || 'Xomashyo' },
+        sheetName: a.productName,
+        supplier: { name: a.supplierName || 'Ta\'minotchi', certificate: 'Mavjud' },
+        quantity: a.warehouseKg || 0,
+        temperature: a.temperature || '-',
+        packaging: 'Standart tara',
+        status,
+        inspector: a.inspectorName?.trim() || 'Sifat Nazorati (QC)',
+        user: { name: a.inspectorName?.trim() || 'Sifat Nazorati (QC)' },
+        conclusion: a.decisionText || (status === 'ACCEPTED' ? 'MUVOFIQ' : 'RAD ETILDI'),
+        notes: a.notes || '',
+      }
     })
 
     const wb = new ExcelJS.Workbook()
