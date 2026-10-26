@@ -228,7 +228,7 @@ export default function RawMovementContent() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-enter">
       {/* Top Header Card */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-900/80 p-5 sm:p-6 rounded-3xl border border-dark-750 backdrop-blur-md shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-dark-900/80 p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-dark-750 backdrop-blur-md shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -237,10 +237,10 @@ export default function RawMovementContent() {
             </span>
             <span className="text-xs text-slate-400 font-mono">№ Ж-01 / WMS</span>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {lang === 'ru' ? 'Журнал регистрации и перемещения основного сырья на производство' : "Asosiy Xomashyoni Ro'yxatga Olish va Ishlab Chiqarishga Berish Jurnali"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
             {formatDual(
               "Xomashyo kelgan sana va vaqti, partiya, kirim og'irligi, saqlash harorati (8:10 va 17:00), sexga berilgan va qaytgan hajmlar hamda kun oxiridagi qoldiq balansi",
               "Журнал учета поступления основного сырья, температурного режима хранения (8:10 и 17:00), отпуска в производственный цех и остатков на конец дня",
@@ -265,7 +265,7 @@ export default function RawMovementContent() {
           <button
             onClick={handleDownloadExcel}
             disabled={exporting}
-            className="px-4 py-3 rounded-2xl border border-dark-600 bg-dark-800 hover:bg-dark-750 text-slate-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow hover:border-emerald-500/50 disabled:opacity-50 active:scale-95"
+            className="px-4 py-3 rounded-2xl border border-slate-200 dark:border-dark-600 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs hover:border-emerald-500/50 disabled:opacity-50 active:scale-95"
           >
             {exporting ? (
               <RefreshCw size={16} className="animate-spin text-emerald-400" />
@@ -278,7 +278,7 @@ export default function RawMovementContent() {
           <button
             onClick={() => fetchLogs()}
             disabled={loading}
-            className="p-3 rounded-2xl bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border border-dark-700 transition-all shadow active:scale-95"
+            className="p-3 rounded-2xl bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-750 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700 transition-all shadow-xs active:scale-95"
             title={formatDual("Yangilash", "Обновить", "Refresh")}
           >
             <RefreshCw size={18} className={loading ? 'animate-spin text-emerald-400' : ''} />
@@ -287,7 +287,7 @@ export default function RawMovementContent() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-dark-900/60 p-4 rounded-2xl border border-dark-750">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-dark-900/60 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-xs">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input
@@ -295,7 +295,7 @@ export default function RawMovementContent() {
             placeholder={formatDual("Xomashyo nomi, ta'minotchi, partiya raqami yoki mas'ul xodim...", "Поиск по сырью, поставщику, номеру партии или ответственному...", "Search by raw material, supplier, batch or person...")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500"
           />
         </div>
 
@@ -307,7 +307,7 @@ export default function RawMovementContent() {
               setDateFilter(e.target.value)
               fetchLogs(e.target.value)
             }}
-            className="bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+            className="bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
           />
           {dateFilter && (
             <button
@@ -320,14 +320,14 @@ export default function RawMovementContent() {
               <X size={14} />
             </button>
           )}
-          <span className="text-xs text-slate-400 font-mono bg-dark-800 px-3 py-2 rounded-xl border border-dark-700 whitespace-nowrap">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-dark-800 px-3 py-2 rounded-xl border border-slate-200 dark:border-dark-700 whitespace-nowrap">
             {filteredLogs.length} ta yozuv
           </span>
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
         {loading ? (
           <div className="p-16 flex flex-col items-center justify-center">
             <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
@@ -344,7 +344,7 @@ export default function RawMovementContent() {
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-dark-800/95 text-slate-300 font-extrabold uppercase border-b border-dark-700 tracking-wider">
+                  <tr className="bg-slate-50 dark:bg-dark-800/95 text-slate-700 dark:text-slate-300 font-extrabold uppercase border-b border-slate-200 dark:border-dark-700 tracking-wider">
                     <th rowSpan={2} className="p-3.5 text-center border-r border-dark-750 w-12">№ п/п</th>
                     <th rowSpan={2} className="p-3.5 border-r border-dark-750 min-w-[110px]">{formatDual("Қабул Санаси", "Дата поступления", "Arrival Date")}</th>
                     <th rowSpan={2} className="p-3.5 text-center border-r border-dark-750 min-w-[70px]">{formatDual("Вақти", "Время", "Time")}</th>
@@ -364,19 +364,19 @@ export default function RawMovementContent() {
                     <th className="p-2 text-center border-r border-dark-750 bg-emerald-950/20 text-emerald-400">17:00</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-750/70 text-slate-300 font-sans">
+                <tbody className="divide-y divide-slate-100 dark:divide-dark-750/70 text-slate-700 dark:text-slate-300 font-sans">
                   {pagination.displayedItems.map((log, idx) => (
-                    <tr key={log.id} className="hover:bg-dark-800/40 transition-colors">
+                    <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                       <td className="p-3 text-center font-mono text-slate-500 border-r border-dark-750/50">
                         {idx + 1}
                       </td>
-                      <td className="p-3 font-mono font-bold text-white border-r border-dark-750/50 whitespace-nowrap">
+                      <td className="p-3 font-mono font-bold text-slate-900 dark:text-white border-r border-slate-100 dark:border-dark-750/50 whitespace-nowrap">
                         {log.arrivalDate}
                       </td>
                       <td className="p-3 text-center font-mono text-slate-400 border-r border-dark-750/50">
                         {log.deliveryTime || '-'}
                       </td>
-                      <td className="p-3 font-bold text-white border-r border-dark-750/50">
+                      <td className="p-3 font-bold text-slate-900 dark:text-white border-r border-slate-100 dark:border-dark-750/50">
                         {log.productName}
                       </td>
                       <td className="p-3 text-slate-300 border-r border-dark-750/50">
@@ -439,14 +439,14 @@ export default function RawMovementContent() {
               {pagination.displayedItems.map((log, idx) => (
                 <div
                   key={log.id}
-                  className="bg-dark-850/70 border border-dark-750 rounded-2xl p-4 shadow-lg space-y-3"
+                  className="bg-white dark:bg-dark-850/70 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 shadow-sm space-y-3"
                 >
                   <div className="flex flex-wrap gap-2 items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-slate-500 bg-dark-800 px-2 py-0.5 rounded">
                         #{idx + 1}
                       </span>
-                      <span className="font-mono text-xs font-bold text-white">
+                      <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
                         {log.arrivalDate}
                       </span>
                       {log.deliveryTime && (
@@ -461,7 +461,7 @@ export default function RawMovementContent() {
                   </div>
 
                   <div>
-                    <h4 className="font-black text-white text-base">{log.productName}</h4>
+                    <h4 className="font-black text-slate-900 dark:text-white text-base">{log.productName}</h4>
                     <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
                       <Building2 size={13} className="text-blue-400 shrink-0" />
                       <span>{log.supplierName}</span>

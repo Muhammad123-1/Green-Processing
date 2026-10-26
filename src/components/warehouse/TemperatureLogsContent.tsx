@@ -229,7 +229,7 @@ export default function TemperatureLogsContent() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-enter">
       {/* Top Header Card */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-900/80 p-5 sm:p-6 rounded-3xl border border-dark-750 backdrop-blur-md shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-dark-900/80 p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-dark-750 backdrop-blur-md shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -240,10 +240,10 @@ export default function TemperatureLogsContent() {
               Форма Ф-01
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {lang === 'ru' ? 'Чек-лист контроля температуры сырья при хранении' : "Xomashyoni Saqlashdagi Harorat Nazorati Chek-Listi"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
             {formatDual(
               "Omborda xomashyoni saqlash harorati ko'rsatkichi (2°C dan past va 5°C dan yuqori bo'lmasligi shart). Kunlik nazorat vaqtlari: 8:00 va 17:00",
               "Хом ашёни сақлашдаги ҳарорат кўрсаткичи (не ниже 2°C не выше 5°C). Время контроля: 8:00 и 17:00. Фиксация отклонений и корректирующих действий",
@@ -268,7 +268,7 @@ export default function TemperatureLogsContent() {
           <button
             onClick={handleDownloadExcel}
             disabled={exporting}
-            className="px-4 py-3 rounded-2xl border border-dark-600 bg-dark-800 hover:bg-dark-750 text-slate-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow hover:border-emerald-500/50 disabled:opacity-50 active:scale-95"
+            className="px-4 py-3 rounded-2xl border border-slate-200 dark:border-dark-600 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs hover:border-emerald-500/50 disabled:opacity-50 active:scale-95"
           >
             {exporting ? (
               <RefreshCw size={16} className="animate-spin text-emerald-400" />
@@ -281,7 +281,7 @@ export default function TemperatureLogsContent() {
           <button
             onClick={() => fetchLogs()}
             disabled={loading}
-            className="p-3 rounded-2xl bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border border-dark-700 transition-all shadow active:scale-95"
+            className="p-3 rounded-2xl bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-750 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700 transition-all shadow-xs active:scale-95"
             title={formatDual("Yangilash", "Обновить", "Refresh")}
           >
             <RefreshCw size={18} className={loading ? 'animate-spin text-emerald-400' : ''} />
@@ -303,7 +303,7 @@ export default function TemperatureLogsContent() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-dark-900/60 p-4 rounded-2xl border border-dark-750">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-dark-900/60 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-xs">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input
@@ -311,7 +311,7 @@ export default function TemperatureLogsContent() {
             placeholder={formatDual("Sana, vaqt, mas'ul xodim yoki ko'rilgan chora bo'yicha qidirish...", "Поиск по дате, времени, ответственному или корректировкам...", "Search by date, time, responsible or actions...")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500"
           />
         </div>
 
@@ -323,7 +323,7 @@ export default function TemperatureLogsContent() {
               setDateFilter(e.target.value)
               fetchLogs(e.target.value)
             }}
-            className="bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+            className="bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
           />
           {dateFilter && (
             <button
@@ -336,14 +336,14 @@ export default function TemperatureLogsContent() {
               <X size={14} />
             </button>
           )}
-          <span className="text-xs text-slate-400 font-mono bg-dark-800 px-3 py-2 rounded-xl border border-dark-700 whitespace-nowrap">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-dark-800 px-3 py-2 rounded-xl border border-slate-200 dark:border-dark-700 whitespace-nowrap">
             {filteredLogs.length} ta yozuv
           </span>
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
         {loading ? (
           <div className="p-16 flex flex-col items-center justify-center">
             <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
@@ -360,7 +360,7 @@ export default function TemperatureLogsContent() {
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-dark-800/95 text-slate-300 font-extrabold uppercase border-b border-dark-700 tracking-wider">
+                  <tr className="bg-slate-50 dark:bg-dark-800/95 text-slate-700 dark:text-slate-300 font-extrabold uppercase border-b border-slate-200 dark:border-dark-700 tracking-wider">
                     <th className="p-3.5 border-r border-dark-750 min-w-[110px]">{formatDual("Дата / Сана", "Дата / Сана", "Date")}</th>
                     <th className="p-3.5 text-center border-r border-dark-750 min-w-[90px]">{formatDual("Время / Вақт", "Время / Вақт", "Time")}</th>
                     <th className="p-3.5 text-center border-r border-dark-750 min-w-[120px] text-emerald-400">Салат Айсберг (°C)</th>
@@ -374,12 +374,12 @@ export default function TemperatureLogsContent() {
                     <th className="p-3.5 text-center w-16">{formatDual("Амал", "Действие", "Action")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-750/70 text-slate-300 font-sans">
+                <tbody className="divide-y divide-slate-100 dark:divide-dark-750/70 text-slate-700 dark:text-slate-300 font-sans">
                   {pagination.displayedItems.map((log) => {
                     const isViolation = log.deviation && log.deviation.includes('ВНИМАНИЕ')
 
                     return (
-                      <tr key={log.id} className="hover:bg-dark-800/40 transition-colors">
+                      <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                         <td className="p-3.5 font-mono font-bold text-white border-r border-dark-750/50 whitespace-nowrap">
                           {log.date}
                         </td>
@@ -471,11 +471,11 @@ export default function TemperatureLogsContent() {
                 return (
                   <div
                     key={log.id}
-                    className="bg-dark-850/70 border border-dark-750 rounded-2xl p-4 shadow-lg space-y-3"
+                    className="bg-white dark:bg-dark-850/70 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 shadow-sm space-y-3"
                   >
                     <div className="flex flex-wrap gap-2 items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-white">
+                        <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
                           {log.date}
                         </span>
                         <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">

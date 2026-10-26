@@ -1212,34 +1212,34 @@ export default function WarehouseContent() {
   return (
     <div className="flex flex-col min-h-full animate-enter space-y-6">
       {/* Premium Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950 via-dark-900 to-teal-950 rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+      <div className="relative overflow-hidden bg-white dark:bg-dark-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 dark:border-dark-750">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/5 dark:bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <Package size={14} />
                 {formatDual('Omborxona Boshqaruvi (WMS)', 'Управление складом (WMS)', 'Warehouse Management (WMS)')}
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-emerald-300 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {l.title}
             </h1>
-            <p className="text-slate-300 text-sm mt-1 max-w-xl">
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 max-w-xl">
               {l.subtitle}
             </p>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center bg-dark-800/80 p-1 rounded-2xl border border-dark-700/80 backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
+          <div className="flex items-center bg-slate-100 dark:bg-dark-800/80 p-1 rounded-2xl border border-slate-200 dark:border-dark-700/80 backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
             <button
               onClick={() => setActiveTab('inventory')}
               className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'inventory'
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Package size={15} />
@@ -1250,7 +1250,7 @@ export default function WarehouseContent() {
               className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'gp'
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Boxes size={15} />
@@ -1261,7 +1261,7 @@ export default function WarehouseContent() {
               className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'transfers'
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Scale size={15} />
@@ -1272,7 +1272,7 @@ export default function WarehouseContent() {
               className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'suppliers'
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Truck size={15} />
@@ -1280,17 +1280,17 @@ export default function WarehouseContent() {
             </button>
             <Link
               href="/raw-movement"
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-300 hover:text-white bg-dark-750/60 hover:bg-emerald-600/20 border border-dark-700 hover:border-emerald-500/40 transition-all whitespace-nowrap ml-1"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-white bg-white dark:bg-dark-750/60 hover:bg-emerald-50 dark:hover:bg-emerald-600/20 border border-slate-200 hover:border-emerald-500/40 dark:border-dark-700 transition-all whitespace-nowrap ml-1"
             >
-              <ClipboardList size={15} className="text-emerald-400" />
+              <ClipboardList size={15} className="text-emerald-500" />
               <span>{formatDual("Xomashyo harakati (alohida)", "Журнал сырья на пр-во", "Raw Movement")}</span>
               <ExternalLink size={12} className="opacity-60 text-slate-400" />
             </Link>
             <Link
               href="/temperature-logs"
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-300 hover:text-white bg-dark-750/60 hover:bg-cyan-600/20 border border-dark-700 hover:border-cyan-500/40 transition-all whitespace-nowrap"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-white bg-white dark:bg-dark-750/60 hover:bg-cyan-50 dark:hover:bg-cyan-600/20 border border-slate-200 hover:border-cyan-500/40 dark:border-dark-700 transition-all whitespace-nowrap"
             >
-              <Thermometer size={15} className="text-cyan-400" />
+              <Thermometer size={15} className="text-cyan-500" />
               <span>{formatDual("Harorat nazorati (F-01)", "Контроль температур Ф-01", "Temp Logs")}</span>
               <ExternalLink size={12} className="opacity-60 text-slate-400" />
             </Link>
@@ -1304,22 +1304,22 @@ export default function WarehouseContent() {
           {/* 1. Director-Style Executive KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {/* Card 1: Jami Kirim */}
-            <div className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+            <div className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-emerald-500/50 transition-all relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
                     {formatDual("Jami Kirim", "Всего приход", "Total Arrivals")}
                   </span>
-                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-sm">...</span>
+                      <span className="text-slate-400 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.totalArrivalTonnes.toLocaleString() || '0'} tn`
                     )}
                   </div>
-                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
-                    <span className="font-semibold text-slate-300">
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
                       {macroData?.summary.totalArrivalKg.toLocaleString() || 0} kg
                     </span>
                     <span className="hidden sm:inline">·</span>
@@ -1328,34 +1328,34 @@ export default function WarehouseContent() {
                     </span>
                   </div>
                 </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-emerald-400 flex-shrink-0">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                   <ArrowDownRight size={18} className="sm:hidden" />
                   <ArrowDownRight size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span className="truncate">{formatDual("Sex Hisoboti", "Отчет цеха", "Shop report")}</span>
-                <span className="text-emerald-400 font-bold whitespace-nowrap">100% kirim</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">100% kirim</span>
               </div>
             </div>
 
             {/* Card 2: Jami Rasxod */}
-            <div className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition-all">
+            <div className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-amber-500/50 transition-all relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
                     {formatDual("Jami Rasxod", "Расход в цех", "Total Expensed")}
                   </span>
-                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-sm">...</span>
+                      <span className="text-slate-400 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.totalExpenseTonnes.toLocaleString() || '0'} tn`
                     )}
                   </div>
-                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
-                    <span className="font-semibold text-slate-300">
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
                       {macroData?.summary.totalExpenseKg.toLocaleString() || 0} kg
                     </span>
                     <span className="hidden sm:inline">·</span>
@@ -1364,14 +1364,14 @@ export default function WarehouseContent() {
                     </span>
                   </div>
                 </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-500/15 border border-amber-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-400 flex-shrink-0">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-500/15 border border-amber-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
                   <ArrowUpRight size={18} className="sm:hidden" />
                   <ArrowUpRight size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span className="truncate">{formatDual("Sex Rasxodi", "Расход", "Shop expense")}</span>
-                <span className="text-amber-400 font-bold whitespace-nowrap">
+                <span className="text-amber-600 dark:text-amber-400 font-bold whitespace-nowrap">
                   {macroData && macroData.summary.totalArrivalKg > 0
                     ? `${Math.round((macroData.summary.totalExpenseKg / macroData.summary.totalArrivalKg) * 100)}%`
                     : '0%'}
@@ -1380,45 +1380,45 @@ export default function WarehouseContent() {
             </div>
 
             {/* Card 3: Joriy Sklad Qoldig'i */}
-            <div className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+            <div className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-cyan-500/50 transition-all relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
                     {formatDual("Sklad Qoldig'i", "Остаток склада", "Net Stock")}
                   </span>
-                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-cyan-400">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-cyan-600 dark:text-cyan-400">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-sm">...</span>
+                      <span className="text-slate-400 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.currentStockTonnes.toLocaleString() || '0'} tn`
                     )}
                   </div>
-                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
-                    <span className="font-semibold text-slate-300">
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
                       {macroData?.summary.currentStockKg.toLocaleString() || 0} kg
                     </span>
                     <span className="hidden sm:inline">·</span>
-                    <span className="text-emerald-400 font-bold text-[10px] sm:text-xs">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] sm:text-xs">
                       {macroData?.summary.sufficientCount || 0} me'yorda
                     </span>
                   </div>
                 </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-cyan-500/15 border border-cyan-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-cyan-400 flex-shrink-0">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-cyan-500/15 border border-cyan-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-cyan-600 dark:text-cyan-400 flex-shrink-0">
                   <BarChart3 size={18} className="sm:hidden" />
                   <BarChart3 size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-slate-400 flex items-center justify-between">
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span className="truncate">{formatDual("Sof zaxira", "Резерв", "Reserve")}</span>
                 <div className="flex items-center gap-1 text-[9px] sm:text-[10px]">
                   {(macroData?.summary.criticalCount || 0) > 0 && (
-                    <span className="px-1 sm:px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold whitespace-nowrap">
+                    <span className="px-1 sm:px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 font-bold whitespace-nowrap">
                       {macroData?.summary.criticalCount} kritik
                     </span>
                   )}
                   {(macroData?.summary.warningCount || 0) > 0 && (
-                    <span className="px-1 sm:px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold whitespace-nowrap">
+                    <span className="px-1 sm:px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-300 font-bold whitespace-nowrap">
                       {macroData?.summary.warningCount} kam
                     </span>
                   )}
@@ -1429,31 +1429,31 @@ export default function WarehouseContent() {
             {/* Card 4: Ta'minotchilar */}
             <div 
               onClick={() => setActiveTab('suppliers')}
-              className="bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden group cursor-pointer hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
+              className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden group cursor-pointer hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/25 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
                     {formatDual("Ta'minotchilar", "Поставщики", "Suppliers")}
                   </span>
-                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
                     {macroLoading ? (
-                      <span className="text-slate-500 text-sm">...</span>
+                      <span className="text-slate-400 text-sm">...</span>
                     ) : (
                       `${macroData?.summary.totalSuppliersCount || 0} ta`
                     )}
                   </div>
-                  <div className="text-[11px] sm:text-xs text-slate-400 mt-1 truncate">
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
                     {formatDual("Faol hamkorlar", "Активные партнеры", "Active partners")}
                   </div>
                 </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-indigo-400 flex-shrink-0">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
                   <Truck size={18} className="sm:hidden" />
                   <Truck size={24} className="hidden sm:block" />
                 </div>
               </div>
-              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-dark-800 text-[10px] sm:text-[11px] text-indigo-400 font-bold flex items-center justify-between group-hover:text-indigo-300">
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-between group-hover:text-indigo-500 dark:group-hover:text-indigo-300">
                 <span className="truncate">{formatDual("Ko'rish", "Смотреть", "View")}</span>
                 <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform sm:w-3.5 sm:h-3.5" />
               </div>
@@ -1464,25 +1464,25 @@ export default function WarehouseContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <Link
               href="/raw-movement"
-              className="bg-gradient-to-r from-emerald-950/40 via-dark-900 to-dark-850 border border-emerald-500/30 hover:border-emerald-500/70 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg flex items-center justify-between group transition-all"
+              className="bg-white dark:bg-gradient-to-r dark:from-emerald-950/40 dark:via-dark-900 dark:to-dark-850 border border-slate-200 dark:border-emerald-500/30 hover:border-emerald-500/70 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md flex items-center justify-between group transition-all"
             >
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0">
                   <ClipboardList size={22} />
                 </div>
                 <div>
-                  <div className="text-[10px] sm:text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+                  <div className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                     {formatDual("Alohida Jurnal Sahifasi", "Отдельная страница журнала", "Dedicated Journal")}
                   </div>
-                  <div className="text-sm sm:text-base font-black text-white group-hover:text-emerald-300 transition-colors">
+                  <div className="text-sm sm:text-base font-black text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                     {formatDual("Xomashyoni Sexga Berish Jurnali", "Журнал регистрации и перемещения сырья", "Raw Material Movement Log")}
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block">
                     {formatDual("12 ustunli partiya, harorat (8:10/17:00), chiqim va kunlik qoldiq", "12 граф: партия, темп-ра, расход, остаток", "12-column batch, temperature & balance")}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white transition-all flex-shrink-0 ml-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white transition-all flex-shrink-0 ml-2">
                 <span>{formatDual("Ochish", "Открыть", "Open")}</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </div>
@@ -1490,25 +1490,25 @@ export default function WarehouseContent() {
 
             <Link
               href="/temperature-logs"
-              className="bg-gradient-to-r from-cyan-950/40 via-dark-900 to-dark-850 border border-cyan-500/30 hover:border-cyan-500/70 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg flex items-center justify-between group transition-all"
+              className="bg-white dark:bg-gradient-to-r dark:from-cyan-950/40 dark:via-dark-900 dark:to-dark-850 border border-slate-200 dark:border-cyan-500/30 hover:border-cyan-500/70 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md flex items-center justify-between group transition-all"
             >
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/20 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition-transform flex-shrink-0">
                   <Thermometer size={22} />
                 </div>
                 <div>
-                  <div className="text-[10px] sm:text-[11px] font-bold text-cyan-400 uppercase tracking-wider">
+                  <div className="text-[10px] sm:text-[11px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
                     {formatDual("Alohida Jurnal Sahifasi", "Отдельная страница журнала", "Dedicated Journal")}
                   </div>
-                  <div className="text-sm sm:text-base font-black text-white group-hover:text-cyan-300 transition-colors">
+                  <div className="text-sm sm:text-base font-black text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">
                     {formatDual("Harorat Nazorati Chek-listi (F-01)", "Контроль температуры сырья при хранении (Ф-01)", "Storage Temperature Log (F-01)")}
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block">
                     {formatDual("2°C–5°C me'yor: Aysberg, Piyoz, Pomidor, Sabzi, Karam nazorati", "Норма 2°C–5°C: Айсберг, Лук, Томаты, Морковь, Капуста", "2°C–5°C norm validation for 5 vegetables")}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1.5 rounded-xl border border-cyan-500/20 group-hover:bg-cyan-500 group-hover:text-white transition-all flex-shrink-0 ml-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 px-3 py-1.5 rounded-xl border border-cyan-200 dark:border-cyan-500/20 group-hover:bg-cyan-500 group-hover:text-white transition-all flex-shrink-0 ml-2">
                 <span>{formatDual("Ochish", "Открыть", "Open")}</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </div>
@@ -1516,19 +1516,19 @@ export default function WarehouseContent() {
           </div>
 
           {/* 2. Executive Macro Balance Table (Kirim - Chiqim = Qoldiq) */}
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-dark-750 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-dark-850 to-dark-900">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-200 dark:border-dark-750 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/70 dark:bg-gradient-to-r dark:from-dark-850 dark:to-dark-900">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
                     {formatDual("Sex Hisoboti & Sklad Integratsiyasi", "Отчет цеха и интеграция склада", "Shop & Warehouse Integration")}
                   </span>
                 </div>
-                <h3 className="text-lg md:text-xl font-black text-white flex items-center gap-2.5">
-                  <BarChart3 className="text-emerald-400" size={22} />
+                <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                  <BarChart3 className="text-emerald-600 dark:text-emerald-400" size={22} />
                   <span>{formatDual("Umumiy Xomashyolar Balansi & Qoldiq Statistikasi", "Сводный баланс и статистика остатков сырья", "Aggregated Raw Material Balance & Stock")}</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
                   {formatDual(
                     "Sex Ishlab Chiqarish Hisoboti va qabul aktlari bo'yicha jami kelgan, sexga rasxod qilingan va skladdagi sof qoldiq balansi (Kirim - Rasxod = Qoldiq)",
                     "Сводка по отчетам цеха и актам приемки: общий приход, списание в цех и фактический чистый остаток на складе",
@@ -1538,35 +1538,35 @@ export default function WarehouseContent() {
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="relative">
+                <div className="relative flex-1 sm:w-60">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                   <input
                     type="text"
                     placeholder={formatDual("Xomashyo nomi bo'yicha...", "Поиск сырья...", "Search material...")}
                     value={macroSearch}
                     onChange={(e) => setMacroSearch(e.target.value)}
-                    className="pl-9 pr-3 py-2 bg-dark-800 border border-dark-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-emerald-500 flex-1 w-full sm:w-60"
+                    className="pl-9 pr-3 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 flex-1 w-full"
                   />
                 </div>
                 <button
                   onClick={() => fetchMacroStats()}
                   disabled={macroLoading}
-                  className="p-2.5 rounded-xl bg-dark-800 border border-dark-700 text-slate-300 hover:text-white hover:border-emerald-500/40 transition-all disabled:opacity-50"
+                  className="p-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-emerald-500/40 transition-all disabled:opacity-50"
                   title={formatDual("Yangilash", "Обновить", "Refresh")}
                 >
-                  <RefreshCw size={16} className={macroLoading ? 'animate-spin text-emerald-400' : ''} />
+                  <RefreshCw size={16} className={macroLoading ? 'animate-spin text-emerald-500' : ''} />
                 </button>
               </div>
             </div>
 
             {/* Category Filter Pills */}
-            <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-dark-750 bg-dark-850/40 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
+            <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200 dark:border-dark-750 bg-slate-50/50 dark:bg-dark-850/40 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setMacroCategoryFilter('all')}
                 className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'all'
                     ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
                 {formatDual("Barchasi", "Все", "All")} ({macroData?.materials.length || 0})
@@ -1576,7 +1576,7 @@ export default function WarehouseContent() {
                 className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'raw'
                     ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
                 🥬 {formatDual("Xomashyo & Sabzavotlar", "Сырье и овощи", "Raw Vegetables")}
@@ -1586,7 +1586,7 @@ export default function WarehouseContent() {
                 className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'packaging'
                     ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
                 📦 {formatDual("Qadoqlash & Paketlar", "Упаковка и тара", "Packaging & Bags")}
@@ -1596,7 +1596,7 @@ export default function WarehouseContent() {
                 className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'hygiene'
                     ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
                 🧤 {formatDual("Xo'jalik & Gigiyena", "Хоз. товары и гигиена", "Hygiene & Supplies")}
@@ -1606,7 +1606,7 @@ export default function WarehouseContent() {
                 className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   macroCategoryFilter === 'chemicals'
                     ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-dark-800 text-slate-400 hover:text-white border border-dark-700'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
                 🧪 {formatDual("Kimyoviy & Dezinfeksiya", "Химия и дезинфекция", "Chemicals")}
@@ -1614,9 +1614,9 @@ export default function WarehouseContent() {
             </div>
 
             {/* Mobile Material Cards View (Smartphones: block sm:hidden) */}
-            <div className="block sm:hidden divide-y divide-dark-750/70">
+            <div className="block sm:hidden divide-y divide-slate-100 dark:divide-dark-750/70">
               {macroLoading && !macroData ? (
-                <div className="p-8 text-center text-slate-400">
+                <div className="p-8 text-center text-slate-500 dark:text-slate-400">
                   <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={24} />
                   <p className="text-xs">{formatDual("Xomashyo balansi hisoblanmoqda...", "Расчет баланса...", "Calculating...")}</p>
                 </div>
@@ -1628,25 +1628,25 @@ export default function WarehouseContent() {
                 filteredMacroMaterials.map((m) => {
                   const stockPercent = m.totalArrivalKg > 0 ? Math.min(100, Math.round((m.currentStockKg / m.totalArrivalKg) * 100)) : 0
                   return (
-                    <div key={m.key} className="p-3.5 hover:bg-dark-800/30 transition-colors space-y-2.5">
+                    <div key={m.key} className="p-3.5 hover:bg-slate-50 dark:hover:bg-dark-800/30 transition-colors space-y-2.5">
                       {/* Name & Status */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-emerald-400 font-bold flex-shrink-0 shadow-sm">
+                          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0 shadow-xs">
                             <Package size={17} />
                           </div>
                           <div className="min-w-0">
-                            <h4 className="font-extrabold text-white text-sm leading-tight truncate">{m.nameUz}</h4>
-                            <p className="text-[11px] text-slate-400 truncate">{m.name} · <span className="text-slate-300 font-medium">{m.category}</span></p>
+                            <h4 className="font-extrabold text-slate-900 dark:text-white text-sm leading-tight truncate">{m.nameUz}</h4>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{m.name} · <span className="text-slate-700 dark:text-slate-300 font-medium">{m.category}</span></p>
                           </div>
                         </div>
 
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 flex-shrink-0 ${
-                          m.status === 'green' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                          m.status === 'yellow' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-                          'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          m.status === 'green' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30' :
+                          m.status === 'yellow' ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30' :
+                          'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'green' ? 'bg-emerald-400' : m.status === 'yellow' ? 'bg-amber-400' : 'bg-rose-400'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${m.status === 'green' ? 'bg-emerald-500' : m.status === 'yellow' ? 'bg-amber-500' : 'bg-rose-500'}`} />
                           {m.status === 'green' ? formatDual("Yetarli", "В норме", "Sufficient") :
                            m.status === 'yellow' ? formatDual("Kam", "Мало", "Low") :
                            formatDual("Kritik", "Критично", "Critical")}
@@ -1654,31 +1654,31 @@ export default function WarehouseContent() {
                       </div>
 
                       {/* 3 Metrics Box */}
-                      <div className="grid grid-cols-3 gap-1.5 bg-dark-850/80 p-2 rounded-xl border border-dark-750 text-center">
+                      <div className="grid grid-cols-3 gap-1.5 bg-slate-50 dark:bg-dark-850/80 p-2 rounded-xl border border-slate-200 dark:border-dark-750 text-center">
                         <div>
-                          <span className="text-[9px] text-slate-400 block">{formatDual("Kirim", "Приход", "Arrival")}</span>
-                          <span className="text-xs font-bold text-white leading-tight">{m.totalArrivalKg.toLocaleString()}</span>
-                          <span className="text-[8px] text-slate-500 block">{m.unit}</span>
+                          <span className="text-[9px] text-slate-500 dark:text-slate-400 block">{formatDual("Kirim", "Приход", "Arrival")}</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{m.totalArrivalKg.toLocaleString()}</span>
+                          <span className="text-[8px] text-slate-400 dark:text-slate-500 block">{m.unit}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-amber-400/90 block">{formatDual("Sexga", "В цех", "Shop")}</span>
-                          <span className="text-xs font-bold text-amber-400 leading-tight">{m.totalExpenseKg.toLocaleString()}</span>
-                          <span className="text-[8px] text-slate-500 block">{m.unit}</span>
+                          <span className="text-[9px] text-amber-600 dark:text-amber-400/90 block">{formatDual("Sexga", "В цех", "Shop")}</span>
+                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 leading-tight">{m.totalExpenseKg.toLocaleString()}</span>
+                          <span className="text-[8px] text-slate-400 dark:text-slate-500 block">{m.unit}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-emerald-400/90 block">{formatDual("Qoldiq", "Остаток", "Stock")}</span>
-                          <span className="text-xs font-black text-emerald-400 leading-tight">{m.currentStockKg.toLocaleString()}</span>
-                          <span className="text-[8px] text-slate-500 block">{m.unit}</span>
+                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400/90 block">{formatDual("Qoldiq", "Остаток", "Stock")}</span>
+                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 leading-tight">{m.currentStockKg.toLocaleString()}</span>
+                          <span className="text-[8px] text-slate-400 dark:text-slate-500 block">{m.unit}</span>
                         </div>
                       </div>
 
                       {/* Stock Level Progress */}
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
                           <span>{formatDual("Zaxira me'yori", "Запас", "Level")}</span>
-                          <span className="font-bold text-slate-300">{stockPercent}%</span>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">{stockPercent}%</span>
                         </div>
-                        <div className="w-full bg-dark-800 h-1.5 rounded-full overflow-hidden border border-dark-750">
+                        <div className="w-full bg-slate-200 dark:bg-dark-800 h-1.5 rounded-full overflow-hidden border border-slate-200 dark:border-dark-750">
                           <div 
                             className={`h-full rounded-full transition-all duration-500 ${
                               m.status === 'green' ? 'bg-gradient-to-r from-emerald-500 to-teal-400' :
@@ -1691,14 +1691,14 @@ export default function WarehouseContent() {
                       </div>
 
                       {/* Supplier & Action */}
-                      <div className="pt-1.5 border-t border-dark-800/80 flex items-center justify-between gap-2 text-xs">
-                        <div className="truncate text-slate-400 text-[11px] min-w-0">
-                          <span className="text-slate-500">{formatDual("Ta'minotchi: ", "Пост.: ", "Sup: ")}</span>
-                          <span className="text-slate-300 font-medium truncate">{m.topSupplier}</span>
+                      <div className="pt-1.5 border-t border-slate-100 dark:border-dark-800/80 flex items-center justify-between gap-2 text-xs">
+                        <div className="truncate text-slate-500 dark:text-slate-400 text-[11px] min-w-0">
+                          <span className="text-slate-400 dark:text-slate-500">{formatDual("Ta'minotchi: ", "Пост.: ", "Sup: ")}</span>
+                          <span className="text-slate-750 dark:text-slate-300 font-medium truncate">{m.topSupplier}</span>
                         </div>
                         <button
                           onClick={() => handleOpenMacroOrder(m)}
-                          className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 text-[11px] font-bold flex items-center gap-1 transition-all flex-shrink-0"
+                          className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/20 hover:bg-amber-500 text-amber-700 dark:text-amber-300 hover:text-white border border-amber-300 dark:border-amber-500/30 text-[11px] font-bold flex items-center gap-1 transition-all flex-shrink-0"
                         >
                           <ShoppingCart size={11} />
                           <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
@@ -1714,7 +1714,7 @@ export default function WarehouseContent() {
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/60 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                     <th className="p-4">{formatDual("Xomashyo Nomi", "Сырье", "Raw Material")}</th>
                     <th className="p-4 text-center">{formatDual("Jami Kirim", "Всего Приход", "Total Arrival")}</th>
                     <th className="p-4 text-center">{formatDual("Jami Rasxod (Sexga)", "Всего Расход (Цех)", "Total Expensed")}</th>
@@ -1725,10 +1725,10 @@ export default function WarehouseContent() {
                     <th className="p-4 text-right">{formatDual("Tezkor Harakat", "Действие", "Action")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-750">
+                <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
                   {macroLoading && !macroData ? (
                     <tr>
-                      <td colSpan={8} className="p-12 text-center text-slate-400">
+                      <td colSpan={8} className="p-12 text-center text-slate-500 dark:text-slate-400">
                         <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={28} />
                         <span>{formatDual("Xomashyo balansi hisoblanmoqda...", "Расчет баланса сырья...", "Calculating material balances...")}</span>
                       </td>
@@ -1743,21 +1743,21 @@ export default function WarehouseContent() {
                     filteredMacroMaterials.map((m) => {
                       const stockPercent = m.totalArrivalKg > 0 ? Math.min(100, Math.round((m.currentStockKg / m.totalArrivalKg) * 100)) : 0
                       return (
-                        <tr key={m.key} className="hover:bg-dark-800/40 transition-colors">
+                        <tr key={m.key} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                           {/* Material Name */}
                           <td className="p-4">
                             <div className="flex items-center gap-3 w-full sm:w-auto">
-                              <div className="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-emerald-400 font-bold flex-shrink-0 shadow-sm">
+                              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0 shadow-xs">
                                 <Package size={18} />
                               </div>
                               <div>
-                                <div className="font-extrabold text-white text-base leading-tight">
+                                <div className="font-extrabold text-slate-900 dark:text-white text-base leading-tight">
                                   {m.nameUz}
                                 </div>
-                                <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
                                   <span>{m.name}</span>
                                   <span>·</span>
-                                  <span className="px-1.5 py-0.2 rounded bg-dark-800 text-[10px] text-slate-300 font-medium">
+                                  <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-dark-800 text-[10px] text-slate-700 dark:text-slate-300 font-medium">
                                     {m.category}
                                   </span>
                                 </div>
@@ -1767,28 +1767,28 @@ export default function WarehouseContent() {
 
                           {/* Total Arrival */}
                           <td className="p-4 text-center">
-                            <div className="font-black text-white text-base">
+                            <div className="font-black text-slate-900 dark:text-white text-base">
                               {m.unit === 'kg'
                                 ? (m.totalArrivalKg >= 1000
                                     ? `${(m.totalArrivalKg / 1000).toFixed(1)} tn`
                                     : `${m.totalArrivalKg.toLocaleString()} kg`)
                                 : `${m.totalArrivalKg.toLocaleString()} ${m.unit}`}
                             </div>
-                            <div className="text-[11px] text-slate-400 mt-0.5">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                               {m.totalArrivalKg.toLocaleString()} {m.unit} ({m.arrivalsCount} ta partiya)
                             </div>
                           </td>
 
                           {/* Total Expense */}
                           <td className="p-4 text-center">
-                            <div className="font-black text-amber-400 text-base">
+                            <div className="font-black text-amber-600 dark:text-amber-400 text-base">
                               {m.unit === 'kg'
                                 ? (m.totalExpenseKg >= 1000
                                     ? `${(m.totalExpenseKg / 1000).toFixed(1)} tn`
                                     : `${m.totalExpenseKg.toLocaleString()} kg`)
                                 : `${m.totalExpenseKg.toLocaleString()} ${m.unit}`}
                             </div>
-                            <div className="text-[11px] text-slate-400 mt-0.5">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                               {m.totalExpenseKg.toLocaleString()} {m.unit} sexga berilgan
                             </div>
                           </td>
@@ -1797,10 +1797,10 @@ export default function WarehouseContent() {
                           <td className="p-4 text-center">
                             <div className={`inline-block px-3 py-1.5 rounded-xl border font-black text-base ${
                               m.status === 'green'
-                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                                ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
                                 : m.status === 'yellow'
-                                ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300'
-                                : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                                ? 'bg-yellow-50 dark:bg-yellow-500/15 border-yellow-200 dark:border-yellow-500/30 text-yellow-700 dark:text-yellow-300'
+                                : 'bg-rose-50 dark:bg-rose-500/15 border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300'
                             }`}>
                               {m.unit === 'kg'
                                 ? (m.currentStockKg >= 1000
@@ -1808,18 +1808,18 @@ export default function WarehouseContent() {
                                     : `${m.currentStockKg.toLocaleString()} kg`)
                                 : `${m.currentStockKg.toLocaleString()} ${m.unit}`}
                             </div>
-                            <div className="text-[11px] text-slate-400 mt-1 font-mono">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
                               {m.currentStockKg.toLocaleString()} {m.unit}
                             </div>
                           </td>
 
                           {/* Stock Level Progress */}
                           <td className="p-4 text-center min-w-[130px]">
-                            <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                            <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1">
                               <span>{stockPercent}% qoldi</span>
                               <span className="font-mono text-[10px]">min: {m.minStock}</span>
                             </div>
-                            <div className="w-full bg-dark-800 rounded-full h-2 overflow-hidden border border-dark-700">
+                            <div className="w-full bg-slate-200 dark:bg-dark-800 rounded-full h-2 overflow-hidden border border-slate-200 dark:border-dark-700">
                               <div
                                 className={`h-full rounded-full transition-all ${
                                   m.status === 'green'
@@ -1836,19 +1836,19 @@ export default function WarehouseContent() {
                           {/* Status (Svetofor) */}
                           <td className="p-4 text-center">
                             {m.status === 'green' && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                                 <CheckCircle size={14} />
                                 <span>{formatDual("Yetarli (Yashil)", "В норме (Зеленый)", "Sufficient")}</span>
                               </span>
                             )}
                             {m.status === 'yellow' && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-yellow-50 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/30">
                                 <Clock size={14} />
                                 <span>{formatDual("Kamaygan (Sariq)", "Мало (Желтый)", "Low")}</span>
                               </span>
                             )}
                             {m.status === 'red' && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30">
                                 <AlertTriangle size={14} />
                                 <span>{formatDual("Kritik (Qizil)", "Критично (Красный)", "Critical")}</span>
                               </span>
@@ -1857,7 +1857,7 @@ export default function WarehouseContent() {
 
                           {/* Top Supplier */}
                           <td className="p-4">
-                            <div className="font-bold text-white text-xs truncate max-w-[160px]" title={m.topSupplier}>
+                            <div className="font-bold text-slate-900 dark:text-white text-xs truncate max-w-[160px]" title={m.topSupplier}>
                               {m.topSupplier}
                             </div>
                             <div className="text-[11px] text-slate-500 mt-0.5">
@@ -1871,7 +1871,7 @@ export default function WarehouseContent() {
                           <td className="p-4 text-right">
                             <button
                               onClick={() => handleOpenMacroOrder(m)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all shadow hover:shadow-amber-500/10"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-500/15 hover:bg-amber-100 dark:hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 text-xs font-bold transition-all shadow-xs hover:shadow-amber-500/10"
                               title="Ta'minot bo'limiga buyurtma berish"
                             >
                               <ShoppingCart size={13} />
@@ -1890,14 +1890,14 @@ export default function WarehouseContent() {
           {/* 3. Section Divider & Batches View Switcher */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6">
             <div className="flex items-center gap-2.5">
-              <span className="w-3 h-3 rounded-full bg-amber-400 animate-pulse" />
+              <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />
               <div>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
                   {batchesView === 'prihod'
                     ? formatDual("ПРИХОД (Kirim qilinayotgan mahsulotlar & partiyalar)", "ПРИХОД (Поступления сырья по партиям)", "Arrivals by Batches")
                     : formatDual("Sklad Qoldiqlari & FEFO Partiyalar Nazorati", "Остатки склада и партии FEFO", "FEFO Stock Batches")}
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {batchesView === 'prihod'
                     ? formatDual("Barcha kelgan xomashyo partiyalari, sanalari va ta'minotchilari ro'yxati", "Полный список прихода сырья с номерами партий", "Full raw material arrivals with batch numbers")
                     : formatDual("Mahsulotlar bo'yicha zonalash va FEFO muddatlari", "Зоны хранения и сроки годности", "Storage zones and expiry dates")}
@@ -1905,18 +1905,18 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            <div className="flex bg-dark-800/80 p-1.5 rounded-2xl border border-dark-700 w-full sm:w-max max-w-full overflow-x-auto backdrop-blur-sm">
+            <div className="flex bg-slate-100 dark:bg-dark-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-700 w-full sm:w-max max-w-full overflow-x-auto backdrop-blur-sm">
               <button
                 onClick={() => setBatchesView('prihod')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   batchesView === 'prihod'
                     ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Tag size={14} />
                 <span>{formatDual("1. Prihod Partiyalari", "1. Партии Прихода", "1. Arrival Batches")}</span>
-                <span className="px-1.5 py-0.2 rounded-md bg-dark-900/60 text-[10px] text-slate-300">
+                <span className="px-1.5 py-0.2 rounded-md bg-amber-500/10 dark:bg-dark-900/60 text-[10px] text-amber-800 dark:text-slate-300 font-bold">
                   {macroData?.batches.length || 0}
                 </span>
               </button>
@@ -1925,7 +1925,7 @@ export default function WarehouseContent() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   batchesView === 'fefo'
                     ? 'bg-emerald-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Layers size={14} />
@@ -1936,8 +1936,8 @@ export default function WarehouseContent() {
 
           {/* VIEW A: REAL PRIHOD BATCHES (Matching user's Image 1) */}
           {batchesView === 'prihod' && (
-            <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
-              <div className="p-5 border-b border-dark-750 flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-850/50">
+            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
+              <div className="p-5 border-b border-slate-200 dark:border-dark-750 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/70 dark:bg-dark-850/50">
                 <div className="relative flex-1 w-full sm:max-w-md">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                   <input
@@ -1949,10 +1949,10 @@ export default function WarehouseContent() {
                     )}
                     value={batchSearch}
                     onChange={(e) => setBatchSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-amber-500"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
                   />
                 </div>
-                <div className="text-xs text-slate-400 font-bold">
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-bold">
                   {formatDual(
                     `Topildi: ${batchesPagination.totalCount} ta partiya`,
                     `Найдено: ${batchesPagination.totalCount} партий`,
@@ -1962,9 +1962,9 @@ export default function WarehouseContent() {
               </div>
 
               {/* Mobile Batches Cards (Visible on phones: block sm:hidden) */}
-              <div className="block sm:hidden divide-y divide-dark-750/70">
+              <div className="block sm:hidden divide-y divide-slate-100 dark:divide-dark-750/70">
                 {macroLoading && !macroData ? (
-                  <div className="p-8 text-center text-slate-400">
+                  <div className="p-8 text-center text-slate-500 dark:text-slate-400">
                     <Loader2 className="animate-spin text-amber-500 mx-auto mb-2" size={24} />
                     <p className="text-xs">{formatDual("Partiyalar yuklanmoqda...", "Загрузка партий...", "Loading...")}</p>
                   </div>
@@ -1975,24 +1975,24 @@ export default function WarehouseContent() {
                   </div>
                 ) : (
                   batchesPagination.displayedItems.map((b) => (
-                    <div key={b.id} className="p-3.5 hover:bg-dark-800/30 transition-colors space-y-1.5">
+                    <div key={b.id} className="p-3.5 hover:bg-slate-50 dark:hover:bg-dark-800/30 transition-colors space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-mono font-bold text-slate-300">
+                        <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
                           📅 {b.date}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/30 font-black text-amber-300 text-[11px]">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 font-black text-amber-700 dark:text-amber-300 text-[11px]">
                           <Tag size={10} />
                           <span>{b.batchNumber}</span>
                         </span>
                       </div>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-extrabold text-white text-sm leading-tight truncate">{b.nomenclature}</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5 truncate">{b.supplier} · <span className="text-slate-500">{b.category}</span></div>
+                          <div className="font-extrabold text-slate-900 dark:text-white text-sm leading-tight truncate">{b.nomenclature}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{b.supplier} · <span className="text-slate-400 dark:text-slate-500">{b.category}</span></div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <span className="text-sm font-black text-amber-400">{b.quantity.toLocaleString()}</span>
-                          <span className="text-[10px] text-slate-400 block">{b.unit}</span>
+                          <span className="text-sm font-black text-amber-600 dark:text-amber-400">{b.quantity.toLocaleString()}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 block">{b.unit}</span>
                         </div>
                       </div>
                     </div>
@@ -2004,7 +2004,7 @@ export default function WarehouseContent() {
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-dark-750 bg-amber-500/10 text-amber-300 text-xs font-black uppercase tracking-wider">
+                    <tr className="border-b border-slate-200 dark:border-dark-750 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-black uppercase tracking-wider">
                       <th className="p-4">{formatDual("SANA", "САНА", "Date")}</th>
                       <th className="p-4">{formatDual("NOMENKLATURA", "НОМЕНКЛАТУРА", "Nomenclature")}</th>
                       <th className="p-4 text-center">{formatDual("MIQDOR", "КОЛИЧЕСТВО", "Quantity")}</th>
@@ -2013,10 +2013,10 @@ export default function WarehouseContent() {
                       <th className="p-4 text-center">{formatDual("TOIFA", "КАТЕГОРИЯ", "Category")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-dark-750">
+                  <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
                     {macroLoading && !macroData ? (
                       <tr>
-                        <td colSpan={6} className="p-12 text-center text-slate-400">
+                        <td colSpan={6} className="p-12 text-center text-slate-500 dark:text-slate-400">
                           <Loader2 className="animate-spin text-amber-500 mx-auto mb-2" size={28} />
                           <span>{formatDual("Partiyalar yuklanmoqda...", "Загрузка партий...", "Loading batches...")}</span>
                         </td>
@@ -2030,27 +2030,27 @@ export default function WarehouseContent() {
                       </tr>
                     ) : (
                       batchesPagination.displayedItems.map((b) => (
-                        <tr key={b.id} className="hover:bg-dark-800/40 transition-colors">
-                          <td className="p-4 font-mono font-bold text-white text-xs">
+                        <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
+                          <td className="p-4 font-mono font-bold text-slate-800 dark:text-white text-xs">
                             {b.date}
                           </td>
-                          <td className="p-4 font-extrabold text-white">
+                          <td className="p-4 font-extrabold text-slate-900 dark:text-white">
                             {b.nomenclature}
                           </td>
-                          <td className="p-4 text-center font-black text-amber-400">
+                          <td className="p-4 text-center font-black text-amber-600 dark:text-amber-400">
                             {b.quantity.toLocaleString()} {b.unit}
                           </td>
-                          <td className="p-4 text-slate-300 font-semibold text-xs">
+                          <td className="p-4 text-slate-700 dark:text-slate-300 font-semibold text-xs">
                             {b.supplier}
                           </td>
                           <td className="p-4 text-center">
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 font-black text-amber-300 text-xs">
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 font-black text-amber-700 dark:text-amber-300 text-xs">
                               <Tag size={12} />
                               <span>{b.batchNumber}</span>
                             </span>
                           </td>
                           <td className="p-4 text-center">
-                            <span className="px-2.5 py-0.5 rounded-lg bg-dark-800 border border-dark-700 text-[11px] text-slate-400">
+                            <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                               {b.category}
                             </span>
                           </td>
@@ -2090,31 +2090,31 @@ export default function WarehouseContent() {
                     placeholder={l.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-dark-900 border border-dark-700 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none text-white shadow-sm"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs"
                   />
                 </div>
-                <div className="flex bg-dark-800/50 p-1.5 rounded-2xl w-full sm:w-max max-w-full overflow-x-auto border border-dark-700/50 backdrop-blur-sm">
+                <div className="flex bg-slate-100 dark:bg-dark-800/50 p-1.5 rounded-2xl w-full sm:w-max max-w-full overflow-x-auto border border-slate-200 dark:border-dark-700/50 backdrop-blur-sm">
                   <button 
                     onClick={() => setStatusFilter('all')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'all' ? 'bg-dark-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'all' ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
                   >
                     {l.filterAll}
                   </button>
                   <button 
                     onClick={() => setStatusFilter('red')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'red' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'text-slate-400 hover:text-red-400'}`}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'red' ? 'bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400'}`}
                   >
                     {l.statusCritical}
                   </button>
                   <button 
                     onClick={() => setStatusFilter('yellow')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'yellow' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-slate-400 hover:text-yellow-500'}`}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'yellow' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border border-yellow-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-yellow-600 dark:hover:text-yellow-500'}`}
                   >
                     {l.statusWarning}
                   </button>
                   <button 
                     onClick={() => setStatusFilter('green')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'green' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-emerald-400'}`}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'green' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'}`}
                   >
                     {l.filterOk}
                   </button>
@@ -2122,22 +2122,22 @@ export default function WarehouseContent() {
               </div>
 
           {/* Inventory Table */}
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
             {loading ? (
               <div className="p-12 flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
-                <p className="text-slate-400 text-sm font-medium">Yuklanmoqda...</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Yuklanmoqda...</p>
               </div>
             ) : filteredInventory.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
                 <Package size={48} className="mx-auto mb-3 opacity-20" />
-                <p className="text-base font-semibold text-slate-400">{l.empty}</p>
+                <p className="text-base font-semibold text-slate-500 dark:text-slate-400">{l.empty}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/40 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-5">{l.colProduct}</th>
                       <th className="p-5">{l.colCode}</th>
                       <th className="p-5">{l.colMin}</th>
@@ -2147,9 +2147,9 @@ export default function WarehouseContent() {
                       <th className="p-5 text-right">{formatDual("Amallar (Kirim / Chiqim)", "Действия (Приход / Расход)", "Actions")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-dark-750">
+                  <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
                     {warehousePagination.displayedItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-dark-800/30 transition-colors group">
+                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/30 transition-colors group">
                         <td className="p-5">
                           <div className="flex items-center gap-3 w-full sm:w-auto">
                             {item.imageUrl ? (
@@ -2157,16 +2157,16 @@ export default function WarehouseContent() {
                                 src={item.imageUrl}
                                 alt={item.name}
                                 onClick={() => setPreviewPhotoModal({ url: item.imageUrl!, title: item.name })}
-                                className="w-11 h-11 rounded-xl object-cover border border-dark-700 cursor-pointer hover:border-emerald-500 hover:scale-105 transition-all flex-shrink-0 shadow-sm"
+                                className="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-dark-700 cursor-pointer hover:border-emerald-500 hover:scale-105 transition-all flex-shrink-0 shadow-xs"
                                 title="Rasmni kattalashtirish"
                               />
                             ) : (
-                              <div className="w-11 h-11 rounded-xl bg-dark-800 border border-dark-750 flex items-center justify-center text-slate-500 flex-shrink-0">
+                              <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-750 flex items-center justify-center text-slate-400 flex-shrink-0">
                                 <Package size={20} />
                               </div>
                             )}
                             <div>
-                              <div className="font-bold text-white text-base group-hover:text-emerald-400 transition-colors">
+                              <div className="font-bold text-slate-900 dark:text-white text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                 {item.name}
                               </div>
                               <span className="text-xs text-slate-500">{item.category || 'Xomashyo'}</span>
@@ -2175,33 +2175,33 @@ export default function WarehouseContent() {
                         </td>
                         <td className="p-5">
                           <div className="flex flex-col">
-                            <span className="font-mono text-xs text-slate-400">{item.code || '-'}</span>
-                            <span className="text-xs text-slate-400">{item.category || 'Xomashyo'}</span>
+                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{item.code || '-'}</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500">{item.category || 'Xomashyo'}</span>
                           </div>
                         </td>
-                        <td className="p-5 font-mono text-sm text-slate-300 font-bold">
+                        <td className="p-5 font-mono text-sm text-slate-700 dark:text-slate-300 font-bold">
                           {item.minStockLevel} {item.unit}
                         </td>
                         <td className="p-5">
                           <div className="flex items-baseline gap-1.5">
-                            <span className="font-black text-2xl text-white leading-none">
+                            <span className="font-black text-2xl text-slate-900 dark:text-white leading-none">
                               {item.totalQuantity}
                             </span>
-                            <span className="text-sm font-bold text-slate-400">{item.unit}</span>
+                            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">{item.unit}</span>
                           </div>
                         </td>
                         <td className="p-5">
                           {item.batches.length === 0 ? (
-                            <span className="text-xs text-slate-400 font-medium bg-dark-800 px-2 py-1 rounded-md">{l.noBatches}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium bg-slate-100 dark:bg-dark-800 px-2 py-1 rounded-md">{l.noBatches}</span>
                           ) : (
                             <div className="flex flex-col gap-1.5 max-w-[220px]">
                               {item.batches.slice(0, 3).map((b) => (
-                                <div key={b.id} className="flex items-center justify-between bg-dark-800 border border-dark-700 rounded-lg px-2.5 py-1 text-xs">
+                                <div key={b.id} className="flex items-center justify-between bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg px-2.5 py-1 text-xs">
                                   <div className="flex flex-col">
-                                    <span className="font-mono font-bold text-slate-400">#{b.batchNumber}</span>
+                                    <span className="font-mono font-bold text-slate-600 dark:text-slate-400">#{b.batchNumber}</span>
                                     <button 
                                       onClick={() => setShowZoneModal({batchId: b.id, currentZoneId: b.zone?.id || null})} 
-                                      className="text-[10px] text-emerald-400 hover:text-emerald-300 text-left"
+                                      className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline text-left font-semibold"
                                     >
                                       {b.zone ? b.zone.name : "+ Zona qo'shish"}
                                     </button>
@@ -2210,21 +2210,21 @@ export default function WarehouseContent() {
                                     {b.arrivalPhotoUrl && (
                                       <button 
                                         onClick={() => setPreviewPhotoModal({ url: b.arrivalPhotoUrl!, title: `${item.name} (#${b.batchNumber})` })}
-                                        className="text-emerald-400 hover:text-emerald-300 p-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20" 
+                                        className="text-emerald-600 dark:text-emerald-400 p-1 rounded bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20" 
                                         title="Partiya rasmini ko'rish"
                                       >
                                         <Camera size={13} />
                                       </button>
                                     )}
-                                    <button onClick={() => handlePrintQR(b.id)} className="text-slate-400 hover:text-white p-0.5" title="Print QR">
+                                    <button onClick={() => handlePrintQR(b.id)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-0.5" title="Print QR">
                                       <QrCode size={12} />
                                     </button>
-                                    <span className="font-black text-indigo-400 bg-indigo-500/10 px-1.5 rounded">{b.quantity} {item.unit}</span>
+                                    <span className="font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 rounded">{b.quantity} {item.unit}</span>
                                   </div>
                                 </div>
                               ))}
                               {item.batches.length > 3 && (
-                                <div className="text-xs font-semibold text-indigo-400 text-center mt-0.5">
+                                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 text-center mt-0.5">
                                   {l.moreBatches.replace('{n}', (item.batches.length - 3).toString())}
                                 </div>
                               )}
@@ -2233,19 +2233,19 @@ export default function WarehouseContent() {
                         </td>
                         <td className="p-5">
                           {item.status === 'red' && (
-                            <div className="inline-flex items-center gap-1.5 text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl shadow-sm">
+                            <div className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-3 py-1.5 rounded-xl shadow-xs">
                               <AlertTriangle size={16} strokeWidth={2.5} />
                               <span className="text-xs font-bold uppercase tracking-wider">{l.statusCritical}</span>
                             </div>
                           )}
                           {item.status === 'yellow' && (
-                            <div className="inline-flex items-center gap-1.5 text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-xl shadow-sm">
+                            <div className="inline-flex items-center gap-1.5 text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 px-3 py-1.5 rounded-xl shadow-xs">
                               <Clock size={16} strokeWidth={2.5} />
                               <span className="text-xs font-bold uppercase tracking-wider">{l.statusWarning}</span>
                             </div>
                           )}
                           {item.status === 'green' && (
-                            <div className="inline-flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl shadow-sm">
+                            <div className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-3 py-1.5 rounded-xl shadow-xs">
                               <CheckCircle size={16} strokeWidth={2.5} />
                               <span className="text-xs font-bold uppercase tracking-wider">{l.statusOk}</span>
                             </div>
@@ -2257,10 +2257,10 @@ export default function WarehouseContent() {
                               onClick={() => handleOpenOrderModal(item)}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                                 item.status === 'red'
-                                  ? 'bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 shadow-sm shadow-rose-500/20 animate-pulse'
+                                  ? 'bg-rose-500/20 hover:bg-rose-600 text-rose-700 dark:text-rose-300 hover:text-white border border-rose-500/40 shadow-xs shadow-rose-500/20 animate-pulse'
                                   : item.status === 'yellow'
-                                  ? 'bg-amber-500/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/40'
-                                  : 'bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white border border-dark-700'
+                                  ? 'bg-amber-500/20 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white border border-amber-500/40'
+                                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700'
                               }`}
                               title={formatDual("Ta'minot bo'limiga buyurtma / talabnoma yuborish", "Отправить заявку в отдел снабжения", "Send purchase request to supply")}
                             >
@@ -2269,7 +2269,7 @@ export default function WarehouseContent() {
                             </button>
                             <button
                               onClick={() => handleOpenReceiveModal(item)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 transition-all"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-400 hover:text-white border border-emerald-200 dark:border-emerald-500/20 transition-all"
                               title="Ushbu mahsulotga yangi partiya kirim qilish"
                             >
                               <Plus size={14} />
@@ -2278,7 +2278,7 @@ export default function WarehouseContent() {
                             <button
                               onClick={() => handleOpenQuickTransfer(item)}
                               disabled={item.totalQuantity <= 0}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-800 hover:bg-emerald-600 text-slate-300 hover:text-white border border-dark-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-dark-800 hover:bg-emerald-600 text-slate-700 dark:text-slate-300 hover:text-white border border-slate-200 dark:border-dark-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                               <Send size={14} />
                               <span>{formatDual("Chiqarish", "Отпустить", "Dispatch")}</span>
@@ -2316,7 +2316,7 @@ export default function WarehouseContent() {
       {activeTab === 'movement' && (
         <div className="space-y-6 animate-enter">
           {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-6 rounded-3xl shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-6 rounded-3xl shadow-sm">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -2324,7 +2324,7 @@ export default function WarehouseContent() {
                   GREEN PROCESSING • FSSC 22000
                 </span>
               </div>
-              <h3 className="text-xl font-black text-white flex items-center gap-2.5">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
                 <span>{lang === 'ru' ? 'Журнал регистрации и перемещения основного сырья на производство' : "Asosiy Xomashyoni Ro'yxatga Olish va Ishlab Chiqarishga Berish Jurnali"}</span>
               </h3>
               <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
@@ -2374,7 +2374,7 @@ export default function WarehouseContent() {
           </div>
 
           {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-dark-900/70 p-4 rounded-2xl border border-dark-750">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-dark-900/70 p-4 rounded-2xl border border-slate-200 dark:border-dark-750">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input
@@ -2414,7 +2414,7 @@ export default function WarehouseContent() {
           </div>
 
           {/* Table Container */}
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
             {movementLoading ? (
               <div className="p-16 flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
@@ -2642,7 +2642,7 @@ export default function WarehouseContent() {
       {activeTab === 'gp' && (
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-6 rounded-3xl shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-6 rounded-3xl shadow-sm">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -2650,7 +2650,7 @@ export default function WarehouseContent() {
                   {formatDual("Sex Ishlab Chiqarish Natijasi", "Выпуск готовой продукции цеха", "Finished Goods Inventory")}
                 </span>
               </div>
-              <h3 className="text-xl font-black text-white flex items-center gap-2.5">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
                 <span>{formatDual("ГП (Tayyor Mahsulot Ombori) & Balansi", "ГП (Склад готовой продукции)", "Finished Goods (FG) Warehouse")}</span>
               </h3>
               <p className="text-xs text-slate-400 mt-1 max-w-2xl">
@@ -2665,7 +2665,7 @@ export default function WarehouseContent() {
             <button
               onClick={() => fetchMacroStats()}
               disabled={macroLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700 text-slate-200 hover:text-white font-bold text-xs transition-all shadow hover:border-emerald-500/40"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-xs transition-all shadow-xs hover:border-emerald-500/40"
             >
               <RefreshCw size={14} className={macroLoading ? 'animate-spin text-emerald-400' : ''} />
               <span>{formatDual("Yangilash", "Обновить", "Refresh")}</span>
@@ -2674,7 +2674,7 @@ export default function WarehouseContent() {
 
           {/* GP Summary KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+            <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
               <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
                 {formatDual("Jami Chiqarilgan ГП", "Всего выпущено ГП", "Total Finished Goods")}
               </span>
@@ -2686,7 +2686,7 @@ export default function WarehouseContent() {
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+            <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
               <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
                 {formatDual("Mahsulot Turlari (SKU)", "Номенклатура ГП", "Finished SKU Count")}
               </span>
@@ -2698,7 +2698,7 @@ export default function WarehouseContent() {
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+            <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
               <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">
                 {formatDual("Ishlab Chiqarish Kunlari", "Дней выработки", "Production Days")}
               </span>
@@ -2710,7 +2710,7 @@ export default function WarehouseContent() {
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+            <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
               <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
                 {formatDual("O'rtacha Kunlik Chiqarish", "Среднесуточный выпуск", "Avg Daily Output")}
               </span>
@@ -2724,7 +2724,7 @@ export default function WarehouseContent() {
           </div>
 
           {/* GP Category Filter Pills */}
-          <div className="flex items-center gap-2 p-1.5 bg-dark-900 border border-dark-750 rounded-2xl overflow-x-auto no-scrollbar shadow-sm">
+          <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl overflow-x-auto no-scrollbar shadow-xs">
             {[
               { id: 'all', uz: `Barchasi (${macroData?.gp?.items?.length || 17})`, ru: `Все (${macroData?.gp?.items?.length || 17})`, en: `All (${macroData?.gp?.items?.length || 17})` },
               { id: 'Salatlar', uz: '🥗 Salatlar', ru: '🥗 Салаты', en: '🥗 Salads' },
@@ -2739,8 +2739,8 @@ export default function WarehouseContent() {
                   onClick={() => setGpCategory(cat.id)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                     isSel 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm' 
-                      : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                      ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 shadow-xs' 
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800'
                   }`}
                 >
                   {formatDual(cat.uz, cat.ru, cat.en)}
@@ -2750,11 +2750,11 @@ export default function WarehouseContent() {
           </div>
 
           {/* GP Items Aggregated Table */}
-          <div className="bg-dark-900 border border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-            <div className="p-4 sm:p-5 border-b border-dark-750 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 bg-dark-850/50">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-dark-750 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 bg-slate-50/70 dark:bg-dark-850/50">
               <div className="flex items-center gap-2">
                 <Boxes className="text-emerald-400 shrink-0" size={20} />
-                <h4 className="font-extrabold text-white text-sm sm:text-base">
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
                   {formatDual("17 ta Tayyor Mahsulot Bo'yicha Umumiy Hajm & Balans", "Сводка выпуска и баланс 17 видов ГП", "Summary & Balance of 17 FG Items")}
                 </h4>
               </div>
@@ -2766,7 +2766,7 @@ export default function WarehouseContent() {
                   placeholder={formatDual("Mahsulot nomi bo'yicha...", "Поиск по продукции...", "Search product...")}
                   value={gpSearch}
                   onChange={(e) => setGpSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-dark-800 border border-dark-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500"
                 />
               </div>
             </div>
@@ -2930,11 +2930,11 @@ export default function WarehouseContent() {
           </div>
 
           {/* Daily Output Logs */}
-          <div className="bg-dark-900 border border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm">
             <div className="p-4 sm:p-5 border-b border-dark-750 flex items-center justify-between gap-4 bg-dark-850/50">
               <div className="flex items-center gap-2">
                 <Calendar className="text-cyan-400 shrink-0" size={20} />
-                <h4 className="font-extrabold text-white text-sm sm:text-base">
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
                   {formatDual("Kunlik Ishlab Chiqarish Jurnali (Выпуск ГП)", "Журнал ежедневного выпуска ГП", "Daily Finished Goods Logs")}
                 </h4>
               </div>
@@ -3030,9 +3030,9 @@ export default function WarehouseContent() {
       {/* TAB 2: TRANSFERS & DISPATCH (TWO-WAY HANDSHAKE) */}
       {activeTab === 'transfers' && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-5 rounded-2xl shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
             <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
                 <Scale className="text-emerald-400" size={22} />
                 <span>Sklad Chiqimlari & Two-Way Handshake Nazorati</span>
               </h3>
@@ -3061,7 +3061,7 @@ export default function WarehouseContent() {
           </div>
 
           {/* Transfers Table */}
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
             {transfersLoading ? (
               <div className="p-12 flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
@@ -3076,7 +3076,7 @@ export default function WarehouseContent() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/40 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">{formatDual("Hujjat Raqami & Sana", "№ Документа & Дата", "Doc № & Date")}</th>
                       <th className="p-4">{formatDual("Mahsulot", "Продукт", "Product")}</th>
                       <th className="p-4">{formatDual("Qayerga", "Куда", "Destination")}</th>
@@ -3170,9 +3170,9 @@ export default function WarehouseContent() {
       {/* TAB 3: TEMPERATURE LOG */}
       {activeTab === 'temperature' && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-5 rounded-2xl shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
             <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
                 <Thermometer className="text-emerald-400" size={22} />
                 {lang === 'ru' ? 'Журнал температурного режима' : 'Harorat rejimi jurnali (Omborxona)'}
               </h3>
@@ -3211,7 +3211,7 @@ export default function WarehouseContent() {
             </div>
           </div>
 
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
             {tempLoading ? (
               <div className="p-12 flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
@@ -3226,7 +3226,7 @@ export default function WarehouseContent() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/40 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">{l.tempDate}</th>
                       <th className="p-4">{l.tempTime}</th>
                       <th className="p-4 text-center">Айсберг (°C)</th>
@@ -3294,7 +3294,7 @@ export default function WarehouseContent() {
       {activeTab === 'suppliers' && (
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-6 rounded-3xl shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-6 rounded-3xl shadow-sm">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -3302,7 +3302,7 @@ export default function WarehouseContent() {
                   {formatDual("Ta'minot Boshqaruvi", "Управление поставками", "Supply Management")}
                 </span>
               </div>
-              <h3 className="text-xl font-black text-white flex items-center gap-2.5">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
                 <span>{formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и статистика поставщиков сырья", "Suppliers Registry & Analytics")}</span>
               </h3>
               <p className="text-xs text-slate-400 mt-1 max-w-2xl">
@@ -3317,7 +3317,7 @@ export default function WarehouseContent() {
             <button
               onClick={() => fetchMacroStats()}
               disabled={macroLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700 text-slate-200 hover:text-white font-bold text-xs transition-all shadow hover:border-emerald-500/40"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-xs transition-all shadow-xs hover:border-emerald-500/40"
             >
               <RefreshCw size={14} className={macroLoading ? 'animate-spin text-emerald-400' : ''} />
               <span>{formatDual("Yangilash", "Обновить", "Refresh")}</span>
@@ -3326,7 +3326,7 @@ export default function WarehouseContent() {
 
           {/* Supplier KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+            <div className="bg-white dark:bg-dark-900/90 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">
               <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
                 {formatDual("Jami Hamkorlar", "Всего поставщиков", "Total Suppliers")}
               </span>
@@ -3338,7 +3338,7 @@ export default function WarehouseContent() {
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+            <div className="bg-white dark:bg-dark-900/90 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">
               <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
                 {formatDual("Jami Keltirilgan Yuk", "Общий объем поставок", "Total Delivered Volume")}
               </span>
@@ -3350,7 +3350,7 @@ export default function WarehouseContent() {
               </p>
             </div>
 
-            <div className="bg-dark-900/90 p-5 rounded-3xl border border-dark-750 shadow-lg">
+            <div className="bg-white dark:bg-dark-900/90 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">
               <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
                 {formatDual("Eng Yirik Hamkor", "Главный поставщик", "Top Supplier Partner")}
               </span>
@@ -3364,8 +3364,8 @@ export default function WarehouseContent() {
           </div>
 
           {/* Suppliers Table Container */}
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-dark-750 flex flex-col sm:flex-row items-center justify-between gap-4 bg-dark-850/50">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-slate-200 dark:border-dark-750 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/70 dark:bg-dark-850/50">
               <div className="relative flex-1 w-full sm:max-w-md">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input
@@ -3377,7 +3377,7 @@ export default function WarehouseContent() {
                   )}
                   value={supplierSearch}
                   onChange={(e) => setSupplierSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
                 />
               </div>
               <div className="text-xs text-slate-400 font-semibold">
@@ -3617,16 +3617,16 @@ export default function WarehouseContent() {
           onClick={() => setShowTransferModal(false)}
         >
           <div 
-            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-lg bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <Send size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">{formatDual("Skladdan Chiqim Berish", "Отпуск сырья со склада", "Warehouse Dispatch")}</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{formatDual("Skladdan Chiqim Berish", "Отпуск сырья со склада", "Warehouse Dispatch")}</h3>
                   <p className="text-xs text-slate-400">{formatDual("Oshxona yoki Zagotovkaga xomashyo o'tkazish", "Перемещение сырья на кухню или в заготовку", "Transfer raw materials to Kitchen or Prep")}</p>
                 </div>
               </div>
@@ -3709,11 +3709,11 @@ export default function WarehouseContent() {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors"
                 >
                   {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
@@ -3734,9 +3734,9 @@ export default function WarehouseContent() {
       {/* MODAL: ZONE */}
       {showZoneModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter" onClick={() => setShowZoneModal(null)}>
-          <div className="bg-dark-900 rounded-3xl w-full max-w-sm shadow-2xl border border-dark-700 flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2"><Package size={20} className="text-emerald-400" /> Zona Tanlash</h2>
+          <div className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><Package size={20} className="text-emerald-600 dark:text-emerald-400" /> Zona Tanlash</h2>
               <button onClick={() => setShowZoneModal(null)} className="text-slate-400 hover:text-white p-1 rounded-lg"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-4">
@@ -3752,8 +3752,8 @@ export default function WarehouseContent() {
                 </select>
               </div>
             </div>
-            <div className="px-6 py-4 bg-dark-800/50 flex justify-end gap-3 border-t border-dark-800">
-              <button onClick={() => setShowZoneModal(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-dark-700">Bekor qilish</button>
+            <div className="px-6 py-4 bg-slate-50 dark:bg-dark-800/50 flex justify-end gap-3 border-t border-slate-200 dark:border-dark-800">
+              <button onClick={() => setShowZoneModal(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700">Bekor qilish</button>
               <button onClick={() => handleUpdateZone(showZoneModal.batchId, showZoneModal.currentZoneId)} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all">Saqlash</button>
             </div>
           </div>
@@ -3767,10 +3767,10 @@ export default function WarehouseContent() {
           onClick={() => setShowMovementModal(false)}
         >
           <div 
-            className="w-full max-w-2xl bg-dark-900 border border-dark-750 rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-dark-750">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-750">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg">
                   <ClipboardList size={20} />
@@ -4053,7 +4053,7 @@ export default function WarehouseContent() {
             className="w-full max-w-2xl bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <Thermometer size={22} />
@@ -4191,11 +4191,11 @@ export default function WarehouseContent() {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-dark-700">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setShowTempModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors"
                 >
                   {l.cancel}
                 </button>
@@ -4221,7 +4221,7 @@ export default function WarehouseContent() {
             className="w-full max-w-2xl bg-dark-900 border border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <Package size={22} />
@@ -4554,7 +4554,7 @@ export default function WarehouseContent() {
                 <button
                   type="button"
                   onClick={() => setShowReceiveModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors"
                 >
                   {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
@@ -4626,7 +4626,7 @@ export default function WarehouseContent() {
             className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-dark-700">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
                   <ShoppingCart size={22} />
@@ -4765,7 +4765,7 @@ export default function WarehouseContent() {
                 <button
                   type="button"
                   onClick={() => setShowOrderModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors"
                 >
                   {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
