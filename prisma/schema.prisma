@@ -1405,3 +1405,65 @@ model RawMaterialMovementLog {
   @@index([productName])
   @@index([supplierName])
 }
+
+model TelegramSession {
+  telegramId       BigInt   @id
+  telegramUsername String?
+  erpUserId        Int
+  username         String
+  name             String
+  role             String
+  updatedAt        DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// 17. EXECUTIVE ERP DASHBOARD & LOSS AUDIT (DIREKTOR NAZORATI VA BRAK AUDITI)
+// -----------------------------------------------------------------------------
+
+model ExecutiveLossStandard {
+  id                    Int      @id @default(autoincrement())
+  productId             Int?
+  productName           String   @unique // e.g. "Томат", "Салат Айсберг", "Лук"
+  incomingNormPercent   Float    @default(3.0)  // Qabuldagi me'yoriy brak %
+  processingNormPercent Float    @default(12.0) // Qayta ishlash texnologik chiqindi %
+  storageNormPercent    Float    @default(2.0)  // Ombor/muzlatgichdagi me'yor %
+  criticalThreshold     Float    @default(5.0)  // Kritik og'ish chegarasi %
+  notes                 String?
+  updatedById           Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([productName])
+}
+
+model ExecutiveWastageLog {
+  id               Int      @id @default(autoincrement())
+  actNumber        String   @unique // e.g. BRK-2026-0001
+  batchNumber      String?  // Partiya raqami
+  productId        Int?
+  productName      String   // Mahsulot nomi
+  supplierId       Int?
+  supplierName     String?  // Ta'minotchi tashkilot
+  reportedById     Int?
+  reportedByName   String?  // Qayd etgan shaxs (QC / Texnolog)
+  receivedByName   String?  // Qabul qilgan omborchi
+  stage            String   // INCOMING | PROCESSING | STORAGE
+  wastageType      String   // ACTUAL_DEFECT | NATURAL_TECH_WASTE
+  weightKg         Float    // Vazn kg
+  reasonCategory   String   // Sabab kategoriyasi
+  detailedComment  String?  // Batafsil izoh
+  photoUrl         String?  // Isbotlovchi rasm/hujjat havolasi (ixtiyoriy)
+  incidentDate     String   // Sana YYYY-MM-DD
+  incidentTime     String?  // Vaqt HH:mm
+  isCancelled      Boolean  @default(false)
+  cancelReason     String?  // Bekor qilish sababi
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([incidentDate])
+  @@index([productName])
+  @@index([stage])
+  @@index([wastageType])
+  @@index([supplierName])
+}
+
