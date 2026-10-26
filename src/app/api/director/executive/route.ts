@@ -335,8 +335,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Saralash: Eng ko'p kirim bo'lgan mahsulotlar oldinda
-    productBalances.sort((a, b) => b.inflowKg - a.inflowKg)
+    // Saralash: Me'yordan eng ko'p og'ish bo'lgan (va eng ko'p kirim bo'lgan) mahsulotlar ketma-ketlikda ko'pdan kamga qarab
+    productBalances.sort((a, b) => {
+      const varA = a.variancePercent !== null ? a.variancePercent : -999999
+      const varB = b.variancePercent !== null ? b.variancePercent : -999999
+      if (Math.abs(varB - varA) > 0.001) return varB - varA
+      return b.inflowKg - a.inflowKg
+    })
 
     return NextResponse.json({
       success: true,
