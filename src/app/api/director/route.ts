@@ -173,73 +173,42 @@ export async function GET(request: NextRequest) {
     let rejectedPrixodKg = 0
     const prixodItems: any[] = []
 
-    // Helper map of incoming acts by date and product name for quality enrichment
-    const actMap = new Map<string, any>()
+    // Helper map of incoming acts by batch number and by date + product for quality enrichment
+    const actByBatchMap = new Map<string, any>()
+    const actByDateProductMap = new Map<string, any>()
     incomingActs.forEach((act) => {
+      if (act.batchNumber) {
+        actByBatchMap.set(String(act.batchNumber).trim().toLowerCase(), act)
+      }
       const key = `${act.actDate}_${(act.productName || '').trim().toLowerCase()}`
-      if (!actMap.has(key)) actMap.set(key, act)
+      if (!actByDateProductMap.has(key)) actByDateProductMap.set(key, act)
     })
 
+    // Include ALL arrivals from shop report / DB without artificial limit
     shopArrivals.forEach((sa) => {
       const qty = sa.quantity || 0
       totalPrixodKg += qty
       acceptedPrixodKg += qty
 
-      const actMatch = actMap.get(`${sa.date}_${(sa.nomenclature || '').trim().toLowerCase()}`)
-      const supplierName = sa.supplier || actMatch?.supplierName || "Mahalliy yetkazib beruvchi"
-      const tempStr = actMatch?.temperature ? `${actMatch.temperature}` : "+4.0 °C (Standart)"
-      const inspectorStr = actMatch?.inspectorName || "Sifat nazorati inspektori"
-      const docNum = sa.batch ? `Partiya #${sa.batch}` : (actMatch?.actNumber ? `Akt #${actMatch.actNumber}` : `KIR-${sa.id}`)
+      const batchKey = sa.batch ? String(sa.batch).trim().toLowerCase() : ''
+      const actMatch = (batchKey && actByBatchMap.get(batchKey)) || actByDateProductMap.get(`${sa.date}_${(sa.nomenclature || '').trim().toLowerCase()}`)
+      const supplierName = sa.supplier || actMatch?.supplierName || "Yetkazib beruvchi"
+      const inspectorStr = actMatch?.inspectorName || "Sifat nazorati / Omborchi"
+      const batchNum = sa.batch ? `Partiya #${sa.batch}` : (actMatch?.batchNumber ? `Partiya #${actMatch.batchNumber}` : `PAR-${sa.id}`)
 
-      if (prixodItems.length < 150) {
-        prixodItems.push({
-          id: `sa-${sa.id}`,
-          type: 'PRIXOD',
-          productName: sa.nomenclature,
-          batchNumber: sa.batch || (actMatch?.batchNumber ? `PAR-${actMatch.batchNumber}` : `PAR-${sa.date}-${sa.id}`),
-          quantityKg: qty,
-          unit: 'kg',
-          date: sa.date,
-          status: actMatch?.decisionText || 'Qabul qilingan',
-          supplierName,
-          chain: {
-            broughtBy: {
-              supplier: supplierName,
-              driver: "Ta'minotchi ekspeditori / Haydovchi",
-              vehicleNumber: actMatch?.batchNumber ? `Partiya № ${actMatch.batchNumber}` : (sa.batch ? `Partiya ${sa.batch}` : "Ta'minot transporti"),
-              arrivalDate: sa.date,
-              temperature: tempStr,
-              docNumber: docNum,
-              notes: actMatch?.decisionText ? `Kirish nazorati xulosasi: ${actMatch.decisionText}` : "Zavodga qabul qilingan xomashyo",
-            },
-            cleanedBy: {
-              worker: inspectorStr,
-              sortingLine: "Kirish nazorati va saralash punkti",
-              cleanlinessRate: actMatch?.decisionRating === 4 || actMatch?.decisionRating === 5 ? "100% standartga mos" : "Normada qabul qilindi",
-              date: sa.date,
-              washMethod: "Organoleptik tekshiruv va laborator tahlil",
-              notes: "Texnik shartlarga muvofiq qabul qilindi",
-            },
-            issuedToProductionBy: {
-              worker: "Xomashyo ombori mudiri",
-              warehouseName: "Asosiy xomashyo skladi",
-              transferDoc: `TR-KIR-${sa.id}`,
-              issuedDate: sa.date,
-              issuedQty: qty,
-              notes: "Sexga berish uchun omborga kirim qilindi",
-            },
-            receivedBy: {
-              worker: "Sex qabul qiluvchisi / Sex ustasi",
-              workshopName: "Tayyorlash va ishlab chiqarish sexi",
-              receivedDate: sa.date,
-              receivedQty: qty,
-              discrepancy: 0,
-              status: "Muvaffaqiyatli qabul qilindi",
-              notes: "Sex hisobotiga to'liq hajmda kiritilgan",
-            },
-          },
-        })
-      }
+      prixodItems.push({
+        id: `sa-${sa.id}`,
+        type: 'PRIXOD',
+        productName: sa.nomenclature,
+        batchNumber: batchNum,
+        rawBatch: sa.batch || actMatch?.batchNumber || '',
+        quantityKg: Math.round(qty * 10) / 10,
+        unit: 'kg',
+        date: sa.date,
+        status: actMatch?.decisionText || 'Qabul qilingan',
+        supplierName,
+        receivedBy: inspectorStr,
+      })
     })
 
     // Also include any rejected acts from incoming acts
@@ -249,55 +218,19 @@ export async function GET(request: NextRequest) {
         rejectedPrixodKg += rejQty
         totalPrixodKg += rejQty
         totalPrixodCount++
-        if (prixodItems.length < 150) {
-          prixodItems.push({
-            id: `act-rej-${act.id}`,
-            type: 'PRIXOD',
-            productName: act.productName,
-            batchNumber: act.batchNumber || `AKT-${act.actNumber}`,
-            quantityKg: rejQty,
-            unit: 'kg',
-            date: act.actDate,
-            status: 'RAD ETILGAN (Brak)',
-            supplierName: act.supplierName,
-            chain: {
-              broughtBy: {
-                supplier: act.supplierName,
-                driver: "Yetkazib beruvchi",
-                vehicleNumber: `Akt №${act.actNumber}`,
-                arrivalDate: act.actDate,
-                temperature: act.temperature || "+8.0 °C",
-                docNumber: `RAD-AKT-${act.actNumber}`,
-                notes: act.decisionText || "Sifat talablariga mos kelmagani sababli rad etildi",
-              },
-              cleanedBy: {
-                worker: act.inspectorName || "Kirish nazorati inspektori",
-                sortingLine: "Karantin va tekshiruv hududi",
-                cleanlinessRate: "Nomuvofiq — rad etilgan",
-                date: act.actDate,
-                washMethod: "Organoleptik tahlil",
-                notes: "Brak va nomuvofiqlik aniqlandi",
-              },
-              issuedToProductionBy: {
-                worker: "Sexga chiqarilmadi (Rad etildi)",
-                warehouseName: "Karantin zonasi",
-                transferDoc: `RAD-${act.id}`,
-                issuedDate: act.actDate,
-                issuedQty: 0,
-                notes: "Ishlab chiqarishga qabul qilinmadi",
-              },
-              receivedBy: {
-                worker: "Ta'minotchi / Qaytarish dalolatnomasi",
-                workshopName: "Qaytarish punkti",
-                receivedDate: act.actDate,
-                receivedQty: rejQty,
-                discrepancy: rejQty,
-                status: "Rad etilgan",
-                notes: "Yetkazib beruvchiga qaytarildi",
-              },
-            },
-          })
-        }
+        prixodItems.push({
+          id: `act-rej-${act.id}`,
+          type: 'PRIXOD',
+          productName: act.productName,
+          batchNumber: act.batchNumber ? `Partiya #${act.batchNumber}` : `AKT-${act.actNumber}`,
+          rawBatch: act.batchNumber || '',
+          quantityKg: rejQty,
+          unit: 'kg',
+          date: act.actDate,
+          status: 'Rad etilgan (Brak)',
+          supplierName: act.supplierName,
+          receivedBy: act.inspectorName || "Sifat nazorati inspektori",
+        })
       }
     })
 

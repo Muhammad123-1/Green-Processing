@@ -45,6 +45,8 @@ import {
   CornerDownRight,
   ShieldCheck,
   Thermometer,
+  Building2,
+  Hash,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -102,6 +104,8 @@ export default function DirectorPage() {
   >(null)
   const [operationsTab, setOperationsTab] = useState<'prixod' | 'rasxod' | 'brak'>('prixod')
   const [selectedOperationItem, setSelectedOperationItem] = useState<any>(null)
+  const [selectedOperationProduct, setSelectedOperationProduct] = useState<string>('ALL')
+  const [visibleOperationsLimit, setVisibleOperationsLimit] = useState<number>(60)
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
   const [selectedAuditAction, setSelectedAuditAction] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -111,6 +115,8 @@ export default function DirectorPage() {
   const openOperationsModal = (tab: 'prixod' | 'rasxod' | 'brak', item?: any) => {
     setOperationsTab(tab)
     setSelectedOperationItem(item || null)
+    setSelectedOperationProduct('ALL')
+    setVisibleOperationsLimit(60)
     setActiveModal('operations')
   }
 
@@ -233,24 +239,40 @@ export default function DirectorPage() {
   const employeeActivityChart: any[] = charts.employeeActivityChart || []
   const operationsSummary = data?.operationsSummary
 
+  // Distinct products for operations product filter dropdown
+  const operationsProductList = useMemo(() => {
+    if (!operationsSummary) return []
+    const list: any[] = operationsSummary[operationsTab]?.items || []
+    const names = new Set<string>()
+    list.forEach((item: any) => {
+      if (item.productName) names.add(item.productName)
+    })
+    return Array.from(names).sort()
+  }, [operationsSummary, operationsTab])
+
   // Filtered operations list (Prixod / Rasxod / Brak)
   const currentOperationsList = useMemo(() => {
     if (!operationsSummary) return []
     const list: any[] = operationsSummary[operationsTab]?.items || []
-    if (!searchQuery) return list
-    const q = searchQuery.toLowerCase()
-    return list.filter(
-      (item: any) =>
+    return list.filter((item: any) => {
+      const matchProduct = selectedOperationProduct === 'ALL' || item.productName === selectedOperationProduct
+      if (!matchProduct) return false
+      if (!searchQuery) return true
+      const q = searchQuery.toLowerCase()
+      return (
         item.productName?.toLowerCase().includes(q) ||
         item.batchNumber?.toLowerCase().includes(q) ||
         item.defectNumber?.toLowerCase().includes(q) ||
         item.supplierName?.toLowerCase().includes(q) ||
+        item.receivedBy?.toLowerCase().includes(q) ||
+        item.date?.toLowerCase().includes(q) ||
         item.chain?.broughtBy?.supplier?.toLowerCase().includes(q) ||
         item.chain?.cleanedBy?.worker?.toLowerCase().includes(q) ||
         item.chain?.issuedToProductionBy?.worker?.toLowerCase().includes(q) ||
         item.chain?.receivedBy?.worker?.toLowerCase().includes(q)
-    )
-  }, [operationsSummary, operationsTab, searchQuery])
+      )
+    })
+  }, [operationsSummary, operationsTab, searchQuery, selectedOperationProduct])
 
   const activeChainItem = selectedOperationItem || currentOperationsList[0] || null
 
@@ -1617,14 +1639,18 @@ export default function DirectorPage() {
                     {activeModal === 'alerts' && formatDual("Shubhali holatlar", "Аномалии", "Discrepancies & alerts")}
                     {activeModal === 'archive' && formatDual("Umumiy Arxiv", "Общий архив", "Global Archive")}
                     {activeModal === 'operations' && (
-                      operationsTab === 'prixod' ? formatDual("Kirim (Prixod) zanjiri", "Цепочка прихода", "Inbound Chain") :
-                      operationsTab === 'rasxod' ? formatDual("Chiqim (Rasxod) zanjiri", "Цепочка расхода", "Consumption Chain") :
-                      formatDual("Brak zanjiri", "Цепочка брака", "Defect Chain")
+                      operationsTab === 'prixod' ? formatDual("Kirim (Prixod) ro'yxati", "Список прихода", "Inbound Arrivals") :
+                      operationsTab === 'rasxod' ? formatDual("Chiqim (Rasxod) jurnali", "Журнал расхода", "Consumption Records") :
+                      formatDual("Brak jurnali", "Журнал брака", "Defect Records")
                     )}
                   </h3>
                   <p className="text-xs text-slate-500">
                     {activeModal === 'operations'
-                      ? formatDual("1. Keltirgan -> 2. Tozalagan -> 3. Ishlab chiqarishga bergan -> 4. Qabul qilgan", "1. Доставил -> 2. Очистил -> 3. Передал в цех -> 4. Принял", "1. Carrier -> 2. Cleaner -> 3. Dispatcher -> 4. Receiver")
+                      ? operationsTab === 'prixod'
+                        ? formatDual("Xomashyo qabuli: ta'minotchi, partiya va qabul qiluvchi mas'ul", "Прием сырья: поставщик, партия и ответственный за прием", "Inbound arrivals: supplier, batch and receiver")
+                        : operationsTab === 'rasxod'
+                        ? formatDual("Sexlarga xomashyo chiqimi va sarfi", "Расход сырья по цехам", "Material consumption")
+                        : formatDual("Brak va texnologik chiqindi dalolatnomalari", "Акты брака и отходов", "Defect and scrap records")
                       : formatDual("Saqlangan rasmiy ma'lumotlar", "Официальные данные", "Official records")}
                   </p>
                 </div>
@@ -2163,253 +2189,317 @@ export default function DirectorPage() {
                   {/* 2-Column Responsive Layout */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                     {/* Left Column: Items List (5 cols on lg) */}
-                    <div className="lg:col-span-5 space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold px-1">
-                        <span>{formatDual("Mahsulotlar ro'yxati", "Список позиций", "Items list")} ({currentOperationsList.length})</span>
-                        <span>{formatDual("Ustiga bosing", "Кликните для деталей", "Click to inspect")}</span>
+                    <div className="lg:col-span-5 space-y-2.5 max-h-[65vh] flex flex-col">
+                      {/* Product filter dropdown & count */}
+                      <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-dark-800">
+                        <div className="flex-1 min-w-0">
+                          <select
+                            value={selectedOperationProduct}
+                            onChange={(e) => {
+                              setSelectedOperationProduct(e.target.value)
+                              setVisibleOperationsLimit(60)
+                            }}
+                            className="w-full text-xs font-bold py-1.5 px-2.5 rounded-xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          >
+                            <option value="ALL">
+                              {formatDual("Barcha mahsulotlar", "Все продукты", "All products")} ({operationsSummary?.[operationsTab]?.items?.length || 0})
+                            </option>
+                            {operationsProductList.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-500 shrink-0">
+                          {currentOperationsList.length} {formatDual("ta", "поз.", "items")}
+                        </span>
                       </div>
 
-                      {currentOperationsList.length === 0 ? (
-                        <div className="p-8 text-center bg-slate-50 dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-750 text-slate-400 text-xs">
-                          {formatDual("Qidiruv bo'yicha ma'lumot topilmadi", "Ничего не найдено", "No items match query")}
-                        </div>
-                      ) : (
-                        currentOperationsList.map((item: any) => {
-                          const isSelected = activeChainItem?.id === item.id
-                          return (
-                            <div
-                              key={item.id}
-                              onClick={() => setSelectedOperationItem(item)}
-                              className={`p-3.5 rounded-2xl border text-xs cursor-pointer transition-all ${
-                                isSelected
-                                  ? operationsTab === 'prixod'
-                                    ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 shadow-sm'
-                                    : operationsTab === 'rasxod'
-                                    ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 shadow-sm'
-                                    : 'bg-rose-50/70 dark:bg-rose-950/40 border-rose-500 shadow-sm'
-                                  : 'bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-750 hover:border-slate-400'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                  <h5 className="font-bold text-slate-900 dark:text-white truncate text-xs">
-                                    {item.productName}
-                                  </h5>
-                                  <span className="text-[10px] text-slate-400 font-mono">
-                                    {item.batchNumber || item.defectNumber}
-                                  </span>
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                  <span className={`font-black text-xs block ${
-                                    operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
-                                    operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'
-                                  }`}>
-                                    {item.quantityKg?.toLocaleString()} {item.unit || 'kg'}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {item.date ? new Date(item.date).toLocaleDateString(dateLocale) : '-'}
-                                  </span>
-                                </div>
-                              </div>
+                      {/* Scrollable list */}
+                      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                        {currentOperationsList.length === 0 ? (
+                          <div className="p-8 text-center bg-slate-50 dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-750 text-slate-400 text-xs">
+                            {formatDual("Qidiruv bo'yicha ma'lumot topilmadi", "Ничего не найдено", "No items match query")}
+                          </div>
+                        ) : (
+                          <>
+                            {currentOperationsList.slice(0, visibleOperationsLimit).map((item: any, idx: number) => {
+                              const isSelected = activeChainItem?.id === item.id
+                              return (
+                                <div
+                                  key={item.id || idx}
+                                  onClick={() => setSelectedOperationItem(item)}
+                                  className={`p-3 rounded-2xl border text-xs cursor-pointer transition-all ${
+                                    isSelected
+                                      ? operationsTab === 'prixod'
+                                        ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
+                                        : operationsTab === 'rasxod'
+                                        ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 shadow-sm'
+                                        : 'bg-rose-50/70 dark:bg-rose-950/40 border-rose-500 shadow-sm'
+                                      : 'bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-750 hover:border-slate-400'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <h5 className="font-bold text-slate-900 dark:text-white truncate text-xs">
+                                        {item.productName}
+                                      </h5>
+                                      <span className="text-[10px] text-slate-400 font-mono">
+                                        {item.batchNumber || item.defectNumber}
+                                      </span>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                      <span className={`font-black text-xs block ${
+                                        operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
+                                        operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'
+                                      }`}>
+                                        {item.quantityKg?.toLocaleString()} {item.unit || 'kg'}
+                                      </span>
+                                      <span className="text-[10px] text-slate-400">
+                                        {item.date ? new Date(item.date).toLocaleDateString(dateLocale) : '-'}
+                                      </span>
+                                    </div>
+                                  </div>
 
-                              <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-[11px] text-slate-500">
-                                <span className="truncate max-w-[180px]">
-                                  {item.chain?.broughtBy?.supplier || item.supplierName || item.workshop || "Sex"}
-                                </span>
-                                <span className={`flex items-center gap-0.5 font-bold ${
-                                  isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'
-                                }`}>
-                                  {formatDual("4-zanjir", "4 этапа", "Chain")} &rarr;
-                                </span>
-                              </div>
-                            </div>
-                          )
-                        })
-                      )}
+                                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-[11px] text-slate-500">
+                                    <span className="truncate max-w-[170px] font-medium text-slate-700 dark:text-slate-300">
+                                      🏢 {item.supplierName || item.workshop || "Yetkazib beruvchi"}
+                                    </span>
+                                    <span className="truncate max-w-[150px] text-[10px] text-slate-500">
+                                      👤 {item.receivedBy || item.responsible || "Qabul qiluvchi"}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            })}
+
+                            {currentOperationsList.length > visibleOperationsLimit && (
+                              <button
+                                onClick={() => setVisibleOperationsLimit((prev) => prev + 60)}
+                                className="w-full py-2.5 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-xl border border-emerald-200 dark:border-emerald-800/40 transition-colors"
+                              >
+                                {formatDual(
+                                  `Yana 60 ta ko'rsatish (${visibleOperationsLimit} / ${currentOperationsList.length})`,
+                                  `Показать еще 60 (${visibleOperationsLimit} / ${currentOperationsList.length})`,
+                                  `Show 60 more (${visibleOperationsLimit} / ${currentOperationsList.length})`
+                                )}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Right Column: 4-Stage Traceability Stepper (7 cols on lg) */}
-                    <div className="lg:col-span-7 bg-slate-50/70 dark:bg-dark-850 p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-dark-750 space-y-4 max-h-[60vh] overflow-y-auto">
+                    {/* Right Column: Clean Executive Card (7 cols on lg) */}
+                    <div className="lg:col-span-7 bg-slate-50/70 dark:bg-dark-850 p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-dark-750 space-y-4 max-h-[65vh] overflow-y-auto">
                       {activeChainItem ? (
                         <>
                           {/* Active Item Header */}
-                          <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-200 dark:border-dark-700">
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wide ${
+                          <div className="bg-white dark:bg-dark-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-dark-800">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
                                   operationsTab === 'prixod' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
-                                  operationsTab === 'rasxod' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                  operationsTab === 'rasxod' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
+                                  'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
                                 }`}>
                                   {operationsTab === 'prixod' ? formatDual("Prixod Karti", "Карта прихода", "Inbound Card") :
                                    operationsTab === 'rasxod' ? formatDual("Rasxod Karti", "Карта расхода", "Consumption Card") :
                                    formatDual("Brak Dalolatnomasi", "Акт брака", "Defect Act")}
                                 </span>
-                                <span className="text-slate-400 text-xs font-mono">
-                                  № {activeChainItem.batchNumber || activeChainItem.defectNumber}
+                                <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+                                  {activeChainItem.batchNumber || activeChainItem.defectNumber}
                                 </span>
                               </div>
-                              <h4 className="text-base font-black text-slate-900 dark:text-white">
-                                {activeChainItem.productName}
-                              </h4>
-                              <p className="text-[11px] text-slate-500">
-                                {formatDual("Faktik hajm:", "Фактический объем:", "Actual volume:")} <b className="text-slate-700 dark:text-slate-300">{activeChainItem.quantityKg} {activeChainItem.unit || 'kg'}</b>
-                                {activeChainItem.cost ? ` • Bahosi: ${(activeChainItem.cost).toLocaleString()} so'm` : ''}
-                              </p>
+                              <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-dark-800 px-3 py-1 rounded-lg">
+                                📅 {activeChainItem.date ? new Date(activeChainItem.date).toLocaleDateString(dateLocale) : '-'}
+                              </span>
                             </div>
 
-                            <span className="text-[11px] font-semibold text-slate-400 bg-white dark:bg-dark-900 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-dark-700">
-                              {activeChainItem.date ? new Date(activeChainItem.date).toLocaleDateString(dateLocale) : '-'}
-                            </span>
-                          </div>
-
-                          {/* 4-STAGE INTERACTIVE STEPPER */}
-                          <div className="space-y-3 relative before:absolute before:inset-0 before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-200 dark:before:bg-dark-700">
-                            {/* STAGE 1: KELTIRGAN */}
-                            <div className="relative pl-10">
-                              <div className="absolute left-1.5 top-2 -translate-x-1/2 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-[11px] shadow-sm z-10">
-                                1
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+                                  {activeChainItem.productName}
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                  {operationsTab === 'prixod' ? formatDual("Zavodga qabul qilingan xomashyo partiyasi", "Партия сырья, принятая на завод", "Raw material batch received") :
+                                   operationsTab === 'rasxod' ? formatDual("Sexga chiqarilgan xomashyo", "Сырье, переданное в цех", "Issued to production") :
+                                   formatDual("Brak va chiqindi yozuvi", "Запись о браке и отходах", "Defect record")}
+                                </p>
                               </div>
-                              <div className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <span className="font-bold text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                                    <Truck size={14} />
-                                    {formatDual("1. Keltirgan shaxs", "1. Кем доставлено", "1. Brought by")}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {activeChainItem.chain?.broughtBy?.arrivalDate ? new Date(activeChainItem.chain.broughtBy.arrivalDate).toLocaleString(dateLocale) : '-'}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] mt-2">
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Yetkazib beruvchi:", "Поставщик:", "Supplier:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.broughtBy?.supplier || "Fermer xo'jaligi"}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Haydovchi / Mashina:", "Водитель / Авто:", "Driver / Vehicle:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.broughtBy?.driver || "Ekspeditor"} ({activeChainItem.chain?.broughtBy?.vehicleNumber || "01 777 AAA"})</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Harorat:", "Температура:", "Temperature:")}</span>
-                                    <b className="text-emerald-600 dark:text-emerald-400">{activeChainItem.chain?.broughtBy?.temperature || "+3.8 °C"}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Hujjat #:", "Документ #:", "Doc #:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200 font-mono">{activeChainItem.chain?.broughtBy?.docNumber || "-"}</b>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* STAGE 2: TOZALAGAN */}
-                            <div className="relative pl-10">
-                              <div className="absolute left-1.5 top-2 -translate-x-1/2 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-[11px] shadow-sm z-10">
-                                2
-                              </div>
-                              <div className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <span className="font-bold text-xs text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
-                                    <Sparkles size={14} />
-                                    {formatDual("2. Tozalagan / saralagan", "2. Кем очищено", "2. Cleaned by")}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {activeChainItem.chain?.cleanedBy?.date ? new Date(activeChainItem.chain.cleanedBy.date).toLocaleDateString(dateLocale) : '-'}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] mt-2">
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Tozalash mas'uli:", "Ответственный:", "Cleaning operator:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.cleanedBy?.worker || "Saralash guruhi"}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Liniya / Vanna:", "Линия / Ванна:", "Line / Bath:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.cleanedBy?.sortingLine || "1-Vanna"}</b>
-                                  </div>
-                                  <div className="sm:col-span-2">
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Tozalik darajasi:", "Степень чистоты:", "Cleanliness:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.cleanedBy?.cleanlinessRate || "100% toza"} ({activeChainItem.chain?.cleanedBy?.washMethod || "Yuvildi"})</b>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* STAGE 3: ISHLAB CHIQARISHGA BERGAN */}
-                            <div className="relative pl-10">
-                              <div className="absolute left-1.5 top-2 -translate-x-1/2 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-[11px] shadow-sm z-10">
-                                3
-                              </div>
-                              <div className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <span className="font-bold text-xs text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
-                                    <ArrowUpRight size={14} />
-                                    {formatDual("3. Sexga bergan shaxs", "3. Кем передано в цех", "3. Issued to production")}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {activeChainItem.chain?.issuedToProductionBy?.issuedDate ? new Date(activeChainItem.chain.issuedToProductionBy.issuedDate).toLocaleDateString(dateLocale) : '-'}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] mt-2">
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Ombordan chiqargan:", "Отпустил со склада:", "Issued by:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.issuedToProductionBy?.worker || "Ombor mudiri"}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Ombor / Bo'lim:", "Склад:", "Source location:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.issuedToProductionBy?.warehouseName || "Asosiy sklad"}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Chiqarish hujjati:", "Документ:", "Transfer doc:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200 font-mono">{activeChainItem.chain?.issuedToProductionBy?.transferDoc || "-"}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Chiqarilgan hajm:", "Отпущенное количество:", "Issued quantity:")}</span>
-                                    <b className="text-indigo-600 dark:text-indigo-400">{activeChainItem.chain?.issuedToProductionBy?.issuedQty} kg</b>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* STAGE 4: QABUL QILGAN */}
-                            <div className="relative pl-10">
-                              <div className="absolute left-1.5 top-2 -translate-x-1/2 w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-[11px] shadow-sm z-10">
-                                4
-                              </div>
-                              <div className="bg-white dark:bg-dark-900 p-3.5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <span className="font-bold text-xs text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
-                                    <UserCheck size={14} />
-                                    {formatDual("4. Qabul qilgan usta", "4. Кем принято", "4. Received by")}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {activeChainItem.chain?.receivedBy?.receivedDate ? new Date(activeChainItem.chain.receivedBy.receivedDate).toLocaleDateString(dateLocale) : '-'}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] mt-2">
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Qabul qilgan usta:", "Принял мастер:", "Received by worker:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.receivedBy?.worker || formatDual("Sex ustasi", "Мастер цеха", "Line supervisor")}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Qabul sexi:", "Цех приема:", "Target line:")}</span>
-                                    <b className="text-slate-800 dark:text-slate-200">{activeChainItem.chain?.receivedBy?.workshopName || formatDual("Zagotovka sexi", "Цех заготовки", "Preparation workshop")}</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Amaldagi qabul miqdori:", "Фактически принято:", "Received qty:")}</span>
-                                    <b className="text-purple-600 dark:text-purple-400">{activeChainItem.chain?.receivedBy?.receivedQty} kg</b>
-                                  </div>
-                                  <div>
-                                    <span className="text-slate-400 block text-[10px]">{formatDual("Kamomad / Farq:", "Расхождение (недостача):", "Discrepancy:")}</span>
-                                    <b className={activeChainItem.chain?.receivedBy?.discrepancy > 0 ? 'text-red-500 font-bold' : 'text-emerald-600'}>
-                                      {activeChainItem.chain?.receivedBy?.discrepancy > 0 ? `${activeChainItem.chain.receivedBy.discrepancy} kg ${formatDual("nomuvofiqlik", "несоответствие", "discrepancy")}` : formatDual("0 kg (Muvofiq)", "0 кг (Соответствует)", "0 kg (Compliant)")}
-                                    </b>
-                                  </div>
-                                </div>
+                              <div className="text-right">
+                                <span className="text-[11px] text-slate-400 block font-medium">
+                                  {operationsTab === 'prixod' ? formatDual("Qabul qilingan hajm:", "Принятый объем:", "Inbound volume:") :
+                                   operationsTab === 'rasxod' ? formatDual("Sarflangan hajm:", "Израсходовано:", "Consumed volume:") :
+                                   formatDual("Brak miqdori:", "Количество брака:", "Defect volume:")}
+                                </span>
+                                <span className={`text-xl sm:text-2xl font-black ${
+                                  operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
+                                  operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' :
+                                  'text-rose-600 dark:text-rose-400'
+                                }`}>
+                                  {activeChainItem.quantityKg?.toLocaleString()} {activeChainItem.unit || 'kg'}
+                                </span>
                               </div>
                             </div>
                           </div>
+
+                          {/* 4 Required Attributes Grid (Ta'minotchi, Partiya, Qabul qilgan, Sana) */}
+                          {operationsTab === 'prixod' ? (
+                            <div className="space-y-3.5">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {/* 1. Qaysi ta'minotchidan kelgani */}
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                                    <Building2 size={20} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                      {formatDual("Ta'minotchi (Yetkazib beruvchi)", "Поставщик", "Supplier")}
+                                    </span>
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 truncate">
+                                      {activeChainItem.supplierName || "Yetkazib beruvchi"}
+                                    </h4>
+                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                      {formatDual("Tasdiqlangan yetkazib beruvchi", "Подтвержденный поставщик", "Verified supplier")}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* 2. Partiya raqami */}
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                    <Hash size={20} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                      {formatDual("Partiya raqami", "Номер партии", "Batch Number")}
+                                    </span>
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 font-mono">
+                                      {activeChainItem.batchNumber || "№ —"}
+                                    </h4>
+                                    <span className="text-[10px] text-slate-500 font-medium">
+                                      {formatDual("Kirim partiyasi kodi", "Код входящей партии", "Inbound batch code")}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* 3. Kim tomonidan qabul qilingani */}
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                    <UserCheck size={20} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                      {formatDual("Kim tomonidan qabul qilingani", "Кем принято", "Received By")}
+                                    </span>
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 truncate">
+                                      {activeChainItem.receivedBy || "Sifat nazorati / Omborchi"}
+                                    </h4>
+                                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
+                                      {formatDual("Mas'ul qabul qiluvchi", "Ответственный сотрудник", "Inspector / Storekeeper")}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* 4. Sanasi */}
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                    <Calendar size={20} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                      {formatDual("Kirim sanasi", "Дата прихода", "Inbound Date")}
+                                    </span>
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
+                                      {activeChainItem.date || '-'}
+                                    </h4>
+                                    <span className="text-[10px] text-slate-500 font-medium">
+                                      {formatDual("Omborga kirim qilingan vaqt", "Время оприходования", "Warehouse arrival date")}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Clean Status Footer */}
+                              <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle2 size={16} className="text-emerald-600" />
+                                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                                    {formatDual("Holati:", "Статус:", "Status:")} {activeChainItem.status || formatDual("Qabul qilingan", "Принято", "Accepted")}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-mono font-bold">
+                                  {activeChainItem.quantityKg} kg
+                                </span>
+                              </div>
+                            </div>
+                          ) : operationsTab === 'rasxod' ? (
+                            <div className="space-y-3.5">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                    {formatDual("Sex / Qabul sexi", "Цех / Линия", "Target Workshop")}
+                                  </span>
+                                  <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
+                                    {activeChainItem.workshop || "Tayyorlash sexi"}
+                                  </h4>
+                                </div>
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                    {formatDual("Chiqim hujjati", "Документ расхода", "Doc #")}
+                                  </span>
+                                  <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 font-mono">
+                                    {activeChainItem.batchNumber}
+                                  </h4>
+                                </div>
+                              </div>
+                              {activeChainItem.targetProducts && (
+                                <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl border border-blue-200 dark:border-blue-800/40">
+                                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase block mb-1">
+                                    {formatDual("Tayyorlangan mahsulotlar", "Выпущенная продукция", "Produced outputs")}:
+                                  </span>
+                                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                    {activeChainItem.targetProducts}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-3.5">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                    {formatDual("Brak / Chiqindi turi", "Тип брака", "Defect Type")}
+                                  </span>
+                                  <h4 className="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5">
+                                    {activeChainItem.defectType || "Texnologik chiqindi"}
+                                  </h4>
+                                </div>
+                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+                                    {formatDual("Mas'ul shaxs", "Ответственный", "Responsible")}
+                                  </span>
+                                  <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
+                                    {activeChainItem.responsible || "Sex texnologi"}
+                                  </h4>
+                                </div>
+                              </div>
+                              {activeChainItem.reason && (
+                                <div className="p-3.5 bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl border border-rose-200 dark:border-rose-800/40">
+                                  <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase block mb-1">
+                                    {formatDual("Brak / Isrof sababi", "Причина брака", "Defect Reason")}:
+                                  </span>
+                                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                    {activeChainItem.reason}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </>
                       ) : (
                         <div className="py-20 text-center text-slate-400 text-xs">
-                          {formatDual("Chapdagi ro'yxatdan mahsulotni tanlang", "Выберите позицию из списка слева", "Select an item from the list to view its chain")}
+                          {formatDual("Chapdagi ro'yxatdan mahsulotni tanlang", "Выберите позицию из списка слева", "Select an item from the list to view its details")}
                         </div>
                       )}
                     </div>
