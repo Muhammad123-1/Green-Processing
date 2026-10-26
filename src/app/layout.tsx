@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   title: 'Green Processing ERP',
   description: 'Green Processing Korporativ ERP Boshqaruv Tizimi',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
