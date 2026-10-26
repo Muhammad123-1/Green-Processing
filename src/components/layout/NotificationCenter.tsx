@@ -212,10 +212,10 @@ export default function NotificationCenter() {
         onClick={() => setIsOpen((prev) => !prev)}
         className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all duration-200 relative ${
           isOpen
-            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-md shadow-emerald-500/20'
+            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/20'
             : hasHighPriority
-            ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
-            : 'bg-dark-700 hover:bg-dark-600 border-dark-600 text-slate-400 hover:text-slate-200'
+            ? 'bg-rose-500/10 border-rose-500/30 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20'
+            : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-slate-900 dark:bg-dark-700 dark:hover:bg-dark-600 dark:border-dark-600 dark:text-slate-400 dark:hover:text-slate-200'
         }`}
         title={formatDual('Bildirishnomalar', 'Уведомления', 'Notifications')}
         aria-label="Bildirishnomalar"
@@ -224,7 +224,7 @@ export default function NotificationCenter() {
 
         {/* Unread Badge Counter */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-dark-900 shadow-md shadow-rose-500/50">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-dark-900 shadow-md shadow-rose-500/50">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -232,18 +232,18 @@ export default function NotificationCenter() {
 
       {/* Notification Dropdown Modal */}
       {isOpen && (
-        <div className="fixed inset-x-2.5 top-16 w-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[420px] max-w-[96vw] bg-dark-900/95 backdrop-blur-2xl border border-dark-750 rounded-2xl sm:rounded-3xl shadow-2xl z-50 overflow-hidden animate-enter">
+        <div className="fixed inset-x-2.5 top-16 w-auto sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[420px] max-w-[96vw] bg-white dark:bg-dark-900/95 backdrop-blur-2xl border border-slate-200 dark:border-dark-750 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-black/50 z-50 overflow-hidden animate-enter">
           {/* Header */}
-          <div className="p-3.5 sm:p-4 border-b border-dark-750 flex items-center justify-between gap-2 bg-dark-850/60">
+          <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-dark-750 flex items-center justify-between gap-2 bg-slate-50/80 dark:bg-dark-850/60">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <Bell size={14} />
               </div>
-              <h3 className="font-extrabold text-white text-xs sm:text-sm">
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
                 {formatDual('Bildirishnomalar', 'Уведомления', 'Notifications')}
               </h3>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30">
                   {unreadCount} yangi
                 </span>
               )}
@@ -253,26 +253,26 @@ export default function NotificationCenter() {
               {/* Sound Toggle */}
               <button
                 onClick={toggleSound}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-750 transition-colors"
+                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750 transition-colors"
                 title={soundEnabled ? "Ovozni o'chirish" : 'Ovozni yoqish'}
               >
-                {soundEnabled ? <Volume2 size={15} className="text-emerald-400" /> : <VolumeX size={15} />}
+                {soundEnabled ? <Volume2 size={15} className="text-emerald-600 dark:text-emerald-400" /> : <VolumeX size={15} />}
               </button>
 
               {/* Refresh Button */}
               <button
                 onClick={() => fetchNotifications()}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-750 transition-colors"
+                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750 transition-colors"
                 title="Yangilash"
               >
-                <RefreshCw size={14} className={loading ? 'animate-spin text-emerald-400' : ''} />
+                <RefreshCw size={14} className={loading ? 'animate-spin text-emerald-500' : ''} />
               </button>
 
               {/* Clear All */}
               {unreadCount > 0 && (
                 <button
                   onClick={dismissAll}
-                  className="text-[11px] font-bold text-slate-400 hover:text-emerald-400 px-2 py-1 rounded-lg hover:bg-dark-750 transition-colors"
+                  className="text-[11px] font-bold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 px-2 py-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-dark-750 transition-colors"
                   title="Barchasini o'qilgan deb belgilash"
                 >
                   <CheckCheck size={14} className="inline mr-1" />
@@ -283,13 +283,13 @@ export default function NotificationCenter() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 p-2 border-b border-dark-750/80 bg-dark-800/40 text-[11px] font-bold">
+          <div className="flex flex-wrap items-center gap-1.5 p-2 border-b border-slate-200 dark:border-dark-750/80 bg-slate-100/70 dark:bg-dark-800/40 text-[11px] font-bold">
             <button
               onClick={() => setActiveTab('all')}
               className={`px-3 py-1 rounded-lg transition-all ${
                 activeTab === 'all'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               {formatDual(`Barchasi (${activeNotifications.length})`, `Все (${activeNotifications.length})`, `All (${activeNotifications.length})`)}
@@ -298,28 +298,28 @@ export default function NotificationCenter() {
               onClick={() => setActiveTab('director')}
               className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
                 activeTab === 'director'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              <AlertTriangle size={12} className="text-amber-400" />
+              <AlertTriangle size={12} className="text-amber-500 dark:text-amber-400" />
               <span>{formatDual('Direktor & Muhim', 'Руководство', 'Executive')}</span>
             </button>
             <button
               onClick={() => setActiveTab('chat')}
               className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
                 activeTab === 'chat'
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              <MessageSquare size={12} className="text-indigo-400" />
+              <MessageSquare size={12} className="text-indigo-500 dark:text-indigo-400" />
               <span>{formatDual('Chatlar', 'Чат', 'Chat')}</span>
             </button>
           </div>
 
           {/* Notifications Scroll Area */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-dark-750 custom-scrollbar">
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-dark-750 custom-scrollbar">
             {loading && notifications.length === 0 ? (
               <div className="p-10 flex flex-col items-center justify-center gap-2 text-slate-400">
                 <Loader2 className="animate-spin text-emerald-500" size={24} />
@@ -327,17 +327,17 @@ export default function NotificationCenter() {
               </div>
             ) : displayItems.length === 0 ? (
               <div className="p-8 text-center space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 dark:text-emerald-400 mx-auto">
                   <Sparkles size={20} />
                 </div>
-                <div className="text-xs font-bold text-slate-300">
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-300">
                   {formatDual(
                     "Barcha bildirishnomalar ko'rib chiqilgan",
                     "Все уведомления прочитаны",
                     "All caught up!"
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
                   {formatDual(
                     "Yangi xabarlar, chatlar yoki direktor eslatmalari paydo bo'lganda bu yerda ko'rinadi",
                     "Новые сообщения и важные напоминания появятся здесь",
@@ -355,24 +355,24 @@ export default function NotificationCenter() {
                   <div
                     key={n.id}
                     onClick={() => handleItemClick(n)}
-                    className={`p-3.5 transition-all flex items-start gap-3 cursor-pointer group hover:bg-dark-800/80 relative ${
+                    className={`p-3.5 transition-all flex items-start gap-3 cursor-pointer group relative ${
                       isReport
-                        ? 'bg-rose-500/5 hover:bg-rose-500/10'
+                        ? 'bg-rose-50/70 hover:bg-rose-100/80 dark:bg-rose-500/5 dark:hover:bg-rose-500/10'
                         : isHigh
-                        ? 'bg-amber-500/5 hover:bg-amber-500/10'
-                        : ''
+                        ? 'bg-amber-50/70 hover:bg-amber-100/80 dark:bg-amber-500/5 dark:hover:bg-amber-500/10'
+                        : 'hover:bg-slate-50 dark:hover:bg-dark-800/80'
                     }`}
                   >
                     {/* Icon Container */}
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 border ${
                         isReport
-                          ? 'bg-rose-500/20 border-rose-500/40 text-rose-400 shadow-sm shadow-rose-500/20'
+                          ? 'bg-rose-100 border-rose-200 text-rose-600 dark:bg-rose-500/20 dark:border-rose-500/40 dark:text-rose-400 shadow-sm shadow-rose-500/20'
                           : isChat
-                          ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-400'
+                          ? 'bg-indigo-100 border-indigo-200 text-indigo-600 dark:bg-indigo-500/20 dark:border-indigo-500/30 dark:text-indigo-400'
                           : isHigh
-                          ? 'bg-amber-500/20 border-amber-500/30 text-amber-400'
-                          : 'bg-dark-800 border-dark-700 text-slate-300'
+                          ? 'bg-amber-100 border-amber-200 text-amber-600 dark:bg-amber-500/20 dark:border-amber-500/30 dark:text-amber-400'
+                          : 'bg-slate-100 border-slate-200 text-slate-600 dark:bg-dark-800 dark:border-dark-700 dark:text-slate-300'
                       }`}
                     >
                       {isReport ? (
@@ -390,29 +390,29 @@ export default function NotificationCenter() {
                         <span
                           className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
                             isReport
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              ? 'bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30'
                               : isChat
-                              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                              : 'bg-dark-800 text-slate-400 border border-dark-700'
+                              ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30'
+                              : 'bg-slate-150 text-slate-700 border border-slate-200 dark:bg-dark-800 dark:text-slate-400 dark:border-dark-700'
                           }`}
                         >
                           {n.source}
                         </span>
                       </div>
 
-                      <h4 className="font-bold text-white text-xs leading-snug line-clamp-1 group-hover:text-emerald-400 transition-colors">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-xs leading-snug line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                         {lang === 'ru' ? n.titleRu : n.title}
                       </h4>
 
-                      <p className="text-[11px] text-slate-300 line-clamp-2 mt-0.5 leading-relaxed">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 mt-0.5 leading-relaxed">
                         {lang === 'ru' ? n.messageRu : n.message}
                       </p>
 
-                      <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-400">
-                        <span className="font-mono text-slate-400">
+                      <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                        <span className="font-mono text-slate-400 dark:text-slate-500">
                           {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <span className="text-emerald-400 font-bold group-hover:underline flex items-center gap-0.5">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline flex items-center gap-0.5">
                           <span>{lang === 'ru' ? n.actionLabelRu : n.actionLabel}</span>
                           <ExternalLink size={10} />
                         </span>
@@ -422,7 +422,7 @@ export default function NotificationCenter() {
                     {/* Dismiss Button (X ni bosib o'chirmaguncha turaveradi) */}
                     <button
                       onClick={(e) => dismissItem(n.id, e)}
-                      className="absolute right-2.5 top-2.5 p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-dark-750 transition-colors"
+                      className="absolute right-2.5 top-2.5 p-1 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/60 dark:hover:bg-dark-750 transition-colors"
                       title={formatDual("O'chirish", "Закрыть", "Dismiss")}
                       aria-label="O'chirish"
                     >
@@ -435,8 +435,8 @@ export default function NotificationCenter() {
           </div>
 
           {/* Footer note */}
-          <div className="p-2.5 bg-dark-850/80 border-t border-dark-750 text-center">
-            <span className="text-[10px] text-slate-400">
+          <div className="p-2.5 bg-slate-50/90 dark:bg-dark-850/80 border-t border-slate-200 dark:border-dark-750 text-center">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">
               {formatDual(
                 "Xabarlar x ni bosib o'chirilguncha bu yerda saqlanadi",
                 "Уведомления сохраняются пока не будут закрыты вручную (X)",
