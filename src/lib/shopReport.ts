@@ -18,13 +18,16 @@ export const toNum = (v: any): number => {
  */
 export function parseExcelDate(val: any): string {
   if (val === null || val === undefined || val === '') return ''
+  if (typeof val === 'object' && val.result !== undefined && val.result !== null) {
+    val = val.result
+  }
 
-  // 1. Agar JavaScript Date obyekti bo'lsa (local time bilan olish)
+  // 1. Agar JavaScript Date obyekti bo'lsa (UTC uslubida xavfsiz olish)
   if (val instanceof Date) {
     if (isNaN(val.getTime())) return ''
-    const y = val.getFullYear()
-    const m = String(val.getMonth() + 1).padStart(2, '0')
-    const d = String(val.getDate()).padStart(2, '0')
+    const y = val.getUTCFullYear()
+    const m = String(val.getUTCMonth() + 1).padStart(2, '0')
+    const d = String(val.getUTCDate()).padStart(2, '0')
     return `${y}-${m}-${d}`
   }
 
@@ -47,17 +50,17 @@ export function parseExcelDate(val: any): string {
 
   // 4. "Dlinniy sana" (Long Date): Masalan "12 сентября 2025", "12-sentabr 2025", "12 September 2025"
   const monthMap: Record<string, string> = {
-    'янв': '01', 'jan': '01',
-    'фев': '02', 'feb': '02',
+    'янв': '01', 'jan': '01', 'yan': '01',
+    'фев': '02', 'feb': '02', 'fev': '02',
     'мар': '03', 'mar': '03',
     'апр': '04', 'apr': '04',
     'май': '05', 'мая': '05', 'may': '05',
-    'июн': '06', 'jun': '06',
-    'июл': '07', 'jul': '07',
-    'авг': '08', 'aug': '08',
-    'сен': '09', 'sep': '09',
-    'окт': '10', 'oct': '10',
-    'ноя': '11', 'nov': '11',
+    'июн': '06', 'jun': '06', 'iyun': '06',
+    'июл': '07', 'jul': '07', 'iyul': '07',
+    'авг': '08', 'aug': '08', 'avg': '08',
+    'сен': '09', 'sep': '09', 'sen': '09',
+    'окт': '10', 'oct': '10', 'okt': '10',
+    'ноя': '11', 'nov': '11', 'noy': '11',
     'дек': '12', 'dec': '12'
   }
 
@@ -78,20 +81,27 @@ export function parseExcelDate(val: any): string {
     let [p1, p2, p3] = parts
     // Agar YYYY/MM/DD bo'lsa:
     if (p1.length === 4) {
-      return `${p1}-${p2.padStart(2, '0')}-${p3.padStart(2, '0')}`
+      let m = parseInt(p2, 10)
+      let d = parseInt(p3, 10)
+      if (m > 12 && d <= 12) { const t = m; m = d; d = t }
+      return `${p1}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     }
     // Agar yil oxirida bo'lsa:
     if (p3.length === 2) p3 = '20' + p3
     if (p3.length === 4) {
-      const n1 = parseInt(p1, 10)
-      const n2 = parseInt(p2, 10)
+      let n1 = parseInt(p1, 10) // odatda Kun (DD)
+      let n2 = parseInt(p2, 10) // odatda Oy (MM)
       if (!isNaN(n1) && !isNaN(n2)) {
-        if (n2 > 12) {
-          // n2 bu kun (masalan 9/13/2025 -> oy=9, kun=13)
-          return `${p3}-${p1.padStart(2, '0')}-${p2.padStart(2, '0')}`
+        let day = n1
+        let month = n2
+        if (month > 12 && day <= 12) {
+          // Swap: masalan 09/15/2025 -> month=9, day=15
+          month = n1
+          day = n2
         }
-        // Korxona qoidasi: KUN / OY / YIL (p1=KUN, p2=OY)
-        return `${p3}-${p2.padStart(2, '0')}-${p1.padStart(2, '0')}`
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          return `${p3}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+        }
       }
     }
   }

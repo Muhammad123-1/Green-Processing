@@ -42,6 +42,23 @@ const todayStr = () => {
 // number <-> input helper: keep the raw string while typing (so "0.75" can be typed)
 const inputVal = (v: any) => (v === 0 || v === null || v === undefined ? '' : v)
 
+const formatMonthLabel = (ym: string, lang: string) => {
+  if (!ym || ym.length < 7) return ym
+  const [year, month] = ym.split('-')
+  const uzMonths: Record<string, string> = {
+    '01': 'Yanvar', '02': 'Fevral', '03': 'Mart', '04': 'Aprel',
+    '05': 'May', '06': 'Iyun', '07': 'Iyul', '08': 'Avgust',
+    '09': 'Sentabr', '10': 'Oktyabr', '11': 'Noyabr', '12': 'Dekabr'
+  }
+  const ruMonths: Record<string, string> = {
+    '01': 'Январь', '02': 'Февраль', '03': 'Март', '04': 'Апрель',
+    '05': 'Май', '06': 'Июнь', '07': 'Июль', '08': 'Август',
+    '09': 'Сентябрь', '10': 'Октябрь', '11': 'Ноябрь', '12': 'Декабрь'
+  }
+  const name = (lang === 'ru' ? ruMonths[month] : uzMonths[month]) || month
+  return `${name} ${year}`
+}
+
 export default function ShopReportContent() {
   const { lang } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
@@ -69,12 +86,34 @@ export default function ShopReportContent() {
   const [history, setHistory] = useState<any[]>([])
 
   // Filters
+  const [selectedMonth, setSelectedMonth] = useState('')
   const [arrFilter, setArrFilter] = useState('')
   const [expFilter, setExpFilter] = useState('')
   const [gpFilter, setGpFilter] = useState('')
   const [reportDate, setReportDate] = useState(todayStr())
   const [historyFilterDate, setHistoryFilterDate] = useState('')
   const [historyType, setHistoryType] = useState<'arrival' | 'expense' | 'gp' | 'report'>('report')
+
+  // Automatically discover all months present in data
+  const availableMonths = useMemo(() => {
+    const s = new Set<string>()
+    arrivals.forEach((a) => {
+      if (a.date && typeof a.date === 'string' && a.date.length >= 7) {
+        s.add(a.date.slice(0, 7))
+      }
+    })
+    expenses.forEach((e) => {
+      if (e.date && typeof e.date === 'string' && e.date.length >= 7) {
+        s.add(e.date.slice(0, 7))
+      }
+    })
+    gpList.forEach((g) => {
+      if (g.date && typeof g.date === 'string' && g.date.length >= 7) {
+        s.add(g.date.slice(0, 7))
+      }
+    })
+    return Array.from(s).sort((a, b) => b.localeCompare(a))
+  }, [arrivals, expenses, gpList])
 
   const [savingArrivals, setSavingArrivals] = useState(false)
   const [savingExpenses, setSavingExpenses] = useState(false)
@@ -335,14 +374,22 @@ export default function ShopReportContent() {
     formData.append('file', file)
     try {
       const res = await fetch('/api/shop-report/import', { method: 'POST', body: formData })
-      if (res.ok) {
-        toast.success(lang === 'ru' ? 'Импортировано успешно!' : 'Muvaffaqiyatli import qilindi!')
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data?.success) {
+        if (data.latestMonth) {
+          setSelectedMonth(data.latestMonth)
+        }
+        const msg =
+          lang === 'ru'
+            ? `Успешно импортировано: +${data.arrivalsCount} новых приходов, обновлено: ${data.updatedArrivalsCount || 0}, дней расхода/ГП: ${data.importedDaysCount + data.updatedDaysCount}`
+            : `Muvaffaqiyatli import qilindi: +${data.arrivalsCount} ta yangi kirim, ${data.updatedArrivalsCount || 0} ta yangilandi, ${data.importedDaysCount + data.updatedDaysCount} kunlik chiqim/GP saqlandi!`
+        toast.success(msg)
         await loadData()
       } else {
-        toast.error('Xatolik yuz berdi')
+        toast.error(data?.error || 'Xatolik yuz berdi')
       }
-    } catch (err) {
-      toast.error('Xatolik yuz berdi')
+    } catch (err: any) {
+      toast.error(err?.message || 'Xatolik yuz berdi')
     } finally {
       setIsLoading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -375,41 +422,72 @@ export default function ShopReportContent() {
   const filteredArrivals = useMemo(() => {
     return arrivals
       .map((row, idx) => ({ row, idx }))
-      .filter(({ row }) => !arrFilter || row.date === arrFilter || !row.date)
-  }, [arrivals, arrFilter])
+      .filter(({ row }) => {
+        if (arrFilter && row.date !== arrFilter && row.date) return false
+        if (selectedMonth && row.date && !row.date.startsWith(selectedMonth)) return false
+        return true
+      })
+  }, [arrivals, arrFilter, selectedMonth])
 
-  const arrivalsPagination = useInfiniteTable(filteredArrivals, 10, [arrFilter])
+  const arrivalsPagination = useInfiniteTable(filteredArrivals, 10, [arrFilter, selectedMonth])
 
   const filteredExpenses = useMemo(() => {
     return expenses
       .map((row, idx) => ({ row, idx }))
-      .filter(({ row }) => !expFilter || row.date === expFilter || !row.date)
-  }, [expenses, expFilter])
+      .filter(({ row }) => {
+        if (expFilter && row.date !== expFilter && row.date) return false
+        if (selectedMonth && row.date && !row.date.startsWith(selectedMonth)) return false
+        return true
+      })
+  }, [expenses, expFilter, selectedMonth])
 
-  const expensesPagination = useInfiniteTable(filteredExpenses, 10, [expFilter])
+  const expensesPagination = useInfiniteTable(filteredExpenses, 10, [expFilter, selectedMonth])
 
   const filteredGP = useMemo(() => {
     return gpList
       .map((row, idx) => ({ row, idx }))
-      .filter(({ row }) => !gpFilter || row.date === gpFilter || !row.date)
-  }, [gpList, gpFilter])
+      .filter(({ row }) => {
+        if (gpFilter && row.date !== gpFilter && row.date) return false
+        if (selectedMonth && row.date && !row.date.startsWith(selectedMonth)) return false
+        return true
+      })
+  }, [gpList, gpFilter, selectedMonth])
 
-  const gpPagination = useInfiniteTable(filteredGP, 10, [gpFilter])
+  const gpPagination = useInfiniteTable(filteredGP, 10, [gpFilter, selectedMonth])
 
   const dateFilterInput = (value: string, onChange: (v: string) => void) => (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <select
+        value={selectedMonth}
+        onChange={(e) => {
+          setSelectedMonth(e.target.value)
+          onChange('')
+        }}
+        className="bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 outline-none hover:border-amber-400 dark:hover:border-amber-500 transition-colors shadow-sm cursor-pointer"
+        title={lang === 'ru' ? 'Выбрать месяц' : "Oyni tanlash"}
+      >
+        <option value="">{lang === 'ru' ? '📅 Все месяцы' : '📅 Barcha oylar'}</option>
+        {availableMonths.map((m) => (
+          <option key={m} value={m}>
+            {formatMonthLabel(m, lang)}
+          </option>
+        ))}
+      </select>
       <input
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-white dark:bg-dark-800 border border-amber-200 dark:border-amber-900 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none"
-        title="Sana bo'yicha qidirish"
+        className="bg-white dark:bg-dark-800 border border-amber-200 dark:border-amber-900 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none shadow-sm"
+        title={lang === 'ru' ? 'Выбрать точный день' : "Aniq kunni tanlash"}
       />
-      {value && (
+      {(value || selectedMonth) && (
         <button
-          onClick={() => onChange('')}
-          className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
-          title="Filterni tozalash"
+          onClick={() => {
+            onChange('')
+            setSelectedMonth('')
+          }}
+          className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+          title={lang === 'ru' ? 'Сбросить фильтры' : "Filtrni tozalash"}
         >
           <X size={14} />
         </button>
@@ -485,12 +563,12 @@ export default function ShopReportContent() {
             }`}
             title={
               dateFormatMode === 'short'
-                ? (lang === 'ru' ? 'Переключить на длинный формат (с названием месяца)' : "Uzun sana formatiga o'tish (oy nomi bilan)")
-                : (lang === 'ru' ? 'Переключить на краткий формат (ДД.ММ.ГГГГ)' : "Qisqa sana formatiga o'tish (03.08.2026)")
+                ? (lang === 'ru' ? 'Переключить на словесный формат (с названием месяца)' : "Matnli sana formatiga o'tish (oy nomi bilan)")
+                : (lang === 'ru' ? 'Переключить на числовой формат (ДД.ММ.ГГГГ)' : "Raqamli formatga o'tish (DD.MM.YYYY)")
             }
           >
             <Calendar size={14} />
-            <span className="hidden xs:inline">{lang === 'ru' ? 'Вид даты:' : "Sana:"}</span>
+            <span className="hidden xs:inline">{lang === 'ru' ? 'Формат:' : "Format:"}</span>
             <span
               className={`px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-extrabold ${
                 dateFormatMode === 'long'
@@ -499,8 +577,8 @@ export default function ShopReportContent() {
               }`}
             >
               {dateFormatMode === 'short'
-                ? (lang === 'ru' ? '03.08' : 'Qisqa (03.08)')
-                : (lang === 'ru' ? 'Август' : 'Uzun (avgust)')}
+                ? (lang === 'ru' ? 'ДД.ММ' : 'KUN.OY')
+                : (lang === 'ru' ? 'Текст' : 'Matnli')}
             </span>
           </button>
         </div>
