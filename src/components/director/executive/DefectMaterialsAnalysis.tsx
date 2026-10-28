@@ -268,7 +268,7 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
           )}
         </div>
 
-        {selectedProduct ? (
+        {selectedProduct && (
           <div className="relative">
             <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
             <input
@@ -282,37 +282,39 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
               className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 w-56"
             />
           </div>
-        ) : (
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder={lang === 'ru' ? 'Поиск продукта...' : 'Mahsulotni qidirish...'}
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 w-48 sm:w-60"
-            />
-          </div>
         )}
       </div>
 
-      {/* 3. Product Cards Grid - Only product name */}
+      {/* 3. Product Cards Grid - Old style divided grid (4 per row), product name only */}
       {!selectedProduct ? (
         <div className="rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 overflow-hidden shadow-2xs">
-          <div className="p-4 border-b border-slate-100 dark:border-dark-800 flex items-center justify-between">
-            <h3 className="font-black text-slate-900 dark:text-white text-sm">
-              {unitFilter === 'kg'
-                ? lang === 'ru' ? 'Отходы и потери сырья' : 'Xomashyo va sabzavotlar chiqindisi'
-                : unitFilter === 'dona'
-                ? lang === 'ru' ? 'Брак упаковочных материалов' : 'Yaroqsiz qadoq va idishlar braki'
-                : lang === 'ru' ? 'Все позиции брака и отходов' : 'Barcha chiqindi va brak mahsulotlar'}
-            </h3>
-            <span className="text-xs text-slate-400 font-medium">
-              {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta mahsulot'}
-            </span>
+          <div className="p-4 border-b border-slate-100 dark:border-dark-800 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-black text-slate-900 dark:text-white text-sm">
+                {unitFilter === 'kg'
+                  ? lang === 'ru' ? 'Отходы и потери сырья' : 'Xomashyo va sabzavotlar chiqindisi'
+                  : unitFilter === 'dona'
+                  ? lang === 'ru' ? 'Брак упаковочных материалов' : 'Yaroqsiz qadoq va idishlar braki'
+                  : lang === 'ru' ? 'Все позиции брака и отходов' : 'Barcha chiqindi va brak mahsulotlar'}
+              </h3>
+              <span className="text-xs text-slate-400 font-medium">
+                {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta mahsulot'}
+              </span>
+            </div>
+
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder={lang === 'ru' ? 'Поиск продукта...' : 'Mahsulotni qidirish...'}
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 w-48 sm:w-60"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-x divide-y divide-slate-100 dark:divide-dark-800">
             {visibleProductsSummary.map((row) => (
               <button
                 key={row.name}
@@ -321,15 +323,17 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
                   setSearch('')
                   setPage(1)
                 }}
-                className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-750 hover:border-rose-500 dark:hover:border-rose-500 hover:bg-rose-50/40 dark:hover:bg-rose-950/20 text-left transition-all flex items-center justify-between gap-3 group shadow-2xs"
+                className="p-5 text-left hover:bg-rose-50/50 dark:hover:bg-dark-800 transition-colors group flex flex-col justify-between min-h-[92px]"
               >
-                <span className="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors line-clamp-2">
+                <b className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors line-clamp-2">
                   {row.name}
-                </span>
-                <ChevronRight
-                  size={16}
-                  className="text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all shrink-0"
-                />
+                </b>
+                <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                  <span className="text-[11px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    {lang === 'ru' ? 'Подробнее' : 'Batafsil'}
+                  </span>
+                  <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform ml-auto" />
+                </div>
               </button>
             ))}
           </div>
