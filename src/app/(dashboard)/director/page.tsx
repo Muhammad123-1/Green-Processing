@@ -2197,7 +2197,7 @@ export default function DirectorPage() {
                            formatDual("Brak va chiqindilar nazorati", "Учет брака и отходов", "Defect & Scrap Records")}
                         </h4>
                         <p className="text-[11px] text-slate-500">
-                          {operationsTab === 'prixod' ? formatDual("Barcha qabul qilingan xomashyo partiyalari va sifat nazorati", "Все принятые партии сырья", "Inbound arrival batches") :
+                          {operationsTab === 'prixod' ? formatDual("Barcha qabul qilingan xomashyo partiyalari", "Все принятые партии сырья", "Inbound arrival batches") :
                            operationsTab === 'rasxod' ? formatDual("Sexlarga sarflangan xomashyo va chiqim hujjatlari", "Расход сырья по цехам", "Workshop consumption records") :
                            formatDual("Ishlab chiqarish, qabul va ombordagi brak dalolatnomalari", "Акты брака и отходов", "Defect and scrap acts")}
                         </p>
@@ -2208,9 +2208,9 @@ export default function DirectorPage() {
                       {/* KG Section */}
                       <div className="text-right">
                         <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                          {operationsTab === 'prixod' && formatDual("Xomashyo (Vazn):", "Сырье (Вес):", "Raw Materials:")}
-                          {operationsTab === 'rasxod' && formatDual("Xomashyo sarfi (Vazn):", "Расход сырья (Вес):", "Raw Consumed:")}
-                          {operationsTab === 'brak' && formatDual("Chiqindi va brak (Vazn):", "Отходы сырья (Вес):", "Waste (Weight):")}
+                          {operationsTab === 'brak'
+                            ? formatDual("Vazn (Brak):", "Вес (Брак):", "Waste (Weight):")
+                            : formatDual("Vazn:", "Вес:", "Weight:")}
                         </span>
                         <span className={`text-base font-black font-mono ${
                           operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
@@ -2225,9 +2225,9 @@ export default function DirectorPage() {
                       {/* DONA Section */}
                       <div className="text-right border-l pl-3 sm:pl-4 border-slate-200 dark:border-dark-700">
                         <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                          {operationsTab === 'prixod' && formatDual("Qadoq / Idish (Sanoq):", "Тара (Шт):", "Packaging:")}
-                          {operationsTab === 'rasxod' && formatDual("Qadoq sarfi (Sanoq):", "Расход тары (Шт):", "Packaging Consumed:")}
-                          {operationsTab === 'brak' && formatDual("Qadoq braki (Sanoq):", "Брак тары (Шт):", "Packaging Scrap:")}
+                          {operationsTab === 'brak'
+                            ? formatDual("Dona (Brak):", "Шт (Брак):", "Scrap (Pcs):")
+                            : formatDual("Dona:", "Шт:", "Pcs:")}
                         </span>
                         <span className={`text-base font-black font-mono ${
                           operationsTab === 'brak' ? 'text-purple-600 dark:text-purple-400' : 'text-indigo-600 dark:text-indigo-400'

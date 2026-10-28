@@ -301,7 +301,7 @@ export default function IncomingMaterialsAnalysis({
         {/* Card 1: Xomashyo kirimi (KG) */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Сырье (Вес)' : 'Xomashyo kirimi (Vazn)'}</span>
+            <span>{lang === 'ru' ? 'Вес' : 'Vazn'}</span>
             <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
               <Scale size={14} />
             </div>
@@ -318,7 +318,7 @@ export default function IncomingMaterialsAnalysis({
         {/* Card 2: Qadoq va idishlar kirimi (DONA) */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Тара и пакеты (Шт)' : 'Qadoq va idishlar (Sanoq)'}</span>
+            <span>{lang === 'ru' ? 'Шт' : 'Dona'}</span>
             <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
               <Boxes size={14} />
             </div>
@@ -401,7 +401,7 @@ export default function IncomingMaterialsAnalysis({
                 }`}
               >
                 <Scale size={13} />
-                <span>{lang === 'ru' ? 'Весовые' : 'Xomashyo'}</span>
+                <span>{lang === 'ru' ? 'Вес' : 'Vazn'}</span>
                 <span className="opacity-80 text-[11px]">
                   ({allProductsSummary.filter((p) => p.unit === 'kg').length})
                 </span>
@@ -415,7 +415,7 @@ export default function IncomingMaterialsAnalysis({
                 }`}
               >
                 <Boxes size={13} />
-                <span>{lang === 'ru' ? 'Штучные' : 'Qadoq / Idish'}</span>
+                <span>{lang === 'ru' ? 'Шт' : 'Dona'}</span>
                 <span className="opacity-80 text-[11px]">
                   ({allProductsSummary.filter((p) => p.unit === 'dona').length})
                 </span>
@@ -536,11 +536,11 @@ export default function IncomingMaterialsAnalysis({
                     : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
                 }`}
               >
-                {selectedProductSummary?.unit === 'dona' ? 'DONA (Sanoq)' : 'KG (Vazn)'}
+                {selectedProductSummary?.unit === 'dona' ? (lang === 'ru' ? 'ШТ' : 'DONA') : (lang === 'ru' ? 'ВЕС' : 'VAZN')}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
                   {lang === 'ru' ? 'Общий объем' : 'Jami qabul miqdori'}
@@ -564,23 +564,6 @@ export default function IncomingMaterialsAnalysis({
                 </div>
                 <span className="text-[10px] text-slate-400 font-medium">
                   {lang === 'ru' ? 'Актов прихода' : 'Qabul dalolatnomalari'}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  {lang === 'ru' ? 'Средняя партия' : 'O‘rtacha bitta partiya'}
-                </span>
-                <div className="mt-1 text-lg sm:text-xl font-black font-mono text-blue-600 dark:text-blue-400">
-                  {formatQty(
-                    selectedProductSummary?.count
-                      ? selectedProductSummary.totalQty / selectedProductSummary.count
-                      : 0,
-                    selectedProductSummary?.unit
-                  )}
-                </div>
-                <span className="text-[10px] text-slate-400 font-medium">
-                  {lang === 'ru' ? 'На одну поставку' : 'Har bir partiyaga'}
                 </span>
               </div>
 
