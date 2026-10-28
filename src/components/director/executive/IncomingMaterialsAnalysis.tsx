@@ -520,12 +520,12 @@ export default function IncomingMaterialsAnalysis({
           <table className="w-full min-w-[760px] text-left text-xs">
             <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="p-3.5">{lang === 'ru' ? 'Документ / дата' : 'Hujjat / sana'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Дата' : 'Sana'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Наименование' : 'Nomi'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Поставщик / Партия' : 'Ta’minotchi / Partiya'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Поставщик' : 'Ta’minotchi'}</th>
                 <th className="p-3.5 text-right">{lang === 'ru' ? 'Количество / Вес' : 'Miqdor / Vazn'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Принял / Инспектор' : 'Qabul qiluvchi / Inspektor'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Статус' : 'Holat'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Партия' : 'Partiya'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
@@ -536,19 +536,13 @@ export default function IncomingMaterialsAnalysis({
                   className="hover:bg-emerald-50/50 dark:hover:bg-dark-800/60 cursor-pointer transition-colors"
                 >
                   <td className="p-3.5 font-mono text-slate-900 dark:text-white">
-                    <span className="font-bold">{item.batchNumber || item.id}</span>
-                    <span className="block text-[11px] text-slate-400">{item.date}</span>
+                    <span className="font-bold">{item.date}</span>
                   </td>
                   <td className="p-3.5 font-bold text-slate-900 dark:text-white">
                     {item.productName}
                   </td>
                   <td className="p-3.5 text-slate-700 dark:text-slate-300 font-medium">
                     <span>{item.supplierName || 'Yetkazib beruvchi'}</span>
-                    {item.rawBatch && (
-                      <span className="block text-[10px] font-mono text-slate-400">
-                        № {item.rawBatch}
-                      </span>
-                    )}
                   </td>
                   <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
                     {formatQty(item.quantityKg, item.unit)}
@@ -556,17 +550,13 @@ export default function IncomingMaterialsAnalysis({
                   <td className="p-3.5 text-slate-500">
                     {item.receivedBy || 'Omborchi / Sifat nazorati'}
                   </td>
-                  <td className="p-3.5">
-                    <span
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
-                        item.status?.toLowerCase().includes('rad')
-                          ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
-                          : item.status?.toLowerCase().includes('shart')
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
-                          : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                      }`}
-                    >
-                      {item.status || 'Qabul qilingan'}
+                  <td className="p-3.5 font-mono">
+                    <span className="font-bold px-2.5 py-1 rounded-lg text-xs bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 inline-flex items-center">
+                      {item.rawBatch
+                        ? `Partiya #${item.rawBatch}`
+                        : item.batchNumber?.includes('Partiya')
+                        ? item.batchNumber
+                        : `Partiya #${item.batchNumber || item.id}`}
                     </span>
                   </td>
                 </tr>
