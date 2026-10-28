@@ -17,6 +17,8 @@ import {
   Info,
   Calendar,
   X,
+  Plus,
+  Sparkles,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
@@ -93,6 +95,18 @@ export default function ShopReportContent() {
   const [reportDate, setReportDate] = useState(todayStr())
   const [historyFilterDate, setHistoryFilterDate] = useState('')
   const [historyType, setHistoryType] = useState<'arrival' | 'expense' | 'gp' | 'report'>('report')
+
+  // Products catalog + frequency & quick selection
+  const [productList, setProductList] = useState<{ id?: number; name: string; category?: string; unit?: string }[]>([])
+  const [activeDropdownIdx, setActiveDropdownIdx] = useState<number | null>(null)
+
+  // New Product Modal
+  const [newProductModalOpen, setNewProductModalOpen] = useState(false)
+  const [targetRowIdxForNewProduct, setTargetRowIdxForNewProduct] = useState<number | null>(null)
+  const [newProductName, setNewProductName] = useState('')
+  const [newProductUnit, setNewProductUnit] = useState('kg')
+  const [newProductCategory, setNewProductCategory] = useState('Xomashyo')
+  const [isSavingProduct, setIsSavingProduct] = useState(false)
 
   // Automatically discover all months present in data
   const availableMonths = useMemo(() => {
@@ -183,6 +197,14 @@ export default function ShopReportContent() {
       setExpenses((data.expenses || []).map((e: any) => readExpenseRow(e)))
       setGpList((data.expenses || []).map((e: any) => readGPRow(e)))
       buildHistory(data)
+
+      // Also fetch products catalog
+      fetch('/api/products')
+        .then((r) => r.json())
+        .then((pData) => {
+          if (Array.isArray(pData)) setProductList(pData)
+        })
+        .catch(() => {})
     } catch (e: any) {
       toast.error(e?.message || "Ma'lumotlarni yuklashda xatolik")
     } finally {
@@ -262,6 +284,137 @@ export default function ShopReportContent() {
   }
 
   const removeNewArrival = (idx: number) => setArrivals((prev) => prev.filter((_, i) => i !== idx))
+
+  // Frequency of products in arrivals (count how many times each product has been received)
+  const productFrequency = useMemo(() => {
+    const counts = new Map<string, number>()
+    arrivals.forEach((a) => {
+      const name = String(a.nomenclature || '').trim()
+      if (name) {
+        counts.set(name, (counts.get(name) || 0) + 1)
+      }
+    })
+    return counts
+  }, [arrivals])
+
+  // Unified product list, sorted from most frequent to least frequent (Ko'pdan kamga qarab)
+  const sortedProducts = useMemo(() => {
+    const seen = new Set<string>()
+    const list: { name: string; count: number; unit?: string }[] = []
+
+    // 1. From arrivals frequency
+    productFrequency.forEach((count, name) => {
+      seen.add(name.toLowerCase())
+      list.push({ name, count })
+    })
+
+    // 2. From product catalog (if not yet in arrivals)
+    productList.forEach((p) => {
+      const lower = (p.name || '').trim().toLowerCase()
+      if (lower && !seen.has(lower)) {
+        seen.add(lower)
+        list.push({ name: p.name.trim(), count: 0, unit: p.unit })
+      }
+    })
+
+    // Sort descending by count, then alphabetically
+    return list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  }, [productFrequency, productList])
+
+  const filteredProductsList = (query?: string) => {
+    if (!query || !query.trim()) return sortedProducts
+    const q = query.trim().toLowerCase()
+    return sortedProducts.filter((p) => p.name.toLowerCase().includes(q))
+  }
+
+  const handleSelectProduct = (idx: number, prodName: string) => {
+    const row = arrivals[idx]
+    const targetDate = row?.date || todayStr()
+    const autoB = computeNextBatch(arrivals, prodName, targetDate)
+    updateArrival(idx, {
+      nomenclature: prodName,
+      batch: autoB,
+      _autoBatch: true,
+    })
+    setActiveDropdownIdx(null)
+    toast.info(`${prodName} — ${lang === 'ru' ? 'Партия' : 'Partiya'}: #${autoB}`)
+  }
+
+  const handleSaveNewProduct = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = newProductName.trim()
+    if (!trimmed) {
+      toast.error(lang === 'ru' ? 'Введите название продукта' : 'Mahsulot nomini kiriting')
+      return
+    }
+
+    setIsSavingProduct(true)
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: trimmed,
+          code: `PRD-${Date.now().toString().slice(-6)}`,
+          unit: newProductUnit,
+          category: newProductCategory,
+          type: newProductCategory === 'Qadoq' ? 'PACKAGING' : 'RAW_MATERIAL',
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Xatolik yuz berdi')
+
+      // Add to local product list
+      setProductList((prev) => [{ name: trimmed, unit: newProductUnit, category: newProductCategory }, ...prev])
+
+      // If a row was targeted, set this product and compute its batch
+      if (targetRowIdxForNewProduct !== null && targetRowIdxForNewProduct < arrivals.length) {
+        const targetRow = arrivals[targetRowIdxForNewProduct]
+        const autoB = computeNextBatch(arrivals, trimmed, targetRow?.date || todayStr())
+        updateArrival(targetRowIdxForNewProduct, {
+          nomenclature: trimmed,
+          batch: autoB,
+          _autoBatch: true,
+        })
+        toast.success(
+          lang === 'ru'
+            ? `«${trimmed}» добавлен и присвоена партия #${autoB}!`
+            : `«${trimmed}» qo'shildi va avtomatik Partiya #${autoB} berildi!`
+        )
+      } else {
+        // If opened from top header without targeting a row, create a new row with this product!
+        const targetDate = arrFilter || todayStr()
+        const autoB = computeNextBatch(arrivals, trimmed, targetDate)
+        setArrivals((prev) => [
+          {
+            date: targetDate,
+            nomenclature: trimmed,
+            quantity: '',
+            supplier: '',
+            batch: autoB,
+            _dirty: true,
+            _new: true,
+            _autoBatch: true,
+          },
+          ...prev,
+        ])
+        toast.success(
+          lang === 'ru'
+            ? `«${trimmed}» добавлен в список с партией #${autoB}!`
+            : `«${trimmed}» qo'shildi va qatorga Partiya #${autoB} bilan kiritildi!`
+        )
+      }
+
+      setNewProductModalOpen(false)
+      setNewProductName('')
+      setTargetRowIdxForNewProduct(null)
+    } catch (err: any) {
+      toast.error(err?.message || 'Mahsulotni saqlashda xatolik')
+    } finally {
+      setIsSavingProduct(false)
+    }
+  }
 
   const dirtyArrivals = arrivals.filter((r) => r._dirty).length
 
@@ -687,6 +840,19 @@ export default function ShopReportContent() {
               >
                 + Qo&apos;shish
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetRowIdxForNewProduct(null)
+                  setNewProductName('')
+                  setNewProductModalOpen(true)
+                }}
+                className="text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+                title={lang === 'ru' ? 'Добавить новый продукт в каталог' : "Yangi mahsulotni katalogga qo'shish"}
+              >
+                <Plus size={13} />
+                <span>{lang === 'ru' ? 'Новый продукт' : 'Yangi mahsulot'}</span>
+              </button>
               {saveButton(dirtyArrivals, savingArrivals, saveArrivals)}
             </div>
           </div>
@@ -703,12 +869,7 @@ export default function ShopReportContent() {
                   <th className="p-2 sm:p-3 border-r border-amber-600 text-right min-w-[90px] sm:min-w-[115px]">Количество</th>
                   <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[140px] sm:min-w-[180px]">Поставщик</th>
                   <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[105px] sm:min-w-[140px]">
-                    <div className="flex items-center gap-1">
-                      <span>{lang === 'ru' ? 'Партия' : 'Partiya'}</span>
-                      <span className="text-[9px] px-1 py-0.2 bg-amber-700/80 rounded text-amber-100 font-normal">
-                        ⚡ {lang === 'ru' ? 'авто' : 'avto'}
-                      </span>
-                    </div>
+                    <span>{lang === 'ru' ? 'Партия' : 'Partiya'}</span>
                   </th>
                   <th className="p-2 sm:p-3 w-10"></th>
                 </tr>
@@ -768,14 +929,110 @@ export default function ShopReportContent() {
                         </div>
                       )}
                     </td>
-                    <td className="p-1 border-r border-slate-200">
-                      <input
-                        type="text"
-                        placeholder="Томат..."
-                        value={row.nomenclature || ''}
-                        onChange={(e) => updateArrival(idx, { nomenclature: e.target.value })}
-                        className="excel-input w-full min-w-[140px] px-2 py-1.5 text-xs font-medium outline-none"
-                      />
+                    <td className="p-1 border-r border-slate-200 relative">
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          placeholder={lang === 'ru' ? 'Томат, Айсберг...' : 'Aysberg, Pomidor...'}
+                          value={row.nomenclature || ''}
+                          onFocus={() => setActiveDropdownIdx(idx)}
+                          onChange={(e) => {
+                            updateArrival(idx, { nomenclature: e.target.value })
+                            if (activeDropdownIdx !== idx) setActiveDropdownIdx(idx)
+                          }}
+                          className="excel-input w-full min-w-[140px] px-2 py-1.5 text-xs font-medium outline-none pr-6"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetRowIdxForNewProduct(idx)
+                            setNewProductName(row.nomenclature || '')
+                            setNewProductModalOpen(true)
+                            setActiveDropdownIdx(null)
+                          }}
+                          title={lang === 'ru' ? 'Добавить новый продукт' : "Yangi mahsulot qo'shish"}
+                          className="absolute right-1 text-slate-400 hover:text-amber-600 hover:bg-amber-100 p-0.5 rounded transition-colors"
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+
+                      {/* Dropdown list of products (sorted from most frequent to least frequent) */}
+                      {activeDropdownIdx === idx && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-30"
+                            onClick={() => setActiveDropdownIdx(null)}
+                          />
+                          <div className="absolute left-0 top-full mt-1 w-72 sm:w-80 max-h-64 overflow-y-auto bg-white dark:bg-dark-850 rounded-2xl shadow-2xl border border-amber-300 dark:border-dark-700 z-40 p-1.5 custom-scrollbar">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTargetRowIdxForNewProduct(idx)
+                                setNewProductName(row.nomenclature || '')
+                                setNewProductModalOpen(true)
+                                setActiveDropdownIdx(null)
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-colors shadow-xs mb-1.5"
+                            >
+                              <Plus size={14} className="shrink-0" />
+                              <span>{lang === 'ru' ? '+ Добавить новый продукт' : '+ Yangi mahsulot qo‘shish'}</span>
+                            </button>
+
+                            <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                              <span>{lang === 'ru' ? 'Часто используемые' : 'Mavjud mahsulotlar (Ko‘pdan kamga)'}</span>
+                              <span className="text-amber-600 font-mono text-[10px]">
+                                {filteredProductsList(row.nomenclature).length}
+                              </span>
+                            </div>
+
+                            <div className="space-y-0.5 max-h-48 overflow-y-auto custom-scrollbar">
+                              {filteredProductsList(row.nomenclature).map((p) => (
+                                <button
+                                  key={p.name}
+                                  type="button"
+                                  onClick={() => handleSelectProduct(idx, p.name)}
+                                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                                    (row.nomenclature || '').trim().toLowerCase() === p.name.toLowerCase()
+                                      ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 font-bold'
+                                      : 'hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-800 dark:text-slate-200'
+                                  }`}
+                                >
+                                  <span className="truncate">{p.name}</span>
+                                  {p.count > 0 && (
+                                    <span className="text-[10px] text-slate-400 font-mono ml-2 shrink-0">
+                                      {p.count} {lang === 'ru' ? 'раз' : 'ta'}
+                                    </span>
+                                  )}
+                                </button>
+                              ))}
+
+                              {row.nomenclature?.trim() &&
+                                !sortedProducts.some(
+                                  (p) => p.name.toLowerCase() === row.nomenclature.trim().toLowerCase()
+                                ) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTargetRowIdxForNewProduct(idx)
+                                      setNewProductName(row.nomenclature.trim())
+                                      setNewProductModalOpen(true)
+                                      setActiveDropdownIdx(null)
+                                    }}
+                                    className="w-full text-left px-2.5 py-2 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-dashed border-amber-300 flex items-center gap-1.5 mt-1"
+                                  >
+                                    <Sparkles size={13} className="shrink-0 text-amber-500" />
+                                    <span className="truncate">
+                                      {lang === 'ru'
+                                        ? `Создать «${row.nomenclature.trim()}» как новый`
+                                        : `«${row.nomenclature.trim()}» ni yangi mahsulot qilib ochish`}
+                                    </span>
+                                  </button>
+                                )}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </td>
                     <td className="p-1 border-r border-slate-200">
                       <input
@@ -809,9 +1066,9 @@ export default function ShopReportContent() {
                           onClick={() => {
                             const nextB = computeNextBatch(arrivals, row.nomenclature, row.date)
                             updateArrival(idx, { batch: nextB })
-                            toast.info(lang === 'ru' ? `Авто-партия: #${nextB}` : `Avto-partiya: #${nextB}`)
+                            toast.info(lang === 'ru' ? `Партия: #${nextB}` : `Partiya: #${nextB}`)
                           }}
-                          title={lang === 'ru' ? "Авто-партия (сброс каждого месяца)" : "Avto-partiya (har oy boshida yangilanadi)"}
+                          title={lang === 'ru' ? "Пересчитать партию (с 1 в начале месяца)" : "Partiyani hisoblash (har oy boshidan 1)"}
                           className="absolute right-1 text-amber-500 hover:text-amber-700 hover:bg-amber-100 p-0.5 rounded transition-colors text-[10px] font-bold"
                         >
                           ⚡
@@ -1246,6 +1503,117 @@ export default function ShopReportContent() {
               pageSize={12}
               itemName={{ uz: 'arxiv hujjati', ru: 'архивных документов', en: 'archive records' }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: YANGI MAHSULOT QO'SHISH (NEW PRODUCT) */}
+      {newProductModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-enter"
+          onClick={() => setNewProductModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 shadow-2xl animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-dark-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <Package size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                    {lang === 'ru' ? 'Добавить новый продукт' : 'Yangi mahsulot qo‘shish'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {lang === 'ru'
+                      ? 'Продукт добавится в каталог и выберется в приход'
+                      : 'Mahsulot katalogga saqlanadi va partiya avto biriktiriladi'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewProductModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNewProduct} className="space-y-4 pt-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  {lang === 'ru' ? 'Название продукта' : 'Mahsulot nomi'} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder={lang === 'ru' ? 'Например: Томаты черри, Брокколи...' : 'Masalan: Pomidor cherri, Brokkoli...'}
+                  value={newProductName}
+                  onChange={(e) => setNewProductName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    {lang === 'ru' ? 'Единица измерения' : 'O‘lchov birligi'}
+                  </label>
+                  <select
+                    value={newProductUnit}
+                    onChange={(e) => setNewProductUnit(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="kg">kg (Kilogramm)</option>
+                    <option value="dona">dona (Shtuka)</option>
+                    <option value="litr">litr (Litr)</option>
+                    <option value="qop">qop (Qop)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    {lang === 'ru' ? 'Категория' : 'Kategoriya'}
+                  </label>
+                  <select
+                    value={newProductCategory}
+                    onChange={(e) => setNewProductCategory(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="Xomashyo">Xomashyo (Sabzavot)</option>
+                    <option value="Qadoq">Qadoq / Idish</option>
+                    <option value="Yarim tayyor">Yarim tayyor mahsulot</option>
+                    <option value="Tayyor mahsulot">Tayyor mahsulot (ГП)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-dark-800">
+                <button
+                  type="button"
+                  onClick={() => setNewProductModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-xl transition-colors"
+                >
+                  {lang === 'ru' ? 'Отмена' : 'Bekor qilish'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProduct}
+                  className="px-5 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-md shadow-amber-600/30 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {isSavingProduct ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={14} />
+                  )}
+                  <span>{lang === 'ru' ? 'Сохранить и выбрать' : 'Saqlash va Tanlash'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
