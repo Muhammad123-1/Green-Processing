@@ -20,6 +20,8 @@ export interface ConsumptionItem {
   type: string
   productName: string
   batchNumber: string
+  actNumber?: string
+  rawBatch?: string
   quantityKg: number
   unit?: string
   date: string
@@ -439,11 +441,11 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
           <table className="w-full min-w-[760px] text-left text-xs">
             <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="p-3.5">{lang === 'ru' ? 'Документ / дата' : 'Hujjat / sana'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Дата операции' : 'Sana'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Наименование' : 'Nomi'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Цех-получатель' : 'Qabul qilgan sex'}</th>
                 <th className="p-3.5 text-right">{lang === 'ru' ? 'Расход' : 'Sarflangan miqdor'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Выпущенная продукция' : 'Tayyorlangan mahsulot'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Акт и партия' : 'Akt va partiya'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
@@ -454,9 +456,9 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                   className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-dark-800 transition-colors"
                 >
                   <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">
-                    {item.batchNumber}
+                    <span>{item.date}</span>
                     <span className="block mt-0.5 text-[10px] font-normal text-slate-400">
-                      {item.date}
+                      Sex hisoboti
                     </span>
                   </td>
                   <td className="p-3 font-bold text-slate-800 dark:text-slate-200">
@@ -468,8 +470,17 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                   <td className="p-3 text-right font-mono font-black text-blue-600 dark:text-blue-400">
                     {formatQty(item.quantityKg, item.unit)}
                   </td>
-                  <td className="p-3 text-slate-600 dark:text-slate-300 truncate max-w-xs">
-                    {item.targetProducts || 'Ishlab chiqarishga sarflandi'}
+                  <td className="p-3 font-mono">
+                    <span className="font-bold text-slate-900 dark:text-white block">
+                      {item.actNumber || `AKT-${item.id}`}
+                    </span>
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                      {item.batchNumber?.includes('Partiya')
+                        ? item.batchNumber
+                        : item.rawBatch
+                        ? `Partiya #${item.rawBatch}`
+                        : item.batchNumber}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -524,10 +535,10 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-dark-800 pb-4">
               <div>
                 <p className="text-[11px] font-black text-blue-600 uppercase tracking-wider">
-                  {lang === 'ru' ? 'АКТ РАСХОДА' : 'CHIQIM HUJJATI'}
+                  {lang === 'ru' ? 'АКТ РАСХОДА' : 'CHIQIM DALOLATNOMASI'}
                 </p>
                 <h3 className="font-mono font-black text-slate-900 dark:text-white text-base">
-                  {selectedItem.batchNumber}
+                  {selectedItem.actNumber || `AKT-${selectedItem.id}`}
                 </h3>
               </div>
               <button
@@ -559,6 +570,28 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
                 <span className="block text-[10px] text-slate-400 font-bold uppercase">
+                  {lang === 'ru' ? 'Акт и номер' : 'Chiqim akti'}
+                </span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white mt-0.5 block">
+                  {selectedItem.actNumber || `AKT-${selectedItem.id}`}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
+                <span className="block text-[10px] text-slate-400 font-bold uppercase">
+                  {lang === 'ru' ? 'Партия сырья' : 'Xomashyo partiyasi'}
+                </span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                  {selectedItem.batchNumber?.includes('Partiya')
+                    ? selectedItem.batchNumber
+                    : selectedItem.rawBatch
+                    ? `Partiya #${selectedItem.rawBatch}`
+                    : selectedItem.batchNumber}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
+                <span className="block text-[10px] text-slate-400 font-bold uppercase">
                   {lang === 'ru' ? 'Цех-получатель' : 'Qabul qilgan sex'}
                 </span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">
@@ -575,17 +608,6 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                 </span>
               </div>
             </div>
-
-            {selectedItem.targetProducts && (
-              <section className="p-4 rounded-2xl bg-blue-50/60 dark:bg-dark-800 border border-blue-200 dark:border-blue-900/40 text-xs mt-2">
-                <b className="text-blue-700 dark:text-blue-300 block mb-1">
-                  {lang === 'ru' ? 'Выпущенная продукция:' : 'Chiqarilgan tayyor mahsulot:'}
-                </b>
-                <p className="text-slate-700 dark:text-slate-300 font-medium">
-                  {selectedItem.targetProducts}
-                </p>
-              </section>
-            )}
           </aside>
         </div>
       )}

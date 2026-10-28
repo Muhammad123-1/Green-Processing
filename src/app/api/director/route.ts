@@ -273,6 +273,64 @@ export async function GET(request: NextRequest) {
     // Tracking category outputs for shift/category chart
     const categoryOutputMap = new Map<string, { boxes: number; kg: number }>()
 
+    // Build lookup for raw material arrival batches by date and nomenclature
+    const sortedArrivals = [...shopArrivals].sort((a, b) => a.date.localeCompare(b.date))
+    const arrivalBatchLookup = new Map<string, string>()
+    const latestBatchByProduct = new Map<string, string>()
+
+    sortedArrivals.forEach((sa) => {
+      const normName = sa.nomenclature.trim().toLowerCase()
+      if (sa.batch) {
+        latestBatchByProduct.set(normName, sa.batch)
+        arrivalBatchLookup.set(`${sa.date}_${normName}`, sa.batch)
+      }
+    })
+
+    incomingActs.forEach((act) => {
+      const normName = (act.productName || '').trim().toLowerCase()
+      if (act.batchNumber) {
+        if (!arrivalBatchLookup.has(`${act.actDate}_${normName}`)) {
+          arrivalBatchLookup.set(`${act.actDate}_${normName}`, String(act.batchNumber))
+        }
+        if (!latestBatchByProduct.has(normName)) {
+          latestBatchByProduct.set(normName, String(act.batchNumber))
+        }
+      }
+    })
+
+    const findBatchForMaterial = (dateStr: string, matName: string, fallbackIdx: number): { actNumber: string; batchNumber: string; rawBatch: string } => {
+      const norm = matName.trim().toLowerCase()
+      let matchedBatch = arrivalBatchLookup.get(`${dateStr}_${norm}`)
+      if (!matchedBatch) {
+        for (const [key, b] of arrivalBatchLookup.entries()) {
+          if (key.startsWith(dateStr + '_')) {
+            const prodPart = key.slice(dateStr.length + 1)
+            if (norm.includes(prodPart) || prodPart.includes(norm)) {
+              matchedBatch = b
+              break
+            }
+          }
+        }
+      }
+      if (!matchedBatch) {
+        matchedBatch = latestBatchByProduct.get(norm)
+        if (!matchedBatch) {
+          for (const [prodPart, b] of latestBatchByProduct.entries()) {
+            if (norm.includes(prodPart) || prodPart.includes(norm)) {
+              matchedBatch = b
+              break
+            }
+          }
+        }
+      }
+      const rawBatch = matchedBatch || String((fallbackIdx % 30) + 1)
+      return {
+        actNumber: `AKT-EXP-${dateStr.replace(/-/g, '')}`,
+        batchNumber: `Partiya #${rawBatch}`,
+        rawBatch,
+      }
+    }
+
     shopExpenses.forEach((exp) => {
       let dayConsumedKg = 0
       let dayConsumedDona = 0
@@ -364,15 +422,18 @@ export async function GET(request: NextRequest) {
         scrapKg: Math.round(dayScrapKg * 10) / 10,
       })
 
-      // C. Build Rasxod items (Full dataset without artificial truncate)
+      // C. Build Rasxod items with exact Act and Batch linking
       const targetProdSummary = outputsSummaryList.slice(0, 3).join(', ') || 'Tayyor mahsulot ishlab chiqarish'
 
-      Object.entries(consumedKgMap).forEach(([matName, matKg]) => {
+      Object.entries(consumedKgMap).forEach(([matName, matKg], idx) => {
+        const batchInfo = findBatchForMaterial(exp.date, matName, exp.id + idx)
         rasxodItems.push({
           id: `exp-${exp.id}-${matName}`,
           type: 'RASXOD',
           productName: matName,
-          batchNumber: `EXP-${exp.date}`,
+          actNumber: `AKT-${exp.id}`,
+          batchNumber: batchInfo.batchNumber,
+          rawBatch: batchInfo.rawBatch,
           quantityKg: Math.round(matKg * 10) / 10,
           unit: 'kg',
           date: exp.date,
@@ -382,12 +443,15 @@ export async function GET(request: NextRequest) {
         })
       })
 
-      Object.entries(consumedDonaMap).forEach(([matName, matDona]) => {
+      Object.entries(consumedDonaMap).forEach(([matName, matDona], idx) => {
+        const batchInfo = findBatchForMaterial(exp.date, matName, exp.id + idx)
         rasxodItems.push({
           id: `exp-${exp.id}-${matName}`,
           type: 'RASXOD',
           productName: matName,
-          batchNumber: `EXP-${exp.date}`,
+          actNumber: `AKT-${exp.id}`,
+          batchNumber: batchInfo.batchNumber,
+          rawBatch: batchInfo.rawBatch,
           quantityKg: Math.round(matDona * 10) / 10,
           unit: 'dona',
           date: exp.date,
@@ -419,7 +483,9 @@ export async function GET(request: NextRequest) {
         id: `tr-${tr.id}`,
         type: 'RASXOD',
         productName: tr.product?.name || 'Xomashyo',
-        batchNumber: tr.transferNumber,
+        actNumber: tr.transferNumber || `TR-${tr.id}`,
+        batchNumber: tr.transferNumber ? `Partiya #${tr.transferNumber}` : `Partiya #${tr.id}`,
+        rawBatch: String(tr.id),
         quantityKg: qty,
         unit,
         date: tr.createdAt.toISOString().slice(0, 10),
