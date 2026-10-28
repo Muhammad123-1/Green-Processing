@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { detectItemUnit } from '@/lib/units'
 
 export async function GET(request: NextRequest) {
   try {
@@ -165,12 +166,15 @@ export async function GET(request: NextRequest) {
     ])
 
     // -------------------------------------------------------------------------
-    // 1. PRIXOD (KIRIM) — REAL OPERATIONAL DATA
+    // 1. PRIXOD (KIRIM) — REAL OPERATIONAL DATA (SEPARATING KG & DONA)
     // -------------------------------------------------------------------------
     let totalPrixodKg = 0
+    let totalPrixodDona = 0
     let totalPrixodCount = shopArrivals.length
     let acceptedPrixodKg = 0
+    let acceptedPrixodDona = 0
     let rejectedPrixodKg = 0
+    let rejectedPrixodDona = 0
     const prixodItems: any[] = []
 
     // Helper map of incoming acts by batch number and by date + product for quality enrichment
@@ -184,11 +188,17 @@ export async function GET(request: NextRequest) {
       if (!actByDateProductMap.has(key)) actByDateProductMap.set(key, act)
     })
 
-    // Include ALL arrivals from shop report / DB without artificial limit
+    // Include ALL arrivals from shop report / DB with exact unit detection
     shopArrivals.forEach((sa) => {
       const qty = sa.quantity || 0
-      totalPrixodKg += qty
-      acceptedPrixodKg += qty
+      const unit = detectItemUnit(sa.nomenclature)
+      if (unit === 'kg') {
+        totalPrixodKg += qty
+        acceptedPrixodKg += qty
+      } else {
+        totalPrixodDona += qty
+        acceptedPrixodDona += qty
+      }
 
       const batchKey = sa.batch ? String(sa.batch).trim().toLowerCase() : ''
       const actMatch = (batchKey && actByBatchMap.get(batchKey)) || actByDateProductMap.get(`${sa.date}_${(sa.nomenclature || '').trim().toLowerCase()}`)
@@ -203,7 +213,7 @@ export async function GET(request: NextRequest) {
         batchNumber: batchNum,
         rawBatch: sa.batch || actMatch?.batchNumber || '',
         quantityKg: Math.round(qty * 10) / 10,
-        unit: 'kg',
+        unit,
         date: sa.date,
         status: actMatch?.decisionText || 'Qabul qilingan',
         supplierName,
@@ -215,8 +225,14 @@ export async function GET(request: NextRequest) {
     incomingActs.forEach((act) => {
       if (act.decisionRating === 2) {
         const rejQty = act.warehouseKg || 0
-        rejectedPrixodKg += rejQty
-        totalPrixodKg += rejQty
+        const unit = detectItemUnit(act.productName)
+        if (unit === 'kg') {
+          rejectedPrixodKg += rejQty
+          totalPrixodKg += rejQty
+        } else {
+          rejectedPrixodDona += rejQty
+          totalPrixodDona += rejQty
+        }
         totalPrixodCount++
         prixodItems.push({
           id: `act-rej-${act.id}`,
@@ -225,7 +241,7 @@ export async function GET(request: NextRequest) {
           batchNumber: act.batchNumber ? `Partiya #${act.batchNumber}` : `AKT-${act.actNumber}`,
           rawBatch: act.batchNumber || '',
           quantityKg: rejQty,
-          unit: 'kg',
+          unit,
           date: act.actDate,
           status: 'Rad etilgan (Brak)',
           supplierName: act.supplierName,
@@ -238,6 +254,7 @@ export async function GET(request: NextRequest) {
     // 2. RASXOD (CHIQIM / SARF) — REAL SHOP EXPENSE & PRODUCTION OUTPUTS
     // -------------------------------------------------------------------------
     let totalRasxodKg = 0
+    let totalRasxodDona = 0
     let totalOutputKg = 0
     let totalOutputBoxes = 0
     const rasxodItems: any[] = []
@@ -248,21 +265,25 @@ export async function GET(request: NextRequest) {
 
     shopExpenses.forEach((exp) => {
       let dayConsumedKg = 0
+      let dayConsumedDona = 0
       let dayOutputKg = 0
       let dayOutputBoxes = 0
 
-      // A. Extract consumed materials
-      const consumedMap: Record<string, number> = {}
+      // A. Extract consumed materials (distinguishing KG vs DONA)
+      const consumedKgMap: Record<string, number> = {}
+      const consumedDonaMap: Record<string, number> = {}
 
       if (exp.materials && typeof exp.materials === 'object') {
         Object.entries(exp.materials).forEach(([matName, matVal]) => {
           const num = typeof matVal === 'number' ? matVal : parseFloat(String(matVal))
           if (!isNaN(num) && num > 0) {
-            const lower = matName.toLowerCase()
-            // Ignore packing materials for raw kg calculations
-            if (!lower.includes('коробк') && !lower.includes('пакет') && !lower.includes('этикет')) {
-              consumedMap[matName] = (consumedMap[matName] || 0) + num
+            const unit = detectItemUnit(matName)
+            if (unit === 'kg') {
+              consumedKgMap[matName] = (consumedKgMap[matName] || 0) + num
               dayConsumedKg += num
+            } else {
+              consumedDonaMap[matName] = (consumedDonaMap[matName] || 0) + num
+              dayConsumedDona += num
             }
           }
         })
@@ -274,11 +295,14 @@ export async function GET(request: NextRequest) {
           if (typeof rowVal === 'object' && rowVal !== null) {
             Object.entries(rowVal).forEach(([k, v]) => {
               const num = typeof v === 'number' ? v : parseFloat(String(v))
-              if (!isNaN(num) && num > 0 && num < 100000) {
-                const lower = k.toLowerCase()
-                if (!lower.includes('коробк') && !lower.includes('пакет') && !lower.includes('этикет') && !lower.includes('col_')) {
-                  consumedMap[k] = (consumedMap[k] || 0) + num
+              if (!isNaN(num) && num > 0 && num < 100000 && !k.toLowerCase().includes('col_')) {
+                const unit = detectItemUnit(k)
+                if (unit === 'kg') {
+                  consumedKgMap[k] = (consumedKgMap[k] || 0) + num
                   dayConsumedKg += num
+                } else {
+                  consumedDonaMap[k] = (consumedDonaMap[k] || 0) + num
+                  dayConsumedDona += num
                 }
               }
             })
@@ -287,6 +311,7 @@ export async function GET(request: NextRequest) {
       }
 
       totalRasxodKg += dayConsumedKg
+      totalRasxodDona += dayConsumedDona
 
       // B. Extract finished outputs
       const outputsSummaryList: string[] = []
@@ -329,61 +354,38 @@ export async function GET(request: NextRequest) {
         scrapKg: Math.round(dayScrapKg * 10) / 10,
       })
 
-      // C. Build Rasxod items for drill-down modal
-      if (rasxodItems.length < 150) {
-        Object.entries(consumedMap).forEach(([matName, matKg]) => {
-          if (rasxodItems.length < 150) {
-            rasxodItems.push({
-              id: `exp-${exp.id}-${matName}`,
-              type: 'RASXOD',
-              productName: matName,
-              batchNumber: `EXP-${exp.date}`,
-              quantityKg: Math.round(matKg * 10) / 10,
-              unit: 'kg',
-              date: exp.date,
-              workshop: 'Tayyorlash va qayta ishlash sexi',
-              status: 'COMPLETED',
-              targetProducts: outputsSummaryList.slice(0, 3).join(', ') || 'Tayyor mahsulot ishlab chiqarish',
-              chain: {
-                broughtBy: {
-                  supplier: "Asosiy xomashyo ombori (Sklad)",
-                  driver: "Ichki transport / Omborchi",
-                  vehicleNumber: `Sex buyurtmasi №${exp.id}`,
-                  arrivalDate: exp.date,
-                  temperature: "+4.0 °C",
-                  docNumber: `TALAB-${exp.date}`,
-                  notes: "Ishlab chiqarish retsepturasi talabnomasi",
-                },
-                cleanedBy: {
-                  worker: "Sex tozalash va tayyorlash brigadasi",
-                  sortingLine: "Ishlab chiqarish sex liniyasi",
-                  cleanlinessRate: "100% texnologik talabga mos",
-                  date: exp.date,
-                  washMethod: "Ozonlangan suvda yuvish va kesish",
-                  notes: "Tayyor mahsulot retseptiga muvofiq ishlov berildi",
-                },
-                issuedToProductionBy: {
-                  worker: "Ombor mudiri",
-                  warehouseName: "Asosiy sklad",
-                  transferDoc: `TR-EXP-${exp.id}`,
-                  issuedDate: exp.date,
-                  issuedQty: Math.round(matKg * 10) / 10,
-                  notes: "Ishlab chiqarishga sarflangan xomashyo",
-                },
-                receivedBy: {
-                  worker: "Sex ustasi va katta texnolog",
-                  workshopName: "1-Tayyorlash va qadoqlash sexi",
-                  receivedDate: exp.date,
-                  receivedQty: Math.round(matKg * 10) / 10,
-                  discrepancy: 0,
-                  status: "Sarflandi (Chiqim)",
-                  notes: outputsSummaryList.slice(0, 2).join(', ') ? `Chiqarilgan: ${outputsSummaryList.slice(0, 2).join(', ')}` : "Tayyor mahsulotga qayta ishlandi",
-                },
-              },
-            })
-          }
+      // C. Build Rasxod items (Full dataset without artificial truncate)
+      const targetProdSummary = outputsSummaryList.slice(0, 3).join(', ') || 'Tayyor mahsulot ishlab chiqarish'
+
+      Object.entries(consumedKgMap).forEach(([matName, matKg]) => {
+        rasxodItems.push({
+          id: `exp-${exp.id}-${matName}`,
+          type: 'RASXOD',
+          productName: matName,
+          batchNumber: `EXP-${exp.date}`,
+          quantityKg: Math.round(matKg * 10) / 10,
+          unit: 'kg',
+          date: exp.date,
+          workshop: 'Tayyorlash va qayta ishlash sexi',
+          status: 'COMPLETED',
+          targetProducts: targetProdSummary,
         })
-      }
+      })
+
+      Object.entries(consumedDonaMap).forEach(([matName, matDona]) => {
+        rasxodItems.push({
+          id: `exp-${exp.id}-${matName}`,
+          type: 'RASXOD',
+          productName: matName,
+          batchNumber: `EXP-${exp.date}`,
+          quantityKg: Math.round(matDona * 10) / 10,
+          unit: 'dona',
+          date: exp.date,
+          workshop: 'Qadoqlash va komplektatsiya sexi',
+          status: 'COMPLETED',
+          targetProducts: targetProdSummary,
+        })
+      })
     })
 
     // Also include Stock Transfers in Rasxod if any
@@ -393,185 +395,183 @@ export async function GET(request: NextRequest) {
 
     stockTransfers.forEach((tr) => {
       const qty = tr.issuedQuantity || 0
-      totalTransfersIssuedKg += qty
+      const unit = detectItemUnit(tr.product?.name || '', tr.issuedUnit || '')
+      if (unit === 'kg') {
+        totalTransfersIssuedKg += qty
+        totalRasxodKg += qty
+      } else {
+        totalRasxodDona += qty
+      }
       totalTransfersReceivedKg += tr.receivedQuantity || 0
       totalTransfersDiscrepancyKg += tr.discrepancy || 0
 
-      if (rasxodItems.length < 150) {
-        rasxodItems.push({
-          id: `tr-${tr.id}`,
-          type: 'RASXOD',
-          productName: tr.product?.name || 'Xomashyo',
-          batchNumber: tr.transferNumber,
-          quantityKg: qty,
-          unit: tr.issuedUnit || 'kg',
-          date: tr.createdAt.toISOString().slice(0, 10),
-          workshop: tr.targetLocation,
-          status: tr.status,
-          chain: {
-            broughtBy: {
-              supplier: "Omborxona",
-              driver: tr.issuedByName || "Omborchi",
-              vehicleNumber: `Transfer №${tr.transferNumber}`,
-              arrivalDate: tr.createdAt.toISOString().slice(0, 10),
-              temperature: "+4.0 °C",
-              docNumber: tr.transferNumber,
-              notes: "Ombordan sexga ichki harakat hujjati",
-            },
-            cleanedBy: {
-              worker: "Sex qabul punkti",
-              sortingLine: tr.targetLocation || "Sex",
-              cleanlinessRate: "100%",
-              date: tr.createdAt.toISOString().slice(0, 10),
-              washMethod: "Ichki nazorat",
-              notes: "Ichki uzatish",
-            },
-            issuedToProductionBy: {
-              worker: tr.issuedByName || "Sklad mudiri",
-              warehouseName: tr.sourceLocation || "Asosiy ombor",
-              transferDoc: tr.transferNumber,
-              issuedDate: tr.issuedAt ? tr.issuedAt.toISOString().slice(0, 10) : tr.createdAt.toISOString().slice(0, 10),
-              issuedQty: qty,
-              notes: tr.notes || "Sexga xomashyo chiqarildi",
-            },
-            receivedBy: {
-              worker: tr.receivedByName || "Sex ustasi",
-              workshopName: tr.targetLocation || "Ishlab chiqarish sexi",
-              receivedDate: tr.receivedAt ? tr.receivedAt.toISOString().slice(0, 10) : tr.createdAt.toISOString().slice(0, 10),
-              receivedQty: tr.receivedQuantity || qty,
-              discrepancy: tr.discrepancy || 0,
-              status: tr.status,
-              notes: tr.discrepancyReason || "Nomuvofiqliksiz qabul qilindi",
-            },
-          },
-        })
-      }
+      rasxodItems.push({
+        id: `tr-${tr.id}`,
+        type: 'RASXOD',
+        productName: tr.product?.name || 'Xomashyo',
+        batchNumber: tr.transferNumber,
+        quantityKg: qty,
+        unit,
+        date: tr.createdAt.toISOString().slice(0, 10),
+        workshop: tr.targetLocation || 'Sex',
+        status: tr.status,
+      })
     })
 
     // -------------------------------------------------------------------------
     // 3. BRAK (TEXNOLOGIK CHIQINDI, ISROF VA NUQSONLAR)
     // -------------------------------------------------------------------------
     let totalBrakKg = 0
+    let totalBrakDona = 0
     const brakItems: any[] = []
 
-    // A. Daily Trimming and Sorting Scrap from Production (Real diff between consumed and output)
+    // A. Daily Trimming and Sorting Scrap from Production (Real diff between consumed and output - KG)
     dailyProductionMap.forEach((prod) => {
       if (prod.scrapKg > 0) {
         totalBrakKg += prod.scrapKg
-        if (brakItems.length < 150) {
-          const scrapPct = prod.consumedKg > 0 ? ((prod.scrapKg / prod.consumedKg) * 100).toFixed(1) : '0'
-          brakItems.push({
-            id: `scrap-${prod.date}`,
-            type: 'BRAK',
-            defectNumber: `ISROF-${prod.date}`,
-            productName: `Texnologik chiqindi (${prod.date})`,
-            batchNumber: `EXP-${prod.date}`,
-            quantityKg: prod.scrapKg,
-            unit: 'kg',
-            defectType: 'TRIMMING_AND_SORTING_SCRAP',
-            reason: `Tozalash, ildiz va po'stini ajratishdagi tabiiy texnologik yo'qotish (${scrapPct}%)`,
-            actionTaken: 'SCRAP_DISPOSAL',
-            date: prod.date,
-            responsible: "Sex texnologi va saralash ustasi",
-            status: 'HISOBLANGAN',
-            cost: Math.round(prod.scrapKg * 13500),
-            chain: {
-              broughtBy: {
-                supplier: "Ishlab chiqarish sexi",
-                driver: "Liniya operatori",
-                vehicleNumber: "Sex liniyasi",
-                arrivalDate: prod.date,
-                temperature: "+4.0 °C",
-                docNumber: `CHIQINDI-${prod.date}`,
-                notes: `Ishlab chiqarishga kirgan: ${Math.round(prod.consumedKg)} kg, tayyor mahsulot: ${Math.round(prod.outputKg)} kg`,
-              },
-              cleanedBy: {
-                worker: "Saralash va tozalash brigadasi",
-                sortingLine: "Saralash va tozalash konveyeri",
-                cleanlinessRate: "Yaroqsiz qismlar va chiqindi ajratildi",
-                date: prod.date,
-                washMethod: "Saralash va kesish jarayoni",
-                notes: "Bargli xomashyolarning qoraygan qismlari tozalandi",
-              },
-              issuedToProductionBy: {
-                worker: "Sex nazoratchisi",
-                warehouseName: "Chiqindi yig'ish joyi",
-                transferDoc: `CHIQ-${prod.date}`,
-                issuedDate: prod.date,
-                issuedQty: 0,
-                notes: "Tayyor mahsulot qutisiga kiritilmadi",
-              },
-              receivedBy: {
-                worker: "Utilizatsiya mas'uli",
-                workshopName: "Chiqindilarni utilizatsiya qilish punkti",
-                receivedDate: prod.date,
-                receivedQty: prod.scrapKg,
-                discrepancy: 0,
-                status: "Utilizatsiya qilindi",
-                notes: "Texnologik chiqindi me'yori doirasida",
-              },
+        const scrapPct = prod.consumedKg > 0 ? ((prod.scrapKg / prod.consumedKg) * 100).toFixed(1) : '0'
+        brakItems.push({
+          id: `scrap-${prod.date}`,
+          type: 'BRAK',
+          defectNumber: `ISROF-${prod.date}`,
+          productName: `Texnologik chiqindi (${prod.date})`,
+          batchNumber: `EXP-${prod.date}`,
+          quantityKg: prod.scrapKg,
+          unit: 'kg',
+          defectType: 'TRIMMING_AND_SORTING_SCRAP',
+          reason: `Tozalash, ildiz va po'stini ajratishdagi tabiiy texnologik yo'qotish (${scrapPct}%)`,
+          actionTaken: 'SCRAP_DISPOSAL',
+          date: prod.date,
+          responsible: 'Sex texnologi va saralash ustasi',
+          status: 'HISOBLANGAN',
+          cost: Math.round(prod.scrapKg * 13500),
+          chain: {
+            broughtBy: {
+              supplier: 'Ishlab chiqarish sexi',
+              driver: 'Liniya operatori',
+              vehicleNumber: 'Sex liniyasi',
+              arrivalDate: prod.date,
+              temperature: '+4.0 °C',
+              docNumber: `CHIQINDI-${prod.date}`,
+              notes: `Ishlab chiqarishga kirgan: ${Math.round(prod.consumedKg)} kg, tayyor mahsulot: ${Math.round(prod.outputKg)} kg`,
             },
-          })
-        }
+            cleanedBy: {
+              worker: 'Saralash va tozalash brigadasi',
+              sortingLine: 'Saralash va tozalash konveyeri',
+              cleanlinessRate: 'Yaroqsiz qismlar va chiqindi ajratildi',
+              date: prod.date,
+              washMethod: 'Saralash va kesish jarayoni',
+              notes: 'Bargli xomashyolarning qoraygan qismlari tozalandi',
+            },
+            issuedToProductionBy: {
+              worker: 'Sex nazoratchisi',
+              warehouseName: 'Chiqindi yig\'ish joyi',
+              transferDoc: `CHIQ-${prod.date}`,
+              issuedDate: prod.date,
+              issuedQty: 0,
+              notes: 'Tayyor mahsulot qutisiga kiritilmadi',
+            },
+            receivedBy: {
+              worker: 'Utilizatsiya mas\'uli',
+              workshopName: 'Chiqindilarni utilizatsiya qilish punkti',
+              receivedDate: prod.date,
+              receivedQty: prod.scrapKg,
+              discrepancy: 0,
+              status: 'Utilizatsiya qilindi',
+              notes: 'Texnologik chiqindi me\'yori doirasida',
+            },
+          },
+        })
       }
     })
 
     // B. Defect Logs from inspectors
     defectLogs.forEach((def) => {
       const qty = def.quantity || 0
-      totalBrakKg += qty
-      if (brakItems.length < 150) {
-        brakItems.push({
-          id: `def-${def.id}`,
-          type: 'BRAK',
-          defectNumber: def.defectNumber,
-          productName: def.product?.name || 'Mahsulot',
-          batchNumber: def.batchNumber || def.defectNumber,
-          quantityKg: qty,
-          unit: def.unit || 'kg',
-          defectType: def.defectType,
-          reason: def.reason,
-          actionTaken: def.actionTaken,
-          date: def.createdAt.toISOString().slice(0, 10),
-          responsible: def.responsible || 'Sifat Nazorati',
-          status: def.status,
-          cost: def.estimatedCost || Math.round(qty * 13500),
-          chain: {
-            broughtBy: {
-              supplier: def.supplier?.name || "Ta'minotchi",
-              driver: "Ta'minot haydovchisi",
-              vehicleNumber: "Yuk mashinasi",
-              arrivalDate: def.createdAt.toISOString().slice(0, 10),
-              temperature: "+6.0 °C",
-              docNumber: def.batchNumber || def.defectNumber,
-              notes: "Ta'minotchi partiyasidan keltirilgan xomashyo",
-            },
-            cleanedBy: {
-              worker: def.responsible || "Sifat nazorati inspektori",
-              sortingLine: "Kirish nazorati punkti",
-              cleanlinessRate: "Brak ajratildi",
-              date: def.createdAt.toISOString().slice(0, 10),
-              washMethod: "Tekshiruv va tahlil",
-              notes: def.reason,
-            },
-            issuedToProductionBy: {
-              worker: "Sexga berilmadi (Rad etildi)",
-              warehouseName: "Karantin zonasi",
-              transferDoc: def.defectNumber,
-              issuedDate: def.createdAt.toISOString().slice(0, 10),
-              issuedQty: 0,
-              notes: `Chora: ${def.actionTaken === 'RETURN_TO_SUPPLIER' ? "Ta'minotchiga qaytarildi" : "Utilizatsiyaga topshirildi"}`,
-            },
-            receivedBy: {
-              worker: "Sifat komissiyasi",
-              workshopName: "Utilizatsiya punkti",
-              receivedDate: def.createdAt.toISOString().slice(0, 10),
-              receivedQty: qty,
-              discrepancy: 0,
-              status: def.status,
-              notes: def.reason,
-            },
+      const unit = detectItemUnit(def.product?.name || '', def.unit)
+      if (unit === 'kg') {
+        totalBrakKg += qty
+      } else {
+        totalBrakDona += qty
+      }
+      brakItems.push({
+        id: `def-${def.id}`,
+        type: 'BRAK',
+        defectNumber: def.defectNumber,
+        productName: def.product?.name || 'Mahsulot',
+        batchNumber: def.batchNumber || def.defectNumber,
+        quantityKg: qty,
+        unit,
+        defectType: def.defectType,
+        reason: def.reason,
+        actionTaken: def.actionTaken,
+        date: def.createdAt.toISOString().slice(0, 10),
+        responsible: def.responsible || 'Sifat Nazorati',
+        status: def.status,
+        cost: def.estimatedCost || Math.round(qty * (unit === 'kg' ? 13500 : 350)),
+        chain: {
+          broughtBy: {
+            supplier: def.supplier?.name || "Ta'minotchi",
+            driver: 'Ta\'minot haydovchisi',
+            vehicleNumber: 'Yuk mashinasi',
+            arrivalDate: def.createdAt.toISOString().slice(0, 10),
+            temperature: '+6.0 °C',
+            docNumber: def.batchNumber || def.defectNumber,
+            notes: "Ta'minotchi partiyasidan keltirilgan xomashyo",
           },
+          cleanedBy: {
+            worker: def.responsible || 'Sifat nazorati inspektori',
+            sortingLine: 'Kirish nazorati punkti',
+            cleanlinessRate: 'Brak ajratildi',
+            date: def.createdAt.toISOString().slice(0, 10),
+            washMethod: 'Tekshiruv va tahlil',
+            notes: def.reason,
+          },
+          issuedToProductionBy: {
+            worker: 'Sexga berilmadi (Rad etildi)',
+            warehouseName: 'Karantin zonasi',
+            transferDoc: def.defectNumber,
+            issuedDate: def.createdAt.toISOString().slice(0, 10),
+            issuedQty: 0,
+            notes: `Chora: ${def.actionTaken === 'RETURN_TO_SUPPLIER' ? "Ta'minotchiga qaytarildi" : 'Utilizatsiyaga topshirildi'}`,
+          },
+          receivedBy: {
+            worker: 'Sifat komissiyasi',
+            workshopName: 'Utilizatsiya punkti',
+            receivedDate: def.createdAt.toISOString().slice(0, 10),
+            receivedQty: qty,
+            discrepancy: 0,
+            status: def.status,
+            notes: def.reason,
+          },
+        },
+      })
+    })
+
+    // C. Packaging defects recorded in production (dona)
+    shopExpenses.forEach((exp) => {
+      if (exp.materials && typeof exp.materials === 'object') {
+        Object.entries(exp.materials).forEach(([matName, matVal]) => {
+          const num = typeof matVal === 'number' ? matVal : parseFloat(String(matVal))
+          if (!isNaN(num) && num > 0 && matName.toLowerCase().includes('брак')) {
+            totalBrakDona += num
+            brakItems.push({
+              id: `scrap-pkg-${exp.id}-${matName}`,
+              type: 'BRAK',
+              defectNumber: `ISROF-${exp.date}`,
+              productName: matName,
+              batchNumber: `EXP-${exp.date}`,
+              quantityKg: Math.round(num * 10) / 10,
+              unit: 'dona',
+              defectType: 'PACKAGING_DEFECT',
+              reason: 'Qadoqlash sexidagi yaroqsiz qutilar yoki paketlar braki',
+              actionTaken: 'SCRAP_DISPOSAL',
+              date: exp.date,
+              responsible: 'Qadoqlash sexi brigadiri',
+              status: 'HISOBLANGAN',
+              cost: Math.round(num * 350),
+            })
+          }
         })
       }
     })
@@ -582,24 +582,26 @@ export async function GET(request: NextRequest) {
 
     const operationsSummary = {
       prixod: {
-        totalKg: Math.round(totalPrixodKg),
+        totalKg: Math.round(totalPrixodKg * 10) / 10,
+        totalDona: Math.round(totalPrixodDona),
         totalCount: totalPrixodCount,
         items: prixodItems,
       },
       rasxod: {
-        totalKg: Math.round(totalRasxodKg),
+        totalKg: Math.round(totalRasxodKg * 10) / 10,
+        totalDona: Math.round(totalRasxodDona),
         totalCount: shopExpenses.length + stockTransfers.length,
         items: rasxodItems,
       },
       brak: {
         totalKg: Math.round(totalBrakKg * 10) / 10,
+        totalDona: Math.round(totalBrakDona),
         totalCount: brakItems.length,
         defectRate: Math.round(defectRatePercent * 10) / 10,
         items: brakItems,
       },
     }
 
-    // -------------------------------------------------------------------------
     // 4. WAREHOUSE STOCK BALANCES (PRIXOD - RASXOD)
     // -------------------------------------------------------------------------
     // Aggregate all arrivals by nomenclature

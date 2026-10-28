@@ -11,6 +11,8 @@ import {
   Search,
   X,
   Package,
+  Scale,
+  Boxes,
 } from 'lucide-react'
 
 export interface ConsumptionItem {
@@ -32,28 +34,26 @@ interface Props {
 }
 
 export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }: Props) {
+  const [unitFilter, setUnitFilter] = useState<'ALL' | 'kg' | 'dona'>('ALL')
   const [selectedProduct, setSelectedProduct] = useState<string>('')
   const [search, setSearch] = useState<string>('')
   const [selectedItem, setSelectedItem] = useState<ConsumptionItem | null>(null)
   const [page, setPage] = useState<number>(1)
   const pageSize = 20
 
-  // 1. Group items by product for product cards (Image 2 style)
-  const productsSummary = useMemo(() => {
-    const map = new Map<string, { name: string; count: number; totalKg: number; workshops: Set<string> }>()
-    items.forEach((item) => {
-      const name = item.productName || 'Noma’lum mahsulot'
-      const existing = map.get(name) || { name, count: 0, totalKg: 0, workshops: new Set<string>() }
-      existing.count += 1
-      existing.totalKg += item.quantityKg || 0
-      if (item.workshop) existing.workshops.add(item.workshop)
-      map.set(name, existing)
-    })
-    return Array.from(map.values()).sort((a, b) => b.totalKg - a.totalKg)
+  // 1. Separate totals for KG and DONA
+  const totalKg = useMemo(() => {
+    return items
+      .filter((i) => (i.unit || 'kg') === 'kg')
+      .reduce((sum, i) => sum + (i.quantityKg || 0), 0)
   }, [items])
 
-  // Overall totals
-  const overallTotalKg = useMemo(() => items.reduce((sum, i) => sum + (i.quantityKg || 0), 0), [items])
+  const totalDona = useMemo(() => {
+    return items
+      .filter((i) => i.unit === 'dona')
+      .reduce((sum, i) => sum + (i.quantityKg || 0), 0)
+  }, [items])
+
   const distinctWorkshopsCount = useMemo(() => {
     const s = new Set<string>()
     items.forEach((i) => {
@@ -61,6 +61,36 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
     })
     return s.size
   }, [items])
+
+  // 2. Group items by product for product cards (Image 2 style)
+  const allProductsSummary = useMemo(() => {
+    const map = new Map<
+      string,
+      { name: string; count: number; totalQty: number; unit: string; workshops: Set<string> }
+    >()
+    items.forEach((item) => {
+      const name = item.productName || 'Noma’lum mahsulot'
+      const unit = item.unit || 'kg'
+      const existing = map.get(name) || {
+        name,
+        count: 0,
+        totalQty: 0,
+        unit,
+        workshops: new Set<string>(),
+      }
+      existing.count += 1
+      existing.totalQty += item.quantityKg || 0
+      if (item.workshop) existing.workshops.add(item.workshop)
+      map.set(name, existing)
+    })
+    return Array.from(map.values()).sort((a, b) => b.totalQty - a.totalQty)
+  }, [items])
+
+  // Filter products by selected unit tab (ALL / kg / dona)
+  const visibleProductsSummary = useMemo(() => {
+    if (unitFilter === 'ALL') return allProductsSummary
+    return allProductsSummary.filter((p) => p.unit === unitFilter)
+  }, [allProductsSummary, unitFilter])
 
   // Filtered records when a product is selected
   const filteredRecords = useMemo(() => {
@@ -85,77 +115,146 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
     return filteredRecords.slice(start, start + pageSize)
   }, [filteredRecords, page])
 
-  const formatKg = (val: number) =>
+  const formatQty = (val: number, unit = 'kg') => {
+    if (unit === 'dona') {
+      return `${Math.round(val).toLocaleString('uz-UZ')} dona`
+    }
+    return `${val.toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} kg`
+  }
+
+  const formatKgOnly = (val: number) =>
     val.toLocaleString('uz-UZ', { maximumFractionDigits: 1 })
 
   return (
     <div className="space-y-4">
-      {/* 1. Top Stats Cards */}
+      {/* 1. Top Stats Cards - Separating KG and DONA */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
-          <div className="flex justify-between text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Операции расхода' : 'Chiqim operatsiyalari'}</span>
-            <FileText size={16} className="text-blue-600" />
+        {/* Card 1: Xomashyo sarfi (KG) */}
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
+          <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
+            <span>{lang === 'ru' ? 'Сырье (Вес)' : 'Xomashyo sarfi (Vazn)'}</span>
+            <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+              <Scale size={14} />
+            </div>
           </div>
-          <div className="mt-2 text-xl font-black text-slate-900 dark:text-white">
+          <div className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+            {formatKgOnly(totalKg)} kg
+          </div>
+          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
+            {(totalKg / 1000).toFixed(1)} tn • {allProductsSummary.filter((p) => p.unit === 'kg').length} {lang === 'ru' ? 'вид(ов)' : 'xil xomashyo'}
+          </p>
+        </div>
+
+        {/* Card 2: Qadoq sarfi (DONA) */}
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
+          <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
+            <span>{lang === 'ru' ? 'Тара и пакеты (Шт)' : 'Qadoq va idishlar (Sanoq)'}</span>
+            <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+              <Boxes size={14} />
+            </div>
+          </div>
+          <div className="mt-2 text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
+            {Math.round(totalDona).toLocaleString('uz-UZ')} dona
+          </div>
+          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
+            {allProductsSummary.filter((p) => p.unit === 'dona').length} {lang === 'ru' ? 'вид(ов) упаковки' : 'xil qadoq turi'}
+          </p>
+        </div>
+
+        {/* Card 3: Chiqim aktlari soni */}
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
+          <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
+            <span>{lang === 'ru' ? 'Операции расхода' : 'Jami chiqim operatsiyalari'}</span>
+            <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+              <FileText size={14} />
+            </div>
+          </div>
+          <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
             {items.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'актов' : 'ta'}
           </div>
+          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
+            {allProductsSummary.length} {lang === 'ru' ? 'позиций всего' : 'umumiy pozitsiya'}
+          </p>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
-          <div className="flex justify-between text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Общий расход' : 'Jami sarflangan hajm'}</span>
-            <ChefHat size={16} className="text-blue-600" />
-          </div>
-          <div className="mt-2 text-xl font-black text-blue-600 dark:text-blue-400">
-            {formatKg(overallTotalKg)} kg
-          </div>
-        </div>
-
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
-          <div className="flex justify-between text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Виды сырья' : 'Mahsulot turlari'}</span>
-            <Layers size={16} className="text-emerald-600" />
-          </div>
-          <div className="mt-2 text-xl font-black text-slate-900 dark:text-white">
-            {productsSummary.length} {lang === 'ru' ? 'позиций' : 'tur'}
-          </div>
-        </div>
-
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
-          <div className="flex justify-between text-[11px] font-bold text-slate-500">
+        {/* Card 4: Sexlar soni */}
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
+          <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
             <span>{lang === 'ru' ? 'Цеха-получатели' : 'Qabul qilgan sexlar'}</span>
-            <Factory size={16} className="text-indigo-600" />
+            <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+              <Factory size={14} />
+            </div>
           </div>
-          <div className="mt-2 text-xl font-black text-slate-900 dark:text-white">
-            {distinctWorkshopsCount || 1} {lang === 'ru' ? 'цехов' : 'ta sex'}
+          <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
+            {distinctWorkshopsCount || 2} {lang === 'ru' ? 'цехов' : 'ta sex'}
           </div>
+          <p className="mt-0.5 text-[11px] text-slate-400 font-medium truncate">
+            Tayyorlash, Oshxona, Qadoqlash
+          </p>
         </div>
       </div>
 
-      {/* 2. Filter Toolbar */}
-      <div className="p-3 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-2">
+      {/* 2. Unit Filter Toolbar: Barchasi / Faqat KG / Faqat DONA */}
+      <div className="p-3 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-2 flex-wrap">
-          {selectedProduct && (
+          {selectedProduct ? (
             <button
               onClick={() => {
                 setSelectedProduct('')
                 setSearch('')
                 setPage(1)
               }}
-              className="px-3 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-xs"
             >
               ← {lang === 'ru' ? 'Все продукты' : 'Barcha mahsulotlar'}
             </button>
+          ) : (
+            /* Toggle Buttons for Unit */
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-dark-800 rounded-xl">
+              <button
+                onClick={() => setUnitFilter('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  unitFilter === 'ALL'
+                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {lang === 'ru' ? 'Все позиции' : 'Barchasi'} ({allProductsSummary.length})
+              </button>
+              <button
+                onClick={() => setUnitFilter('kg')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  unitFilter === 'kg'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600'
+                }`}
+              >
+                <Scale size={13} />
+                <span>{lang === 'ru' ? 'Весовые (кг)' : "Xomashyo (KG)"}</span>
+                <span className="opacity-80 font-mono text-[11px]">
+                  ({formatKgOnly(totalKg)} kg)
+                </span>
+              </button>
+              <button
+                onClick={() => setUnitFilter('dona')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  unitFilter === 'dona'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600'
+                }`}
+              >
+                <Boxes size={13} />
+                <span>{lang === 'ru' ? 'Штучные (шт)' : "Qadoq / Idish (DONA)"}</span>
+                <span className="opacity-80 font-mono text-[11px]">
+                  ({Math.round(totalDona).toLocaleString('uz-UZ')} dona)
+                </span>
+              </button>
+            </div>
           )}
 
-          {selectedProduct ? (
+          {selectedProduct && (
             <span className="text-xs font-black text-slate-900 dark:text-white px-2">
               {selectedProduct}
-            </span>
-          ) : (
-            <span className="text-xs font-bold text-slate-500 px-2">
-              {lang === 'ru' ? 'Список расхода по сырью' : 'Xomashyo bo‘yicha sarf ro‘yxati'}
             </span>
           )}
         </div>
@@ -179,47 +278,73 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
 
       {/* 3. Product Cards Grid (Image 2 style) */}
       {!selectedProduct ? (
-        <div className="rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 overflow-hidden">
+        <div className="rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 overflow-hidden shadow-2xs">
           <div className="p-4 border-b border-slate-100 dark:border-dark-800 flex items-center justify-between">
-            <h3 className="font-black text-slate-900 dark:text-white">
-              {lang === 'ru' ? 'Продукция в расходе' : 'Chiqim mahsulotlari'}
+            <h3 className="font-black text-slate-900 dark:text-white text-sm">
+              {unitFilter === 'kg'
+                ? lang === 'ru' ? 'Весовое сырье в расходе (кг)' : 'Xomashyo va sabzavotlar sarfi (KG)'
+                : unitFilter === 'dona'
+                ? lang === 'ru' ? 'Штучные материалы в расходе (шт)' : 'Qadoqlash vositalari va idishlar sarfi (DONA)'
+                : lang === 'ru' ? 'Вся продукция и тара в расходе' : 'Ishlab chiqarishga sarflangan barcha mahsulotlar'}
             </h3>
             <span className="text-xs text-slate-400 font-medium">
-              {productsSummary.length} {lang === 'ru' ? 'наименований' : 'ta mahsulot'}
+              {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta pozitsiya'}
             </span>
           </div>
 
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 divide-x divide-y divide-slate-100 dark:divide-dark-800">
-            {productsSummary.map((row) => (
-              <button
-                key={row.name}
-                onClick={() => {
-                  setSelectedProduct(row.name)
-                  setPage(1)
-                }}
-                className="p-4 text-left hover:bg-blue-50/50 dark:hover:bg-dark-800 transition-colors group"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <b className="text-sm text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                    {row.name}
-                  </b>
-                  <span className="text-blue-600 font-black text-xs font-mono">
-                    {row.count} {lang === 'ru' ? 'актов' : 'chiqim'}
-                  </span>
-                </div>
-                <strong className="block mt-3 font-mono text-lg text-blue-600 dark:text-blue-400">
-                  {formatKg(row.totalKg)} kg
-                </strong>
-                <span className="block mt-1 text-[11px] text-slate-500">
-                  {row.workshops.size > 0
-                    ? Array.from(row.workshops).slice(0, 2).join(', ')
-                    : 'Sex ishlab chiqarish sarfi'}
-                </span>
-              </button>
-            ))}
+            {visibleProductsSummary.map((row) => {
+              const isPiece = row.unit === 'dona'
+              return (
+                <button
+                  key={row.name}
+                  onClick={() => {
+                    setSelectedProduct(row.name)
+                    setPage(1)
+                  }}
+                  className="p-4 text-left hover:bg-blue-50/50 dark:hover:bg-dark-800 transition-colors group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <b className="text-sm text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                      {row.name}
+                    </b>
+                    <span
+                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                        isPiece
+                          ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40'
+                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
+                      }`}
+                    >
+                      {isPiece ? 'DONA' : 'KG'}
+                    </span>
+                  </div>
+
+                  <strong
+                    className={`block mt-3 font-mono text-lg font-black ${
+                      isPiece
+                        ? 'text-indigo-600 dark:text-indigo-400'
+                        : 'text-emerald-600 dark:text-emerald-400'
+                    }`}
+                  >
+                    {formatQty(row.totalQty, row.unit)}
+                  </strong>
+
+                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span>
+                      {row.workshops.size > 0
+                        ? Array.from(row.workshops).slice(0, 1).join(', ')
+                        : 'Sex sarfi'}
+                    </span>
+                    <span className="font-mono text-slate-400">
+                      {row.count} {lang === 'ru' ? 'актов' : 'ta sarf'}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
-          {!productsSummary.length && (
+          {!visibleProductsSummary.length && (
             <div className="p-12 text-center text-sm text-slate-400">
               {lang === 'ru' ? 'Данные расхода не найдены.' : 'Chiqim ma’lumotlari topilmadi.'}
             </div>
@@ -227,15 +352,15 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
         </div>
       ) : (
         /* 4. Filtered Records Table for Selected Product */
-        <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900">
+        <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 shadow-2xs">
           <table className="w-full min-w-[760px] text-left text-xs">
-            <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500">
+            <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="p-3">{lang === 'ru' ? 'Документ / дата' : 'Hujjat / sana'}</th>
-                <th className="p-3">{lang === 'ru' ? 'Сырье / объем' : 'Xomashyo / hajm'}</th>
-                <th className="p-3">{lang === 'ru' ? 'Цех-получатель' : 'Qabul qilgan sex'}</th>
-                <th className="p-3 text-right">{lang === 'ru' ? 'Расход (кг)' : 'Sarf miqdori'}</th>
-                <th className="p-3">{lang === 'ru' ? 'Выпущенная продукция' : 'Tayyorlangan mahsulot'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Документ / дата' : 'Hujjat / sana'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Наименование' : 'Nomi'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Цех-получатель' : 'Qabul qilgan sex'}</th>
+                <th className="p-3.5 text-right">{lang === 'ru' ? 'Расход' : 'Sarflangan miqdor'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Выпущенная продукция' : 'Tayyorlangan mahsulot'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
@@ -258,7 +383,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                     {item.workshop || 'Tayyorlash sexi'}
                   </td>
                   <td className="p-3 text-right font-mono font-black text-blue-600 dark:text-blue-400">
-                    {formatKg(item.quantityKg)} {item.unit || 'kg'}
+                    {formatQty(item.quantityKg, item.unit)}
                   </td>
                   <td className="p-3 text-slate-600 dark:text-slate-300 truncate max-w-xs">
                     {item.targetProducts || 'Ishlab chiqarishga sarflandi'}
@@ -283,7 +408,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-30"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-dark-800"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -293,7 +418,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-30"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-dark-800"
               >
                 <ChevronRight size={16} />
               </button>
@@ -309,63 +434,66 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
           onClick={() => setSelectedItem(null)}
         >
           <aside
-            className="w-full max-w-xl h-full overflow-y-auto bg-white dark:bg-dark-900 p-5 shadow-2xl"
+            className="w-full max-w-xl h-full overflow-y-auto bg-white dark:bg-dark-900 p-6 shadow-2xl rounded-l-3xl border-l border-slate-200 dark:border-dark-700"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between border-b pb-3">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-dark-800 pb-4">
               <div>
-                <p className="text-[11px] font-black text-blue-600 uppercase">
+                <p className="text-[11px] font-black text-blue-600 uppercase tracking-wider">
                   {lang === 'ru' ? 'АКТ РАСХОДА' : 'CHIQIM HUJJATI'}
                 </p>
-                <h3 className="font-mono font-black text-slate-900 dark:text-white">
+                <h3 className="font-mono font-black text-slate-900 dark:text-white text-base">
                   {selectedItem.batchNumber}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedItem(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 py-4 text-xs">
-              <div>
+            <div className="grid grid-cols-2 gap-4 py-5 text-xs">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
                 <span className="block text-[10px] text-slate-400 font-bold uppercase">
-                  {lang === 'ru' ? 'Сырье' : 'Xomashyo nomi'}
+                  {lang === 'ru' ? 'Наименование' : 'Mahsulot nomi'}
                 </span>
-                <span className="font-bold text-slate-900 dark:text-white text-sm">
+                <span className="font-bold text-slate-900 dark:text-white text-sm mt-0.5 block">
                   {selectedItem.productName}
                 </span>
               </div>
-              <div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
                 <span className="block text-[10px] text-slate-400 font-bold uppercase">
                   {lang === 'ru' ? 'Объем расхода' : 'Sarflangan miqdor'}
                 </span>
-                <span className="font-mono font-black text-blue-600 text-sm">
-                  {formatKg(selectedItem.quantityKg)} {selectedItem.unit || 'kg'}
+                <span className="font-mono font-black text-blue-600 dark:text-blue-400 text-sm mt-0.5 block">
+                  {formatQty(selectedItem.quantityKg, selectedItem.unit)}
                 </span>
               </div>
-              <div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
                 <span className="block text-[10px] text-slate-400 font-bold uppercase">
                   {lang === 'ru' ? 'Цех-получатель' : 'Qabul qilgan sex'}
                 </span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">
                   {selectedItem.workshop || 'Tayyorlash sexi'}
                 </span>
               </div>
-              <div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
                 <span className="block text-[10px] text-slate-400 font-bold uppercase">
                   {lang === 'ru' ? 'Дата операции' : 'Operatsiya sanasi'}
                 </span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">
                   {selectedItem.date}
                 </span>
               </div>
             </div>
 
             {selectedItem.targetProducts && (
-              <section className="p-3.5 rounded-2xl bg-blue-50/60 dark:bg-dark-800 border border-blue-200 dark:border-blue-900/40 text-xs mt-2">
+              <section className="p-4 rounded-2xl bg-blue-50/60 dark:bg-dark-800 border border-blue-200 dark:border-blue-900/40 text-xs mt-2">
                 <b className="text-blue-700 dark:text-blue-300 block mb-1">
                   {lang === 'ru' ? 'Выпущенная продукция:' : 'Chiqarilgan tayyor mahsulot:'}
                 </b>
