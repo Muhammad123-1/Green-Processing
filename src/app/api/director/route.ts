@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
       logs,
       defectLogs,
       mealLogs,
+      dailyChecklists,
     ] = await Promise.all([
       prisma.user.findMany({
         select: {
@@ -163,6 +164,15 @@ export async function GET(request: NextRequest) {
             take: 30,
           })
         : Promise.resolve([]),
+      // 11. Smena hisobotlari va QC Cheklistlar
+      prisma.dailyQCChecklist.findMany({
+        where: stringDateFilter.date ? { date: stringDateFilter.date } : {},
+        include: {
+          user: { select: { id: true, name: true, username: true } },
+        },
+        orderBy: [{ date: 'desc' }, { id: 'desc' }],
+        take: 100,
+      }),
     ])
 
     // -------------------------------------------------------------------------
@@ -1031,6 +1041,7 @@ export async function GET(request: NextRequest) {
       alerts,
       details: {
         productStockDetails,
+        recentChecklists: dailyChecklists,
         recentShopArrivals: shopArrivals.slice(0, 50),
         recentShopExpenses: shopExpenses.slice(0, 50),
         recentIncomingActs: incomingActs.slice(0, 50),

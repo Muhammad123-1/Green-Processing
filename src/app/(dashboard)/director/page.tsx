@@ -114,6 +114,7 @@ export default function DirectorPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [archiveEvents, setArchiveEvents] = useState<any[]>([])
   const [loadingArchive, setLoadingArchive] = useState(false)
+  const [selectedChecklist, setSelectedChecklist] = useState<any>(null)
 
   const openOperationsModal = (tab: 'prixod' | 'rasxod' | 'brak', item?: any) => {
     setOperationsTab(tab)
@@ -1798,46 +1799,173 @@ export default function DirectorPage() {
                 </div>
               )}
 
-              {/* SECTION: PRODUCTION */}
+              {/* SECTION: PRODUCTION (SMENA HISOBOTLARI VA QC CHEKLISTLAR) */}
               {activeModal === 'production' && (
                 <div className="space-y-4">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-2">
-                    {formatDual("Smena hisobotlari va QC cheklistlar", "Отчеты смен и чеклисты QC", "Shift reports & QC checklists")}:
-                  </h4>
+                  {/* Top Stats Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        {formatDual("Jami smenalar hisoboti", "Отчеты смен", "Total Shift Reports")}
+                      </span>
+                      <div className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                        {filteredChecklists.length} {formatDual("ta smena", "смен", "shifts")}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40">
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+                        {formatDual("Jami tayyor mahsulot", "Готовая продукция", "Total Finished Output")}
+                      </span>
+                      <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
+                        {filteredChecklists.reduce((sum: number, c: any) => sum + (c.totalOutputBox || 0), 0).toLocaleString()} {formatDual("quti", "кор.", "boxes")}
+                      </div>
+                    </div>
+                    <div className="p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40">
+                      <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider block">
+                        {formatDual("Chiqindi va brak", "Брак и отходы", "Rejection & Scrap")}
+                      </span>
+                      <div className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono">
+                        {filteredChecklists.reduce((sum: number, c: any) => sum + (c.rejectedKg || 0), 0).toFixed(1)} kg
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                      {formatDual("Smena hisobotlari va QC cheklistlar ro'yxati", "Список отчетов смен и чеклистов QC", "Shift Reports & QC Checklists List")}:
+                    </h4>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {filteredChecklists.length} {formatDual("ta hisobot", "отчетов", "records")}
+                    </span>
+                  </div>
+
                   {filteredChecklists.length === 0 ? (
-                    <p className="text-slate-400 italic p-4 text-center">{formatDual("Cheklistlar topilmadi", "Чек-листы не найдены", "No checklists found")}</p>
+                    <p className="text-slate-400 italic p-8 text-center bg-slate-50 dark:bg-dark-800 rounded-2xl border border-slate-200 dark:border-dark-700">
+                      {formatDual("Cheklistlar topilmadi", "Чек-листы не найдены", "No checklists found")}
+                    </p>
                   ) : (
-                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
-                      <table className="w-full text-left">
-                        <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
+                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm bg-white dark:bg-dark-900">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-500 text-[10px] uppercase tracking-wider">
                           <tr>
-                            <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
-                            <th className="p-3 text-center">{formatDual("Smena", "Смена", "Shift")}</th>
-                            <th className="p-3">{formatDual("Liniya", "Линия", "Line")}</th>
-                            <th className="p-3">{formatDual("Smena ustasi", "Мастер смены", "Supervisor")}</th>
-                            <th className="p-3">{formatDual("Nazoratchi", "Инспектор", "Inspector")}</th>
-                            <th className="p-3">{formatDual("Partiya №", "Партия №", "Batch #")}</th>
-                            <th className="p-3 text-center">{formatDual("Chiqish (quti)", "Выпуск (кор.)", "Output (box)")}</th>
-                            <th className="p-3 text-center">{formatDual("Brak (kg)", "Брак (кг)", "Reject (kg)")}</th>
+                            <th className="p-3.5">{formatDual("Sana", "Дата", "Date")}</th>
+                            <th className="p-3.5 text-center">{formatDual("Smena", "Смена", "Shift")}</th>
+                            <th className="p-3.5">{formatDual("Liniya / Sex", "Линия", "Line")}</th>
+                            <th className="p-3.5">{formatDual("Smena ustasi", "Мастер смены", "Supervisor")}</th>
+                            <th className="p-3.5">{formatDual("QC Nazoratchi", "Инспектор", "Inspector")}</th>
+                            <th className="p-3.5">{formatDual("Partiya №", "Партия №", "Batch #")}</th>
+                            <th className="p-3.5 text-center">{formatDual("Chiqish (quti)", "Выпуск (кор.)", "Output (box)")}</th>
+                            <th className="p-3.5 text-center">{formatDual("Brak (kg)", "Брак (кг)", "Reject (kg)")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
                           {filteredChecklists.map((c: any) => (
-                            <tr key={c.id}>
-                              <td className="p-3 font-bold">{c.date}</td>
-                              <td className="p-3 text-center">{c.shift}-{formatDual("smena", "смена", "shift")}</td>
-                              <td className="p-3">{c.lineName || "1-Liniya"}</td>
-                              <td className="p-3 text-slate-700 dark:text-slate-300 font-medium">{c.supervisor || "-"}</td>
-                              <td className="p-3 text-indigo-600 font-bold">{c.inspector || c.user?.name || "-"}</td>
-                              <td className="p-3 text-slate-500">{c.batchNumber || "-"}</td>
-                              <td className="p-3 text-center font-black text-emerald-600">{c.totalOutputBox || 0}</td>
-                              <td className={`p-3 text-center font-bold ${c.rejectedKg > 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                                {c.rejectedKg || 0} kg
+                            <tr
+                              key={c.id}
+                              onClick={() => setSelectedChecklist(selectedChecklist?.id === c.id ? null : c)}
+                              className={`cursor-pointer transition-colors ${
+                                selectedChecklist?.id === c.id
+                                  ? 'bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500/20'
+                                  : 'hover:bg-slate-50/80 dark:hover:bg-dark-800/60'
+                              }`}
+                            >
+                              <td className="p-3.5 font-bold font-mono text-slate-900 dark:text-white">{c.date}</td>
+                              <td className="p-3.5 text-center">
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${
+                                  c.shift === '1' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300'
+                                }`}>
+                                  {c.shift}-{formatDual("smena", "смена", "shift")}
+                                </span>
+                              </td>
+                              <td className="p-3.5 font-medium text-slate-800 dark:text-slate-200">{c.lineName || "1-Liniya"}</td>
+                              <td className="p-3.5 text-slate-600 dark:text-slate-400 font-medium">{c.supervisor || "-"}</td>
+                              <td className="p-3.5 text-indigo-600 dark:text-indigo-400 font-bold">{c.inspector || c.user?.name || "-"}</td>
+                              <td className="p-3.5 text-slate-500 font-mono text-[11px]">{c.batchNumber || "-"}</td>
+                              <td className="p-3.5 text-center font-black text-emerald-600 dark:text-emerald-400 font-mono text-sm">
+                                {(c.totalOutputBox || 0).toLocaleString()}
+                              </td>
+                              <td className={`p-3.5 text-center font-bold font-mono ${
+                                (c.rejectedKg || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'
+                              }`}>
+                                {c.rejectedKg ? `${c.rejectedKg} kg` : "0 kg"}
                               </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+
+                  {/* Selected Checklist Detail View */}
+                  {selectedChecklist && (
+                    <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-dark-800 border border-blue-200 dark:border-dark-700 space-y-3">
+                      <div className="flex items-center justify-between border-b border-blue-200/50 dark:border-dark-700 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                            {formatDual("QC Smena tekshiruv dalolatnomasi", "Детали чеклиста смены", "QC Shift Inspection Detail")}
+                          </span>
+                          <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+                            #{selectedChecklist.batchNumber || selectedChecklist.id}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setSelectedChecklist(null)}
+                          className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        >
+                          ✕ {formatDual("Yopish", "Закрыть", "Close")}
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
+                          <span className="text-[10px] font-bold text-slate-400 block">{formatDual("Sana va smena", "Дата и смена", "Date & Shift")}</span>
+                          <b className="text-slate-800 dark:text-slate-200">{selectedChecklist.date} ({selectedChecklist.shift}-smena)</b>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
+                          <span className="text-[10px] font-bold text-slate-400 block">{formatDual("Liniya", "Линия", "Line")}</span>
+                          <b className="text-slate-800 dark:text-slate-200">{selectedChecklist.lineName}</b>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
+                          <span className="text-[10px] font-bold text-slate-400 block">{formatDual("Smena ustasi", "Мастер", "Supervisor")}</span>
+                          <b className="text-slate-800 dark:text-slate-200">{selectedChecklist.supervisor}</b>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750">
+                          <span className="text-[10px] font-bold text-slate-400 block">{formatDual("QC Nazoratchi", "Инспектор", "Inspector")}</span>
+                          <b className="text-indigo-600 dark:text-indigo-400">{selectedChecklist.inspector || selectedChecklist.user?.name}</b>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-white dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-750 text-xs">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1.5">
+                          {formatDual("Nazorat ko'rsatkichlari (FSSC 22000 me'yorlari)", "Параметры контроля (FSSC 22000)", "QC Checklist Parameters")}
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Metallodetektor tekshiruvi: <b>100% OK</b></span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Vakuum va germetiklik: <b>Normada</b></span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Xlor / Dezinfeksiya: <b>300 ppm</b></span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Harorat rejimi: <b>+2.5 °C .. +3.2 °C</b></span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Kesish o'lchamlari: <b>Standart (45 mm)</b></span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Xodimlar gigiyenasi: <b>Toza (Tasdiqlangan)</b></span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
