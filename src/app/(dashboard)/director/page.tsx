@@ -1666,7 +1666,7 @@ export default function DirectorPage() {
                     {activeModal === 'alerts' && formatDual("Shubhali holatlar", "Аномалии", "Discrepancies & alerts")}
                     {activeModal === 'archive' && formatDual("Umumiy Arxiv", "Общий архив", "Global Archive")}
                     {activeModal === 'operations' && (
-                      operationsTab === 'prixod' ? formatDual("Kirim ro'yxati", "Список прихода", "Inbound Arrivals") :
+                      operationsTab === 'prixod' ? formatDual("Kirim jurnali", "Журнал прихода", "Inbound Journal") :
                       operationsTab === 'rasxod' ? formatDual("Chiqim jurnali", "Журнал расхода", "Consumption Records") :
                       formatDual("Brak jurnali", "Журнал брака", "Defect Records")
                     )}
@@ -1674,7 +1674,7 @@ export default function DirectorPage() {
                   <p className="text-xs text-slate-500">
                     {activeModal === 'operations'
                       ? operationsTab === 'prixod'
-                        ? formatDual("Xomashyo qabuli: ta'minotchi, partiya va qabul qiluvchi mas'ul", "Прием сырья: поставщик, партия и ответственный за прием", "Inbound arrivals: supplier, batch and receiver")
+                        ? formatDual("Ombor va sexlarga xomashyo qabuli", "Прием сырья и материалов на склад и в цеха", "Inbound arrivals and materials")
                         : operationsTab === 'rasxod'
                         ? formatDual("Sexlarga xomashyo chiqimi va sarfi", "Расход сырья по цехам", "Material consumption")
                         : formatDual("Brak va texnologik chiqindi dalolatnomalari", "Акты брака и отходов", "Defect and scrap records")
@@ -2328,9 +2328,10 @@ export default function DirectorPage() {
                     </div>
                   </div>
 
-                  {/* 1. KIRIM: Dedicated Inbound Analysis */}
+                  {/* 1. KIRIM: Dedicated Inbound Analysis (Matching Chiqim 1:1) */}
                   {operationsTab === 'prixod' && (
                     <IncomingMaterialsAnalysis
+                      items={operationsSummary?.prixod?.items || []}
                       dateFrom={period === 'custom' ? customFrom : ''}
                       dateTo={period === 'custom' ? customTo : ''}
                       lang={directorLang}
