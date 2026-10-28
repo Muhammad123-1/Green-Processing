@@ -22,9 +22,11 @@ export async function GET(request: NextRequest) {
             zone: true,
             supplier: { select: { id: true, name: true } }
           },
-          orderBy: {
-            expirationDate: 'asc' // FEFO: muddatiga qarab o'sish tartibida
-          }
+          orderBy: [
+            { expirationDate: 'asc' },
+            { receivedAt: 'asc' },
+            { id: 'asc' }
+          ]
         }
       },
       orderBy: { name: 'asc' }
@@ -57,12 +59,17 @@ export async function GET(request: NextRequest) {
         minStockLevel: minStock,
         totalQuantity,
         status, // 'red', 'yellow', 'green'
-        batches: product.batches.map(b => ({
+        batches: product.batches.map((b, idx) => ({
           id: b.id,
           batchNumber: b.batchNumber,
           quantity: b.quantity,
           receivedAt: b.receivedAt,
           expirationDate: b.expirationDate,
+          fefoOrder: idx + 1,
+          isFefoActive: idx === 0,
+          daysUntilExpiry: b.expirationDate
+            ? Math.ceil((new Date(b.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            : null,
           arrivalPhotoUrl: b.arrivalPhotoUrl,
           arrivalTemperature: b.arrivalTemperature,
           supplierBatchNumber: b.supplierBatchNumber,

@@ -183,6 +183,9 @@ type InventoryBatch = {
   quantity: number
   receivedAt: string
   expirationDate: string | null
+  fefoOrder?: number
+  isFefoActive?: boolean
+  daysUntilExpiry?: number | null
   arrivalPhotoUrl?: string | null
   arrivalTemperature?: number | null
   supplierBatchNumber?: string | null
@@ -381,6 +384,10 @@ export default function WarehouseContent() {
     notes: ''
   })
   const [savingTransfer, setSavingTransfer] = useState(false)
+  const selectedTransferProduct = useMemo(
+    () => inventory.find((p) => p.id === parseInt(transferForm.productId)),
+    [inventory, transferForm.productId]
+  )
 
   // Temperature Log states
   const [tempLogs, setTempLogs] = useState<TemperatureLog[]>([])
@@ -2134,8 +2141,162 @@ export default function WarehouseContent() {
                 <p className="text-base font-semibold text-slate-500 dark:text-slate-400">{l.empty}</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <>
+                {/* Mobile Smartphone Card View (Dedicated for warehousemen on phones) */}
+                <div className="block md:hidden divide-y divide-slate-100 dark:divide-dark-800">
+                  {warehousePagination.displayedItems.map((item) => (
+                    <div key={item.id} className="p-3.5 bg-white dark:bg-dark-900 space-y-3">
+                      {/* Product Header */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              onClick={() => setPreviewPhotoModal({ url: item.imageUrl!, title: item.name })}
+                              className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-dark-700 flex-shrink-0 cursor-pointer"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center text-slate-400 flex-shrink-0">
+                              <Package size={18} />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">
+                              {item.name}
+                            </h4>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] text-slate-500 font-medium">{item.category || 'Xomashyo'}</span>
+                              {item.code && <span className="text-[10px] text-slate-400 font-mono">#{item.code}</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Total Stock */}
+                        <div className="text-right flex-shrink-0">
+                          <div className="inline-flex items-baseline gap-1 bg-slate-100 dark:bg-dark-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-dark-700">
+                            <span className="font-black text-sm text-slate-900 dark:text-white">{item.totalQuantity}</span>
+                            <span className="text-[10px] font-bold text-slate-500">{item.unit}</span>
+                          </div>
+                          <div className="text-[10px] mt-0.5 font-bold">
+                            {item.status === 'red' && <span className="text-red-500">🔴 Kritik</span>}
+                            {item.status === 'yellow' && <span className="text-amber-500">🟡 Kam</span>}
+                            {item.status === 'green' && <span className="text-emerald-500">🟢 Yetarli</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* FEFO Batches List - Har bir partiya alohida, tartibli */}
+                      <div className="bg-slate-50 dark:bg-dark-850 rounded-xl p-2.5 border border-slate-200/80 dark:border-dark-750 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-0.5">
+                          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                            <Layers size={12} />
+                            <span>Partiyalar (FEFO tartibida):</span>
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {item.batches.length > 0 ? `${item.batches.length} ta partiya` : "Partiya yo'q"}
+                          </span>
+                        </div>
+
+                        {item.batches.length === 0 ? (
+                          <p className="text-[11px] text-slate-400 italic py-1 text-center">Partiyalar mavjud emas</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {item.batches.map((b, idx) => {
+                              const isActive = idx === 0
+                              return (
+                                <div
+                                  key={b.id}
+                                  className={`p-2 rounded-lg border text-xs flex items-center justify-between transition-all ${
+                                    isActive
+                                      ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-400 dark:border-emerald-500/40 text-emerald-950 dark:text-emerald-100 shadow-xs'
+                                      : 'bg-white dark:bg-dark-800/80 border-slate-200 dark:border-dark-700 text-slate-500 dark:text-slate-400 opacity-65'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className={`px-1.5 py-0.2 rounded text-[10px] font-black ${
+                                        isActive
+                                          ? 'bg-emerald-600 text-white'
+                                          : 'bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400'
+                                      }`}
+                                    >
+                                      #{idx + 1}
+                                    </span>
+                                    <div className="truncate">
+                                      <span className="font-mono font-bold text-slate-800 dark:text-white">
+                                        #{b.batchNumber}
+                                      </span>
+                                      {b.expirationDate && (
+                                        <span className="text-[10px] text-slate-500 dark:text-slate-400 ml-1.5">
+                                          Muddati: {new Date(b.expirationDate).toLocaleDateString([], { month: 'numeric', day: 'numeric' })}
+                                          {typeof b.daysUntilExpiry === 'number' && (
+                                            <span
+                                              className={`ml-1 font-bold ${
+                                                b.daysUntilExpiry <= 2
+                                                  ? 'text-red-500'
+                                                  : b.daysUntilExpiry <= 5
+                                                  ? 'text-amber-500'
+                                                  : 'text-slate-400'
+                                              }`}
+                                            >
+                                              ({b.daysUntilExpiry > 0 ? `${b.daysUntilExpiry}k` : 'tugadi!'})
+                                            </span>
+                                          )}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <span className="font-mono font-black text-xs text-slate-900 dark:text-white">
+                                      {b.quantity} {item.unit}
+                                    </span>
+                                    {isActive ? (
+                                      <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs">
+                                        <span>⚡ Aktiv</span>
+                                      </span>
+                                    ) : (
+                                      <span
+                                        className="text-[10px] bg-slate-200 dark:bg-dark-700 text-slate-500 px-1.5 py-0.5 rounded-md flex items-center gap-1"
+                                        title="1-partiya tugagach ochiladi"
+                                      >
+                                        <span>🔒 Navbatda</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Mobile Actions */}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <button
+                          onClick={() => handleOpenQuickTransfer(item)}
+                          disabled={item.totalQuantity <= 0}
+                          className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                        >
+                          <Send size={14} />
+                          <span>Chiqim berish (FEFO)</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenReceiveModal(item)}
+                          className="flex items-center justify-center gap-1 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-slate-200 dark:border-dark-700 cursor-pointer"
+                        >
+                          <Plus size={14} />
+                          <span>Kirim</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/40 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-5">{l.colProduct}</th>
@@ -2290,6 +2451,7 @@ export default function WarehouseContent() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
 
             {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
@@ -3639,8 +3801,9 @@ export default function WarehouseContent() {
             </div>
 
             <form onSubmit={handleCreateTransfer} className="space-y-4 pt-4">
+              {/* Product selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                   {formatDual("Mahsulot", "Продукт", "Product")} <span className="text-red-400">*</span>
                 </label>
                 <select
@@ -3655,75 +3818,241 @@ export default function WarehouseContent() {
                     })
                   }}
                   required
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="">{formatDual("Tanlang...", "Выберите...", "Select...")}</option>
+                  <option value="">{formatDual("Mahsulotni tanlang...", "Выберите продукт...", "Select product...")}</option>
                   {inventory.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name} (Mavjud: {p.totalQuantity} {p.unit})</option>
+                    <option key={p.id} value={p.id}>
+                      {p.name} (Qoldiq: {p.totalQuantity} {p.unit})
+                    </option>
                   ))}
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    {formatDual("Qayerga", "Куда", "Destination")} <span className="text-red-400">*</span>
-                  </label>
-                  <select
-                    value={transferForm.targetLocation}
-                    onChange={(e) => setTransferForm({ ...transferForm, targetLocation: e.target.value })}
-                    required
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+              {/* Target Location - Touch Friendly Buttons */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                  {formatDual("Qayerga berilmoqda?", "Куда отпускается?", "Destination")} <span className="text-red-400">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTransferForm({ ...transferForm, targetLocation: 'OSHXONA' })}
+                    className={`py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      transferForm.targetLocation === 'OSHXONA'
+                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                        : 'bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-200'
+                    }`}
                   >
-                    <option value="OSHXONA">{formatDual("🍲 Oshxona", "🍲 Кухня", "🍲 Kitchen")}</option>
-                    <option value="ZAGOTOVKA">{formatDual("🔪 Zagotovka Sexi", "🔪 Цех заготовки", "🔪 Prep Shop")}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    {formatDual("Chiqariladigan Miqdor", "Отпускаемое количество", "Issue Quantity")} ({transferForm.issuedUnit}) <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Masalan: 30"
-                    value={transferForm.issuedQuantity}
-                    onChange={(e) => setTransferForm({ ...transferForm, issuedQuantity: e.target.value })}
-                    required
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono font-bold"
-                  />
+                    <span className="text-base">🍲</span>
+                    <span>{formatDual("Oshxona", "Кухня", "Kitchen")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTransferForm({ ...transferForm, targetLocation: 'ZAGOTOVKA' })}
+                    className={`py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      transferForm.targetLocation === 'ZAGOTOVKA'
+                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                        : 'bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <span className="text-base">🔪</span>
+                    <span>{formatDual("Zagotovka Sexi", "Цех заготовки", "Prep Shop")}</span>
+                  </button>
                 </div>
               </div>
 
+              {/* FEFO Batches Display */}
+              {selectedTransferProduct && (
+                <div className="bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                      <Layers size={13} />
+                      <span>FEFO Partiyalar Nazorati ({selectedTransferProduct.batches.length})</span>
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Jami: <strong className="text-slate-900 dark:text-white">{selectedTransferProduct.totalQuantity} {selectedTransferProduct.unit}</strong>
+                    </span>
+                  </div>
+
+                  {selectedTransferProduct.batches.length === 0 ? (
+                    <p className="text-xs text-red-400 italic text-center py-2">
+                      Omborda tasdiqlangan partiya qolmagan!
+                    </p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                      {selectedTransferProduct.batches.map((b, idx) => {
+                        const isActive = idx === 0
+                        return (
+                          <div
+                            key={b.id}
+                            className={`p-2 rounded-lg border text-xs flex items-center justify-between transition-all ${
+                              isActive
+                                ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-400 dark:border-emerald-500/40 text-emerald-950 dark:text-emerald-100 shadow-xs'
+                                : 'bg-white dark:bg-dark-800/80 border-slate-200 dark:border-dark-700 text-slate-500 dark:text-slate-400 opacity-65'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`px-1.5 py-0.2 rounded text-[10px] font-black ${
+                                  isActive
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                #{idx + 1}
+                              </span>
+                              <div className="truncate">
+                                <span className="font-mono font-bold text-slate-800 dark:text-white">
+                                  Partiya #{b.batchNumber}
+                                </span>
+                                {b.expirationDate && (
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 ml-2">
+                                    Muddati: {new Date(b.expirationDate).toLocaleDateString([], { month: 'numeric', day: 'numeric' })}
+                                    {typeof b.daysUntilExpiry === 'number' && (
+                                      <span
+                                        className={`ml-1 font-bold ${
+                                          b.daysUntilExpiry <= 2
+                                            ? 'text-red-500'
+                                            : b.daysUntilExpiry <= 5
+                                            ? 'text-amber-500'
+                                            : 'text-slate-400'
+                                        }`}
+                                      >
+                                        ({b.daysUntilExpiry > 0 ? `${b.daysUntilExpiry}k` : 'tugadi!'})
+                                      </span>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <span className="font-mono font-black text-xs text-slate-900 dark:text-white">
+                                {b.quantity} {selectedTransferProduct.unit}
+                              </span>
+                              {isActive ? (
+                                <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs">
+                                  <span>⚡ Aktiv</span>
+                                </span>
+                              ) : (
+                                <span
+                                  className="text-[10px] bg-slate-200 dark:bg-dark-700 text-slate-500 px-1.5 py-0.5 rounded-md flex items-center gap-1"
+                                  title="1-partiya tugagach ochiladi"
+                                >
+                                  <span>🔒 Navbatda</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Quantity Input with Quick Fill Buttons */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  {formatDual("Izoh", "Примечание", "Notes")}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase">
+                    {formatDual("Chiqariladigan Miqdor", "Отпускаемое количество", "Issue Quantity")} ({transferForm.issuedUnit}) <span className="text-red-400">*</span>
+                  </label>
+                  {selectedTransferProduct?.batches?.[0] && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTransferForm({
+                          ...transferForm,
+                          issuedQuantity: selectedTransferProduct.batches[0].quantity.toString()
+                        })
+                      }
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                    >
+                      1-partiyani to'liq berish ({selectedTransferProduct.batches[0].quantity} {selectedTransferProduct.unit})
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="number"
+                  step="any"
+                  placeholder="Masalan: 30"
+                  value={transferForm.issuedQuantity}
+                  onChange={(e) => setTransferForm({ ...transferForm, issuedQuantity: e.target.value })}
+                  required
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-base focus:outline-none focus:border-emerald-500 font-mono font-bold"
+                />
+
+                {/* Quick amount increments for mobile touch */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span className="text-[10px] text-slate-400 mr-0.5">Tezkor:</span>
+                  {[5, 10, 20, 50].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => {
+                        const current = parseFloat(transferForm.issuedQuantity) || 0
+                        setTransferForm({ ...transferForm, issuedQuantity: (current + v).toString() })
+                      }}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:bg-slate-200 cursor-pointer"
+                    >
+                      +{v}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setTransferForm({ ...transferForm, issuedQuantity: '' })}
+                    className="text-xs font-semibold px-2 py-1 rounded-lg text-slate-400 hover:text-red-400 cursor-pointer"
+                  >
+                    Tozalash
+                  </button>
+                </div>
+
+                {/* Multi-batch allocation notice */}
+                {selectedTransferProduct?.batches?.[0] &&
+                  parseFloat(transferForm.issuedQuantity) > selectedTransferProduct.batches[0].quantity && (
+                    <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 text-xs space-y-0.5">
+                      <div className="font-bold flex items-center gap-1">
+                        <AlertTriangle size={13} className="text-amber-500" />
+                        <span>FEFO ketma-ket taqsimot:</span>
+                      </div>
+                      <p className="text-[11px] leading-tight">
+                        1-partiya (#{selectedTransferProduct.batches[0].batchNumber}) dan <strong>{selectedTransferProduct.batches[0].quantity} {selectedTransferProduct.unit}</strong> to'liq yopiladi,
+                        qolgan <strong>{(parseFloat(transferForm.issuedQuantity) - selectedTransferProduct.batches[0].quantity).toFixed(2)} {selectedTransferProduct.unit}</strong> esa keyingi 2-partiyadan olinadi.
+                      </p>
+                    </div>
+                  )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                  {formatDual("Izoh (Ixtiyoriy)", "Примечание", "Notes")}
                 </label>
                 <input
                   type="text"
-                  placeholder="Izoh yozing..."
+                  placeholder="Chiqim bo'yicha qo'shimcha izoh..."
                   value={transferForm.notes}
                   onChange={(e) => setTransferForm({ ...transferForm, notes: e.target.value })}
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-700">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors cursor-pointer"
                 >
                   {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
                 <button
                   type="submit"
-                  disabled={savingTransfer}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
+                  disabled={savingTransfer || !selectedTransferProduct?.batches?.length}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  {savingTransfer && <Loader2 size={16} className="animate-spin" />}
-                  <span>{formatDual("Chiqimni Yuborish", "Отправить", "Submit Dispatch")}</span>
+                  {savingTransfer && <Loader2 size={15} className="animate-spin" />}
+                  <span>{formatDual("Chiqimni Yuborish (FEFO)", "Отправить по FEFO", "Submit Dispatch (FEFO)")}</span>
                 </button>
               </div>
             </form>

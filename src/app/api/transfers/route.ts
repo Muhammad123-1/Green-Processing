@@ -52,36 +52,77 @@ export async function POST(request: NextRequest) {
     const pId = parseInt(productId)
     const bId = batchId ? parseInt(batchId) : null
 
+    // 1. Fetch available approved batches ordered strictly by FEFO
+    const availableBatches = await prisma.inventoryBatch.findMany({
+      where: { productId: pId, qcStatus: 'APPROVED', quantity: { gt: 0 } },
+      orderBy: [
+        { expirationDate: 'asc' },
+        { receivedAt: 'asc' },
+        { id: 'asc' }
+      ]
+    })
+
+    if (!availableBatches.length) {
+      return NextResponse.json(
+        { error: "Ushbu mahsulot bo'yicha omborda tasdiqlangan qoldiq mavjud emas!" },
+        { status: 400 }
+      )
+    }
+
+    const totalAvailable = availableBatches.reduce((sum, b) => sum + b.quantity, 0)
+    if (qty > totalAvailable) {
+      return NextResponse.json(
+        {
+          error: `Omborda yetarli qoldiq yo'q! Jami mavjud: ${totalAvailable.toFixed(2)} ${issuedUnit || 'kg'}, siz so'ragan: ${qty} ${issuedUnit || 'kg'}`
+        },
+        { status: 400 }
+      )
+    }
+
+    // 2. Strict FEFO batch enforcement:
+    // If the warehouseman specifically requested a batch that is NOT the active (earliest expiry) batch,
+    // block it if the active batch still has stock!
+    const activeBatch = availableBatches[0]
+    if (bId && bId !== activeBatch.id) {
+      return NextResponse.json(
+        {
+          error: `FEFO qoidasiga ko'ra oldingi Partiya #${activeBatch.batchNumber} (qoldiq: ${activeBatch.quantity} ${issuedUnit || 'kg'}) tugatilmasdan, keyingi partiyadan chiqim berish mumkin emas!`
+        },
+        { status: 400 }
+      )
+    }
+
     const transferNum = `TR-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`
 
-    // Transaction to deduct from Warehouse batch and create transfer
+    // 3. Transaction to deduct from Warehouse batches using FEFO and create transfer
     const transfer = await prisma.$transaction(async (tx: any) => {
-      // Deduct from batch if specified or FEFO batch
-      if (bId) {
+      let remainingToDeduct = qty
+      const deductions: { batchNumber: string; amount: number }[] = []
+
+      for (const b of availableBatches) {
+        if (remainingToDeduct <= 0) break
+        const deduct = Math.min(b.quantity, remainingToDeduct)
         await tx.inventoryBatch.update({
-          where: { id: bId },
-          data: { quantity: { decrement: qty } }
+          where: { id: b.id },
+          data: { quantity: { decrement: deduct } }
         })
-      } else {
-        // Find approved batch with quantity > 0
-        const batch = await tx.inventoryBatch.findFirst({
-          where: { productId: pId, qcStatus: 'APPROVED', quantity: { gte: qty } },
-          orderBy: { expirationDate: 'asc' }
-        })
-        if (batch) {
-          await tx.inventoryBatch.update({
-            where: { id: batch.id },
-            data: { quantity: { decrement: qty } }
-          })
-        }
+        deductions.push({ batchNumber: b.batchNumber, amount: Number(deduct.toFixed(2)) })
+        remainingToDeduct -= deduct
       }
+
+      const fefoBreakdown =
+        deductions.length > 1
+          ? `FEFO taqsimoti: ${deductions.map(d => `#${d.batchNumber} dan ${d.amount} ${issuedUnit || 'kg'}`).join(', ')}`
+          : `Partiya #${deductions[0]?.batchNumber || activeBatch.batchNumber}`
+
+      const finalNotes = [notes, fefoBreakdown].filter(Boolean).join('. ')
 
       // Create transfer record
       return await tx.stockTransfer.create({
         data: {
           transferNumber: transferNum,
           productId: pId,
-          batchId: bId,
+          batchId: activeBatch.id,
           sourceLocation: 'SKLAD',
           targetLocation: targetLocation.toUpperCase(),
           issuedQuantity: qty,
@@ -90,10 +131,11 @@ export async function POST(request: NextRequest) {
           issuedByName: session.name || 'Sklad Mudiri',
           issuedAt: new Date(),
           status: 'IN_TRANSIT',
-          notes: notes || null
+          notes: finalNotes
         },
         include: {
-          product: true
+          product: true,
+          batch: true
         }
       })
     })
