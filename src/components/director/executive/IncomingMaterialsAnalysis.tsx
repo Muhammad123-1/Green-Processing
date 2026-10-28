@@ -35,6 +35,89 @@ interface Props {
   lang?: string
 }
 
+export function isNoBatch(val?: string, raw?: string): boolean {
+  const cleanRaw = (raw || '').trim().toUpperCase()
+  const cleanVal = (val || '').trim().toUpperCase()
+
+  // If cleanRaw exists and is NOT a dummy/synthetic pattern:
+  if (
+    cleanRaw &&
+    !cleanRaw.startsWith('PAR-') &&
+    !cleanRaw.startsWith('SA-') &&
+    !cleanRaw.startsWith('ARR-') &&
+    cleanRaw !== '-' &&
+    cleanRaw !== 'PARTIYA YOZILMAGAN' &&
+    cleanRaw !== 'ПАРТИЯ НЕ УКАЗАНА' &&
+    cleanRaw !== 'NO_BATCH'
+  ) {
+    return false
+  }
+
+  // If cleanVal has dummy/synthetic patterns or is empty:
+  if (!cleanVal) return true
+  if (
+    cleanVal.includes('PAR-') ||
+    cleanVal.includes('SA-') ||
+    cleanVal.includes('ARR-') ||
+    cleanVal === 'PARTIYA YOZILMAGAN' ||
+    cleanVal === 'ПАРТИЯ НЕ УКАЗАНА' ||
+    cleanVal === '-' ||
+    cleanVal === 'NO_BATCH' ||
+    cleanVal === 'PARTIYA #' ||
+    cleanVal === 'PARTIYA'
+  ) {
+    return true
+  }
+
+  const afterHash = cleanVal.replace(/^PARTIYA\s*#?\s*/, '').trim()
+  if (
+    !afterHash ||
+    afterHash.startsWith('PAR-') ||
+    afterHash.startsWith('SA-') ||
+    afterHash.startsWith('ARR-') ||
+    afterHash === '-' ||
+    afterHash === 'YOZILMAGAN'
+  ) {
+    return true
+  }
+
+  return false
+}
+
+export function formatBatchNumber(
+  val?: string,
+  raw?: string,
+  lang: string = 'uz'
+): { text: string; isMissing: boolean } {
+  if (isNoBatch(val, raw)) {
+    return {
+      text: lang === 'ru' ? 'Партия не указана' : 'Partiya yozilmagan',
+      isMissing: true,
+    }
+  }
+
+  if (raw && raw.trim()) {
+    const r = raw.trim()
+    return {
+      text: r.toLowerCase().startsWith('partiya') ? r : `Partiya #${r}`,
+      isMissing: false,
+    }
+  }
+
+  if (val && val.trim()) {
+    const v = val.trim()
+    return {
+      text: v.toLowerCase().startsWith('partiya') ? v : `Partiya #${v}`,
+      isMissing: false,
+    }
+  }
+
+  return {
+    text: lang === 'ru' ? 'Партия не указана' : 'Partiya yozilmagan',
+    isMissing: true,
+  }
+}
+
 export default function IncomingMaterialsAnalysis({
   items = [],
   dateFrom = '',
@@ -69,7 +152,9 @@ export default function IncomingMaterialsAnalysis({
             id: String(r.id),
             type: 'PRIXOD',
             productName: r.productName,
-            batchNumber: r.actNumber || (r.batchNumber ? `Partiya #${r.batchNumber}` : `PAR-${r.id}`),
+            batchNumber: r.batchNumber
+              ? `Partiya #${r.batchNumber}`
+              : (r.actNumber?.includes('PAR-') ? 'Partiya yozilmagan' : r.actNumber || 'Partiya yozilmagan'),
             rawBatch: r.batchNumber || '',
             quantityKg: Number(r.warehouseKg || 0),
             unit: r.unit || 'kg',
@@ -551,13 +636,18 @@ export default function IncomingMaterialsAnalysis({
                     {item.receivedBy || 'Omborchi / Sifat nazorati'}
                   </td>
                   <td className="p-3.5 font-mono">
-                    <span className="font-bold px-2.5 py-1 rounded-lg text-xs bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 inline-flex items-center">
-                      {item.rawBatch
-                        ? `Partiya #${item.rawBatch}`
-                        : item.batchNumber?.includes('Partiya')
-                        ? item.batchNumber
-                        : `Partiya #${item.batchNumber || item.id}`}
-                    </span>
+                    {(() => {
+                      const bInfo = formatBatchNumber(item.batchNumber, item.rawBatch, lang)
+                      return bInfo.isMissing ? (
+                        <span className="font-medium px-2.5 py-1 rounded-lg text-xs bg-slate-100 dark:bg-dark-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-dark-700 inline-flex items-center">
+                          {bInfo.text}
+                        </span>
+                      ) : (
+                        <span className="font-bold px-2.5 py-1 rounded-lg text-xs bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 inline-flex items-center">
+                          {bInfo.text}
+                        </span>
+                      )
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -614,10 +704,10 @@ export default function IncomingMaterialsAnalysis({
             <div className="flex justify-between items-center border-b pb-3 border-slate-200 dark:border-dark-750">
               <div>
                 <p className="text-[11px] font-black tracking-wider text-emerald-600 uppercase">
-                  QABUL PARTIYASI
+                  {lang === 'ru' ? 'Сведения о партии' : 'Qabul partiyasi'}
                 </p>
                 <h3 className="font-mono font-black text-xl text-slate-900 dark:text-white">
-                  {selectedItem.batchNumber || selectedItem.id}
+                  {formatBatchNumber(selectedItem.batchNumber, selectedItem.rawBatch, lang).text}
                 </h3>
               </div>
               <button
@@ -629,13 +719,28 @@ export default function IncomingMaterialsAnalysis({
             </div>
 
             <div className="grid grid-cols-2 gap-4 py-4 text-xs">
-              <Detail label="Mahsulot" value={selectedItem.productName} />
-              <Detail label="Partiya raqami" value={selectedItem.rawBatch || selectedItem.batchNumber} />
-              <Detail label="Yetkazib beruvchi" value={selectedItem.supplierName || 'Ko‘rsatilmagan'} />
-              <Detail label="Qabul qilgan mas'ul" value={selectedItem.receivedBy || 'Ko‘rsatilmagan'} />
-              <Detail label="Sana" value={selectedItem.date} />
-              <Detail label="Miqdori / Vazni" value={formatQty(selectedItem.quantityKg, selectedItem.unit)} />
-              <Detail label="Holati" value={selectedItem.status || 'Qabul qilingan'} />
+              <Detail label={lang === 'ru' ? 'Продукт' : 'Mahsulot'} value={selectedItem.productName} />
+              <Detail
+                label={lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}
+                value={formatBatchNumber(selectedItem.batchNumber, selectedItem.rawBatch, lang).text}
+              />
+              <Detail
+                label={lang === 'ru' ? 'Поставщик' : 'Yetkazib beruvchi'}
+                value={selectedItem.supplierName || (lang === 'ru' ? 'Не указан' : 'Ko‘rsatilmagan')}
+              />
+              <Detail
+                label={lang === 'ru' ? 'Принял ответственный' : "Qabul qilgan mas'ul"}
+                value={selectedItem.receivedBy || (lang === 'ru' ? 'Не указан' : 'Ko‘rsatilmagan')}
+              />
+              <Detail label={lang === 'ru' ? 'Дата' : 'Sana'} value={selectedItem.date} />
+              <Detail
+                label={lang === 'ru' ? 'Количество / Вес' : 'Miqdori / Vazni'}
+                value={formatQty(selectedItem.quantityKg, selectedItem.unit)}
+              />
+              <Detail
+                label={lang === 'ru' ? 'Статус' : 'Holati'}
+                value={selectedItem.status || (lang === 'ru' ? 'Принято' : 'Qabul qilingan')}
+              />
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-dark-800">

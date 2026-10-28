@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 
       unified.push({
         id: `arr-${sa.id}`,
-        actNumber: sa.batch ? `Partiya #${sa.batch}` : (match?.batchNumber ? `Partiya #${match.batchNumber}` : `PAR-${sa.id}`),
+        actNumber: sa.batch ? `Partiya #${sa.batch}` : (match?.batchNumber ? `Partiya #${match.batchNumber}` : `Partiya yozilmagan`),
         actDate: sa.date,
         productName: nom,
         supplierName: sName,
@@ -114,7 +114,9 @@ export async function GET(request: NextRequest) {
       const issues = qualityIssues(act)
       unified.push({
         id: `act-${act.id}`,
-        actNumber: act.batchNumber ? `Partiya #${act.batchNumber}` : `AKT-${act.actNumber}`,
+        actNumber: act.batchNumber
+          ? (act.batchNumber.toUpperCase().startsWith('PAR-') ? 'Partiya yozilmagan' : `Partiya #${act.batchNumber}`)
+          : 'Partiya yozilmagan',
         actDate: act.actDate,
         productName: act.productName,
         supplierName: act.supplierName,

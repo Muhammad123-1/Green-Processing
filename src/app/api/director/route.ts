@@ -214,7 +214,7 @@ export async function GET(request: NextRequest) {
       const actMatch = (batchKey && actByBatchMap.get(batchKey)) || actByDateProductMap.get(`${sa.date}_${(sa.nomenclature || '').trim().toLowerCase()}`)
       const supplierName = sa.supplier || actMatch?.supplierName || "Yetkazib beruvchi"
       const inspectorStr = actMatch?.inspectorName || "Sifat nazorati / Omborchi"
-      const batchNum = sa.batch ? `Partiya #${sa.batch}` : (actMatch?.batchNumber ? `Partiya #${actMatch.batchNumber}` : `PAR-${sa.id}`)
+      const batchNum = sa.batch ? `Partiya #${sa.batch}` : (actMatch?.batchNumber ? `Partiya #${actMatch.batchNumber}` : `Partiya yozilmagan`)
 
       prixodItems.push({
         id: `sa-${sa.id}`,
@@ -248,7 +248,9 @@ export async function GET(request: NextRequest) {
           id: `act-rej-${act.id}`,
           type: 'PRIXOD',
           productName: act.productName,
-          batchNumber: act.batchNumber ? `Partiya #${act.batchNumber}` : `AKT-${act.actNumber}`,
+          batchNumber: act.batchNumber
+            ? (act.batchNumber.toUpperCase().startsWith('PAR-') ? 'Partiya yozilmagan' : `Partiya #${act.batchNumber}`)
+            : 'Partiya yozilmagan',
           rawBatch: act.batchNumber || '',
           quantityKg: rejQty,
           unit,

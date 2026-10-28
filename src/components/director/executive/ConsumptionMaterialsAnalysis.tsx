@@ -14,6 +14,7 @@ import {
   Scale,
   Boxes,
 } from 'lucide-react'
+import { formatBatchNumber } from './IncomingMaterialsAnalysis'
 
 export interface ConsumptionItem {
   id: string
@@ -474,13 +475,20 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                     <span className="font-bold text-slate-900 dark:text-white block">
                       {item.actNumber || `AKT-${item.id}`}
                     </span>
-                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block mt-0.5">
-                      {item.batchNumber?.includes('Partiya')
-                        ? item.batchNumber
-                        : item.rawBatch
-                        ? `Partiya #${item.rawBatch}`
-                        : item.batchNumber}
-                    </span>
+                    {(() => {
+                      const bInfo = formatBatchNumber(item.batchNumber, item.rawBatch, lang)
+                      return (
+                        <span
+                          className={`text-[11px] block mt-0.5 ${
+                            bInfo.isMissing
+                              ? 'text-slate-400 dark:text-slate-500 font-medium'
+                              : 'font-semibold text-emerald-600 dark:text-emerald-400'
+                          }`}
+                        >
+                          {bInfo.text}
+                        </span>
+                      )
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -581,13 +589,20 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                 <span className="block text-[10px] text-slate-400 font-bold uppercase">
                   {lang === 'ru' ? 'Партия сырья' : 'Xomashyo partiyasi'}
                 </span>
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
-                  {selectedItem.batchNumber?.includes('Partiya')
-                    ? selectedItem.batchNumber
-                    : selectedItem.rawBatch
-                    ? `Partiya #${selectedItem.rawBatch}`
-                    : selectedItem.batchNumber}
-                </span>
+                {(() => {
+                  const bInfo = formatBatchNumber(selectedItem.batchNumber, selectedItem.rawBatch, lang)
+                  return (
+                    <span
+                      className={`mt-0.5 block ${
+                        bInfo.isMissing
+                          ? 'text-xs text-slate-400 dark:text-slate-500 font-medium'
+                          : 'font-mono font-bold text-emerald-600 dark:text-emerald-400'
+                      }`}
+                    >
+                      {bInfo.text}
+                    </span>
+                  )
+                })()}
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
