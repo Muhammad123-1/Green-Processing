@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { getDictionaryTranslation } from '@/lib/survey-translations'
 import QuestionDrillDownModal from './QuestionDrillDownModal'
 
 interface SurveyReportModalProps {
@@ -272,7 +273,7 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
     if (st && st.comments.length > 0) {
       st.comments.forEach((c) => {
         allComments.push({
-          qTitle: `${q.subLabel ? q.subLabel + ' ' : ''}${q.questionText}`,
+          qTitle: `${q.subLabel ? q.subLabel + ' ' : ''}${getDictionaryTranslation(q.questionText, 'uz_ru') || q.questionText}`,
           ...c,
         })
       })
@@ -740,7 +741,7 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                                 {q.subLabel || `№${idx + 1}`}
                               </span>
                               <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 print:text-black leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                {q.questionText}
+                                {getDictionaryTranslation(q.questionText, 'uz_ru') || q.questionText}
                               </h4>
                             </div>
 

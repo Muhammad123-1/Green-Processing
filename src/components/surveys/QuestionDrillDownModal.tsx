@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { getDictionaryTranslation } from '@/lib/survey-translations'
 
 export interface QuestionDrillDownModalProps {
   isOpen: boolean
@@ -372,7 +373,7 @@ export default function QuestionDrillDownModal({
                   )}
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
-                  {question.questionText}
+                  {getDictionaryTranslation(question.questionText, 'uz_ru') || question.questionText}
                 </h3>
                 {question.helpText && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
