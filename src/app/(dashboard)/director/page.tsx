@@ -961,69 +961,6 @@ export default function DirectorPage() {
             </span>
           </div>
         </div>
-
-        {/* CARD 5: MIJOZLAR QONIQISH DARAJASI (SO'ROVNOMALAR) */}
-        <div
-          onClick={() => setActiveModal('surveys')}
-          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-amber-400 dark:hover:border-amber-500 cursor-pointer transition-all group relative overflow-hidden"
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-              <Award size={24} />
-            </div>
-            <span className="flex items-center text-xs font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-1 transition-transform">
-              {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
-            </span>
-          </div>
-
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            {formatDual("Mijozlar bahosi", "Оценка клиентов", "Customer feedback")}
-          </span>
-          <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-            {kpis?.surveys?.satisfactionPercent != null ? `${kpis.surveys.satisfactionPercent.toFixed(1)}%` : '-'}
-          </div>
-          <p className="text-xs text-slate-400 mt-1">
-            {kpis?.surveys?.responsesCount || 0} {formatDual("ta qabul va bahodan", "из оценок и приемок", "from receipts & reviews")}
-          </p>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
-            <span className="text-slate-400">{formatDual("O'rtacha baho:", "Средняя оценка:", "Average score:")}</span>
-            <span className="font-bold text-blue-600">
-              {kpis?.surveys?.avgRating ? `${kpis.surveys.avgRating.toFixed(2)} / 5.0` : '-'}
-            </span>
-          </div>
-        </div>
-
-        {/* CARD 6: MOLIYA VA TUSHUMLAR (DIZAYN REJALASHTIRILGAN BLOK) */}
-        <div className="bg-gradient-to-br from-slate-900 to-indigo-950 p-5 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
-
-          <div>
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 text-emerald-400 flex items-center justify-center font-bold backdrop-blur-sm">
-                <DollarSign size={24} />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {formatDual("Rejada", "В плане", "Planned")}
-              </span>
-            </div>
-
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              {formatDual("Moliya va tushum", "Финансы и выручка", "Finance & revenue")}
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">
-              {kpis?.sales?.revenue ? `${(kpis.sales.revenue / 1_000_000).toFixed(1)} ${formatDual("mln", "млн", "mln")}` : formatDual("Moliya moduli", "Финансовый модуль", "Finance module")}
-            </div>
-            <p className="text-xs text-slate-400 mt-1">
-              {formatDual("Buyurtmalar va to'lovlar", "Заказы и платежи", "Orders and payments")}
-            </p>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-300">
-            <span>{formatDual("Sotuv buyurtmalari:", "Заказы продаж:", "Sales orders:")}</span>
-            <b className="text-white">{kpis?.sales?.ordersCount || 0} {formatDual("ta", "шт", "pcs")}</b>
-          </div>
-        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -1468,32 +1405,7 @@ export default function DirectorPage() {
             </div>
           </Link>
 
-          {/* Card 4: Surveys */}
-          <Link
-            href="/surveys"
-            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-amber-500/50 dark:hover:border-amber-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <Award size={20} />
-                </div>
-                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-amber-500 transition-colors" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">
-                {formatDual("Mijozlar so'rovnomalari", "Опросы клиентов", "Customer Surveys")}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                {formatDual("Mijozlar qoniqishi va fikrlari", "Удовлетворенность и отзывы", "Customer satisfaction & feedback")}
-              </p>
-            </div>
-            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-              <span>{formatDual("Ochish", "Открыть", "Open")}</span>
-              <ChevronRight size={13} />
-            </div>
-          </Link>
-
-          {/* Card 5: Users */}
+          {/* Card 4: Users */}
           <Link
             href="/users"
             className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"

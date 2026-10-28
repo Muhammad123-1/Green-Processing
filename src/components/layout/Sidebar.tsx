@@ -72,7 +72,6 @@ const navSections = [
       { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'DIRECTOR', 'KITCHEN', 'QUALITY_CONTROL', 'HR', 'INSPECTOR'] },
-      { key: 'surveys', href: '/surveys', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   },
   {
@@ -162,7 +161,6 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
                 'warehouse',
                 'suppliers',
                 'kitchen',
-                'surveys',
                 'accounting',
                 'reports',
                 'users',
