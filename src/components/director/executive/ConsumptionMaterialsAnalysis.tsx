@@ -36,6 +36,7 @@ interface Props {
 export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }: Props) {
   const [unitFilter, setUnitFilter] = useState<'ALL' | 'kg' | 'dona'>('ALL')
   const [selectedProduct, setSelectedProduct] = useState<string>('')
+  const [productSearch, setProductSearch] = useState<string>('')
   const [search, setSearch] = useState<string>('')
   const [selectedItem, setSelectedItem] = useState<ConsumptionItem | null>(null)
   const [page, setPage] = useState<number>(1)
@@ -86,11 +87,24 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
     return Array.from(map.values()).sort((a, b) => b.totalQty - a.totalQty)
   }, [items])
 
-  // Filter products by selected unit tab (ALL / kg / dona)
+  // Filter products by selected unit tab (ALL / kg / dona) & search
   const visibleProductsSummary = useMemo(() => {
-    if (unitFilter === 'ALL') return allProductsSummary
-    return allProductsSummary.filter((p) => p.unit === unitFilter)
-  }, [allProductsSummary, unitFilter])
+    let list = allProductsSummary
+    if (unitFilter !== 'ALL') {
+      list = list.filter((p) => p.unit === unitFilter)
+    }
+    if (productSearch.trim()) {
+      const q = productSearch.toLowerCase().trim()
+      list = list.filter((p) => p.name.toLowerCase().includes(q))
+    }
+    return list
+  }, [allProductsSummary, unitFilter, productSearch])
+
+  // Selected product summary stats
+  const selectedProductSummary = useMemo(() => {
+    if (!selectedProduct) return null
+    return allProductsSummary.find((p) => p.name === selectedProduct) || null
+  }, [allProductsSummary, selectedProduct])
 
   // Filtered records when a product is selected
   const filteredRecords = useMemo(() => {
@@ -225,14 +239,14 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                 onClick={() => setUnitFilter('kg')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                   unitFilter === 'kg'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-600'
                 }`}
               >
                 <Scale size={13} />
-                <span>{lang === 'ru' ? 'Весовые (кг)' : "Xomashyo (KG)"}</span>
-                <span className="opacity-80 font-mono text-[11px]">
-                  ({formatKgOnly(totalKg)} kg)
+                <span>{lang === 'ru' ? 'Весовые' : "Xomashyo"}</span>
+                <span className="opacity-80 text-[11px]">
+                  ({allProductsSummary.filter((p) => p.unit === 'kg').length})
                 </span>
               </button>
               <button
@@ -244,9 +258,9 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                 }`}
               >
                 <Boxes size={13} />
-                <span>{lang === 'ru' ? 'Штучные (шт)' : "Qadoq / Idish (DONA)"}</span>
-                <span className="opacity-80 font-mono text-[11px]">
-                  ({Math.round(totalDona).toLocaleString('uz-UZ')} dona)
+                <span>{lang === 'ru' ? 'Штучные' : "Qadoq / Idish"}</span>
+                <span className="opacity-80 text-[11px]">
+                  ({allProductsSummary.filter((p) => p.unit === 'dona').length})
                 </span>
               </button>
             </div>
@@ -259,7 +273,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
           )}
         </div>
 
-        {selectedProduct && (
+        {selectedProduct ? (
           <div className="relative">
             <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
             <input
@@ -273,75 +287,56 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
               className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
             />
           </div>
+        ) : (
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder={lang === 'ru' ? 'Поиск продукта...' : 'Mahsulotni qidirish...'}
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 sm:w-60"
+            />
+          </div>
         )}
       </div>
 
-      {/* 3. Product Cards Grid (Image 2 style) */}
+      {/* 3. Product Cards Grid - Only product name */}
       {!selectedProduct ? (
         <div className="rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 overflow-hidden shadow-2xs">
           <div className="p-4 border-b border-slate-100 dark:border-dark-800 flex items-center justify-between">
             <h3 className="font-black text-slate-900 dark:text-white text-sm">
               {unitFilter === 'kg'
-                ? lang === 'ru' ? 'Весовое сырье в расходе (кг)' : 'Xomashyo va sabzavotlar sarfi (KG)'
+                ? lang === 'ru' ? 'Весовое сырье в расходе' : 'Xomashyo va sabzavotlar sarfi'
                 : unitFilter === 'dona'
-                ? lang === 'ru' ? 'Штучные материалы в расходе (шт)' : 'Qadoqlash vositalari va idishlar sarfi (DONA)'
+                ? lang === 'ru' ? 'Штучные материалы в расходе' : 'Qadoqlash vositalari va idishlar sarfi'
                 : lang === 'ru' ? 'Вся продукция и тара в расходе' : 'Ishlab chiqarishga sarflangan barcha mahsulotlar'}
             </h3>
             <span className="text-xs text-slate-400 font-medium">
-              {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta pozitsiya'}
+              {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta mahsulot'}
             </span>
           </div>
 
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3 divide-x divide-y divide-slate-100 dark:divide-dark-800">
-            {visibleProductsSummary.map((row) => {
-              const isPiece = row.unit === 'dona'
-              return (
-                <button
-                  key={row.name}
-                  onClick={() => {
-                    setSelectedProduct(row.name)
-                    setPage(1)
-                  }}
-                  className="p-4 text-left hover:bg-blue-50/50 dark:hover:bg-dark-800 transition-colors group"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <b className="text-sm text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                      {row.name}
-                    </b>
-                    <span
-                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
-                        isPiece
-                          ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40'
-                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
-                      }`}
-                    >
-                      {isPiece ? 'DONA' : 'KG'}
-                    </span>
-                  </div>
-
-                  <strong
-                    className={`block mt-3 font-mono text-lg font-black ${
-                      isPiece
-                        ? 'text-indigo-600 dark:text-indigo-400'
-                        : 'text-emerald-600 dark:text-emerald-400'
-                    }`}
-                  >
-                    {formatQty(row.totalQty, row.unit)}
-                  </strong>
-
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                    <span>
-                      {row.workshops.size > 0
-                        ? Array.from(row.workshops).slice(0, 1).join(', ')
-                        : 'Sex sarfi'}
-                    </span>
-                    <span className="font-mono text-slate-400">
-                      {row.count} {lang === 'ru' ? 'актов' : 'ta sarf'}
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 p-4">
+            {visibleProductsSummary.map((row) => (
+              <button
+                key={row.name}
+                onClick={() => {
+                  setSelectedProduct(row.name)
+                  setSearch('')
+                  setPage(1)
+                }}
+                className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-750 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 text-left transition-all flex items-center justify-between gap-3 group shadow-2xs"
+              >
+                <span className="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                  {row.name}
+                </span>
+                <ChevronRight
+                  size={16}
+                  className="text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all shrink-0"
+                />
+              </button>
+            ))}
           </div>
 
           {!visibleProductsSummary.length && (
@@ -351,8 +346,92 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
           )}
         </div>
       ) : (
-        /* 4. Filtered Records Table for Selected Product */
-        <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 shadow-2xs">
+        /* 4. Inside Product: Numbers & Filtered Records Table */
+        <div className="space-y-3">
+          {/* Product KPI Statistics (Mahsulot ichiga kirganda raqamlar ko'rsatiladi) */}
+          <div className="p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-dark-800 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                  {lang === 'ru' ? 'Отчет по расходу продукта' : 'Mahsulot chiqimi hisoboti'}
+                </span>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
+                  {selectedProduct}
+                </h2>
+              </div>
+              <span
+                className={`text-xs font-black uppercase px-2.5 py-1 rounded-xl ${
+                  selectedProductSummary?.unit === 'dona'
+                    ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
+                    : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                }`}
+              >
+                {selectedProductSummary?.unit === 'dona' ? 'DONA (Sanoq)' : 'KG (Vazn)'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                  {lang === 'ru' ? 'Общий расход' : 'Jami sarflangan'}
+                </span>
+                <div className="mt-1 text-lg sm:text-xl font-black font-mono text-blue-600 dark:text-blue-400">
+                  {formatQty(selectedProductSummary?.totalQty || 0, selectedProductSummary?.unit)}
+                </div>
+                {selectedProductSummary?.unit === 'kg' && (
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {((selectedProductSummary?.totalQty || 0) / 1000).toFixed(2)} tn
+                  </span>
+                )}
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                  {lang === 'ru' ? 'Актов расхода' : 'Chiqim aktlari soni'}
+                </span>
+                <div className="mt-1 text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white">
+                  {selectedProductSummary?.count || 0} ta sarf
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {lang === 'ru' ? 'Списаний в производство' : 'Sexlarga uzatilgan'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                  {lang === 'ru' ? 'Средний расход' : 'O‘rtacha bitta sarf'}
+                </span>
+                <div className="mt-1 text-lg sm:text-xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                  {formatQty(
+                    selectedProductSummary?.count
+                      ? selectedProductSummary.totalQty / selectedProductSummary.count
+                      : 0,
+                    selectedProductSummary?.unit
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {lang === 'ru' ? 'На один акт' : 'Har bir chiqimga'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                  {lang === 'ru' ? 'Цеха' : 'Ishlatilgan sexlar'}
+                </span>
+                <div className="mt-1 text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white">
+                  {selectedProductSummary?.workshops.size || 0} ta sex
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium truncate block">
+                  {selectedProductSummary?.workshops.size
+                    ? Array.from(selectedProductSummary.workshops).slice(0, 2).join(', ')
+                    : 'Sex sarfi'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Filtered Records Table for Selected Product */}
+          <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 shadow-2xs">
           <table className="w-full min-w-[760px] text-left text-xs">
             <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
               <tr>
@@ -425,6 +504,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* 5. Detail Modal / Drawer */}
