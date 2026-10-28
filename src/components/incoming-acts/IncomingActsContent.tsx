@@ -413,14 +413,28 @@ export default function IncomingActsContent() {
     }
   }
 
+  const getNextActBatch = (prodName: string, dateStr: string) => {
+    const p = (prodName || '').trim().toUpperCase()
+    const ym = (dateStr || '').slice(0, 7)
+    let maxB = 0
+    acts.forEach((a) => {
+      if ((a.productName || '').trim().toUpperCase() === p && (a.actDate || '').startsWith(ym)) {
+        const n = parseInt(String(a.batchNumber || '').trim(), 10)
+        if (!isNaN(n) && n > maxB) maxB = n
+      }
+    })
+    return String(maxB + 1)
+  }
+
   // Open Form Create
   const handleOpenCreate = () => {
     setEditingAct(null)
     const prod = selectedProduct !== 'all' ? selectedProduct : 'ТОМАТ'
+    const today = new Date().toISOString().slice(0, 10)
     const theme = getProductTheme(prod)
     setFormData({
       actNumber: String(acts.length + 1),
-      actDate: new Date().toISOString().slice(0, 10),
+      actDate: today,
       productName: prod,
       supplierName: '',
       temperature: prod === 'ТОМАТ' ? '18 с' : '19 с',
@@ -437,7 +451,7 @@ export default function IncomingActsContent() {
       diameterWeight: prod === 'ТОМАТ' ? '6-7 см' : '5-6 см',
       outerLeavesRemoved: 1,
       noMechanicalDamage: 1,
-      batchNumber: String(acts.length + 1),
+      batchNumber: getNextActBatch(prod, today),
       decisionRating: 4,
       warehouseKg: '',
       shopIssuedKg: '',

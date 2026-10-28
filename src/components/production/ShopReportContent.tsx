@@ -196,16 +196,70 @@ export default function ShopReportContent() {
   }, [loadData])
 
   // ---------------------------------------------------------------------------
-  // Tab 1: Приход
+  // Tab 1: Приход (Avto-partiya hisoblash: har oy yangilanadi, har mahsulot uchun 1, 2, 3...)
   // ---------------------------------------------------------------------------
-  const updateArrival = (idx: number, patch: any) =>
-    setArrivals((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch, _dirty: true } : r)))
+  const computeNextBatch = (list: any[], nom: string, dateStr: string): string => {
+    const cleanNom = String(nom || '').trim().toLowerCase()
+    if (!cleanNom) return '1'
+    const ym = (dateStr || '').slice(0, 7)
+    if (!ym) return '1'
 
-  const addArrival = () =>
+    let maxNum = 0
+    for (const a of list) {
+      const aNom = String(a.nomenclature || '').trim().toLowerCase()
+      const aYm = String(a.date || '').slice(0, 7)
+      if (aNom === cleanNom && aYm === ym) {
+        const b = parseInt(String(a.batch || '').trim(), 10)
+        if (!isNaN(b) && b > maxNum) {
+          maxNum = b
+        }
+      }
+    }
+    return String(maxNum + 1)
+  }
+
+  const updateArrival = (idx: number, patch: any) =>
+    setArrivals((prev) =>
+      prev.map((r, i) => {
+        if (i !== idx) return r
+        const updated = { ...r, ...patch, _dirty: true }
+
+        // If nomenclature or date changes and batch is empty or marked as auto, recalculate next batch
+        if (
+          (patch.nomenclature !== undefined || patch.date !== undefined) &&
+          (!r.batch || r._autoBatch) &&
+          updated.nomenclature?.trim()
+        ) {
+          const autoB = computeNextBatch(prev, updated.nomenclature, updated.date)
+          updated.batch = autoB
+          updated._autoBatch = true
+        }
+
+        // If user manually types a batch, disable auto flag
+        if (patch.batch !== undefined) {
+          updated._autoBatch = false
+        }
+
+        return updated
+      })
+    )
+
+  const addArrival = () => {
+    const targetDate = arrFilter || todayStr()
     setArrivals((prev) => [
-      { date: arrFilter || todayStr(), nomenclature: '', quantity: '', supplier: '', batch: '', _dirty: true, _new: true },
+      {
+        date: targetDate,
+        nomenclature: '',
+        quantity: '',
+        supplier: '',
+        batch: '',
+        _dirty: true,
+        _new: true,
+        _autoBatch: true,
+      },
       ...prev,
     ])
+  }
 
   const removeNewArrival = (idx: number) => setArrivals((prev) => prev.filter((_, i) => i !== idx))
 
@@ -648,7 +702,14 @@ export default function ShopReportContent() {
                   <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[160px] sm:min-w-[220px]">Номенклатура</th>
                   <th className="p-2 sm:p-3 border-r border-amber-600 text-right min-w-[90px] sm:min-w-[115px]">Количество</th>
                   <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[140px] sm:min-w-[180px]">Поставщик</th>
-                  <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[100px] sm:min-w-[130px]">Партии</th>
+                  <th className="p-2 sm:p-3 border-r border-amber-600 min-w-[105px] sm:min-w-[140px]">
+                    <div className="flex items-center gap-1">
+                      <span>{lang === 'ru' ? 'Партия' : 'Partiya'}</span>
+                      <span className="text-[9px] px-1 py-0.2 bg-amber-700/80 rounded text-amber-100 font-normal">
+                        ⚡ {lang === 'ru' ? 'авто' : 'avto'}
+                      </span>
+                    </div>
+                  </th>
                   <th className="p-2 sm:p-3 w-10"></th>
                 </tr>
               </thead>
@@ -735,13 +796,27 @@ export default function ShopReportContent() {
                       />
                     </td>
                     <td className="p-1 border-r border-slate-200">
-                      <input
-                        type="text"
-                        placeholder="Партия"
-                        value={row.batch || ''}
-                        onChange={(e) => updateArrival(idx, { batch: e.target.value })}
-                        className="excel-input w-full min-w-[90px] px-2 py-1.5 text-xs font-mono outline-none"
-                      />
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          placeholder="Партия"
+                          value={row.batch || ''}
+                          onChange={(e) => updateArrival(idx, { batch: e.target.value })}
+                          className="excel-input w-full min-w-[90px] px-2 py-1.5 text-xs font-mono font-bold text-slate-800 outline-none pr-6"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextB = computeNextBatch(arrivals, row.nomenclature, row.date)
+                            updateArrival(idx, { batch: nextB })
+                            toast.info(lang === 'ru' ? `Авто-партия: #${nextB}` : `Avto-partiya: #${nextB}`)
+                          }}
+                          title={lang === 'ru' ? "Авто-партия (сброс каждого месяца)" : "Avto-partiya (har oy boshida yangilanadi)"}
+                          className="absolute right-1 text-amber-500 hover:text-amber-700 hover:bg-amber-100 p-0.5 rounded transition-colors text-[10px] font-bold"
+                        >
+                          ⚡
+                        </button>
+                      </div>
                     </td>
                     <td className="p-1 text-center">
                       {row._new && (
