@@ -3,6 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { toNum } from '@/lib/shopReport'
 
+const STAGES = new Set(['INCOMING', 'PROCESSING', 'STORAGE'])
+const WASTAGE_TYPES = new Set(['ACTUAL_DEFECT', 'NATURAL_TECH_WASTE'])
+const RESPONSIBILITY_STATUSES = new Set(['NOT_DETERMINED', 'UNDER_INVESTIGATION', 'DETERMINED', 'CLEARED'])
+
+function text(value: unknown) {
+  const result = String(value ?? '').trim()
+  return result || null
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
@@ -80,6 +89,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const productName = String(body.productName || '').trim()
     const weightKg = toNum(body.weightKg)
+    const stage = STAGES.has(body.stage) ? body.stage : 'PROCESSING'
+    const wastageType = WASTAGE_TYPES.has(body.wastageType) ? body.wastageType : 'ACTUAL_DEFECT'
 
     if (!productName) {
       return NextResponse.json({ error: 'Mahsulot nomini kiriting' }, { status: 400 })
@@ -109,13 +120,14 @@ export async function POST(req: NextRequest) {
         supplierName: body.supplierName ? String(body.supplierName).trim() : null,
         reportedById: session.id,
         reportedByName: session.name,
-        receivedByName: body.receivedByName ? String(body.receivedByName).trim() : null,
-        stage: body.stage || 'PROCESSING',
-        wastageType: body.wastageType || 'ACTUAL_DEFECT',
+        receivedByName: text(body.receivedByName),
+        stage,
+        wastageType,
         weightKg,
         reasonCategory: body.reasonCategory || 'Boshqa',
         detailedComment: body.detailedComment ? String(body.detailedComment).trim() : null,
         photoUrl: body.photoUrl ? String(body.photoUrl).trim() : null,
+        documentUrl: text(body.documentUrl),
         incidentDate,
         incidentTime: body.incidentTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
@@ -146,24 +158,61 @@ export async function PATCH(req: NextRequest) {
 
     const body = await req.json()
     const id = parseInt(body.id, 10)
-    const cancelReason = String(body.cancelReason || '').trim()
+    if (!id) return NextResponse.json({ error: 'Yozuv ID sini kiriting' }, { status: 400 })
 
-    if (!id || !cancelReason) {
-      return NextResponse.json({ error: 'ID va bekor qilish sababini kiriting' }, { status: 400 })
+    const previous = await prisma.executiveWastageLog.findUnique({ where: { id } })
+    if (!previous) return NextResponse.json({ error: 'Yozuv topilmadi' }, { status: 404 })
+
+    let updated
+    let operation: 'CANCEL' | 'RESPONSIBILITY_DECISION'
+
+    if (body.action === 'RESPONSIBILITY_DECISION') {
+      const responsibilityStatus = String(body.responsibilityStatus || '')
+      const responsiblePersonName = text(body.responsiblePersonName)
+      const responsibilityDecisionNote = text(body.responsibilityDecisionNote)
+      const investigatedByName = text(body.investigatedByName)
+
+      if (!RESPONSIBILITY_STATUSES.has(responsibilityStatus)) {
+        return NextResponse.json({ error: "Javobgarlik holati noto'g'ri" }, { status: 400 })
+      }
+      if (responsibilityStatus === 'DETERMINED' && (!responsiblePersonName || !responsibilityDecisionNote)) {
+        return NextResponse.json({ error: "Javobgar shaxs va tasdiqlovchi qaror asosini kiriting" }, { status: 400 })
+      }
+      if (responsibilityStatus !== 'DETERMINED' && responsiblePersonName) {
+        return NextResponse.json({ error: "Shaxs faqat tasdiqlangan javobgarlik qarorida belgilanadi" }, { status: 400 })
+      }
+
+      updated = await prisma.executiveWastageLog.update({
+        where: { id },
+        data: {
+          investigatedByName,
+          responsibilityStatus,
+          responsiblePersonName: responsibilityStatus === 'DETERMINED' ? responsiblePersonName : null,
+          responsibilityDecisionNote,
+          responsibilityDecidedAt: responsibilityStatus === 'DETERMINED' ? new Date() : null,
+        },
+      })
+      operation = 'RESPONSIBILITY_DECISION'
+    } else {
+      const cancelReason = String(body.cancelReason || '').trim()
+      if (!cancelReason) {
+        return NextResponse.json({ error: 'Bekor qilish sababini kiriting' }, { status: 400 })
+      }
+      updated = await prisma.executiveWastageLog.update({
+        where: { id },
+        data: {
+          isCancelled: true,
+          cancelReason: `${cancelReason} (Bekor qildi: ${session.name})`,
+        },
+      })
+      operation = 'CANCEL'
     }
-
-    const updated = await prisma.executiveWastageLog.update({
-      where: { id },
-      data: {
-        isCancelled: true,
-        cancelReason: `${cancelReason} (Bekor qildi: ${session.name})`,
-      },
-    })
 
     await prisma.auditLog.create({
       data: {
         tableName: 'ExecutiveWastageLog',
-        operation: 'CANCEL',
+        operation,
+        oldValues: JSON.stringify(previous),
         newValues: JSON.stringify(updated),
         changedByUserId: session.id,
       },

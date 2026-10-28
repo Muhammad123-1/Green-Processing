@@ -67,6 +67,9 @@ import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import ExecutiveSummaryReportModal from '@/components/director/ExecutiveSummaryReportModal'
 import ExecutiveDashboardContainer from '@/components/director/executive/ExecutiveDashboardContainer'
+import IncomingMaterialsAnalysis from '@/components/director/executive/IncomingMaterialsAnalysis'
+import ConsumptionMaterialsAnalysis from '@/components/director/executive/ConsumptionMaterialsAnalysis'
+import DefectMaterialsAnalysis from '@/components/director/executive/DefectMaterialsAnalysis'
 
 export default function DirectorPage() {
   const { directorLang, setDirectorLang, formatDirector } = useLanguage()
@@ -74,7 +77,7 @@ export default function DirectorPage() {
   const dateLocale: string = directorLang === 'ru' ? 'ru-RU' : directorLang === 'en' ? 'en-US' : 'uz-UZ'
 
   // Top Director Tab Mode: Executive 3-Layer Audit vs All Plant Departments
-  const [directorMainTab, setDirectorMainTab] = useState<'executive' | 'departments'>('executive')
+  const [directorMainTab, setDirectorMainTab] = useState<'executive' | 'departments'>('departments')
 
   // Period state
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('all')
@@ -504,10 +507,10 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       {/* 1.5. TOP MODE SWITCHER: EXECUTIVE AUDIT VS ALL PLANT DEPARTMENTS */}
       {/* ========================================================================= */}
-      <div className="flex items-center gap-2 bg-slate-100 dark:bg-dark-850 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-750 no-print">
+      <div className="hidden">
         <button
           onClick={() => setDirectorMainTab('executive')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
+          className={`hidden flex-1 sm:flex-none items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
             directorMainTab === 'executive'
               ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-600/25'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -527,6 +530,14 @@ export default function DirectorPage() {
           <BarChart3 size={16} />
           <span>{formatDual("Umumiy Zavod Bo'limlari", "Все отделы завода", "Plant Departments Overview")}</span>
         </button>
+      </div>
+
+      <div className="flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-dark-750 bg-slate-100 p-3 dark:bg-dark-850 no-print">
+        <BarChart3 size={18} className="text-emerald-600" />
+        <div>
+          <h2 className="text-sm font-black text-slate-900 dark:text-white">Operatsiyalar</h2>
+          <p className="text-xs text-slate-500">Kirim, chiqim, brak va ombor bo‘yicha umumiy holat</p>
+        </div>
       </div>
 
       {directorMainTab === 'executive' ? (
@@ -688,7 +699,7 @@ export default function DirectorPage() {
             </div>
 
             <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider block">
-              {formatDual("Kirim (Prixod)", "Приход", "Inbound")}
+              {formatDual("Kirim", "Приход", "Inbound")}
             </span>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
               {operationsSummary?.prixod?.totalKg ? `${(operationsSummary.prixod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
@@ -720,7 +731,7 @@ export default function DirectorPage() {
             </div>
 
             <span className="text-xs font-extrabold text-blue-800 dark:text-blue-400 uppercase tracking-wider block">
-              {formatDual("Chiqim (Rasxod)", "Расход", "Outbound")}
+              {formatDual("Chiqim", "Расход", "Outbound")}
             </span>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
               {operationsSummary?.rasxod?.totalKg ? `${(operationsSummary.rasxod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
@@ -906,7 +917,7 @@ export default function DirectorPage() {
         {/* CARD 4: XODIMLAR FAOLLIGI (KIM NIMA ISH QILGAN) */}
         <div
           onClick={() => setActiveModal('employees')}
-          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group relative overflow-hidden"
+          className="hidden bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group relative overflow-hidden"
         >
           <div className="flex items-start justify-between mb-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
@@ -1279,7 +1290,7 @@ export default function DirectorPage() {
           </div>
 
           {/* Chart 4: Top Employee Activity (BarChart) */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
+          <div className="hidden bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -1639,8 +1650,8 @@ export default function DirectorPage() {
                     {activeModal === 'alerts' && formatDual("Shubhali holatlar", "Аномалии", "Discrepancies & alerts")}
                     {activeModal === 'archive' && formatDual("Umumiy Arxiv", "Общий архив", "Global Archive")}
                     {activeModal === 'operations' && (
-                      operationsTab === 'prixod' ? formatDual("Kirim (Prixod) ro'yxati", "Список прихода", "Inbound Arrivals") :
-                      operationsTab === 'rasxod' ? formatDual("Chiqim (Rasxod) jurnali", "Журнал расхода", "Consumption Records") :
+                      operationsTab === 'prixod' ? formatDual("Kirim ro'yxati", "Список прихода", "Inbound Arrivals") :
+                      operationsTab === 'rasxod' ? formatDual("Chiqim jurnali", "Журнал расхода", "Consumption Records") :
                       formatDual("Brak jurnali", "Журнал брака", "Defect Records")
                     )}
                   </h3>
@@ -2111,71 +2122,40 @@ export default function DirectorPage() {
                 </div>
               )}
 
-              {/* SECTION: OPERATIONS (PRIXOD, RASXOD & BRAK 4-STAGE ACCOUNTABILITY) */}
+              {/* SECTION: OPERATIONS (DEDICATED VIEW FOR KIRIM, CHIQIM, OR BRAK) */}
               {activeModal === 'operations' && (
-                <div className="space-y-5">
-                  {/* Operations Tab Switcher & Quick Stat Bar */}
+                <div className="space-y-4">
+                  {/* Dedicated Operation Banner (No tabs mixing other operations) */}
                   <div className="bg-slate-50 dark:bg-dark-800/60 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
-                      <button
-                        onClick={() => { setOperationsTab('prixod'); setSelectedOperationItem(null); }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
-                          operationsTab === 'prixod'
-                            ? 'bg-emerald-600 text-white shadow-md'
-                            : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:border-emerald-500'
-                        }`}
-                      >
-                        <Truck size={14} />
-                        <span>{formatDual("Prixod (Kirim)", "Приход сырья", "Inbound Arrivals")}</span>
-                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                          operationsTab === 'prixod' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        }`}>
-                          {operationsSummary?.prixod?.totalCount || 0}
-                        </span>
-                      </button>
-
-                      <button
-                        onClick={() => { setOperationsTab('rasxod'); setSelectedOperationItem(null); }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
-                          operationsTab === 'rasxod'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:border-blue-500'
-                        }`}
-                      >
-                        <ChefHat size={14} />
-                        <span>{formatDual("Rasxod (Chiqim)", "Расход сырья", "Consumption")}</span>
-                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                          operationsTab === 'rasxod' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                        }`}>
-                          {operationsSummary?.rasxod?.totalCount || 0}
-                        </span>
-                      </button>
-
-                      <button
-                        onClick={() => { setOperationsTab('brak'); setSelectedOperationItem(null); }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${
-                          operationsTab === 'brak'
-                            ? 'bg-rose-600 text-white shadow-md'
-                            : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:border-rose-500'
-                        }`}
-                      >
-                        <AlertTriangle size={14} />
-                        <span>{formatDual("Brak mahsulotlar", "Брак и отходы", "Defects & Rejects")}</span>
-                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                          operationsTab === 'brak' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                        }`}>
-                          {operationsSummary?.brak?.totalCount || 0}
-                        </span>
-                      </button>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-xl text-white ${
+                        operationsTab === 'prixod' ? 'bg-emerald-600' :
+                        operationsTab === 'rasxod' ? 'bg-blue-600' : 'bg-rose-600'
+                      }`}>
+                        {operationsTab === 'prixod' ? <Truck size={18} /> :
+                         operationsTab === 'rasxod' ? <ChefHat size={18} /> : <AlertTriangle size={18} />}
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-slate-900 dark:text-white">
+                          {operationsTab === 'prixod' ? formatDual("Kirim (Xomashyo qabuli)", "Прием сырья", "Raw Material Arrivals") :
+                           operationsTab === 'rasxod' ? formatDual("Chiqim (Ishlab chiqarishga sarf)", "Расход в цеха", "Production Consumption") :
+                           formatDual("Brak va chiqindilar nazorati", "Учет брака и отходов", "Defect & Scrap Records")}
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          {operationsTab === 'prixod' ? formatDual("Barcha qabul qilingan xomashyo partiyalari va sifat nazorati", "Все принятые партии сырья", "Inbound arrival batches") :
+                           operationsTab === 'rasxod' ? formatDual("Sexlarga sarflangan xomashyo va chiqim hujjatlari", "Расход сырья по цехам", "Workshop consumption records") :
+                           formatDual("Ishlab chiqarish, qabul va ombordagi brak dalolatnomalari", "Акты брака и отходов", "Defect and scrap acts")}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-3 text-xs self-end sm:self-auto font-medium">
                       <span className="text-slate-400">
-                        {operationsTab === 'prixod' && formatDual("Jami kelgan hajm:", "Всего поступило:", "Total inbound:")}
-                        {operationsTab === 'rasxod' && formatDual("Jami sarflangan hajm:", "Всего израсходовано:", "Total consumed:")}
+                        {operationsTab === 'prixod' && formatDual("Jami qabul qilingan:", "Всего поступило:", "Total inbound:")}
+                        {operationsTab === 'rasxod' && formatDual("Jami sarflangan:", "Всего израсходовано:", "Total consumed:")}
                         {operationsTab === 'brak' && formatDual("Jami brak miqdori:", "Всего брака:", "Total waste:")}
                       </span>
-                      <span className={`text-sm font-black ${
+                      <span className={`text-base font-black ${
                         operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
                         operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'
                       }`}>
@@ -2186,324 +2166,30 @@ export default function DirectorPage() {
                     </div>
                   </div>
 
-                  {/* 2-Column Responsive Layout */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                    {/* Left Column: Items List (5 cols on lg) */}
-                    <div className="lg:col-span-5 space-y-2.5 max-h-[65vh] flex flex-col">
-                      {/* Product filter dropdown & count */}
-                      <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-dark-800">
-                        <div className="flex-1 min-w-0">
-                          <select
-                            value={selectedOperationProduct}
-                            onChange={(e) => {
-                              setSelectedOperationProduct(e.target.value)
-                              setVisibleOperationsLimit(60)
-                            }}
-                            className="w-full text-xs font-bold py-1.5 px-2.5 rounded-xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          >
-                            <option value="ALL">
-                              {formatDual("Barcha mahsulotlar", "Все продукты", "All products")} ({operationsSummary?.[operationsTab]?.items?.length || 0})
-                            </option>
-                            {operationsProductList.map((p) => (
-                              <option key={p} value={p}>{p}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-500 shrink-0">
-                          {currentOperationsList.length} {formatDual("ta", "поз.", "items")}
-                        </span>
-                      </div>
+                  {/* 1. KIRIM: Dedicated Inbound Analysis */}
+                  {operationsTab === 'prixod' && (
+                    <IncomingMaterialsAnalysis
+                      dateFrom={period === 'custom' ? customFrom : ''}
+                      dateTo={period === 'custom' ? customTo : ''}
+                      lang={directorLang}
+                    />
+                  )}
 
-                      {/* Scrollable list */}
-                      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                        {currentOperationsList.length === 0 ? (
-                          <div className="p-8 text-center bg-slate-50 dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-750 text-slate-400 text-xs">
-                            {formatDual("Qidiruv bo'yicha ma'lumot topilmadi", "Ничего не найдено", "No items match query")}
-                          </div>
-                        ) : (
-                          <>
-                            {currentOperationsList.slice(0, visibleOperationsLimit).map((item: any, idx: number) => {
-                              const isSelected = activeChainItem?.id === item.id
-                              return (
-                                <div
-                                  key={item.id || idx}
-                                  onClick={() => setSelectedOperationItem(item)}
-                                  className={`p-3 rounded-2xl border text-xs cursor-pointer transition-all ${
-                                    isSelected
-                                      ? operationsTab === 'prixod'
-                                        ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
-                                        : operationsTab === 'rasxod'
-                                        ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-500 shadow-sm'
-                                        : 'bg-rose-50/70 dark:bg-rose-950/40 border-rose-500 shadow-sm'
-                                      : 'bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-750 hover:border-slate-400'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <h5 className="font-bold text-slate-900 dark:text-white truncate text-xs">
-                                        {item.productName}
-                                      </h5>
-                                      <span className="text-[10px] text-slate-400 font-mono">
-                                        {item.batchNumber || item.defectNumber}
-                                      </span>
-                                    </div>
-                                    <div className="text-right flex-shrink-0">
-                                      <span className={`font-black text-xs block ${
-                                        operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
-                                        operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'
-                                      }`}>
-                                        {item.quantityKg?.toLocaleString()} {item.unit || 'kg'}
-                                      </span>
-                                      <span className="text-[10px] text-slate-400">
-                                        {item.date ? new Date(item.date).toLocaleDateString(dateLocale) : '-'}
-                                      </span>
-                                    </div>
-                                  </div>
+                  {/* 2. CHIQIM: Dedicated Consumption Analysis */}
+                  {operationsTab === 'rasxod' && (
+                    <ConsumptionMaterialsAnalysis
+                      items={operationsSummary?.rasxod?.items || []}
+                      lang={directorLang}
+                    />
+                  )}
 
-                                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-[11px] text-slate-500">
-                                    <span className="truncate max-w-[170px] font-medium text-slate-700 dark:text-slate-300">
-                                      🏢 {item.supplierName || item.workshop || "Yetkazib beruvchi"}
-                                    </span>
-                                    <span className="truncate max-w-[150px] text-[10px] text-slate-500">
-                                      👤 {item.receivedBy || item.responsible || "Qabul qiluvchi"}
-                                    </span>
-                                  </div>
-                                </div>
-                              )
-                            })}
-
-                            {currentOperationsList.length > visibleOperationsLimit && (
-                              <button
-                                onClick={() => setVisibleOperationsLimit((prev) => prev + 60)}
-                                className="w-full py-2.5 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-xl border border-emerald-200 dark:border-emerald-800/40 transition-colors"
-                              >
-                                {formatDual(
-                                  `Yana 60 ta ko'rsatish (${visibleOperationsLimit} / ${currentOperationsList.length})`,
-                                  `Показать еще 60 (${visibleOperationsLimit} / ${currentOperationsList.length})`,
-                                  `Show 60 more (${visibleOperationsLimit} / ${currentOperationsList.length})`
-                                )}
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right Column: Clean Executive Card (7 cols on lg) */}
-                    <div className="lg:col-span-7 bg-slate-50/70 dark:bg-dark-850 p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-dark-750 space-y-4 max-h-[65vh] overflow-y-auto">
-                      {activeChainItem ? (
-                        <>
-                          {/* Active Item Header */}
-                          <div className="bg-white dark:bg-dark-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-dark-800">
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                                  operationsTab === 'prixod' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
-                                  operationsTab === 'rasxod' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
-                                  'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                                }`}>
-                                  {operationsTab === 'prixod' ? formatDual("Prixod Karti", "Карта прихода", "Inbound Card") :
-                                   operationsTab === 'rasxod' ? formatDual("Rasxod Karti", "Карта расхода", "Consumption Card") :
-                                   formatDual("Brak Dalolatnomasi", "Акт брака", "Defect Act")}
-                                </span>
-                                <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
-                                  {activeChainItem.batchNumber || activeChainItem.defectNumber}
-                                </span>
-                              </div>
-                              <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-dark-800 px-3 py-1 rounded-lg">
-                                📅 {activeChainItem.date ? new Date(activeChainItem.date).toLocaleDateString(dateLocale) : '-'}
-                              </span>
-                            </div>
-
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
-                                  {activeChainItem.productName}
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                  {operationsTab === 'prixod' ? formatDual("Zavodga qabul qilingan xomashyo partiyasi", "Партия сырья, принятая на завод", "Raw material batch received") :
-                                   operationsTab === 'rasxod' ? formatDual("Sexga chiqarilgan xomashyo", "Сырье, переданное в цех", "Issued to production") :
-                                   formatDual("Brak va chiqindi yozuvi", "Запись о браке и отходах", "Defect record")}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <span className="text-[11px] text-slate-400 block font-medium">
-                                  {operationsTab === 'prixod' ? formatDual("Qabul qilingan hajm:", "Принятый объем:", "Inbound volume:") :
-                                   operationsTab === 'rasxod' ? formatDual("Sarflangan hajm:", "Израсходовано:", "Consumed volume:") :
-                                   formatDual("Brak miqdori:", "Количество брака:", "Defect volume:")}
-                                </span>
-                                <span className={`text-xl sm:text-2xl font-black ${
-                                  operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
-                                  operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' :
-                                  'text-rose-600 dark:text-rose-400'
-                                }`}>
-                                  {activeChainItem.quantityKg?.toLocaleString()} {activeChainItem.unit || 'kg'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* 4 Required Attributes Grid (Ta'minotchi, Partiya, Qabul qilgan, Sana) */}
-                          {operationsTab === 'prixod' ? (
-                            <div className="space-y-3.5">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {/* 1. Qaysi ta'minotchidan kelgani */}
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                                    <Building2 size={20} />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                      {formatDual("Ta'minotchi (Yetkazib beruvchi)", "Поставщик", "Supplier")}
-                                    </span>
-                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 truncate">
-                                      {activeChainItem.supplierName || "Yetkazib beruvchi"}
-                                    </h4>
-                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                                      {formatDual("Tasdiqlangan yetkazib beruvchi", "Подтвержденный поставщик", "Verified supplier")}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* 2. Partiya raqami */}
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                                    <Hash size={20} />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                      {formatDual("Partiya raqami", "Номер партии", "Batch Number")}
-                                    </span>
-                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 font-mono">
-                                      {activeChainItem.batchNumber || "№ —"}
-                                    </h4>
-                                    <span className="text-[10px] text-slate-500 font-medium">
-                                      {formatDual("Kirim partiyasi kodi", "Код входящей партии", "Inbound batch code")}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* 3. Kim tomonidan qabul qilingani */}
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                                    <UserCheck size={20} />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                      {formatDual("Kim tomonidan qabul qilingani", "Кем принято", "Received By")}
-                                    </span>
-                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 truncate">
-                                      {activeChainItem.receivedBy || "Sifat nazorati / Omborchi"}
-                                    </h4>
-                                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
-                                      {formatDual("Mas'ul qabul qiluvchi", "Ответственный сотрудник", "Inspector / Storekeeper")}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* 4. Sanasi */}
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs flex items-start gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                                    <Calendar size={20} />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                      {formatDual("Kirim sanasi", "Дата прихода", "Inbound Date")}
-                                    </span>
-                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
-                                      {activeChainItem.date || '-'}
-                                    </h4>
-                                    <span className="text-[10px] text-slate-500 font-medium">
-                                      {formatDual("Omborga kirim qilingan vaqt", "Время оприходования", "Warehouse arrival date")}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Clean Status Footer */}
-                              <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <CheckCircle2 size={16} className="text-emerald-600" />
-                                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                                    {formatDual("Holati:", "Статус:", "Status:")} {activeChainItem.status || formatDual("Qabul qilingan", "Принято", "Accepted")}
-                                  </span>
-                                </div>
-                                <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-mono font-bold">
-                                  {activeChainItem.quantityKg} kg
-                                </span>
-                              </div>
-                            </div>
-                          ) : operationsTab === 'rasxod' ? (
-                            <div className="space-y-3.5">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                    {formatDual("Sex / Qabul sexi", "Цех / Линия", "Target Workshop")}
-                                  </span>
-                                  <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
-                                    {activeChainItem.workshop || "Tayyorlash sexi"}
-                                  </h4>
-                                </div>
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                    {formatDual("Chiqim hujjati", "Документ расхода", "Doc #")}
-                                  </span>
-                                  <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5 font-mono">
-                                    {activeChainItem.batchNumber}
-                                  </h4>
-                                </div>
-                              </div>
-                              {activeChainItem.targetProducts && (
-                                <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl border border-blue-200 dark:border-blue-800/40">
-                                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase block mb-1">
-                                    {formatDual("Tayyorlangan mahsulotlar", "Выпущенная продукция", "Produced outputs")}:
-                                  </span>
-                                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                    {activeChainItem.targetProducts}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="space-y-3.5">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                    {formatDual("Brak / Chiqindi turi", "Тип брака", "Defect Type")}
-                                  </span>
-                                  <h4 className="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5">
-                                    {activeChainItem.defectType || "Texnologik chiqindi"}
-                                  </h4>
-                                </div>
-                                <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-2xs">
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                                    {formatDual("Mas'ul shaxs", "Ответственный", "Responsible")}
-                                  </span>
-                                  <h4 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">
-                                    {activeChainItem.responsible || "Sex texnologi"}
-                                  </h4>
-                                </div>
-                              </div>
-                              {activeChainItem.reason && (
-                                <div className="p-3.5 bg-rose-50/70 dark:bg-rose-950/30 rounded-2xl border border-rose-200 dark:border-rose-800/40">
-                                  <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase block mb-1">
-                                    {formatDual("Brak / Isrof sababi", "Причина брака", "Defect Reason")}:
-                                  </span>
-                                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                    {activeChainItem.reason}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="py-20 text-center text-slate-400 text-xs">
-                          {formatDual("Chapdagi ro'yxatdan mahsulotni tanlang", "Выберите позицию из списка слева", "Select an item from the list to view its details")}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  {/* 3. BRAK: Dedicated Defect Analysis */}
+                  {operationsTab === 'brak' && (
+                    <DefectMaterialsAnalysis
+                      items={operationsSummary?.brak?.items || []}
+                      lang={directorLang}
+                    />
+                  )}
                 </div>
               )}
             </div>

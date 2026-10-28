@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
-import { toNum } from '@/lib/shopReport'
+
+function nonNegativeNumber(value: unknown) {
+  const result = Number(value)
+  return Number.isFinite(result) && result >= 0 ? result : null
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -33,10 +37,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Mahsulot nomini kiriting' }, { status: 400 })
     }
 
-    const incomingNormPercent = toNum(body.incomingNormPercent) || 3.0
-    const processingNormPercent = toNum(body.processingNormPercent) || 12.0
-    const storageNormPercent = toNum(body.storageNormPercent) || 2.0
-    const criticalThreshold = toNum(body.criticalThreshold) || 5.0
+    const incomingNormPercent = nonNegativeNumber(body.incomingNormPercent)
+    const processingNormPercent = nonNegativeNumber(body.processingNormPercent)
+    const storageNormPercent = nonNegativeNumber(body.storageNormPercent)
+    const criticalThreshold = nonNegativeNumber(body.criticalThreshold)
+    if (incomingNormPercent === null || processingNormPercent === null || storageNormPercent === null || criticalThreshold === null) {
+      return NextResponse.json({ error: "Me'yorlar 0 yoki undan katta son bo'lishi kerak" }, { status: 400 })
+    }
     const notes = body.notes ? String(body.notes).trim() : null
 
     const record = await prisma.executiveLossStandard.upsert({

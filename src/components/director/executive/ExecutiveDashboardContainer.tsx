@@ -17,6 +17,8 @@ import ProductBalanceTable, { ProductBalanceItem } from './ProductBalanceTable'
 import ProductLossDrawer from './ProductLossDrawer'
 import WastageAuditJournal from './WastageAuditJournal'
 import LossStandardsModal from './LossStandardsModal'
+import IncomingMaterialsAnalysis from './IncomingMaterialsAnalysis'
+import OperationsExecutivePanel from './OperationsExecutivePanel'
 
 interface Props {
   lang: string
@@ -34,7 +36,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   // Sub-views
-  const [activeTab, setActiveTab] = useState<'balance' | 'journal'>('balance')
+  const [activeTab, setActiveTab] = useState<'balance' | 'journal' | 'incoming' | 'operations'>('balance')
   const [selectedProduct, setSelectedProduct] = useState<ProductBalanceItem | null>(null)
   const [showStandardsModal, setShowStandardsModal] = useState(false)
   const [journalProductFilter, setJournalProductFilter] = useState('')
@@ -98,8 +100,13 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
   const kpis = data?.kpis || null
   const productBalances: ProductBalanceItem[] = data?.productBalances || []
 
-  const handleOpenJournalForProduct = (prodName: string) => {
+  const [journalStageFilter, setJournalStageFilter] = useState('')
+  const [journalWastageType, setJournalWastageType] = useState('')
+
+  const handleOpenJournalForProduct = (prodName: string, stage = '', wastageType = '') => {
     setJournalProductFilter(prodName)
+    setJournalStageFilter(stage)
+    setJournalWastageType(wastageType)
     setActiveTab('journal')
   }
 
@@ -256,6 +263,28 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             <FileText size={14} />
             <span>{lang === 'ru' ? '2. Журнал брака и рекламаций (Акты)' : '2. Brak va Rektamatsiyalar Jurnali (Aktlar)'}</span>
           </button>
+          <button
+            onClick={() => setActiveTab('incoming')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+              activeTab === 'incoming'
+                ? 'bg-white dark:bg-dark-700 text-blue-700 dark:text-blue-300 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+            }`}
+          >
+            <FileSpreadsheet size={14} />
+            <span>{lang === 'ru' ? '3. Входящее сырьё' : '3. Kiruvchi xomashyo'}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('operations')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+              activeTab === 'operations'
+                ? 'bg-white dark:bg-dark-700 text-violet-700 dark:text-violet-300 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+            }`}
+          >
+            <CheckCircle2 size={14} />
+            <span>{lang === 'ru' ? '4. Операции и аудит' : '4. Operatsiyalar va audit'}</span>
+          </button>
         </div>
 
         <button
@@ -276,11 +305,19 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
           onSelectProduct={(p) => setSelectedProduct(p)}
           onOpenStandards={() => setShowStandardsModal(true)}
         />
-      ) : (
+      ) : activeTab === 'journal' ? (
         <WastageAuditJournal
           initialProductFilter={journalProductFilter}
+          initialStageFilter={journalStageFilter}
+          initialWastageType={journalWastageType}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
           lang={lang}
         />
+      ) : activeTab === 'incoming' ? (
+        <IncomingMaterialsAnalysis dateFrom={dateFrom} dateTo={dateTo} lang={lang} />
+      ) : (
+        <OperationsExecutivePanel dateFrom={dateFrom} dateTo={dateTo} lang={lang} />
       )}
 
       {/* Layer 2: Product Loss Drawer */}

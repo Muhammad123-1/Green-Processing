@@ -17,7 +17,7 @@ import { ProductBalanceItem } from './ProductBalanceTable'
 interface Props {
   product: ProductBalanceItem | null
   onClose: () => void
-  onViewJournal: (productName: string) => void
+  onViewJournal: (productName: string, stage?: string, wastageType?: string) => void
   lang: string
 }
 
@@ -144,6 +144,9 @@ export default function ProductLossDrawer({
                 </div>
               </div>
             )}
+            <button onClick={() => onViewJournal(product.productName, 'INCOMING', 'ACTUAL_DEFECT')} className="text-[11px] font-bold text-blue-700 dark:text-blue-300 hover:underline">
+              Qabul aktlarini ko'rish →
+            </button>
           </div>
 
           {/* Stage 2: PROCESSING */}
@@ -189,6 +192,9 @@ export default function ProductLossDrawer({
                 </div>
               </div>
             )}
+            <button onClick={() => onViewJournal(product.productName, 'PROCESSING')} className="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:underline">
+              Ishlov aktlarini ko'rish →
+            </button>
           </div>
 
           {/* Stage 3: STORAGE */}
@@ -235,6 +241,9 @@ export default function ProductLossDrawer({
                 {lang === 'ru' ? 'Потерь на складе не зафиксировано' : "Omborda buzilish qayd etilmagan"}
               </div>
             )}
+            <button onClick={() => onViewJournal(product.productName, 'STORAGE', 'ACTUAL_DEFECT')} className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:underline">
+              Ombor aktlarini ko'rish →
+            </button>
           </div>
         </div>
 

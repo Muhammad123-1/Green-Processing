@@ -1447,12 +1447,18 @@ model ExecutiveWastageLog {
   reportedById     Int?
   reportedByName   String?  // Qayd etgan shaxs (QC / Texnolog)
   receivedByName   String?  // Qabul qilgan omborchi
+  investigatedByName String? // Tergov / tekshiruvni olib borgan vakolatli xodim
+  responsibilityStatus String @default("NOT_DETERMINED") // NOT_DETERMINED, UNDER_INVESTIGATION, DETERMINED, CLEARED
+  responsiblePersonName String? // Faqat tasdiqlangan qaror bo'lsa kiritiladi
+  responsibilityDecisionNote String? // Qaror asosi yoki hujjat raqami
+  responsibilityDecidedAt DateTime?
   stage            String   // INCOMING | PROCESSING | STORAGE
   wastageType      String   // ACTUAL_DEFECT | NATURAL_TECH_WASTE
   weightKg         Float    // Vazn kg
   reasonCategory   String   // Sabab kategoriyasi
   detailedComment  String?  // Batafsil izoh
   photoUrl         String?  // Isbotlovchi rasm/hujjat havolasi (ixtiyoriy)
+  documentUrl      String?  // Dalolatnoma yoki boshqa tasdiqlovchi hujjat havolasi
   incidentDate     String   // Sana YYYY-MM-DD
   incidentTime     String?  // Vaqt HH:mm
   isCancelled      Boolean  @default(false)
@@ -1465,5 +1471,6 @@ model ExecutiveWastageLog {
   @@index([stage])
   @@index([wastageType])
   @@index([supplierName])
+  @@index([responsibilityStatus])
 }
 

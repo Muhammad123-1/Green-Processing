@@ -23,7 +23,7 @@ export interface ProductBalanceItem {
   techWasteKg: number
   actualDefectKg: number
   currentStockKg: number
-  standardLossPercent: number
+  standardLossPercent: number | null
   actualLossPercent: number | null
   actualDefectPercent: number | null
   yieldPercent: number | null
@@ -406,7 +406,7 @@ export default function ProductBalanceTable({
                       {item.currentStockKg.toLocaleString()}
                     </td>
                     <td className="p-3.5 text-center font-mono text-slate-500">
-                      {item.standardLossPercent}%
+                      {item.standardLossPercent !== null ? `${item.standardLossPercent}%` : '—'}
                     </td>
                     <td className="p-3.5 text-center font-mono font-bold">
                       {item.actualLossPercent !== null ? (

@@ -247,13 +247,15 @@ export async function GET(req: NextRequest) {
 
       // Me'yor va status
       const std = standardsMap.get(norm(item.productName))
-      const standardLossPercent = std?.processingNormPercent ?? 12.0
-      const criticalThreshold = std?.criticalThreshold ?? 5.0
+      // Standards are an approved configuration, not an inferred default.
+      // Without one we show NO_DATA instead of presenting an invented threshold.
+      const standardLossPercent = std?.processingNormPercent ?? null
+      const criticalThreshold = std?.criticalThreshold ?? null
 
       let variancePercent: number | null = null
       let status: 'NORMAL' | 'WARNING' | 'CRITICAL' | 'NO_DATA' = 'NO_DATA'
 
-      if (actualLossPercent !== null) {
+      if (actualLossPercent !== null && standardLossPercent !== null && criticalThreshold !== null) {
         variancePercent = actualLossPercent - standardLossPercent
         if (variancePercent > criticalThreshold) {
           status = 'CRITICAL'

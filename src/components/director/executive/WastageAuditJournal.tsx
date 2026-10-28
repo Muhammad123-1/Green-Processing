@@ -15,6 +15,8 @@ import {
   Calendar,
   Image as ImageIcon,
   CheckCircle,
+  ShieldCheck,
+  Save,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -26,12 +28,18 @@ export interface WastageLogItem {
   supplierName: string | null
   reportedByName: string | null
   receivedByName: string | null
+  investigatedByName: string | null
+  responsibilityStatus: 'NOT_DETERMINED' | 'UNDER_INVESTIGATION' | 'DETERMINED' | 'CLEARED'
+  responsiblePersonName: string | null
+  responsibilityDecisionNote: string | null
+  responsibilityDecidedAt: string | null
   stage: 'INCOMING' | 'PROCESSING' | 'STORAGE'
   wastageType: 'ACTUAL_DEFECT' | 'NATURAL_TECH_WASTE'
   weightKg: number
   reasonCategory: string
   detailedComment: string | null
   photoUrl: string | null
+  documentUrl: string | null
   incidentDate: string
   incidentTime: string | null
   isCancelled: boolean
@@ -39,10 +47,14 @@ export interface WastageLogItem {
 
 interface Props {
   initialProductFilter?: string
+  initialStageFilter?: string
+  initialWastageType?: string
+  dateFrom?: string
+  dateTo?: string
   lang: string
 }
 
-export default function WastageAuditJournal({ initialProductFilter = '', lang }: Props) {
+export default function WastageAuditJournal({ initialProductFilter = '', initialStageFilter = '', initialWastageType = '', dateFrom = '', dateTo = '', lang }: Props) {
   const [items, setItems] = useState<WastageLogItem[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -52,12 +64,20 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
   // Filters
   const [search, setSearch] = useState('')
   const [stageFilter, setStageFilter] = useState('')
+  const [wastageTypeFilter, setWastageTypeFilter] = useState(initialWastageType)
   const [productFilter, setProductFilter] = useState(initialProductFilter)
 
   // Modals
   const [selectedAct, setSelectedAct] = useState<WastageLogItem | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [savingDecision, setSavingDecision] = useState(false)
+  const [decision, setDecision] = useState({
+    investigatedByName: '',
+    responsibilityStatus: 'NOT_DETERMINED',
+    responsiblePersonName: '',
+    responsibilityDecisionNote: '',
+  })
 
   // New act form
   const [newAct, setNewAct] = useState({
@@ -70,6 +90,7 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
     reasonCategory: 'Mexanik shikast',
     detailedComment: '',
     photoUrl: '',
+    documentUrl: '',
     incidentDate: new Date().toISOString().slice(0, 10),
   })
 
@@ -78,6 +99,21 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
       setProductFilter(initialProductFilter)
     }
   }, [initialProductFilter])
+
+  useEffect(() => {
+    setStageFilter(initialStageFilter)
+    setWastageTypeFilter(initialWastageType)
+  }, [initialStageFilter, initialWastageType])
+
+  useEffect(() => {
+    if (!selectedAct) return
+    setDecision({
+      investigatedByName: selectedAct.investigatedByName || '',
+      responsibilityStatus: selectedAct.responsibilityStatus || 'NOT_DETERMINED',
+      responsiblePersonName: selectedAct.responsiblePersonName || '',
+      responsibilityDecisionNote: selectedAct.responsibilityDecisionNote || '',
+    })
+  }, [selectedAct])
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
@@ -88,7 +124,10 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
       })
       if (search) params.append('search', search)
       if (stageFilter) params.append('stage', stageFilter)
+      if (wastageTypeFilter) params.append('wastageType', wastageTypeFilter)
       if (productFilter) params.append('productName', productFilter)
+      if (dateFrom) params.append('dateFrom', dateFrom)
+      if (dateTo) params.append('dateTo', dateTo)
 
       const res = await fetch(`/api/director/wastage-logs?${params.toString()}`)
       const data = await res.json()
@@ -104,7 +143,7 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
     } finally {
       setLoading(false)
     }
-  }, [page, search, stageFilter, productFilter])
+  }, [page, search, stageFilter, wastageTypeFilter, productFilter, dateFrom, dateTo])
 
   useEffect(() => {
     fetchLogs()
@@ -138,6 +177,7 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
           reasonCategory: 'Mexanik shikast',
           detailedComment: '',
           photoUrl: '',
+          documentUrl: '',
           incidentDate: new Date().toISOString().slice(0, 10),
         })
         await fetchLogs()
@@ -148,6 +188,36 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
       toast.error("Server bilan aloqa uzildi")
     } finally {
       setCreating(false)
+    }
+  }
+
+  const responsibilityLabel = (status: WastageLogItem['responsibilityStatus']) => {
+    switch (status) {
+      case 'DETERMINED': return 'Tasdiqlangan'
+      case 'UNDER_INVESTIGATION': return 'Tekshiruvda'
+      case 'CLEARED': return 'Javobgarlik aniqlanmadi'
+      default: return 'Aniqlanmagan'
+    }
+  }
+
+  const saveResponsibility = async () => {
+    if (!selectedAct) return
+    setSavingDecision(true)
+    try {
+      const res = await fetch('/api/director/wastage-logs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedAct.id, action: 'RESPONSIBILITY_DECISION', ...decision }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.success) throw new Error(data?.error || 'Saqlashda xatolik')
+      setItems((current) => current.map((item) => item.id === data.log.id ? data.log : item))
+      setSelectedAct(data.log)
+      toast.success('Javobgarlik qarori audit jurnaliga saqlandi')
+    } catch (error: any) {
+      toast.error(error?.message || 'Server bilan aloqa uzildi')
+    } finally {
+      setSavingDecision(false)
     }
   }
 
@@ -200,6 +270,16 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
             <option value="STORAGE">3. Ombor (Storage)</option>
           </select>
 
+          <select
+            value={wastageTypeFilter}
+            onChange={(e) => { setWastageTypeFilter(e.target.value); setPage(1) }}
+            className="px-2.5 py-1.5 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-750 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 outline-none"
+          >
+            <option value="">Barcha yo'qotishlar</option>
+            <option value="ACTUAL_DEFECT">Haqiqiy brak</option>
+            <option value="NATURAL_TECH_WASTE">Texnologik chiqindi</option>
+          </select>
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 text-slate-400" size={14} />
@@ -248,7 +328,8 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
               <th className="p-3.5 text-right">{lang === 'ru' ? 'Вес (кг)' : 'Vazn (kg)'}</th>
               <th className="p-3.5">{lang === 'ru' ? 'Поставщик / Партия' : "Ta'minotchi / Partiya"}</th>
               <th className="p-3.5">{lang === 'ru' ? 'Причина' : 'Brak sababi'}</th>
-              <th className="p-3.5">{lang === 'ru' ? 'Ответственный' : "Mas'ul"}</th>
+              <th className="p-3.5">{lang === 'ru' ? 'Заявитель' : 'Qayd etgan'}</th>
+              <th className="p-3.5">{lang === 'ru' ? 'Ответственность' : 'Javobgarlik'}</th>
               <th className="p-3.5 text-center">{lang === 'ru' ? 'Фото' : 'Foto'}</th>
               <th className="p-3.5 w-10 pr-5"></th>
             </tr>
@@ -257,14 +338,14 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
             {loading ? (
               [1, 2, 3, 4].map((i) => (
                 <tr key={i} className="animate-pulse">
-                  <td colSpan={10} className="p-4 bg-slate-50/50 dark:bg-dark-850/30">
+                  <td colSpan={11} className="p-4 bg-slate-50/50 dark:bg-dark-850/30">
                     <div className="h-5 bg-slate-200 dark:bg-dark-750 rounded" />
                   </td>
                 </tr>
               ))
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={10} className="p-12 text-center text-slate-400">
+                <td colSpan={11} className="p-12 text-center text-slate-400">
                   <div className="max-w-sm mx-auto space-y-1">
                     <div className="text-sm font-bold text-slate-600 dark:text-slate-300">
                       {lang === 'ru' ? 'Актов не найдено' : "Hech qanday brak akti topilmadi"}
@@ -312,6 +393,11 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
                   </td>
                   <td className="p-3.5 text-slate-600 dark:text-slate-400 text-[11px]">
                     {act.reportedByName || '—'}
+                  </td>
+                  <td className="p-3.5 text-[11px]">
+                    <span className={act.responsibilityStatus === 'DETERMINED' ? 'font-bold text-rose-600' : 'text-slate-500'}>
+                      {act.responsibilityStatus === 'DETERMINED' ? act.responsiblePersonName : responsibilityLabel(act.responsibilityStatus)}
+                    </span>
                   </td>
                   <td className="p-3.5 text-center">
                     {act.photoUrl ? (
@@ -367,7 +453,7 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
       {/* Modal: View Act Details */}
       {selectedAct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-dark-800 pb-3">
               <div>
                 <span className="text-[10px] font-black uppercase text-emerald-600 tracking-wider">Brak Akti</span>
@@ -403,6 +489,14 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
                 <span className="text-slate-400 block text-[10px]">Sana va vaqt</span>
                 <span className="text-slate-700 dark:text-slate-300">{selectedAct.incidentDate} {selectedAct.incidentTime || ''}</span>
               </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Qayd etgan</span>
+                <span className="text-slate-700 dark:text-slate-300">{selectedAct.reportedByName || 'Ko\'rsatilmagan'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Qabul qilgan</span>
+                <span className="text-slate-700 dark:text-slate-300">{selectedAct.receivedByName || 'Ko\'rsatilmagan'}</span>
+              </div>
               <div className="col-span-2">
                 <span className="text-slate-400 block text-[10px]">Sabab kategoriyasi</span>
                 <span className="font-bold text-amber-600">{selectedAct.reasonCategory}</span>
@@ -426,7 +520,51 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
                   </a>
                 </div>
               )}
+              {selectedAct.documentUrl && (
+                <div className="col-span-2">
+                  <span className="text-slate-400 block text-[10px] mb-1">Tasdiqlovchi hujjat</span>
+                  <a href={selectedAct.documentUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
+                    <FileText size={14} /> Hujjatni ochish
+                  </a>
+                </div>
+              )}
             </div>
+
+            <section className="border border-slate-200 dark:border-dark-750 rounded-2xl p-3.5 space-y-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={16} className="text-indigo-600" />
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white">Sabab va javobgarlik qarori</h4>
+                  <p className="text-[10px] text-slate-400">Qayd etgan yoki qabul qilgan shaxs avtomatik ravishda aybdor deb belgilanmaydi.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <label className="font-semibold text-slate-600 dark:text-slate-300">Tekshirgan shaxs
+                  <input value={decision.investigatedByName} onChange={(e) => setDecision({ ...decision, investigatedByName: e.target.value })} className="mt-1 w-full px-2.5 py-2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl outline-none" placeholder="F.I.Sh." />
+                </label>
+                <label className="font-semibold text-slate-600 dark:text-slate-300">Qaror holati
+                  <select value={decision.responsibilityStatus} onChange={(e) => setDecision({ ...decision, responsibilityStatus: e.target.value as WastageLogItem['responsibilityStatus'], responsiblePersonName: e.target.value === 'DETERMINED' ? decision.responsiblePersonName : '' })} className="mt-1 w-full px-2.5 py-2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl outline-none">
+                    <option value="NOT_DETERMINED">Aniqlanmagan</option>
+                    <option value="UNDER_INVESTIGATION">Tekshiruvda</option>
+                    <option value="DETERMINED">Tasdiqlangan</option>
+                    <option value="CLEARED">Javobgarlik aniqlanmadi</option>
+                  </select>
+                </label>
+                {decision.responsibilityStatus === 'DETERMINED' && (
+                  <label className="font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">Tasdiqlangan javobgar shaxs
+                    <input value={decision.responsiblePersonName} onChange={(e) => setDecision({ ...decision, responsiblePersonName: e.target.value })} className="mt-1 w-full px-2.5 py-2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl outline-none" placeholder="F.I.Sh. yoki tashkilot" />
+                  </label>
+                )}
+                <label className="font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">Qaror asosi / hujjat raqami
+                  <textarea value={decision.responsibilityDecisionNote} onChange={(e) => setDecision({ ...decision, responsibilityDecisionNote: e.target.value })} rows={2} className="mt-1 w-full px-2.5 py-2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl outline-none" placeholder="Tasdiqlovchi dalil yoki qaror rekviziti" />
+                </label>
+              </div>
+              <div className="flex justify-end">
+                <button onClick={saveResponsibility} disabled={savingDecision} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold">
+                  <Save size={14} /> {savingDecision ? 'Saqlanmoqda...' : 'Qarorni saqlash'}
+                </button>
+              </div>
+            </section>
 
             <div className="pt-2 flex justify-end">
               <button
@@ -559,6 +697,17 @@ export default function WastageAuditJournal({ initialProductFilter = '', lang }:
                   placeholder="https://... yoki bo'sh qoldiring"
                   value={newAct.photoUrl}
                   onChange={(e) => setNewAct({ ...newAct, photoUrl: e.target.value })}
+                  className="w-full px-3 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl outline-none font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Hujjat havolasi (ixtiyoriy)</label>
+                <input
+                  type="url"
+                  placeholder="Dalolatnoma, ekspertiza yoki boshqa fayl havolasi"
+                  value={newAct.documentUrl}
+                  onChange={(e) => setNewAct({ ...newAct, documentUrl: e.target.value })}
                   className="w-full px-3 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl outline-none font-mono text-[11px]"
                 />
               </div>
