@@ -376,13 +376,13 @@ export default function ProductBalanceTable({
                 onClick={() => handleSort('outputKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
               >
-                {lang === 'ru' ? 'Выпуск ГП / Выход %' : 'Tayyor chiqim / Yield %'} {renderSortIndicator('outputKg')}
+                {lang === 'ru' ? 'Выпуск ГП / Выход %' : 'Tayyor chiqim / Chiqish %'} {renderSortIndicator('outputKg')}
               </th>
               <th
                 onClick={() => handleSort('techWasteKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
               >
-                {lang === 'ru' ? 'Тех. отход (кг)' : 'Tex. chiqindi (kg)'} {renderSortIndicator('techWasteKg')}
+                {lang === 'ru' ? 'Тех. отход (кг)' : 'Tozalash chiqindisi (kg)'} {renderSortIndicator('techWasteKg')}
               </th>
               <th
                 onClick={() => handleSort('actualDefectKg')}
@@ -394,7 +394,7 @@ export default function ProductBalanceTable({
                 onClick={() => handleSort('currentStockKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
               >
-                {lang === 'ru' ? 'Остаток / Покрытие' : 'Qoldiq / Qoplash muddati'} {renderSortIndicator('currentStockKg')}
+                {lang === 'ru' ? 'Остаток / Запас на дни' : 'Ombor qoldig‘i / Necha kunga yetadi?'} {renderSortIndicator('currentStockKg')}
               </th>
               <th className="p-3.5 text-center">{lang === 'ru' ? 'Норма %' : "Me'yor %"}</th>
               <th
@@ -481,9 +481,9 @@ export default function ProductBalanceTable({
                       <div>{item.outputKg > 0 ? item.outputKg.toLocaleString() : '—'}</div>
                       {yieldVal !== null && yieldVal !== undefined && (
                         <span className="text-[10px] text-emerald-700 dark:text-emerald-300 block">
-                          Yield: {yieldVal}%
+                          {lang === 'ru' ? 'Выход:' : 'Chiqish:'} {yieldVal}%
                           {item.stockRelativeOutputPercent !== null && item.stockRelativeOutputPercent !== undefined
-                            ? ` (Zaxiradan: ${item.stockRelativeOutputPercent}%)`
+                            ? ` (${lang === 'ru' ? 'от запаса:' : 'Zaxiradan:'} ${item.stockRelativeOutputPercent}%)`
                             : ''}
                         </span>
                       )}

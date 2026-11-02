@@ -76,9 +76,6 @@ export default function DirectorPage() {
   const formatDual = formatDirector
   const dateLocale: string = directorLang === 'ru' ? 'ru-RU' : directorLang === 'en' ? 'en-US' : 'uz-UZ'
 
-  // Top Director Tab Mode: Executive 3-Layer Audit vs All Plant Departments
-  const [directorMainTab, setDirectorMainTab] = useState<'executive' | 'departments'>('departments')
-
   // Period state
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('all')
   const [customFrom, setCustomFrom] = useState('')
@@ -506,48 +503,14 @@ export default function DirectorPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 1.5. TOP MODE SWITCHER: EXECUTIVE AUDIT VS ALL PLANT DEPARTMENTS */}
+      {/* 2. ASOSIY ZAVOD BO'LIMLARI VA DIREKTOR ISH STOLI */}
       {/* ========================================================================= */}
-      <div className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-dark-850 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-750 no-print">
-        <button
-          onClick={() => setDirectorMainTab('executive')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
-            directorMainTab === 'executive'
-              ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-600/25'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <Layers size={16} />
-          <span>{formatDual("Ijrochi Nazorat (4-Qavatli Audit)", "Исполнительный аудит (4 уровня)", "Executive Audit (4 Layers)")}</span>
-        </button>
-        <button
-          onClick={() => setDirectorMainTab('departments')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
-            directorMainTab === 'departments'
-              ? 'bg-white dark:bg-dark-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-dark-700'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <BarChart3 size={16} />
-          <span>{formatDual("Umumiy Zavod Bo'limlari", "Все отделы завода", "Plant Departments Overview")}</span>
-        </button>
-      </div>
+      <ExecutiveDashboardContainer lang={directorLang} />
 
-      <div className="flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-dark-750 bg-slate-100 p-3 dark:bg-dark-850 no-print">
-        <BarChart3 size={18} className="text-emerald-600" />
-        <div>
-          <h2 className="text-sm font-black text-slate-900 dark:text-white">Operatsiyalar</h2>
-          <p className="text-xs text-slate-500">Kirim, chiqim, brak va ombor bo‘yicha umumiy holat</p>
-        </div>
-      </div>
-
-      {directorMainTab === 'executive' ? (
-        <ExecutiveDashboardContainer lang={directorLang} />
-      ) : (
-        <>
-          {/* ========================================================================= */}
-          {/* 2. TIME PERIOD SELECTOR BAR */}
-          {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* 3. VAQT VA GRAFIKLAR NAZORATI */}
+      {/* ========================================================================= */}
+      <div className="pt-4 border-t border-slate-200 dark:border-dark-750 space-y-6">
       <div className="bg-slate-100/80 dark:bg-dark-850 p-1.5 rounded-2xl flex flex-wrap items-center justify-between gap-2 border border-slate-200 dark:border-dark-750 no-print">
         <div className="flex items-center gap-1 overflow-x-auto">
           {[
@@ -1536,8 +1499,7 @@ export default function DirectorPage() {
           </Link>
         </div>
       </div>
-        </>
-      )}
+      </div>
 
       {/* ========================================================================= */}
       {/* 5. DRILL-DOWN MODAL FOR DEPARTMENTS / AUDIT */}

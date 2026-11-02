@@ -127,10 +127,11 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                {lang === 'ru' ? 'Исполнительный аудит и контроль сырья' : 'Ijrochi Nazorat va 4-Qavatli Audit'}
+                {lang === 'ru' ? 'Контроль отделов завода (Рабочий стол Директора)' : "Zavod Bo'limlari Nazorati (Direktor Ish Stoli)"}
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
-                100% Real DB
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                {lang === 'ru' ? 'Реальная база завода' : 'Haqiqiy Zavod Ma’lumotlari'}
               </span>
               {data?.period?.operationalDays !== undefined && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
@@ -140,8 +141,8 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
               {lang === 'ru'
-                ? '4-уровневый аудит: Сводка KPI → Продукт и покрытие запасов → Акты и партии → Доказательства и ответственность'
-                : "4 qavatli audit: Zavod KPI → Mahsulot va zaxira qoplash muddati → Aktlar va partiyalar → Dalillar va javobgarlik"}
+                ? 'Склад, производство, контроль качества и снабжение: понятные показатели и объяснение каждой причины'
+                : "Omborxona, ishlab chiqarish sexi, sifat nazorati va ta'minot bo'limlarining aniq ko'rsatkichlari va sabablari"}
             </p>
           </div>
         </div>
@@ -268,7 +269,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <Layers size={14} />
-            <span>{lang === 'ru' ? '1. Баланс и покрытие запасов' : '1. Xomashyo Balansi va Qoplash muddati'}</span>
+            <span>{lang === 'ru' ? '1. Склад сырья (Остатки и запас)' : '1. Omborxona (Xomashyo va zaxira yetishi)'}</span>
           </button>
           <button
             onClick={() => setActiveTab('journal')}
@@ -279,7 +280,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <FileText size={14} />
-            <span>{lang === 'ru' ? '2. Журнал брака и ответственность' : '2. Brak Aktlari va Javobgarlik Jurnali'}</span>
+            <span>{lang === 'ru' ? '2. Контроль качества (Причины брака)' : '2. Sifat Nazorati (Brak sabablari)'}</span>
           </button>
           <button
             onClick={() => setActiveTab('suppliers_fifo')}
@@ -290,7 +291,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <Truck size={14} />
-            <span>{lang === 'ru' ? '3. Брак поставщиков и очередь FIFO' : "3. Ta'minotchilar Braki va FIFO Navbati"}</span>
+            <span>{lang === 'ru' ? '3. Поставщики и очередь FIFO' : "3. Ta'minotchilar & FIFO Navbati"}</span>
           </button>
           <button
             onClick={() => setActiveTab('incoming')}
@@ -301,7 +302,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <FileSpreadsheet size={14} />
-            <span>{lang === 'ru' ? '4. Входящее сырьё' : '4. Kiruvchi xomashyo aktlari'}</span>
+            <span>{lang === 'ru' ? '4. Акты приёма сырья' : '4. Kiruvchi xomashyo aktlari'}</span>
           </button>
           <button
             onClick={() => setActiveTab('operations')}
@@ -312,7 +313,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <CheckCircle2 size={14} />
-            <span>{lang === 'ru' ? '5. Операции и аудит' : '5. Operatsiyalar va Xodimlar Auditi'}</span>
+            <span>{lang === 'ru' ? '5. Работа сотрудников' : '5. Xodimlar faoliyati (Kim nima qildi)'}</span>
           </button>
         </div>
 

@@ -44,7 +44,7 @@ export default function ProductLossDrawer({
         <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-dark-750 flex items-center justify-between gap-3 bg-slate-50/80 dark:bg-dark-850/60">
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Layer 2: {lang === 'ru' ? 'Полный жизненный цикл и нормативы запасов' : "Mahsulot hayotiy sikli (4 bosqich) va zaxira me'yorlari"}
+              {lang === 'ru' ? 'Полная история продукта, контроль качества и остатки' : "Mahsulotning to'liq tarixi, sifat nazorati va saqlash sabablari"}
             </span>
             <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mt-0.5">
               <span>{product.productName}</span>
@@ -98,13 +98,13 @@ export default function ProductLossDrawer({
               </div>
               <div className="space-y-1 text-[11px]">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{lang === 'ru' ? 'Макс. срок хранения:' : 'Maks. xavfsiz saqlash:'}</span>
+                  <span className="text-slate-500">{lang === 'ru' ? 'Макс. срок хранения:' : 'Maksimal saqlash muddati:'}</span>
                   <b className="text-slate-900 dark:text-white">
                     {product.approvedMaxStorageDays ? `${product.approvedMaxStorageDays} kun` : 'Kiritilmagan'}
                   </b>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{lang === 'ru' ? 'Ср. дневной расход (Formula A):' : "O'rtacha kunlik sarf (Formula A):"}</span>
+                  <span className="text-slate-500">{lang === 'ru' ? 'Ср. дневной расход:' : "Kunlik o'rtacha sarf:"}</span>
                   <b className="font-mono text-slate-900 dark:text-white">
                     {product.avgDailyConsumptionKg !== null && product.avgDailyConsumptionKg !== undefined
                       ? `${product.avgDailyConsumptionKg.toLocaleString()} kg/kun`
@@ -112,7 +112,7 @@ export default function ProductLossDrawer({
                   </b>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{lang === 'ru' ? 'Ср. недельный расход:' : "O'rtacha haftalik sarf:"}</span>
+                  <span className="text-slate-500">{lang === 'ru' ? 'Ср. недельный расход:' : "Haftalik o'rtacha sarf:"}</span>
                   <b className="font-mono text-slate-900 dark:text-white">
                     {product.avgWeeklyConsumptionKg !== null && product.avgWeeklyConsumptionKg !== undefined
                       ? `${product.avgWeeklyConsumptionKg.toLocaleString()} kg/hafta`
@@ -120,7 +120,7 @@ export default function ProductLossDrawer({
                   </b>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{lang === 'ru' ? 'Макс. реком. запас (Formula B):' : 'Maks. tavsiya zaxira (Formula B):'}</span>
+                  <span className="text-slate-500">{lang === 'ru' ? 'Макс. рекомендуемый запас:' : 'Tavsiya etilgan eng ko‘p zaxira:'}</span>
                   <b className="font-mono text-indigo-700 dark:text-indigo-300">
                     {product.maxRecommendedInventoryKg !== null && product.maxRecommendedInventoryKg !== undefined
                       ? `${product.maxRecommendedInventoryKg.toLocaleString()} kg`
@@ -129,22 +129,22 @@ export default function ProductLossDrawer({
                 </div>
                 <div className="flex justify-between pt-1 border-t border-indigo-200/60 dark:border-indigo-800/40">
                   <span className="text-slate-600 dark:text-slate-300 font-bold">
-                    {lang === 'ru' ? 'Покрытие запаса (Formulas C/D):' : 'Zaxira qoplash muddati (C/D):'}
+                    {lang === 'ru' ? 'Запаса хватит на:' : 'Zaxira yetish muddati:'}
                   </span>
                   <b className="font-mono text-emerald-700 dark:text-emerald-300">
                     {product.stockCoverageDays !== null && product.stockCoverageDays !== undefined
                       ? `${product.stockCoverageDays} kun (${product.stockCoverageWeeks ?? '—'} hafta)`
-                      : 'Hisoblab bo‘lmaydi (sarf = 0)'}
+                      : 'Hozircha sarf yo‘q'}
                   </b>
                 </div>
               </div>
             </div>
 
-            {/* Card B: Production Yield vs Stock-Relative Output (Requirement 5) */}
+            {/* Card B: Production Yield vs Stock-Relative Output */}
             <div className="bg-emerald-50/60 dark:bg-emerald-950/20 p-3.5 rounded-2xl border border-emerald-200/70 dark:border-emerald-800/40 space-y-2 text-xs">
               <div className="flex items-center gap-1.5 font-black text-emerald-900 dark:text-emerald-300 uppercase tracking-wide text-[11px]">
                 <Calculator size={14} />
-                <span>{lang === 'ru' ? 'Формулы выхода продукции' : 'Ishlab chiqarish foizlari (Req 5)'}</span>
+                <span>{lang === 'ru' ? 'Выход продукции из сырья' : 'Sexda mahsulot chiqishi va unumdorlik'}</span>
               </div>
               <div className="space-y-1 text-[11px]">
                 <div className="flex justify-between">
@@ -167,7 +167,7 @@ export default function ProductLossDrawer({
                 </div>
                 <div className="flex justify-between pt-1 border-t border-emerald-200/60 dark:border-emerald-800/40">
                   <span className="text-slate-600 dark:text-slate-300 font-bold">
-                    {lang === 'ru' ? 'Выход из расхода (Production Yield):' : 'Haqiqiy sarfdan chiqish (Yield):'}
+                    {lang === 'ru' ? 'Выход из расхода (эффективность):' : 'Xomashyodan chiqish (unumdorlik):'}
                   </span>
                   <b className="font-mono text-emerald-700 dark:text-emerald-300">
                     {yieldPct !== null && yieldPct !== undefined ? `${yieldPct}%` : '—'}
