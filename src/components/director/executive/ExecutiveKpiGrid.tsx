@@ -10,17 +10,36 @@ import {
   Recycle,
   Warehouse,
   Minus,
+  ShieldCheck,
 } from 'lucide-react'
 
 interface KpiData {
+  openingUsableStockKg?: number
   totalRawMaterialInKg: number
+  rejectedIncomingKg?: number
+  totalAvailableRawMaterialsKg?: number
+  totalConsumedRawKg?: number
   totalFinishedGoodsKg: number
+  stockRelativeOutputPercent?: number | null
+  productionYieldPercent?: number | null
   overallYieldPercent: number | null
   actualDefectKg: number
   actualDefectPercent: number | null
   naturalTechWasteKg: number
   naturalTechWastePercent: number | null
   currentWarehouseStockKg: number
+  inventoryStatusSummary?: {
+    sufficientCount: number
+    lowCount: number
+    outOfStockCount: number
+    excessCount: number
+  }
+  finalQcSummary?: {
+    checkedKg: number
+    approvedKg: number
+    rejectedKg: number
+  }
+  fifoExceptionsCount?: number
   previousPeriodDiff?: {
     inflowDiffPercent: number | null
     outputDiffPercent: number | null
@@ -41,7 +60,7 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="h-32 rounded-3xl bg-slate-100 dark:bg-dark-800/80 border border-slate-200 dark:border-dark-750 p-4"
+            className="h-36 rounded-3xl bg-slate-100 dark:bg-dark-800/80 border border-slate-200 dark:border-dark-750 p-4"
           />
         ))}
       </div>
@@ -84,13 +103,16 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
     )
   }
 
+  const yieldPct = kpis?.productionYieldPercent ?? kpis?.overallYieldPercent ?? null
+  const stockRelPct = kpis?.stockRelativeOutputPercent ?? null
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
-      {/* 1. Xomashyo Kirimi */}
+      {/* 1. Qabul qilingan xomashyo va Jami mavjud zaxira */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 sm:p-5 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {lang === 'ru' ? 'Приход сырья' : 'Xomashyo kirimi'}
+            {lang === 'ru' ? 'Принятое сырьё' : 'Qabul qilingan xomashyo'}
           </span>
           <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <Truck size={17} />
@@ -101,19 +123,28 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
             {formatWeight(kpis?.totalRawMaterialInKg ?? 0)}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            {(kpis?.totalRawMaterialInKg ?? 0).toLocaleString()} kg
+            {lang === 'ru' ? 'Всего доступно (с нач. ост.):' : "Boshlang'ich qoldiq bilan:"}{' '}
+            <b className="text-slate-700 dark:text-slate-200">
+              {((kpis?.totalAvailableRawMaterialsKg ?? kpis?.totalRawMaterialInKg) || 0).toLocaleString()} kg
+            </b>
           </p>
+          {(kpis?.rejectedIncomingKg || 0) > 0 && (
+            <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5">
+              {lang === 'ru' ? 'Отклонено при приёмке:' : 'Qabulda rad etilgan (kirmagan):'}{' '}
+              {kpis?.rejectedIncomingKg?.toLocaleString()} kg
+            </p>
+          )}
         </div>
         <div className="pt-2 border-t border-slate-100 dark:border-dark-800">
           {renderDelta(kpis?.previousPeriodDiff?.inflowDiffPercent)}
         </div>
       </div>
 
-      {/* 2. Tayyor Mahsulot Chiqimi (Yield) */}
+      {/* 2. Tayyor Mahsulot Chiqimi (Production Yield % vs Stock-Relative Output %) */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 sm:p-5 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {lang === 'ru' ? 'Выпуск ГП (Выход)' : 'Tayyor mahsulot (Chiqim)'}
+            {lang === 'ru' ? 'Выпуск ГП (Выход)' : 'Tayyor mahsulot'}
           </span>
           <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <PackageCheck size={17} />
@@ -123,9 +154,20 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
           <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             {formatWeight(kpis?.totalFinishedGoodsKg ?? 0)}
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">
-              Yield: {kpis?.overallYieldPercent !== null ? `${kpis?.overallYieldPercent}%` : '—'}
+          <div className="flex flex-col gap-1 mt-1">
+            <span
+              className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded w-fit"
+              title="Tayyor mahsulot / Haqiqiy sarflangan xomashyo × 100"
+            >
+              {lang === 'ru' ? 'Выход из расхода (Yield):' : 'Sarfdan chiqish (Yield):'}{' '}
+              {yieldPct !== null ? `${yieldPct}%` : '—'}
+            </span>
+            <span
+              className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded w-fit"
+              title="Tayyor mahsulot / (Boshlang'ich qoldiq + Qabul qilingan kirim) × 100"
+            >
+              {lang === 'ru' ? 'К общему запасу:' : 'Jami zaxiraga nisbatan:'}{' '}
+              {stockRelPct !== null ? `${stockRelPct}%` : '—'}
             </span>
           </div>
         </div>
@@ -149,7 +191,7 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
             {formatWeight(kpis?.actualDefectKg ?? 0)}
           </div>
           <p className="text-[11px] font-extrabold text-rose-500 dark:text-rose-400 mt-0.5">
-            {kpis?.actualDefectPercent !== null ? `${kpis?.actualDefectPercent}% xomashyodan` : '0 kg'}
+            {kpis?.actualDefectPercent !== null ? `${kpis?.actualDefectPercent}% sarfdan` : '0 kg'}
           </p>
         </div>
         <div className="pt-2 border-t border-slate-100 dark:border-dark-800">
@@ -157,7 +199,7 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
         </div>
       </div>
 
-      {/* 4. Texnologik Chiqindi (Tech Waste) */}
+      {/* 4. Tabiiy Texnologik Chiqindi (Natural Tech Waste) */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 sm:p-5 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -176,11 +218,11 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
           </p>
         </div>
         <div className="pt-2 border-t border-slate-100 dark:border-dark-800 text-[10px] text-slate-400">
-          {lang === 'ru' ? 'Естественная убыль/очистка' : "Po'choq va tozalash chiqindisi"}
+          {lang === 'ru' ? 'Естественная убыль / очистка (не брак)' : "Po'choq va tozalash chiqindisi (brak emas)"}
         </div>
       </div>
 
-      {/* 5. Joriy Ombor Qoldig'i */}
+      {/* 5. Joriy Ombor Qoldig'i va Me'yor Statuslari */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 sm:p-5 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -194,12 +236,31 @@ export default function ExecutiveKpiGrid({ kpis, loading, lang }: Props) {
           <div className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
             {formatWeight(kpis?.currentWarehouseStockKg ?? 0)}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            {(kpis?.currentWarehouseStockKg ?? 0).toLocaleString()} kg
-          </p>
+          {kpis?.inventoryStatusSummary && (
+            <div className="flex flex-wrap items-center gap-1 mt-1 text-[10px] font-bold">
+              <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">
+                Yetarli: {kpis.inventoryStatusSummary.sufficientCount}
+              </span>
+              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                Kam: {kpis.inventoryStatusSummary.lowCount}
+              </span>
+              {kpis.inventoryStatusSummary.excessCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300">
+                  Ortiqcha: {kpis.inventoryStatusSummary.excessCount}
+                </span>
+              )}
+              <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300">
+                Tugagan: {kpis.inventoryStatusSummary.outOfStockCount}
+              </span>
+            </div>
+          )}
         </div>
-        <div className="pt-2 border-t border-slate-100 dark:border-dark-800 text-[10px] text-slate-400 font-medium">
-          {lang === 'ru' ? 'Фактическое наличие на складе' : "Ayni paytdagi mavjud zaxira"}
+        <div className="pt-2 border-t border-slate-100 dark:border-dark-800 text-[10px] text-slate-500 flex items-center justify-between">
+          <span className="flex items-center gap-1">
+            <ShieldCheck size={12} className="text-emerald-500" />
+            {lang === 'ru' ? 'Финальный ОКК:' : 'Yakuniy QC:'}
+          </span>
+          <b>{formatWeight(kpis?.finalQcSummary?.approvedKg ?? 0)}</b>
         </div>
       </div>
     </div>

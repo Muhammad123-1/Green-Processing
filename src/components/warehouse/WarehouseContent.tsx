@@ -78,14 +78,14 @@ const tBase = {
     exportExcel: "Excel (.xlsx) yuklab olish",
     tempDate: "Sana",
     tempTime: "Vaqt (M: 8-00, 17-00)",
-    tempIceberg: "Салат Айсберг (°C)",
-    tempOnion: "Лук белый (°C)",
-    tempTomato: "Томаты (°C)",
-    tempCarrot: "Морковь (°C)",
-    tempCabbage: "Капуста белокоч. (°C)",
-    tempDeviation: "Отклонения / Chiqish",
-    tempAction: "Корректирующие действия",
-    tempResp: "Ответственный (ФИО)",
+    tempIceberg: "Aysberg salati (°C)",
+    tempOnion: "Oq piyoz (°C)",
+    tempTomato: "Pomidor (°C)",
+    tempCarrot: "Sabzi (°C)",
+    tempCabbage: "Oq boshli karam (°C)",
+    tempDeviation: "Me'yordan og'ish",
+    tempAction: "Ko'rilgan tuzatish choralari",
+    tempResp: "Javobgar shaxs (F.I.Sh.)",
     save: "Saqlash",
     cancel: "Bekor qilish"
   },
@@ -381,7 +381,10 @@ export default function WarehouseContent() {
     targetLocation: 'OSHXONA',
     issuedQuantity: '',
     issuedUnit: 'kg',
-    notes: ''
+    notes: '',
+    isFifoException: false,
+    exceptionReason: '',
+    authorizedByQcName: ''
   })
   const [savingTransfer, setSavingTransfer] = useState(false)
   const selectedTransferProduct = useMemo(
@@ -827,7 +830,10 @@ export default function WarehouseContent() {
           targetLocation: 'OSHXONA',
           issuedQuantity: '',
           issuedUnit: 'kg',
-          notes: ''
+          notes: '',
+          isFifoException: false,
+          exceptionReason: '',
+          authorizedByQcName: ''
         })
         fetchInventory()
         fetchTransfers()
@@ -850,7 +856,10 @@ export default function WarehouseContent() {
       targetLocation: 'OSHXONA',
       issuedQuantity: '',
       issuedUnit: item.unit || 'kg',
-      notes: ''
+      notes: '',
+      isFifoException: false,
+      exceptionReason: '',
+      authorizedByQcName: ''
     })
     setShowTransferModal(true)
   }
@@ -3211,7 +3220,10 @@ export default function WarehouseContent() {
                   targetLocation: 'OSHXONA',
                   issuedQuantity: '',
                   issuedUnit: inventory.length > 0 ? inventory[0].unit : 'kg',
-                  notes: ''
+                  notes: '',
+                  isFifoException: false,
+                  exceptionReason: '',
+                  authorizedByQcName: ''
                 })
                 setShowTransferModal(true)
               }}
@@ -3947,6 +3959,80 @@ export default function WarehouseContent() {
                           </div>
                         )
                       })}
+                    </div>
+                  )}
+
+                  {/* QC-Authorized FIFO/FEFO Exception Toggle */}
+                  {selectedTransferProduct.batches.length > 1 && (
+                    <div className="pt-2 border-t border-slate-200 dark:border-dark-700 space-y-2.5">
+                      <label className="flex items-center gap-2 text-xs font-bold text-amber-500 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={transferForm.isFifoException}
+                          onChange={(e) =>
+                            setTransferForm({
+                              ...transferForm,
+                              isFifoException: e.target.checked,
+                              batchId: e.target.checked && selectedTransferProduct.batches[1]
+                                ? selectedTransferProduct.batches[1].id.toString()
+                                : selectedTransferProduct.batches[0].id.toString()
+                            })
+                          }
+                          className="rounded border-amber-500 text-amber-600 focus:ring-amber-500"
+                        />
+                        <ShieldCheck size={14} className="text-amber-400" />
+                        <span>Sifat Nazorati (QC) ruxsati bilan muqobil partiyani tanlash (FIFO Istisnosi)</span>
+                      </label>
+
+                      {transferForm.isFifoException && (
+                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2.5">
+                          <div>
+                            <label className="block text-[11px] font-bold text-amber-300 uppercase mb-1">
+                              Tanlangan Muqobil Partiya *
+                            </label>
+                            <select
+                              value={transferForm.batchId}
+                              onChange={(e) => setTransferForm({ ...transferForm, batchId: e.target.value })}
+                              className="w-full bg-dark-900 border border-amber-500/40 rounded-lg px-3 py-1.5 text-white text-xs font-mono"
+                            >
+                              {selectedTransferProduct.batches.map((b, idx) => (
+                                <option key={b.id} value={b.id}>
+                                  #{idx + 1} — Partiya #{b.batchNumber} ({b.quantity} {selectedTransferProduct.unit})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[11px] font-bold text-amber-300 uppercase mb-1">
+                                Tasdiqlagan QC Nazoratchi (F.I.Sh.) *
+                              </label>
+                              <input
+                                type="text"
+                                required={transferForm.isFifoException}
+                                placeholder="Masalan: Karimova N."
+                                value={transferForm.authorizedByQcName}
+                                onChange={(e) => setTransferForm({ ...transferForm, authorizedByQcName: e.target.value })}
+                                className="w-full bg-dark-900 border border-amber-500/40 rounded-lg px-3 py-1.5 text-white text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-bold text-amber-300 uppercase mb-1">
+                                QC Istisno Sababi *
+                              </label>
+                              <input
+                                type="text"
+                                required={transferForm.isFifoException}
+                                placeholder="Sifat yoki texnologik ko'rsatma sababi..."
+                                value={transferForm.exceptionReason}
+                                onChange={(e) => setTransferForm({ ...transferForm, exceptionReason: e.target.value })}
+                                className="w-full bg-dark-900 border border-amber-500/40 rounded-lg px-3 py-1.5 text-white text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import {
-  Calendar,
   RefreshCw,
   Sliders,
   AlertTriangle,
@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   Layers,
   FileText,
+  Truck,
+  ShieldCheck,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import ExecutiveKpiGrid from './ExecutiveKpiGrid'
@@ -19,6 +21,7 @@ import WastageAuditJournal from './WastageAuditJournal'
 import LossStandardsModal from './LossStandardsModal'
 import IncomingMaterialsAnalysis from './IncomingMaterialsAnalysis'
 import OperationsExecutivePanel from './OperationsExecutivePanel'
+import SupplierAndFifoAuditPanel from './SupplierAndFifoAuditPanel'
 
 interface Props {
   lang: string
@@ -36,7 +39,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   // Sub-views
-  const [activeTab, setActiveTab] = useState<'balance' | 'journal' | 'incoming' | 'operations'>('balance')
+  const [activeTab, setActiveTab] = useState<'balance' | 'journal' | 'suppliers_fifo' | 'incoming' | 'operations'>('balance')
   const [selectedProduct, setSelectedProduct] = useState<ProductBalanceItem | null>(null)
   const [showStandardsModal, setShowStandardsModal] = useState(false)
   const [journalProductFilter, setJournalProductFilter] = useState('')
@@ -99,6 +102,9 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
 
   const kpis = data?.kpis || null
   const productBalances: ProductBalanceItem[] = data?.productBalances || []
+  const supplierDefectAnalysis = data?.supplierDefectAnalysis || []
+  const fifoExceptions = data?.fifoExceptions || []
+  const activeFifoQueue = data?.activeFifoQueue || []
 
   const [journalStageFilter, setJournalStageFilter] = useState('')
   const [journalWastageType, setJournalWastageType] = useState('')
@@ -119,25 +125,29 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             <Layers size={22} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                {lang === 'ru' ? 'Исполнительный аудит и контроль сырья' : 'Ijrochi Nazorat va Yo‘qotishlar Auditi'}
+                {lang === 'ru' ? 'Исполнительный аудит и контроль сырья' : 'Ijrochi Nazorat va 4-Qavatli Audit'}
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
                 100% Real DB
               </span>
+              {data?.period?.operationalDays !== undefined && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
+                  {lang === 'ru' ? 'Раб. дней:' : 'Ish kunlari:'} {data.period.operationalDays}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
               {lang === 'ru'
-                ? '3-уровневый аудит: Сводка KPI → Анализ потерь по сырью → Журнал актов'
-                : "3 qavatli audit: KPI xulosa → Mahsulot yo'qotishlari → Birlamchi brak aktlari"}
+                ? '4-уровневый аудит: Сводка KPI → Продукт и покрытие запасов → Акты и партии → Доказательства и ответственность'
+                : "4 qavatli audit: Zavod KPI → Mahsulot va zaxira qoplash muddati → Aktlar va partiyalar → Dalillar va javobgarlik"}
             </p>
           </div>
         </div>
 
         {/* Date Filter & Actions */}
         <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
-          {/* Quick Period Buttons */}
           <div className="flex items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-2xl border border-slate-200 dark:border-dark-700 text-xs font-bold">
             <button
               onClick={() => handleSelectPeriod('all')}
@@ -148,6 +158,16 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
               }`}
             >
               {lang === 'ru' ? 'Все время' : 'Barchasi'}
+            </button>
+            <button
+              onClick={() => handleSelectPeriod('year')}
+              className={`px-2.5 py-1.5 rounded-xl transition-all ${
+                period === 'year'
+                  ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {lang === 'ru' ? 'Год' : 'Yil'}
             </button>
             <button
               onClick={() => handleSelectPeriod('month')}
@@ -191,7 +211,6 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             </button>
           </div>
 
-          {/* Custom Date Inputs */}
           {period === 'custom' && (
             <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-dark-800 rounded-xl border border-slate-200 dark:border-dark-700 text-xs">
               <input
@@ -210,7 +229,6 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             </div>
           )}
 
-          {/* Refresh Button */}
           <button
             onClick={() => fetchData()}
             disabled={loading}
@@ -238,62 +256,82 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
       {/* 3. Layer 1: Executive KPI Grid (5 Cards) */}
       <ExecutiveKpiGrid kpis={kpis} loading={loading} lang={lang} />
 
-      {/* 4. Tab Navigation between Balances (Layer 1-2) and Audit Journal (Layer 3) */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-2">
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-dark-800 p-1 rounded-2xl border border-slate-200 dark:border-dark-700 text-xs font-bold">
+      {/* 4. Tab Navigation between Balances, Journal, Supplier & FIFO Audit, Incoming, Operations */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-dark-750 pb-2">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-2xl border border-slate-200 dark:border-dark-700 text-xs font-bold">
           <button
             onClick={() => setActiveTab('balance')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
               activeTab === 'balance'
                 ? 'bg-white dark:bg-dark-700 text-emerald-700 dark:text-emerald-300 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
             }`}
           >
             <Layers size={14} />
-            <span>{lang === 'ru' ? '1. Баланс сырья и отклонения' : '1. Xomashyo Balansi va Og‘ishlar'}</span>
+            <span>{lang === 'ru' ? '1. Баланс и покрытие запасов' : '1. Xomashyo Balansi va Qoplash muddati'}</span>
           </button>
           <button
             onClick={() => setActiveTab('journal')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
               activeTab === 'journal'
                 ? 'bg-white dark:bg-dark-700 text-emerald-700 dark:text-emerald-300 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
             }`}
           >
             <FileText size={14} />
-            <span>{lang === 'ru' ? '2. Журнал брака и рекламаций (Акты)' : '2. Brak va Rektamatsiyalar Jurnali (Aktlar)'}</span>
+            <span>{lang === 'ru' ? '2. Журнал брака и ответственность' : '2. Brak Aktlari va Javobgarlik Jurnali'}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('suppliers_fifo')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
+              activeTab === 'suppliers_fifo'
+                ? 'bg-white dark:bg-dark-700 text-rose-700 dark:text-rose-300 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+            }`}
+          >
+            <Truck size={14} />
+            <span>{lang === 'ru' ? '3. Брак поставщиков и очередь FIFO' : "3. Ta'minotchilar Braki va FIFO Navbati"}</span>
           </button>
           <button
             onClick={() => setActiveTab('incoming')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
               activeTab === 'incoming'
                 ? 'bg-white dark:bg-dark-700 text-blue-700 dark:text-blue-300 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
             }`}
           >
             <FileSpreadsheet size={14} />
-            <span>{lang === 'ru' ? '3. Входящее сырьё' : '3. Kiruvchi xomashyo'}</span>
+            <span>{lang === 'ru' ? '4. Входящее сырьё' : '4. Kiruvchi xomashyo aktlari'}</span>
           </button>
           <button
             onClick={() => setActiveTab('operations')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
               activeTab === 'operations'
                 ? 'bg-white dark:bg-dark-700 text-violet-700 dark:text-violet-300 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
             }`}
           >
             <CheckCircle2 size={14} />
-            <span>{lang === 'ru' ? '4. Операции и аудит' : '4. Operatsiyalar va audit'}</span>
+            <span>{lang === 'ru' ? '5. Операции и аудит' : '5. Operatsiyalar va Xodimlar Auditi'}</span>
           </button>
         </div>
 
-        <button
-          onClick={() => setShowStandardsModal(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors"
-        >
-          <Sliders size={13} />
-          <span>{lang === 'ru' ? 'Настройка норм потерь' : "Yo'qotish me'yorlarini sozlash"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/traceability"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
+          >
+            <ShieldCheck size={13} />
+            <span>{lang === 'ru' ? 'Паспорт прослеживаемости' : "To'liq mahsulot zanjiri (Pasport)"}</span>
+          </Link>
+          <button
+            onClick={() => setShowStandardsModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors"
+          >
+            <Sliders size={13} />
+            <span>{lang === 'ru' ? 'Настройка норм потерь' : "Yo'qotish me'yorlarini sozlash"}</span>
+          </button>
+        </div>
       </div>
 
       {/* 5. Main Tab Contents */}
@@ -312,6 +350,13 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
           initialWastageType={journalWastageType}
           dateFrom={dateFrom}
           dateTo={dateTo}
+          lang={lang}
+        />
+      ) : activeTab === 'suppliers_fifo' ? (
+        <SupplierAndFifoAuditPanel
+          suppliers={supplierDefectAnalysis}
+          fifoExceptions={fifoExceptions}
+          activeFifoQueue={activeFifoQueue}
           lang={lang}
         />
       ) : activeTab === 'incoming' ? (

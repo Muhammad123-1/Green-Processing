@@ -97,6 +97,29 @@ export async function POST(request: NextRequest) {
     }
 
     const actNumber = `КС-${year}-${String(nextNum).padStart(4, '0')}`
+    const totalQty = parseFloat(body.quantity) || 0
+    const status = body.status || 'ACCEPTED' // ACCEPTED | REJECTED | CONDITIONAL | PARTIAL
+
+    // Requirement 6: Accepted vs Rejected Materials & Partial Acceptance
+    let acceptedQty = totalQty
+    let rejectedQty = 0
+
+    if (status === 'REJECTED') {
+      acceptedQty = 0
+      rejectedQty = totalQty
+    } else if (body.acceptedQuantity !== undefined || body.rejectedQuantity !== undefined) {
+      acceptedQty = body.acceptedQuantity !== undefined ? parseFloat(body.acceptedQuantity) || 0 : Math.max(0, totalQty - (parseFloat(body.rejectedQuantity) || 0))
+      rejectedQty = body.rejectedQuantity !== undefined ? parseFloat(body.rejectedQuantity) || 0 : Math.max(0, totalQty - acceptedQty)
+    }
+
+    // Rejected deliveries must NEVER receive a normal accepted inventory batch number
+    const finalBatchNumber = status === 'REJECTED' ? null : (body.batchNumber ? String(body.batchNumber).trim() : `PART-${year}-${String(nextNum).padStart(4, '0')}`)
+
+    // Generate rejectionActNumber when rejectedQty > 0 or status === 'REJECTED'
+    let rejectionActNumber: string | null = body.rejectionActNumber || null
+    if ((status === 'REJECTED' || rejectedQty > 0) && !rejectionActNumber) {
+      rejectionActNumber = `REJ-${year}-${String(nextNum).padStart(4, '0')}`
+    }
 
     const inspection = await prisma.inspection.create({
       data: {
@@ -104,8 +127,12 @@ export async function POST(request: NextRequest) {
         inspectionDate: new Date(body.inspectionDate),
         supplierId: parseInt(body.supplierId),
         productId: parseInt(body.productId),
-        batchNumber: body.batchNumber,
-        quantity: parseFloat(body.quantity),
+        batchNumber: finalBatchNumber,
+        quantity: totalQty,
+        acceptedQuantity: acceptedQty,
+        rejectedQuantity: rejectedQty,
+        rejectionActNumber,
+        rejectionReason: body.rejectionReason || (status === 'REJECTED' ? (body.conclusion || body.notes || 'Sifat talabiga javob bermaydi') : null),
         quantityUnit: body.quantityUnit || 'kg',
         temperature: body.temperature ? parseFloat(body.temperature) : null,
         temperatureUnit: body.temperatureUnit || '°C',
@@ -113,8 +140,8 @@ export async function POST(request: NextRequest) {
         color: body.color || null,
         smell: body.smell || null,
         appearance: body.appearance || null,
-        conclusion: body.conclusion || 'Muvofiq',
-        status: body.status || 'ACCEPTED',
+        conclusion: body.conclusion || (status === 'REJECTED' ? 'Rad etildi' : 'Muvofiq'),
+        status,
         rating: body.rating ? parseInt(body.rating) : null,
         inspector: body.inspector || null,
         inspectorId: body.inspectorId ? parseInt(body.inspectorId) : null,
@@ -137,34 +164,85 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // If accepted, create an InventoryBatch in the Warehouse WMS
-    if (inspection.status === 'ACCEPTED') {
-      // FEFO logic: Calculate expiration date if product has shelfLifeDays
-      let expirationDate = null;
-      if (inspection.product.shelfLifeDays) {
-        expirationDate = new Date(inspection.inspectionDate);
-        expirationDate.setDate(expirationDate.getDate() + inspection.product.shelfLifeDays);
+    // Only accepted quantity enters usable inventory in the Warehouse WMS (Requirement 1 & 6)
+    if (status !== 'REJECTED' && acceptedQty > 0 && finalBatchNumber) {
+      const shelfDays = inspection.product.maxStorageDays || inspection.product.shelfLifeDays
+      let expirationDate = null
+      if (shelfDays) {
+        expirationDate = new Date(inspection.inspectionDate)
+        expirationDate.setDate(expirationDate.getDate() + shelfDays)
       }
 
-      await prisma.inventoryBatch.create({
+      const createdBatch = await prisma.inventoryBatch.create({
         data: {
           productId: inspection.productId,
-          batchNumber: inspection.batchNumber,
-          quantity: inspection.quantity,
+          supplierId: inspection.supplierId,
+          inspectionId: inspection.id,
+          batchNumber: finalBatchNumber,
+          quantity: acceptedQty,
           receivedAt: inspection.inspectionDate,
           expirationDate: expirationDate,
           qcStatus: 'APPROVED'
         }
-      });
-      
-      // Log WMS addition
+      })
+
+      await prisma.inventoryTransaction.create({
+        data: {
+          batchId: createdBatch.id,
+          transactionType: 'IN',
+          quantity: acceptedQty,
+          userId: inspection.inspectorId || null,
+          referenceDocId: actNumber,
+        }
+      })
+
       await prisma.log.create({
         data: {
+          userId: inspection.inspectorId || null,
           action: 'CREATE_INVENTORY_BATCH',
           entity: 'InventoryBatch',
-          entityId: inspection.id, // using inspection id as reference
-          details: `Omborga yangi partiya qo'shildi: ${inspection.batchNumber}`,
+          entityId: createdBatch.id,
+          details: `Omborga qabul qilingan partiya qo'shildi: #${finalBatchNumber} (${acceptedQty} ${inspection.quantityUnit})`,
         },
+      })
+    }
+
+    // If there is a rejected portion or full rejection, record it in ExecutiveWastageLog (Stage A — Incoming QC)
+    if (rejectedQty > 0 && rejectionActNumber) {
+      const incidentDateStr = new Date(inspection.inspectionDate).toISOString().slice(0, 10)
+      const firstImage = inspection.images?.[0]?.url || null
+      await prisma.executiveWastageLog.upsert({
+        where: { actNumber: rejectionActNumber },
+        update: {
+          weightKg: rejectedQty,
+          reasonCategory: inspection.rejectionReason || inspection.conclusion || 'Qabulda rad etilgan',
+          detailedComment: inspection.notes || inspection.conclusion,
+          photoUrl: firstImage,
+        },
+        create: {
+          actNumber: rejectionActNumber,
+          batchNumber: null, // Rejected delivery has no accepted batch number
+          productId: inspection.productId,
+          productName: inspection.product.name,
+          supplierId: inspection.supplierId,
+          supplierName: inspection.supplier.name,
+          reportedById: inspection.inspectorId || null,
+          reportedByName: inspection.inspector || inspection.user?.name || 'Sifat nazoratchisi',
+          inspectedByName: inspection.inspector || inspection.user?.name || 'Sifat nazoratchisi',
+          responsibleDepartment: 'SUPPLIER',
+          responsibilityStatus: 'DETERMINED',
+          responsiblePersonName: inspection.supplier.name,
+          responsibilityDecisionNote: `Kirish sifat nazoratida rad etildi (Akt: ${rejectionActNumber})`,
+          responsibilityDecidedAt: new Date(),
+          stage: 'INCOMING',
+          wastageType: 'ACTUAL_DEFECT',
+          weightKg: rejectedQty,
+          reasonCategory: inspection.rejectionReason || inspection.conclusion || 'Qabulda rad etilgan',
+          detailedComment: inspection.notes || inspection.conclusion,
+          photoUrl: firstImage,
+          documentUrl: inspection.pdfPath || null,
+          incidentDate: incidentDateStr,
+        }
       })
     }
 

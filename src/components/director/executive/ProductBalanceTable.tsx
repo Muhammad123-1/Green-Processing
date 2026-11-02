@@ -8,7 +8,6 @@ import {
   AlertOctagon,
   Minus,
   ChevronRight,
-  Filter,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -18,11 +17,28 @@ import {
 export interface ProductBalanceItem {
   productName: string
   unit: string
+  openingStockKg?: number
   inflowKg: number
+  rejectedIncomingKg?: number
+  totalAvailableRawKg?: number
+  consumedKg?: number
   outputKg: number
   techWasteKg: number
   actualDefectKg: number
   currentStockKg: number
+  // Requirement 3 & 4 fields
+  approvedMaxStorageDays?: number | null
+  minStockThresholdKg?: number | null
+  operationalDaysCount?: number
+  avgDailyConsumptionKg?: number | null
+  avgWeeklyConsumptionKg?: number | null
+  maxRecommendedInventoryKg?: number | null
+  stockCoverageDays?: number | null
+  stockCoverageWeeks?: number | null
+  inventoryStatus?: 'OUT_OF_STOCK' | 'LOW' | 'SUFFICIENT' | 'EXCESS'
+  // Requirement 5 fields
+  stockRelativeOutputPercent?: number | null
+  productionYieldPercent?: number | null
   standardLossPercent: number | null
   actualLossPercent: number | null
   actualDefectPercent: number | null
@@ -33,6 +49,7 @@ export interface ProductBalanceItem {
     incoming: { defectKg: number; reasons: Record<string, number>; suppliers: Record<string, number> }
     processing: { techWasteKg: number; defectKg: number; reasons: Record<string, number> }
     storage: { defectKg: number; reasons: Record<string, number> }
+    finalQc?: { checkedKg: number; approvedKg: number; rejectedKg: number }
   }
 }
 
@@ -47,6 +64,7 @@ interface Props {
 type SortKey =
   | 'variancePercent'
   | 'inflowKg'
+  | 'consumedKg'
   | 'actualDefectKg'
   | 'techWasteKg'
   | 'outputKg'
@@ -63,14 +81,14 @@ export default function ProductBalanceTable({
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'NORMAL' | 'WARNING' | 'CRITICAL'>('ALL')
   const [sortKey, setSortKey] = useState<SortKey>('variancePercent')
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc') // Default: ko'pdan kamga qarab!
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
     } else {
       setSortKey(key)
-      setSortOrder('desc') // Start with descending (ko'pdan kamga)
+      setSortOrder('desc')
     }
   }
 
@@ -91,9 +109,12 @@ export default function ProductBalanceTable({
       } else if (sortKey === 'actualLossPercent') {
         valA = a.actualLossPercent !== null ? a.actualLossPercent : -999999
         valB = b.actualLossPercent !== null ? b.actualLossPercent : -999999
+      } else if (sortKey === 'consumedKg') {
+        valA = a.consumedKg ?? 0
+        valB = b.consumedKg ?? 0
       } else {
-        valA = a[sortKey] ?? 0
-        valB = b[sortKey] ?? 0
+        valA = (a[sortKey] as number) ?? 0
+        valB = (b[sortKey] as number) ?? 0
       }
 
       if (Math.abs(valB - valA) > 0.0001) {
@@ -126,7 +147,36 @@ export default function ProductBalanceTable({
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-500 dark:bg-dark-800 dark:text-slate-400 border border-slate-200 dark:border-dark-700">
-            <Minus size={12} /> {lang === 'ru' ? 'НЕТ ДАННЫХ' : "MA'LUMOT YO'Q"}
+            <Minus size={12} /> {lang === 'ru' ? 'НЕТ НОРМЫ' : "ME'YOR YO'Q"}
+          </span>
+        )
+    }
+  }
+
+  const renderInventoryStatusPill = (invStatus?: ProductBalanceItem['inventoryStatus']) => {
+    switch (invStatus) {
+      case 'OUT_OF_STOCK':
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">
+            {lang === 'ru' ? 'Закончилось' : 'Tugagan'}
+          </span>
+        )
+      case 'LOW':
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+            {lang === 'ru' ? 'Мало' : 'Kam qolgan'}
+          </span>
+        )
+      case 'EXCESS':
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
+            {lang === 'ru' ? 'Избыток' : 'Me’yordan ko‘p'}
+          </span>
+        )
+      default:
+        return (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+            {lang === 'ru' ? 'В норме' : 'Yetarli'}
           </span>
         )
     }
@@ -151,7 +201,7 @@ export default function ProductBalanceTable({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                {lang === 'ru' ? 'Баланс сырья и отклонения от нормы' : "Xomashyo balansi va me'yordan og'ish"}
+                {lang === 'ru' ? 'Баланс сырья, покрытие запасов и отклонения' : "Xomashyo balansi, zaxira qoplash muddati va og'ishlar"}
               </h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-dark-750 text-slate-700 dark:text-slate-300">
                 {sorted.length} ta
@@ -159,8 +209,8 @@ export default function ProductBalanceTable({
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
               {lang === 'ru'
-                ? 'Отсортировано по убыванию (от критических отклонений к норме)'
-                : "Ko'pdan kamga qarab ketma-ketlikda saralangan (eng katta og'ish va zarardan boshlab)"}
+                ? 'Нажмите на любую позицию для поэтапного анализа (4 уровня: Приёмка → Переработка → Склад → Финальный ОКК)'
+                : "Batafsil 4-bosqichli tahlil va zaxira me'yorlarini ko'rish uchun istalgan mahsulot ustiga bosing"}
             </p>
           </div>
 
@@ -204,7 +254,7 @@ export default function ProductBalanceTable({
               <Search className="absolute left-2.5 top-2.5 text-slate-400" size={14} />
               <input
                 type="text"
-                placeholder={lang === 'ru' ? 'Поиск сырья...' : "Qidirish..."}
+                placeholder={lang === 'ru' ? 'Поиск сырья...' : 'Qidirish...'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8 pr-3 py-1.5 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-750 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-emerald-500"
@@ -222,11 +272,11 @@ export default function ProductBalanceTable({
           </div>
         </div>
 
-        {/* Quick Sorting Pills (Ko'pdan kamga) */}
+        {/* Quick Sorting Pills */}
         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/60 dark:border-dark-750/60 text-xs">
           <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-1">
             <SlidersHorizontal size={13} />
-            {lang === 'ru' ? 'Сортировка (по убыванию):' : "Saralash (ko'pdan kamga):"}
+            {lang === 'ru' ? 'Сортировка:' : 'Saralash:'}
           </span>
 
           <button
@@ -251,6 +301,18 @@ export default function ProductBalanceTable({
           >
             <span>📦 {lang === 'ru' ? 'Объем прихода' : 'Kirim hajmi'}</span>
             {renderSortIndicator('inflowKg')}
+          </button>
+
+          <button
+            onClick={() => handleSort('consumedKg')}
+            className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 ${
+              sortKey === 'consumedKg'
+                ? 'bg-teal-600 text-white shadow-sm'
+                : 'bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 hover:bg-slate-100'
+            }`}
+          >
+            <span>⚙️ {lang === 'ru' ? 'Расход в цех' : 'Sexga sarf'}</span>
+            {renderSortIndicator('consumedKg')}
           </button>
 
           <button
@@ -293,45 +355,46 @@ export default function ProductBalanceTable({
 
       {/* Table Content */}
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse min-w-[1020px]">
+        <table className="w-full text-left border-collapse min-w-[1160px]">
           <thead className="bg-slate-100/80 dark:bg-dark-800/80 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 dark:border-dark-750">
             <tr>
-              <th className="p-3.5 pl-4 w-12 text-center">№</th>
+              <th className="p-3.5 pl-4 w-10 text-center">№</th>
               <th className="p-3.5">{lang === 'ru' ? 'Сырье / Номенклатура' : 'Xomashyo nomi'}</th>
               <th
                 onClick={() => handleSort('inflowKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
-                title="Kirim bo'yicha saralash"
               >
-                {lang === 'ru' ? 'Приход (кг)' : 'Kirim (kg)'} {renderSortIndicator('inflowKg')}
+                {lang === 'ru' ? 'Принято (кг)' : 'Qabul kirim (kg)'} {renderSortIndicator('inflowKg')}
+              </th>
+              <th
+                onClick={() => handleSort('consumedKg')}
+                className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
+              >
+                {lang === 'ru' ? 'Расход / Ср. день' : 'Sarf / Kunlik o‘rt.'} {renderSortIndicator('consumedKg')}
               </th>
               <th
                 onClick={() => handleSort('outputKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
-                title="Tayyor chiqim bo'yicha saralash"
               >
-                {lang === 'ru' ? 'Выпуск ГП (кг)' : 'Tayyor chiqim (kg)'} {renderSortIndicator('outputKg')}
+                {lang === 'ru' ? 'Выпуск ГП / Выход %' : 'Tayyor chiqim / Yield %'} {renderSortIndicator('outputKg')}
               </th>
               <th
                 onClick={() => handleSort('techWasteKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
-                title="Tex. chiqindi bo'yicha saralash"
               >
                 {lang === 'ru' ? 'Тех. отход (кг)' : 'Tex. chiqindi (kg)'} {renderSortIndicator('techWasteKg')}
               </th>
               <th
                 onClick={() => handleSort('actualDefectKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
-                title="Haqiqiy brak bo'yicha saralash"
               >
                 {lang === 'ru' ? 'Брак (кг)' : 'Haqiqiy brak (kg)'} {renderSortIndicator('actualDefectKg')}
               </th>
               <th
                 onClick={() => handleSort('currentStockKg')}
                 className="p-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
-                title="Qoldiq bo'yicha saralash"
               >
-                {lang === 'ru' ? 'Остаток (кг)' : 'Joriy qoldiq (kg)'} {renderSortIndicator('currentStockKg')}
+                {lang === 'ru' ? 'Остаток / Покрытие' : 'Qoldiq / Qoplash muddati'} {renderSortIndicator('currentStockKg')}
               </th>
               <th className="p-3.5 text-center">{lang === 'ru' ? 'Норма %' : "Me'yor %"}</th>
               <th
@@ -343,7 +406,6 @@ export default function ProductBalanceTable({
               <th
                 onClick={() => handleSort('variancePercent')}
                 className="p-3.5 text-center cursor-pointer hover:text-slate-900 dark:hover:text-white select-none transition-colors"
-                title="Me'yordan og'ish bo'yicha saralash"
               >
                 {lang === 'ru' ? 'Отклонение' : "Me'yordan og‘ish"} {renderSortIndicator('variancePercent')}
               </th>
@@ -355,14 +417,14 @@ export default function ProductBalanceTable({
             {loading ? (
               [1, 2, 3, 4].map((i) => (
                 <tr key={i} className="animate-pulse">
-                  <td colSpan={12} className="p-4 bg-slate-50/50 dark:bg-dark-850/30">
+                  <td colSpan={13} className="p-4 bg-slate-50/50 dark:bg-dark-850/30">
                     <div className="h-5 bg-slate-200 dark:bg-dark-750 rounded" />
                   </td>
                 </tr>
               ))
             ) : sorted.length === 0 ? (
               <tr>
-                <td colSpan={12} className="p-12 text-center text-slate-400">
+                <td colSpan={13} className="p-12 text-center text-slate-400">
                   <div className="max-w-sm mx-auto space-y-1.5">
                     <div className="text-sm font-bold text-slate-600 dark:text-slate-300">
                       {lang === 'ru' ? 'Данные не найдены' : "Ma'lumot topilmadi"}
@@ -370,13 +432,14 @@ export default function ProductBalanceTable({
                     <p className="text-[11px] text-slate-400">
                       {lang === 'ru'
                         ? 'За выбранный период операционные данные по сырью отсутствуют'
-                        : "Tanlangan davr uchun hech qanday xomashyo harakati mavjud emas"}
+                        : 'Tanlangan davr uchun hech qanday xomashyo harakati mavjud emas'}
                     </p>
                   </div>
                 </td>
               </tr>
             ) : (
               sorted.map((item, idx) => {
+                const yieldVal = item.productionYieldPercent ?? item.yieldPercent
                 return (
                   <tr
                     key={item.productName}
@@ -386,15 +449,44 @@ export default function ProductBalanceTable({
                     <td className="p-3.5 pl-4 text-center font-mono text-[11px] font-black text-slate-400 group-hover:text-emerald-600">
                       {idx + 1}
                     </td>
-                    <td className="p-3.5 font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span>{item.productName}</span>
+                    <td className="p-3.5 font-bold text-slate-900 dark:text-white">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                        <span>{item.productName}</span>
+                      </div>
+                      {item.approvedMaxStorageDays && (
+                        <span className="text-[10px] text-slate-400 font-normal block pl-4">
+                          {lang === 'ru' ? 'Макс. срок:' : 'Maks. saqlash:'} {item.approvedMaxStorageDays}{' '}
+                          {lang === 'ru' ? 'дн.' : 'kun'}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3.5 text-right font-mono text-slate-800 dark:text-slate-200">
-                      {item.inflowKg > 0 ? item.inflowKg.toLocaleString() : '—'}
+                      <div>{item.inflowKg > 0 ? item.inflowKg.toLocaleString() : '—'}</div>
+                      {(item.rejectedIncomingKg || 0) > 0 && (
+                        <span className="text-[10px] text-rose-500 block">
+                          Rad: {item.rejectedIncomingKg?.toLocaleString()} kg
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3.5 text-right font-mono text-slate-700 dark:text-slate-300">
+                      <div>{(item.consumedKg || 0) > 0 ? item.consumedKg?.toLocaleString() : '—'}</div>
+                      {item.avgDailyConsumptionKg !== null && item.avgDailyConsumptionKg !== undefined && (
+                        <span className="text-[10px] text-slate-400 block">
+                          ~{item.avgDailyConsumptionKg.toLocaleString()} kg/kun
+                        </span>
+                      )}
                     </td>
                     <td className="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {item.outputKg > 0 ? item.outputKg.toLocaleString() : '—'}
+                      <div>{item.outputKg > 0 ? item.outputKg.toLocaleString() : '—'}</div>
+                      {yieldVal !== null && yieldVal !== undefined && (
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 block">
+                          Yield: {yieldVal}%
+                          {item.stockRelativeOutputPercent !== null && item.stockRelativeOutputPercent !== undefined
+                            ? ` (Zaxiradan: ${item.stockRelativeOutputPercent}%)`
+                            : ''}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3.5 text-right font-mono text-amber-600 dark:text-amber-400">
                       {item.techWasteKg > 0 ? item.techWasteKg.toLocaleString() : '0'}
@@ -403,7 +495,15 @@ export default function ProductBalanceTable({
                       {item.actualDefectKg > 0 ? item.actualDefectKg.toLocaleString() : '0'}
                     </td>
                     <td className="p-3.5 text-right font-mono text-indigo-600 dark:text-indigo-400">
-                      {item.currentStockKg.toLocaleString()}
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span>{item.currentStockKg.toLocaleString()}</span>
+                        {renderInventoryStatusPill(item.inventoryStatus)}
+                      </div>
+                      {item.stockCoverageDays !== null && item.stockCoverageDays !== undefined && (
+                        <span className="text-[10px] text-slate-400 block">
+                          {item.stockCoverageDays} kun ({item.stockCoverageWeeks ?? '—'} hafta)
+                        </span>
+                      )}
                     </td>
                     <td className="p-3.5 text-center font-mono text-slate-500">
                       {item.standardLossPercent !== null ? `${item.standardLossPercent}%` : '—'}
@@ -415,8 +515,8 @@ export default function ProductBalanceTable({
                             item.status === 'CRITICAL'
                               ? 'text-rose-600'
                               : item.status === 'WARNING'
-                              ? 'text-amber-600'
-                              : 'text-emerald-600'
+                                ? 'text-amber-600'
+                                : 'text-emerald-600'
                           }
                         >
                           {item.actualLossPercent}%
@@ -436,9 +536,7 @@ export default function ProductBalanceTable({
                         '—'
                       )}
                     </td>
-                    <td className="p-3.5 text-center pr-4">
-                      {renderStatusBadge(item.status)}
-                    </td>
+                    <td className="p-3.5 text-center pr-4">{renderStatusBadge(item.status)}</td>
                     <td className="p-3.5 text-right pr-4 text-slate-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all">
                       <ChevronRight size={16} />
                     </td>

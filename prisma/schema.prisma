@@ -203,6 +203,16 @@ model StockTransfer {
   discrepancyReason String?  // Sabab: Masalan "Go'sht suvi oqishi", "Qirqish isrofi"
   status            String   @default("IN_TRANSIT") // IN_TRANSIT, ACCEPTED, DISCREPANCY, REJECTED
   
+  // QC-Authorized FIFO/FEFO Controlled Exception (Requirement 1)
+  isFifoException         Boolean   @default(false)
+  originalFifoBatchId     Int?
+  originalFifoBatchNumber String?
+  exceptionReason         String?
+  authorizedByQcId        Int?
+  authorizedByQcName      String?
+  exceptionTimestamp      DateTime?
+  exceptionEvidenceUrl    String?
+
   notes             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -352,6 +362,8 @@ model Product {
   type               String   @default("RAW_MATERIAL") // RAW_MATERIAL, KITCHEN, FINISHED_GOOD
   isPerishable       Boolean  @default(true)
   minStockLevel      Float?   @default(0) // Svetofor tizimi uchun (Sariq/Qizil)
+  maxStorageDays     Int?     // Tasdiqlangan maksimal xavfsiz saqlash muddati (kun)
+  maxRecommendedStock Float?  // Tasdiqlangan maksimal zaxira chegarasi (kg/dona)
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -396,8 +408,12 @@ model Inspection {
   inspectionDate   DateTime
   supplierId       Int
   productId        Int
-  batchNumber      String
+  batchNumber      String?
   quantity         Float
+  acceptedQuantity Float?
+  rejectedQuantity Float?
+  rejectionActNumber String?
+  rejectionReason  String?
   quantityUnit     String   @default("kg")
   temperature      Float?
   temperatureUnit  String   @default("°C")
@@ -1013,6 +1029,13 @@ model ShippingLog {
   batchNumber      String?
   productionOrderId Int?
 
+  // Stage D — Final Quality Control before customer dispatch (Requirement 2D)
+  finalQcStatus        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  finalQcInspectorId   Int?
+  finalQcInspectorName String?
+  finalQcDate          DateTime?
+  finalQcNotes         String?
+
   createdAt        DateTime @default(now())
 
   batch            InventoryBatch? @relation("ShipmentBatch", fields: [batchId], references: [id])
@@ -1446,7 +1469,10 @@ model ExecutiveWastageLog {
   supplierName     String?  // Ta'minotchi tashkilot
   reportedById     Int?
   reportedByName   String?  // Qayd etgan shaxs (QC / Texnolog)
+  inspectedByName  String?  // Tekshirgan sifat nazoratchisi (QC)
+  processedByName  String?  // Qayta ishlagan smena / operator
   receivedByName   String?  // Qabul qilgan omborchi
+  responsibleDepartment String? // SUPPLIER | WAREHOUSE | PRODUCTION | QC | LOGISTICS
   investigatedByName String? // Tergov / tekshiruvni olib borgan vakolatli xodim
   responsibilityStatus String @default("NOT_DETERMINED") // NOT_DETERMINED, UNDER_INVESTIGATION, DETERMINED, CLEARED
   responsiblePersonName String? // Faqat tasdiqlangan qaror bo'lsa kiritiladi

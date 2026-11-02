@@ -508,17 +508,17 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       {/* 1.5. TOP MODE SWITCHER: EXECUTIVE AUDIT VS ALL PLANT DEPARTMENTS */}
       {/* ========================================================================= */}
-      <div className="hidden">
+      <div className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-dark-850 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-750 no-print">
         <button
           onClick={() => setDirectorMainTab('executive')}
-          className={`hidden flex-1 sm:flex-none items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
             directorMainTab === 'executive'
               ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-600/25'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <Layers size={16} />
-          <span>{formatDual("Ijrochi Nazorat (Executive Audit)", "Исполнительный аудит (3 уровня)", "Executive Audit (3 Layers)")}</span>
+          <span>{formatDual("Ijrochi Nazorat (4-Qavatli Audit)", "Исполнительный аудит (4 уровня)", "Executive Audit (4 Layers)")}</span>
         </button>
         <button
           onClick={() => setDirectorMainTab('departments')}
@@ -801,7 +801,7 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       {/* 4. EXECUTIVE SUMMARY KPIS (CLICKABLE DRILL-DOWNS) */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* CARD 1: XOMASHYO VA TA'MINOT */}
         <div
           onClick={() => setActiveModal('arrivals')}
@@ -820,10 +820,10 @@ export default function DirectorPage() {
             {formatDual("Xomashyo qabuli", "Прием сырья", "Raw arrivals")}
           </span>
           <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-            {kpis?.arrivals?.totalKg ? (kpis.arrivals.totalKg / 1000).toFixed(1) + ` ${formatDual("tn", "тн", "tn")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("partiya", "партий", "batches")}`}
+            {kpis?.arrivals?.acceptedKg ? (kpis.arrivals.acceptedKg / 1000).toFixed(1) + ` ${formatDual("tn", "тн", "tn")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("partiya", "партий", "batches")}`}
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            {kpis?.arrivals?.totalKg ? `${kpis.arrivals.totalKg.toLocaleString()} kg ${formatDual("jami kelgan", "всего поступило", "total received")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("ta qabul", "приемок", "receipts")}`}
+            {kpis?.arrivals?.acceptedKg ? `${kpis.arrivals.acceptedKg.toLocaleString()} kg ${formatDual("qabul qilingan", "принято", "accepted")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("ta qabul", "приемок", "receipts")}`}
           </p>
 
           <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs">
@@ -834,7 +834,7 @@ export default function DirectorPage() {
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Brak / Rad:", "Брак / Отклонено:", "Defect / Rejected:")}</span>
+              <span className="text-[10px] text-slate-400 block">{formatDual("Rad etilgan:", "Отклонено:", "Rejected:")}</span>
               <span className={`font-bold ${kpis?.arrivals?.rejectedKg > 0 ? 'text-red-500' : 'text-slate-500'}`}>
                 {kpis?.arrivals?.rejectedKg ? `${kpis.arrivals.rejectedKg} kg` : '0 kg'}
               </span>
@@ -868,15 +868,15 @@ export default function DirectorPage() {
 
           <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs">
             <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Brak:", "Брак:", "Defect:")}</span>
-              <span className={`font-bold ${kpis?.production?.rejectedKg > 0 ? 'text-amber-600' : 'text-slate-500'}`}>
-                {kpis?.production?.rejectedKg ? `${kpis.production.rejectedKg.toLocaleString()} kg` : '0 kg'}
+              <span className="text-[10px] text-slate-400 block">{formatDual("Sarfdan (Yield):", "Выход (Yield):", "Yield:")}</span>
+              <span className="font-bold text-emerald-600">
+                {kpis?.production?.avgYieldPercent ? `${kpis.production.avgYieldPercent.toFixed(1)}%` : '-'}
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Chiqish:", "Выход:", "Yield:")}</span>
-              <span className="font-bold text-emerald-600">
-                {kpis?.production?.avgYieldPercent ? `${kpis.production.avgYieldPercent.toFixed(1)}%` : '-'}
+              <span className="text-[10px] text-slate-400 block">{formatDual("Zaxiradan:", "К запасу:", "Stock-Rel:")}</span>
+              <span className="font-bold text-indigo-600">
+                {kpis?.production?.stockRelativeOutputPercent ? `${kpis.production.stockRelativeOutputPercent.toFixed(1)}%` : '-'}
               </span>
             </div>
           </div>
@@ -899,14 +899,19 @@ export default function DirectorPage() {
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
             {formatDual("Ombor zaxirasi", "Складские остатки", "Stock balance")}
           </span>
-          <div className="flex flex-wrap items-center gap-3 mt-1.5">
-            <span className="flex items-center gap-1 text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">
+          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+            <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span> {kpis?.warehouse?.sufficientCount || 0} {formatDual("yetarli", "в норме", "sufficient")}
             </span>
-            <span className="flex items-center gap-1 text-sm font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg">
+            <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg">
               <span className="w-2 h-2 rounded-full bg-amber-500"></span> {kpis?.warehouse?.lowStockCount || 0} {formatDual("kam", "мало", "low")}
             </span>
-            <span className="flex items-center gap-1 text-sm font-bold text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-lg">
+            {(kpis?.warehouse?.excessStockCount || 0) > 0 && (
+              <span className="flex items-center gap-1 text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-purple-500"></span> {kpis?.warehouse?.excessStockCount} {formatDual("ortiqcha", "избыток", "excess")}
+              </span>
+            )}
+            <span className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-lg">
               <span className="w-2 h-2 rounded-full bg-red-500"></span> {kpis?.warehouse?.outOfStockCount || 0} {formatDual("tugagan", "закончилось", "out of stock")}
             </span>
           </div>
@@ -933,7 +938,7 @@ export default function DirectorPage() {
         {/* CARD 4: XODIMLAR FAOLLIGI (KIM NIMA ISH QILGAN) */}
         <div
           onClick={() => setActiveModal('employees')}
-          className="hidden bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group relative overflow-hidden"
+          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group relative overflow-hidden"
         >
           <div className="flex items-start justify-between mb-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
@@ -1243,7 +1248,7 @@ export default function DirectorPage() {
           </div>
 
           {/* Chart 4: Top Employee Activity (BarChart) */}
-          <div className="hidden bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -1635,8 +1640,10 @@ export default function DirectorPage() {
                           <tr>
                             <th className="p-3">{formatDual("Mahsulot nomi", "Наименование", "Product name")}</th>
                             <th className="p-3 text-center">{formatDual("Hozirgi qoldiq", "Остаток", "Current stock")}</th>
-                            <th className="p-3 text-center">{formatDual("Minimal norma", "Мин. норма", "Min norm")}</th>
-                            <th className="p-3 text-center">{formatDual("Partiyalar soni", "Кол-во партий", "Batches count")}</th>
+                            <th className="p-3 text-center">{formatDual("Maks. saqlash muddati", "Макс. срок хран.", "Max storage")}</th>
+                            <th className="p-3 text-center">{formatDual("Kunlik o'rtacha sarf", "Ср. дневной расход", "Avg daily use")}</th>
+                            <th className="p-3 text-center">{formatDual("Maks. tavsiya zaxira", "Макс. рек. запас", "Max rec. stock")}</th>
+                            <th className="p-3 text-center">{formatDual("Qoplash muddati", "Покрытие запаса", "Stock coverage")}</th>
                             <th className="p-3 text-center">{formatDual("Holati", "Статус", "Status")}</th>
                           </tr>
                         </thead>
@@ -1644,16 +1651,29 @@ export default function DirectorPage() {
                           {filteredProducts.map((p: any) => (
                             <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
                               <td className="p-3 font-bold text-slate-900 dark:text-white">{p.name}</td>
-                              <td className="p-3 text-center font-bold">{p.currentStock} {p.unit}</td>
-                              <td className="p-3 text-center text-slate-500">{p.minStock} {p.unit}</td>
-                              <td className="p-3 text-center">{p.batchCount} ta partiya</td>
+                              <td className="p-3 text-center font-bold font-mono">{p.currentStock} {p.unit}</td>
+                              <td className="p-3 text-center text-slate-500">
+                                {p.approvedMaxStorageDays ? `${p.approvedMaxStorageDays} kun` : 'Kiritilmagan'}
+                              </td>
+                              <td className="p-3 text-center font-mono text-slate-700 dark:text-slate-300">
+                                {p.avgDailyConsumptionKg ? `${p.avgDailyConsumptionKg} ${p.unit}/kun` : '—'}
+                              </td>
+                              <td className="p-3 text-center font-mono text-indigo-600 dark:text-indigo-400">
+                                {p.maxRecommendedStockKg ? `${p.maxRecommendedStockKg} ${p.unit}` : '—'}
+                              </td>
+                              <td className="p-3 text-center font-mono">
+                                {p.stockCoverageDays != null ? `${p.stockCoverageDays} kun (${p.stockCoverageWeeks ?? '-'} hafta)` : '—'}
+                              </td>
                               <td className="p-3 text-center">
                                 <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
                                   p.status === 'SUFFICIENT' ? 'bg-emerald-100 text-emerald-800' :
+                                  p.status === 'EXCESS' ? 'bg-purple-100 text-purple-800' :
                                   p.status === 'LOW' ? 'bg-amber-100 text-amber-800' :
                                   'bg-red-100 text-red-800'
                                 }`}>
-                                  {p.status === 'SUFFICIENT' ? '🟢 Yetarli' : p.status === 'LOW' ? '🟡 Kamaygan' : '🔴 Tugagan'}
+                                  {p.status === 'SUFFICIENT' ? '🟢 Yetarli' :
+                                   p.status === 'EXCESS' ? '🟣 Ortiqcha (Me’yordan ko‘p)' :
+                                   p.status === 'LOW' ? '🟡 Kam qolgan' : '🔴 Tugagan'}
                                 </span>
                               </td>
                             </tr>
@@ -1849,34 +1869,36 @@ export default function DirectorPage() {
 
                       <div className="p-3 bg-white dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-750 text-xs">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1.5">
-                          {formatDual("Nazorat ko'rsatkichlari (FSSC 22000 me'yorlari)", "Параметры контроля (FSSC 22000)", "QC Checklist Parameters")}
+                          {formatDual("Nazorat ko'rsatkichlari (Ma'lumotlar bazasidagi haqiqiy yozuv)", "Параметры контроля (Фактическая запись БД)", "Recorded QC Checklist Data")}
                         </span>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Metallodetektor tekshiruvi: <b>100% OK</b></span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Vakuum va germetiklik: <b>Normada</b></span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Xlor / Dezinfeksiya: <b>300 ppm</b></span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Harorat rejimi: <b>+2.5 °C .. +3.2 °C</b></span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Kesish o'lchamlari: <b>Standart (45 mm)</b></span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Xodimlar gigiyenasi: <b>Toza (Tasdiqlangan)</b></span>
-                          </div>
-                        </div>
+                        {(() => {
+                          try {
+                            const parsed = selectedChecklist.formData ? JSON.parse(selectedChecklist.formData) : null
+                            if (!parsed || typeof parsed !== 'object' || Object.keys(parsed).length === 0) {
+                              return (
+                                <div className="text-[11px] text-slate-400 italic">
+                                  {formatDual("Qo'shimcha parametrlar kiritilmagan", "Дополнительные параметры не указаны", "No extra parameters recorded")}
+                                </div>
+                              )
+                            }
+                            return (
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                                {Object.entries(parsed).slice(0, 9).map(([k, v]) => (
+                                  <div key={k} className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                    <span className="truncate">{k}: <b>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</b></span>
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          } catch {
+                            return (
+                              <div className="text-[11px] text-slate-500">
+                                {String(selectedChecklist.formData || '')}
+                              </div>
+                            )
+                          }
+                        })()}
                       </div>
                     </div>
                   )}
