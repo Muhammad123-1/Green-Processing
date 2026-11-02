@@ -153,17 +153,14 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
               return false
             }
             // Director panel items requested by user:
-            // director, archive, warehouse, reports, settings, chat, users, accounting, surveys, kitchen
+            // director, archive, warehouse, accounting, reports, chat, settings (suppliers, kitchen, users removed)
             if (userRole === 'DIRECTOR') {
               const directorAllowedKeys = [
                 'director',
                 'archive',
                 'warehouse',
-                'suppliers',
-                'kitchen',
                 'accounting',
                 'reports',
-                'users',
                 'chat',
                 'settings',
               ]
