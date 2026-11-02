@@ -39,7 +39,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   // Sub-views
-  const [activeTab, setActiveTab] = useState<'balance' | 'journal' | 'suppliers_fifo' | 'incoming' | 'operations'>('balance')
+  const [activeTab, setActiveTab] = useState<'balance' | 'journal' | 'incoming' | 'operations'>('balance')
   const [selectedProduct, setSelectedProduct] = useState<ProductBalanceItem | null>(null)
   const [showStandardsModal, setShowStandardsModal] = useState(false)
   const [journalProductFilter, setJournalProductFilter] = useState('')
@@ -283,17 +283,6 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             <span>{lang === 'ru' ? '2. Контроль качества (Причины брака)' : '2. Sifat Nazorati (Brak sabablari)'}</span>
           </button>
           <button
-            onClick={() => setActiveTab('suppliers_fifo')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
-              activeTab === 'suppliers_fifo'
-                ? 'bg-white dark:bg-dark-700 text-rose-700 dark:text-rose-300 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-            }`}
-          >
-            <Truck size={14} />
-            <span>{lang === 'ru' ? '3. Поставщики и очередь FIFO' : "3. Ta'minotchilar & FIFO Navbati"}</span>
-          </button>
-          <button
             onClick={() => setActiveTab('incoming')}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
               activeTab === 'incoming'
@@ -302,7 +291,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <FileSpreadsheet size={14} />
-            <span>{lang === 'ru' ? '4. Акты приёма сырья' : '4. Kiruvchi xomashyo aktlari'}</span>
+            <span>{lang === 'ru' ? '3. Акты приёма сырья' : '3. Kiruvchi xomashyo aktlari'}</span>
           </button>
           <button
             onClick={() => setActiveTab('operations')}
@@ -313,7 +302,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <CheckCircle2 size={14} />
-            <span>{lang === 'ru' ? '5. Работа сотрудников' : '5. Xodimlar faoliyati (Kim nima qildi)'}</span>
+            <span>{lang === 'ru' ? '4. Работа сотрудников' : '4. Xodimlar faoliyati (Kim nima qildi)'}</span>
           </button>
         </div>
 
@@ -351,13 +340,6 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
           initialWastageType={journalWastageType}
           dateFrom={dateFrom}
           dateTo={dateTo}
-          lang={lang}
-        />
-      ) : activeTab === 'suppliers_fifo' ? (
-        <SupplierAndFifoAuditPanel
-          suppliers={supplierDefectAnalysis}
-          fifoExceptions={fifoExceptions}
-          activeFifoQueue={activeFifoQueue}
           lang={lang}
         />
       ) : activeTab === 'incoming' ? (

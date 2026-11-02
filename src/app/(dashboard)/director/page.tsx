@@ -1348,56 +1348,6 @@ export default function DirectorPage() {
             </div>
           </Link>
 
-          {/* Card 3: Kitchen */}
-          <Link
-            href="/kitchen"
-            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-rose-500/50 dark:hover:border-rose-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                  <Utensils size={20} />
-                </div>
-                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-rose-500 transition-colors" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-rose-500 transition-colors">
-                {formatDual("Xodimlar oshxonasi", "Кухня персонала", "Staff Kitchen")}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                {formatDual("Kunlik menyu va xarajatlar", "Ежедневное меню и расходы", "Daily menu and expenses")}
-              </p>
-            </div>
-            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">
-              <span>{formatDual("Ochish", "Открыть", "Open")}</span>
-              <ChevronRight size={13} />
-            </div>
-          </Link>
-
-          {/* Card 4: Users */}
-          <Link
-            href="/users"
-            className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <Users size={20} />
-                </div>
-                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-purple-500 transition-colors" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-purple-500 transition-colors">
-                {formatDual("Foydalanuvchilar", "Пользователи", "Users & Staff")}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                {formatDual("Xodimlar ro'yxati va ruxsatlar", "Список сотрудников и доступы", "Staff directory and permissions")}
-              </p>
-            </div>
-            <div className="mt-4 pt-2 border-t border-slate-100 dark:border-dark-800 text-[11px] font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
-              <span>{formatDual("Ochish", "Открыть", "Open")}</span>
-              <ChevronRight size={13} />
-            </div>
-          </Link>
-
           {/* Card 6: Chat */}
           <Link
             href="/chat"
