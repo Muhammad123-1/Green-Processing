@@ -1561,7 +1561,8 @@ export default function DirectorPage() {
                   activeModal === 'operations'
                     ? operationsTab === 'prixod' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' :
                       operationsTab === 'rasxod' ? 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400' :
-                      'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400'
+                      operationsTab === 'brak' ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400' :
+                      'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
                     : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'
                 }`}>
                   {activeModal === 'warehouse' && <Package size={20} />}
@@ -1573,7 +1574,8 @@ export default function DirectorPage() {
                   {activeModal === 'archive' && <Archive size={20} />}
                   {activeModal === 'operations' && (
                     operationsTab === 'prixod' ? <Truck size={20} /> :
-                    operationsTab === 'rasxod' ? <ChefHat size={20} /> : <AlertTriangle size={20} />
+                    operationsTab === 'rasxod' ? <ChefHat size={20} /> :
+                    operationsTab === 'brak' ? <AlertTriangle size={20} /> : <Package size={20} />
                   )}
                 </div>
                 <div>
@@ -1586,9 +1588,10 @@ export default function DirectorPage() {
                     {activeModal === 'alerts' && formatDual("Shubhali holatlar", "Аномалии", "Discrepancies & alerts")}
                     {activeModal === 'archive' && formatDual("Umumiy Arxiv", "Общий архив", "Global Archive")}
                     {activeModal === 'operations' && (
-                      operationsTab === 'prixod' ? formatDual("Kirim jurnali", "Журнал прихода", "Inbound Journal") :
-                      operationsTab === 'rasxod' ? formatDual("Chiqim jurnali", "Журнал расхода", "Consumption Records") :
-                      formatDual("Brak jurnali", "Журнал брака", "Defect Records")
+                      operationsTab === 'prixod' ? formatDual("Kirim zanjiri", "Журнал прихода", "Inbound Journal") :
+                      operationsTab === 'rasxod' ? formatDual("Chiqim zanjiri", "Журнал расхода", "Consumption Records") :
+                      operationsTab === 'brak' ? formatDual("Brak va chiqindi zanjiri", "Журнал брака", "Defect Records") :
+                      formatDual("Omborxona zanjiri", "Складские остатки", "Warehouse Stock")
                     )}
                   </h3>
                   <p className="text-xs text-slate-500">
@@ -1597,7 +1600,9 @@ export default function DirectorPage() {
                         ? formatDual("Ombor va sexlarga xomashyo qabuli", "Прием сырья и материалов на склад и в цеха", "Inbound arrivals and materials")
                         : operationsTab === 'rasxod'
                         ? formatDual("Sexlarga xomashyo chiqimi va sarfi", "Расход сырья по цехам", "Material consumption")
-                        : formatDual("Brak va texnologik chiqindi dalolatnomalari", "Акты брака и отходов", "Defect and scrap records")
+                        : operationsTab === 'brak'
+                        ? formatDual("Brak va texnologik chiqindi dalolatnomalari", "Акты брака и отходов", "Defect and scrap records")
+                        : formatDual("Ombordagi barcha xomashyo va taralar qoldig'i tahlili", "Анализ остатков сырья и тары на складе", "Warehouse material and packaging stock analysis")
                       : formatDual("Saqlangan rasmiy ma'lumotlar", "Официальные данные", "Official records")}
                   </p>
                 </div>
@@ -2205,66 +2210,6 @@ export default function DirectorPage() {
               {/* SECTION: OPERATIONS (DEDICATED VIEW FOR KIRIM, CHIQIM, BRAK, OR OMBOR) */}
               {activeModal === 'operations' && (
                 <div className="space-y-4">
-                  {/* Operations Tabs Switcher */}
-                  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-dark-800 rounded-2xl border border-slate-200 dark:border-dark-700">
-                    <button
-                      onClick={() => setOperationsTab('prixod')}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                        operationsTab === 'prixod'
-                          ? 'bg-emerald-600 text-white shadow-md'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <Truck size={14} />
-                      <span>{formatDual("Kirim", "Приход", "Inbound")}</span>
-                    </button>
-                    <button
-                      onClick={() => setOperationsTab('rasxod')}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                        operationsTab === 'rasxod'
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <ChefHat size={14} />
-                      <span>{formatDual("Chiqim", "Расход", "Outbound")}</span>
-                    </button>
-                    <button
-                      onClick={() => setOperationsTab('brak')}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                        operationsTab === 'brak'
-                          ? 'bg-rose-600 text-white shadow-md'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <AlertTriangle size={14} />
-                      <span>{formatDual("Brak", "Брак", "Waste")}</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setOperationsTab('ombor')
-                        if (executiveProductBalances.length === 0) {
-                          setLoadingExecutiveBalances(true)
-                          fetch('/api/director/executive')
-                            .then((res) => res.json())
-                            .then((json) => {
-                              if (json?.productBalances) setExecutiveProductBalances(json.productBalances)
-                            })
-                            .catch(console.error)
-                            .finally(() => setLoadingExecutiveBalances(false))
-                        }
-                      }}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                        operationsTab === 'ombor'
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <Package size={14} />
-                      <span>{formatDual("Omborxona (Qoldiq)", "Склад (Остаток)", "Warehouse Stock")}</span>
-                    </button>
-                  </div>
-
                   {/* Dedicated Operation Banner */}
                   <div className="bg-slate-50 dark:bg-dark-800/60 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
