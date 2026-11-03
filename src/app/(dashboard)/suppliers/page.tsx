@@ -20,7 +20,8 @@ import {
   ShieldCheck, 
   Boxes,
   TrendingUp,
-  PackageCheck
+  PackageCheck,
+  Filter
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
@@ -36,8 +37,12 @@ interface Supplier {
   category?: string | null
   totalKg?: number
   totalTonnes?: number
+  totalDona?: number
+  totalLitr?: number
+  supplyType?: 'KG' | 'DONA' | 'MIXED'
   deliveriesCount?: number
   products?: string[]
+  productsDetails?: Array<{ name: string; qty: number; unit: string }>
   lastDeliveryDate?: string
   status?: string
 }
@@ -55,6 +60,7 @@ export default function SuppliersPage() {
   const { lang, formatDual } = useLanguage()
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [search, setSearch] = useState('')
+  const [unitFilter, setUnitFilter] = useState<'ALL' | 'KG' | 'DONA'>('ALL')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
@@ -92,28 +98,32 @@ export default function SuppliersPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // KPI Calculations
+  // KPI Calculations (Separating weight in kg/tonnes and packaging in dona)
   const stats = useMemo(() => {
     const totalCount = suppliers.length
     const totalArrivalKg = suppliers.reduce((acc, s) => acc + (s.totalKg || 0), 0)
     const totalArrivalTonnes = Math.round((totalArrivalKg / 1000) * 10) / 10
+    const totalArrivalDona = suppliers.reduce((acc, s) => acc + (s.totalDona || 0), 0)
     const totalDeliveries = suppliers.reduce((acc, s) => acc + (s.deliveriesCount || 0), 0)
-    const topSupplier = [...suppliers].sort((a, b) => (b.totalKg || 0) - (a.totalKg || 0))[0]
 
     return {
       totalCount,
       totalArrivalKg,
       totalArrivalTonnes,
+      totalArrivalDona,
       totalDeliveries,
-      topSupplierName: topSupplier?.name || '-',
-      topSupplierTonnes: topSupplier?.totalTonnes || 0
     }
   }, [suppliers])
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim()
-    if (!q) return suppliers
     return suppliers.filter((s) => {
+      // Unit Type Filter
+      if (unitFilter === 'KG' && (!s.totalKg || s.totalKg <= 0)) return false
+      if (unitFilter === 'DONA' && (!s.totalDona || s.totalDona <= 0)) return false
+
+      if (!q) return true
+
       const prods = (s.products || []).join(' ').toLowerCase()
       return (
         s.name.toLowerCase().includes(q) ||
@@ -125,10 +135,10 @@ export default function SuppliersPage() {
         prods.includes(q)
       )
     })
-  }, [suppliers, search])
+  }, [suppliers, search, unitFilter])
 
-  // 10 tadan yuklash (Infinite Scroll & Show All)
-  const suppliersPagination = useInfiniteTable(filtered, 12, [search])
+  // 12 tadan yuklash (Infinite Scroll & Show All)
+  const suppliersPagination = useInfiniteTable(filtered, 12, [search, unitFilter])
 
   function openNew() {
     setEditId(null)
@@ -210,7 +220,7 @@ export default function SuppliersPage() {
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-            {formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и аналитика поставщиков сырья", "Suppliers Registry & Analytics")}
+            {formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и аналитика поставщиков", "Suppliers Registry & Analytics")}
           </h1>
         </div>
 
@@ -223,7 +233,7 @@ export default function SuppliersPage() {
         </button>
       </div>
 
-      {/* KPI Cards (Director / Supply Overview) */}
+      {/* KPI Cards (Accurate Separation: Weight tn/kg vs Packaging dona) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Jami Hamkorlar */}
         <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
@@ -239,15 +249,15 @@ export default function SuppliersPage() {
             {stats.totalCount} ta
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
-            {formatDual("Prixodda qayd etilgan", "Зафиксировано в приходе", "Recorded in arrivals")}
+            {formatDual("Ro'yxatdagi korxonalar", "Зарегистрировано", "Registered companies")}
           </p>
         </div>
 
-        {/* Card 2: Jami Yuk */}
+        {/* Card 2: Jami Xomashyo (Vazn: Tn / Kg) */}
         <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
-              {formatDual("Jami Keltirilgan Yuk", "Общий объем поставок", "Total Volume")}
+              {formatDual("Xomashyo (Vazn)", "Вес сырья (Кг / Тн)", "Raw Material (Weight)")}
             </span>
             <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <TrendingUp size={16} />
@@ -257,25 +267,25 @@ export default function SuppliersPage() {
             {stats.totalArrivalTonnes} tn
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
-            {stats.totalArrivalKg.toLocaleString()} kg {formatDual("xomashyo", "сырья", "raw material")}
+            {stats.totalArrivalKg.toLocaleString()} kg {formatDual("sof xomashyo", "сырья", "raw material")}
           </p>
         </div>
 
-        {/* Card 3: Eng Yirik Hamkor */}
+        {/* Card 3: Jami Qadoq & Taralar (Dona) */}
         <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
-              {formatDual("Bosh Yetkazib Beruvchi", "Главный поставщик", "Top Supplier")}
+              {formatDual("Qadoq & Taralar (Dona)", "Тара и Упаковка (Шт)", "Packaging & Boxes (Pcs)")}
             </span>
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
               <Boxes size={16} />
             </div>
           </div>
-          <div className="text-sm sm:text-base md:text-lg font-black text-white truncate" title={stats.topSupplierName}>
-            {stats.topSupplierName}
+          <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-400">
+            {stats.totalArrivalDona.toLocaleString()} dona
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
-            {stats.topSupplierTonnes} tn {formatDual("yetkazib bergan", "поставлено", "delivered")}
+            {formatDual("Qutilar, idishlar va paketlar", "Коробки, мешки, пакеты", "Boxes, bags and packages")}
           </p>
         </div>
 
@@ -299,7 +309,7 @@ export default function SuppliersPage() {
       </div>
 
       {/* Filter and Search Card */}
-      <div className="bg-dark-900 border border-dark-750 p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="bg-dark-900 border border-dark-750 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
@@ -315,7 +325,43 @@ export default function SuppliersPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2 justify-between sm:justify-end">
+        {/* Unit Type Filter Pills */}
+        <div className="flex items-center gap-1.5 bg-dark-800 p-1 rounded-xl border border-dark-700 overflow-x-auto">
+          <button
+            onClick={() => setUnitFilter('ALL')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+              unitFilter === 'ALL'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            {formatDual("Barchasi", "Все", "All")} ({suppliers.length})
+          </button>
+          <button
+            onClick={() => setUnitFilter('KG')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              unitFilter === 'KG'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <TrendingUp size={13} />
+            <span>{formatDual("Xomashyo (Kg)", "Сырье (Кг)", "Weight (Kg)")}</span>
+          </button>
+          <button
+            onClick={() => setUnitFilter('DONA')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              unitFilter === 'DONA'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Boxes size={13} />
+            <span>{formatDual("Qadoq (Dona)", "Тара (Шт)", "Packaging (Pcs)")}</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 justify-between md:justify-end">
           <div className="text-xs text-slate-400 font-medium">
             {formatDual(`Topildi: ${filtered.length} ta`, `Найдено: ${filtered.length}`, `Found: ${filtered.length}`)}
           </div>
@@ -347,7 +393,7 @@ export default function SuppliersPage() {
           <>
             {/* Mobile View: Touch Cards */}
             <div className="block sm:hidden divide-y divide-dark-750">
-              {suppliersPagination.displayedItems.map((s, idx) => (
+              {suppliersPagination.displayedItems.map((s) => (
                 <div key={s.id} className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -373,22 +419,44 @@ export default function SuppliersPage() {
 
                   {s.products && s.products.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {s.products.map((p, pIdx) => (
-                        <span
-                          key={pIdx}
-                          className="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-[10px] font-medium text-emerald-300"
-                        >
-                          {p}
-                        </span>
-                      ))}
+                      {s.products.map((p, pIdx) => {
+                        const detail = s.productsDetails?.find((d) => d.name.toLowerCase() === p.toLowerCase())
+                        const unit = detail?.unit || ''
+                        const isDona = unit === 'dona'
+                        return (
+                          <span
+                            key={pIdx}
+                            className={`px-2 py-0.5 rounded-md border text-[10px] font-medium flex items-center gap-1 ${
+                              isDona
+                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                            }`}
+                          >
+                            <span>{p}</span>
+                            {unit && <span className="text-[8px] opacity-70 font-mono">({unit})</span>}
+                          </span>
+                        )
+                      })}
                     </div>
                   )}
 
                   <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2.5 rounded-xl border border-dark-700/60 text-center">
                     <div>
                       <div className="text-[10px] uppercase font-bold text-slate-400">Jami Yuk</div>
-                      <div className="font-black text-white text-xs mt-0.5">
-                        {(s.totalTonnes || 0) >= 1 ? `${s.totalTonnes} tn` : `${(s.totalKg || 0).toLocaleString()} kg`}
+                      <div className="font-black text-white text-xs mt-0.5 space-y-0.5">
+                        {s.totalKg && s.totalKg > 0 ? (
+                          <div>
+                            {(s.totalTonnes || 0) >= 1 ? `${s.totalTonnes} tn` : `${(s.totalKg || 0).toLocaleString()} kg`}
+                          </div>
+                        ) : null}
+                        {s.totalDona && s.totalDona > 0 ? (
+                          <div className="text-amber-300 font-bold text-[11px]">
+                            {s.totalDona.toLocaleString()} dona
+                          </div>
+                        ) : null}
+                        {!s.totalKg && !s.totalDona ? (
+                          <div className="text-slate-500">—</div>
+                        ) : null}
                       </div>
                     </div>
                     <div>
@@ -445,7 +513,7 @@ export default function SuppliersPage() {
                   <tr className="bg-dark-800/60 border-b border-dark-750 text-xs font-bold text-slate-400 uppercase tracking-wider">
                     <th className="py-4 px-5">{formatDual("Nomi & Korxona", "Поставщик / Организация", "Supplier Organization")}</th>
                     <th className="py-4 px-5">{formatDual("Keltirgan Mahsulotlari", "Поставляемая продукция", "Supplied Products")}</th>
-                    <th className="py-4 px-5 text-center">{formatDual("Jami Yetkazilgan Yuk", "Общий объем", "Total Volume")}</th>
+                    <th className="py-4 px-5 text-center">{formatDual("Jami Yetkazilgan Yuk", "Объем поставок", "Total Volume")}</th>
                     <th className="py-4 px-5 text-center">{formatDual("Partiyalar", "Партий", "Batches")}</th>
                     <th className="py-4 px-5 text-center">{formatDual("Oxirgi Yetkazish", "Посл. поставка", "Last Delivery")}</th>
                     <th className="py-4 px-5">{formatDual("Aloqa / Telefon", "Контакты", "Contact")}</th>
@@ -480,31 +548,58 @@ export default function SuppliersPage() {
                       </td>
 
                       {/* Products */}
-                      <td className="py-4 px-5 max-w-[220px]">
+                      <td className="py-4 px-5 max-w-[240px]">
                         <div className="flex flex-wrap gap-1">
                           {s.products && s.products.length > 0 ? (
-                            s.products.map((p, pIdx) => (
-                              <span
-                                key={pIdx}
-                                className="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-[11px] font-medium text-emerald-300"
-                              >
-                                {p}
-                              </span>
-                            ))
+                            s.products.map((p, pIdx) => {
+                              const detail = s.productsDetails?.find((d) => d.name.toLowerCase() === p.toLowerCase())
+                              const unit = detail?.unit || ''
+                              const isDona = unit === 'dona'
+                              return (
+                                <span
+                                  key={pIdx}
+                                  className={`px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 ${
+                                    isDona
+                                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                  }`}
+                                >
+                                  <span>{p}</span>
+                                  {unit && <span className="text-[9px] opacity-70 font-mono">({unit})</span>}
+                                </span>
+                              )
+                            })
                           ) : (
                             <span className="text-xs text-slate-500">-</span>
                           )}
                         </div>
                       </td>
 
-                      {/* Total Volume */}
+                      {/* Total Volume (Separating weight in kg/tn and packaging in dona) */}
                       <td className="py-4 px-5 text-center">
-                        <div className="font-black text-white text-base">
-                          {(s.totalTonnes || 0) >= 1 ? `${s.totalTonnes} tn` : `${(s.totalKg || 0).toLocaleString()} kg`}
-                        </div>
-                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                          {(s.totalKg || 0).toLocaleString()} kg
-                        </div>
+                        {s.totalKg && s.totalKg > 0 ? (
+                          <div>
+                            <div className="font-black text-white text-base">
+                              {(s.totalTonnes || 0) >= 1 ? `${s.totalTonnes} tn` : `${(s.totalKg || 0).toLocaleString()} kg`}
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                              {(s.totalKg || 0).toLocaleString()} kg
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {s.totalDona && s.totalDona > 0 ? (
+                          <div className={s.totalKg && s.totalKg > 0 ? 'mt-1.5' : ''}>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs shadow-xs">
+                              <Boxes size={12} />
+                              <span>{s.totalDona.toLocaleString()} dona</span>
+                            </span>
+                          </div>
+                        ) : null}
+
+                        {(!s.totalKg || s.totalKg === 0) && (!s.totalDona || s.totalDona === 0) ? (
+                          <span className="text-slate-500 text-xs">—</span>
+                        ) : null}
                       </td>
 
                       {/* Deliveries Count */}

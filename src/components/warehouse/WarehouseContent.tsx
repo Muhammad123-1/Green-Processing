@@ -244,6 +244,7 @@ type MacroSupplier = {
   name: string
   totalKg: number
   totalTonnes: number
+  totalDona?: number
   deliveriesCount: number
   products: string[]
   lastDeliveryDate: string
@@ -3584,7 +3585,14 @@ export default function WarehouseContent() {
                       <div>
                         <div className="text-[10px] uppercase font-bold text-slate-400">Jami Yuk</div>
                         <div className="font-black text-white text-xs mt-0.5">
-                          {s.totalTonnes >= 1 ? `${s.totalTonnes} tn` : `${s.totalKg.toLocaleString()} kg`}
+                          {s.totalKg && s.totalKg > 0
+                            ? s.totalTonnes >= 1
+                              ? `${s.totalTonnes} tn`
+                              : `${s.totalKg.toLocaleString()} kg`
+                            : ''}
+                          {s.totalKg && s.totalKg > 0 && s.totalDona && s.totalDona > 0 ? ' • ' : ''}
+                          {s.totalDona && s.totalDona > 0 ? `${s.totalDona.toLocaleString()} dona` : ''}
+                          {!s.totalKg && !s.totalDona ? '0 kg' : ''}
                         </div>
                       </div>
                       <div>
@@ -3693,12 +3701,27 @@ export default function WarehouseContent() {
 
                         {/* Total Volume */}
                         <td className="p-4 text-center">
-                          <div className="font-black text-white text-base">
-                            {s.totalTonnes >= 1 ? `${s.totalTonnes} tn` : `${s.totalKg.toLocaleString()} kg`}
-                          </div>
-                          <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                            {s.totalKg.toLocaleString()} kg
-                          </div>
+                          {s.totalKg && s.totalKg > 0 ? (
+                            <div>
+                              <div className="font-black text-white text-base">
+                                {s.totalTonnes >= 1 ? `${s.totalTonnes} tn` : `${s.totalKg.toLocaleString()} kg`}
+                              </div>
+                              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                {s.totalKg.toLocaleString()} kg
+                              </div>
+                            </div>
+                          ) : null}
+                          {s.totalDona && s.totalDona > 0 ? (
+                            <div className={s.totalKg && s.totalKg > 0 ? 'mt-1.5' : ''}>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs">
+                                <Boxes size={12} />
+                                <span>{s.totalDona.toLocaleString()} dona</span>
+                              </span>
+                            </div>
+                          ) : null}
+                          {!s.totalKg && !s.totalDona ? (
+                            <span className="text-slate-500 text-xs">—</span>
+                          ) : null}
                         </td>
 
                         {/* Deliveries Count */}

@@ -419,8 +419,12 @@ export default function ProductsPage() {
                   <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2 rounded-xl border border-dark-700/60 text-center">
                     <div>
                       <div className="text-[9px] uppercase font-bold text-slate-400">Jami Prixod</div>
-                      <div className="font-black text-emerald-400 text-xs mt-0.5">
-                        {(p.totalArrivalTonnes || 0) >= 1 ? `${p.totalArrivalTonnes} tn` : `${(p.totalArrivalKg || 0).toLocaleString()} ${p.unit}`}
+                      <div className={`font-black text-xs mt-0.5 ${p.unit === 'dona' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        {p.unit === 'dona'
+                          ? `${(p.totalArrivalKg || 0).toLocaleString()} dona`
+                          : (p.totalArrivalTonnes || 0) >= 1
+                          ? `${p.totalArrivalTonnes} tn`
+                          : `${(p.totalArrivalKg || 0).toLocaleString()} ${p.unit}`}
                       </div>
                     </div>
                     <div>
@@ -529,12 +533,18 @@ export default function ProductsPage() {
 
                       {/* Total Inflow from Prixod */}
                       <td className="py-4 px-5 text-center">
-                        <div className="font-black text-emerald-400 text-sm">
-                          {(p.totalArrivalTonnes || 0) >= 1 ? `${p.totalArrivalTonnes} tn` : `${(p.totalArrivalKg || 0).toLocaleString()} ${p.unit}`}
+                        <div className={`font-black text-sm ${p.unit === 'dona' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {p.unit === 'dona'
+                            ? `${(p.totalArrivalKg || 0).toLocaleString()} dona`
+                            : (p.totalArrivalTonnes || 0) >= 1
+                            ? `${p.totalArrivalTonnes} tn`
+                            : `${(p.totalArrivalKg || 0).toLocaleString()} ${p.unit}`}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                          {(p.totalArrivalKg || 0).toLocaleString()} {p.unit}
-                        </div>
+                        {p.unit !== 'dona' && (p.totalArrivalTonnes || 0) >= 1 && (
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            {(p.totalArrivalKg || 0).toLocaleString()} {p.unit}
+                          </div>
+                        )}
                       </td>
 
                       {/* Deliveries Count */}

@@ -2,6 +2,39 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 
+function inferProductUnit(name: string): 'kg' | 'dona' | 'litr' {
+  const s = name.toLowerCase().trim()
+  if (
+    s.includes('пакет') ||
+    s.includes('каробка') ||
+    s.includes('короб') ||
+    s.includes('karobka') ||
+    s.includes('этикетк') ||
+    s.includes('стрич') ||
+    s.includes('яшик') ||
+    s.includes('падон') ||
+    s.includes('скотч') ||
+    s.includes('перчатк') ||
+    s.includes('шапка') ||
+    s.includes('бахила') ||
+    s.includes('маска') ||
+    s.includes('халат') ||
+    s.includes('бумага') ||
+    s.includes('салфетк') ||
+    s.includes('полотенц') ||
+    s.includes('рукавадник') ||
+    s.includes('тара') ||
+    s.includes('мешок') ||
+    s.includes('сетка')
+  ) {
+    return 'dona'
+  }
+  if (s.includes('вода') || s.includes('масло') || s.includes('сироп')) {
+    return 'litr'
+  }
+  return 'kg'
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
@@ -265,6 +298,7 @@ export async function GET(req: NextRequest) {
       {
         name: string
         totalKg: number
+        totalDona: number
         deliveriesCount: number
         productsSet: Set<string>
         lastDeliveryDate: string
@@ -279,6 +313,7 @@ export async function GET(req: NextRequest) {
         suppliersSummary[s.name.trim()] = {
           name: s.name.trim(),
           totalKg: 0,
+          totalDona: 0,
           deliveriesCount: 0,
           productsSet: new Set(),
           lastDeliveryDate: '',
@@ -381,6 +416,7 @@ export async function GET(req: NextRequest) {
           suppliersSummary[sup] = {
             name: sup,
             totalKg: 0,
+            totalDona: 0,
             deliveriesCount: 0,
             productsSet: new Set(),
             lastDeliveryDate: '',
@@ -389,7 +425,12 @@ export async function GET(req: NextRequest) {
             status: 'Faol'
           }
         }
-        suppliersSummary[sup].totalKg += qty
+        const unit = inferProductUnit(nom)
+        if (unit === 'dona') {
+          suppliersSummary[sup].totalDona = (suppliersSummary[sup].totalDona || 0) + Math.round(qty)
+        } else {
+          suppliersSummary[sup].totalKg += qty
+        }
         suppliersSummary[sup].deliveriesCount += 1
         suppliersSummary[sup].productsSet.add(nom)
         if (date && (!suppliersSummary[sup].lastDeliveryDate || date > suppliersSummary[sup].lastDeliveryDate)) {
@@ -553,11 +594,12 @@ export async function GET(req: NextRequest) {
 
     // Sort suppliers list
     const sortedSuppliersList = Object.values(suppliersSummary)
-      .filter((s) => s.totalKg > 0 || s.deliveriesCount > 0 || s.phone)
+      .filter((s) => s.totalKg > 0 || s.totalDona > 0 || s.deliveriesCount > 0 || s.phone)
       .map((s) => ({
         name: s.name,
         totalKg: Math.round(s.totalKg * 10) / 10,
         totalTonnes: Math.round((s.totalKg / 1000) * 100) / 100,
+        totalDona: Math.round(s.totalDona || 0),
         deliveriesCount: s.deliveriesCount,
         products: Array.from(s.productsSet).slice(0, 5),
         lastDeliveryDate: s.lastDeliveryDate || '-',
@@ -565,7 +607,7 @@ export async function GET(req: NextRequest) {
         contactPerson: s.contactPerson || "Mas'ul vakil",
         status: s.status || 'Faol'
       }))
-      .sort((a, b) => b.totalKg - a.totalKg)
+      .sort((a, b) => (b.totalKg - a.totalKg) || (b.totalDona - a.totalDona))
 
     return NextResponse.json({
       summary: {
