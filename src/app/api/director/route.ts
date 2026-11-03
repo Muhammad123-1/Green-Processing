@@ -881,7 +881,7 @@ export async function GET(request: NextRequest) {
         }
 
         return {
-          id: cfg?.id || idx + 1,
+          id: `stock-${idx + 1}-${name.toLowerCase().replace(/[^a-z0-9а-яё]/gi, '-')}`,
           name,
           unit: cfg?.unit || 'kg',
           currentStock,

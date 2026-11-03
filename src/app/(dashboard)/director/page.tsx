@@ -2057,8 +2057,8 @@ export default function DirectorPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                          {filteredProducts.map((p: any) => (
-                            <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
+                          {filteredProducts.map((p: any, idx: number) => (
+                            <tr key={`prod-stock-${p.id || idx}-${p.name || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
                               <td className="p-3 font-bold text-slate-900 dark:text-white">{p.name}</td>
                               <td className="p-3 text-center font-bold font-mono">{p.currentStock} {p.unit}</td>
                               <td className="p-3 text-center text-slate-500">
@@ -2114,8 +2114,8 @@ export default function DirectorPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                            {filteredTransfers.map((tr: any) => (
-                              <tr key={tr.id}>
+                            {filteredTransfers.map((tr: any, idx: number) => (
+                              <tr key={`tr-${tr.id || idx}-${idx}`}>
                                 <td className="p-3 text-slate-500">{new Date(tr.createdAt).toLocaleDateString(dateLocale)}</td>
                                 <td className="p-3 font-bold">{tr.product?.name || formatDual("Mahsulot", "Продукт", "Product")}</td>
                                 <td className="p-3 text-indigo-600 font-medium">{tr.issuedByName || formatDual("Skladchi", "Кладовщик", "Warehouse worker")}</td>
@@ -2200,9 +2200,9 @@ export default function DirectorPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                          {filteredChecklists.map((c: any) => (
+                          {filteredChecklists.map((c: any, idx: number) => (
                             <tr
-                              key={c.id}
+                              key={`chk-${c.id || idx}-${idx}`}
                               onClick={() => setSelectedChecklist(selectedChecklist?.id === c.id ? null : c)}
                               className={`cursor-pointer transition-colors ${
                                 selectedChecklist?.id === c.id
@@ -2361,10 +2361,10 @@ export default function DirectorPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                            {filteredInspections.slice(0, arrivalsDisplayLimit).map((insp: any) => {
+                            {filteredInspections.slice(0, arrivalsDisplayLimit).map((insp: any, idx: number) => {
                               const isDona = /dona|пакет|каробк|коробк|перчатк|салфетк|полотенц|бумага|халат|маска|шапка/i.test(insp.nomenclature || insp.product?.name || '')
                               return (
-                                <tr key={insp.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/50 transition-colors">
+                                <tr key={`insp-${insp.id || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/50 transition-colors">
                                   <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{insp.date || new Date(insp.createdAt).toLocaleDateString(dateLocale)}</td>
                                   <td className="p-3 font-bold text-slate-900 dark:text-white">{insp.nomenclature || insp.product?.name || formatDual("Xomashyo", "Сырье", "Raw material")}</td>
                                   <td className="p-3 text-slate-700 dark:text-slate-300 text-xs">{insp.supplier?.name || insp.supplier || "-"}</td>
@@ -2734,9 +2734,9 @@ export default function DirectorPage() {
                       Hech qanday shubhali holat aniqlanmadi. Barcha parametrlar norma doirasida.
                     </div>
                   ) : (
-                    alerts.map((al) => (
+                    alerts.map((al, idx) => (
                       <div
-                        key={al.id}
+                        key={`alert-${al.id || idx}-${idx}`}
                         className="p-4 rounded-2xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 space-y-2"
                       >
                         <div className="flex items-center justify-between">
@@ -2775,15 +2775,15 @@ export default function DirectorPage() {
                   <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-2">
                     {formatDual("Mijozlar so'rovnomalari natijalari", "Результаты опросов клиентов", "Customer survey results")}:
                   </h4>
-                  {(details.recentSurveys || []).map((s: any) => (
-                    <div key={s.id} className="p-4 rounded-2xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 space-y-3">
+                  {(details.recentSurveys || []).map((s: any, sIdx: number) => (
+                    <div key={`survey-${s.id || sIdx}-${sIdx}`} className="p-4 rounded-2xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 space-y-3">
                       <div className="flex items-center justify-between">
                         <h5 className="font-bold text-slate-900 dark:text-white">{s.title}</h5>
                         <span className="text-xs text-slate-500 font-bold">{s.responses?.length || 0} ta javob</span>
                       </div>
                       <div className="space-y-2">
-                        {(s.responses || []).slice(0, 5).map((resp: any) => (
-                          <div key={resp.id} className="bg-white dark:bg-dark-900 p-2.5 rounded-xl border border-slate-200 dark:border-dark-750 text-xs">
+                        {(s.responses || []).slice(0, 5).map((resp: any, rIdx: number) => (
+                          <div key={`resp-${resp.id || rIdx}-${rIdx}`} className="bg-white dark:bg-dark-900 p-2.5 rounded-xl border border-slate-200 dark:border-dark-750 text-xs">
                             <div className="flex items-center justify-between font-bold text-slate-800 dark:text-slate-200">
                               <span>{resp.restaurantName || "Mijoz"} ({resp.respondentName || "Mas'ul"})</span>
                               <span className="text-[10px] text-slate-400 font-normal">{resp.respondentDate || "-"}</span>
@@ -2833,9 +2833,9 @@ export default function DirectorPage() {
                           )
                         })
                         .slice(0, 30)
-                        .map((evt) => (
+                        .map((evt, idx) => (
                           <div
-                            key={evt.id}
+                            key={`arch-${evt.id || idx}-${idx}`}
                             className="bg-white dark:bg-dark-900 rounded-2xl p-4 border border-slate-200 dark:border-dark-750 flex items-start gap-3 text-xs shadow-xs"
                           >
                             <span className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold flex-shrink-0">
