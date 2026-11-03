@@ -115,7 +115,7 @@ export default function ProductBalanceTable({
 
   const lowOrOutCount = useMemo(() => {
     return products.filter(
-      (p) => p.inventoryStatus === 'LOW' || p.inventoryStatus === 'OUT_OF_STOCK' || p.status === 'CRITICAL'
+      (p) => p.inventoryStatus === 'LOW' || p.inventoryStatus === 'OUT_OF_STOCK' || p.inventoryStatus === 'EXCESS' || p.status === 'CRITICAL'
     ).length
   }, [products])
 
@@ -132,7 +132,14 @@ export default function ProductBalanceTable({
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchSearch = p.productName.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = statusFilter === 'ALL' || p.status === statusFilter
+      let matchStatus = true
+      if (statusFilter === 'NORMAL') {
+        matchStatus = p.inventoryStatus === 'SUFFICIENT' || p.status === 'NORMAL'
+      } else if (statusFilter === 'WARNING') {
+        matchStatus = p.inventoryStatus === 'LOW' || p.inventoryStatus === 'EXCESS' || p.status === 'WARNING'
+      } else if (statusFilter === 'CRITICAL') {
+        matchStatus = p.inventoryStatus === 'OUT_OF_STOCK' || p.status === 'CRITICAL'
+      }
       const matchUnit = unitFilter === 'ALL' || (p.unit || 'kg') === unitFilter
       return matchSearch && matchStatus && matchUnit
     })
@@ -510,9 +517,23 @@ export default function ProductBalanceTable({
                     <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
                       <Clock size={12} className="text-slate-400" />
                       {item.stockCoverageDays !== null && item.stockCoverageDays !== undefined ? (
-                        <span>~{item.stockCoverageDays} kunga yetadi</span>
+                        item.inventoryStatus === 'EXCESS' ? (
+                          <span className="text-purple-600 dark:text-purple-400 font-bold">
+                            ~{item.stockCoverageDays} kunga yetadi (Max: {item.approvedMaxStorageDays ?? '-'} kun — Ortiqcha)
+                          </span>
+                        ) : item.inventoryStatus === 'LOW' ? (
+                          <span className="text-amber-600 dark:text-amber-400 font-bold">
+                            ~{item.stockCoverageDays} kunga yetadi (Kam qolgan)
+                          </span>
+                        ) : (
+                          <span>
+                            ~{item.stockCoverageDays} kunga yetadi{item.approvedMaxStorageDays ? ` (Max: ${item.approvedMaxStorageDays} kun)` : ''}
+                          </span>
+                        )
                       ) : (
-                        <span className="text-slate-400">Kunlik sarf yo‘q</span>
+                        <span className="text-slate-400">
+                          {item.approvedMaxStorageDays ? `Max: ${item.approvedMaxStorageDays} kun saqlanadi` : 'Kunlik sarf yo‘q'}
+                        </span>
                       )}
                     </span>
                     <span className="flex items-center gap-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">

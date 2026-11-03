@@ -825,7 +825,14 @@ export async function GET(request: NextRequest) {
         totalStockRemainingKg += currentStock
 
         const cfg = productConfigMap.get(name.toLowerCase())
-        const approvedMaxStorageDays = cfg?.maxStorageDays ?? cfg?.shelfLifeDays ?? null
+        let approvedMaxStorageDays = cfg?.maxStorageDays ?? cfg?.shelfLifeDays ?? null
+        const sLower = name.toLowerCase()
+        if (approvedMaxStorageDays === null) {
+          if (sLower.includes('айсберг') || sLower.includes('ayzberg') || sLower.includes('aysberg')) approvedMaxStorageDays = 21
+          else if (sLower.includes('томат') || sLower.includes('tomat')) approvedMaxStorageDays = 10
+          else if (sLower.includes('лимон') || sLower.includes('limon')) approvedMaxStorageDays = 10
+          else if (sLower.includes('сельдер') || sLower.includes('seldre')) approvedMaxStorageDays = 3
+        }
         const minStock = cfg?.minStockLevel && cfg.minStockLevel > 0 ? cfg.minStockLevel : null
 
         const activeDays = productDaysMap.get(name)?.size || globalOperationalDays
@@ -851,14 +858,22 @@ export async function GET(request: NextRequest) {
             ? Number((currentStock / avgWeeklyConsumptionKg).toFixed(2))
             : null
 
+        // Safe storage low threshold (e.g. 25% of max storage days, or at least 1.5 days)
+        const lowCoverageDaysThreshold = approvedMaxStorageDays !== null
+          ? Math.max(1.0, Number((approvedMaxStorageDays * 0.25).toFixed(1)))
+          : 1.5
+
         let status: 'SUFFICIENT' | 'LOW' | 'OUT_OF_STOCK' | 'EXCESS' = 'SUFFICIENT'
         if (currentStock <= 0) {
           status = 'OUT_OF_STOCK'
           outOfStockCount++
-        } else if (maxRecommendedStockKg !== null && currentStock > maxRecommendedStockKg) {
+        } else if (
+          (approvedMaxStorageDays !== null && stockCoverageDays !== null && stockCoverageDays > approvedMaxStorageDays) ||
+          (maxRecommendedStockKg !== null && currentStock > maxRecommendedStockKg)
+        ) {
           status = 'EXCESS'
           excessStockCount++
-        } else if ((minStock !== null && currentStock <= minStock) || (stockCoverageDays !== null && stockCoverageDays <= 1.0)) {
+        } else if ((minStock !== null && currentStock <= minStock) || (stockCoverageDays !== null && stockCoverageDays <= lowCoverageDaysThreshold)) {
           status = 'LOW'
           lowStockCount++
         } else {
@@ -952,7 +967,7 @@ export async function GET(request: NextRequest) {
           approvedMaxStorageDays: p.approvedMaxStorageDays,
           minStockThresholdKg: p.minStock,
           inventoryStatus: p.status,
-          status: p.status === 'OUT_OF_STOCK' ? 'CRITICAL' : p.status === 'LOW' ? 'WARNING' : 'NORMAL',
+          status: p.status === 'OUT_OF_STOCK' ? 'CRITICAL' : p.status === 'LOW' || p.status === 'EXCESS' ? 'WARNING' : 'NORMAL',
           standardLossPercent: null,
           actualLossPercent: null,
           actualDefectPercent: null,

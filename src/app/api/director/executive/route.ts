@@ -580,7 +580,14 @@ export async function GET(req: NextRequest) {
       const actualDefectPercent = lossBase > 0 ? Number(((item.actualDefectKg / lossBase) * 100).toFixed(2)) : null
 
       // Requirement 3 & 4: Product-Specific Storage Standards & Stock Coverage Formulas A, B, C, D
-      const approvedMaxStorageDays = cfg?.maxStorageDays ?? cfg?.shelfLifeDays ?? null
+      let approvedMaxStorageDays = cfg?.maxStorageDays ?? cfg?.shelfLifeDays ?? null
+      const sLower = item.productName.toLowerCase()
+      if (approvedMaxStorageDays === null) {
+        if (sLower.includes('айсберг') || sLower.includes('ayzberg') || sLower.includes('aysberg')) approvedMaxStorageDays = 21
+        else if (sLower.includes('томат') || sLower.includes('tomat')) approvedMaxStorageDays = 10
+        else if (sLower.includes('лимон') || sLower.includes('limon')) approvedMaxStorageDays = 10
+        else if (sLower.includes('сельдер') || sLower.includes('seldre')) approvedMaxStorageDays = 3
+      }
       const minStockThresholdKg = cfg?.minStockLevel && cfg.minStockLevel > 0 ? cfg.minStockLevel : null
 
       const prodOperationalDays = item.activeConsumptionDays.size || totalOperationalDays
@@ -612,17 +619,24 @@ export async function GET(req: NextRequest) {
           ? Number((usableStockKg / avgWeeklyConsumptionKg).toFixed(2))
           : null
 
+      const lowCoverageDaysThreshold = approvedMaxStorageDays !== null
+        ? Math.max(1.0, Number((approvedMaxStorageDays * 0.25).toFixed(1)))
+        : 1.5
+
       // Inventory Status (OUT_OF_STOCK, LOW, SUFFICIENT, EXCESS)
       let inventoryStatus: 'OUT_OF_STOCK' | 'LOW' | 'SUFFICIENT' | 'EXCESS' = 'SUFFICIENT'
       if (usableStockKg <= 0) {
         inventoryStatus = 'OUT_OF_STOCK'
         stockOutCount++
-      } else if (maxRecommendedInventoryKg !== null && usableStockKg > maxRecommendedInventoryKg) {
+      } else if (
+        (approvedMaxStorageDays !== null && stockCoverageDays !== null && stockCoverageDays > approvedMaxStorageDays) ||
+        (maxRecommendedInventoryKg !== null && usableStockKg > maxRecommendedInventoryKg)
+      ) {
         inventoryStatus = 'EXCESS'
         stockExcessCount++
       } else if (
         (minStockThresholdKg !== null && usableStockKg <= minStockThresholdKg) ||
-        (stockCoverageDays !== null && stockCoverageDays <= 1.0)
+        (stockCoverageDays !== null && stockCoverageDays <= lowCoverageDaysThreshold)
       ) {
         inventoryStatus = 'LOW'
         stockLowCount++
