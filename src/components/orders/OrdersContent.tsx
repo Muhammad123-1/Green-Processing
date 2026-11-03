@@ -29,10 +29,11 @@ import {
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
+import SupplierDebtsTable from '@/components/accounting/SupplierDebtsTable'
 
 export default function OrdersContent() {
   const { lang, formatDual } = useLanguage()
-  const [activeTab, setActiveTab] = useState<'inventory' | 'orders'>('inventory')
+  const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'debts'>('inventory')
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -584,6 +585,18 @@ export default function OrdersContent() {
             <span className="px-2 py-0.5 text-[11px] bg-dark-700 text-slate-300 rounded-full font-bold">
               {orders.length}
             </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('debts')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all ${
+              activeTab === 'debts'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black'
+                : 'bg-dark-800/80 text-slate-400 hover:text-white hover:bg-dark-750 border border-dark-700'
+            }`}
+          >
+            <DollarSign size={16} />
+            <span>{formatDual("Ta'minotchi Qarzdorligi (Buxgalteriya)", "Долги поставщикам (Бухгалтерия)", "Supplier Debts (Accounting)")}</span>
           </button>
         </div>
       </div>
@@ -1297,6 +1310,13 @@ export default function OrdersContent() {
             </>
           )}
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: Ta'minotchi Qarzdorligi (Buxgalteriya Rasmiy Balansi) */}
+      {/* ========================================================================= */}
+      {activeTab === 'debts' && (
+        <SupplierDebtsTable isProcurementView={true} />
       )}
 
       {/* ========================================================================= */}

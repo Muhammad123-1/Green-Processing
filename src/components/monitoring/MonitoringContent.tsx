@@ -3,44 +3,68 @@
 import React, { useState, useEffect } from 'react'
 import {
   FileSpreadsheet,
-  Filter,
   Search,
   Download,
   Calendar as CalendarIcon,
   Package,
   ArrowDownToLine,
   Loader2,
-  CheckCircle2,
   Boxes,
+  BarChart3,
+  TrendingUp,
+  Clock,
+  Layers,
+  ChevronRight,
+  Truck,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export default function MonitoringContent() {
   const { lang, formatDual } = useLanguage()
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('day')
   const [selectedDate, setSelectedDate] = useState<string>('')
+  const [selectedMonth, setSelectedMonth] = useState<string>('')
+  const [selectedYear, setSelectedYear] = useState<string>('')
   const [availableDates, setAvailableDates] = useState<string[]>([])
+  const [availableMonths, setAvailableMonths] = useState<string[]>([])
+  const [availableYears, setAvailableYears] = useState<string[]>([])
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    fetchMonitoringData(selectedDate)
-  }, [selectedDate])
+    fetchMonitoringData()
+  }, [period, selectedDate, selectedMonth, selectedYear])
 
-  const fetchMonitoringData = async (dateStr?: string) => {
+  const fetchMonitoringData = async () => {
     setLoading(true)
     try {
-      const url = dateStr ? `/api/monitoring?date=${dateStr}` : '/api/monitoring'
-      const res = await fetch(url)
+      const params = new URLSearchParams()
+      params.set('period', period)
+      if (period === 'day' || period === 'week') {
+        if (selectedDate) params.set('date', selectedDate)
+      } else if (period === 'month') {
+        if (selectedMonth) params.set('month', selectedMonth)
+      } else if (period === 'year') {
+        if (selectedYear) params.set('year', selectedYear)
+      }
+
+      const res = await fetch(`/api/monitoring?${params.toString()}`)
       if (res.ok) {
         const json = await res.json()
         setData(json)
         if (!selectedDate && json.activeDate) {
           setSelectedDate(json.activeDate)
         }
-        if (json.availableDates) {
-          setAvailableDates(json.availableDates)
+        if (!selectedMonth && json.activeMonth) {
+          setSelectedMonth(json.activeMonth)
         }
+        if (!selectedYear && json.activeYear) {
+          setSelectedYear(json.activeYear)
+        }
+        if (json.availableDates) setAvailableDates(json.availableDates)
+        if (json.availableMonths) setAvailableMonths(json.availableMonths)
+        if (json.availableYears) setAvailableYears(json.availableYears)
       }
     } catch {
       // ignore
@@ -53,46 +77,52 @@ export default function MonitoringContent() {
   const arrivals: any[] = data?.arrivals || []
 
   const filteredProducts = products.filter((p) =>
-    p.product.toLowerCase().includes(searchQuery.toLowerCase().trim())
+    (p.product || '').toLowerCase().includes(searchQuery.toLowerCase().trim())
   )
 
   const filteredArrivals = arrivals.filter((a) =>
-    a.product.toLowerCase().includes(searchQuery.toLowerCase().trim())
+    (a.product || '').toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+    (a.supplier || '').toLowerCase().includes(searchQuery.toLowerCase().trim())
   )
 
   const totalKg = data?.totalKg || 0
   const totalBoxes = data?.totalBoxes || 0
   const totalPacks = data?.totalPacks || 0
   const totalArrivalsKg = data?.totalArrivalsKg || 0
+  const operationalDaysCount = data?.operationalDaysCount || (period === 'day' ? 1 : 0)
+  const periodLabel = data?.periodLabel || selectedDate
 
   return (
-    <div className="flex flex-col min-h-full space-y-3 sm:space-y-5 animate-enter">
+    <div className="flex flex-col min-h-full space-y-4 sm:space-y-6 animate-enter">
       {/* Top Header Card */}
-      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl p-4 sm:p-5 md:p-6 shadow-sm dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center shadow-sm dark:shadow-inner">
-            <BarChart3Icon size={26} />
+          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center shadow-sm shrink-0">
+            <BarChart3 size={28} />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-900 dark:bg-indigo-500/20 dark:text-indigo-300 text-[10px] font-extrabold uppercase tracking-wider border border-indigo-300 dark:border-indigo-500/30">
-                {formatDual('Sex Ishlab Chiqarish Monitoringi', 'Мониторинг производства цеха', 'Shop Production Monitoring')}
+                {formatDual('Ishlab Chiqarish Monitoringi', 'Мониторинг производства цеха', 'Shop Production Monitoring')}
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 font-mono font-bold">
+                {periodLabel}
               </span>
             </div>
-            <h1 className="text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatDual("Kunlik Ishlab Chiqarish & Kirim Monitoringi", 'Ежедневный выпуск и приход сырья', 'Daily Production & Arrival Monitoring')}
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              {formatDual("Ishlab Chiqarish & Kirim Monitoringi", 'Выпуск продукции и приход сырья', 'Production & Arrival Monitoring')}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-snug line-clamp-1 font-semibold">
+            <p className="text-slate-600 dark:text-slate-400 text-xs mt-1 leading-snug line-clamp-1 font-semibold">
               {formatDual(
-                "Sex hisobotlari (Prixod GP) va xomashyo kirimi bo'yicha real ma'lumotlar",
-                'Реальные данные цеха по выходу готовой продукции и приходу сырья',
-                'Real factory data on finished goods output and raw material arrivals'
+                "Kunlik, haftalik, oylik va yillik sex hisobotlari (Prixod GP) hamda xomashyo kirimi",
+                'Ежедневный, недельный, месячный и годовой учет готовой продукции и сырья',
+                'Daily, weekly, monthly and yearly finished goods output and raw arrivals'
               )}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <a
             href={`/api/reports/excel?lang=${lang || 'uz'}`}
             download
@@ -104,17 +134,68 @@ export default function MonitoringContent() {
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
-        {/* Filters Toolbar */}
-        <div className="p-4 border-b border-slate-200 dark:border-dark-750 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50/50 dark:bg-dark-900/50">
-          <div className="flex flex-wrap items-center gap-3">
+      {/* Period Selector & Filter Bar */}
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Period Tabs: Kunlik, Haftalik, Oylik, Yillik */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-dark-800 rounded-2xl w-full sm:w-auto">
+          <button
+            onClick={() => setPeriod('day')}
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              period === 'day'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Clock size={14} />
+            <span>{formatDual("Kunlik", "Ежедневно", "Daily")}</span>
+          </button>
+
+          <button
+            onClick={() => setPeriod('week')}
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              period === 'week'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <CalendarIcon size={14} />
+            <span>{formatDual("Haftalik", "Неделя", "Weekly")}</span>
+          </button>
+
+          <button
+            onClick={() => setPeriod('month')}
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              period === 'month'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Layers size={14} />
+            <span>{formatDual("Oylik", "Месяц", "Monthly")}</span>
+          </button>
+
+          <button
+            onClick={() => setPeriod('year')}
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              period === 'year'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <TrendingUp size={14} />
+            <span>{formatDual("Yillik", "Год", "Yearly")}</span>
+          </button>
+        </div>
+
+        {/* Dynamic Context Picker depending on chosen period */}
+        <div className="flex flex-wrap items-center gap-3">
+          {period === 'day' && (
             <div className="relative">
               <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="pl-9 pr-8 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+                className="pl-9 pr-8 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
               >
                 {availableDates.map((d) => (
                   <option key={d} value={d}>
@@ -123,10 +204,61 @@ export default function MonitoringContent() {
                 ))}
               </select>
             </div>
-            <span className="text-xs text-slate-500 font-semibold">
-              {products.length} {formatDual('xil tayyor mahsulot chiqishi', 'видов продукции', 'products produced')}
-            </span>
-          </div>
+          )}
+
+          {period === 'week' && (
+            <div className="relative flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-medium">{formatDual("Hafta oxiri sanasi:", "Конец недели:", "Week end date:")}</span>
+              <div className="relative">
+                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <select
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="pl-9 pr-8 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
+                >
+                  {availableDates.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {period === 'month' && (
+            <div className="relative">
+              <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="pl-9 pr-8 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
+              >
+                {availableMonths.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {period === 'year' && (
+            <div className="relative">
+              <TrendingUp className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="pl-9 pr-8 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
+              >
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>
+                    {y}-yil
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -135,13 +267,109 @@ export default function MonitoringContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={lang === 'ru' ? 'Поиск продукта...' : 'Mahsulot qidirish...'}
-              className="w-full sm:w-64 pl-9 pr-4 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+              className="w-full sm:w-56 pl-9 pr-4 py-2 bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
             />
           </div>
         </div>
+      </div>
 
+      {/* 5 Executive KPI Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        {/* Card 1: Finished Output Kg */}
+        <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {formatDual("Tayyor Mahsulot", "Выпуск ГП", "Finished Output")}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+              <Package size={16} />
+            </div>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            {totalKg.toLocaleString()} <span className="text-sm font-semibold text-slate-500">kg</span>
+          </div>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            {filteredProducts.length} {formatDual("xil mahsulot turi", "видов продукции", "SKU varieties")}
+          </span>
+        </div>
+
+        {/* Card 2: Boxes Output */}
+        <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {formatDual("Qutilar Soni", "Коробки", "Total Boxes")}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <Boxes size={16} />
+            </div>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            {totalBoxes.toLocaleString()} <span className="text-sm font-semibold text-slate-500">{formatDual("quti", "кор", "box")}</span>
+          </div>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            {formatDual("Qadoqlangan taralar", "Упакованная тара", "Packaged boxes")}
+          </span>
+        </div>
+
+        {/* Card 3: Packs Output */}
+        <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {formatDual("Paketlar Soni", "Упаковки", "Total Packs")}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <Layers size={16} />
+            </div>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            {totalPacks.toLocaleString()} <span className="text-sm font-semibold text-slate-500">{formatDual("dona", "шт", "pcs")}</span>
+          </div>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            {formatDual("Alohida qadoqlar", "Индивид. упаковки", "Individual units")}
+          </span>
+        </div>
+
+        {/* Card 4: Inbound Raw Arrivals */}
+        <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {formatDual("Xomashyo Kirimi", "Приход сырья", "Raw Arrivals")}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <ArrowDownToLine size={16} />
+            </div>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+            {totalArrivalsKg.toLocaleString()} <span className="text-sm font-semibold text-slate-500">kg</span>
+          </div>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            {filteredArrivals.length} {formatDual("xil xomashyo kirimi", "приемок сырья", "inbound lots")}
+          </span>
+        </div>
+
+        {/* Card 5: Operational Days */}
+        <div className="col-span-2 lg:col-span-1 bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {formatDual("Faol Ish Kunlari", "Рабочие дни", "Active Days")}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <Clock size={16} />
+            </div>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono">
+            {operationalDaysCount} <span className="text-sm font-semibold text-slate-500">{formatDual("kun", "дней", "days")}</span>
+          </div>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            {formatDual("Tanlangan davrda", "За выбранный период", "In selected period")}
+          </span>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
         {/* Content Area */}
-        <div className="flex-1 overflow-auto p-4 custom-scrollbar space-y-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-5 custom-scrollbar space-y-6">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center text-slate-400">
               <Loader2 size={32} className="animate-spin text-indigo-500 mb-2" />
@@ -151,17 +379,17 @@ export default function MonitoringContent() {
             <>
               {/* Finished Goods Section */}
               <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-6 rounded bg-indigo-600"></div>
                     <h2 className="text-base sm:text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">
                       {formatDual('Sexdan Tayyor Mahsulot Chiqishi (Prixod GP)', 'Выпуск готовой продукции цеха', 'Finished Goods Output (Shop)')}
                     </h2>
-                    <span className="px-2 py-0.5 ml-1 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded text-xs font-bold text-slate-600 dark:text-slate-400">
-                      {selectedDate}
+                    <span className="px-2.5 py-0.5 ml-1 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold">
+                      {periodLabel}
                     </span>
                   </div>
-                  <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                  <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">
                     {totalKg.toLocaleString()} kg / {totalBoxes.toLocaleString()} quti
                   </div>
                 </div>
@@ -180,36 +408,45 @@ export default function MonitoringContent() {
                         <th className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
                           {formatDual('Qadoqlar soni (upakovka)', 'Упаковки', 'Packs')}
                         </th>
-                        <th className="p-3 text-center font-black text-indigo-700 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 w-36">
+                        <th className="p-3 text-center font-black text-indigo-700 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 w-40">
                           {formatDual('Jami og\'irlik (kg)', 'Вес (кг)', 'Weight (kg)')}
+                        </th>
+                        <th className="p-3 text-center text-[10px] w-24">
+                          {formatDual("Ulush (%)", "Доля (%)", "Share (%)")}
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-dark-750 text-xs">
                       {filteredProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="p-6 text-center text-slate-400">
-                            {formatDual('Ushbu kunda chiqish ma\'lumotlari topilmadi', 'Данные за эту дату не найдены', 'No output recorded for this date')}
+                          <td colSpan={6} className="p-8 text-center text-slate-400 italic">
+                            {formatDual('Ushbu davrda chiqish ma\'lumotlari topilmadi', 'Данные за этот период не найдены', 'No output recorded for this period')}
                           </td>
                         </tr>
                       ) : (
-                        filteredProducts.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors">
-                            <td className="p-3 text-center font-bold text-slate-400">{idx + 1}</td>
-                            <td className="p-3 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-dark-750">
-                              {item.product}
-                            </td>
-                            <td className="p-3 text-center font-mono border-r border-slate-200 dark:border-dark-750 text-slate-700 dark:text-slate-300">
-                              {item.boxes > 0 ? `${item.boxes} quti` : '-'}
-                            </td>
-                            <td className="p-3 text-center font-mono border-r border-slate-200 dark:border-dark-750 text-slate-700 dark:text-slate-300">
-                              {item.packs > 0 ? `${item.packs} dona` : '-'}
-                            </td>
-                            <td className="p-3 text-center font-mono font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50/30 dark:bg-indigo-900/10">
-                              {item.total.toLocaleString()} kg
-                            </td>
-                          </tr>
-                        ))
+                        filteredProducts.map((item, idx) => {
+                          const pct = totalKg > 0 ? ((item.total / totalKg) * 100).toFixed(1) : '0'
+                          return (
+                            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors">
+                              <td className="p-3 text-center font-bold text-slate-400">{idx + 1}</td>
+                              <td className="p-3 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-dark-750">
+                                {item.product}
+                              </td>
+                              <td className="p-3 text-center font-mono border-r border-slate-200 dark:border-dark-750 text-slate-700 dark:text-slate-300">
+                                {item.boxes > 0 ? `${item.boxes.toLocaleString()} quti` : '-'}
+                              </td>
+                              <td className="p-3 text-center font-mono border-r border-slate-200 dark:border-dark-750 text-slate-700 dark:text-slate-300">
+                                {item.packs > 0 ? `${item.packs.toLocaleString()} dona` : '-'}
+                              </td>
+                              <td className="p-3 text-center font-mono font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50/30 dark:bg-indigo-900/10">
+                                {item.total.toLocaleString()} kg
+                              </td>
+                              <td className="p-3 text-center font-mono text-slate-500 font-semibold">
+                                {pct}%
+                              </td>
+                            </tr>
+                          )
+                        })
                       )}
                     </tbody>
                     {filteredProducts.length > 0 && (
@@ -227,6 +464,9 @@ export default function MonitoringContent() {
                           <td className="p-3 text-center font-mono font-black text-indigo-700 dark:text-indigo-400 bg-indigo-100/50 dark:bg-indigo-900/30">
                             {totalKg.toLocaleString()} kg
                           </td>
+                          <td className="p-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                            100%
+                          </td>
                         </tr>
                       </tfoot>
                     )}
@@ -236,57 +476,87 @@ export default function MonitoringContent() {
 
               {/* Raw Material Inbound Arrivals Section */}
               {arrivals.length > 0 && (
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="pt-4 border-t border-slate-200 dark:border-dark-750">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-6 rounded bg-emerald-600"></div>
                       <h2 className="text-base sm:text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                        {formatDual("Kunlik Xomashyo Kirimi (Prixod Xomashyo)", 'Приемка сырья за день', 'Raw Material Inbound Arrivals')}
+                        {period === 'day'
+                          ? formatDual("Kunlik Xomashyo Kirimi (Prixod Xomashyo)", 'Приемка сырья за день', 'Raw Material Inbound Arrivals')
+                          : formatDual(`Xomashyo Kirimi (${periodLabel})`, `Приемка сырья (${periodLabel})`, `Inbound Arrivals (${periodLabel})`)}
                       </h2>
                     </div>
-                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                       {totalArrivalsKg.toLocaleString()} kg xomashyo
                     </div>
                   </div>
 
                   <div className="border border-slate-200 dark:border-dark-750 rounded-2xl overflow-x-auto shadow-sm">
-                    <table className="w-full text-left border-collapse text-xs">
+                    <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-100 dark:bg-dark-800 uppercase tracking-wider text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-dark-750">
+                        <tr className="bg-slate-100 dark:bg-dark-800 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-dark-750">
                           <th className="p-3 w-12 text-center">№</th>
-                          <th className="p-3 border-r border-slate-200 dark:border-dark-750">
-                            {formatDual('Xomashyo nomi', 'Сырье', 'Raw Material')}
-                          </th>
-                          <th className="p-3 border-r border-slate-200 dark:border-dark-750">
-                            {formatDual('Ta\'minotchi', 'Поставщик', 'Supplier')}
-                          </th>
-                          <th className="p-3 text-center border-r border-slate-200 dark:border-dark-750">
-                            {formatDual('Partiya', 'Партия', 'Batch')}
-                          </th>
+                          {period === 'day' && <th className="p-3">{formatDual('Sana', 'Дата', 'Date')}</th>}
+                          <th className="p-3">{formatDual('Mahsulot / Xomashyo', 'Сырье / Номенклатура', 'Raw Material')}</th>
+                          <th className="p-3">{formatDual("Ta'minotchi(lar)", 'Поставщик(и)', 'Supplier(s)')}</th>
+                          <th className="p-3 text-center">{formatDual('Partiya', 'Партия', 'Batch')}</th>
+                          {period !== 'day' && (
+                            <th className="p-3 text-center">{formatDual('Qabullar soni', 'Кол-во приемок', 'Arrivals Count')}</th>
+                          )}
                           <th className="p-3 text-center font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20 w-36">
-                            {formatDual('Qabul miqdori (kg)', 'Количество (кг)', 'Quantity (kg)')}
+                            {formatDual('Jami miqdor (kg)', 'Вес (кг)', 'Weight (kg)')}
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
-                        {filteredArrivals.map((arr, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors">
-                            <td className="p-3 text-center font-bold text-slate-400">{idx + 1}</td>
-                            <td className="p-3 font-bold text-slate-900 dark:text-white border-r border-slate-200 dark:border-dark-750">
-                              {arr.product}
-                            </td>
-                            <td className="p-3 text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-dark-750">
-                              {arr.supplier}
-                            </td>
-                            <td className="p-3 text-center font-mono text-slate-500 border-r border-slate-200 dark:border-dark-750">
-                              {arr.batch}
-                            </td>
-                            <td className="p-3 text-center font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-900/10">
-                              {arr.quantity.toLocaleString()} kg
+                      <tbody className="divide-y divide-slate-200 dark:divide-dark-750 text-xs">
+                        {filteredArrivals.length === 0 ? (
+                          <tr>
+                            <td colSpan={period === 'day' ? 6 : 6} className="p-8 text-center text-slate-400 italic">
+                              {formatDual('Xomashyo kirimi ma\'lumotlari topilmadi', 'Данные по сырью не найдены', 'No arrival data found')}
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          filteredArrivals.map((arr, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors">
+                              <td className="p-3 text-center font-bold text-slate-400">{idx + 1}</td>
+                              {period === 'day' && (
+                                <td className="p-3 text-slate-500 font-mono whitespace-nowrap text-xs">{arr.date || selectedDate}</td>
+                              )}
+                              <td className="p-3 font-bold text-slate-900 dark:text-white">
+                                {arr.product}
+                              </td>
+                              <td className="p-3 text-slate-600 dark:text-slate-300">
+                                {arr.suppliers || arr.supplier || '-'}
+                              </td>
+                              <td className="p-3 text-center font-mono">
+                                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                                  {arr.batches || arr.batch || '-'}
+                                </span>
+                              </td>
+                              {period !== 'day' && (
+                                <td className="p-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                                  {arr.count ? `${arr.count} ta` : '-'}
+                                </td>
+                              )}
+                              <td className="p-3 text-center font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-900/10">
+                                {(arr.quantity || 0).toLocaleString()} kg
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
+                      {filteredArrivals.length > 0 && (
+                        <tfoot>
+                          <tr className="bg-slate-100 dark:bg-dark-800 border-t-2 border-slate-300 dark:border-dark-600 text-xs">
+                            <td colSpan={period === 'day' ? 5 : 5} className="p-3 font-black text-slate-900 dark:text-white uppercase">
+                              {formatDual('Umumiy xomashyo kirimi:', 'ИТОГО ПРИХОД СЫРЬЯ:', 'TOTAL INBOUND ARRIVALS:')}
+                            </td>
+                            <td className="p-3 text-center font-mono font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-900/30">
+                              {totalArrivalsKg.toLocaleString()} kg
+                            </td>
+                          </tr>
+                        </tfoot>
+                      )}
                     </table>
                   </div>
                 </div>
@@ -296,27 +566,5 @@ export default function MonitoringContent() {
         </div>
       </div>
     </div>
-  )
-}
-
-function BarChart3Icon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 3v18h18" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
-    </svg>
   )
 }

@@ -68,6 +68,7 @@ const navSections = [
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'QUALITY_CONTROL'] },
       { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'arrivals', href: '/arrivals', icon: ArrowDownToLine, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
+      { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
       { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
@@ -79,7 +80,6 @@ const navSections = [
     title: "Savdo va Ta'minot",
     items: [
       { key: 'sales', href: '/sales', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SALES'] },
-      { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'SALES', 'SUPPLY'] },
       { key: 'orders', href: '/orders', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },

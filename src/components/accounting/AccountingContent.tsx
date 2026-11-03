@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Wallet, TrendingUp, TrendingDown, Plus, FileText, Landmark, Loader2, ArrowRight } from 'lucide-react'
+import { Wallet, TrendingUp, TrendingDown, Plus, FileText, Landmark, Loader2, ArrowRight, Truck } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import SupplierDebtsTable from './SupplierDebtsTable'
 
 export default function AccountingContent() {
   const { formatDual } = useLanguage()
-  const [activeTab, setActiveTab] = useState<'accounts' | 'transactions' | 'invoices'>('accounts')
+  const [activeTab, setActiveTab] = useState<'accounts' | 'transactions' | 'invoices' | 'supplierDebts'>('accounts')
   const [loading, setLoading] = useState(true)
   
   const [accounts, setAccounts] = useState<any[]>([])
@@ -166,6 +167,16 @@ export default function AccountingContent() {
         >
           <FileText size={16} /> {formatDual("Invoyslar (Qarzlar)", "Счета-фактуры (Долги)", "Invoices")}
         </button>
+        <button
+          onClick={() => setActiveTab('supplierDebts')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
+            activeTab === 'supplierDebts'
+              ? 'bg-violet-600/20 text-violet-400 border border-violet-500/30'
+              : 'bg-dark-800/80 text-slate-400 hover:text-white'
+          }`}
+        >
+          <Truck size={16} /> {formatDual("Ta'minotchilar Qarzdorligi", "Долги перед поставщиками", "Supplier Payables")}
+        </button>
       </div>
 
       {loading ? (
@@ -243,11 +254,18 @@ export default function AccountingContent() {
           </div>
         </div>
       ) : (
-        <div className="card border border-dark-700 bg-dark-900/50 rounded-2xl overflow-hidden p-10 text-center text-slate-500">
-          <FileText size={48} className="mx-auto mb-4 opacity-50" />
-          <h2 className="text-xl text-white font-bold mb-2">{formatDual("Invoyslar Qismi Ishlanmoqda", "Раздел счетов в разработке", "Invoices Section Under Development")}</h2>
-          <p>{formatDual("Bu yerda mijozlar va yetkazib beruvchilardan bo'lgan qarzlar (to'lanmagan nakladnoylar) chiqadi.", "Здесь будут отображаться задолженности клиентов и поставщиков (неоплаченные накладные).", "Customer and supplier receivables/payables (unpaid invoices) will appear here.")}</p>
-        </div>
+        <SupplierDebtsTable
+          onOpenPaymentModal={(supName, remaining) => {
+            setTxForm({
+              bankAccountId: accounts[0]?.id ? String(accounts[0].id) : '',
+              type: 'EXPENSE',
+              amount: String(remaining),
+              category: 'RAW_MATERIALS',
+              description: `${supName} xomashyo qarzini to'lash`,
+            })
+            setShowTxModal(true)
+          }}
+        />
       )}
 
       {/* NEW TRANSACTION MODAL */}
