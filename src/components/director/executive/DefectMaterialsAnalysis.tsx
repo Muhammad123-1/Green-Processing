@@ -32,11 +32,15 @@ export interface DefectItem {
 }
 
 interface Props {
-  items: DefectItem[]
+  items?: DefectItem[]
+  dateFrom?: string
+  dateTo?: string
   lang?: string
 }
 
-export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Props) {
+export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo = '', lang = 'uz' }: Props) {
+  const [fetchedItems, setFetchedItems] = useState<DefectItem[]>([])
+  const [loading, setLoading] = useState(false)
   const [unitFilter, setUnitFilter] = useState<'ALL' | 'kg' | 'dona'>('ALL')
   const [selectedProduct, setSelectedProduct] = useState<string>('')
   const [productSearch, setProductSearch] = useState<string>('')
@@ -45,18 +49,63 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
   const [page, setPage] = useState<number>(1)
   const pageSize = 20
 
+  // Auto-fetch if items are not passed via props
+  React.useEffect(() => {
+    if (items && items.length > 0) return
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const p = new URLSearchParams()
+        if (dateFrom) p.set('dateFrom', dateFrom)
+        if (dateTo) p.set('dateTo', dateTo)
+        p.set('pageSize', '100')
+        const res = await fetch(`/api/director/wastage-logs?${p}`, { cache: 'no-store' })
+        const json = await res.json()
+        if (!cancelled && json?.items) {
+          const mapped: DefectItem[] = json.items.map((r: any) => ({
+            id: String(r.id),
+            type: 'BRAK',
+            defectNumber: r.actNumber,
+            productName: r.productName,
+            batchNumber: r.batchNumber || '',
+            quantityKg: Number(r.weightKg || 0),
+            unit: 'kg',
+            reason: r.reasonCategory || r.detailedComment || 'Sifat chetlanishi',
+            date: r.incidentDate,
+            responsible: r.responsiblePersonName || r.reportedByName || 'Sifat nazorati',
+            status: r.stage,
+          }))
+          setFetchedItems(mapped)
+        }
+      } catch (e) {
+        console.error('Failed to fetch defect items:', e)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [items, dateFrom, dateTo])
+
+  const effectiveItems = useMemo(() => {
+    return items && items.length > 0 ? items : fetchedItems
+  }, [items, fetchedItems])
+
   // 1. Separate totals for KG and DONA
   const totalKg = useMemo(() => {
-    return items
+    return effectiveItems
       .filter((i) => (i.unit || 'kg') === 'kg')
       .reduce((sum, i) => sum + (i.quantityKg || 0), 0)
-  }, [items])
+  }, [effectiveItems])
 
   const totalDona = useMemo(() => {
-    return items
+    return effectiveItems
       .filter((i) => i.unit === 'dona')
       .reduce((sum, i) => sum + (i.quantityKg || 0), 0)
-  }, [items])
+  }, [effectiveItems])
 
   // 2. Group items by product for product cards (Image 2 style)
   const allProductsSummary = useMemo(() => {
@@ -64,7 +113,7 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
       string,
       { name: string; count: number; totalQty: number; unit: string; reasons: Set<string> }
     >()
-    items.forEach((item) => {
+    effectiveItems.forEach((item) => {
       const name = item.productName || 'Noma’lum mahsulot'
       const unit = item.unit || 'kg'
       const existing = map.get(name) || {
@@ -80,7 +129,7 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
       map.set(name, existing)
     })
     return Array.from(map.values()).sort((a, b) => b.totalQty - a.totalQty)
-  }, [items])
+  }, [effectiveItems])
 
   // Filter products by unit tab & search
   const visibleProductsSummary = useMemo(() => {
@@ -104,7 +153,7 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
   // Filtered records when a product is selected
   const filteredRecords = useMemo(() => {
     if (!selectedProduct) return []
-    return items.filter((item) => {
+    return effectiveItems.filter((item) => {
       const matchProduct = item.productName === selectedProduct
       if (!matchProduct) return false
       if (!search) return true
@@ -117,7 +166,7 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
         item.date?.includes(q)
       )
     })
-  }, [items, selectedProduct, search])
+  }, [effectiveItems, selectedProduct, search])
 
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize))
   const paginatedRecords = useMemo(() => {
@@ -180,7 +229,7 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
             </div>
           </div>
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
-            {items.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'актов' : 'ta'}
+            {effectiveItems.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'актов' : 'ta'}
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
             {allProductsSummary.length} {lang === 'ru' ? 'наименований' : 'ta mahsulot turi'}

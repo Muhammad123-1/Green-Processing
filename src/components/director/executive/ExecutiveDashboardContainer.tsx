@@ -18,6 +18,7 @@ import ExecutiveKpiGrid from './ExecutiveKpiGrid'
 import ProductBalanceTable, { ProductBalanceItem } from './ProductBalanceTable'
 import ProductLossDrawer from './ProductLossDrawer'
 import WastageAuditJournal from './WastageAuditJournal'
+import DefectMaterialsAnalysis from './DefectMaterialsAnalysis'
 import LossStandardsModal from './LossStandardsModal'
 import IncomingMaterialsAnalysis from './IncomingMaterialsAnalysis'
 import OperationsExecutivePanel from './OperationsExecutivePanel'
@@ -334,10 +335,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
           onOpenStandards={() => setShowStandardsModal(true)}
         />
       ) : activeTab === 'journal' ? (
-        <WastageAuditJournal
-          initialProductFilter={journalProductFilter}
-          initialStageFilter={journalStageFilter}
-          initialWastageType={journalWastageType}
+        <DefectMaterialsAnalysis
           dateFrom={dateFrom}
           dateTo={dateTo}
           lang={lang}
