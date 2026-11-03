@@ -63,7 +63,6 @@ const navSections = [
     title: 'Ombor va Ishlab chiqarish',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
-      { key: 'rawMovement', href: '/raw-movement', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION', 'QUALITY_CONTROL'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'QUALITY_CONTROL'] },
       { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },

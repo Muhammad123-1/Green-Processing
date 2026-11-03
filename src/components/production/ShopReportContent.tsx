@@ -226,7 +226,10 @@ export default function ShopReportContent({
       const res = await fetch('/api/shop-report', { cache: 'no-store' })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Ma'lumotlarni yuklashda xatolik")
-      setArrivals((data.arrivals || []).map((a: any) => ({ ...a })))
+      setArrivals((data.arrivals || []).map((a: any) => ({
+        ...a,
+        batch: a.batch || (a.id ? `#${a.id}` : '')
+      })))
       setRawExpenses(data.expenses || [])
       setExpenses((data.expenses || []).map((e: any) => readExpenseRow(e)))
       setGpList((data.expenses || []).map((e: any) => readGPRow(e)))
@@ -1323,8 +1326,8 @@ export default function ShopReportContent({
                             type="text"
                             readOnly={!isRowEditable}
                             disabled={!isRowEditable}
-                            placeholder="Партия"
-                            value={row.batch || ''}
+                            placeholder={row.id ? `#${row.id}` : "Партия"}
+                            value={row.batch || (row.id ? `#${row.id}` : '')}
                             onClick={() => {
                               if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
                             }}

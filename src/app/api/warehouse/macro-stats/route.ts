@@ -334,6 +334,8 @@ export async function GET(req: NextRequest) {
       supplier: string
       batchNumber: string
       category: string
+      isEdited?: boolean
+      editReason?: string
     }> = []
 
     // 1. Process ShopArrival
@@ -407,7 +409,9 @@ export async function GET(req: NextRequest) {
         unit: mat.unit,
         supplier: sup,
         batchNumber: batchNum,
-        category: mat.category
+        category: mat.category,
+        isEdited: Boolean(arr.isEdited),
+        editReason: arr.editReason || undefined
       })
 
       // Update supplier
@@ -439,7 +443,19 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 2. Process ShopExpense (Raw materials expenses)
+    // 2. Process ShopExpense (Raw materials expenses / dispatches to workshop)
+    const dispatchesList: Array<{
+      id: number
+      date: string
+      nomenclature: string
+      quantity: number
+      unit: string
+      destination: string
+      category: string
+      isEdited?: boolean
+      editReason?: string
+    }> = []
+
     for (const exp of expenses) {
       const mats = exp.materials as Record<string, any>
       if (mats && typeof mats === 'object') {
@@ -447,6 +463,21 @@ export async function GET(req: NextRequest) {
           const k = matKey.toLowerCase()
           const qty = Number(val) || 0
           if (qty <= 0) continue
+
+          const unit = inferProductUnit(matKey)
+          const { category } = categorizeNomenclature(matKey)
+
+          dispatchesList.push({
+            id: exp.id,
+            date: exp.date || '-',
+            nomenclature: matKey,
+            quantity: Math.round(qty * 10) / 10,
+            unit,
+            destination: 'Ishlab chiqarish sexi',
+            category,
+            isEdited: Boolean(exp.isEdited),
+            editReason: exp.editReason || undefined
+          })
 
           // Match core
           let matchedKey: string | null = null
@@ -618,6 +649,7 @@ export async function GET(req: NextRequest) {
         currentStockKg: Math.round(currentStockKg * 10) / 10,
         currentStockTonnes: Math.round((currentStockKg / 1000) * 10) / 10,
         totalArrivalBatches: arrivals.length + acts.length,
+        totalDispatchesCount: dispatchesList.length,
         totalSuppliersCount: sortedSuppliersList.length,
         totalNomenclaturesCount: formattedMaterials.length,
         totalFinishedGoodsKg: totalGpKg,
@@ -628,6 +660,7 @@ export async function GET(req: NextRequest) {
       },
       materials: formattedMaterials,
       batches: batchesList,
+      dispatches: dispatchesList,
       gp: {
         summary: {
           totalKg: totalGpKg,
