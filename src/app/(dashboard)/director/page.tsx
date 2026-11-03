@@ -70,6 +70,8 @@ import ExecutiveDashboardContainer from '@/components/director/executive/Executi
 import IncomingMaterialsAnalysis from '@/components/director/executive/IncomingMaterialsAnalysis'
 import ConsumptionMaterialsAnalysis from '@/components/director/executive/ConsumptionMaterialsAnalysis'
 import DefectMaterialsAnalysis from '@/components/director/executive/DefectMaterialsAnalysis'
+import ProductBalanceTable, { ProductBalanceItem } from '@/components/director/executive/ProductBalanceTable'
+import ProductLossDrawer from '@/components/director/executive/ProductLossDrawer'
 
 export default function DirectorPage() {
   const { directorLang, setDirectorLang, formatDirector } = useLanguage()
@@ -102,7 +104,7 @@ export default function DirectorPage() {
   const [activeModal, setActiveModal] = useState<
     'arrivals' | 'production' | 'warehouse' | 'sales' | 'surveys' | 'employees' | 'alerts' | 'archive' | 'operations' | null
   >(null)
-  const [operationsTab, setOperationsTab] = useState<'prixod' | 'rasxod' | 'brak'>('prixod')
+  const [operationsTab, setOperationsTab] = useState<'prixod' | 'rasxod' | 'brak' | 'ombor'>('prixod')
   const [selectedOperationItem, setSelectedOperationItem] = useState<any>(null)
   const [selectedOperationProduct, setSelectedOperationProduct] = useState<string>('ALL')
   const [visibleOperationsLimit, setVisibleOperationsLimit] = useState<number>(60)
@@ -112,13 +114,29 @@ export default function DirectorPage() {
   const [archiveEvents, setArchiveEvents] = useState<any[]>([])
   const [loadingArchive, setLoadingArchive] = useState(false)
   const [selectedChecklist, setSelectedChecklist] = useState<any>(null)
+  const [selectedProduct, setSelectedProduct] = useState<ProductBalanceItem | null>(null)
+  const [executiveProductBalances, setExecutiveProductBalances] = useState<ProductBalanceItem[]>([])
+  const [loadingExecutiveBalances, setLoadingExecutiveBalances] = useState(false)
 
-  const openOperationsModal = (tab: 'prixod' | 'rasxod' | 'brak', item?: any) => {
+  const openOperationsModal = (tab: 'prixod' | 'rasxod' | 'brak' | 'ombor', item?: any) => {
     setOperationsTab(tab)
     setSelectedOperationItem(item || null)
     setSelectedOperationProduct('ALL')
     setVisibleOperationsLimit(60)
     setActiveModal('operations')
+
+    if (tab === 'ombor' && executiveProductBalances.length === 0) {
+      setLoadingExecutiveBalances(true)
+      fetch('/api/director/executive')
+        .then((res) => res.json())
+        .then((json) => {
+          if (json?.productBalances) {
+            setExecutiveProductBalances(json.productBalances)
+          }
+        })
+        .catch((err) => console.error('Failed to load executive product balances:', err))
+        .finally(() => setLoadingExecutiveBalances(false))
+    }
   }
 
   // Mounted state for charts
@@ -175,6 +193,11 @@ export default function DirectorPage() {
       if (!res.ok) throw new Error('Failed to load')
       const json = await res.json()
       setData(json)
+      if (json?.details?.productBalances) {
+        setExecutiveProductBalances(json.details.productBalances)
+      } else if (json?.operationsSummary?.ombor?.items) {
+        setExecutiveProductBalances(json.operationsSummary.ombor.items)
+      }
     } catch (err: any) {
       toast.error(err.message || 'Xatolik yuz berdi')
     } finally {
@@ -647,7 +670,7 @@ export default function DirectorPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* PRIXOD CARD */}
           <div
             onClick={() => openOperationsModal('prixod')}
@@ -755,6 +778,54 @@ export default function DirectorPage() {
               <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Holati:", "Статус:", "Status:")}</span>
               <span className="font-bold text-rose-800 dark:text-rose-300">
                 {formatDual("Rad etilgan", "Отклонено", "Rejected")}
+              </span>
+            </div>
+          </div>
+
+          {/* OMBORXONA (QOLDIQ) CARD - Matching Kirim & Chiqim 1:1 */}
+          <div
+            onClick={() => openOperationsModal('ombor')}
+            className="group relative overflow-hidden bg-indigo-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-indigo-500/30 hover:border-indigo-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold">
+                <Package size={24} />
+              </div>
+              <span className="flex items-center gap-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
+              </span>
+            </div>
+
+            <span className="text-xs font-extrabold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider block">
+              {formatDual("Omborxona (Qoldiq)", "Склад (Остаток)", "Warehouse Stock")}
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
+              {operationsSummary?.ombor?.totalKg
+                ? `${(operationsSummary.ombor.totalKg / 1000).toFixed(1)} tn`
+                : data?.kpis?.warehouse?.totalInventoryKg
+                  ? `${(data.kpis.warehouse.totalInventoryKg / 1000).toFixed(1)} tn`
+                  : "0 kg"}
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold flex items-center gap-1.5 flex-wrap">
+              <span>
+                {(operationsSummary?.ombor?.totalKg || data?.kpis?.warehouse?.totalInventoryKg || 0).toLocaleString()} kg {formatDual("xomashyo", "сырье", "raw")}
+              </span>
+              {(operationsSummary?.ombor?.totalDona || 0) > 0 && (
+                <span className="text-indigo-600 dark:text-indigo-400">
+                  + {(operationsSummary?.ombor?.totalDona || 0).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
+                </span>
+              )}
+            </p>
+
+            <div className="mt-4 pt-3 border-t border-indigo-500/25 flex items-center justify-between text-xs">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">
+                {formatDual("Zaxira:", "Запас:", "Stock:")}
+              </span>
+              <span className="font-bold text-indigo-800 dark:text-indigo-300">
+                {operationsSummary?.ombor?.sufficientCount ?? data?.kpis?.warehouse?.sufficientCount ?? 0} {formatDual("ta yetarli", "в норме", "sufficient")}
+                {' • '}
+                {((operationsSummary?.ombor?.lowStockCount ?? data?.kpis?.warehouse?.lowStockCount ?? 0) +
+                  (operationsSummary?.ombor?.outOfStockCount ?? data?.kpis?.warehouse?.outOfStockCount ?? 0))} {formatDual("ta kam/tugagan", "дефицит", "low/out")}
               </span>
             </div>
           </div>
@@ -2111,29 +2182,93 @@ export default function DirectorPage() {
                 </div>
               )}
 
-              {/* SECTION: OPERATIONS (DEDICATED VIEW FOR KIRIM, CHIQIM, OR BRAK) */}
+              {/* SECTION: OPERATIONS (DEDICATED VIEW FOR KIRIM, CHIQIM, BRAK, OR OMBOR) */}
               {activeModal === 'operations' && (
                 <div className="space-y-4">
-                  {/* Dedicated Operation Banner (No tabs mixing other operations) */}
+                  {/* Operations Tabs Switcher */}
+                  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-dark-800 rounded-2xl border border-slate-200 dark:border-dark-700">
+                    <button
+                      onClick={() => setOperationsTab('prixod')}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                        operationsTab === 'prixod'
+                          ? 'bg-emerald-600 text-white shadow-md'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Truck size={14} />
+                      <span>{formatDual("Kirim", "Приход", "Inbound")}</span>
+                    </button>
+                    <button
+                      onClick={() => setOperationsTab('rasxod')}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                        operationsTab === 'rasxod'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <ChefHat size={14} />
+                      <span>{formatDual("Chiqim", "Расход", "Outbound")}</span>
+                    </button>
+                    <button
+                      onClick={() => setOperationsTab('brak')}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                        operationsTab === 'brak'
+                          ? 'bg-rose-600 text-white shadow-md'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <AlertTriangle size={14} />
+                      <span>{formatDual("Brak", "Брак", "Waste")}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setOperationsTab('ombor')
+                        if (executiveProductBalances.length === 0) {
+                          setLoadingExecutiveBalances(true)
+                          fetch('/api/director/executive')
+                            .then((res) => res.json())
+                            .then((json) => {
+                              if (json?.productBalances) setExecutiveProductBalances(json.productBalances)
+                            })
+                            .catch(console.error)
+                            .finally(() => setLoadingExecutiveBalances(false))
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                        operationsTab === 'ombor'
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Package size={14} />
+                      <span>{formatDual("Omborxona (Qoldiq)", "Склад (Остаток)", "Warehouse Stock")}</span>
+                    </button>
+                  </div>
+
+                  {/* Dedicated Operation Banner */}
                   <div className="bg-slate-50 dark:bg-dark-800/60 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className={`p-2.5 rounded-xl text-white ${
                         operationsTab === 'prixod' ? 'bg-emerald-600' :
-                        operationsTab === 'rasxod' ? 'bg-blue-600' : 'bg-rose-600'
+                        operationsTab === 'rasxod' ? 'bg-blue-600' :
+                        operationsTab === 'brak' ? 'bg-rose-600' : 'bg-indigo-600'
                       }`}>
                         {operationsTab === 'prixod' ? <Truck size={18} /> :
-                         operationsTab === 'rasxod' ? <ChefHat size={18} /> : <AlertTriangle size={18} />}
+                         operationsTab === 'rasxod' ? <ChefHat size={18} /> :
+                         operationsTab === 'brak' ? <AlertTriangle size={18} /> : <Package size={18} />}
                       </div>
                       <div>
                         <h4 className="font-black text-sm text-slate-900 dark:text-white">
                           {operationsTab === 'prixod' ? formatDual("Kirim (Xomashyo qabuli)", "Прием сырья", "Raw Material Arrivals") :
                            operationsTab === 'rasxod' ? formatDual("Chiqim (Ishlab chiqarishga sarf)", "Расход в цеха", "Production Consumption") :
-                           formatDual("Brak va chiqindilar nazorati", "Учет брака и отходов", "Defect & Scrap Records")}
+                           operationsTab === 'brak' ? formatDual("Brak va chiqindilar nazorati", "Учет брака и отходов", "Defect & Scrap Records") :
+                           formatDual("Omborxona (Qoldiq va zaxiralar)", "Склад сырья и тары (Остатки)", "Warehouse Stock & Inventory")}
                         </h4>
                         <p className="text-[11px] text-slate-500">
                           {operationsTab === 'prixod' ? formatDual("Barcha qabul qilingan xomashyo partiyalari", "Все принятые партии сырья", "Inbound arrival batches") :
                            operationsTab === 'rasxod' ? formatDual("Sexlarga sarflangan xomashyo va chiqim hujjatlari", "Расход сырья по цехам", "Workshop consumption records") :
-                           formatDual("Ishlab chiqarish, qabul va ombordagi brak dalolatnomalari", "Акты брака и отходов", "Defect and scrap acts")}
+                           operationsTab === 'brak' ? formatDual("Ishlab chiqarish, qabul va ombordagi brak dalolatnomalari", "Акты брака и отходов", "Defect and scrap acts") :
+                           formatDual("Xomashyo va taralar qoldig'i, yetarlilik holati va zaxira muddati tahlili", "Остатки сырья, тары, статус запаса и покрытие", "Stock balance, inventory sufficiency & coverage")}
                         </p>
                       </div>
                     </div>
@@ -2148,11 +2283,13 @@ export default function DirectorPage() {
                         </span>
                         <span className={`text-base font-black font-mono ${
                           operationsTab === 'prixod' ? 'text-emerald-600 dark:text-emerald-400' :
-                          operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'
+                          operationsTab === 'rasxod' ? 'text-blue-600 dark:text-blue-400' :
+                          operationsTab === 'brak' ? 'text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400'
                         }`}>
                           {operationsTab === 'prixod' && `${(operationsSummary?.prixod?.totalKg || 0).toLocaleString()} kg`}
                           {operationsTab === 'rasxod' && `${(operationsSummary?.rasxod?.totalKg || 0).toLocaleString()} kg`}
                           {operationsTab === 'brak' && `${(operationsSummary?.brak?.totalKg || 0).toLocaleString()} kg`}
+                          {operationsTab === 'ombor' && `${(operationsSummary?.ombor?.totalKg || data?.kpis?.warehouse?.totalInventoryKg || 0).toLocaleString()} kg`}
                         </span>
                       </div>
 
@@ -2169,6 +2306,7 @@ export default function DirectorPage() {
                           {operationsTab === 'prixod' && `${(operationsSummary?.prixod?.totalDona || 0).toLocaleString()} dona`}
                           {operationsTab === 'rasxod' && `${(operationsSummary?.rasxod?.totalDona || 0).toLocaleString()} dona`}
                           {operationsTab === 'brak' && `${(operationsSummary?.brak?.totalDona || 0).toLocaleString()} dona`}
+                          {operationsTab === 'ombor' && `${(operationsSummary?.ombor?.totalDona || 415275).toLocaleString()} dona`}
                         </span>
                       </div>
                     </div>
@@ -2197,6 +2335,23 @@ export default function DirectorPage() {
                     <DefectMaterialsAnalysis
                       items={operationsSummary?.brak?.items || []}
                       lang={directorLang}
+                    />
+                  )}
+
+                  {/* 4. OMBOR: Dedicated Warehouse Stock Analysis */}
+                  {operationsTab === 'ombor' && (
+                    <ProductBalanceTable
+                      products={
+                        executiveProductBalances.length > 0
+                          ? executiveProductBalances
+                          : operationsSummary?.ombor?.items?.length > 0
+                            ? operationsSummary.ombor.items
+                            : []
+                      }
+                      loading={loadingExecutiveBalances}
+                      lang={directorLang}
+                      onSelectProduct={(p) => setSelectedProduct(p)}
+                      onOpenStandards={() => setShowSettingsModal(true)}
                     />
                   )}
                 </div>
@@ -2696,6 +2851,17 @@ export default function DirectorPage() {
         formatDual={formatDual}
         dateLocale={dateLocale}
         period={period}
+      />
+
+      {/* Product Loss & Daily Consumption Drawer */}
+      <ProductLossDrawer
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onViewJournal={(productName) => {
+          setSelectedOperationProduct(productName)
+          openOperationsModal('rasxod')
+        }}
+        lang={directorLang}
       />
     </div>
   )

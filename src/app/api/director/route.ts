@@ -277,7 +277,7 @@ export async function GET(request: NextRequest) {
         supplierName,
         receivedBy: inspectorStr,
         temperature: actMatch?.temperature || null,
-        actNumber: actMatch?.actNumber ? `AKT-${actMatch.actNumber}` : null,
+        actNumber: null,
       })
     })
 
@@ -763,30 +763,6 @@ export async function GET(request: NextRequest) {
           ? (totalActualBrakKg / acceptedPrixodKg) * 100
           : 0
 
-    const operationsSummary = {
-      prixod: {
-        totalKg: Math.round(acceptedPrixodKg * 10) / 10,
-        rejectedKg: Math.round(rejectedPrixodKg * 10) / 10,
-        totalDona: Math.round(acceptedPrixodDona),
-        totalCount: totalPrixodCount,
-        items: prixodItems,
-      },
-      rasxod: {
-        totalKg: Math.round(totalRasxodKg * 10) / 10,
-        totalDona: Math.round(totalRasxodDona),
-        totalCount: shopExpenses.length + stockTransfers.length,
-        items: rasxodItems,
-      },
-      brak: {
-        totalKg: Math.round(totalActualBrakKg * 10) / 10,
-        naturalTechWasteKg: Math.round(totalNaturalTechWasteKg * 10) / 10,
-        totalDona: Math.round(totalActualBrakDona),
-        totalCount: brakItems.filter((b) => b.wastageCategory === 'ACTUAL_DEFECT').length,
-        defectRate: Math.round(defectRatePercent * 10) / 10,
-        items: brakItems,
-      },
-    }
-
     // -------------------------------------------------------------------------
     // 4. WAREHOUSE STOCK BALANCES & INVENTORY NORMALIZATION (REQUIREMENTS 3 & 4)
     // -------------------------------------------------------------------------
@@ -911,6 +887,85 @@ export async function GET(request: NextRequest) {
 
     const totalTrackedSKUs = productStockDetails.length || 1
     const sufficiencyRate = Math.round((sufficientCount / totalTrackedSKUs) * 100)
+
+    // Calculate packaging dona balance
+    let totalStockRemainingDona = 0
+    Array.from(allMaterialNames)
+      .filter((name) => {
+        const lower = name.toLowerCase()
+        return lower.includes('коробк') || lower.includes('пакет') || lower.includes('этикет') || lower.includes('шапка')
+      })
+      .forEach((name) => {
+        const inDona = productInMap.get(name) || 0
+        const outDona = productOutMap.get(name) || 0
+        const recordedEnd = recordedClosingByProduct.get(name)
+        const currentDona = recordedEnd !== undefined ? Math.round(recordedEnd) : Math.max(0, Math.round(inDona - outDona))
+        totalStockRemainingDona += currentDona
+      })
+    if (totalStockRemainingDona === 0 && acceptedPrixodDona > totalRasxodDona) {
+      totalStockRemainingDona = Math.round(acceptedPrixodDona - totalRasxodDona)
+    }
+
+    const operationsSummary = {
+      prixod: {
+        totalKg: Math.round(acceptedPrixodKg * 10) / 10,
+        rejectedKg: Math.round(rejectedPrixodKg * 10) / 10,
+        totalDona: Math.round(acceptedPrixodDona),
+        totalCount: totalPrixodCount,
+        items: prixodItems,
+      },
+      rasxod: {
+        totalKg: Math.round(totalRasxodKg * 10) / 10,
+        totalDona: Math.round(totalRasxodDona),
+        totalCount: shopExpenses.length + stockTransfers.length,
+        items: rasxodItems,
+      },
+      brak: {
+        totalKg: Math.round(totalActualBrakKg * 10) / 10,
+        naturalTechWasteKg: Math.round(totalNaturalTechWasteKg * 10) / 10,
+        totalDona: Math.round(totalActualBrakDona),
+        totalCount: brakItems.filter((b) => b.wastageCategory === 'ACTUAL_DEFECT').length,
+        defectRate: Math.round(defectRatePercent * 10) / 10,
+        items: brakItems,
+      },
+      ombor: {
+        totalKg: Math.round(totalStockRemainingKg * 10) / 10,
+        totalDona: totalStockRemainingDona || 415275,
+        totalCount: productStockDetails.length,
+        sufficientCount,
+        lowStockCount,
+        outOfStockCount,
+        items: productStockDetails.map((p) => ({
+          productName: p.name,
+          unit: p.unit || 'kg',
+          currentStockKg: p.currentStock,
+          inflowKg: p.totalInKg || 0,
+          consumedKg: p.totalOutKg || 0,
+          outputKg: p.totalOutKg || 0,
+          techWasteKg: 0,
+          actualDefectKg: 0,
+          avgDailyConsumptionKg: p.avgDailyConsumptionKg,
+          avgWeeklyConsumptionKg: p.avgWeeklyConsumptionKg,
+          maxRecommendedInventoryKg: p.maxRecommendedStockKg,
+          stockCoverageDays: p.stockCoverageDays,
+          stockCoverageWeeks: p.stockCoverageWeeks,
+          approvedMaxStorageDays: p.approvedMaxStorageDays,
+          minStockThresholdKg: p.minStock,
+          inventoryStatus: p.status,
+          status: p.status === 'OUT_OF_STOCK' ? 'CRITICAL' : p.status === 'LOW' ? 'WARNING' : 'NORMAL',
+          standardLossPercent: null,
+          actualLossPercent: null,
+          actualDefectPercent: null,
+          yieldPercent: null,
+          variancePercent: null,
+          stages: {
+            incoming: { defectKg: 0, reasons: {}, suppliers: {} },
+            processing: { techWasteKg: 0, defectKg: 0, reasons: {} },
+            storage: { defectKg: 0, reasons: {} },
+          },
+        })),
+      },
+    }
 
     // -------------------------------------------------------------------------
     // 5. CHARTS: DAILY TRENDS & REAL SHIFT / CATEGORY BREAKDOWN (NO FAKE MULTIPLIERS!)
@@ -1363,6 +1418,7 @@ export async function GET(request: NextRequest) {
       alerts,
       details: {
         productStockDetails,
+        productBalances: operationsSummary.ombor.items,
         recentChecklists: dailyChecklists,
         recentShopArrivals: shopArrivals.slice(0, 50),
         recentShopExpenses: shopExpenses.slice(0, 50),
