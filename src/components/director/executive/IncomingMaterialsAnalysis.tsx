@@ -45,7 +45,13 @@ export function isNoBatch(val?: string, raw?: string): boolean {
     !cleanRaw.startsWith('PAR-') &&
     !cleanRaw.startsWith('SA-') &&
     !cleanRaw.startsWith('ARR-') &&
+    !cleanRaw.startsWith('AKT-') &&
+    !cleanRaw.startsWith('ACT-') &&
+    !cleanRaw.includes('AKT') &&
+    !cleanRaw.includes('ACT') &&
+    !cleanRaw.includes('RAD ETISH') &&
     cleanRaw !== '-' &&
+    cleanRaw !== 'YOZILMAGAN' &&
     cleanRaw !== 'PARTIYA YOZILMAGAN' &&
     cleanRaw !== 'ПАРТИЯ НЕ УКАЗАНА' &&
     cleanRaw !== 'NO_BATCH'
@@ -59,6 +65,11 @@ export function isNoBatch(val?: string, raw?: string): boolean {
     cleanVal.includes('PAR-') ||
     cleanVal.includes('SA-') ||
     cleanVal.includes('ARR-') ||
+    cleanVal.startsWith('AKT-') ||
+    cleanVal.startsWith('ACT-') ||
+    cleanVal.includes('AKT') ||
+    cleanVal.includes('ACT') ||
+    cleanVal.includes('RAD ETISH') ||
     cleanVal === 'PARTIYA YOZILMAGAN' ||
     cleanVal === 'ПАРТИЯ НЕ УКАЗАНА' ||
     cleanVal === '-' ||
@@ -75,6 +86,10 @@ export function isNoBatch(val?: string, raw?: string): boolean {
     afterHash.startsWith('PAR-') ||
     afterHash.startsWith('SA-') ||
     afterHash.startsWith('ARR-') ||
+    afterHash.startsWith('AKT-') ||
+    afterHash.startsWith('ACT-') ||
+    afterHash.includes('AKT') ||
+    afterHash.includes('ACT') ||
     afterHash === '-' ||
     afterHash === 'YOZILMAGAN'
   ) {
@@ -154,7 +169,7 @@ export default function IncomingMaterialsAnalysis({
             productName: r.productName,
             batchNumber: r.batchNumber
               ? `Partiya #${r.batchNumber}`
-              : (r.actNumber?.includes('PAR-') ? 'Partiya yozilmagan' : r.actNumber || 'Partiya yozilmagan'),
+              : 'Partiya yozilmagan',
             rawBatch: r.batchNumber || '',
             quantityKg: Number(r.warehouseKg || 0),
             unit: r.unit || 'kg',
@@ -563,7 +578,7 @@ export default function IncomingMaterialsAnalysis({
                   {selectedProductSummary?.count || 0} ta partiya
                 </div>
                 <span className="text-[10px] text-slate-400 font-medium">
-                  {lang === 'ru' ? 'Актов прихода' : 'Qabul dalolatnomalari'}
+                  {lang === 'ru' ? 'Поступлений' : 'Qabul qilingan partiyalar'}
                 </span>
               </div>
 
@@ -593,7 +608,7 @@ export default function IncomingMaterialsAnalysis({
                 <th className="p-3.5">{lang === 'ru' ? 'Поставщик' : 'Ta’minotchi'}</th>
                 <th className="p-3.5 text-right">{lang === 'ru' ? 'Количество / Вес' : 'Miqdor / Vazn'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Принял / Инспектор' : 'Qabul qiluvchi / Inspektor'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Партия' : 'Partiya'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-dark-800">

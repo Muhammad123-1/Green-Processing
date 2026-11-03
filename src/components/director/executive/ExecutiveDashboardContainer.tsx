@@ -291,7 +291,7 @@ export default function ExecutiveDashboardContainer({ lang }: Props) {
             }`}
           >
             <FileSpreadsheet size={14} />
-            <span>{lang === 'ru' ? '3. Акты приёма сырья' : '3. Kiruvchi xomashyo aktlari'}</span>
+            <span>{lang === 'ru' ? '3. Партии приёма сырья' : '3. Kiruvchi xomashyo partiyalari'}</span>
           </button>
           <button
             onClick={() => setActiveTab('operations')}

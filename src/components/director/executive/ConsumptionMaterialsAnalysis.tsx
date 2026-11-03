@@ -178,7 +178,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
           </p>
         </div>
 
-        {/* Card 3: Chiqim aktlari soni */}
+        {/* Card 3: Chiqim operatsiyalari soni */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
             <span>{lang === 'ru' ? 'Операции расхода' : 'Jami chiqim operatsiyalari'}</span>
@@ -187,7 +187,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
             </div>
           </div>
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
-            {items.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'актов' : 'ta'}
+            {items.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'операций' : 'ta'}
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
             {allProductsSummary.length} {lang === 'ru' ? 'позиций всего' : 'umumiy pozitsiya'}
@@ -394,7 +394,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  {lang === 'ru' ? 'Актов расхода' : 'Chiqim aktlari soni'}
+                  {lang === 'ru' ? 'Операций расхода' : 'Chiqim operatsiyalari'}
                 </span>
                 <div className="mt-1 text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white">
                   {selectedProductSummary?.count || 0} ta sarf
@@ -429,7 +429,7 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                 <th className="p-3.5">{lang === 'ru' ? 'Наименование' : 'Nomi'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Цех-получатель' : 'Qabul qilgan sex'}</th>
                 <th className="p-3.5 text-right">{lang === 'ru' ? 'Расход' : 'Sarflangan miqdor'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Акт и партия' : 'Akt va partiya'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
@@ -455,19 +455,14 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
                     {formatQty(item.quantityKg, item.unit)}
                   </td>
                   <td className="p-3 font-mono">
-                    <span className="font-bold text-slate-900 dark:text-white block">
-                      {item.actNumber || `AKT-${item.id}`}
-                    </span>
                     {(() => {
                       const bInfo = formatBatchNumber(item.batchNumber, item.rawBatch, lang)
-                      return (
-                        <span
-                          className={`text-[11px] block mt-0.5 ${
-                            bInfo.isMissing
-                              ? 'text-slate-400 dark:text-slate-500 font-medium'
-                              : 'font-semibold text-emerald-600 dark:text-emerald-400'
-                          }`}
-                        >
+                      return bInfo.isMissing ? (
+                        <span className="font-medium text-slate-400 dark:text-slate-500 text-xs">
+                          {bInfo.text}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-slate-900 dark:text-white text-xs">
                           {bInfo.text}
                         </span>
                       )
@@ -526,10 +521,10 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-dark-800 pb-4">
               <div>
                 <p className="text-[11px] font-black text-blue-600 uppercase tracking-wider">
-                  {lang === 'ru' ? 'АКТ РАСХОДА' : 'CHIQIM DALOLATNOMASI'}
+                  {lang === 'ru' ? 'СВЕДЕНИЯ О РАСХОДЕ' : 'XOMASHYO CHIQIMI TAFSILOTI'}
                 </p>
                 <h3 className="font-mono font-black text-slate-900 dark:text-white text-base">
-                  {selectedItem.actNumber || `AKT-${selectedItem.id}`}
+                  {formatBatchNumber(selectedItem.batchNumber, selectedItem.rawBatch, lang).text}
                 </h3>
               </div>
               <button
@@ -561,31 +556,31 @@ export default function ConsumptionMaterialsAnalysis({ items = [], lang = 'uz' }
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
                 <span className="block text-[10px] text-slate-400 font-bold uppercase">
-                  {lang === 'ru' ? 'Акт и номер' : 'Chiqim akti'}
-                </span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white mt-0.5 block">
-                  {selectedItem.actNumber || `AKT-${selectedItem.id}`}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
-                <span className="block text-[10px] text-slate-400 font-bold uppercase">
-                  {lang === 'ru' ? 'Партия сырья' : 'Xomashyo partiyasi'}
+                  {lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}
                 </span>
                 {(() => {
                   const bInfo = formatBatchNumber(selectedItem.batchNumber, selectedItem.rawBatch, lang)
                   return (
                     <span
-                      className={`mt-0.5 block ${
+                      className={`font-mono font-bold mt-0.5 block ${
                         bInfo.isMissing
-                          ? 'text-xs text-slate-400 dark:text-slate-500 font-medium'
-                          : 'font-mono font-bold text-emerald-600 dark:text-emerald-400'
+                          ? 'text-xs text-slate-400 dark:text-slate-500'
+                          : 'text-slate-900 dark:text-white'
                       }`}
                     >
                       {bInfo.text}
                     </span>
                   )
                 })()}
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
+                <span className="block text-[10px] text-slate-400 font-bold uppercase">
+                  {lang === 'ru' ? 'Статус' : 'Holati'}
+                </span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                  {lang === 'ru' ? 'Списано в производство' : 'Sexga sarflangan'}
+                </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">

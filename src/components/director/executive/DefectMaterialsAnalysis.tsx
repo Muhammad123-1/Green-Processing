@@ -434,7 +434,7 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
           <table className="w-full min-w-[760px] text-left text-xs">
             <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="p-3.5">{lang === 'ru' ? 'Акт / партия' : 'Akt / partiya'}</th>
+                <th className="p-3.5">{lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Наименование' : 'Nomi'}</th>
                 <th className="p-3.5 text-right">{lang === 'ru' ? 'Количество' : 'Chiqindi miqdori'}</th>
                 <th className="p-3.5">{lang === 'ru' ? 'Причина' : 'Sabab / izoh'}</th>
@@ -449,7 +449,17 @@ export default function DefectMaterialsAnalysis({ items = [], lang = 'uz' }: Pro
                   className="cursor-pointer hover:bg-rose-50/50 dark:hover:bg-dark-800 transition-colors"
                 >
                   <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">
-                    {item.defectNumber || item.batchNumber}
+                    {(() => {
+                      const bNum = item.batchNumber || item.defectNumber
+                      if (!bNum || bNum === '-' || bNum === 'YOZILMAGAN' || bNum.toUpperCase().includes('PAR-') || bNum.toUpperCase().startsWith('AKT-')) {
+                        return (
+                          <span className="text-slate-400 dark:text-slate-500 font-medium text-xs">
+                            {lang === 'ru' ? 'Партия не указана' : 'Partiya yozilmagan'}
+                          </span>
+                        )
+                      }
+                      return bNum.toLowerCase().startsWith('partiya') ? bNum : `Partiya #${bNum}`
+                    })()}
                     <span className="block mt-0.5 text-[10px] font-normal text-slate-400">
                       {item.date}
                     </span>
