@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { checkWarehouseWriteOffPermission, checkWarehouseWriteOffDeletePermission } from '@/lib/auditRules'
 
 async function ensureTableAndSeed() {
   try {
@@ -22,12 +23,20 @@ async function ensureTableAndSeed() {
         "endOfDayBalanceKg" DOUBLE PRECISION DEFAULT 0,
         "responsiblePerson" TEXT NOT NULL,
         "notes" TEXT,
+        "isEdited" BOOLEAN DEFAULT false,
+        "editReason" TEXT,
+        "editedAt" TIMESTAMP(3),
+        "editedBy" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `)
 
     await prisma.$executeRawUnsafe(`ALTER TABLE "RawMaterialMovementLog" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;`).catch(() => {})
+    await prisma.$executeRawUnsafe(`ALTER TABLE "RawMaterialMovementLog" ADD COLUMN IF NOT EXISTS "isEdited" BOOLEAN DEFAULT false;`).catch(() => {})
+    await prisma.$executeRawUnsafe(`ALTER TABLE "RawMaterialMovementLog" ADD COLUMN IF NOT EXISTS "editReason" TEXT;`).catch(() => {})
+    await prisma.$executeRawUnsafe(`ALTER TABLE "RawMaterialMovementLog" ADD COLUMN IF NOT EXISTS "editedAt" TIMESTAMP(3);`).catch(() => {})
+    await prisma.$executeRawUnsafe(`ALTER TABLE "RawMaterialMovementLog" ADD COLUMN IF NOT EXISTS "editedBy" TEXT;`).catch(() => {})
 
     // Check count and seed if empty
     const countRes: any = await prisma.$queryRawUnsafe(`SELECT COUNT(*)::int as count FROM "RawMaterialMovementLog"`)
@@ -382,10 +391,29 @@ export async function PUT(request: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
 
     const body = await request.json()
-    const { id, ...fields } = body
+    const { id, editReason, ...fields } = body
 
     const numId = parseInt(id)
     if (isNaN(numId)) return NextResponse.json({ error: 'Noto\'g\'ri ID' }, { status: 400 })
+
+    const existing: any = await prisma.$queryRawUnsafe(`SELECT * FROM "RawMaterialMovementLog" WHERE "id" = ${numId}`)
+    if (!existing || existing.length === 0) {
+      return NextResponse.json({ error: 'Hujjat topilmadi' }, { status: 404 })
+    }
+
+    const row = existing[0]
+
+    // 24-hour limit & Chief Accountant/Admin permission check:
+    const perm = checkWarehouseWriteOffPermission({
+      role: session.role,
+      createdAt: row.createdAt
+    })
+
+    if (!perm.allowed) {
+      return NextResponse.json({
+        error: perm.reason || "Ombor chiqimi (списание) qilinganiga 24 soatdan oshgan. Tafovutlarni oldini olish uchun tahrirlash faqat Bosh buxgalter yoki Administrator tomonidan amalga oshirilishi mumkin!"
+      }, { status: 403 })
+    }
 
     const updates: string[] = []
     if (fields.arrivalDate) updates.push(`"arrivalDate" = '${fields.arrivalDate.replace(/'/g, "''")}'`)
@@ -403,6 +431,12 @@ export async function PUT(request: NextRequest) {
     if (fields.responsiblePerson) updates.push(`"responsiblePerson" = '${fields.responsiblePerson.replace(/'/g, "''")}'`)
     if (fields.notes !== undefined) updates.push(`"notes" = '${fields.notes ? fields.notes.replace(/'/g, "''") : ''}'`)
 
+    updates.push(`"isEdited" = true`)
+    const resolvedReason = (editReason || row.editReason || 'Ombor harakati parametrlariga tuzatish kiritildi').replace(/'/g, "''")
+    updates.push(`"editReason" = '${resolvedReason}'`)
+    updates.push(`"editedAt" = CURRENT_TIMESTAMP`)
+    const editor = `${session.name || 'Xodim'} (${session.role})`.replace(/'/g, "''")
+    updates.push(`"editedBy" = '${editor}'`)
     updates.push(`"updatedAt" = CURRENT_TIMESTAMP`)
 
     if (updates.length > 0) {
@@ -425,6 +459,14 @@ export async function DELETE(request: NextRequest) {
     await ensureTableAndSeed()
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
+
+    // Deletion rule: Strictly ADMIN or DIRECTOR
+    const perm = checkWarehouseWriteOffDeletePermission(session.role)
+    if (!perm.allowed) {
+      return NextResponse.json({
+        error: perm.reason || "Ombor chiqim hujjatlarini o'chirish faqat Administrator tomonidan amalga oshirilishi mumkin!"
+      }, { status: 403 })
+    }
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')

@@ -15,6 +15,7 @@ import {
   Eye,
   Edit2,
   Trash2,
+  Lock,
   X,
   FileCheck,
   Scale,
@@ -33,6 +34,7 @@ import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import { PRODUCT_THEMES, getProductTheme } from '@/lib/incoming-acts/constants'
+import { checkQcActEditPermission, checkQcActDeletePermission } from '@/lib/auditRules'
 
 interface IncomingAct {
   id: number
@@ -65,6 +67,10 @@ interface IncomingAct {
   pricePerKg?: number | null
   notes?: string | null
   rawValues?: Record<string, any> | null
+  isEdited?: boolean
+  editReason?: string | null
+  editedAt?: string | null
+  editedBy?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -91,7 +97,13 @@ const PRODUCT_LIST = [
   { id: 'ОГУРЦЫ СВЕЖИЕ', label: 'ОГУРЦЫ', color: '#00B050', bg: 'bg-[#00B050] text-black font-bold' }
 ]
 
-export default function IncomingActsContent() {
+export default function IncomingActsContent({
+  userRole = 'INSPECTOR',
+  userName = 'Sifat Nazoratchisi'
+}: {
+  userRole?: string
+  userName?: string
+}) {
   const { lang } = useLanguage()
   const activeLang: 'uz' | 'ru' | 'en' =
     lang.includes('ru') ? 'ru' : lang.includes('en') ? 'en' : 'uz'
@@ -160,7 +172,8 @@ export default function IncomingActsContent() {
     rejectionActNumber: '',
     inspectorName: 'Камбарова А.М.',
     pricePerKg: '26000',
-    notes: ''
+    notes: '',
+    editReason: ''
   })
 
   // Translations
@@ -459,13 +472,19 @@ export default function IncomingActsContent() {
       rejectionActNumber: '',
       inspectorName: 'Камбарова А.М.',
       pricePerKg: prod === 'ТОМАТ' ? '26000' : '13500',
-      notes: ''
+      notes: '',
+      editReason: ''
     })
     setIsFormOpen(true)
   }
 
   // Open Form Edit
   const handleOpenEdit = (act: IncomingAct) => {
+    const perm = checkQcActEditPermission({ role: userRole, createdAt: act.createdAt })
+    if (!perm.allowed) {
+      toast.error(perm.reason || "Ushbu sifat akti kiritilganiga 24 soatdan oshgan. Faqat Bosh Texnolog yoki Administrator o'zgartirishi mumkin!")
+      return
+    }
     setEditingAct(act)
     setFormData({
       actNumber: act.actNumber || '',
@@ -494,7 +513,8 @@ export default function IncomingActsContent() {
       rejectionActNumber: act.rejectionActNumber || '',
       inspectorName: act.inspectorName || 'Камбарова А.М.',
       pricePerKg: act.pricePerKg !== null && act.pricePerKg !== undefined ? String(act.pricePerKg) : '',
-      notes: act.notes || ''
+      notes: act.notes || '',
+      editReason: act.editReason || ''
     })
     setIsFormOpen(true)
   }
@@ -504,6 +524,11 @@ export default function IncomingActsContent() {
     e.preventDefault()
     if (!formData.productName.trim() || !formData.supplierName.trim()) {
       toast.error('Xomashyo nomi va ta\'minotchi to\'ldirilishi shart!')
+      return
+    }
+
+    if (editingAct && (!formData.editReason || !formData.editReason.trim())) {
+      toast.error("O'zgartirish sababini (Audit izohini) kiritish majburiy!")
       return
     }
 
@@ -535,6 +560,11 @@ export default function IncomingActsContent() {
 
   // Delete Act
   const handleDeleteAct = async (id: number) => {
+    const perm = checkQcActDeletePermission(userRole)
+    if (!perm.allowed) {
+      toast.error(perm.reason || "Sifat aktini o'chirish faqat Administrator tomonidan amalga oshirilishi mumkin!")
+      return
+    }
     if (!confirm('Haqiqatan ham bu aktni o\'chirmoqchimisiz?')) return
     try {
       const res = await fetch(`/api/incoming-acts/${id}`, { method: 'DELETE' })
@@ -1063,7 +1093,17 @@ export default function IncomingActsContent() {
                     >
                       {/* Col 2: № п/п */}
                       <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-mono font-medium text-slate-800 dark:text-slate-200">
-                        {act.actNumber || idx + 1}
+                        <div className="flex items-center justify-center gap-1 flex-wrap">
+                          <span>{act.actNumber || idx + 1}</span>
+                          {act.isEdited && (
+                            <span
+                              className="px-1 py-0.5 rounded text-[8px] font-black bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 whitespace-nowrap cursor-help"
+                              title={`O'zgartirilgan: ${act.editedBy || ''} (${act.editedAt ? new Date(act.editedAt).toLocaleString('uz-UZ') : ''}). Sabab: ${act.editReason || ''}`}
+                            >
+                              🔴 O'ZGARGAN
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Col 3: Дата */}
@@ -1218,20 +1258,32 @@ export default function IncomingActsContent() {
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => handleOpenEdit(act)}
-                            className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded"
-                            title="Tahrirlash"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAct(act.id)}
-                            className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 rounded"
-                            title="O'chirish"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {checkQcActEditPermission({ role: userRole, createdAt: act.createdAt }).allowed ? (
+                            <button
+                              onClick={() => handleOpenEdit(act)}
+                              className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded"
+                              title="Tahrirlash"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="p-1 text-amber-500 hover:bg-amber-100/50 dark:hover:bg-amber-950/40 rounded cursor-not-allowed opacity-80"
+                              title={checkQcActEditPermission({ role: userRole, createdAt: act.createdAt }).reason || "24 soatdan oshgan — faqat Bosh texnolog yoki Admin tahrirlashi mumkin"}
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {checkQcActDeletePermission(userRole).allowed && (
+                            <button
+                              onClick={() => handleDeleteAct(act.id)}
+                              className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 rounded"
+                              title="O'chirish (Admin)"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1554,6 +1606,22 @@ export default function IncomingActsContent() {
                   </div>
                 </div>
               </div>
+
+              {editingAct && (
+                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl p-3 my-2">
+                  <label className="block text-xs font-black text-amber-900 dark:text-amber-200 mb-1">
+                    ⚠️ Tahrirlash sababi (Audit jurnali uchun majburiy):
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.editReason || ''}
+                    onChange={e => setFormData({ ...formData, editReason: e.target.value })}
+                    placeholder="Nima sababdan laboratoriya xulosasiga o'zgartirish kiritilmoqda?"
+                    className="w-full p-2 bg-white dark:bg-dark-900 border border-amber-300 dark:border-amber-700 rounded-lg text-xs text-slate-900 dark:text-white font-medium"
+                  />
+                </div>
+              )}
 
               {/* Actions */}
               <div className="pt-4 border-t border-slate-200 dark:border-dark-700 flex items-center justify-end gap-2">

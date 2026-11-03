@@ -2,18 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { getRatingText } from '@/lib/incoming-acts/excel'
+import { checkQcActEditPermission, checkQcActDeletePermission } from '@/lib/auditRules'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Avtorizatsiyadan o\'tilmagan' }, { status: 401 })
     }
 
     const { id } = await params
     const actId = parseInt(id, 10)
     if (isNaN(actId)) {
-      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
+      return NextResponse.json({ error: 'Noto\'g\'ri akt ID' }, { status: 400 })
+    }
+
+    const existing = await prisma.incomingRawMaterialAct.findUnique({
+      where: { id: actId }
+    })
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Sifat akti topilmadi' }, { status: 404 })
+    }
+
+    // Role and 24-hour verification:
+    // After 24h, ONLY TECHNOLOGY (Chief Technologist), ADMIN, or DIRECTOR can edit!
+    const perm = checkQcActEditPermission({
+      role: session.role,
+      createdAt: existing.createdAt
+    })
+
+    if (!perm.allowed) {
+      return NextResponse.json({
+        success: false,
+        error: perm.reason || "Ushbu sifat akti kiritilganiga 24 soatdan oshgan. Laboratoriya xulosasini faqat Bosh Texnolog yoki Administrator o'zgartirishi mumkin!"
+      }, { status: 403 })
     }
 
     const body = await req.json()
@@ -45,7 +68,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       rejectionActNumber,
       inspectorName,
       pricePerKg,
-      notes
+      notes,
+      editReason
     } = body
 
     const rating = Number(decisionRating) || 4
@@ -81,9 +105,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         rejectionActNumber: rejectionActNumber !== undefined ? (rejectionActNumber ? String(rejectionActNumber) : null) : undefined,
         inspectorName: inspectorName !== undefined ? (inspectorName ? String(inspectorName).trim() : null) : undefined,
         pricePerKg: pricePerKg !== undefined ? (pricePerKg !== null && pricePerKg !== '' ? Number(pricePerKg) : null) : undefined,
-        notes: notes !== undefined ? (notes ? String(notes).trim() : null) : undefined
+        notes: notes !== undefined ? (notes ? String(notes).trim() : null) : undefined,
+        // Audit log trail
+        isEdited: true,
+        editReason: editReason?.trim() || existing.editReason || "Laboratoriya xulosasi qayta baholandi",
+        editedAt: new Date(),
+        editedBy: `${session.name || 'Foydalanuvchi'} (${session.role})`
       }
     })
+
+    // Create system audit log
+    await prisma.log.create({
+      data: {
+        action: 'INCOMING_ACT_EDITED',
+        entity: 'IncomingRawMaterialAct',
+        entityId: updated.id,
+        userId: session.id ? Number(session.id) : null,
+        details: `Sifat akti #${updated.actNumber} (${updated.productName}) ${session.name || 'Foydalanuvchi'} tomonidan tahrirlandi. Sabab: ${editReason || 'Ko\'rsatilmadi'}`
+      }
+    }).catch(() => {})
 
     return NextResponse.json({ success: true, act: updated })
   } catch (error: any) {
@@ -96,18 +136,37 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const session = await getSession()
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Avtorizatsiyadan o\'tilmagan' }, { status: 401 })
+    }
+
+    // Deletion rule: Strictly ADMIN or DIRECTOR
+    const perm = checkQcActDeletePermission(session.role)
+    if (!perm.allowed) {
+      return NextResponse.json({
+        success: false,
+        error: perm.reason || "Sifat aktini o'chirish huquqi faqat Tizim Administratoriga berilgan!"
+      }, { status: 403 })
     }
 
     const { id } = await params
     const actId = parseInt(id, 10)
     if (isNaN(actId)) {
-      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 })
+      return NextResponse.json({ error: 'Noto\'g\'ri akt ID' }, { status: 400 })
     }
 
-    await prisma.incomingRawMaterialAct.delete({
+    const deleted = await prisma.incomingRawMaterialAct.delete({
       where: { id: actId }
     })
+
+    await prisma.log.create({
+      data: {
+        action: 'INCOMING_ACT_DELETED',
+        entity: 'IncomingRawMaterialAct',
+        entityId: actId,
+        userId: session.id ? Number(session.id) : null,
+        details: `Sifat akti #${deleted.actNumber} (${deleted.productName}) ${session.name} (Admin) tomonidan butunlay o'chirildi.`
+      }
+    }).catch(() => {})
 
     return NextResponse.json({ success: true, message: 'Akt muvaffaqiyatli o\'chirildi' })
   } catch (error: any) {

@@ -214,6 +214,10 @@ model StockTransfer {
   exceptionEvidenceUrl    String?
 
   notes             String?
+  isEdited             Boolean   @default(false)
+  editReason           String?
+  editedAt             DateTime?
+  editedBy             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -306,6 +310,10 @@ model DefectLog {
   responsible   String?
   inspectorId   Int?
   status        String   @default("RECORDED") // RECORDED, APPROVED, DISPOSED, REIMBURSED
+  isEdited             Boolean   @default(false)
+  editReason           String?
+  editedAt             DateTime?
+  editedBy             String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -999,6 +1007,10 @@ model DailyQCChecklist {
   formData       String   @db.Text // JSON string of the entire checklist data
   status         String   @default("COMPLETED")
   
+  isEdited             Boolean   @default(false)
+  editReason           String?
+  editedAt             DateTime?
+  editedBy             String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -1341,6 +1353,10 @@ model IncomingRawMaterialAct {
   pricePerKg           Float?   // Narxi (so'm/kg)
   notes                String?  // Qo'shimcha izoh
   rawValues            Json?    @default("{}") // Asl Excel matnlari va ranglari
+  isEdited             Boolean   @default(false)
+  editReason           String?
+  editedAt             DateTime?
+  editedBy             String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -1431,6 +1447,10 @@ model RawMaterialMovementLog {
   endOfDayBalanceKg        Float?   @default(0) // Остаток к концу дня / КУН ОХИРИДАГИ ЖАМИ, КГ
   responsiblePerson        String   // ФИО Ответственного / ЖАВОБГАР ШАХСНИ ФИШ
   notes                    String?  // Izoh
+  isEdited             Boolean   @default(false)
+  editReason           String?
+  editedAt             DateTime?
+  editedBy             String?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

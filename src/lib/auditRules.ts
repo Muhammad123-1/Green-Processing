@@ -7,6 +7,19 @@
  * 3. After 24 hours or outside the shift window, ONLY ADMIN and DIRECTOR roles have permission to edit.
  * 4. Any edit to an existing record requires a mandatory documented reason (editReason).
  * 5. Modified records must record audit trail and display prominent "O'zgartirilgan" indicators in red.
+ * 
+ * Extended Module Rules:
+ * - Module 1: Kiruvchi xomashyo sifat aktlari (IncomingRawMaterialAct):
+ *   QC creates lab conclusions. After 24h, editable ONLY by Chief Technologist (TECHNOLOGY), Admin (ADMIN), or Director (DIRECTOR).
+ *   Deletion: Strictly ADMIN or DIRECTOR only.
+ * - Module 2: Brak va nuqson aktlari (DefectLog / DailyQCChecklist):
+ *   Shift completion (12h): edits locked for regular workshop personnel.
+ *   Quantity reduction strictly protected against arbitrary lowering.
+ *   Modifications after shift require Chief QC (QUALITY_CONTROL), Admin, or Director.
+ *   Deletion: Strictly ADMIN or DIRECTOR only.
+ * - Module 3: Ombor zaxirasidan to'g'ridan-to'g'ri chiqim (Списание / RawMaterialMovementLog / StockTransfer):
+ *   Prevents discrepancies between Supply and Accounting. After 24h, editable ONLY with Chief Accountant (ACCOUNTING), Admin, or Director approval.
+ *   Deletion: Strictly ADMIN or DIRECTOR only.
  */
 
 export function getTashkentDate(date: Date = new Date()): { hour: number; fullDate: Date } {
@@ -53,6 +66,17 @@ export function isWithin24Hours(createdAt: Date | string | null | undefined, now
   return ageMs <= 24 * 60 * 60 * 1000
 }
 
+/**
+ * Returns true if record was created within a standard 12-hour work shift.
+ */
+export function isWithinShiftHours(createdAt: Date | string | null | undefined, shiftHours: number = 12, now = new Date()): boolean {
+  if (!createdAt) return true
+  const createdMs = new Date(createdAt).getTime()
+  if (isNaN(createdMs)) return true
+  const ageMs = now.getTime() - createdMs
+  return ageMs <= shiftHours * 60 * 60 * 1000
+}
+
 export interface PermissionCheckResult {
   allowed: boolean
   isAdmin: boolean
@@ -62,7 +86,7 @@ export interface PermissionCheckResult {
 }
 
 /**
- * Evaluates whether the current user is allowed to edit an existing record.
+ * General check for shop report records (24h + 17:00-09:00 window).
  */
 export function checkEditPermission(params: {
   role?: string | null
@@ -110,4 +134,155 @@ export function checkEditPermission(params: {
     isAfter24h: false,
     isOutsideHours: false,
   }
+}
+
+// =============================================================================
+// MODULE 1: Kiruvchi xomashyo sifat aktlari (IncomingRawMaterialAct)
+// Sifat nazoratchisi (QC) laboratoriya xulosasini saqlaganidan so'ng,
+// 24 soatdan keyin faqat Bosh texnolog yoki Admin ruxsati bilan o'zgarishi kerak.
+// O'chirish: Faqat Administrator yoki Direktor.
+// =============================================================================
+
+export function checkQcActEditPermission(params: {
+  role?: string | null
+  createdAt?: Date | string | null
+  now?: Date
+}): { allowed: boolean; reason?: string; isAuthorizedElevated: boolean } {
+  const { role, createdAt, now = new Date() } = params
+  const normalizedRole = String(role || '').toUpperCase().trim()
+  const isElevated = normalizedRole === 'TECHNOLOGY' || normalizedRole === 'ADMIN' || normalizedRole === 'DIRECTOR'
+
+  if (isElevated) {
+    return { allowed: true, isAuthorizedElevated: true }
+  }
+
+  const in24h = isWithin24Hours(createdAt, now)
+  if (!in24h) {
+    return {
+      allowed: false,
+      isAuthorizedElevated: false,
+      reason: "Ushbu sifat akti kiritilganiga 24 soatdan oshgan. Laboratoriya xulosasini faqat Bosh Texnolog yoki Administrator o'zgartirishi mumkin!",
+    }
+  }
+
+  return { allowed: true, isAuthorizedElevated: false }
+}
+
+export function checkQcActDeletePermission(role?: string | null): { allowed: boolean; reason?: string } {
+  const normalizedRole = String(role || '').toUpperCase().trim()
+  const isAdmin = normalizedRole === 'ADMIN' || normalizedRole === 'DIRECTOR'
+  if (!isAdmin) {
+    return {
+      allowed: false,
+      reason: "Sifat aktini o'chirish huquqi faqat Tizim Administratoriga berilgan!",
+    }
+  }
+  return { allowed: true }
+}
+
+// =============================================================================
+// MODULE 2: Brak va nuqson aktlari (DefectLog / DailyQCChecklist)
+// Sexda aniqlangan brak miqdorlarini xodimlar o'z xohishicha kamaytirib qo'ymasligi uchun
+// belgilangan smena yakunlangach tahrir bloklanishi shart.
+// Smena yakunlangach tahrir faqat Bosh QC (QUALITY_CONTROL) yoki Admin ruxsati bilan.
+// O'chirish: Faqat Administrator yoki Direktor.
+// =============================================================================
+
+export function checkDefectEditPermission(params: {
+  role?: string | null
+  createdAt?: Date | string | null
+  oldQuantity?: number | null
+  newQuantity?: number | null
+  now?: Date
+}): { allowed: boolean; reason?: string; isAuthorizedElevated: boolean } {
+  const { role, createdAt, oldQuantity, newQuantity, now = new Date() } = params
+  const normalizedRole = String(role || '').toUpperCase().trim()
+  const isElevated = normalizedRole === 'QUALITY_CONTROL' || normalizedRole === 'ADMIN' || normalizedRole === 'DIRECTOR'
+
+  if (isElevated) {
+    return { allowed: true, isAuthorizedElevated: true }
+  }
+
+  // Check if non-elevated user is attempting to reduce defect quantity
+  if (
+    oldQuantity !== undefined &&
+    oldQuantity !== null &&
+    newQuantity !== undefined &&
+    newQuantity !== null &&
+    Number(newQuantity) < Number(oldQuantity) - 0.001
+  ) {
+    return {
+      allowed: false,
+      isAuthorizedElevated: false,
+      reason: `Sex xodimlari tomonidan brak miqdorini kamaytirish qat'iyan taqiqlangan! (${oldQuantity} kg dan ${newQuantity} kg ga kamaytirish faqat Bosh Sifat Nazorati (QC) yoki Administrator ruxsati bilan mumkin).`,
+    }
+  }
+
+  // Check shift completion (12 hours)
+  const inShift = isWithinShiftHours(createdAt, 12, now)
+  if (!inShift) {
+    return {
+      allowed: false,
+      isAuthorizedElevated: false,
+      reason: "Belgilangan ish smenasi yakunlanganligi sababli ushbu brak akti tahrirlash uchun bloklangan. O'zgartirish kiritish faqat Bosh Sifat Nazoratchisi (QC) yoki Administrator ruxsati bilan amalga oshiriladi!",
+    }
+  }
+
+  return { allowed: true, isAuthorizedElevated: false }
+}
+
+export function checkDefectDeletePermission(role?: string | null): { allowed: boolean; reason?: string } {
+  const normalizedRole = String(role || '').toUpperCase().trim()
+  const isAdmin = normalizedRole === 'ADMIN' || normalizedRole === 'DIRECTOR'
+  if (!isAdmin) {
+    return {
+      allowed: false,
+      reason: "Brak va nuqson aktlarini o'chirish huquqi faqat Tizim Administratoriga berilgan!",
+    }
+  }
+  return { allowed: true }
+}
+
+// =============================================================================
+// MODULE 3: Ombor zaxirasidan to'g'ridan-to'g'ri chiqim (Списание)
+// Buxgalteriya va ta'minot o'rtasidagi tafovutlarni oldini olish uchun
+// 24 soatdan so'ng tahrir faqat Bosh buxgalter / Admin tasdig'i bilan bo'lishi maqsadga muvofiq.
+// O'chirish: Faqat Administrator yoki Direktor.
+// =============================================================================
+
+export function checkWarehouseWriteOffPermission(params: {
+  role?: string | null
+  createdAt?: Date | string | null
+  now?: Date
+}): { allowed: boolean; reason?: string; isAuthorizedElevated: boolean } {
+  const { role, createdAt, now = new Date() } = params
+  const normalizedRole = String(role || '').toUpperCase().trim()
+  const isElevated = normalizedRole === 'ACCOUNTING' || normalizedRole === 'ADMIN' || normalizedRole === 'DIRECTOR'
+
+  if (isElevated) {
+    return { allowed: true, isAuthorizedElevated: true }
+  }
+
+  const in24h = isWithin24Hours(createdAt, now)
+  if (!in24h) {
+    return {
+      allowed: false,
+      isAuthorizedElevated: false,
+      reason: "Ombor zaxirasidan chiqim (списание) qilinganiga 24 soatdan oshgan. Buxgalteriya va ta'minot o'rtasidagi tafovutlarni oldini olish uchun tahrirlash faqat Bosh buxgalter yoki Administrator ruxsati bilan amalga oshiriladi!",
+    }
+  }
+
+  return { allowed: true, isAuthorizedElevated: false }
+}
+
+export function checkWarehouseWriteOffDeletePermission(role?: string | null): { allowed: boolean; reason?: string } {
+  const normalizedRole = String(role || '').toUpperCase().trim()
+  const isAdmin = normalizedRole === 'ADMIN' || normalizedRole === 'DIRECTOR'
+  if (!isAdmin) {
+    return {
+      allowed: false,
+      reason: "Ombor chiqim hujjatlarini (списание) o'chirish huquqi faqat Tizim Administratoriga berilgan!",
+    }
+  }
+  return { allowed: true }
 }

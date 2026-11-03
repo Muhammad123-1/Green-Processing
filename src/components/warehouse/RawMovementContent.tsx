@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Edit2,
   Trash2,
+  Lock,
   Loader2,
   X,
   Package,
@@ -24,7 +25,14 @@ import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
-export default function RawMovementContent() {
+import { checkWarehouseWriteOffPermission, checkWarehouseWriteOffDeletePermission } from '@/lib/auditRules'
+export default function RawMovementContent({
+  userRole = 'WAREHOUSE',
+  userName = 'Skladchi'
+}: {
+  userRole?: string
+  userName?: string
+}) {
   const { lang, formatDual } = useLanguage()
 
   const [logs, setLogs] = useState<any[]>([])
@@ -53,7 +61,8 @@ export default function RawMovementContent() {
     returnedFromProductionKg: '0',
     endOfDayBalanceKg: '',
     responsiblePerson: '',
-    notes: ''
+    notes: '',
+    editReason: ''
   }
   const [form, setForm] = useState(initialForm)
 
@@ -130,6 +139,11 @@ export default function RawMovementContent() {
   }
 
   function openEdit(log: any) {
+    const perm = checkWarehouseWriteOffPermission({ role: userRole, createdAt: log.createdAt })
+    if (!perm.allowed) {
+      toast.error(perm.reason || "Ushbu chiqim kiritilganiga 24 soatdan oshgan. Faqat Bosh buxgalter yoki Admin tahrirlashi mumkin!")
+      return
+    }
     setEditingId(log.id)
     setForm({
       orderNumber: log.orderNumber || 1,
@@ -146,13 +160,18 @@ export default function RawMovementContent() {
       returnedFromProductionKg: log.returnedFromProductionKg !== null ? log.returnedFromProductionKg.toString() : '0',
       endOfDayBalanceKg: log.endOfDayBalanceKg !== null ? log.endOfDayBalanceKg.toString() : '',
       responsiblePerson: log.responsiblePerson || '',
-      notes: log.notes || ''
+      notes: log.notes || '',
+      editReason: log.editReason || ''
     })
     setShowModal(true)
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
+    if (editingId && (!form.editReason || !form.editReason.trim())) {
+      toast.error("O'zgartirish sababini (Audit izohini) kiritish majburiy!")
+      return
+    }
     setSaving(true)
     try {
       const method = editingId ? 'PUT' : 'POST'
@@ -193,6 +212,11 @@ export default function RawMovementContent() {
   }
 
   async function handleDelete(id: number) {
+    const perm = checkWarehouseWriteOffDeletePermission(userRole)
+    if (!perm.allowed) {
+      toast.error(perm.reason || "Chiqim hujjatini o'chirish faqat Administrator tomonidan amalga oshirilishi mumkin!")
+      return
+    }
     if (!confirm(lang === 'ru' ? 'Удалить эту запись из журнала?' : 'Ushbu yozuvni o\'chirishni tasdiqlaysizmi?')) return
     try {
       const res = await fetch(`/api/warehouse/raw-movement-logs?id=${id}`, { method: 'DELETE' })
@@ -412,20 +436,32 @@ export default function RawMovementContent() {
                       </td>
                       <td className="p-3 text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => openEdit(log)}
-                            className="p-1.5 hover:bg-dark-700 text-slate-400 hover:text-emerald-400 rounded-lg transition-colors"
-                            title="Tahrirlash"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(log.id)}
-                            className="p-1.5 hover:bg-dark-700 text-slate-400 hover:text-rose-400 rounded-lg transition-colors"
-                            title="O'chirish"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          {checkWarehouseWriteOffPermission({ role: userRole, createdAt: log.createdAt }).allowed ? (
+                            <button
+                              onClick={() => openEdit(log)}
+                              className="p-1.5 hover:bg-dark-700 text-slate-400 hover:text-emerald-400 rounded-lg transition-colors"
+                              title="Tahrirlash"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="p-1.5 text-amber-500/80 hover:bg-dark-700 rounded-lg opacity-70 cursor-not-allowed"
+                              title={checkWarehouseWriteOffPermission({ role: userRole, createdAt: log.createdAt }).reason || "24 soatdan oshgan — faqat Bosh buxgalter yoki Admin tahrirlashi mumkin"}
+                            >
+                              <Lock size={14} />
+                            </button>
+                          )}
+                          {checkWarehouseWriteOffDeletePermission(userRole).allowed && (
+                            <button
+                              onClick={() => handleDelete(log.id)}
+                              className="p-1.5 hover:bg-dark-700 text-slate-400 hover:text-rose-400 rounded-lg transition-colors"
+                              title="O'chirish (Admin)"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
