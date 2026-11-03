@@ -42,10 +42,6 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       title: t('warehouse'), 
       subtitle: formatDual('Ombor qoldiqlari, partiyalar va harorat nazorati', 'Остатки на складе, партии и контроль температур', 'Warehouse stocks, batches and temperature control') 
     },
-    '/arrivals': { 
-      title: t('arrivals'), 
-      subtitle: t('arrivalsSub') 
-    },
     '/production': { 
       title: t('production'), 
       subtitle: t('productionSub') 
