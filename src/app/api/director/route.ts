@@ -1435,18 +1435,28 @@ export async function GET(request: NextRequest) {
         productStockDetails,
         productBalances: operationsSummary.ombor.items,
         recentChecklists: dailyChecklists,
-        recentShopArrivals: shopArrivals.slice(0, 50),
-        recentShopExpenses: shopExpenses.slice(0, 50),
-        recentIncomingActs: incomingActs.slice(0, 50),
-        recentTransfers: stockTransfers.slice(0, 30),
-        recentSalesOrders: salesOrders.slice(0, 30),
-        recentDefectLogs: defectLogs.slice(0, 30),
+        recentShopArrivals: shopArrivals.map((sa) => {
+          const norm = (sa.nomenclature || '').trim().toLowerCase()
+          const matchedBatch =
+            (sa.batch && sa.batch.trim() !== '')
+              ? sa.batch
+              : arrivalBatchLookup.get(`${sa.date}_${norm}`) || latestBatchByProduct.get(norm) || ''
+          return {
+            ...sa,
+            batch: matchedBatch,
+          }
+        }),
+        recentShopExpenses: shopExpenses.slice(0, 100),
+        recentIncomingActs: incomingActs,
+        recentTransfers: stockTransfers.slice(0, 50),
+        recentSalesOrders: salesOrders.slice(0, 50),
+        recentDefectLogs: defectLogs.slice(0, 50),
         recentWastageLogs: wastageLogs.slice(0, 50),
-        recentShippingLogs: shippingLogs.slice(0, 30),
+        recentShippingLogs: shippingLogs.slice(0, 50),
         recentLogs: logs.slice(0, 100),
         employeeStats,
-        recentSurveys: surveys.slice(0, 10),
-        recentMealLogs: safeMealLogs.slice(0, 10),
+        recentSurveys: surveys.slice(0, 20),
+        recentMealLogs: safeMealLogs.slice(0, 20),
       },
     })
   } catch (error: any) {

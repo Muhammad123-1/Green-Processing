@@ -111,6 +111,7 @@ export default function DirectorPage() {
   const [selectedOperationItem, setSelectedOperationItem] = useState<any>(null)
   const [selectedOperationProduct, setSelectedOperationProduct] = useState<string>('ALL')
   const [visibleOperationsLimit, setVisibleOperationsLimit] = useState<number>(60)
+  const [arrivalsDisplayLimit, setArrivalsDisplayLimit] = useState<number>(100)
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<'accounting' | 'quality' | 'inspector' | 'admin' | 'production' | null>(null)
   const [deptPeriodFilter, setDeptPeriodFilter] = useState<'today' | 'week' | 'month' | 'all'>('today')
@@ -365,7 +366,12 @@ export default function DirectorPage() {
         i.supplier?.toLowerCase?.().includes(q) ||
         i.nomenclature?.toLowerCase().includes(q) ||
         i.product?.name?.toLowerCase().includes(q) ||
-        i.user?.name?.toLowerCase().includes(q)
+        i.user?.name?.toLowerCase().includes(q) ||
+        i.inspector?.toLowerCase().includes(q) ||
+        i.inspectorName?.toLowerCase().includes(q) ||
+        i.batch?.toLowerCase().includes(q) ||
+        i.batchNumber?.toLowerCase().includes(q) ||
+        i.date?.toLowerCase().includes(q)
     )
   }, [details.recentInspections, details.recentShopArrivals, searchQuery])
 
@@ -2311,48 +2317,112 @@ export default function DirectorPage() {
               {/* SECTION: ARRIVALS */}
               {activeModal === 'arrivals' && (
                 <div className="space-y-4">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-2">
-                    {formatDual("Xomashyo qabuli aktlari", "Акты приема сырья", "Raw arrivals acts")}:
-                  </h4>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>{formatDual("Xomashyo qabuli aktlari", "Акты приема сырья", "Raw arrivals acts")}:</span>
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono font-bold border border-emerald-200 dark:border-emerald-800">
+                          {filteredInspections.length} {formatDual("ta qabul", "приемок", "arrivals")}
+                        </span>
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {formatDual(
+                          "Barcha qabul qilingan xomashyo partiyalari va rasmiy kirim hujjatlari",
+                          "Все принятые партии сырья и официальные документы прихода",
+                          "All accepted raw material batches and inbound acts"
+                        )}
+                      </p>
+                    </div>
+                    {filteredInspections.length > arrivalsDisplayLimit && (
+                      <span className="text-xs text-slate-500 font-medium">
+                        {formatDual(
+                          `${Math.min(arrivalsDisplayLimit, filteredInspections.length)} tasi ko'rsatilmoqda`,
+                          `Показано ${Math.min(arrivalsDisplayLimit, filteredInspections.length)}`,
+                          `Showing ${Math.min(arrivalsDisplayLimit, filteredInspections.length)}`
+                        )}
+                      </span>
+                    )}
+                  </div>
+
                   {filteredInspections.length === 0 ? (
                     <p className="text-slate-400 italic p-4 text-center">{formatDual("Qabul yozuvlari topilmadi", "Записи приемок не найдены", "No arrival records found")}</p>
                   ) : (
-                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
-                      <table className="w-full text-left">
-                        <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
-                          <tr>
-                            <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
-                            <th className="p-3">{formatDual("Mahsulot", "Продукт", "Product")}</th>
-                            <th className="p-3">{formatDual("Ta'minotchi", "Поставщик", "Supplier")}</th>
-                            <th className="p-3">{formatDual("Tekshiruvchi", "Проверил", "Inspector")}</th>
-                            <th className="p-3 text-center">{formatDual("Miqdor (kg)", "Кол-во (кг)", "Qty (kg)")}</th>
-                            <th className="p-3 text-center">{formatDual("Holat", "Статус", "Status")}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                          {filteredInspections.map((insp: any) => (
-                            <tr key={insp.id}>
-                              <td className="p-3 text-slate-500">{insp.date || new Date(insp.createdAt).toLocaleDateString(dateLocale)}</td>
-                              <td className="p-3 font-bold">{insp.nomenclature || insp.product?.name || formatDual("Xomashyo", "Сырье", "Raw material")}</td>
-                              <td className="p-3 text-slate-700 dark:text-slate-300">{insp.supplier?.name || insp.supplier || "-"}</td>
-                              <td className="p-3 text-indigo-600 font-bold">{insp.user?.name || insp.inspector || formatDual("Nazoratchi", "Инспектор", "Inspector")}</td>
-                              <td className="p-3 text-center font-black">{insp.quantity} kg</td>
-                              <td className="p-3 text-center">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  insp.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-800' :
-                                  insp.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                  'bg-blue-100 text-blue-800'
-                                }`}>
-                                  {insp.status === 'ACCEPTED' ? formatDual("Qabul", "Принято", "Accepted") :
-                                   insp.status === 'REJECTED' ? formatDual("Rad etildi", "Отклонено", "Rejected") :
-                                   (insp.status || formatDual("Qabul", "Принято", "Accepted"))}
-                                </span>
-                              </td>
+                    <>
+                      <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
+                        <table className="w-full text-left">
+                          <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
+                            <tr>
+                              <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
+                              <th className="p-3">{formatDual("Mahsulot", "Продукт", "Product")}</th>
+                              <th className="p-3">{formatDual("Ta'minotchi", "Поставщик", "Supplier")}</th>
+                              <th className="p-3">{formatDual("Tekshiruvchi", "Проверил", "Inspector")}</th>
+                              <th className="p-3 text-center">{formatDual("Miqdor", "Кол-во", "Quantity")}</th>
+                              <th className="p-3 text-center">{formatDual("Partiya", "Партия", "Batch")}</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                            {filteredInspections.slice(0, arrivalsDisplayLimit).map((insp: any) => {
+                              const isDona = /dona|пакет|каробк|коробк|перчатк|салфетк|полотенц|бумага|халат|маска|шапка/i.test(insp.nomenclature || insp.product?.name || '')
+                              return (
+                                <tr key={insp.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/50 transition-colors">
+                                  <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{insp.date || new Date(insp.createdAt).toLocaleDateString(dateLocale)}</td>
+                                  <td className="p-3 font-bold text-slate-900 dark:text-white">{insp.nomenclature || insp.product?.name || formatDual("Xomashyo", "Сырье", "Raw material")}</td>
+                                  <td className="p-3 text-slate-700 dark:text-slate-300 text-xs">{insp.supplier?.name || insp.supplier || "-"}</td>
+                                  <td className="p-3 text-indigo-600 dark:text-indigo-400 font-bold text-xs">{insp.user?.name || insp.inspector || insp.inspectorName || formatDual("Nazoratchi", "Инспектор", "Inspector")}</td>
+                                  <td className="p-3 text-center font-black text-slate-900 dark:text-white text-xs whitespace-nowrap">
+                                    {typeof insp.quantity === 'number' ? insp.quantity.toLocaleString() : insp.quantity} {isDona ? 'dona' : 'kg'}
+                                  </td>
+                                  <td className="p-3 text-center font-mono">
+                                    {insp.batch || insp.batchNumber ? (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        {String(insp.batch || insp.batchNumber).startsWith('#') || String(insp.batch || insp.batchNumber).toLowerCase().startsWith('partiya')
+                                          ? (insp.batch || insp.batchNumber)
+                                          : `Partiya #${insp.batch || insp.batchNumber}`}
+                                      </span>
+                                    ) : (
+                                      <span className="inline-block px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-400 bg-slate-100 dark:bg-dark-800">
+                                        {formatDual("Partiya yozilmagan", "Без партии", "No batch")}
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {filteredInspections.length > arrivalsDisplayLimit && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-dark-800">
+                          <span className="text-xs text-slate-500">
+                            {formatDual(
+                              `Jami ${filteredInspections.length} ta yozuvdan ${Math.min(arrivalsDisplayLimit, filteredInspections.length)} tasi ko'rsatilmoqda`,
+                              `Показано ${Math.min(arrivalsDisplayLimit, filteredInspections.length)} из ${filteredInspections.length} записей`,
+                              `Showing ${Math.min(arrivalsDisplayLimit, filteredInspections.length)} of ${filteredInspections.length} records`
+                            )}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setArrivalsDisplayLimit((prev) => prev + 100)}
+                              className="px-3.5 py-1.5 text-xs font-bold rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              {formatDual("+100 ta ko'rsatish", "+100 показать", "+100 show more")}
+                            </button>
+                            <button
+                              onClick={() => setArrivalsDisplayLimit(filteredInspections.length)}
+                              className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-2xs cursor-pointer"
+                            >
+                              {formatDual(
+                                `Barchasini ko'rsatish (${filteredInspections.length})`,
+                                `Показать все (${filteredInspections.length})`,
+                                `Show all (${filteredInspections.length})`
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
