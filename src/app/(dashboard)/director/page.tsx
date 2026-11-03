@@ -2489,6 +2489,9 @@ export default function DirectorPage() {
                       </span>
                       <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono">
                         {filteredChecklists.reduce((sum: number, c: any) => sum + (c.totalOutputBox || 0), 0).toLocaleString()} {formatDual("quti", "кор.", "boxes")}
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-2">
+                          ({(filteredChecklists.reduce((sum: number, c: any) => sum + (c.totalOutputKg || (c.totalOutputBox ? c.totalOutputBox * 5 : 0)), 0)).toLocaleString()} kg)
+                        </span>
                       </div>
                     </div>
                     <div className="p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40">
@@ -2526,6 +2529,7 @@ export default function DirectorPage() {
                             <th className="p-3.5">{formatDual("QC Nazoratchi", "Инспектор", "Inspector")}</th>
                             <th className="p-3.5">{formatDual("Partiya №", "Партия №", "Batch #")}</th>
                             <th className="p-3.5 text-center">{formatDual("Chiqish (quti)", "Выпуск (кор.)", "Output (box)")}</th>
+                            <th className="p-3.5 text-center">{formatDual("Chiqish (kg)", "Выпуск (кг)", "Output (kg)")}</th>
                             <th className="p-3.5 text-center">{formatDual("Brak (kg)", "Брак (кг)", "Reject (kg)")}</th>
                           </tr>
                         </thead>
@@ -2554,6 +2558,9 @@ export default function DirectorPage() {
                               <td className="p-3.5 text-slate-500 font-mono text-[11px]">{c.batchNumber || "-"}</td>
                               <td className="p-3.5 text-center font-black text-emerald-600 dark:text-emerald-400 font-mono text-sm">
                                 {(c.totalOutputBox || 0).toLocaleString()}
+                              </td>
+                              <td className="p-3.5 text-center font-black text-indigo-600 dark:text-indigo-400 font-mono text-sm">
+                                {((c.totalOutputKg || (c.totalOutputBox ? Math.round(c.totalOutputBox * 5) : 0)) || 0).toLocaleString()} kg
                               </td>
                               <td className={`p-3.5 text-center font-bold font-mono ${
                                 (c.rejectedKg || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'

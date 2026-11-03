@@ -19,6 +19,10 @@ import {
   X,
   Plus,
   Sparkles,
+  Lock,
+  AlertTriangle,
+  Clock,
+  ShieldAlert,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
@@ -35,6 +39,11 @@ import {
   formatDMY,
   formatLongDate,
 } from '@/lib/shopReport'
+import {
+  checkEditPermission,
+  isWithinShiftEditWindow,
+  isWithin24Hours,
+} from '@/lib/auditRules'
 
 const todayStr = () => {
   const d = new Date()
@@ -61,10 +70,34 @@ const formatMonthLabel = (ym: string, lang: string) => {
   return `${name} ${year}`
 }
 
-export default function ShopReportContent() {
+export default function ShopReportContent({
+  userRole = 'OPERATOR',
+  userName = 'Foydalanuvchi',
+}: {
+  userRole?: string
+  userName?: string
+}) {
   const { lang } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isAdmin = userRole === 'ADMIN' || userRole === 'DIRECTOR'
+  const shiftWindowActive = isWithinShiftEditWindow()
+
+  const [editReasonModal, setEditReasonModal] = useState<{
+    open: boolean
+    targetType: 'arrival' | 'expense' | 'gp'
+    dirtyItemsCount: number
+    itemsSummary: string[]
+    reason: string
+    onConfirm?: (reason: string) => void
+  }>({
+    open: false,
+    targetType: 'arrival',
+    dirtyItemsCount: 0,
+    itemsSummary: [],
+    reason: '',
+  })
 
   const [activeTab, setActiveTab] = useState<'arrival' | 'expense' | 'gp' | 'report' | 'history'>('arrival')
 
@@ -240,7 +273,16 @@ export default function ShopReportContent() {
     return String(maxNum + 1)
   }
 
-  const updateArrival = (idx: number, patch: any) =>
+  const updateArrival = (idx: number, patch: any) => {
+    const row = arrivals[idx]
+    if (!row) return
+    if (!row._new) {
+      const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+      if (!perm.allowed) {
+        toast.error(perm.reason || "Ushbu yozuvni o'zgartirish huquqi yo'q!")
+        return
+      }
+    }
     setArrivals((prev) =>
       prev.map((r, i) => {
         if (i !== idx) return r
@@ -265,6 +307,7 @@ export default function ShopReportContent() {
         return updated
       })
     )
+  }
 
   const addArrival = () => {
     const targetDate = arrFilter || todayStr()
@@ -418,17 +461,7 @@ export default function ShopReportContent() {
 
   const dirtyArrivals = arrivals.filter((r) => r._dirty).length
 
-  const saveArrivals = async () => {
-    // new rows that were left completely blank are simply dropped
-    const rows = arrivals.filter((r) => r._dirty && !(r._new && !String(r.nomenclature || '').trim() && !toNum(r.quantity)))
-    if (rows.length === 0) {
-      setArrivals((prev) => prev.filter((r) => !(r._new && !String(r.nomenclature || '').trim() && !toNum(r.quantity))))
-      return
-    }
-    if (rows.some((r) => !isDateStr(r.date))) {
-      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
-      return
-    }
+  const executeSaveArrivals = async (rows: any[], reason: string) => {
     setSavingArrivals(true)
     try {
       const res = await fetch('/api/shop-report/arrivals', {
@@ -442,18 +475,62 @@ export default function ShopReportContent() {
             quantity: toNum(r.quantity),
             supplier: r.supplier,
             batch: r.batch,
+            editReason: reason || r.editReason,
           })),
         }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j?.error || 'Saqlashda xatolik')
       toast.success(`Kirim saqlandi: ${j.updated} ta yangilandi, ${j.created} ta qo'shildi`)
+      setEditReasonModal((prev) => ({ ...prev, open: false }))
       await loadData()
     } catch (e: any) {
       toast.error(e?.message || 'Saqlashda xatolik')
     } finally {
       setSavingArrivals(false)
     }
+  }
+
+  const saveArrivals = async () => {
+    // new rows that were left completely blank are simply dropped
+    const rows = arrivals.filter(
+      (r) => r._dirty && !(r._new && !String(r.nomenclature || '').trim() && !toNum(r.quantity))
+    )
+    if (rows.length === 0) {
+      setArrivals((prev) =>
+        prev.filter((r) => !(r._new && !String(r.nomenclature || '').trim() && !toNum(r.quantity)))
+      )
+      return
+    }
+    if (rows.some((r) => !isDateStr(r.date))) {
+      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
+      return
+    }
+
+    // Check if any existing rows are being modified
+    const modifiedExisting = rows.filter((r) => !r._new && r.id)
+    if (modifiedExisting.length > 0) {
+      // Must prompt for edit reason!
+      const summary = modifiedExisting
+        .slice(0, 5)
+        .map((r) => `${r.nomenclature || 'Mahsulot'} (${r.quantity} kg, ${r.date})`)
+      if (modifiedExisting.length > 5) {
+        summary.push(`... va yana ${modifiedExisting.length - 5} ta qator`)
+      }
+
+      setEditReasonModal({
+        open: true,
+        targetType: 'arrival',
+        dirtyItemsCount: modifiedExisting.length,
+        itemsSummary: summary,
+        reason: '',
+        onConfirm: (reason) => executeSaveArrivals(rows, reason),
+      })
+      return
+    }
+
+    // Only new rows
+    await executeSaveArrivals(rows, '')
   }
 
   // ---------------------------------------------------------------------------
@@ -465,8 +542,18 @@ export default function ShopReportContent() {
     return row
   }
 
-  const updateExpense = (idx: number, patch: any) =>
+  const updateExpense = (idx: number, patch: any) => {
+    const row = expenses[idx]
+    if (!row) return
+    if (!row._new) {
+      const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+      if (!perm.allowed) {
+        toast.error(perm.reason || "Ushbu yozuvni o'zgartirish huquqi yo'q!")
+        return
+      }
+    }
     setExpenses((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch, _dirty: true } : r)))
+  }
 
   const addExpense = () => setExpenses((prev) => [blankExpense(expFilter || todayStr()), ...prev])
 
@@ -474,13 +561,7 @@ export default function ShopReportContent() {
 
   const dirtyExpenses = expenses.filter((r) => r._dirty).length
 
-  const saveExpenses = async () => {
-    const rows = expenses.filter((r) => r._dirty)
-    if (rows.length === 0) return
-    if (rows.some((r) => !isDateStr(r.date))) {
-      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
-      return
-    }
+  const executeSaveExpenses = async (rows: any[], reason: string) => {
     setSavingExpenses(true)
     try {
       const res = await fetch('/api/shop-report/expenses', {
@@ -488,7 +569,7 @@ export default function ShopReportContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rows: rows.map((r) => {
-            const out: Record<string, any> = { date: r.date }
+            const out: Record<string, any> = { date: r.date, editReason: reason || r.editReason }
             EXPENSE_FIELDS.forEach((f) => (out[f.field] = toNum(r[f.field])))
             return out
           }),
@@ -497,12 +578,38 @@ export default function ShopReportContent() {
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j?.error || 'Saqlashda xatolik')
       toast.success(`Chiqim saqlandi: ${j.saved} ta kun`)
+      setEditReasonModal((prev) => ({ ...prev, open: false }))
       await loadData()
     } catch (e: any) {
       toast.error(e?.message || 'Saqlashda xatolik')
     } finally {
       setSavingExpenses(false)
     }
+  }
+
+  const saveExpenses = async () => {
+    const rows = expenses.filter((r) => r._dirty)
+    if (rows.length === 0) return
+    if (rows.some((r) => !isDateStr(r.date))) {
+      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
+      return
+    }
+
+    const modifiedExisting = rows.filter((r) => !r._new)
+    if (modifiedExisting.length > 0) {
+      const summary = modifiedExisting.map((r) => `Chiqim: ${r.date}`)
+      setEditReasonModal({
+        open: true,
+        targetType: 'expense',
+        dirtyItemsCount: modifiedExisting.length,
+        itemsSummary: summary,
+        reason: '',
+        onConfirm: (reason) => executeSaveExpenses(rows, reason),
+      })
+      return
+    }
+
+    await executeSaveExpenses(rows, '')
   }
 
   // ---------------------------------------------------------------------------
@@ -514,8 +621,18 @@ export default function ShopReportContent() {
     return row
   }
 
-  const updateGP = (idx: number, patch: any) =>
+  const updateGP = (idx: number, patch: any) => {
+    const row = gpList[idx]
+    if (!row) return
+    if (!row._new) {
+      const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+      if (!perm.allowed) {
+        toast.error(perm.reason || "Ushbu yozuvni o'zgartirish huquqi yo'q!")
+        return
+      }
+    }
     setGpList((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch, _dirty: true } : r)))
+  }
 
   const addGP = () => setGpList((prev) => [blankGP(gpFilter || todayStr()), ...prev])
 
@@ -523,13 +640,7 @@ export default function ShopReportContent() {
 
   const dirtyGP = gpList.filter((r) => r._dirty).length
 
-  const saveGP = async () => {
-    const rows = gpList.filter((r) => r._dirty)
-    if (rows.length === 0) return
-    if (rows.some((r) => !isDateStr(r.date))) {
-      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
-      return
-    }
+  const executeSaveGP = async (rows: any[], reason: string) => {
     setSavingGP(true)
     try {
       const res = await fetch('/api/shop-report/gp', {
@@ -537,7 +648,7 @@ export default function ShopReportContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rows: rows.map((r) => {
-            const out: Record<string, any> = { date: r.date }
+            const out: Record<string, any> = { date: r.date, editReason: reason || r.editReason }
             GP_FIELDS.forEach((f) => (out[f.field] = toNum(r[f.field])))
             return out
           }),
@@ -546,12 +657,38 @@ export default function ShopReportContent() {
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j?.error || 'Saqlashda xatolik')
       toast.success(`ГП (Tayyor mahsulot) saqlandi: ${j.saved} ta kun`)
+      setEditReasonModal((prev) => ({ ...prev, open: false }))
       await loadData()
     } catch (e: any) {
       toast.error(e?.message || 'Saqlashda xatolik')
     } finally {
       setSavingGP(false)
     }
+  }
+
+  const saveGP = async () => {
+    const rows = gpList.filter((r) => r._dirty)
+    if (rows.length === 0) return
+    if (rows.some((r) => !isDateStr(r.date))) {
+      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
+      return
+    }
+
+    const modifiedExisting = rows.filter((r) => !r._new)
+    if (modifiedExisting.length > 0) {
+      const summary = modifiedExisting.map((r) => `ГП Chiqishi: ${r.date}`)
+      setEditReasonModal({
+        open: true,
+        targetType: 'gp',
+        dirtyItemsCount: modifiedExisting.length,
+        itemsSummary: summary,
+        reason: '',
+        onConfirm: (reason) => executeSaveGP(rows, reason),
+      })
+      return
+    }
+
+    await executeSaveGP(rows, '')
   }
 
   // ---------------------------------------------------------------------------
@@ -791,6 +928,63 @@ export default function ShopReportContent() {
         </div>
       </div>
 
+      {/* ENTERPRISE AUDIT & SHIFT WINDOW NOTICE */}
+      <div className="bg-slate-50 dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold shrink-0 ${
+              isAdmin
+                ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
+                : shiftWindowActive
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+            }`}
+          >
+            {isAdmin ? <ShieldAlert size={16} /> : shiftWindowActive ? <Clock size={16} /> : <Lock size={16} />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-black text-slate-900 dark:text-white">
+                {isAdmin
+                  ? (lang === 'ru' ? 'Режим Администратора' : "Administrator / Direktor Rejimi")
+                  : shiftWindowActive
+                  ? (lang === 'ru' ? 'Смена открыта (17:00 – 09:00)' : "Kechki navbat ochiq (17:00 – 09:00)")
+                  : (lang === 'ru' ? 'Дневной режим (09:00 – 17:00)' : "Kunduzgi rejim (09:00 – 17:00)")}
+              </span>
+              <span
+                className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                  isAdmin
+                    ? 'bg-purple-50 text-purple-600 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300'
+                    : shiftWindowActive
+                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+                    : 'bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300'
+                }`}
+              >
+                {isAdmin ? 'ADMIN OVERRIDE' : shiftWindowActive ? 'TAHRIRLASH MUMKIN (24h)' : 'TAHRIRLASH QULFLANGAN'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {isAdmin
+                ? (lang === 'ru'
+                    ? 'Полный доступ: разрешено создание и редактирование записей любого срока давности.'
+                    : 'To\'liq huquq: Barcha sanalardagi ma\'lumotlarni tahrirlash ruxsati mavjud.')
+                : shiftWindowActive
+                ? (lang === 'ru'
+                    ? 'Разрешено исправление ошибок в записях младше 24 часов с указанием обязательной причины.'
+                    : 'Kiritilganiga 24 soat to\'lmagan xatoliklarni sababini ko\'rsatgan holda o\'zgartirishingiz mumkin.')
+                : (lang === 'ru'
+                    ? 'Редактирование ранее внесенных данных заблокировано. Новые записи (+ Добавить) разрешены.'
+                    : 'Mavjud yozuvlarni o\'zgartirish bloklangan. Faqat yangi kelgan xomashyo qabulini (+ Qo\'shish) kiritish mumkin.')}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+          <span>Rol: <strong className="text-slate-700 dark:text-slate-200">{userRole}</strong></span>
+          <span>•</span>
+          <span>Foydalanuvchi: <strong className="text-slate-700 dark:text-slate-200">{userName}</strong></span>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-dark-900 p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm overflow-x-auto custom-scrollbar">
         <button
@@ -896,75 +1090,85 @@ export default function ShopReportContent() {
                     </td>
                   </tr>
                 ) : null}
-                {arrivalsPagination.displayedItems.map(({ row, idx }) => (
-                  <tr
-                    key={row.id ?? `new-${idx}`}
-                    className={`hover:bg-amber-50/40 ${row._dirty ? 'bg-amber-50' : 'bg-white'}`}
-                  >
-                    <td className="sticky left-0 z-10 bg-amber-50 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0]">
-                      {row._new ? (
-                        <input
-                          type="date"
-                          value={row.date || ''}
-                          onChange={(e) => updateArrival(idx, { date: e.target.value })}
-                          className="excel-input w-full px-1.5 py-1 text-[11px] sm:text-xs font-semibold outline-none"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-between gap-1 px-1.5 py-1 group rounded hover:bg-amber-100/70 transition-colors">
-                          <span className="text-[11px] sm:text-xs font-semibold text-slate-900 whitespace-nowrap">
-                            {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
-                          </span>
-                          <label
-                            className="relative cursor-pointer p-1 rounded hover:bg-amber-200/60 text-slate-500 hover:text-amber-700 transition-colors"
-                            title={lang === 'ru' ? 'Изменить дату' : "Sanani o'zgartirish"}
-                          >
-                            <Calendar size={12} />
-                            <input
-                              type="date"
-                              value={row.date || ''}
-                              onChange={(e) => updateArrival(idx, { date: e.target.value })}
-                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            />
-                          </label>
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-1 border-r border-slate-200 relative">
-                      <div className="relative flex items-center">
-                        <input
-                          type="text"
-                          placeholder={lang === 'ru' ? 'Томат, Айсберг...' : 'Aysberg, Pomidor...'}
-                          value={row.nomenclature || ''}
-                          onFocus={() => setActiveDropdownIdx(idx)}
-                          onChange={(e) => {
-                            updateArrival(idx, { nomenclature: e.target.value })
-                            if (activeDropdownIdx !== idx) setActiveDropdownIdx(idx)
-                          }}
-                          className="excel-input w-full min-w-[140px] px-2 py-1.5 text-xs font-medium outline-none pr-6"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTargetRowIdxForNewProduct(idx)
-                            setNewProductName(row.nomenclature || '')
-                            setNewProductModalOpen(true)
-                            setActiveDropdownIdx(null)
-                          }}
-                          title={lang === 'ru' ? 'Добавить новый продукт' : "Yangi mahsulot qo'shish"}
-                          className="absolute right-1 text-slate-400 hover:text-amber-600 hover:bg-amber-100 p-0.5 rounded transition-colors"
-                        >
-                          <Plus size={13} />
-                        </button>
-                      </div>
+                {arrivalsPagination.displayedItems.map(({ row, idx }) => {
+                  const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+                  const isRowEditable = Boolean(row._new) || perm.allowed
 
-                      {/* Dropdown list of products (sorted from most frequent to least frequent) */}
-                      {activeDropdownIdx === idx && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-30"
-                            onClick={() => setActiveDropdownIdx(null)}
+                  return (
+                    <tr
+                      key={row.id ?? `new-${idx}`}
+                      className={`transition-colors ${
+                        row.isEdited
+                          ? 'bg-rose-50/70 dark:bg-rose-950/25 border-l-4 border-l-rose-500'
+                          : row._dirty
+                          ? 'bg-amber-50 dark:bg-amber-950/20'
+                          : 'bg-white dark:bg-dark-900 hover:bg-amber-50/40 dark:hover:bg-dark-800/40'
+                      }`}
+                    >
+                      <td className={`sticky left-0 z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] ${row.isEdited ? 'bg-rose-100/60 dark:bg-rose-950/40' : 'bg-amber-50 dark:bg-dark-850'}`}>
+                        {row._new ? (
+                          <input
+                            type="date"
+                            value={row.date || ''}
+                            onChange={(e) => updateArrival(idx, { date: e.target.value })}
+                            className="excel-input w-full px-1.5 py-1 text-[11px] sm:text-xs font-semibold outline-none"
                           />
-                          <div className="absolute left-0 top-full mt-1 w-72 sm:w-80 max-h-64 overflow-y-auto bg-white dark:bg-dark-850 rounded-2xl shadow-2xl border border-amber-300 dark:border-dark-700 z-40 p-1.5 custom-scrollbar">
+                        ) : (
+                          <div className="flex items-center justify-between gap-1 px-1.5 py-1 group rounded hover:bg-amber-100/70 transition-colors">
+                            <span className="text-[11px] sm:text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                              {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
+                            </span>
+                            {isRowEditable ? (
+                              <label
+                                className="relative cursor-pointer p-1 rounded hover:bg-amber-200/60 text-slate-500 hover:text-amber-700 transition-colors"
+                                title={lang === 'ru' ? 'Изменить дату' : "Sanani o'zgartirish"}
+                              >
+                                <Calendar size={12} />
+                                <input
+                                  type="date"
+                                  value={row.date || ''}
+                                  onChange={(e) => updateArrival(idx, { date: e.target.value })}
+                                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                />
+                              </label>
+                            ) : (
+                              <span
+                                className="p-0.5 text-slate-400 cursor-help"
+                                title={
+                                  perm.isAfter24h
+                                    ? (lang === 'ru' ? 'Прошло более 24 часов. Изменение только Администратору.' : "24 soatdan oshgan. Faqat Administrator o'zgartira oladi.")
+                                    : (lang === 'ru' ? 'Редактирование разрешено только с 17:00 до 09:00.' : "Tahrirlash faqat 17:00 dan 09:00 gacha ruxsat etiladi.")
+                                }
+                              >
+                                <Lock size={12} className="text-amber-500 inline" />
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-1 border-r border-slate-200 relative">
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            readOnly={!isRowEditable}
+                            disabled={!isRowEditable}
+                            placeholder={lang === 'ru' ? 'Томат, Айсберг...' : 'Aysberg, Pomidor...'}
+                            value={row.nomenclature || ''}
+                            onFocus={() => { if (isRowEditable) setActiveDropdownIdx(idx) }}
+                            onClick={() => {
+                              if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
+                            }}
+                            onChange={(e) => {
+                              if (isRowEditable) {
+                                updateArrival(idx, { nomenclature: e.target.value })
+                                if (activeDropdownIdx !== idx) setActiveDropdownIdx(idx)
+                              }
+                            }}
+                            className={`excel-input w-full min-w-[140px] px-2 py-1.5 text-xs font-medium outline-none pr-6 ${
+                              !isRowEditable ? 'bg-slate-50/70 dark:bg-dark-800/60 cursor-not-allowed opacity-80' : ''
+                            }`}
+                          />
+                          {isRowEditable && (
                             <button
                               type="button"
                               onClick={() => {
@@ -973,121 +1177,208 @@ export default function ShopReportContent() {
                                 setNewProductModalOpen(true)
                                 setActiveDropdownIdx(null)
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-colors shadow-xs mb-1.5"
+                              title={lang === 'ru' ? 'Добавить новый продукт' : "Yangi mahsulot qo'shish"}
+                              className="absolute right-1 text-slate-400 hover:text-amber-600 hover:bg-amber-100 p-0.5 rounded transition-colors"
                             >
-                              <Plus size={14} className="shrink-0" />
-                              <span>{lang === 'ru' ? '+ Добавить новый продукт' : '+ Yangi mahsulot qo‘shish'}</span>
+                              <Plus size={13} />
                             </button>
+                          )}
+                        </div>
 
-                            <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                              <span>{lang === 'ru' ? 'Часто используемые' : 'Mavjud mahsulotlar (Ko‘pdan kamga)'}</span>
-                              <span className="text-amber-600 font-mono text-[10px]">
-                                {filteredProductsList(row.nomenclature).length}
-                              </span>
-                            </div>
+                        {/* Dropdown list of products (sorted from most frequent to least frequent) */}
+                        {isRowEditable && activeDropdownIdx === idx && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-30"
+                              onClick={() => setActiveDropdownIdx(null)}
+                            />
+                            <div className="absolute left-0 top-full mt-1 w-72 sm:w-80 max-h-64 overflow-y-auto bg-white dark:bg-dark-850 rounded-2xl shadow-2xl border border-amber-300 dark:border-dark-700 z-40 p-1.5 custom-scrollbar">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTargetRowIdxForNewProduct(idx)
+                                  setNewProductName(row.nomenclature || '')
+                                  setNewProductModalOpen(true)
+                                  setActiveDropdownIdx(null)
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-colors shadow-xs mb-1.5"
+                              >
+                                <Plus size={14} className="shrink-0" />
+                                <span>{lang === 'ru' ? '+ Добавить новый продукт' : '+ Yangi mahsulot qo‘shish'}</span>
+                              </button>
 
-                            <div className="space-y-0.5 max-h-48 overflow-y-auto custom-scrollbar">
-                              {filteredProductsList(row.nomenclature).map((p) => (
-                                <button
-                                  key={p.name}
-                                  type="button"
-                                  onClick={() => handleSelectProduct(idx, p.name)}
-                                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                                    (row.nomenclature || '').trim().toLowerCase() === p.name.toLowerCase()
-                                      ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 font-bold'
-                                      : 'hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-800 dark:text-slate-200'
-                                  }`}
-                                >
-                                  <span className="truncate">{p.name}</span>
-                                  {p.count > 0 && (
-                                    <span className="text-[10px] text-slate-400 font-mono ml-2 shrink-0">
-                                      {p.count} {lang === 'ru' ? 'раз' : 'ta'}
-                                    </span>
-                                  )}
-                                </button>
-                              ))}
+                              <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                                <span>{lang === 'ru' ? 'Часто используемые' : 'Mavjud mahsulotlar (Ko‘pdan kamga)'}</span>
+                                <span className="text-amber-600 font-mono text-[10px]">
+                                  {filteredProductsList(row.nomenclature).length}
+                                </span>
+                              </div>
 
-                              {row.nomenclature?.trim() &&
-                                !sortedProducts.some(
-                                  (p) => p.name.toLowerCase() === row.nomenclature.trim().toLowerCase()
-                                ) && (
+                              <div className="space-y-0.5 max-h-48 overflow-y-auto custom-scrollbar">
+                                {filteredProductsList(row.nomenclature).map((p) => (
                                   <button
+                                    key={p.name}
                                     type="button"
-                                    onClick={() => {
-                                      setTargetRowIdxForNewProduct(idx)
-                                      setNewProductName(row.nomenclature.trim())
-                                      setNewProductModalOpen(true)
-                                      setActiveDropdownIdx(null)
-                                    }}
-                                    className="w-full text-left px-2.5 py-2 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-dashed border-amber-300 flex items-center gap-1.5 mt-1"
+                                    onClick={() => handleSelectProduct(idx, p.name)}
+                                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                                      (row.nomenclature || '').trim().toLowerCase() === p.name.toLowerCase()
+                                        ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 font-bold'
+                                        : 'hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-800 dark:text-slate-200'
+                                    }`}
                                   >
-                                    <Sparkles size={13} className="shrink-0 text-amber-500" />
-                                    <span className="truncate">
-                                      {lang === 'ru'
-                                        ? `Создать «${row.nomenclature.trim()}» как новый`
-                                        : `«${row.nomenclature.trim()}» ni yangi mahsulot qilib ochish`}
-                                    </span>
+                                    <span className="truncate">{p.name}</span>
+                                    {p.count > 0 && (
+                                      <span className="text-[10px] text-slate-400 font-mono ml-2 shrink-0">
+                                        {p.count} {lang === 'ru' ? 'раз' : 'ta'}
+                                      </span>
+                                    )}
                                   </button>
-                                )}
+                                ))}
+
+                                {row.nomenclature?.trim() &&
+                                  !sortedProducts.some(
+                                    (p) => p.name.toLowerCase() === row.nomenclature.trim().toLowerCase()
+                                  ) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setTargetRowIdxForNewProduct(idx)
+                                        setNewProductName(row.nomenclature.trim())
+                                        setNewProductModalOpen(true)
+                                        setActiveDropdownIdx(null)
+                                      }}
+                                      className="w-full text-left px-2.5 py-2 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-dashed border-amber-300 flex items-center gap-1.5 mt-1"
+                                    >
+                                      <Sparkles size={13} className="shrink-0 text-amber-500" />
+                                      <span className="truncate">
+                                        {lang === 'ru'
+                                          ? `Создать «${row.nomenclature.trim()}» как новый`
+                                          : `«${row.nomenclature.trim()}» ni yangi mahsulot qilib ochish`}
+                                      </span>
+                                    </button>
+                                  )}
+                              </div>
                             </div>
+                          </>
+                        )}
+
+                        {/* PROMINENT RED "O'ZGARTIRILGAN" BADGE AND REASON */}
+                        {row.isEdited && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1 px-1">
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs cursor-help"
+                              title={`O'zgartirilgan yozuv:\nSabab: ${row.editReason || 'Kiritilmagan'}\nKim tomonidan: ${row.editedBy || 'Noma\'lum'}\nVaqt: ${row.editedAt ? new Date(row.editedAt).toLocaleString('uz-UZ') : '—'}`}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                              {lang === 'ru' ? 'Изменено' : "O'zgartirilgan"}
+                            </span>
+                            {row.editReason && (
+                              <span
+                                className="text-[10px] text-rose-700 dark:text-rose-400 font-bold italic truncate max-w-[200px]"
+                                title={row.editReason}
+                              >
+                                «{row.editReason}»
+                              </span>
+                            )}
+                            {row.editedBy && (
+                              <span className="text-[9px] text-slate-400 font-mono">
+                                ({row.editedBy})
+                              </span>
+                            )}
                           </div>
-                        </>
-                      )}
-                    </td>
-                    <td className="p-1 border-r border-slate-200">
-                      <input
-                        type="number"
-                        step="any"
-                        value={inputVal(row.quantity)}
-                        onChange={(e) => updateArrival(idx, { quantity: e.target.value })}
-                        className="excel-input w-full min-w-[75px] px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 outline-none"
-                      />
-                    </td>
-                    <td className="p-1 border-r border-slate-200">
-                      <input
-                        type="text"
-                        placeholder="Turk shanay biznes"
-                        value={row.supplier || ''}
-                        onChange={(e) => updateArrival(idx, { supplier: e.target.value })}
-                        className="excel-input w-full min-w-[125px] px-2 py-1.5 text-xs outline-none"
-                      />
-                    </td>
-                    <td className="p-1 border-r border-slate-200">
-                      <div className="relative flex items-center">
+                        )}
+                      </td>
+                      <td className="p-1 border-r border-slate-200">
+                        <input
+                          type="number"
+                          step="any"
+                          readOnly={!isRowEditable}
+                          disabled={!isRowEditable}
+                          value={inputVal(row.quantity)}
+                          onClick={() => {
+                            if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
+                          }}
+                          onChange={(e) => {
+                            if (isRowEditable) updateArrival(idx, { quantity: e.target.value })
+                          }}
+                          className={`excel-input w-full min-w-[75px] px-2 py-1.5 text-xs font-mono font-bold text-right text-amber-700 outline-none ${
+                            !isRowEditable ? 'bg-slate-50/70 dark:bg-dark-800/60 cursor-not-allowed opacity-80' : ''
+                          }`}
+                        />
+                      </td>
+                      <td className="p-1 border-r border-slate-200">
                         <input
                           type="text"
-                          placeholder="Партия"
-                          value={row.batch || ''}
-                          onChange={(e) => updateArrival(idx, { batch: e.target.value })}
-                          className="excel-input w-full min-w-[90px] px-2 py-1.5 text-xs font-mono font-bold text-slate-800 outline-none pr-6"
-                        />
-                        <button
-                          type="button"
+                          readOnly={!isRowEditable}
+                          disabled={!isRowEditable}
+                          placeholder="Turk shanay biznes"
+                          value={row.supplier || ''}
                           onClick={() => {
-                            const nextB = computeNextBatch(arrivals, row.nomenclature, row.date)
-                            updateArrival(idx, { batch: nextB })
-                            toast.info(lang === 'ru' ? `Партия: #${nextB}` : `Partiya: #${nextB}`)
+                            if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
                           }}
-                          title={lang === 'ru' ? "Пересчитать партию (с 1 в начале месяца)" : "Partiyani hisoblash (har oy boshidan 1)"}
-                          className="absolute right-1 text-amber-500 hover:text-amber-700 hover:bg-amber-100 p-0.5 rounded transition-colors text-[10px] font-bold"
-                        >
-                          ⚡
-                        </button>
-                      </div>
-                    </td>
-                    <td className="p-1 text-center">
-                      {row._new && (
-                        <button
-                          onClick={() => removeNewArrival(idx)}
-                          className="p-1 rounded text-red-500 hover:bg-red-50"
-                          title="Yangi qatorni o'chirish"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                          onChange={(e) => {
+                            if (isRowEditable) updateArrival(idx, { supplier: e.target.value })
+                          }}
+                          className={`excel-input w-full min-w-[125px] px-2 py-1.5 text-xs outline-none ${
+                            !isRowEditable ? 'bg-slate-50/70 dark:bg-dark-800/60 cursor-not-allowed opacity-80' : ''
+                          }`}
+                        />
+                      </td>
+                      <td className="p-1 border-r border-slate-200">
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            readOnly={!isRowEditable}
+                            disabled={!isRowEditable}
+                            placeholder="Партия"
+                            value={row.batch || ''}
+                            onClick={() => {
+                              if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
+                            }}
+                            onChange={(e) => {
+                              if (isRowEditable) updateArrival(idx, { batch: e.target.value })
+                            }}
+                            className={`excel-input w-full min-w-[90px] px-2 py-1.5 text-xs font-mono font-bold text-slate-800 dark:text-slate-200 outline-none pr-6 ${
+                              !isRowEditable ? 'bg-slate-50/70 dark:bg-dark-800/60 cursor-not-allowed opacity-80' : ''
+                            }`}
+                          />
+                          {isRowEditable && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nextB = computeNextBatch(arrivals, row.nomenclature, row.date)
+                                updateArrival(idx, { batch: nextB })
+                                toast.info(lang === 'ru' ? `Партия: #${nextB}` : `Partiya: #${nextB}`)
+                              }}
+                              title={lang === 'ru' ? "Пересчитать партию (с 1 в начале месяца)" : "Partiyani hisoblash (har oy boshidan 1)"}
+                              className="absolute right-1 text-amber-500 hover:text-amber-700 hover:bg-amber-100 p-0.5 rounded transition-colors text-[10px] font-bold"
+                            >
+                              ⚡
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-1 text-center">
+                        {row._new ? (
+                          <button
+                            onClick={() => removeNewArrival(idx)}
+                            className="p-1 rounded text-red-500 hover:bg-red-50"
+                            title="Yangi qatorni o'chirish"
+                          >
+                            <X size={14} />
+                          </button>
+                        ) : !isRowEditable ? (
+                          <span
+                            className="p-1 text-slate-400 cursor-help flex items-center justify-center"
+                            title={perm.reason}
+                          >
+                            <Lock size={13} className="text-amber-500" />
+                          </span>
+                        ) : null}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
 
@@ -1168,56 +1459,104 @@ export default function ShopReportContent() {
                     </td>
                   </tr>
                 ) : null}
-                {expensesPagination.displayedItems.map(({ row, idx }) => (
-                  <tr
-                    key={row._new ? `new-${idx}` : row.date}
-                    className={`hover:bg-amber-100/50 ${row._dirty ? 'bg-amber-100/80' : 'bg-[#FFFBF0]'}`}
-                  >
-                    <td className="sticky left-0 z-10 p-1 border-r border-amber-200 shadow-[inset_-1px_0_0_#fde68a] bg-[#FFF3CD] text-slate-900">
-                      {row._new ? (
-                        <input
-                          type="date"
-                          value={row.date || ''}
-                          onChange={(e) => updateExpense(idx, { date: e.target.value })}
-                          className="excel-input w-full px-1 py-1 text-[11px] font-bold outline-none"
-                        />
-                      ) : (
-                        <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 whitespace-nowrap">
-                          {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
-                        </div>
-                      )}
-                    </td>
-                    {EXPENSE_FIELDS.map((f) => {
-                      const defect = f.field === 'boxDefect' || f.field === 'bagDefect'
-                      const green = f.field === 'ses' || f.field === 'kitchen'
-                      return (
-                        <td
-                          key={f.field}
-                          className={`p-1 border-r border-amber-200/70 ${defect ? 'bg-red-50' : ''} ${green ? 'bg-green-50' : ''}`}
-                        >
+                {expensesPagination.displayedItems.map(({ row, idx }) => {
+                  const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+                  const isRowEditable = Boolean(row._new) || perm.allowed
+
+                  return (
+                    <tr
+                      key={row._new ? `new-${idx}` : row.date}
+                      className={`transition-colors ${
+                        row.isEdited
+                          ? 'bg-rose-50/70 border-l-4 border-l-rose-500'
+                          : row._dirty
+                          ? 'bg-amber-100/80'
+                          : 'bg-[#FFFBF0] hover:bg-amber-100/50'
+                      }`}
+                    >
+                      <td className={`sticky left-0 z-10 p-1 border-r border-amber-200 shadow-[inset_-1px_0_0_#fde68a] ${row.isEdited ? 'bg-rose-100/60' : 'bg-[#FFF3CD]'} text-slate-900`}>
+                        {row._new ? (
                           <input
-                            type="number"
-                            step="any"
-                            value={inputVal(row[f.field])}
-                            onChange={(e) => updateExpense(idx, { [f.field]: e.target.value })}
-                            className={`excel-input w-full min-w-[68px] px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none ${defect ? 'text-red-600' : 'text-slate-900'}`}
+                            type="date"
+                            value={row.date || ''}
+                            onChange={(e) => updateExpense(idx, { date: e.target.value })}
+                            className="excel-input w-full px-1 py-1 text-[11px] font-bold outline-none"
                           />
-                        </td>
-                      )
-                    })}
-                    <td className="p-1 text-center">
-                      {row._new && (
-                        <button
-                          onClick={() => removeNewExpense(idx)}
-                          className="p-1 rounded text-red-500 hover:bg-red-50"
-                          title="Yangi qatorni o'chirish"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        ) : (
+                          <div className="flex items-center justify-between gap-1 px-1.5 py-1">
+                            <span className="text-[11px] font-bold text-slate-900 whitespace-nowrap">
+                              {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
+                            </span>
+                            {!isRowEditable && (
+                              <span
+                                className="p-0.5 text-slate-400 cursor-help"
+                                title={perm.reason}
+                              >
+                                <Lock size={12} className="text-amber-500 inline" />
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {row.isEdited && (
+                          <div className="flex items-center gap-1 px-1.5 pb-0.5">
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-600 text-white shadow-xs cursor-help"
+                              title={`Tahrirlangan:\nSabab: ${row.editReason || '—'}\nKim: ${row.editedBy || '—'}\nVaqt: ${row.editedAt ? new Date(row.editedAt).toLocaleString('uz-UZ') : '—'}`}
+                            >
+                              <span className="w-1 h-1 rounded-full bg-white animate-ping" />
+                              {lang === 'ru' ? 'Изменено' : "O'zgartirilgan"}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      {EXPENSE_FIELDS.map((f) => {
+                        const defect = f.field === 'boxDefect' || f.field === 'bagDefect'
+                        const green = f.field === 'ses' || f.field === 'kitchen'
+                        return (
+                          <td
+                            key={f.field}
+                            className={`p-1 border-r border-amber-200/70 ${defect ? 'bg-red-50' : ''} ${green ? 'bg-green-50' : ''}`}
+                          >
+                            <input
+                              type="number"
+                              step="any"
+                              readOnly={!isRowEditable}
+                              disabled={!isRowEditable}
+                              value={inputVal(row[f.field])}
+                              onClick={() => {
+                                if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
+                              }}
+                              onChange={(e) => {
+                                if (isRowEditable) updateExpense(idx, { [f.field]: e.target.value })
+                              }}
+                              className={`excel-input w-full min-w-[68px] px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none ${
+                                !isRowEditable ? 'bg-slate-100/60 cursor-not-allowed opacity-80' : ''
+                              } ${defect ? 'text-red-600' : 'text-slate-900'}`}
+                            />
+                          </td>
+                        )
+                      })}
+                      <td className="p-1 text-center">
+                        {row._new ? (
+                          <button
+                            onClick={() => removeNewExpense(idx)}
+                            className="p-1 rounded text-red-500 hover:bg-red-50"
+                            title="Yangi qatorni o'chirish"
+                          >
+                            <X size={14} />
+                          </button>
+                        ) : !isRowEditable ? (
+                          <span
+                            className="p-1 text-slate-400 cursor-help flex items-center justify-center"
+                            title={perm.reason}
+                          >
+                            <Lock size={13} className="text-amber-500" />
+                          </span>
+                        ) : null}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
 
@@ -1298,13 +1637,22 @@ export default function ShopReportContent() {
                   </tr>
                 ) : null}
                 {gpPagination.displayedItems.map(({ row, idx }) => {
+                  const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+                  const isRowEditable = Boolean(row._new) || perm.allowed
                   const rowSum = GP_FIELDS.reduce((acc, f) => acc + toNum(row[f.field]), 0)
+
                   return (
                     <tr
                       key={row._new ? `new-${idx}` : row.date}
-                      className={`hover:bg-emerald-50/50 ${row._dirty ? 'bg-emerald-100/60' : 'bg-white'}`}
+                      className={`transition-colors ${
+                        row.isEdited
+                          ? 'bg-rose-50/70 border-l-4 border-l-rose-500'
+                          : row._dirty
+                          ? 'bg-emerald-100/60'
+                          : 'bg-white hover:bg-emerald-50/50'
+                      }`}
                     >
-                      <td className="sticky left-0 z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] bg-emerald-50 text-slate-900">
+                      <td className={`sticky left-0 z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] ${row.isEdited ? 'bg-rose-100/60' : 'bg-emerald-50'} text-slate-900`}>
                         {row._new ? (
                           <input
                             type="date"
@@ -1313,8 +1661,29 @@ export default function ShopReportContent() {
                             className="excel-input w-full px-1 py-1 text-[11px] font-bold outline-none"
                           />
                         ) : (
-                          <div className="px-1.5 py-1 text-[11px] font-bold text-slate-900 whitespace-nowrap">
-                            {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
+                          <div className="flex items-center justify-between gap-1 px-1.5 py-1">
+                            <span className="text-[11px] font-bold text-slate-900 whitespace-nowrap">
+                              {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
+                            </span>
+                            {!isRowEditable && (
+                              <span
+                                className="p-0.5 text-slate-400 cursor-help"
+                                title={perm.reason}
+                              >
+                                <Lock size={12} className="text-amber-500 inline" />
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {row.isEdited && (
+                          <div className="flex items-center gap-1 px-1.5 pb-0.5">
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-600 text-white shadow-xs cursor-help"
+                              title={`Tahrirlangan:\nSabab: ${row.editReason || '—'}\nKim: ${row.editedBy || '—'}\nVaqt: ${row.editedAt ? new Date(row.editedAt).toLocaleString('uz-UZ') : '—'}`}
+                            >
+                              <span className="w-1 h-1 rounded-full bg-white animate-ping" />
+                              {lang === 'ru' ? 'Изменено' : "O'zgartirilgan"}
+                            </span>
                           </div>
                         )}
                       </td>
@@ -1323,9 +1692,18 @@ export default function ShopReportContent() {
                           <input
                             type="number"
                             step="any"
+                            readOnly={!isRowEditable}
+                            disabled={!isRowEditable}
                             value={inputVal(row[f.field])}
-                            onChange={(e) => updateGP(idx, { [f.field]: e.target.value })}
-                            className="excel-input w-full min-w-[68px] px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none text-slate-900"
+                            onClick={() => {
+                              if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
+                            }}
+                            onChange={(e) => {
+                              if (isRowEditable) updateGP(idx, { [f.field]: e.target.value })
+                            }}
+                            className={`excel-input w-full min-w-[68px] px-1.5 py-1 text-[11px] font-mono font-bold text-right outline-none text-slate-900 ${
+                              !isRowEditable ? 'bg-slate-50/70 cursor-not-allowed opacity-80' : ''
+                            }`}
                           />
                         </td>
                       ))}
@@ -1333,7 +1711,7 @@ export default function ShopReportContent() {
                         {rowSum > 0 ? rowSum.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '—'}
                       </td>
                       <td className="p-1 text-center">
-                        {row._new && (
+                        {row._new ? (
                           <button
                             onClick={() => removeNewGP(idx)}
                             className="p-1 rounded text-red-500 hover:bg-red-50"
@@ -1341,7 +1719,14 @@ export default function ShopReportContent() {
                           >
                             <X size={14} />
                           </button>
-                        )}
+                        ) : !isRowEditable ? (
+                          <span
+                            className="p-1 text-slate-400 cursor-help flex items-center justify-center"
+                            title={perm.reason}
+                          >
+                            <Lock size={13} className="text-amber-500" />
+                          </span>
+                        ) : null}
                       </td>
                     </tr>
                   )
@@ -1614,6 +1999,108 @@ export default function ShopReportContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: O'ZGARTIRISH SABABINI TASDIQLASH (EDIT REASON AUDIT MODAL) */}
+      {editReasonModal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-enter"
+          onClick={() => setEditReasonModal((prev) => ({ ...prev, open: false }))}
+        >
+          <div
+            className="bg-white dark:bg-dark-900 border border-amber-300 dark:border-dark-750 w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl relative space-y-4 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-dark-750 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                  <ShieldAlert size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    {lang === 'ru' ? 'Подтверждение изменения данных' : "O'zgartirish sababini tasdiqlash"}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    {lang === 'ru'
+                      ? 'Регламент завода Green Processing: обязательный аудит изменений'
+                      : 'Green Processing zavod reglamenti: majburiy audit'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditReasonModal((prev) => ({ ...prev, open: false }))}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-2xl text-xs space-y-1.5 text-amber-900 dark:text-amber-300">
+              <p className="font-bold flex items-center gap-1.5">
+                <AlertTriangle size={15} className="shrink-0 text-amber-600" />
+                <span>
+                  {lang === 'ru'
+                    ? `Вы изменяете ранее сохраненные записи (${editReasonModal.dirtyItemsCount} шт.)`
+                    : `Siz ilgari saqlangan ${editReasonModal.dirtyItemsCount} ta yozuvni o'zgartirmoqdasiz`}
+                </span>
+              </p>
+              <div className="text-[11px] text-slate-600 dark:text-slate-400 pl-5 space-y-0.5 max-h-24 overflow-y-auto custom-scrollbar">
+                {editReasonModal.itemsSummary.map((item, idx) => (
+                  <div key={idx}>• {item}</div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                {lang === 'ru' ? 'Причина изменения (обязательно):' : "O'zgartirish sababi (majburiy):"} <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={editReasonModal.reason}
+                onChange={(e) => setEditReasonModal((prev) => ({ ...prev, reason: e.target.value }))}
+                placeholder={
+                  lang === 'ru'
+                    ? 'Например: Ошибка при взвешивании на приеме, уточнен номер партии, опечатка оператора...'
+                    : 'Masalan: Qabulda tarozida xato kiritilgan, partiya raqami aniqlashtirildi, skladchi xatosi...'
+                }
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none font-medium"
+              />
+              <span className="text-[10px] text-slate-400 block mt-1">
+                {lang === 'ru'
+                  ? 'Эта причина будет отображаться в списке красным бейджем и сохранена в журнале аудита.'
+                  : "Ushbu sabab ro'yxatda qizil belgi bilan ko'rinadi va audit jurnalida saqlanadi."}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-dark-750">
+              <button
+                type="button"
+                onClick={() => setEditReasonModal((prev) => ({ ...prev, open: false }))}
+                className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-xl transition-colors"
+              >
+                {lang === 'ru' ? 'Отмена' : 'Bekor qilish'}
+              </button>
+              <button
+                type="button"
+                disabled={!editReasonModal.reason.trim()}
+                onClick={() => {
+                  if (!editReasonModal.reason.trim()) {
+                    toast.error(lang === 'ru' ? 'Укажите причину изменения' : "O'zgartirish sababini yozing")
+                    return
+                  }
+                  if (editReasonModal.onConfirm) {
+                    editReasonModal.onConfirm(editReasonModal.reason.trim())
+                  }
+                }}
+                className="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm flex items-center gap-1.5"
+              >
+                <Save size={14} />
+                <span>{lang === 'ru' ? 'Сохранить с причиной' : 'Sabab bilan saqlash'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

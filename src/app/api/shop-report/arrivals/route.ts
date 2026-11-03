@@ -3,14 +3,20 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { isDateStr, toNum } from '@/lib/shopReport'
 import { getNextShopArrivalBatch, normalizeProductKey, parseDateToYearMonth } from '@/lib/batchNumbering'
+import { checkEditPermission } from '@/lib/auditRules'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * Save edited / newly added "Приход" rows.
- * Body: { rows: [{ id?, date, nomenclature, quantity, supplier, batch }] }
- * Rows with an id are updated, rows without an id are created.
- * Automatically generates sequential batch numbers per product and month if batch is left blank or "auto".
+ * Body: { rows: [{ id?, date, nomenclature, quantity, supplier, batch, editReason? }] }
+ * 
+ * Strict Enterprise Audit Rules:
+ * - General staff (skladchi/warehouse/etc) can only edit within 24 hours of creation.
+ * - Non-admin edits are restricted to the 17:00 to 09:00 shift window (UZT).
+ * - After 24 hours, ONLY ADMIN and DIRECTOR can edit or delete.
+ * - Any edit to an existing record requires a mandatory editReason.
+ * - Modified records are stamped with isEdited = true, editedAt, editedBy, and editReason.
  */
 export async function PUT(req: NextRequest) {
   try {
@@ -42,6 +48,7 @@ export async function PUT(req: NextRequest) {
           const cleanNom = normalizeProductKey(nom)
           let batchStr = String(r.batch ?? '').trim()
           const dateStr = String(r.date ?? '').trim()
+          const id = Number(r.id)
 
           // If batch is empty or explicitly 'auto', calculate the next sequential monthly number
           if (cleanNom && (!batchStr || batchStr.toLowerCase() === 'auto')) {
@@ -60,20 +67,71 @@ export async function PUT(req: NextRequest) {
             }
           }
 
-          const data = {
-            date: dateStr,
-            nomenclature: nom,
-            quantity: toNum(r.quantity),
-            supplier: String(r.supplier ?? '').trim(),
-            batch: batchStr,
-          }
-
-          const id = Number(r.id)
           if (Number.isInteger(id) && id > 0) {
-            await tx.shopArrival.update({ where: { id }, data })
-            updated++
+            // Update existing record
+            const existing = await tx.shopArrival.findUnique({ where: { id } })
+            if (!existing) {
+              throw new Error(`Yozuv topilmadi (ID: ${id})`)
+            }
+
+            // Check permissions (24h window + 17:00-09:00 window for non-admins)
+            const perm = checkEditPermission({
+              role: session.role,
+              createdAt: existing.createdAt,
+            })
+
+            if (!perm.allowed) {
+              throw new Error(`[Qator #${id} - ${existing.nomenclature}]: ${perm.reason}`)
+            }
+
+            // Check if values actually changed
+            const newQty = toNum(r.quantity)
+            const newSupp = String(r.supplier ?? '').trim()
+            const isChanged =
+              existing.date !== dateStr ||
+              existing.nomenclature !== nom ||
+              Math.abs(existing.quantity - newQty) > 0.0001 ||
+              (existing.supplier || '') !== newSupp ||
+              (existing.batch || '') !== batchStr
+
+            if (isChanged) {
+              const reason = String(r.editReason ?? '').trim()
+              if (!reason) {
+                throw new Error(
+                  `«${nom || existing.nomenclature}» yozuvi o'zgartirilmoqda. O'zgartirish sababini ko'rsatish majburiy!`
+                )
+              }
+
+              await tx.shopArrival.update({
+                where: { id },
+                data: {
+                  date: dateStr,
+                  nomenclature: nom,
+                  quantity: newQty,
+                  supplier: newSupp,
+                  batch: batchStr,
+                  isEdited: true,
+                  editReason: reason,
+                  editedAt: new Date(),
+                  editedBy: session.name || session.role || 'Foydalanuvchi',
+                },
+              })
+              updated++
+            } else {
+              // Nothing changed
+            }
           } else {
-            await tx.shopArrival.create({ data })
+            // New record creation
+            await tx.shopArrival.create({
+              data: {
+                date: dateStr,
+                nomenclature: nom,
+                quantity: toNum(r.quantity),
+                supplier: String(r.supplier ?? '').trim(),
+                batch: batchStr,
+                isEdited: false,
+              },
+            })
             created++
           }
         }
@@ -84,6 +142,44 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, updated, created })
   } catch (error: any) {
     console.error('Shop arrivals save error:', error)
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+}
+
+/**
+ * Delete an arrival row.
+ * Guarded by the same enterprise audit rule:
+ * Non-admins can only delete within 24h and between 17:00-09:00. After 24h, only Admin/Director.
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { searchParams } = new URL(req.url)
+    const id = Number(searchParams.get('id'))
+    if (!Number.isInteger(id) || id <= 0) {
+      return NextResponse.json({ error: "Noto'g'ri ID" }, { status: 400 })
+    }
+
+    const existing = await prisma.shopArrival.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Yozuv topilmadi' }, { status: 404 })
+    }
+
+    const perm = checkEditPermission({
+      role: session.role,
+      createdAt: existing.createdAt,
+    })
+
+    if (!perm.allowed) {
+      return NextResponse.json({ error: perm.reason }, { status: 403 })
+    }
+
+    await prisma.shopArrival.delete({ where: { id } })
+    return NextResponse.json({ success: true, deletedId: id })
+  } catch (error: any) {
+    console.error('Shop arrival delete error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

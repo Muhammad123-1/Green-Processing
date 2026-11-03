@@ -1276,23 +1276,33 @@ model SurveyAnswer {
 // -----------------------------------------------------------------------------
 
 model ShopArrival {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   date         String
   nomenclature String
   quantity     Float
   supplier     String?
   batch        String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+  isEdited     Boolean   @default(false)
+  editReason   String?
+  editedAt     DateTime?
+  editedBy     String?
 }
 
 model ShopExpense {
-  id           Int      @id @default(autoincrement())
-  date         String   @unique
-  materials    Json     @default("{}") // Flat totals
-  matrix       Json     @default("{}") // 2D raw material to finished good mapping
-  outputs      Json     @default("{}") // Finished goods output
-  balances     Json     @default("{}") // Raw material balances (start, end, arrival, expense)
-  createdAt    DateTime @default(now())
+  id           Int       @id @default(autoincrement())
+  date         String    @unique
+  materials    Json      @default("{}") // Flat totals
+  matrix       Json      @default("{}") // 2D raw material to finished good mapping
+  outputs      Json      @default("{}") // Finished goods output
+  balances     Json      @default("{}") // Raw material balances (start, end, arrival, expense)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+  isEdited     Boolean   @default(false)
+  editReason   String?
+  editedAt     DateTime?
+  editedBy     String?
 }
 
 

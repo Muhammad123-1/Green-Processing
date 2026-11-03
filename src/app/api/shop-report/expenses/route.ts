@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { applyExpenseRow, isDateStr } from '@/lib/shopReport'
+import { checkEditPermission } from '@/lib/auditRules'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * Save edited / newly added "Расход" rows (one row per date).
- * Body: { rows: [{ date, iceberg, tomatoes, ... }] }
- * Existing materials that are not part of the table are preserved, and the
- * daily workshop report stored in balances.report is never touched here.
+ * Body: { rows: [{ date, editReason?, ...materials }] }
+ * 
+ * Strict Enterprise Audit Rules:
+ * - Non-admins can only edit existing expense records within 24 hours of creation
+ *   and during the 17:00 to 09:00 shift window.
+ * - After 24 hours, ONLY ADMIN and DIRECTOR can edit.
+ * - Edits to existing records require a mandatory editReason.
  */
 export async function PUT(req: NextRequest) {
   try {
@@ -32,7 +37,7 @@ export async function PUT(req: NextRequest) {
     const byDate = new Map<string, any>()
     rows.forEach((r) => byDate.set(r.date, r))
 
-    const now = new Date().toISOString()
+    const now = new Date()
     let saved = 0
 
     await prisma.$transaction(
@@ -41,15 +46,73 @@ export async function PUT(req: NextRequest) {
           const existing = await tx.shopExpense.findUnique({ where: { date } })
           const materials = applyExpenseRow(existing?.materials, row)
           const prevBalances = ((existing?.balances as any) || {}) as Record<string, any>
-          const balances = {
-            ...prevBalances,
-            expenseMeta: { updatedBy: session.name, updatedAt: now },
-          }
 
           if (existing) {
-            await tx.shopExpense.update({ where: { date }, data: { materials, balances } })
+            // Check edit permissions
+            const perm = checkEditPermission({
+              role: session.role,
+              createdAt: existing.createdAt,
+              now,
+            })
+
+            if (!perm.allowed) {
+              throw new Error(`[Chiqim - Sana: ${date}]: ${perm.reason}`)
+            }
+
+            // Check if materials actually changed
+            const isChanged = JSON.stringify(materials) !== JSON.stringify(existing.materials || {})
+
+            let isEdited = existing.isEdited
+            let editReason = existing.editReason
+            let editedAt = existing.editedAt
+            let editedBy = existing.editedBy
+
+            if (isChanged) {
+              const reason = String(row.editReason ?? '').trim()
+              if (!reason && !existing.editReason) {
+                throw new Error(
+                  `${date} sanadagi Chiqim (Расход) ma'lumotlari o'zgartirilmoqda. O'zgartirish sababini ko'rsatish majburiy!`
+                )
+              }
+              if (reason) {
+                isEdited = true
+                editReason = reason
+                editedAt = now
+                editedBy = session.name || session.role || 'Foydalanuvchi'
+              }
+            }
+
+            const balances = {
+              ...prevBalances,
+              expenseMeta: { updatedBy: session.name, updatedAt: now.toISOString() },
+            }
+
+            await tx.shopExpense.update({
+              where: { date },
+              data: {
+                materials,
+                balances,
+                isEdited,
+                editReason,
+                editedAt,
+                editedBy,
+              },
+            })
           } else {
-            await tx.shopExpense.create({ data: { date, materials, balances } })
+            // New record for this date
+            const balances = {
+              ...prevBalances,
+              expenseMeta: { updatedBy: session.name, updatedAt: now.toISOString() },
+            }
+
+            await tx.shopExpense.create({
+              data: {
+                date,
+                materials,
+                balances,
+                isEdited: false,
+              },
+            })
           }
           saved++
         }
@@ -60,6 +123,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, saved })
   } catch (error: any) {
     console.error('Shop expenses save error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 400 })
   }
 }

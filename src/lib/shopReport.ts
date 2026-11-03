@@ -213,11 +213,28 @@ export const EXPENSE_FIELDS: ExpenseField[] = [
 ]
 
 /** DB record -> flat row used by the Tab 2 table. */
-export function readExpenseRow(rec: { date: string; materials?: any }) {
+export function readExpenseRow(rec: {
+  date: string
+  materials?: any
+  createdAt?: any
+  updatedAt?: any
+  isEdited?: boolean
+  editReason?: string | null
+  editedAt?: any
+  editedBy?: string | null
+}) {
   const materials = (rec.materials || {}) as Record<string, any>
   const normalized: Record<string, any> = {}
   for (const [k, v] of Object.entries(materials)) normalized[normKey(k)] = v
-  const row: Record<string, any> = { date: rec.date }
+  const row: Record<string, any> = {
+    date: rec.date,
+    createdAt: rec.createdAt,
+    updatedAt: rec.updatedAt,
+    isEdited: Boolean(rec.isEdited),
+    editReason: rec.editReason || null,
+    editedAt: rec.editedAt || null,
+    editedBy: rec.editedBy || null,
+  }
   for (const f of EXPENSE_FIELDS) {
     let val: any = 0
     for (const a of f.aliases) {
@@ -276,14 +293,31 @@ export const GP_FIELDS: GPField[] = [
   { field: 'icebergLeaf', label: 'Айсберг (листовой)', unit: 'кг', aliases: ['Айсберг (листовой)', 'Айсберг листовой'] },
 ]
 
-export function readGPRow(rec: { date: string; outputs?: any }) {
+export function readGPRow(rec: {
+  date: string
+  outputs?: any
+  createdAt?: any
+  updatedAt?: any
+  isEdited?: boolean
+  editReason?: string | null
+  editedAt?: any
+  editedBy?: string | null
+}) {
   const outputs = (rec.outputs || {}) as Record<string, any>
   const normalized: Record<string, any> = {}
   for (const [k, v] of Object.entries(outputs)) {
     const val = typeof v === 'object' && v !== null ? ((v as any).kg ?? (v as any).val ?? 0) : v
     normalized[normKey(k)] = val
   }
-  const row: Record<string, any> = { date: rec.date }
+  const row: Record<string, any> = {
+    date: rec.date,
+    createdAt: rec.createdAt,
+    updatedAt: rec.updatedAt,
+    isEdited: Boolean(rec.isEdited),
+    editReason: rec.editReason || null,
+    editedAt: rec.editedAt || null,
+    editedBy: rec.editedBy || null,
+  }
   for (const f of GP_FIELDS) {
     let val: any = 0
     for (const a of f.aliases) {
