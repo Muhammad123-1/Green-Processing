@@ -2061,8 +2061,18 @@ export default function DirectorPage() {
                             <tr key={`prod-stock-${p.id || idx}-${p.name || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
                               <td className="p-3 font-bold text-slate-900 dark:text-white">{p.name}</td>
                               <td className="p-3 text-center font-bold font-mono">{p.currentStock} {p.unit}</td>
-                              <td className="p-3 text-center text-slate-500">
-                                {p.approvedMaxStorageDays ? `${p.approvedMaxStorageDays} kun` : 'Kiritilmagan'}
+                              <td className="p-3 text-center text-slate-500 text-xs">
+                                {p.approvedMaxStorageDays ? (
+                                  <span className="font-semibold text-slate-700 dark:text-slate-200">{p.approvedMaxStorageDays} kun</span>
+                                ) : p.unit === 'dona' || /kimyo|tara|qadoq|dezinfek/i.test(p.category || '') || /вода|хлор|уксус|кислот|сорбат|бензоат|соль|туз|divosan|suma|пакет|каробк/i.test(p.name || '') ? (
+                                  <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-800 text-slate-400">
+                                    {formatDual("Uzoq muddatli (Tara/Kimyo)", "Долгосрочный (Тара/Химия)", "Long-term (Pkg/Chem)")}
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-slate-400 italic">
+                                    {formatDual("Kiritilmagan", "Не указан", "Not set")}
+                                  </span>
+                                )}
                               </td>
                               <td className="p-3 text-center font-mono text-slate-700 dark:text-slate-300">
                                 {p.avgDailyConsumptionKg ? `${p.avgDailyConsumptionKg} ${p.unit}/kun` : '—'}
