@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronRight,
+  ChevronLeft,
   Search,
   Calendar,
   Filter,
@@ -115,6 +116,7 @@ export default function DirectorPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<'accounting' | 'quality' | 'inspector' | 'admin' | 'production' | null>(null)
   const [deptPeriodFilter, setDeptPeriodFilter] = useState<'today' | 'week' | 'month' | 'all'>('today')
+  const [deptActionsPage, setDeptActionsPage] = useState<number>(1)
   const [selectedAuditAction, setSelectedAuditAction] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [archiveEvents, setArchiveEvents] = useState<any[]>([])
@@ -461,6 +463,23 @@ export default function DirectorPage() {
     },
   ], [formatDual])
 
+  // Helper to parse dates safely (handles DD.MM.YYYY, DD,MM,YYYY, ISO, etc.)
+  const parseSafeDate = (raw: any): Date => {
+    if (!raw) return new Date()
+    if (raw instanceof Date) return isNaN(raw.getTime()) ? new Date() : raw
+    const s = String(raw).trim().replace(/,/g, '.')
+    const dmy = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/)
+    if (dmy) {
+      return new Date(Date.UTC(parseInt(dmy[3], 10), parseInt(dmy[2], 10) - 1, parseInt(dmy[1], 10), 12, 0, 0))
+    }
+    const ymd = s.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/)
+    if (ymd) {
+      return new Date(Date.UTC(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10), 12, 0, 0))
+    }
+    const d = new Date(s)
+    return isNaN(d.getTime()) ? new Date() : d
+  }
+
   // Helper to filter actions by period (Bugun / Shu hafta / Shu oy / Barchasi)
   const filterActionsByPeriod = (actions: any[], periodFilter: 'today' | 'week' | 'month' | 'all') => {
     if (periodFilter === 'all') return actions
@@ -503,7 +522,7 @@ export default function DirectorPage() {
 
     // 1. Incoming acts (Quality Control & Accounting)
     ;(details.recentIncomingActs || []).forEach((act: any) => {
-      const actDate = act.actDate ? new Date(act.actDate + 'T12:00:00Z') : new Date(act.createdAt)
+      const actDate = parseSafeDate(act.actDate || act.createdAt)
 
       // QC inspection act
       map.quality.push({
@@ -539,7 +558,7 @@ export default function DirectorPage() {
 
     // 2. Daily QC Checklists
     ;(details.recentChecklists || []).forEach((c: any) => {
-      const cDate = c.date ? new Date(c.date + 'T12:00:00Z') : new Date(c.createdAt)
+      const cDate = parseSafeDate(c.date || c.createdAt)
 
       // Quality control
       map.quality.push({
@@ -586,7 +605,7 @@ export default function DirectorPage() {
 
     // 3. Shop Arrivals
     ;(details.recentShopArrivals || []).forEach((sa: any) => {
-      const saDate = sa.date ? new Date(sa.date + 'T12:00:00Z') : new Date(sa.createdAt)
+      const saDate = parseSafeDate(sa.date || sa.createdAt)
 
       // Inspector
       map.inspector.push({
@@ -619,7 +638,7 @@ export default function DirectorPage() {
 
     // 4. Shop Expenses (Production)
     ;(details.recentShopExpenses || []).forEach((exp: any) => {
-      const expDate = exp.date ? new Date(exp.date + 'T12:00:00Z') : new Date(exp.createdAt)
+      const expDate = parseSafeDate(exp.date || exp.createdAt)
       const matKeys = Object.keys(exp.materials || {})
       const outKeys = Object.keys(exp.outputs || {})
 
@@ -2452,14 +2471,32 @@ export default function DirectorPage() {
                         const activeDeptActions = filterActionsByPeriod(allDeptActions, deptPeriodFilter)
                         const DeptIcon = currentDept.icon
 
+                        // Filter by search query if any
+                        const searchedDeptActions = !searchQuery
+                          ? activeDeptActions
+                          : activeDeptActions.filter(
+                              (act: any) =>
+                                act.details?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                act.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                act.user?.toLowerCase().includes(searchQuery.toLowerCase())
+                            )
+
+                        const pageSize = 10
+                        const totalPages = Math.max(1, Math.ceil(searchedDeptActions.length / pageSize))
+                        const currentPage = Math.min(Math.max(1, deptActionsPage), totalPages)
+                        const pagedActions = searchedDeptActions.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
                         return (
                           <div className="space-y-5">
                             {/* Top Navigation & Department Title */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-dark-700">
                               <div>
                                 <button
-                                  onClick={() => setSelectedDepartment(null)}
-                                  className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline mb-2 flex items-center gap-1.5 transition-transform hover:-translate-x-0.5"
+                                  onClick={() => {
+                                    setSelectedDepartment(null)
+                                    setDeptActionsPage(1)
+                                  }}
+                                  className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline mb-2 flex items-center gap-1.5 transition-transform hover:-translate-x-0.5 cursor-pointer"
                                 >
                                   &larr; {formatDual("Barcha 5 ta bo'limga qaytish", "Назад ко всем 5 отделам", "Back to all 5 departments")}
                                 </button>
@@ -2518,8 +2555,11 @@ export default function DirectorPage() {
                                 ].map((tab) => (
                                   <button
                                     key={tab.id}
-                                    onClick={() => setDeptPeriodFilter(tab.id)}
-                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    onClick={() => {
+                                      setDeptPeriodFilter(tab.id)
+                                      setDeptActionsPage(1)
+                                    }}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                       deptPeriodFilter === tab.id
                                         ? 'bg-white dark:bg-dark-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/80 dark:border-dark-700'
                                         : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -2548,7 +2588,7 @@ export default function DirectorPage() {
                             </div>
 
                             {/* Completed Actions List */}
-                            {activeDeptActions.length === 0 ? (
+                            {searchedDeptActions.length === 0 ? (
                               <div className="bg-slate-50 dark:bg-dark-800 p-8 rounded-3xl border border-slate-200 dark:border-dark-700 text-center space-y-3">
                                 <div className="w-12 h-12 rounded-2xl bg-slate-200/60 dark:bg-dark-700 text-slate-400 mx-auto flex items-center justify-center">
                                   <Clock size={24} />
@@ -2563,59 +2603,148 @@ export default function DirectorPage() {
                                 </p>
                                 <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
                                   <button
-                                    onClick={() => setDeptPeriodFilter('week')}
-                                    className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100"
+                                    onClick={() => {
+                                      setDeptPeriodFilter('week')
+                                      setDeptActionsPage(1)
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 cursor-pointer"
                                   >
                                     {formatDual("Haftalik nazorat", "Недельный контроль", "Weekly control")} ({weekActions.length})
                                   </button>
                                   <button
-                                    onClick={() => setDeptPeriodFilter('month')}
-                                    className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100"
+                                    onClick={() => {
+                                      setDeptPeriodFilter('month')
+                                      setDeptActionsPage(1)
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 cursor-pointer"
                                   >
                                     {formatDual("Oylik nazorat", "Месячный контроль", "Monthly control")} ({monthActions.length})
                                   </button>
                                   <button
-                                    onClick={() => setDeptPeriodFilter('all')}
-                                    className="px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-300"
+                                    onClick={() => {
+                                      setDeptPeriodFilter('all')
+                                      setDeptActionsPage(1)
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-300 cursor-pointer"
                                   >
                                     {formatDual("Barcha amallar", "Все действия", "All actions")} ({allDeptActions.length})
                                   </button>
                                 </div>
                               </div>
                             ) : (
-                              <div className="space-y-2.5">
-                                {activeDeptActions.map((act: any, idx: number) => (
-                                  <div
-                                    key={act.id || idx}
-                                    onClick={() => setSelectedAuditAction(act)}
-                                    className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-4 group"
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${act.badge}`}>
-                                          {act.type}
-                                        </span>
-                                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
-                                          <Clock size={12} />
-                                          {act.date ? new Date(act.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' }) : ''}{' '}
-                                          {act.date ? new Date(act.date).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' }) : ''}
-                                        </span>
-                                        {act.user && (
-                                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300">
-                                            {act.user}
+                              <div className="space-y-3">
+                                {/* Item count and page indicator */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 px-1">
+                                  <span>
+                                    {formatDual("Jami amallar:", "Всего задач:", "Total tasks:")}{' '}
+                                    <b className="text-slate-800 dark:text-slate-200 font-bold">{searchedDeptActions.length} ta</b>
+                                    {' • '}
+                                    {formatDual(
+                                      `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, searchedDeptActions.length)} tasi ko'rsatilmoqda (10 tadan)`,
+                                      `Показано ${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, searchedDeptActions.length)} (по 10)`,
+                                      `Showing ${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, searchedDeptActions.length)} (10 per page)`
+                                    )}
+                                  </span>
+                                  {totalPages > 1 && (
+                                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                                      {formatDual(`Sahifa ${currentPage} / ${totalPages}`, `Стр. ${currentPage} из ${totalPages}`, `Page ${currentPage} of ${totalPages}`)}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="space-y-2.5">
+                                  {pagedActions.map((act: any, idx: number) => (
+                                    <div
+                                      key={act.id || idx}
+                                      onClick={() => setSelectedAuditAction(act)}
+                                      className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-4 group"
+                                    >
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${act.badge}`}>
+                                            {act.type}
                                           </span>
-                                        )}
+                                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 font-mono">
+                                            <Clock size={12} />
+                                            {act.date instanceof Date && !isNaN(act.date.getTime())
+                                              ? `${act.date.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                              : act.dateStr || ''}
+                                          </span>
+                                          {act.user && (
+                                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300">
+                                              {act.user}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                          {act.details}
+                                        </p>
                                       </div>
-                                      <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                                        {act.details}
-                                      </p>
+                                      <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 group-hover:translate-x-1 transition-transform">
+                                        <span className="hidden sm:inline">{formatDual("Barcha ma'lumotlar", "Все данные", "Full details")}</span>
+                                        <ChevronRight size={18} />
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 group-hover:translate-x-1 transition-transform">
-                                      <span className="hidden sm:inline">{formatDual("Barcha ma'lumotlar", "Все данные", "Full details")}</span>
-                                      <ChevronRight size={18} />
+                                  ))}
+                                </div>
+
+                                {/* PAGINATION CONTROLS (10 tadan sahifalash) */}
+                                {totalPages > 1 && (
+                                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-dark-700">
+                                    <div className="text-xs text-slate-500 font-medium">
+                                      {formatDual(
+                                        `Sahifa ${currentPage} / ${totalPages} (har safar 10 tadan)`,
+                                        `Страница ${currentPage} из ${totalPages} (по 10 на страницу)`,
+                                        `Page ${currentPage} of ${totalPages} (10 per page)`
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <button
+                                        disabled={currentPage <= 1}
+                                        onClick={() => setDeptActionsPage((p) => Math.max(1, p - 1))}
+                                        className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                                      >
+                                        <ChevronLeft size={14} />
+                                        <span>{formatDual("Oldingi 10 ta", "Назад", "Prev 10")}</span>
+                                      </button>
+
+                                      {/* Page number buttons with smart ellipsis */}
+                                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                        .filter((page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 2)
+                                        .reduce((acc: (number | string)[], page, idx, arr) => {
+                                          if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push('...')
+                                          acc.push(page)
+                                          return acc
+                                        }, [])
+                                        .map((item, pIdx) =>
+                                          item === '...' ? (
+                                            <span key={`dots-${pIdx}`} className="px-1 text-xs text-slate-400 font-bold">...</span>
+                                          ) : (
+                                            <button
+                                              key={`dept-page-${item}`}
+                                              onClick={() => setDeptActionsPage(item as number)}
+                                              className={`w-8 h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                                                currentPage === item
+                                                  ? 'bg-indigo-600 text-white font-black'
+                                                  : 'border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-dark-750'
+                                              }`}
+                                            >
+                                              {item}
+                                            </button>
+                                          )
+                                        )}
+
+                                      <button
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => setDeptActionsPage((p) => Math.min(totalPages, p + 1))}
+                                        className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                                      >
+                                        <span>{formatDual("Keyingi 10 ta", "Вперед", "Next 10")}</span>
+                                        <ChevronRight size={14} />
+                                      </button>
                                     </div>
                                   </div>
-                                ))}
+                                )}
                               </div>
                             )}
                           </div>
