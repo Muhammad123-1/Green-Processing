@@ -308,6 +308,19 @@ export async function POST(req: NextRequest) {
       }
 
       if (toInsert.length > 0) {
+        // Auto-assign monthly batch numbers to new arrivals if empty
+        const importBatchCounters = new Map<string, number>()
+        for (const item of toInsert) {
+          if (!item.batch || String(item.batch).trim() === '') {
+            const nom = String(item.nomenclature || '').trim().toLowerCase()
+            const ym = String(item.date || '').slice(0, 7)
+            const k = `${nom}:::${ym}`
+            const cur = (importBatchCounters.get(k) || 0) + 1
+            importBatchCounters.set(k, cur)
+            item.batch = String(cur)
+          }
+        }
+
         // Insert in batches of 200
         for (let idx = 0; idx < toInsert.length; idx += 200) {
           const batch = toInsert.slice(idx, idx + 200)
