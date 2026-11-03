@@ -684,31 +684,32 @@ export default function DirectorPage() {
           {/* PRIXOD CARD */}
           <div
             onClick={() => openOperationsModal('prixod')}
-            className="group relative overflow-hidden bg-emerald-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-emerald-500/30 hover:border-emerald-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+            className="group relative overflow-hidden bg-emerald-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-emerald-500/30 hover:border-emerald-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
-                <Truck size={24} />
-              </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
-                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-              </span>
-            </div>
-
-            <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider block">
-              {formatDual("Kirim", "Приход", "Inbound")}
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-              {operationsSummary?.prixod?.totalKg ? `${(operationsSummary.prixod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
-            </div>
-            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold flex items-center gap-1.5 flex-wrap">
-              <span>{operationsSummary?.prixod?.totalKg?.toLocaleString()} kg {formatDual("xomashyo", "сырье", "raw")}</span>
-              {(operationsSummary?.prixod?.totalDona || 0) > 0 && (
-                <span className="text-indigo-600 dark:text-indigo-400">
-                  + {(operationsSummary?.prixod?.totalDona || 0).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <Truck size={24} />
+                </div>
+                <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
+                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
                 </span>
-              )}
-            </p>
+              </div>
+
+              <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider block">
+                {formatDual("Kirim operatsiyalari", "Приход сырья", "Inbound Operations")}
+              </span>
+              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
+                {formatDual("Xomashyo va taralar", "Сырье и тара", "Raw Materials & Packaging")}
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
+                {formatDual(
+                  "Ta'minotchi partiyalari, sifat nazorati (QC) va qabul aktlari jurnali",
+                  "Партии поставщиков, входной контроль качества (QC) и акты",
+                  "Supplier batches, QC inspection & inbound acceptance logs"
+                )}
+              </p>
+            </div>
 
             <div className="mt-4 pt-3 border-t border-emerald-500/25 flex items-center justify-between text-xs">
               <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Ta'minot:", "Поставка:", "Supply:")}</span>
@@ -721,31 +722,32 @@ export default function DirectorPage() {
           {/* RASXOD CARD */}
           <div
             onClick={() => openOperationsModal('rasxod')}
-            className="group relative overflow-hidden bg-blue-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-blue-500/30 hover:border-blue-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+            className="group relative overflow-hidden bg-blue-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-blue-500/30 hover:border-blue-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
-                <ChefHat size={24} />
-              </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
-                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-              </span>
-            </div>
-
-            <span className="text-xs font-extrabold text-blue-800 dark:text-blue-400 uppercase tracking-wider block">
-              {formatDual("Chiqim", "Расход", "Outbound")}
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-              {operationsSummary?.rasxod?.totalKg ? `${(operationsSummary.rasxod.totalKg / 1000).toFixed(1)} tn` : "0 kg"}
-            </div>
-            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold flex items-center gap-1.5 flex-wrap">
-              <span>{operationsSummary?.rasxod?.totalKg?.toLocaleString()} kg {formatDual("xomashyo", "сырье", "raw")}</span>
-              {(operationsSummary?.rasxod?.totalDona || 0) > 0 && (
-                <span className="text-indigo-600 dark:text-indigo-400">
-                  + {(operationsSummary?.rasxod?.totalDona || 0).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
+                  <ChefHat size={24} />
+                </div>
+                <span className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
+                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
                 </span>
-              )}
-            </p>
+              </div>
+
+              <span className="text-xs font-extrabold text-blue-800 dark:text-blue-400 uppercase tracking-wider block">
+                {formatDual("Chiqim operatsiyalari", "Расход производства", "Outbound Operations")}
+              </span>
+              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
+                {formatDual("Sexlar va sarf", "Цехи и расход", "Workshops & Consumption")}
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
+                {formatDual(
+                  "Sexlarga berilgan xomashyo, tayyor mahsulot va partiyalar zanjiri",
+                  "Списание в цехи, готовая продукция и цепочка партий",
+                  "Workshop allocations, finished output & batch tracking"
+                )}
+              </p>
+            </div>
 
             <div className="mt-4 pt-3 border-t border-blue-500/25 flex items-center justify-between text-xs">
               <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Sexlar:", "Цехи:", "Target:")}</span>
@@ -758,127 +760,79 @@ export default function DirectorPage() {
           {/* BRAK CARD */}
           <div
             onClick={() => openOperationsModal('brak')}
-            className="group relative overflow-hidden bg-rose-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-rose-500/30 hover:border-rose-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+            className="group relative overflow-hidden bg-rose-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-rose-500/30 hover:border-rose-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold">
-                <AlertTriangle size={24} />
-              </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:translate-x-1 transition-transform">
-                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-              </span>
-            </div>
-
-            <span className="text-xs font-extrabold text-rose-800 dark:text-rose-400 uppercase tracking-wider block">
-              {formatDual("Brak mahsulot", "Брак", "Reject")}
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-rose-700 dark:text-rose-400 mt-1">
-              {(operationsSummary?.brak?.totalKg || 0) > 0
-                ? (operationsSummary?.brak?.totalKg || 0) >= 1000
-                  ? `${((operationsSummary?.brak?.totalKg || 0) / 1000).toFixed(1)} tn`
-                  : `${(operationsSummary?.brak?.totalKg || 0).toLocaleString()} kg`
-                : (operationsSummary?.brak?.totalDona || 0) > 0
-                  ? `${(operationsSummary?.brak?.totalDona || 0).toLocaleString()} ${formatDual("dona", "шт", "pcs")}`
-                  : "0 kg"}
-            </div>
-            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold flex items-center gap-1.5 flex-wrap">
-              {(operationsSummary?.brak?.totalKg || 0) > 0 ? (
-                <>
-                  <span>
-                    {(operationsSummary?.brak?.totalKg || 0).toLocaleString()} kg {formatDual("xomashyo", "сырье", "raw")}
-                  </span>
-                  {(operationsSummary?.brak?.totalDona || 0) > 0 && (
-                    <span className="text-purple-600 dark:text-purple-400">
-                      + {(operationsSummary?.brak?.totalDona || 0).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
-                    </span>
-                  )}
-                </>
-              ) : (operationsSummary?.brak?.totalDona || 0) > 0 ? (
-                <>
-                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                    0 kg {formatDual("xomashyo (toza)", "сырье (чисто)", "raw (clean)")}
-                  </span>
-                  <span className="text-purple-600 dark:text-purple-400">
-                    • {operationsSummary?.brak?.totalCount || 0} {formatDual("ta qadoq braki", "брак тары", "pkg defects")}
-                  </span>
-                </>
-              ) : (
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                  {formatDual("Zavodda brak qayd etilmagan", "Брака не зафиксировано", "No defect recorded")}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold">
+                  <AlertTriangle size={24} />
+                </div>
+                <span className="flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:translate-x-1 transition-transform">
+                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
                 </span>
-              )}
-            </p>
+              </div>
+
+              <span className="text-xs font-extrabold text-rose-800 dark:text-rose-400 uppercase tracking-wider block">
+                {formatDual("Brak va chiqindi", "Брак и отходы", "Defects & Waste")}
+              </span>
+              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
+                {formatDual("Sifat nazorati", "Контроль качества", "Quality Control")}
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
+                {formatDual(
+                  "Qadoqlash taralari braki, texnologik chiqindi va sabablar tahlili",
+                  "Брак тары, технологические отходы и анализ причин",
+                  "Packaging defects, technological loss & root cause logs"
+                )}
+              </p>
+            </div>
 
             <div className="mt-4 pt-3 border-t border-rose-500/25 flex items-center justify-between text-xs">
               <span className="text-slate-600 dark:text-slate-400 font-medium">
-                {(operationsSummary?.brak?.totalKg || 0) === 0 && (operationsSummary?.brak?.totalDona || 0) > 0
-                  ? formatDual("Manba:", "Источник:", "Source:")
-                  : formatDual("Holati:", "Статус:", "Status:")}
+                {formatDual("Manba:", "Источник:", "Source:")}
               </span>
               <span className="font-bold text-rose-800 dark:text-rose-300">
-                {(operationsSummary?.brak?.totalKg || 0) === 0 && (operationsSummary?.brak?.totalDona || 0) > 0
-                  ? formatDual("Qadoqlash sexi (Taralar)", "Цех упаковки (Тара)", "Packaging workshop")
-                  : (operationsSummary?.brak?.totalKg || 0) > 0
-                    ? formatDual("Qayd etilgan", "Зафиксировано", "Recorded")
-                    : formatDual("100% Toza", "100% Чисто", "100% Clean")}
+                {formatDual("Qadoqlash sexi (Taralar)", "Цех упаковки (Тара)", "Packaging workshop")}
               </span>
             </div>
           </div>
 
-          {/* OMBORXONA (QOLDIQ) CARD - Matching Kirim & Chiqim 1:1 */}
+          {/* OMBORXONA (QOLDIQ) CARD */}
           <div
             onClick={() => openOperationsModal('ombor')}
-            className="group relative overflow-hidden bg-indigo-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-indigo-500/30 hover:border-indigo-500 shadow-sm hover:shadow-xl transition-all cursor-pointer"
+            className="group relative overflow-hidden bg-indigo-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-indigo-500/30 hover:border-indigo-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold">
-                <Package size={24} />
-              </div>
-              <span className="flex items-center gap-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
-                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-              </span>
-            </div>
-
-            <span className="text-xs font-extrabold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider block">
-              {formatDual("Omborxona (Qoldiq)", "Склад (Остаток)", "Warehouse Stock")}
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-              {executiveProductBalances.length > 0
-                ? `${(executiveProductBalances.filter(p => (p.unit || 'kg') === 'kg').reduce((s, p) => s + (p.currentStockKg || 0), 0) / 1000).toFixed(1)} tn`
-                : operationsSummary?.ombor?.totalKg
-                  ? `${(operationsSummary.ombor.totalKg / 1000).toFixed(1)} tn`
-                  : data?.kpis?.warehouse?.totalInventoryKg
-                    ? `${(data.kpis.warehouse.totalInventoryKg / 1000).toFixed(1)} tn`
-                    : "0 kg"}
-            </div>
-            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold flex items-center gap-1.5 flex-wrap">
-              <span>
-                {executiveProductBalances.length > 0
-                  ? `${Math.round(executiveProductBalances.filter(p => (p.unit || 'kg') === 'kg').reduce((s, p) => s + (p.currentStockKg || 0), 0)).toLocaleString()} kg ${formatDual("xomashyo", "сырье", "raw")}`
-                  : `${(operationsSummary?.ombor?.totalKg || data?.kpis?.warehouse?.totalInventoryKg || 0).toLocaleString()} kg ${formatDual("xomashyo", "сырье", "raw")}`}
-              </span>
-              {(executiveProductBalances.length > 0 ? executiveProductBalances.filter(p => p.unit === 'dona').reduce((s, p) => s + (p.currentStockKg || 0), 0) : (operationsSummary?.ombor?.totalDona || 0)) > 0 && (
-                <span className="text-purple-600 dark:text-purple-400">
-                  + {Math.round(executiveProductBalances.length > 0
-                    ? executiveProductBalances.filter(p => p.unit === 'dona').reduce((s, p) => s + (p.currentStockKg || 0), 0)
-                    : (operationsSummary?.ombor?.totalDona || 0)).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  <Package size={24} />
+                </div>
+                <span className="flex items-center gap-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
                 </span>
-              )}
-            </p>
+              </div>
+
+              <span className="text-xs font-extrabold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider block">
+                {formatDual("Omborxona qoldig'i", "Складской остаток", "Warehouse Stock")}
+              </span>
+              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
+                {formatDual("Zaxira va qoldiqlar", "Запасы и остатки", "Stock & Balances")}
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
+                {formatDual(
+                  "Mahsulotlar kesimida qoldiq, sarf, muddatlar va yetish tahlili",
+                  "Остатки по позициям, расход, сроки годности и анализ запаса",
+                  "Stock per product, consumption, shelf life & coverage analysis"
+                )}
+              </p>
+            </div>
 
             <div className="mt-4 pt-3 border-t border-indigo-500/25 flex items-center justify-between text-xs">
               <span className="text-slate-600 dark:text-slate-400 font-medium">
-                {formatDual("Zaxira:", "Запас:", "Stock:")}
+                {formatDual("Holati:", "Статус:", "Status:")}
               </span>
               <span className="font-bold text-indigo-800 dark:text-indigo-300">
-                {executiveProductBalances.length > 0
-                  ? executiveProductBalances.filter(p => p.inventoryStatus === 'SUFFICIENT' || p.status === 'NORMAL').length
-                  : (operationsSummary?.ombor?.sufficientCount ?? data?.kpis?.warehouse?.sufficientCount ?? 0)} {formatDual("ta yetarli", "в норме", "sufficient")}
-                {' • '}
-                {executiveProductBalances.length > 0
-                  ? executiveProductBalances.filter(p => p.inventoryStatus === 'LOW' || p.inventoryStatus === 'OUT_OF_STOCK' || p.status === 'CRITICAL').length
-                  : (((operationsSummary?.ombor?.lowStockCount ?? data?.kpis?.warehouse?.lowStockCount ?? 0) +
-                    (operationsSummary?.ombor?.outOfStockCount ?? data?.kpis?.warehouse?.outOfStockCount ?? 0)))} {formatDual("ta kam/tugagan", "дефицит", "low/out")}
+                {formatDual("Doimiy monitoring", "Постоянный мониторинг", "Active monitoring")}
               </span>
             </div>
           </div>
