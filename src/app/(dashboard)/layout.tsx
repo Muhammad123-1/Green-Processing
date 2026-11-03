@@ -5,6 +5,8 @@ import MobileNav from '@/components/layout/MobileNav'
 import ChatBadgeListener from '@/components/chat/ChatBadgeListener'
 import { getSession } from '@/app/actions/auth'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Kiruvchi Xomashyo Nazorati',
   description: 'Kiruvchi xom ashyo qabul qilish nazorat tizimi',

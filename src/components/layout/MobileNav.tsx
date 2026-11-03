@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
@@ -17,10 +17,19 @@ import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useChatBadge } from '@/store/chatBadge'
 
 export default function MobileNav({ userRole }: { userRole?: string }) {
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const { toggle, isOpen } = useSidebar()
   const { formatDual } = useLanguage()
   const unreadCount = useChatBadge((s) => s.unreadCount)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
 
   const isDirector = userRole === 'DIRECTOR'
   const homeHref = isDirector ? '/director' : '/dashboard'
