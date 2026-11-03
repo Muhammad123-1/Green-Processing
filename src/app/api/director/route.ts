@@ -325,6 +325,33 @@ export async function GET(request: NextRequest) {
     let totalOutputKg = 0
     let totalOutputBoxes = 0
     let totalOpeningStockKg = 0
+
+    // Helper to normalize material keys between ShopArrival (inbound), ShopExpense (outbound), and balances
+    const normalizeMaterialKey = (raw: string): string => {
+      const s = raw.trim().toLowerCase()
+      if (s.includes('томат') || s.includes('tomat') || s.includes('помидор')) {
+        if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Томат'
+      }
+      if (s.includes('айсберг') || s.includes('айзберг') || s.includes('ayzberg') || s.includes('aysberg')) {
+        if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Салат Айсберг'
+      }
+      if (s.includes('капуст')) return 'Капуста белокачанная'
+      if (s.includes('лук')) {
+        if (!s.includes('пакет')) return 'Лук салатный белый'
+      }
+      if (s.includes('морков')) return 'Морковь'
+      if (s.includes('огур')) return 'Огурцы свежие'
+      if (s.includes('лимон')) {
+        if (!s.includes('пакет') && !s.includes('кислот')) return 'Лимон'
+      }
+      if (s.includes('сельдер')) return 'Сельдерей'
+      if (s.includes('шпинат')) return 'Шпинат'
+      if (s.includes('руккол')) return 'Руккола'
+      if (s.includes('lollo') || s.includes('лолло')) return 'Lollo Rosso'
+      if (s.includes('мят')) return 'Мята'
+      return raw.trim()
+    }
+
     const recordedOpeningByProduct = new Map<string, number>()
     const recordedClosingByProduct = new Map<string, number>()
     const operationalDaysSet = new Set<string>()
@@ -403,7 +430,7 @@ export async function GET(request: NextRequest) {
       if (balances?.start && typeof balances.start === 'object') {
         Object.entries(balances.start).forEach(([rawName, val]) => {
           const num = typeof val === 'number' ? val : parseFloat(String(val))
-          const k = rawName.trim()
+          const k = normalizeMaterialKey(rawName)
           if (!isNaN(num) && num >= 0 && !recordedOpeningByProduct.has(k)) {
             recordedOpeningByProduct.set(k, num)
             totalOpeningStockKg += num
@@ -413,7 +440,7 @@ export async function GET(request: NextRequest) {
       if (balances?.end && typeof balances.end === 'object') {
         Object.entries(balances.end).forEach(([rawName, val]) => {
           const num = typeof val === 'number' ? val : parseFloat(String(val))
-          const k = rawName.trim()
+          const k = normalizeMaterialKey(rawName)
           if (!isNaN(num) && num >= 0) {
             recordedClosingByProduct.set(k, num)
           }
@@ -760,44 +787,23 @@ export async function GET(request: NextRequest) {
     // 4. WAREHOUSE STOCK BALANCES & INVENTORY NORMALIZATION (REQUIREMENTS 3 & 4)
     // -------------------------------------------------------------------------
     const productInMap = new Map<string, number>()
-    // Helper to normalize material keys between ShopArrival (inbound) and ShopExpense (outbound)
-    const normalizeMaterialKey = (raw: string): string => {
-      const s = raw.trim().toLowerCase()
-      if (s.includes('томат') || s.includes('tomat') || s.includes('помидор')) {
-        if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Томат'
-      }
-      if (s.includes('айсберг') || s.includes('айзберг') || s.includes('ayzberg') || s.includes('aysberg')) {
-        if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Салат Айсберг'
-      }
-      if (s.includes('капуст')) return 'Капуста белокачанная'
-      if (s.includes('лук')) {
-        if (!s.includes('пакет')) return 'лук салатный белый'
-      }
-      if (s.includes('морков')) return 'Морковь'
-      if (s.includes('огур')) return 'Огурцы свежие'
-      if (s.includes('лимон')) {
-        if (!s.includes('пакет') && !s.includes('кислот')) return 'Лимон'
-      }
-      if (s.includes('сельдер')) return 'Сельдерей'
-      if (s.includes('шпинат')) return 'Шпинат'
-      if (s.includes('руккол')) return 'Руккола'
-      if (s.includes('lollo') || s.includes('лолло')) return 'Lollo Rosso'
-      if (s.includes('мят')) return 'Мята'
-      return raw.trim()
-    }
 
     shopArrivals.forEach((a) => {
-      const name = normalizeMaterialKey(a.nomenclature || '')
+      const raw = (a.nomenclature || '').trim()
+      if (!raw || /^[\s?\uFFFD\-_.]+$/.test(raw) || raw.replace(/[\uFFFD\s?\-_.]/g, '').length < 2) return
+      const name = normalizeMaterialKey(raw)
       if (name) productInMap.set(name, (productInMap.get(name) || 0) + (a.quantity || 0))
     })
 
     const productOutMap = new Map<string, number>()
     const productDaysMap = new Map<string, Set<string>>()
     shopExpenses.forEach((exp) => {
-      if (exp.materials && typeof exp.materials === 'object') {
+      let hasMaterials = false
+      if (exp.materials && typeof exp.materials === 'object' && Object.keys(exp.materials).length > 0) {
         Object.entries(exp.materials).forEach(([k, v]) => {
           const num = typeof v === 'number' ? v : parseFloat(String(v))
           if (!isNaN(num) && num > 0) {
+            hasMaterials = true
             const key = normalizeMaterialKey(k)
             productOutMap.set(key, (productOutMap.get(key) || 0) + num)
             if (!productDaysMap.has(key)) productDaysMap.set(key, new Set())
@@ -805,7 +811,7 @@ export async function GET(request: NextRequest) {
           }
         })
       }
-      if (exp.matrix && typeof exp.matrix === 'object') {
+      if (!hasMaterials && exp.matrix && typeof exp.matrix === 'object') {
         Object.entries(exp.matrix).forEach(([, rowVal]) => {
           if (typeof rowVal === 'object' && rowVal !== null) {
             Object.entries(rowVal).forEach(([k, v]) => {
@@ -832,24 +838,9 @@ export async function GET(request: NextRequest) {
 
     const productStockDetails = Array.from(allMaterialNames)
       .filter((name) => {
-        const lower = name.toLowerCase()
-        return (
-          !lower.includes('коробк') &&
-          !lower.includes('каробк') &&
-          !lower.includes('karobka') &&
-          !lower.includes('пакет') &&
-          !lower.includes('этикет') &&
-          !lower.includes('шапка') &&
-          !lower.includes('перчатк') &&
-          !lower.includes('бахил') &&
-          !lower.includes('халат') &&
-          !lower.includes('маск') &&
-          !lower.includes('салфетк') &&
-          !lower.includes('полотенц') &&
-          !lower.includes('бумаг') &&
-          !lower.includes('мусир') &&
-          !lower.includes('стрич')
-        )
+        const raw = name.trim()
+        if (!raw || /^[\s?\uFFFD\-_.]+$/.test(raw) || raw.replace(/[\uFFFD\s?\-_.]/g, '').length < 2) return false
+        return true
       })
       .map((name, idx) => {
         const inKg = productInMap.get(name) || 0
@@ -860,11 +851,19 @@ export async function GET(request: NextRequest) {
         totalStockRemainingKg += currentStock
 
         const cfg = productConfigMap.get(name.toLowerCase())
-        let approvedMaxStorageDays = cfg?.maxStorageDays ?? cfg?.shelfLifeDays ?? null
         const sLower = name.toLowerCase()
-        if (approvedMaxStorageDays === null) {
+
+        const isNonPerishable =
+          cfg?.unit === 'dona' ||
+          /коробк|каробк|пакет|этикет|шапка|перчатк|бахил|халат|маск|салфетк|полотенц|бумаг|мусир|стрич|вода|хлор|уксус|кислот|сорбат|бензоат|соль|туз|divosan|suma/i.test(sLower)
+        const unit = isNonPerishable
+          ? (sLower.includes('вода') ? 'litr' : /suma|хлор|уксус|кислот|сорбат|бензоат/i.test(sLower) ? 'kg' : 'dona')
+          : (cfg?.unit || 'kg')
+
+        let approvedMaxStorageDays = cfg?.maxStorageDays ?? cfg?.shelfLifeDays ?? null
+        if (approvedMaxStorageDays === null && !isNonPerishable) {
           if (sLower.includes('айсберг') || sLower.includes('ayzberg') || sLower.includes('aysberg')) approvedMaxStorageDays = 21
-          else if (sLower.includes('томат') || sLower.includes('tomat')) approvedMaxStorageDays = 10
+          else if (sLower.includes('томат') || sLower.includes('tomat') || sLower.includes('помидор')) approvedMaxStorageDays = 10
           else if (sLower.includes('лимон') || sLower.includes('limon')) approvedMaxStorageDays = 10
           else if (sLower.includes('сельдер') || sLower.includes('seldre')) approvedMaxStorageDays = 3
           else if (sLower.includes('капуст')) approvedMaxStorageDays = 30
@@ -873,7 +872,7 @@ export async function GET(request: NextRequest) {
           else if (sLower.includes('огур')) approvedMaxStorageDays = 10
           else if (sLower.includes('шпинат')) approvedMaxStorageDays = 5
           else if (sLower.includes('руккол')) approvedMaxStorageDays = 5
-          else if (sLower.includes('lollo')) approvedMaxStorageDays = 7
+          else if (sLower.includes('lollo') || sLower.includes('лолло')) approvedMaxStorageDays = 7
           else if (sLower.includes('мят')) approvedMaxStorageDays = 5
         }
         const minStock = cfg?.minStockLevel && cfg.minStockLevel > 0 ? cfg.minStockLevel : null
@@ -911,22 +910,29 @@ export async function GET(request: NextRequest) {
           status = 'OUT_OF_STOCK'
           outOfStockCount++
         } else if (
-          (approvedMaxStorageDays !== null && stockCoverageDays !== null && stockCoverageDays > approvedMaxStorageDays) ||
-          (maxRecommendedStockKg !== null && currentStock > maxRecommendedStockKg)
+          !isNonPerishable &&
+          ((approvedMaxStorageDays !== null && stockCoverageDays !== null && stockCoverageDays > approvedMaxStorageDays * 1.5) ||
+          (maxRecommendedStockKg !== null && currentStock > maxRecommendedStockKg * 1.5))
         ) {
           status = 'EXCESS'
           excessStockCount++
-        } else if ((minStock !== null && currentStock <= minStock) || (stockCoverageDays !== null && stockCoverageDays <= lowCoverageDaysThreshold)) {
+        } else if (
+          (!isNonPerishable && stockCoverageDays !== null && stockCoverageDays <= lowCoverageDaysThreshold) ||
+          (minStock !== null && currentStock <= minStock) ||
+          (isNonPerishable && currentStock < 100)
+        ) {
           status = 'LOW'
           lowStockCount++
         } else {
+          status = 'SUFFICIENT'
           sufficientCount++
         }
 
         return {
           id: `stock-${idx + 1}-${name.toLowerCase().replace(/[^a-z0-9а-яё]/gi, '-')}`,
           name,
-          unit: cfg?.unit || 'kg',
+          unit,
+          isNonPerishable,
           currentStock,
           minStock,
           approvedMaxStorageDays,
@@ -1159,10 +1165,10 @@ export async function GET(request: NextRequest) {
         techWasteKg: Math.round(d.techWasteKg * 10) / 10,
       }))
 
-    // CHART 3: INVENTORY STOCK COVERAGE (Days Covered vs Min & Max thresholds)
+    // CHART 3: INVENTORY STOCK COVERAGE (Perishable produce prioritized for director operational control)
     const inventoryStockCoverage = productStockDetails
-      .filter((p) => p.currentStock > 0 || p.minStock !== null)
-      .slice(0, 12)
+      .filter((p) => !p.isNonPerishable && (p.currentStock > 0 || p.minStock !== null))
+      .slice(0, 10)
       .map((p) => ({
         id: p.id,
         name: p.name,
@@ -1777,17 +1783,23 @@ export async function GET(request: NextRequest) {
         productStockDetails,
         productBalances: operationsSummary.ombor.items,
         recentChecklists: dailyChecklists,
-        recentShopArrivals: shopArrivals.map((sa) => {
-          const norm = (sa.nomenclature || '').trim().toLowerCase()
-          const matchedBatch =
-            (sa.batch && sa.batch.trim() !== '')
-              ? sa.batch
-              : arrivalBatchLookup.get(`${sa.date}_${norm}`) || latestBatchByProduct.get(norm) || ''
-          return {
-            ...sa,
-            batch: matchedBatch,
-          }
-        }),
+        recentShopArrivals: shopArrivals
+          .filter((sa) => {
+            const raw = (sa.nomenclature || '').trim()
+            if (!raw || /^[\s?\uFFFD\-_.]+$/.test(raw) || raw.replace(/[\uFFFD\s?\-_.]/g, '').length < 2) return false
+            return true
+          })
+          .map((sa) => {
+            const norm = (sa.nomenclature || '').trim().toLowerCase()
+            const matchedBatch =
+              (sa.batch && sa.batch.trim() !== '')
+                ? sa.batch
+                : arrivalBatchLookup.get(`${sa.date}_${norm}`) || latestBatchByProduct.get(norm) || ''
+            return {
+              ...sa,
+              batch: matchedBatch,
+            }
+          }),
         recentShopExpenses: shopExpenses.slice(0, 100),
         recentIncomingActs: incomingActs,
         recentTransfers: stockTransfers.slice(0, 50),

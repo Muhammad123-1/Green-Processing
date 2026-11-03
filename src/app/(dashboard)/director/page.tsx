@@ -380,29 +380,60 @@ export default function DirectorPage() {
   }, [details.recentTransfers, searchQuery])
 
   const filteredInspections = useMemo(() => {
-    const rawList: any[] = details.recentShopArrivals || details.recentInspections || []
-    // Sanitize any corrupt/question-mark/demo entries (Fix for ?????? products)
-    const cleanList = rawList.filter((i: any) => {
-      const name = (i.nomenclature || i.product?.name || i.productName || '').trim()
-      if (!name || /^[\s?\uFFFD\-_.]+$/.test(name)) return false
-      return true
+    const unifiedList: any[] = []
+
+    // 1. Kiruvchi xomashyo qabul aktlari (IncomingRawMaterialAct - Quality & Warehouse verified)
+    ;(details.recentIncomingActs || []).forEach((act: any) => {
+      const name = (act.productName || '').trim()
+      if (!name || /^[\s?\uFFFD\-_.]+$/.test(name) || name.replace(/[\uFFFD\s?\-_.]/g, '').length < 2) return
+      unifiedList.push({
+        id: `inc-act-${act.id}`,
+        date: act.actDate || (act.createdAt ? String(act.createdAt).split('T')[0] : ''),
+        rawDate: act.actDate || act.createdAt,
+        nomenclature: name,
+        supplier: act.supplierName || '-',
+        inspectorName: act.inspectorName || formatDual("Sifat Nazoratchisi", "Контролер качества", "QC Inspector"),
+        quantity: act.warehouseKg || 0,
+        batch: act.batchNumber || act.actNumber || '-',
+        docType: formatDual("Kirim akti", "Акт приемки", "Inbound Act"),
+      })
     })
-    if (!searchQuery) return cleanList
+
+    // 2. Sex xomashyo qabullari (ShopArrival)
+    ;(details.recentShopArrivals || []).forEach((sa: any) => {
+      const name = (sa.nomenclature || sa.productName || '').trim()
+      if (!name || /^[\s?\uFFFD\-_.]+$/.test(name) || name.replace(/[\uFFFD\s?\-_.]/g, '').length < 2) return
+      unifiedList.push({
+        id: `shop-arr-${sa.id}`,
+        date: sa.date || (sa.createdAt ? String(sa.createdAt).split('T')[0] : ''),
+        rawDate: sa.date || sa.createdAt,
+        nomenclature: name,
+        supplier: sa.supplier || 'Markaziy ombor',
+        inspectorName: sa.inspector || sa.user?.name || formatDual("Sex Nazoratchisi", "Цеховой инспектор", "Shop Inspector"),
+        quantity: sa.quantity || 0,
+        batch: sa.batch || '-',
+        docType: formatDual("Sex qabuli", "Цеховой приход", "Shop Arrival"),
+      })
+    })
+
+    // Sort all arrivals by date descending
+    unifiedList.sort((a, b) => {
+      const da = a.date || ''
+      const db = b.date || ''
+      return db.localeCompare(da)
+    })
+
+    if (!searchQuery) return unifiedList
     const q = searchQuery.toLowerCase()
-    return cleanList.filter(
+    return unifiedList.filter(
       (i: any) =>
-        i.supplier?.name?.toLowerCase().includes(q) ||
         i.supplier?.toLowerCase?.().includes(q) ||
-        i.nomenclature?.toLowerCase().includes(q) ||
-        i.product?.name?.toLowerCase().includes(q) ||
-        i.user?.name?.toLowerCase().includes(q) ||
-        i.inspector?.toLowerCase().includes(q) ||
-        i.inspectorName?.toLowerCase().includes(q) ||
-        i.batch?.toLowerCase().includes(q) ||
-        i.batchNumber?.toLowerCase().includes(q) ||
-        i.date?.toLowerCase().includes(q)
+        i.nomenclature?.toLowerCase?.().includes(q) ||
+        i.inspectorName?.toLowerCase?.().includes(q) ||
+        i.batch?.toLowerCase?.().includes(q) ||
+        i.date?.toLowerCase?.().includes(q)
     )
-  }, [details.recentInspections, details.recentShopArrivals, searchQuery])
+  }, [details.recentIncomingActs, details.recentShopArrivals, searchQuery, formatDual])
 
   // Arrivals 10-per-page Pagination
   const arrivalsPageSize = 10
@@ -503,46 +534,57 @@ export default function DirectorPage() {
     if (!raw) return new Date()
     if (raw instanceof Date) return isNaN(raw.getTime()) ? new Date() : raw
     const s = String(raw).trim().replace(/,/g, '.')
-    const dmy = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/)
+    if (s.toLowerCase().includes('invalid') || /^m\d+/i.test(s)) return new Date()
+    const dmy = s.match(/^(\d{1,2})[./, -](\d{1,2})[./, -](\d{4})/)
     if (dmy) {
-      return new Date(Date.UTC(parseInt(dmy[3], 10), parseInt(dmy[2], 10) - 1, parseInt(dmy[1], 10), 12, 0, 0))
+      return new Date(parseInt(dmy[3], 10), parseInt(dmy[2], 10) - 1, parseInt(dmy[1], 10), 12, 0, 0)
     }
-    const ymd = s.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/)
+    const ymd = s.match(/^(\d{4})[./, -](\d{1,2})[./, -](\d{1,2})/)
     if (ymd) {
-      return new Date(Date.UTC(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10), 12, 0, 0))
+      return new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10), 12, 0, 0)
     }
     const d = new Date(s)
     return isNaN(d.getTime()) ? new Date() : d
   }
 
-  // Universal clean date formatter that never prints 'Invalid Date' or 'M10'
-  const formatCleanDate = (d: any, includeTime: boolean = false): string => {
-    if (!d) return '-'
-    let dt: Date
-    if (d instanceof Date) {
-      dt = d
-    } else if (typeof d === 'string') {
-      const s = d.trim()
-      const dmy = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/)
+  // Universal clean date formatter that never prints 'Invalid Date', 'M10', or 'NaN'
+  const formatCleanDate = (val: any, includeTime: boolean = false): string => {
+    if (!val) return '-'
+    if (typeof val === 'string') {
+      const s = val.trim()
+      if (s.toLowerCase().includes('invalid') || /^m\d+/i.test(s)) return '-'
+      const dmy = s.match(/^(\d{1,2})[./, -](\d{1,2})[./, -](\d{4})/)
       if (dmy) {
-        dt = new Date(parseInt(dmy[3], 10), parseInt(dmy[2], 10) - 1, parseInt(dmy[1], 10))
-      } else {
-        const ymd = s.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/)
-        if (ymd) {
-          dt = new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10))
-        } else {
-          dt = new Date(s)
-        }
+        const dd = String(dmy[1]).padStart(2, '0')
+        const mm = String(dmy[2]).padStart(2, '0')
+        const yyyy = dmy[3]
+        return `${dd}.${mm}.${yyyy}`
       }
-    } else {
-      dt = new Date(d)
+      const ymd = s.match(/^(\d{4})[./, -](\d{1,2})[./, -](\d{1,2})/)
+      if (ymd) {
+        const yyyy = ymd[1]
+        const mm = String(ymd[2]).padStart(2, '0')
+        const dd = String(ymd[3]).padStart(2, '0')
+        return `${dd}.${mm}.${yyyy}`
+      }
     }
 
-    if (isNaN(dt.getTime())) return typeof d === 'string' ? d : '-'
+    let dt: Date | null = null
+    if (val instanceof Date) {
+      if (!isNaN(val.getTime())) dt = val
+    } else if (typeof val === 'number') {
+      const td = new Date(val)
+      if (!isNaN(td.getTime())) dt = td
+    } else if (typeof val === 'string') {
+      const td = new Date(val)
+      if (!isNaN(td.getTime())) dt = td
+    }
+
+    if (!dt || isNaN(dt.getTime())) return '-'
     const day = String(dt.getDate()).padStart(2, '0')
     const month = String(dt.getMonth() + 1).padStart(2, '0')
     const year = dt.getFullYear()
-    if (includeTime && (dt.getHours() !== 0 || dt.getMinutes() !== 0)) {
+    if (includeTime && (dt.getHours() !== 0 || dt.getMinutes() !== 0) && (dt.getHours() !== 12 || dt.getMinutes() !== 0)) {
       const hrs = String(dt.getHours()).padStart(2, '0')
       const mins = String(dt.getMinutes()).padStart(2, '0')
       return `${day}.${month}.${year} ${hrs}:${mins}`
@@ -2280,13 +2322,13 @@ export default function DirectorPage() {
                                 <td className="p-3 text-center text-slate-500 text-xs">
                                   {p.approvedMaxStorageDays ? (
                                     <span className="font-semibold text-slate-700 dark:text-slate-200">{p.approvedMaxStorageDays} kun</span>
-                                  ) : p.unit === 'dona' || /kimyo|tara|qadoq|dezinfek/i.test(p.category || '') || /вода|хлор|уксус|кислот|сорбат|бензоат|соль|туз|divosan|suma|пакет|каробк/i.test(p.name || '') ? (
+                                  ) : p.unit === 'dona' || p.unit === 'litr' || p.isNonPerishable || /kimyo|tara|qadoq|dezinfek/i.test(p.category || '') || /вода|хлор|уксус|кислот|сорбат|бензоат|соль|туз|divosan|suma|пакет|каробк|коробк|перчатк|бахил|шапка|халат/i.test(p.name || '') ? (
                                     <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-800 text-slate-400">
                                       {formatDual("Uzoq muddatli (Tara/Kimyo)", "Долгосрочный (Тара/Химия)", "Long-term (Pkg/Chem)")}
                                     </span>
                                   ) : (
-                                    <span className="text-[11px] text-slate-400 italic">
-                                      {formatDual("Kiritilmagan", "Не указан", "Not set")}
+                                    <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-800 text-slate-400">
+                                      {formatDual("Standart 30 kun", "Стандарт 30 дней", "Standard 30 days")}
                                     </span>
                                   )}
                                 </td>
@@ -2297,7 +2339,13 @@ export default function DirectorPage() {
                                   {p.maxRecommendedStockKg ? `${p.maxRecommendedStockKg} ${p.unit}` : '—'}
                                 </td>
                                 <td className="p-3 text-center font-mono">
-                                  {p.stockCoverageDays != null ? `${p.stockCoverageDays} kun (${p.stockCoverageWeeks ?? '-'} hafta)` : '—'}
+                                  {p.stockCoverageDays != null ? (
+                                    `${p.stockCoverageDays} kun (${p.stockCoverageWeeks ?? '-'} hafta)`
+                                  ) : (p.isNonPerishable || p.unit === 'dona' || p.unit === 'litr') && p.currentStock > 0 ? (
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{formatDual("Zaxira yetarli", "Запас достаточный", "Sufficient")}</span>
+                                  ) : (
+                                    '—'
+                                  )}
                                 </td>
                                 <td className="p-3 text-center">
                                   <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
@@ -2647,20 +2695,29 @@ export default function DirectorPage() {
                               const isDona = /dona|пакет|каробк|коробк|перчатк|салфетк|полотенц|бумага|халат|маска|шапка/i.test(insp.nomenclature || insp.product?.name || '')
                               return (
                                 <tr key={`insp-${insp.id || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/50 transition-colors">
-                                  <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{formatCleanDate(insp.date || insp.createdAt)}</td>
-                                  <td className="p-3 font-bold text-slate-900 dark:text-white">{insp.nomenclature || insp.product?.name || formatDual("Xomashyo", "Сырье", "Raw material")}</td>
-                                  <td className="p-3 text-slate-700 dark:text-slate-300 text-xs">{insp.supplier?.name || insp.supplier || "-"}</td>
-                                  <td className="p-3 text-indigo-600 dark:text-indigo-400 font-bold text-xs">{insp.user?.name || insp.inspector || insp.inspectorName || formatDual("Nazoratchi", "Инспектор", "Inspector")}</td>
+                                  <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{formatCleanDate(insp.date || insp.rawDate || insp.createdAt)}</td>
+                                  <td className="p-3 font-bold text-slate-900 dark:text-white">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span>{insp.nomenclature || insp.product || formatDual("Xomashyo", "Сырье", "Raw material")}</span>
+                                      {insp.docType && (
+                                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-dark-700 text-slate-500 font-semibold font-sans">
+                                          {insp.docType}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="p-3 text-slate-700 dark:text-slate-300 text-xs">{insp.supplier || "-"}</td>
+                                  <td className="p-3 text-indigo-600 dark:text-indigo-400 font-bold text-xs">{insp.inspectorName || formatDual("Nazoratchi", "Инспектор", "Inspector")}</td>
                                   <td className="p-3 text-center font-black text-slate-900 dark:text-white text-xs whitespace-nowrap">
-                                    {typeof insp.quantity === 'number' ? insp.quantity.toLocaleString() : insp.quantity} {isDona ? 'dona' : 'kg'}
+                                    {typeof insp.quantity === 'number' ? insp.quantity.toLocaleString() : insp.quantity} {insp.unit || (isDona ? 'dona' : 'kg')}
                                   </td>
                                   <td className="p-3 text-center font-mono">
-                                    {insp.batch || insp.batchNumber ? (
+                                    {insp.batch && insp.batch !== '-' ? (
                                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        {String(insp.batch || insp.batchNumber).startsWith('#') || String(insp.batch || insp.batchNumber).toLowerCase().startsWith('partiya')
-                                          ? (insp.batch || insp.batchNumber)
-                                          : `Partiya #${insp.batch || insp.batchNumber}`}
+                                        {String(insp.batch).startsWith('#') || String(insp.batch).toLowerCase().startsWith('partiya')
+                                          ? insp.batch
+                                          : `Partiya #${insp.batch}`}
                                       </span>
                                     ) : (
                                       <span className="inline-block px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-400 bg-slate-100 dark:bg-dark-800">
@@ -2946,7 +3003,7 @@ export default function DirectorPage() {
                                           </span>
                                           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 font-mono">
                                             <Clock size={12} />
-                                            {formatCleanDate(act.date || act.dateStr || act.rawData?.actDate || act.rawData?.createdAt, true)}
+                                            {formatCleanDate(act.dateStr || act.rawData?.actDate || act.date || act.rawData?.createdAt)}
                                           </span>
                                           {act.user && (
                                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300">
