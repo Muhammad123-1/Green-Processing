@@ -551,10 +551,10 @@ export default function ProductBalanceTable({
                 {renderInventoryStatusPill(selectedCardProduct.inventoryStatus)}
                 <button
                   onClick={() => onSelectProduct(selectedCardProduct)}
-                  className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-bold text-xs hover:bg-indigo-100 flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-bold text-xs hover:bg-indigo-100 flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
-                  <ShieldCheck size={14} />
-                  <span>{lang === 'ru' ? 'Паспорт (4 этапа)' : 'To‘liq pasport (4-bosqichli audit)'}</span>
+                  <Layers size={14} />
+                  <span>{lang === 'ru' ? 'Подробный анализ' : 'Batafsil tahlil'}</span>
                 </button>
               </div>
             </div>

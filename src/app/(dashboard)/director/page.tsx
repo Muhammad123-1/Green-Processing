@@ -2306,16 +2306,9 @@ export default function DirectorPage() {
                   {/* 4. OMBOR: Dedicated Warehouse Stock Analysis */}
                   {operationsTab === 'ombor' && (
                     <div className="space-y-4">
-                      {/* Top Action Buttons (Traceability Passport & Loss Standards) */}
+                      {/* Top Action Bar */}
                       <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-dark-750">
                         <div className="flex items-center gap-2">
-                          <Link
-                            href="/traceability"
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors shadow-xs"
-                          >
-                            <ShieldCheck size={14} />
-                            <span>{formatDual("To'liq mahsulot zanjiri (Pasport)", "Паспорт прослеживаемости", "Traceability Passport")}</span>
-                          </Link>
                           <button
                             onClick={() => setShowSettingsModal(true)}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors shadow-xs cursor-pointer"
