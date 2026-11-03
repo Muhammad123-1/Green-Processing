@@ -793,7 +793,10 @@ export default function ShopReportContent({
   }
 
   const exportToExcelReal = () => {
-    window.location.href = '/api/shop-report/export'
+    const url = selectedMonth
+      ? `/api/shop-report/export?month=${encodeURIComponent(selectedMonth)}`
+      : '/api/shop-report/export'
+    window.location.href = url
   }
 
   const viewReport = (date: string, type: 'arrival' | 'expense' | 'gp' | 'report') => {
@@ -929,14 +932,14 @@ export default function ShopReportContent({
             disabled={isLoading}
             className="flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm disabled:opacity-50"
           >
-            {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+            {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             <span>{lang === 'ru' ? 'Импорт Excel' : 'Excel Import'}</span>
           </button>
           <button
             onClick={exportToExcelReal}
             className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm"
           >
-            <Download size={14} />
+            <Upload size={14} />
             <span>{lang === 'ru' ? 'Экспорт Excel' : 'Excel Export'}</span>
           </button>
           <button
