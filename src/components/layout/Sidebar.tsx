@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, Suspense } from 'react'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Archive, 
   LayoutDashboard,
   ClipboardList,
@@ -29,7 +29,10 @@ import { Archive,
   CheckCircle2,
   Table2,
   FlaskConical,
-  Thermometer
+  Thermometer,
+  ArrowDownRight,
+  ArrowUpRight,
+  Boxes
  } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -63,11 +66,14 @@ const navSections = [
     title: 'Ombor va Ishlab chiqarish',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'prihod', href: '/warehouse?tab=prihod', icon: ArrowDownRight, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'SUPPLY'] },
+      { key: 'rashod', href: '/warehouse?tab=rashod', icon: ArrowUpRight, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION'] },
+      { key: 'gp', href: '/warehouse?tab=gp', icon: Boxes, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'QUALITY_CONTROL'] },
       { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
-      { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
+      { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'DIRECTOR', 'KITCHEN', 'QUALITY_CONTROL', 'HR', 'INSPECTOR'] },
     ]
@@ -106,8 +112,10 @@ const navSections = [
   }
 ]
 
-export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { userRole?: string, userName?: string }) {
+function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { userRole?: string, userName?: string }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams ? searchParams.get('tab') : null
   const { t, formatDual, lang } = useLanguage()
   const { isOpen, close } = useSidebar()
   const unreadCount = useChatBadge((s) => s.unreadCount)
@@ -150,12 +158,15 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
               return false
             }
             // Director panel items requested by user:
-            // director, archive, warehouse, accounting, reports, chat, settings (suppliers, kitchen, users removed)
+            // director, archive, warehouse, prihod, rashod, gp, accounting, reports, chat, settings
             if (userRole === 'DIRECTOR') {
               const directorAllowedKeys = [
                 'director',
                 'archive',
                 'warehouse',
+                'prihod',
+                'rashod',
+                'gp',
                 'accounting',
                 'reports',
                 'chat',
@@ -175,9 +186,17 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
               </h3>
               {visibleItems.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href || 
-                  (item.href !== '/dashboard' && pathname.startsWith(item.href)) ||
-                  (item.href === '/orders' && pathname.startsWith('/supply'))
+                let isActive = false
+                if (item.href.includes('?tab=')) {
+                  const itemTab = item.href.split('?tab=')[1]
+                  isActive = pathname === '/warehouse' && currentTab === itemTab
+                } else if (item.href === '/warehouse') {
+                  isActive = pathname === '/warehouse' && (!currentTab || currentTab === 'inventory')
+                } else {
+                  isActive = pathname === item.href || 
+                    (item.href !== '/dashboard' && pathname.startsWith(item.href)) ||
+                    (item.href === '/orders' && pathname.startsWith('/supply'))
+                }
 
                 const isChat = item.key === 'chat'
                 const hasChatBadge = isChat && unreadCount > 0
@@ -261,5 +280,13 @@ export default function Sidebar({ userRole = 'OPERATOR', userName = 'Foydalanuvc
       </div>
       </aside>
     </>
+  )
+}
+
+export default function Sidebar(props: { userRole?: string, userName?: string }) {
+  return (
+    <Suspense fallback={null}>
+      <SidebarInner {...props} />
+    </Suspense>
   )
 }

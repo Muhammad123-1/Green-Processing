@@ -9,7 +9,8 @@ import {
   FileSpreadsheet, 
   ClipboardList, 
   Menu,
-  ChefHat
+  ChefHat,
+  ArrowDownRight
 } from 'lucide-react'
 import { useSidebar } from '@/store/sidebar'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -43,12 +44,23 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
       icon: FileSpreadsheet,
       active: pathname.startsWith('/incoming-acts') || pathname.startsWith('/inspections')
     },
-    {
-      label: formatDual('Sex', 'Цех', 'Shop'),
-      href: '/shop-report',
-      icon: ChefHat,
-      active: pathname.startsWith('/shop-report') || pathname.startsWith('/production')
-    }
+    ...(userRole === 'WAREHOUSE'
+      ? [
+          {
+            label: formatDual('Kirim', 'Приход', 'Arrivals'),
+            href: '/warehouse?tab=prihod',
+            icon: ArrowDownRight,
+            active: pathname.startsWith('/warehouse'),
+          },
+        ]
+      : [
+          {
+            label: formatDual('Sex', 'Цех', 'Shop'),
+            href: '/shop-report',
+            icon: ChefHat,
+            active: pathname.startsWith('/shop-report') || pathname.startsWith('/production'),
+          },
+        ]),
   ]
 
   return (

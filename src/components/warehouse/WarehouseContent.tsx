@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   Package,
   AlertTriangle,
@@ -343,6 +344,15 @@ export default function WarehouseContent() {
   }
 
   const [activeTab, setActiveTab] = useState<'inventory' | 'prihod' | 'rashod' | 'gp' | 'transfers' | 'temperature' | 'suppliers'>('inventory')
+
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const tab = searchParams?.get('tab')
+    if (tab && ['inventory', 'prihod', 'rashod', 'gp', 'transfers', 'temperature', 'suppliers'].includes(tab)) {
+      setActiveTab(tab as any)
+    }
+  }, [searchParams])
 
   // Inbound & Outbound states (Kirim va Chiqim)
   const [prihodSearch, setPrihodSearch] = useState('')
