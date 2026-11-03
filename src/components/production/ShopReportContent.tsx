@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Clock,
   ShieldAlert,
+  Trash2,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
@@ -327,6 +328,57 @@ export default function ShopReportContent({
   }
 
   const removeNewArrival = (idx: number) => setArrivals((prev) => prev.filter((_, i) => i !== idx))
+
+  const handleDeleteExistingArrival = async (id: number) => {
+    if (!isAdmin) {
+      toast.error(lang === 'ru' ? 'Удаление разрешено только Администратору' : "O'chirish faqat Administratorga ruxsat etilgan!")
+      return
+    }
+    if (!confirm(lang === 'ru' ? 'Вы уверены, что хотите удалить эту запись?' : "Haqiqatan ham ushbu yozuvni o'chirmoqchimisiz?")) return
+    try {
+      const res = await fetch(`/api/shop-report/arrivals?id=${id}`, { method: 'DELETE' })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error || "O'chirishda xatolik")
+      toast.success(lang === 'ru' ? 'Запись успешно удалена' : "Yozuv o'chirildi")
+      await loadData()
+    } catch (e: any) {
+      toast.error(e?.message || "O'chirishda xatolik")
+    }
+  }
+
+  const handleDeleteExistingExpense = async (date: string) => {
+    if (!isAdmin) {
+      toast.error(lang === 'ru' ? 'Удаление разрешено только Администратору' : "O'chirish faqat Administratorga ruxsat etilgan!")
+      return
+    }
+    if (!confirm(lang === 'ru' ? `Удалить расход за ${date}?` : `${date} sanadagi chiqimni o'chirmoqchimisiz?`)) return
+    try {
+      const res = await fetch(`/api/shop-report/expenses?date=${encodeURIComponent(date)}`, { method: 'DELETE' })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error || "O'chirishda xatolik")
+      toast.success(lang === 'ru' ? 'Расход удален' : "Chiqim o'chirildi")
+      await loadData()
+    } catch (e: any) {
+      toast.error(e?.message || "O'chirishda xatolik")
+    }
+  }
+
+  const handleDeleteExistingGP = async (date: string) => {
+    if (!isAdmin) {
+      toast.error(lang === 'ru' ? 'Удаление разрешено только Администратору' : "O'chirish faqat Administratorga ruxsat etilgan!")
+      return
+    }
+    if (!confirm(lang === 'ru' ? `Удалить ГП за ${date}?` : `${date} sanadagi tayyor mahsulotni o'chirmoqchimisiz?`)) return
+    try {
+      const res = await fetch(`/api/shop-report/gp?date=${encodeURIComponent(date)}`, { method: 'DELETE' })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error || "O'chirishda xatolik")
+      toast.success(lang === 'ru' ? 'ГП удален' : "Tayyor mahsulot (ГП) o'chirildi")
+      await loadData()
+    } catch (e: any) {
+      toast.error(e?.message || "O'chirishda xatolik")
+    }
+  }
 
   // Frequency of products in arrivals (count how many times each product has been received)
   const productFrequency = useMemo(() => {
@@ -1363,9 +1415,17 @@ export default function ShopReportContent({
                           <button
                             onClick={() => removeNewArrival(idx)}
                             className="p-1 rounded text-red-500 hover:bg-red-50"
-                            title="Yangi qatorni o'chirish"
+                            title="Yangi qatorni bekor qilish"
                           >
                             <X size={14} />
+                          </button>
+                        ) : isAdmin ? (
+                          <button
+                            onClick={() => handleDeleteExistingArrival(row.id)}
+                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            title={lang === 'ru' ? 'Удалить запись (только Администратор)' : "Yozuvni o'chirish (faqat Administrator)"}
+                          >
+                            <Trash2 size={13} />
                           </button>
                         ) : !isRowEditable ? (
                           <span
@@ -1374,7 +1434,14 @@ export default function ShopReportContent({
                           >
                             <Lock size={13} className="text-amber-500" />
                           </span>
-                        ) : null}
+                        ) : (
+                          <span
+                            className="p-1 text-slate-300 dark:text-slate-600 cursor-help flex items-center justify-center opacity-60"
+                            title={lang === 'ru' ? 'Удаление запрещено (только Администратор)' : "O'chirish taqiqlangan (faqat Administrator)"}
+                          >
+                            <Lock size={11} />
+                          </span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -1541,9 +1608,17 @@ export default function ShopReportContent({
                           <button
                             onClick={() => removeNewExpense(idx)}
                             className="p-1 rounded text-red-500 hover:bg-red-50"
-                            title="Yangi qatorni o'chirish"
+                            title="Yangi qatorni bekor qilish"
                           >
                             <X size={14} />
+                          </button>
+                        ) : isAdmin ? (
+                          <button
+                            onClick={() => handleDeleteExistingExpense(row.date)}
+                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            title={lang === 'ru' ? 'Удалить запись (только Администратор)' : "Yozuvni o'chirish (faqat Administrator)"}
+                          >
+                            <Trash2 size={13} />
                           </button>
                         ) : !isRowEditable ? (
                           <span
@@ -1552,7 +1627,14 @@ export default function ShopReportContent({
                           >
                             <Lock size={13} className="text-amber-500" />
                           </span>
-                        ) : null}
+                        ) : (
+                          <span
+                            className="p-1 text-slate-300 dark:text-slate-600 cursor-help flex items-center justify-center opacity-60"
+                            title={lang === 'ru' ? 'Удаление запрещено (только Администратор)' : "O'chirish taqiqlangan (faqat Administrator)"}
+                          >
+                            <Lock size={11} />
+                          </span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -1715,9 +1797,17 @@ export default function ShopReportContent({
                           <button
                             onClick={() => removeNewGP(idx)}
                             className="p-1 rounded text-red-500 hover:bg-red-50"
-                            title="Yangi qatorni o'chirish"
+                            title="Yangi qatorni bekor qilish"
                           >
                             <X size={14} />
+                          </button>
+                        ) : isAdmin ? (
+                          <button
+                            onClick={() => handleDeleteExistingGP(row.date)}
+                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            title={lang === 'ru' ? 'Удалить запись (только Администратор)' : "Yozuvni o'chirish (faqat Administrator)"}
+                          >
+                            <Trash2 size={13} />
                           </button>
                         ) : !isRowEditable ? (
                           <span
@@ -1726,7 +1816,14 @@ export default function ShopReportContent({
                           >
                             <Lock size={13} className="text-amber-500" />
                           </span>
-                        ) : null}
+                        ) : (
+                          <span
+                            className="p-1 text-slate-300 dark:text-slate-600 cursor-help flex items-center justify-center opacity-60"
+                            title={lang === 'ru' ? 'Удаление запрещено (только Администратор)' : "O'chirish taqiqlangan (faqat Administrator)"}
+                          >
+                            <Lock size={11} />
+                          </span>
+                        )}
                       </td>
                     </tr>
                   )

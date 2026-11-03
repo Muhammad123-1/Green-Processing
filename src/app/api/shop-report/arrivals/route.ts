@@ -148,13 +148,22 @@ export async function PUT(req: NextRequest) {
 
 /**
  * Delete an arrival row.
- * Guarded by the same enterprise audit rule:
- * Non-admins can only delete within 24h and between 17:00-09:00. After 24h, only Admin/Director.
+ * Strict enterprise anti-tampering rule:
+ * ONLY ADMIN and DIRECTOR roles can delete previously saved arrival records!
+ * General warehouse operators and users cannot delete saved data under any circumstances.
  */
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const isAdmin = session.role === 'ADMIN' || session.role === 'DIRECTOR'
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Yozuvni o'chirish taqiqlangan! Saqlangan ma'lumotlarni faqat Administrator o'chirish huquqiga ega." },
+        { status: 403 }
+      )
+    }
 
     const { searchParams } = new URL(req.url)
     const id = Number(searchParams.get('id'))
@@ -165,15 +174,6 @@ export async function DELETE(req: NextRequest) {
     const existing = await prisma.shopArrival.findUnique({ where: { id } })
     if (!existing) {
       return NextResponse.json({ error: 'Yozuv topilmadi' }, { status: 404 })
-    }
-
-    const perm = checkEditPermission({
-      role: session.role,
-      createdAt: existing.createdAt,
-    })
-
-    if (!perm.allowed) {
-      return NextResponse.json({ error: perm.reason }, { status: 403 })
     }
 
     await prisma.shopArrival.delete({ where: { id } })

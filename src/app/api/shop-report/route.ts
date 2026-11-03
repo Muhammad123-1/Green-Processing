@@ -17,6 +17,14 @@ export async function POST(req: NextRequest) {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const isAdmin = session.role === 'ADMIN' || session.role === 'DIRECTOR'
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "To'liq bazani yangilash va o'chirish faqat Administrator tomonidan amalga oshirilishi mumkin!" },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
 
     if (body.arrivals && body.arrivals.length > 0) {

@@ -126,3 +126,32 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 }
+
+/**
+ * Delete GP record for a date.
+ * Strictly restricted to ADMIN or DIRECTOR only.
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const isAdmin = session.role === 'ADMIN' || session.role === 'DIRECTOR'
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Tayyor mahsulot (GP) ma'lumotlarini o'chirish taqiqlangan! Faqat Administrator o'chirish huquqiga ega." },
+        { status: 403 }
+      )
+    }
+
+    const { searchParams } = new URL(req.url)
+    const date = searchParams.get('date')
+    if (!date) return NextResponse.json({ error: "Sana ko'rsatilmagan" }, { status: 400 })
+
+    await prisma.shopExpense.delete({ where: { date } })
+    return NextResponse.json({ success: true, deletedDate: date })
+  } catch (error: any) {
+    console.error('Shop GP delete error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
