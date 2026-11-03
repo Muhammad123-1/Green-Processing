@@ -59,6 +59,9 @@ import {
   Area,
   BarChart,
   Bar,
+  LineChart,
+  Line,
+  ReferenceLine,
   PieChart,
   Pie,
   Cell,
@@ -113,6 +116,16 @@ export default function DirectorPage() {
   const [selectedOperationProduct, setSelectedOperationProduct] = useState<string>('ALL')
   const [visibleOperationsLimit, setVisibleOperationsLimit] = useState<number>(60)
   const [arrivalsDisplayLimit, setArrivalsDisplayLimit] = useState<number>(100)
+  const [arrivalsPage, setArrivalsPage] = useState<number>(1)
+  const [warehouseStockPage, setWarehouseStockPage] = useState<number>(1)
+
+  // Interactive 4-Level Chart Drill-Down Modal State
+  const [chartDrillModal, setChartDrillModal] = useState<{
+    type: 'dynamics' | 'defects' | 'coverage' | 'debt' | 'plan' | 'perf'
+    title: string
+    subtitle?: string
+    data: any
+  } | null>(null)
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<'accounting' | 'quality' | 'inspector' | 'admin' | 'production' | null>(null)
   const [deptPeriodFilter, setDeptPeriodFilter] = useState<'today' | 'week' | 'month' | 'all'>('today')
@@ -285,6 +298,14 @@ export default function DirectorPage() {
   }, [charts.shiftComparison, formatDual])
 
   const employeeActivityChart: any[] = charts.employeeActivityChart || []
+
+  // 6 Executive Analytics Charts Data
+  const productionDynamics: any[] = charts.productionDynamics || []
+  const defectsByStage: any[] = charts.defectsByStage || []
+  const inventoryStockCoverage: any[] = charts.inventoryStockCoverage || []
+  const supplierDebts: any[] = charts.supplierDebts || []
+  const productionPlanVsActual: any = charts.productionPlanVsActual || { hasPlan: false, items: [] }
+  const supplierPerformance: any[] = charts.supplierPerformance || []
   const operationsSummary = data?.operationsSummary
 
   // Distinct products for operations product filter dropdown
@@ -359,10 +380,16 @@ export default function DirectorPage() {
   }, [details.recentTransfers, searchQuery])
 
   const filteredInspections = useMemo(() => {
-    const list: any[] = details.recentInspections || details.recentShopArrivals || []
-    if (!searchQuery) return list
+    const rawList: any[] = details.recentShopArrivals || details.recentInspections || []
+    // Sanitize any corrupt/question-mark/demo entries (Fix for ?????? products)
+    const cleanList = rawList.filter((i: any) => {
+      const name = (i.nomenclature || i.product?.name || i.productName || '').trim()
+      if (!name || /^[\s?\uFFFD\-_.]+$/.test(name)) return false
+      return true
+    })
+    if (!searchQuery) return cleanList
     const q = searchQuery.toLowerCase()
-    return list.filter(
+    return cleanList.filter(
       (i: any) =>
         i.supplier?.name?.toLowerCase().includes(q) ||
         i.supplier?.toLowerCase?.().includes(q) ||
@@ -376,6 +403,14 @@ export default function DirectorPage() {
         i.date?.toLowerCase().includes(q)
     )
   }, [details.recentInspections, details.recentShopArrivals, searchQuery])
+
+  // Arrivals 10-per-page Pagination
+  const arrivalsPageSize = 10
+  const totalArrivalsPages = Math.max(1, Math.ceil(filteredInspections.length / arrivalsPageSize))
+  const currentArrivalsPage = Math.min(arrivalsPage, totalArrivalsPages)
+  const pagedArrivals = useMemo(() => {
+    return filteredInspections.slice((currentArrivalsPage - 1) * arrivalsPageSize, currentArrivalsPage * arrivalsPageSize)
+  }, [filteredInspections, currentArrivalsPage])
 
   // -------------------------------------------------------------------------
   // 5 CORE DEPARTMENTS DEFINITIONS (Director Request #10)
@@ -478,6 +513,41 @@ export default function DirectorPage() {
     }
     const d = new Date(s)
     return isNaN(d.getTime()) ? new Date() : d
+  }
+
+  // Universal clean date formatter that never prints 'Invalid Date' or 'M10'
+  const formatCleanDate = (d: any, includeTime: boolean = false): string => {
+    if (!d) return '-'
+    let dt: Date
+    if (d instanceof Date) {
+      dt = d
+    } else if (typeof d === 'string') {
+      const s = d.trim()
+      const dmy = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/)
+      if (dmy) {
+        dt = new Date(parseInt(dmy[3], 10), parseInt(dmy[2], 10) - 1, parseInt(dmy[1], 10))
+      } else {
+        const ymd = s.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/)
+        if (ymd) {
+          dt = new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10))
+        } else {
+          dt = new Date(s)
+        }
+      }
+    } else {
+      dt = new Date(d)
+    }
+
+    if (isNaN(dt.getTime())) return typeof d === 'string' ? d : '-'
+    const day = String(dt.getDate()).padStart(2, '0')
+    const month = String(dt.getMonth() + 1).padStart(2, '0')
+    const year = dt.getFullYear()
+    if (includeTime && (dt.getHours() !== 0 || dt.getMinutes() !== 0)) {
+      const hrs = String(dt.getHours()).padStart(2, '0')
+      const mins = String(dt.getMinutes()).padStart(2, '0')
+      return `${day}.${month}.${year} ${hrs}:${mins}`
+    }
+    return `${day}.${month}.${year}`
   }
 
   // Helper to filter actions by period (Bugun / Shu hafta / Shu oy / Barchasi)
@@ -1080,6 +1150,7 @@ export default function DirectorPage() {
           </div>
         </div>
       )}
+      </div>
 
       {/* ========================================================================= */}
       {/* 3.5. PRIMARY OPERATIONAL CONTROLS: PRIXOD, RASXOD & BRAK */}
@@ -1441,9 +1512,10 @@ export default function DirectorPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 4.5. EXECUTIVE CHARTS & DIAGRAMS */}
+      {/* 4.5. EXECUTIVE CHARTS & INTERACTIVE ANALYTICS (6 KEY CHARTS) */}
       {/* ========================================================================= */}
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* PRIMARY ANALYTICS HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
@@ -1451,64 +1523,81 @@ export default function DirectorPage() {
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                {formatDual("Grafiklar va dinamika", "Графика и динамика", "Analytics & trends")}
+                {formatDual("Asosiy operatsion analitika", "Ключевая операционная аналитика", "Primary Operational Analytics")}
               </h2>
               <p className="text-xs text-slate-500">
-                {formatDual("Operatsion ko'rsatkichlar tahlili", "Анализ ключевых показателей", "Key performance metrics")}
+                {formatDual("Haqiqiy ma'lumotlar tahlili va interaktiv burg'ulash (drill-down)", "Анализ реальных данных с интерактивной детализацией", "Real data analytics with progressive drill-down")}
               </p>
             </div>
           </div>
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
+            {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
+          </span>
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chart 1: Daily Trends (AreaChart) - spans 2 cols on lg */}
-          <div className="lg:col-span-2 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
+        {/* PRIMARY 4 CHARTS — 2-COLUMN RESPONSIVE GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* CHART 1: PRODUCTION DYNAMICS */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-indigo-500/30 transition-all flex flex-col justify-between">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <TrendingUp size={16} className="text-emerald-500" />
-                  {formatDual("Kunlik dinamika", "Дневная динамика", "Daily trend")}
+                  {formatDual("1. Ishlab chiqarish dinamikasi", "1. Динамика производства", "1. Production Dynamics")}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {formatDual("Xomashyo (kg), quti va brak (kg)", "Сырье (кг), коробки и брак (кг)", "Raw (kg), boxes and reject (kg)")}
+                  {formatDual("Xomashyo sarfi (kg) va tayyor mahsulot (kg)", "Расход сырья (кг) и выпуск готовой продукции (кг)", "Raw material consumed (kg) vs finished output (kg)")}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                  {formatDual("Kirim (kg)", "Прием (кг)", "Arrivals (kg)")}
-                </span>
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-                  {formatDual("Mahsulot (quti)", "Выпуск (кор.)", "Output (box)")}
-                </span>
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                  {formatDual("Brak (kg)", "Брак (кг)", "Reject (kg)")}
-                </span>
+              <div className="flex items-center gap-2">
+                {kpis?.production?.avgYieldPercent ? (
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                    {kpis.production.avgYieldPercent}% {formatDual("chiqish normasi", "норма выхода", "yield")}
+                  </span>
+                ) : null}
               </div>
             </div>
 
-            <div className="h-[280px] w-full">
-              {mounted && dailyTrends.length > 0 ? (
+            <div className="flex items-center gap-4 text-xs mb-3 px-1">
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                {formatDual("Sarflangan xomashyo (kg)", "Расход сырья (кг)", "Raw consumed (kg)")}
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                {formatDual("Tayyor mahsulot (kg)", "Выпуск (кг)", "Finished output (kg)")}
+              </span>
+            </div>
+
+            <div className="h-[280px] w-full cursor-pointer">
+              {mounted && productionDynamics.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dailyTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart
+                    data={productionDynamics}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    onClick={(e: any) => {
+                      if (e && e.activePayload && e.activePayload[0]) {
+                        const payload = e.activePayload[0].payload
+                        setChartDrillModal({
+                          type: 'dynamics',
+                          title: `${formatDual("Ishlab chiqarish tahlili", "Анализ производства", "Production Audit")} — ${payload.date}`,
+                          subtitle: formatDual("Sex sarfi, tayyor qutilar va chiqish foizi", "Расход цеха, коробки и процент выхода", "Workshop consumption, boxes & yield"),
+                          data: payload,
+                        })
+                      }
+                    }}
+                  >
                     <defs>
-                      <linearGradient id="colorArrivals" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                      <linearGradient id="dynConsumed" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
-                      <linearGradient id="colorOutput" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                      <linearGradient id="dynOutput" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
                         <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                       </linearGradient>
-                      <linearGradient id="colorReject" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                      </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
                     <XAxis
                       dataKey="date"
                       tickFormatter={(val) => {
@@ -1522,7 +1611,11 @@ export default function DirectorPage() {
                       tick={{ fontSize: 11 }}
                       stroke="#94a3b8"
                     />
-                    <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      stroke="#94a3b8"
+                      tickFormatter={(val) => (val >= 1000 ? `${(val / 1000).toFixed(0)}t` : `${val}kg`)}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#1e293b',
@@ -1530,230 +1623,205 @@ export default function DirectorPage() {
                         borderRadius: '12px',
                         color: '#fff',
                         fontSize: '12px',
-                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
                       }}
-                      labelFormatter={(label) => `Sana: ${label}`}
+                      formatter={(val: any, name: any) => [
+                        `${Number(val).toLocaleString()} kg`,
+                        name === 'consumedKg'
+                          ? formatDual("Sarflangan xomashyo", "Расход сырья", "Raw consumed")
+                          : formatDual("Tayyor mahsulot", "Выпуск", "Finished output"),
+                      ]}
+                      labelFormatter={(label) => `${formatDual("Sana", "Дата", "Date")}: ${label}`}
                     />
                     <Area
                       type="monotone"
-                      dataKey="arrivalsKg"
-                      name={formatDual("Kirim (kg)", "Прием (кг)", "Arrivals (kg)")}
+                      dataKey="consumedKg"
                       stroke="#10b981"
                       strokeWidth={2}
                       fillOpacity={1}
-                      fill="url(#colorArrivals)"
+                      fill="url(#dynConsumed)"
+                      activeDot={{ r: 6 }}
                     />
                     <Area
                       type="monotone"
-                      dataKey="outputBoxes"
-                      name={formatDual("Mahsulot (quti)", "Выпуск (кор.)", "Output (box)")}
+                      dataKey="outputKg"
                       stroke="#6366f1"
                       strokeWidth={2}
                       fillOpacity={1}
-                      fill="url(#colorOutput)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="rejectedKg"
-                      name={formatDual("Brak (kg)", "Брак (кг)", "Reject (kg)")}
-                      stroke="#f43f5e"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#colorReject)"
+                      fill="url(#dynOutput)"
+                      activeDot={{ r: 6 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-slate-400 text-xs">
-                  {formatDual("Tanlangan davr uchun ma'lumotlar mavjud emas", "Нет данных за выбранный период", "No data available for selected period")}
+                  {formatDual("Tanlangan davr uchun ishlab chiqarish dinamikasi mavjud emas", "Нет данных о производстве за период", "No production dynamics data")}
                 </div>
               )}
             </div>
+            <p className="text-[11px] text-slate-400 mt-2 text-right">
+              {formatDual("Nuqta ustiga bosing → kunlik audit", "Кликните точку → аудит дня", "Click point → daily audit")}
+            </p>
           </div>
 
-          {/* Chart 2: Stock Traffic Light Donut Chart */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                  {formatDual("Ombor zaxirasi", "Складские остатки", "Stock balance")}
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400">
-                  {details?.productStockDetails?.length || 0} SKU
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 mb-2">
-                {formatDual("Svetofor qoidasi bo'yicha", "По правилу светофора", "Traffic light status")}
-              </p>
-
-              <div className="h-[200px] w-full relative flex items-center justify-center">
-                {mounted && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={stockDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={80}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {stockDistribution.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(val: any, name: any) => [
-                          `${val} ${formatDual('ta', 'позиций', 'items')}`,
-                          name,
-                        ]}
-                        contentStyle={{
-                          backgroundColor: '#1e293b',
-                          borderColor: '#334155',
-                          borderRadius: '10px',
-                          color: '#fff',
-                          fontSize: '12px',
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-                {/* Center text in Donut */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                    {formatDual("Yetarli", "В норме", "Sufficiency")}
-                  </span>
-                  <span className="text-xl font-black text-emerald-500">
-                    {kpis?.warehouse?.sufficiencyRate != null ? `${kpis.warehouse.sufficiencyRate}%` : '-'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick stock indicators */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-dark-800 mt-2">
-              <div className="text-center p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
-                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  {kpis?.warehouse?.sufficientCount || 0}
-                </div>
-                <div className="text-[10px] text-slate-500 font-medium">
-                  {formatDual("Yetarli", "В норме", "Sufficient")}
-                </div>
-              </div>
-              <div className="text-center p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
-                <div className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                  {kpis?.warehouse?.lowStockCount || 0}
-                </div>
-                <div className="text-[10px] text-slate-500 font-medium">
-                  {formatDual("Kam qolgan", "Мало", "Low")}
-                </div>
-              </div>
-              <div className="text-center p-2 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40">
-                <div className="text-xs font-bold text-rose-600 dark:text-rose-400">
-                  {kpis?.warehouse?.outOfStockCount || 0}
-                </div>
-                <div className="text-[10px] text-slate-500 font-medium">
-                  {formatDual("Tugagan", "Закончилось", "Out")}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Second row of charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Chart 3: Shift comparison (BarChart) */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
+          {/* CHART 2: DEFECT ANALYSIS BY STAGE */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-rose-500/30 transition-all flex flex-col justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <ChefHat size={16} className="text-indigo-500" />
-                  {formatDual("Smenalar taqqoslashi", "Сравнение смен", "Shift comparison")}
+                  <AlertCircle size={16} className="text-rose-500" />
+                  {formatDual("2. Bosqichlar bo'yicha brak tahlili", "2. Анализ брака по этапам", "2. Defect Analysis by Stage")}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {formatDual("1 va 2-smena mahsuloti va braki", "Выпуск и брак 1 и 2 смены", "Output vs rejects")}
+                  {formatDual("Qabul, ishlab chiqarish va saqlashdagi jismoniy brak (kg)", "Брак при приеме, переработке и хранении (кг)", "Actual defects at incoming, processing, storage (kg)")}
                 </p>
               </div>
-              <button
-                onClick={() => setActiveModal('production')}
-                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-              >
-                {formatDual("Batafsil", "Подробнее", "Details")}
-                <ChevronRight size={14} />
-              </button>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                {formatDual("Jismoniy og'irlik (kg)", "Физический вес (кг)", "Physical weight (kg)")}
+              </span>
             </div>
 
-            <div className="h-[240px] w-full">
-              {mounted ? (
+            <div className="flex flex-wrap items-center gap-3 text-xs mb-3 px-1">
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                {formatDual("Qabul (Incoming)", "Прием", "Incoming")}
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                {formatDual("Sex (Processing)", "Цех", "Processing")}
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                {formatDual("Ombor (Storage)", "Склад", "Storage")}
+              </span>
+            </div>
+
+            <div className="h-[280px] w-full cursor-pointer">
+              {mounted && defectsByStage.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={shiftComparison} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis dataKey="shift" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                  <BarChart
+                    data={defectsByStage}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 20 }}
+                    onClick={(e: any) => {
+                      if (e && e.activePayload && e.activePayload[0]) {
+                        const payload = e.activePayload[0].payload
+                        setChartDrillModal({
+                          type: 'defects',
+                          title: `${formatDual("Brak dalolatnomalari", "Акты о браке", "Defect Acts")} — ${payload.product}`,
+                          subtitle: formatDual("Qabul, ishlab chiqarish va saqlash hujjatlari", "Документы по браку", "Underlying defect acts & roots"),
+                          data: payload,
+                        })
+                      }
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
+                    <XAxis
+                      dataKey="product"
+                      tick={{ fontSize: 10 }}
+                      stroke="#94a3b8"
+                      interval={0}
+                      angle={-20}
+                      textAnchor="end"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      stroke="#94a3b8"
+                      tickFormatter={(val) => `${val}kg`}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: '#1e293b',
                         borderColor: '#334155',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         color: '#fff',
                         fontSize: '12px',
                       }}
+                      formatter={(val: any, name: any) => [
+                        `${Number(val).toLocaleString()} kg`,
+                        name === 'incomingKg'
+                          ? formatDual("Qabul jarayonida", "При приеме", "Incoming")
+                          : name === 'processingKg'
+                            ? formatDual("Ishlov berishda", "В переработке", "Processing")
+                            : formatDual("Ombor saqlashda", "При хранении", "Storage"),
+                      ]}
                     />
-                    <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                    <Bar
-                      dataKey="outputBoxes"
-                      name={formatDual("Tayyor mahsulot (quti)", "Выпуск (кор.)", "Output (boxes)")}
-                      fill="#6366f1"
-                      radius={[6, 6, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="rejectedKg"
-                      name={formatDual("Brak / Chiqindi (kg)", "Брак (кг)", "Reject (kg)")}
-                      fill="#f43f5e"
-                      radius={[6, 6, 0, 0]}
-                    />
+                    <Bar dataKey="incomingKg" stackId="def" fill="#f43f5e" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="processingKg" stackId="def" fill="#f59e0b" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="storageKg" stackId="def" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : null}
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
+                  {formatDual("Tanlangan davr uchun brak qaydlari mavjud emas", "Нет зарегистрированных актов о браке", "No defect records available")}
+                </div>
+              )}
             </div>
+            <p className="text-[11px] text-slate-400 mt-2 text-right">
+              {formatDual("Ustun ustiga bosing → rasmiy aktlar ro'yxati", "Кликните столбец → акты брака", "Click bar → defect acts")}
+            </p>
           </div>
 
-          {/* Chart 4: Top Employee Activity (BarChart) */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
+          {/* CHART 3: INVENTORY STOCK COVERAGE */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-emerald-500/30 transition-all flex flex-col justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <Users size={16} className="text-blue-500" />
-                  {formatDual("Xodimlar faolligi", "Активность сотрудников", "Staff activity")}
+                  <Package size={16} className="text-emerald-500" />
+                  {formatDual("3. Zaxiraning qoplash muddati", "3. Покрытие запасов сырья", "3. Inventory Stock Coverage")}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {formatDual("Amallar va operatsiyalar soni", "Количество операций", "Action count")}
+                  {formatDual("Amaldagi qoldiq necha kunlik ishlab chiqarishga yetishi", "На сколько дней производства хватит остатка", "Days of usable inventory remaining")}
                 </p>
               </div>
-              <button
-                onClick={() => setActiveModal('employees')}
-                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-              >
-                {formatDual("Barchasi", "Все", "All")}
-                <ChevronRight size={14} />
-              </button>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                {formatDual("Kun hisobida", "В днях", "In days")}
+              </span>
             </div>
 
-            <div className="h-[240px] w-full">
-              {mounted && employeeActivityChart.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-3 text-xs mb-3 px-1">
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                {formatDual("Yetarli", "В норме", "Sufficient")}
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                {formatDual("Kam qolgan", "Мало", "Low")}
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                {formatDual("Ortiqcha saqlash", "Избыток", "Excess")}
+              </span>
+            </div>
+
+            <div className="h-[280px] w-full cursor-pointer">
+              {mounted && inventoryStockCoverage.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={employeeActivityChart}
                     layout="vertical"
-                    margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+                    data={inventoryStockCoverage}
+                    margin={{ top: 5, right: 30, left: 15, bottom: 5 }}
+                    onClick={(e: any) => {
+                      if (e && e.activePayload && e.activePayload[0]) {
+                        const payload = e.activePayload[0].payload
+                        setChartDrillModal({
+                          type: 'coverage',
+                          title: `${formatDual("Zaxira qoplash muddati", "Покрытие запасов", "Stock Coverage")} — ${payload.name}`,
+                          subtitle: formatDual("Kunlik sarf, qoldiq va me'yoriy saqlash muddatlari", "Расход, остаток и допустимый срок хранения", "Daily burn, stock & approved storage shelf life"),
+                          data: payload,
+                        })
+                      }
+                    }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis type="number" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 11 }}
+                      stroke="#94a3b8"
+                      tickFormatter={(val) => `${val} kun`}
+                    />
                     <YAxis
                       dataKey="name"
                       type="category"
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 10 }}
                       stroke="#94a3b8"
                       width={90}
                     />
@@ -1761,32 +1829,140 @@ export default function DirectorPage() {
                       contentStyle={{
                         backgroundColor: '#1e293b',
                         borderColor: '#334155',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         color: '#fff',
                         fontSize: '12px',
                       }}
-                      formatter={(val: any, name: any) => [
-                        `${val} ${formatDual('ta', 'операций', 'actions')}`,
-                        name === 'actions' ? formatDual("Jami amallar", "Всего действий", "Total actions") : name,
+                      formatter={(val: any) => [
+                        `${val !== null ? `${val} kun` : formatDual("Yetarli emas", "Недостаточно", "N/A")}`,
+                        formatDual("Qoplash muddati", "Срок покрытия", "Stock coverage"),
                       ]}
                     />
-                    <Bar
-                      dataKey="actions"
-                      name={formatDual("Jami amallar", "Всего действий", "Total actions")}
-                      fill="#3b82f6"
-                      radius={[0, 6, 6, 0]}
-                    />
+                    <Bar dataKey="stockCoverageDays" radius={[0, 6, 6, 0]}>
+                      {inventoryStockCoverage.map((entry: any, index: number) => {
+                        const color =
+                          entry.status === 'EXCESS'
+                            ? '#8b5cf6'
+                            : entry.status === 'LOW'
+                              ? '#f59e0b'
+                              : entry.status === 'OUT_OF_STOCK'
+                                ? '#ef4444'
+                                : '#10b981'
+                        return <Cell key={`cov-cell-${index}`} fill={color} />
+                      })}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-slate-400 text-xs">
-                  {formatDual("Xodimlar faoliyati topilmadi", "Нет данных об активности", "No staff activity data")}
+                  {formatDual("Zaxira qoplash muddati hisob-kitobi uchun ma'lumot yo'q", "Нет данных для расчета запасов", "No stock coverage data")}
                 </div>
               )}
             </div>
+            <p className="text-[11px] text-slate-400 mt-2 text-right">
+              {formatDual("Xomashyo ustiga bosing → ombor qoldig'i tahlili", "Кликните сырье → аудит запасов", "Click item → stock audit")}
+            </p>
+          </div>
+
+          {/* CHART 4: SUPPLIER OUTSTANDING DEBT */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-blue-500/30 transition-all flex flex-col justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <DollarSign size={16} className="text-blue-500" />
+                  {formatDual("4. Ta'minotchilar oldidagi qarz", "4. Задолженность поставщикам", "4. Supplier Outstanding Debt")}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {formatDual("Rasmiy xomashyo qabul aktlari bo'yicha haqiqiy qarz", "Фактическая задолженность по официальным актам приемки", "Payables from verified incoming receiving acts")}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                  UZS
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 text-xs mb-3 px-1">
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                {formatDual("Muddati yetmagan", "Срок не истек", "Not yet due")}
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                {formatDual("Muddati o'tgan qarz", "Просроченная задолженность", "Overdue")}
+              </span>
+            </div>
+
+            <div className="h-[280px] w-full cursor-pointer">
+              {mounted && supplierDebts.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    layout="vertical"
+                    data={supplierDebts}
+                    margin={{ top: 5, right: 30, left: 15, bottom: 5 }}
+                    onClick={(e: any) => {
+                      if (e && e.activePayload && e.activePayload[0]) {
+                        const payload = e.activePayload[0].payload
+                        setChartDrillModal({
+                          type: 'debt',
+                          title: `${formatDual("Ta'minotchi qarz taqsimoti", "Детализация задолженности", "Supplier Debt Breakdown")} — ${payload.supplierName}`,
+                          subtitle: formatDual("Invoyslar, qabul aktlari va to'lov muddatlari", "Акты приемки, инвойсы и сроки оплаты", "Verified receiving acts, invoices & due dates"),
+                          data: payload,
+                        })
+                      }
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 11 }}
+                      stroke="#94a3b8"
+                      tickFormatter={(val) =>
+                        val >= 1000000000
+                          ? `${(val / 1000000000).toFixed(1)} mlrd`
+                          : val >= 1000000
+                            ? `${(val / 1000000).toFixed(0)} mln`
+                            : `${val}`
+                      }
+                    />
+                    <YAxis
+                      dataKey="supplierName"
+                      type="category"
+                      tick={{ fontSize: 10 }}
+                      stroke="#94a3b8"
+                      width={100}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1e293b',
+                        borderColor: '#334155',
+                        borderRadius: '12px',
+                        color: '#fff',
+                        fontSize: '12px',
+                      }}
+                      formatter={(val: any, name: any) => [
+                        `${Number(val).toLocaleString()} UZS`,
+                        name === 'notYetDueUzs'
+                          ? formatDual("Muddati yetmagan", "В пределах срока", "Not yet due")
+                          : formatDual("Muddati o'tgan", "Просрочено", "Overdue"),
+                      ]}
+                    />
+                    <Bar dataKey="notYetDueUzs" stackId="debt" fill="#3b82f6" />
+                    <Bar dataKey="overdueUzs" stackId="debt" fill="#ef4444" radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
+                  {formatDual("Tasdiqlangan qarzlar jurnali topilmadi", "Нет данных о задолженности", "No debt records found")}
+                </div>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-2 text-right">
+              {formatDual("Ta'minotchi ustiga bosing → 4 bosqichli burg'ulash", "Кликните поставщика → детальный аудит", "Click supplier → 4-level drill down")}
+            </p>
           </div>
         </div>
-      </div>
 
       {/* ========================================================================= */}
       {/* 4.9. DIRECT DEPARTMENT NAVIGATION PANELS */}
@@ -2056,107 +2232,83 @@ export default function DirectorPage() {
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-5 text-xs text-slate-800 dark:text-slate-200">
               {/* SECTION: WAREHOUSE */}
-              {activeModal === 'warehouse' && (
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-3">
-                      {formatDual("Mahsulotlar qoldig'i (Svetofor)", "Остатки продукции (Светофор)", "Stock balances (Traffic light)")}:
-                    </h4>
-                    <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
-                      <table className="w-full text-left">
-                        <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
-                          <tr>
-                            <th className="p-3">{formatDual("Mahsulot nomi", "Наименование", "Product name")}</th>
-                            <th className="p-3 text-center">{formatDual("Hozirgi qoldiq", "Остаток", "Current stock")}</th>
-                            <th className="p-3 text-center">{formatDual("Maks. saqlash muddati", "Макс. срок хран.", "Max storage")}</th>
-                            <th className="p-3 text-center">{formatDual("Kunlik o'rtacha sarf", "Ср. дневной расход", "Avg daily use")}</th>
-                            <th className="p-3 text-center">{formatDual("Maks. tavsiya zaxira", "Макс. рек. запас", "Max rec. stock")}</th>
-                            <th className="p-3 text-center">{formatDual("Qoplash muddati", "Покрытие запаса", "Stock coverage")}</th>
-                            <th className="p-3 text-center">{formatDual("Holati", "Статус", "Status")}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                          {filteredProducts.map((p: any, idx: number) => (
-                            <tr key={`prod-stock-${p.id || idx}-${p.name || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
-                              <td className="p-3 font-bold text-slate-900 dark:text-white">{p.name}</td>
-                              <td className="p-3 text-center font-bold font-mono">{p.currentStock} {p.unit}</td>
-                              <td className="p-3 text-center text-slate-500 text-xs">
-                                {p.approvedMaxStorageDays ? (
-                                  <span className="font-semibold text-slate-700 dark:text-slate-200">{p.approvedMaxStorageDays} kun</span>
-                                ) : p.unit === 'dona' || /kimyo|tara|qadoq|dezinfek/i.test(p.category || '') || /вода|хлор|уксус|кислот|сорбат|бензоат|соль|туз|divosan|suma|пакет|каробк/i.test(p.name || '') ? (
-                                  <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-800 text-slate-400">
-                                    {formatDual("Uzoq muddatli (Tara/Kimyo)", "Долгосрочный (Тара/Химия)", "Long-term (Pkg/Chem)")}
-                                  </span>
-                                ) : (
-                                  <span className="text-[11px] text-slate-400 italic">
-                                    {formatDual("Kiritilmagan", "Не указан", "Not set")}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="p-3 text-center font-mono text-slate-700 dark:text-slate-300">
-                                {p.avgDailyConsumptionKg ? `${p.avgDailyConsumptionKg} ${p.unit}/kun` : '—'}
-                              </td>
-                              <td className="p-3 text-center font-mono text-indigo-600 dark:text-indigo-400">
-                                {p.maxRecommendedStockKg ? `${p.maxRecommendedStockKg} ${p.unit}` : '—'}
-                              </td>
-                              <td className="p-3 text-center font-mono">
-                                {p.stockCoverageDays != null ? `${p.stockCoverageDays} kun (${p.stockCoverageWeeks ?? '-'} hafta)` : '—'}
-                              </td>
-                              <td className="p-3 text-center">
-                                <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
-                                  p.status === 'SUFFICIENT' ? 'bg-emerald-100 text-emerald-800' :
-                                  p.status === 'EXCESS' ? 'bg-purple-100 text-purple-800' :
-                                  p.status === 'LOW' ? 'bg-amber-100 text-amber-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {p.status === 'SUFFICIENT' ? '🟢 Yetarli' :
-                                   p.status === 'EXCESS' ? '🟣 Ortiqcha (Me’yordan ko‘p)' :
-                                   p.status === 'LOW' ? '🟡 Kam qolgan' : '🔴 Tugagan'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+              {activeModal === 'warehouse' && (() => {
+                const warehousePageSize = 10
+                const totalWarehousePages = Math.ceil(filteredProducts.length / warehousePageSize) || 1
+                const currentWarehousePage = Math.min(Math.max(1, warehouseStockPage), totalWarehousePages)
+                const pagedWarehouseProducts = filteredProducts.slice(
+                  (currentWarehousePage - 1) * warehousePageSize,
+                  currentWarehousePage * warehousePageSize
+                )
 
-                  <div>
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-3">
-                      {formatDual("Ombor transferlari", "Складские перемещения", "Warehouse transfers")}:
-                    </h4>
-                    {filteredTransfers.length === 0 ? (
-                      <p className="text-slate-400 italic p-4 text-center">{formatDual("Transferlar yozuvi topilmadi", "Записи перемещений не найдены", "No transfer records found")}</p>
-                    ) : (
+                return (
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                          <span>{formatDual("Mahsulotlar qoldig'i (Svetofor)", "Остатки продукции (Светофор)", "Stock balances (Traffic light)")}:</span>
+                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono font-bold border border-indigo-200 dark:border-indigo-800">
+                            {filteredProducts.length} {formatDual("ta mahsulot", "товаров", "items")}
+                          </span>
+                        </h4>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {formatDual(
+                            `${(currentWarehousePage - 1) * warehousePageSize + 1}–${Math.min(currentWarehousePage * warehousePageSize, filteredProducts.length)} tasi ko'rsatilmoqda (10 tadan)`,
+                            `Показано ${(currentWarehousePage - 1) * warehousePageSize + 1}–${Math.min(currentWarehousePage * warehousePageSize, filteredProducts.length)} (по 10)`,
+                            `Showing ${(currentWarehousePage - 1) * warehousePageSize + 1}–${Math.min(currentWarehousePage * warehousePageSize, filteredProducts.length)} (10 per page)`
+                          )}
+                        </span>
+                      </div>
                       <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
                         <table className="w-full text-left">
                           <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
                             <tr>
-                              <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
-                              <th className="p-3">{formatDual("Mahsulot", "Продукт", "Product")}</th>
-                              <th className="p-3">{formatDual("Kim chiqardi", "Отпустил", "Issued by")}</th>
-                              <th className="p-3">{formatDual("Kim qabul qildi", "Принял", "Received by")}</th>
-                              <th className="p-3 text-center">{formatDual("Chiqarilgan", "Отпущено", "Issued")}</th>
-                              <th className="p-3 text-center">{formatDual("Qabul", "Принято", "Received")}</th>
-                              <th className="p-3 text-center">{formatDual("Farq", "Разница", "Discrepancy")}</th>
-                              <th className="p-3">{formatDual("Holat", "Статус", "Status")}</th>
+                              <th className="p-3">{formatDual("Mahsulot nomi", "Наименование", "Product name")}</th>
+                              <th className="p-3 text-center">{formatDual("Hozirgi qoldiq", "Остаток", "Current stock")}</th>
+                              <th className="p-3 text-center">{formatDual("Maks. saqlash muddati", "Макс. срок хран.", "Max storage")}</th>
+                              <th className="p-3 text-center">{formatDual("Kunlik o'rtacha sarf", "Ср. дневной расход", "Avg daily use")}</th>
+                              <th className="p-3 text-center">{formatDual("Maks. tavsiya zaxira", "Макс. рек. запас", "Max rec. stock")}</th>
+                              <th className="p-3 text-center">{formatDual("Qoplash muddati", "Покрытие запаса", "Stock coverage")}</th>
+                              <th className="p-3 text-center">{formatDual("Holati", "Статус", "Status")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                            {filteredTransfers.map((tr: any, idx: number) => (
-                              <tr key={`tr-${tr.id || idx}-${idx}`}>
-                                <td className="p-3 text-slate-500">{new Date(tr.createdAt).toLocaleDateString(dateLocale)}</td>
-                                <td className="p-3 font-bold">{tr.product?.name || formatDual("Mahsulot", "Продукт", "Product")}</td>
-                                <td className="p-3 text-indigo-600 font-medium">{tr.issuedByName || formatDual("Skladchi", "Кладовщик", "Warehouse worker")}</td>
-                                <td className="p-3 text-purple-600 font-medium">{tr.receivedByName || formatDual("Oshpaz/Usta", "Повар/Мастер", "Chef/Supervisor")}</td>
-                                <td className="p-3 text-center">{tr.issuedQuantity} {tr.issuedUnit}</td>
-                                <td className="p-3 text-center">{tr.receivedQuantity ?? '-'} {tr.issuedUnit}</td>
-                                <td className={`p-3 text-center font-bold ${tr.discrepancy > 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                                  {tr.discrepancy ? `${tr.discrepancy} ${tr.issuedUnit}` : '0'}
+                            {pagedWarehouseProducts.map((p: any, idx: number) => (
+                              <tr key={`prod-stock-${p.id || idx}-${p.name || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
+                                <td className="p-3 font-bold text-slate-900 dark:text-white">{p.name}</td>
+                                <td className="p-3 text-center font-bold font-mono">{p.currentStock} {p.unit}</td>
+                                <td className="p-3 text-center text-slate-500 text-xs">
+                                  {p.approvedMaxStorageDays ? (
+                                    <span className="font-semibold text-slate-700 dark:text-slate-200">{p.approvedMaxStorageDays} kun</span>
+                                  ) : p.unit === 'dona' || /kimyo|tara|qadoq|dezinfek/i.test(p.category || '') || /вода|хлор|уксус|кислот|сорбат|бензоат|соль|туз|divosan|suma|пакет|каробк/i.test(p.name || '') ? (
+                                    <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-800 text-slate-400">
+                                      {formatDual("Uzoq muddatli (Tara/Kimyo)", "Долгосрочный (Тара/Химия)", "Long-term (Pkg/Chem)")}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] text-slate-400 italic">
+                                      {formatDual("Kiritilmagan", "Не указан", "Not set")}
+                                    </span>
+                                  )}
                                 </td>
-                                <td className="p-3">
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
-                                    {tr.status}
+                                <td className="p-3 text-center font-mono text-slate-700 dark:text-slate-300">
+                                  {p.avgDailyConsumptionKg ? `${p.avgDailyConsumptionKg} ${p.unit}/kun` : '—'}
+                                </td>
+                                <td className="p-3 text-center font-mono text-indigo-600 dark:text-indigo-400">
+                                  {p.maxRecommendedStockKg ? `${p.maxRecommendedStockKg} ${p.unit}` : '—'}
+                                </td>
+                                <td className="p-3 text-center font-mono">
+                                  {p.stockCoverageDays != null ? `${p.stockCoverageDays} kun (${p.stockCoverageWeeks ?? '-'} hafta)` : '—'}
+                                </td>
+                                <td className="p-3 text-center">
+                                  <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
+                                    p.status === 'SUFFICIENT' ? 'bg-emerald-100 text-emerald-800' :
+                                    p.status === 'EXCESS' ? 'bg-purple-100 text-purple-800' :
+                                    p.status === 'LOW' ? 'bg-amber-100 text-amber-800' :
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                    {p.status === 'SUFFICIENT' ? '🟢 Yetarli' :
+                                     p.status === 'EXCESS' ? '🟣 Ortiqcha (Me’yordan ko‘p)' :
+                                     p.status === 'LOW' ? '🟡 Kam qolgan' : '🔴 Tugagan'}
                                   </span>
                                 </td>
                               </tr>
@@ -2164,10 +2316,111 @@ export default function DirectorPage() {
                           </tbody>
                         </table>
                       </div>
-                    )}
+
+                      {/* WAREHOUSE PAGINATION CONTROLS (10 tadan sahifalash) */}
+                      {totalWarehousePages > 1 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-dark-700 mt-3">
+                          <div className="text-xs text-slate-500 font-medium">
+                            {formatDual(
+                              `Sahifa ${currentWarehousePage} / ${totalWarehousePages} (har safar 10 tadan)`,
+                              `Страница ${currentWarehousePage} из ${totalWarehousePages} (по 10 на страницу)`,
+                              `Page ${currentWarehousePage} of ${totalWarehousePages} (10 per page)`
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <button
+                              disabled={currentWarehousePage <= 1}
+                              onClick={() => setWarehouseStockPage((p) => Math.max(1, p - 1))}
+                              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                            >
+                              <ChevronLeft size={14} />
+                              <span>{formatDual("Oldingi 10 ta", "Назад", "Prev 10")}</span>
+                            </button>
+
+                            {Array.from({ length: totalWarehousePages }, (_, i) => i + 1)
+                              .filter((page) => page === 1 || page === totalWarehousePages || Math.abs(page - currentWarehousePage) <= 2)
+                              .reduce<(number | string)[]>((acc, page, idx, arr) => {
+                                if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push('...')
+                                acc.push(page)
+                                return acc
+                              }, [])
+                              .map((item, pIdx) =>
+                                item === '...' ? (
+                                  <span key={`wh-ellipsis-${pIdx}`} className="px-2 py-1 text-slate-400 text-xs">...</span>
+                                ) : (
+                                  <button
+                                    key={`wh-page-${item}`}
+                                    onClick={() => setWarehouseStockPage(item as number)}
+                                    className={`min-w-[32px] h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                                      item === currentWarehousePage
+                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                        : 'bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750'
+                                    }`}
+                                  >
+                                    {item}
+                                  </button>
+                                )
+                              )}
+
+                            <button
+                              disabled={currentWarehousePage >= totalWarehousePages}
+                              onClick={() => setWarehouseStockPage((p) => Math.min(totalWarehousePages, p + 1))}
+                              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                            >
+                              <span>{formatDual("Keyingi 10 ta", "Вперед", "Next 10")}</span>
+                              <ChevronRight size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-3">
+                        {formatDual("Ombor transferlari", "Складские перемещения", "Warehouse transfers")}:
+                      </h4>
+                      {filteredTransfers.length === 0 ? (
+                        <p className="text-slate-400 italic p-4 text-center">{formatDual("Transferlar yozuvi topilmadi", "Записи перемещений не найдены", "No transfer records found")}</p>
+                      ) : (
+                        <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
+                          <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
+                              <tr>
+                                <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
+                                <th className="p-3">{formatDual("Mahsulot", "Продукт", "Product")}</th>
+                                <th className="p-3">{formatDual("Kim chiqardi", "Отпустил", "Issued by")}</th>
+                                <th className="p-3">{formatDual("Kim qabul qildi", "Принял", "Received by")}</th>
+                                <th className="p-3 text-center">{formatDual("Chiqarilgan", "Отпущено", "Issued")}</th>
+                                <th className="p-3 text-center">{formatDual("Qabul", "Принято", "Received")}</th>
+                                <th className="p-3 text-center">{formatDual("Farq", "Разница", "Discrepancy")}</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                              {filteredTransfers.map((tr: any) => (
+                                <tr key={tr.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
+                                  <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{formatCleanDate(tr.createdAt)}</td>
+                                  <td className="p-3 font-bold text-slate-900 dark:text-white">{tr.product?.name || "-"}</td>
+                                  <td className="p-3 text-slate-700 dark:text-slate-300">{tr.issuedByName || "-"}</td>
+                                  <td className="p-3 text-slate-700 dark:text-slate-300">{tr.receivedByName || "-"}</td>
+                                  <td className="p-3 text-center font-mono">{tr.quantityRequested} {tr.product?.unit || 'kg'}</td>
+                                  <td className="p-3 text-center font-mono">{tr.quantityReceived || "-"} {tr.product?.unit || 'kg'}</td>
+                                  <td className="p-3 text-center font-mono">
+                                    {tr.quantityDifference ? (
+                                      <span className={tr.quantityDifference < 0 ? "text-red-500 font-bold" : "text-emerald-500 font-bold"}>
+                                        {tr.quantityDifference}
+                                      </span>
+                                    ) : "-"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
               {/* SECTION: PRODUCTION (SMENA HISOBOTLARI VA QC CHEKLISTLAR) */}
               {activeModal === 'production' && (
@@ -2362,12 +2615,12 @@ export default function DirectorPage() {
                         )}
                       </p>
                     </div>
-                    {filteredInspections.length > arrivalsDisplayLimit && (
+                    {filteredInspections.length > 0 && (
                       <span className="text-xs text-slate-500 font-medium">
                         {formatDual(
-                          `${Math.min(arrivalsDisplayLimit, filteredInspections.length)} tasi ko'rsatilmoqda`,
-                          `Показано ${Math.min(arrivalsDisplayLimit, filteredInspections.length)}`,
-                          `Showing ${Math.min(arrivalsDisplayLimit, filteredInspections.length)}`
+                          `${(currentArrivalsPage - 1) * arrivalsPageSize + 1}-${Math.min(currentArrivalsPage * arrivalsPageSize, filteredInspections.length)} tasi ko'rsatilmoqda (10 tadan)`,
+                          `Показано ${(currentArrivalsPage - 1) * arrivalsPageSize + 1}-${Math.min(currentArrivalsPage * arrivalsPageSize, filteredInspections.length)} (по 10)`,
+                          `Showing ${(currentArrivalsPage - 1) * arrivalsPageSize + 1}-${Math.min(currentArrivalsPage * arrivalsPageSize, filteredInspections.length)} (10 per page)`
                         )}
                       </span>
                     )}
@@ -2390,11 +2643,11 @@ export default function DirectorPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-                            {filteredInspections.slice(0, arrivalsDisplayLimit).map((insp: any, idx: number) => {
+                            {pagedArrivals.map((insp: any, idx: number) => {
                               const isDona = /dona|пакет|каробк|коробк|перчатк|салфетк|полотенц|бумага|халат|маска|шапка/i.test(insp.nomenclature || insp.product?.name || '')
                               return (
                                 <tr key={`insp-${insp.id || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/50 transition-colors">
-                                  <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{insp.date || new Date(insp.createdAt).toLocaleDateString(dateLocale)}</td>
+                                  <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{formatCleanDate(insp.date || insp.createdAt)}</td>
                                   <td className="p-3 font-bold text-slate-900 dark:text-white">{insp.nomenclature || insp.product?.name || formatDual("Xomashyo", "Сырье", "Raw material")}</td>
                                   <td className="p-3 text-slate-700 dark:text-slate-300 text-xs">{insp.supplier?.name || insp.supplier || "-"}</td>
                                   <td className="p-3 text-indigo-600 dark:text-indigo-400 font-bold text-xs">{insp.user?.name || insp.inspector || insp.inspectorName || formatDual("Nazoratchi", "Инспектор", "Inspector")}</td>
@@ -2422,31 +2675,58 @@ export default function DirectorPage() {
                         </table>
                       </div>
 
-                      {filteredInspections.length > arrivalsDisplayLimit && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-dark-800">
-                          <span className="text-xs text-slate-500">
+                      {/* ARRIVALS PAGINATION CONTROLS (10 tadan sahifalash) */}
+                      {totalArrivalsPages > 1 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-dark-700 mt-3">
+                          <div className="text-xs text-slate-500 font-medium">
                             {formatDual(
-                              `Jami ${filteredInspections.length} ta yozuvdan ${Math.min(arrivalsDisplayLimit, filteredInspections.length)} tasi ko'rsatilmoqda`,
-                              `Показано ${Math.min(arrivalsDisplayLimit, filteredInspections.length)} из ${filteredInspections.length} записей`,
-                              `Showing ${Math.min(arrivalsDisplayLimit, filteredInspections.length)} of ${filteredInspections.length} records`
+                              `Sahifa ${currentArrivalsPage} / ${totalArrivalsPages} (har safar 10 tadan)`,
+                              `Страница ${currentArrivalsPage} из ${totalArrivalsPages} (по 10 на страницу)`,
+                              `Page ${currentArrivalsPage} of ${totalArrivalsPages} (10 per page)`
                             )}
-                          </span>
-                          <div className="flex items-center gap-2">
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <button
-                              onClick={() => setArrivalsDisplayLimit((prev) => prev + 100)}
-                              className="px-3.5 py-1.5 text-xs font-bold rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
+                              disabled={currentArrivalsPage <= 1}
+                              onClick={() => setArrivalsPage((p) => Math.max(1, p - 1))}
+                              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
                             >
-                              {formatDual("+100 ta ko'rsatish", "+100 показать", "+100 show more")}
+                              <ChevronLeft size={14} />
+                              <span>{formatDual("Oldingi 10 ta", "Назад", "Prev 10")}</span>
                             </button>
-                            <button
-                              onClick={() => setArrivalsDisplayLimit(filteredInspections.length)}
-                              className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-2xs cursor-pointer"
-                            >
-                              {formatDual(
-                                `Barchasini ko'rsatish (${filteredInspections.length})`,
-                                `Показать все (${filteredInspections.length})`,
-                                `Show all (${filteredInspections.length})`
+
+                            {Array.from({ length: totalArrivalsPages }, (_, i) => i + 1)
+                              .filter((page) => page === 1 || page === totalArrivalsPages || Math.abs(page - currentArrivalsPage) <= 2)
+                              .reduce<(number | string)[]>((acc, page, idx, arr) => {
+                                if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push('...')
+                                acc.push(page)
+                                return acc
+                              }, [])
+                              .map((item, pIdx) =>
+                                item === '...' ? (
+                                  <span key={`arr-ellipsis-${pIdx}`} className="px-2 py-1 text-slate-400 text-xs">...</span>
+                                ) : (
+                                  <button
+                                    key={`arr-page-${item}`}
+                                    onClick={() => setArrivalsPage(item as number)}
+                                    className={`min-w-[32px] h-8 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                                      item === currentArrivalsPage
+                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                        : 'bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750'
+                                    }`}
+                                  >
+                                    {item}
+                                  </button>
+                                )
                               )}
+
+                            <button
+                              disabled={currentArrivalsPage >= totalArrivalsPages}
+                              onClick={() => setArrivalsPage((p) => Math.min(totalArrivalsPages, p + 1))}
+                              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                            >
+                              <span>{formatDual("Keyingi 10 ta", "Вперед", "Next 10")}</span>
+                              <ChevronRight size={14} />
                             </button>
                           </div>
                         </div>
@@ -2666,9 +2946,7 @@ export default function DirectorPage() {
                                           </span>
                                           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 font-mono">
                                             <Clock size={12} />
-                                            {act.date instanceof Date && !isNaN(act.date.getTime())
-                                              ? `${act.date.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })}`
-                                              : act.dateStr || ''}
+                                            {formatCleanDate(act.date || act.dateStr || act.rawData?.actDate || act.rawData?.createdAt, true)}
                                           </span>
                                           {act.user && (
                                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300">
@@ -2845,7 +3123,7 @@ export default function DirectorPage() {
                               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-dark-700 flex items-center justify-between text-xs">
                                 <span className="text-slate-400 text-[11px] truncate max-w-[170px]">
                                   {latestAction?.date
-                                    ? `${formatDual("Oxirgi:", "Посл.:", "Last:")} ${new Date(latestAction.date).toLocaleDateString(dateLocale, { month: 'numeric', day: 'numeric' })} ${new Date(latestAction.date).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}`
+                                    ? `${formatDual("Oxirgi:", "Посл.:", "Last:")} ${formatCleanDate(latestAction.date, true)}`
                                     : formatDual("Amal yo'q", "Нет записей", "No entries")}
                                 </span>
                                 <span className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
@@ -3737,6 +4015,510 @@ export default function DirectorPage() {
         }}
         lang={directorLang}
       />
+
+      {/* ========================================================================= */}
+      {/* 8. INTERACTIVE 4-LEVEL PROGRESSIVE CHART DRILL-DOWN MODAL */}
+      {/* ========================================================================= */}
+      {chartDrillModal && mounted && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setChartDrillModal(null)}
+        >
+          <div
+            className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-200 dark:border-dark-750 flex items-center justify-between bg-slate-50/50 dark:bg-dark-850/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  {chartDrillModal.type === 'dynamics' && <TrendingUp size={20} />}
+                  {chartDrillModal.type === 'defects' && <AlertCircle size={20} />}
+                  {chartDrillModal.type === 'coverage' && <Package size={20} />}
+                  {chartDrillModal.type === 'debt' && <DollarSign size={20} />}
+                  {chartDrillModal.type === 'plan' && <CheckSquare size={20} />}
+                  {chartDrillModal.type === 'perf' && <Truck size={20} />}
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    {chartDrillModal.title}
+                  </h3>
+                  {chartDrillModal.subtitle && (
+                    <p className="text-xs text-slate-500 mt-0.5">{chartDrillModal.subtitle}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setChartDrillModal(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-6">
+              {/* TYPE 1: PRODUCTION DYNAMICS DRILL-DOWN */}
+              {chartDrillModal.type === 'dynamics' && (
+                <div className="space-y-6">
+                  {/* Level 1: Overview KPIs */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Sarflangan xomashyo", "Расход сырья", "Raw Consumed")}
+                      </span>
+                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                        {Number(chartDrillModal.data.consumedKg || 0).toLocaleString()} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Tayyor mahsulot (kg)", "Выпуск (кг)", "Finished Output (kg)")}
+                      </span>
+                      <span className="text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                        {Number(chartDrillModal.data.outputKg || 0).toLocaleString()} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Tayyor qutilar", "Выпуск (коробки)", "Finished Boxes")}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                        {Number(chartDrillModal.data.outputBoxes || 0).toLocaleString()} quti
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Chiqish normasi (Yield)", "Норма выхода", "Production Yield")}
+                      </span>
+                      <span className="text-lg font-black text-indigo-500 font-mono">
+                        {chartDrillModal.data.yieldPercent}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Level 2 & 3: Details & Underlying batches */}
+                  <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-500/20 text-xs text-indigo-900 dark:text-indigo-300 space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-sm">
+                      <ChefHat size={16} />
+                      <span>{formatDual("Sex va operatsion kontekst", "Цех и контекст операций", "Workshop & Operations Context")}</span>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-300">
+                      {formatDual(
+                        `Ushbu kunda (${chartDrillModal.data.date}) qayta ishlash sexida ${Number(chartDrillModal.data.consumedKg).toLocaleString()} kg xomashyo sarflanib, ${Number(chartDrillModal.data.outputKg).toLocaleString()} kg tayyor mahsulot (${chartDrillModal.data.outputBoxes} quti) qadoqlangan. Tabiiy tozalash va ajratish chiqindisi: ${chartDrillModal.data.scrapKg} kg.`,
+                        `В этот день (${chartDrillModal.data.date}) в цехе переработано ${Number(chartDrillModal.data.consumedKg).toLocaleString()} кг сырья, выпущено ${Number(chartDrillModal.data.outputKg).toLocaleString()} кг готовой продукции (${chartDrillModal.data.outputBoxes} коробок).`,
+                        `On ${chartDrillModal.data.date}, ${Number(chartDrillModal.data.consumedKg).toLocaleString()} kg raw material was consumed, producing ${Number(chartDrillModal.data.outputKg).toLocaleString()} kg finished output (${chartDrillModal.data.outputBoxes} boxes).`
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* TYPE 2: DEFECT ANALYSIS DRILL-DOWN */}
+              {chartDrillModal.type === 'defects' && (
+                <div className="space-y-6">
+                  {/* Level 1: Overview */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Jami haqiqiy brak", "Всего брака", "Total Actual Defect")}
+                      </span>
+                      <span className="text-lg font-black text-rose-600 font-mono">
+                        {chartDrillModal.data.totalDefectKg} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Qabul jarayonida", "При приеме", "Incoming")}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                        {chartDrillModal.data.incomingKg} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Ishlov berishda", "В переработке", "Processing")}
+                      </span>
+                      <span className="text-lg font-black text-amber-500 font-mono">
+                        {chartDrillModal.data.processingKg} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Ombor saqlashda", "При хранении", "Storage")}
+                      </span>
+                      <span className="text-lg font-black text-violet-500 font-mono">
+                        {chartDrillModal.data.storageKg} kg
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Level 3 & 4: Underlying Defect Acts List */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3">
+                      {formatDual("Rasmiy dalolatnomalar va javobgarlik (Level 3-4):", "Официальные акты и ответственность:", "Official Defect Acts & Root Causes:")}
+                    </h4>
+                    {chartDrillModal.data.acts && chartDrillModal.data.acts.length > 0 ? (
+                      <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-hidden">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 dark:bg-dark-800 text-slate-500 uppercase font-bold text-[10px] border-b border-slate-200 dark:border-dark-700">
+                            <tr>
+                              <th className="p-3">{formatDual("Akt №", "Акт №", "Act №")}</th>
+                              <th className="p-3">{formatDual("Bosqich", "Этап", "Stage")}</th>
+                              <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
+                              <th className="p-3 text-right">{formatDual("Og'irlik", "Вес", "Quantity")}</th>
+                              <th className="p-3">{formatDual("Sabab / Xulosa", "Причина", "Reason")}</th>
+                              <th className="p-3">{formatDual("Mas'ul / Inspektor", "Ответственный", "Responsible")}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-medium">
+                            {chartDrillModal.data.acts.map((act: any, idx: number) => (
+                              <tr key={act.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
+                                <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">
+                                  {act.rejectionActNumber || act.actNumber || `#${idx + 1}`}
+                                </td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    act.stage === 'INCOMING' ? 'bg-rose-500/10 text-rose-500' :
+                                    act.stage === 'PROCESSING' ? 'bg-amber-500/10 text-amber-500' :
+                                    'bg-violet-500/10 text-violet-500'
+                                  }`}>
+                                    {act.stage}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-slate-500">{act.date}</td>
+                                <td className="p-3 text-right font-mono font-bold text-rose-600">
+                                  {act.quantityKg} kg
+                                </td>
+                                <td className="p-3 text-slate-600 dark:text-slate-300 max-w-xs truncate" title={act.reason}>
+                                  {act.reason}
+                                </td>
+                                <td className="p-3 text-slate-500">
+                                  {act.responsible || act.inspector}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500">{formatDual("Aktlar ro'yxati mavjud emas", "Список актов пуст", "No acts found")}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TYPE 3: INVENTORY STOCK COVERAGE DRILL-DOWN */}
+              {chartDrillModal.type === 'coverage' && (
+                <div className="space-y-6">
+                  {/* Level 1: Overview */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Joriy ombor qoldig'i", "Текущий остаток", "Current Usable Stock")}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                        {Number(chartDrillModal.data.currentStock || 0).toLocaleString()} {chartDrillModal.data.unit || 'kg'}
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Kunlik o'rtacha sarf", "Среднесуточный расход", "Avg Daily Consumption")}
+                      </span>
+                      <span className="text-lg font-black text-slate-700 dark:text-slate-300 font-mono">
+                        {chartDrillModal.data.avgDailyConsumptionKg || 0} kg/kun
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Qoplash muddati", "Срок покрытия", "Stock Coverage")}
+                      </span>
+                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                        {chartDrillModal.data.stockCoverageDays !== null ? `${chartDrillModal.data.stockCoverageDays} kun` : "Noma'lum"}
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Ruxsat etilgan max saqlash", "Макс. срок хранения", "Approved Max Storage")}
+                      </span>
+                      <span className="text-lg font-black text-violet-500 font-mono">
+                        {chartDrillModal.data.approvedMaxStorageDays !== null ? `${chartDrillModal.data.approvedMaxStorageDays} kun` : formatDual("Cheklanmagan", "Не указан", "No limit")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Level 2 & 4: Inventory Standards & Movements */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 space-y-3">
+                    <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                      {formatDual("Zaxira me'yorlari va hisob-kitob (Level 2-4):", "Нормативы и расчет:", "Stock Standards & Analysis:")}
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <span className="text-slate-400 block mb-1">{formatDual("Zaxira holati:", "Статус запасов:", "Stock Status:")}</span>
+                        <span className={`px-2.5 py-1 rounded-full font-bold text-xs ${
+                          chartDrillModal.data.status === 'SUFFICIENT' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                          chartDrillModal.data.status === 'LOW' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                          chartDrillModal.data.status === 'EXCESS' ? 'bg-violet-500/10 text-violet-500 border border-violet-500/20' :
+                          'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                        }`}>
+                          {chartDrillModal.data.status}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block mb-1">{formatDual("Tavsiya etilgan maksimal zaxira:", "Макс. рекомендованный запас:", "Max Recommended Inventory:")}</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
+                          {chartDrillModal.data.maxRecommendedStockKg ? `${chartDrillModal.data.maxRecommendedStockKg} kg` : "Hisoblanmagan"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block mb-1">{formatDual("Jami ombor kirimi:", "Всего приход:", "Total Inbound Arrivals:")}</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
+                          {Number(chartDrillModal.data.totalInKg || 0).toLocaleString()} kg
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block mb-1">{formatDual("Jami sexlarga chiqim:", "Всего расход в цеха:", "Total Shop Expenses:")}</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
+                          {Number(chartDrillModal.data.totalOutKg || 0).toLocaleString()} kg
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TYPE 4: SUPPLIER DEBT DRILL-DOWN (4 LEVELS) */}
+              {chartDrillModal.type === 'debt' && (
+                <div className="space-y-6">
+                  {/* Level 1: Overview */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-500/20">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Jami rasmiy qarz", "Общая задолженность", "Total Outstanding Debt")}
+                      </span>
+                      <span className="text-lg font-black text-blue-600 dark:text-blue-400 font-mono">
+                        {Number(chartDrillModal.data.totalDebtUzs || 0).toLocaleString()} UZS
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Muddati yetmagan", "Срок не истек", "Not Yet Due")}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                        {Number(chartDrillModal.data.notYetDueUzs || 0).toLocaleString()} UZS
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-500/20">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Muddati o'tgan qarz", "Просрочено", "Overdue Debt")}
+                      </span>
+                      <span className="text-lg font-black text-rose-600 dark:text-rose-400 font-mono">
+                        {Number(chartDrillModal.data.overdueUzs || 0).toLocaleString()} UZS
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Qabul aktlari soni", "Количество актов", "Verified Acts Count")}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                        {chartDrillModal.data.actsCount} ta
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Level 3 & 4: Invoices & Quality Acts Breakdown */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3">
+                      {formatDual("Rasmiy xomashyo qabul aktlari va invoyslar (Level 3-4):", "Акты приемки и инвойсы:", "Underlying Receiving Acts & Invoices:")}
+                    </h4>
+                    {chartDrillModal.data.invoices && chartDrillModal.data.invoices.length > 0 ? (
+                      <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-hidden max-h-[350px] overflow-y-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 dark:bg-dark-800 text-slate-500 uppercase font-bold text-[10px] border-b border-slate-200 dark:border-dark-700 sticky top-0">
+                            <tr>
+                              <th className="p-3">{formatDual("Akt №", "Акт №", "Act №")}</th>
+                              <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
+                              <th className="p-3">{formatDual("To'lov muddati", "Срок оплаты", "Due Date")}</th>
+                              <th className="p-3">{formatDual("Mahsulot", "Сырье", "Product")}</th>
+                              <th className="p-3 text-right">{formatDual("Og'irlik", "Вес", "Kg")}</th>
+                              <th className="p-3 text-right">{formatDual("Narx / kg", "Цена", "Price/kg")}</th>
+                              <th className="p-3 text-right">{formatDual("Qarz summasi", "Сумма", "Amount")}</th>
+                              <th className="p-3 text-center">{formatDual("Holat", "Статус", "Status")}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-medium">
+                            {chartDrillModal.data.invoices.map((inv: any, idx: number) => (
+                              <tr key={inv.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
+                                <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">
+                                  #{inv.actNumber}
+                                </td>
+                                <td className="p-3 text-slate-500">{inv.date}</td>
+                                <td className="p-3 text-slate-500 font-mono">{inv.dueDate}</td>
+                                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{inv.productName}</td>
+                                <td className="p-3 text-right font-mono">{Number(inv.warehouseKg).toLocaleString()} kg</td>
+                                <td className="p-3 text-right font-mono text-slate-500">{Number(inv.pricePerKg).toLocaleString()}</td>
+                                <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                                  {Number(inv.amountUzs).toLocaleString()} UZS
+                                </td>
+                                <td className="p-3 text-center">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    inv.isOverdue
+                                      ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                                      : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                                  }`}>
+                                    {inv.isOverdue ? formatDual("Muddati o'tgan", "Просрочено", "Overdue") : formatDual("Yetmagan", "В норме", "Due")}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500">{formatDual("Hujjatlar topilmadi", "Документы не найдены", "No records found")}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TYPE 5: PLAN VS ACTUAL DRILL-DOWN */}
+              {chartDrillModal.type === 'plan' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Haqiqiy mahsulot (kg)", "Фактический выпуск (кг)", "Actual Output (kg)")}
+                      </span>
+                      <span className="text-lg font-black text-indigo-600 font-mono">
+                        {Number(chartDrillModal.data.actualKg || 0).toLocaleString()} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Tayyor qutilar soni", "Количество коробок", "Output Boxes")}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                        {Number(chartDrillModal.data.actualBoxes || 0).toLocaleString()} quti
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-500/20">
+                      <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 block mb-1">
+                        {formatDual("Tasdiqlangan reja", "Утвержденный план", "Approved Plan")}
+                      </span>
+                      <span className="text-sm font-bold text-amber-600">
+                        {formatDual("Reja kiritilmagan", "Не утвержден", "No Plan in DB")}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-xs text-slate-600 dark:text-slate-300">
+                    <p>
+                      {formatDual(
+                        "Ushbu kategoriya bo'yicha ishlab chiqarish rejalari (ProductionPlan) direktor yoki ishlab chiqarish boshlig'i tomonidan kiritilgach, avtomatik reja-fakt og'ishi (% va kg) hisoblanadi.",
+                        "После утверждения планов производства директором отклонение (план-факт) будет рассчитано автоматически.",
+                        "Once approved production plans are submitted, actual vs plan variance will be computed automatically."
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* TYPE 6: SUPPLIER PERFORMANCE DRILL-DOWN */}
+              {chartDrillModal.type === 'perf' && (
+                <div className="space-y-6">
+                  {/* Level 1: Overview */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Jami yetkazib berishlar", "Всего поставок", "Total Deliveries")}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                        {chartDrillModal.data.totalDeliveries} ta
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-500/20">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Qabul qilingan", "Принято (кг)", "Accepted (kg)")}
+                      </span>
+                      <span className="text-lg font-black text-emerald-600 font-mono">
+                        {Number(chartDrillModal.data.acceptedKg || 0).toLocaleString()} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-500/20">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Rad etilgan (Brak)", "Брак (кг)", "Rejected (kg)")}
+                      </span>
+                      <span className="text-lg font-black text-rose-600 font-mono">
+                        {Number(chartDrillModal.data.rejectedKg || 0).toLocaleString()} kg
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700">
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">
+                        {formatDual("Sifat darajasi", "Уровень качества", "Quality Rate")}
+                      </span>
+                      <span className="text-lg font-black text-indigo-500 font-mono">
+                        {chartDrillModal.data.qualityRatePercent}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Level 3 & 4: Rejection Acts List */}
+                  {chartDrillModal.data.rejections && chartDrillModal.data.rejections.length > 0 ? (
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-3">
+                        {formatDual("Rad etilgan (Brak) partiyalar dalolatnomalari:", "Акты отклоненных партий:", "Rejection Acts & Root Causes:")}
+                      </h4>
+                      <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-hidden">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 dark:bg-dark-800 text-slate-500 uppercase font-bold text-[10px] border-b border-slate-200 dark:border-dark-700">
+                            <tr>
+                              <th className="p-3">{formatDual("Rad etish akti №", "Акт брака №", "Rejection Act №")}</th>
+                              <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
+                              <th className="p-3">{formatDual("Xomashyo", "Сырье", "Product")}</th>
+                              <th className="p-3 text-right">{formatDual("Miqdor", "Вес", "Quantity")}</th>
+                              <th className="p-3">{formatDual("Sabab / Xulosa", "Причина", "Reason")}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-medium">
+                            {chartDrillModal.data.rejections.map((rej: any, idx: number) => (
+                              <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
+                                <td className="p-3 font-mono font-bold text-rose-600">{rej.rejectionActNumber}</td>
+                                <td className="p-3 text-slate-500">{rej.date}</td>
+                                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{rej.product}</td>
+                                <td className="p-3 text-right font-mono font-bold text-rose-600">{rej.quantityKg} kg</td>
+                                <td className="p-3 text-slate-600 dark:text-slate-300">{rej.reason}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                      {formatDual("Ushbu ta'minotchi bo'yicha rad etilgan yoki yaroqsiz deb topilgan partiyalar qayd etilmagan (100% qabul qilingan).", "Забракованных партий у данного поставщика не зафиксировано.", "No rejected deliveries recorded for this supplier.")}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-200 dark:border-dark-750 bg-slate-50/50 dark:bg-dark-850/50 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">
+                {formatDual("Zavod ERP rasmiy ma'lumotlar bazasi", "Официальная база данных завода", "Factory ERP Verified Source Records")}
+              </span>
+              <button
+                type="button"
+                onClick={() => setChartDrillModal(null)}
+                className="px-5 py-2 rounded-xl font-bold text-xs bg-slate-200 hover:bg-slate-300 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-200 transition-all shadow-sm"
+              >
+                {formatDual("Yopish", "Закрыть", "Close")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

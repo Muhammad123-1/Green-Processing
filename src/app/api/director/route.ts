@@ -596,12 +596,11 @@ export async function GET(request: NextRequest) {
     })
 
     // -------------------------------------------------------------------------
-    // 3. BRAK (ACTUAL DEFECTS) VS NATURAL TECHNOLOGICAL WASTE (REQUIREMENT 2B & 9)
+    // 3. BRAK (ACTUAL DEFECTS) VS NATURAL TECHNOLOGICAL WASTE (PHYSICAL METRICS ONLY - NO MONETARY VALUATION)
     // -------------------------------------------------------------------------
     let totalActualBrakKg = 0
     let totalActualBrakDona = 0
     let totalNaturalTechWasteKg = 0
-    let totalEstimatedLossUzs = 0
     const brakItems: any[] = []
 
     // A. ExecutiveWastageLog records (Real 3-stage INCOMING, PROCESSING, STORAGE + Accountability)
@@ -609,15 +608,12 @@ export async function GET(request: NextRequest) {
       const qty = w.weightKg || 0
       if (qty <= 0) return
       const unit = detectItemUnit(w.productName)
-      const unitPrice = priceByProductMap.get(w.productName.trim().toLowerCase()) ?? realAvgRawCostPerKg
-      const itemCost = unitPrice !== null && unit === 'kg' ? Math.round(qty * unitPrice) : null
 
       if (w.wastageType === 'NATURAL_TECH_WASTE') {
         totalNaturalTechWasteKg += qty
       } else {
         if (unit === 'kg') {
           totalActualBrakKg += qty
-          if (itemCost !== null) totalEstimatedLossUzs += itemCost
         } else {
           totalActualBrakDona += qty
         }
@@ -651,7 +647,7 @@ export async function GET(request: NextRequest) {
         photoUrl: w.photoUrl || null,
         documentUrl: w.documentUrl || null,
         status: w.responsibilityStatus,
-        cost: itemCost,
+        cost: null,
       })
     })
 
@@ -660,12 +656,9 @@ export async function GET(request: NextRequest) {
       const qty = def.quantity || 0
       const unit = detectItemUnit(def.product?.name || '', def.unit)
       const pName = def.product?.name || 'Mahsulot'
-      const unitPrice = priceByProductMap.get(pName.trim().toLowerCase()) ?? realAvgRawCostPerKg
-      const itemCost = def.estimatedCost ?? (unitPrice !== null && unit === 'kg' ? Math.round(qty * unitPrice) : null)
 
       if (unit === 'kg') {
         totalActualBrakKg += qty
-        if (itemCost !== null) totalEstimatedLossUzs += itemCost
       } else {
         totalActualBrakDona += qty
       }
@@ -690,7 +683,7 @@ export async function GET(request: NextRequest) {
         responsibilityStatus: def.responsible ? 'DETERMINED' : 'NOT_DETERMINED',
         responsible: def.responsible || 'Javobgar aniqlanmagan',
         status: def.status,
-        cost: itemCost,
+        cost: null,
       })
     })
 
@@ -770,18 +763,26 @@ export async function GET(request: NextRequest) {
     // Helper to normalize material keys between ShopArrival (inbound) and ShopExpense (outbound)
     const normalizeMaterialKey = (raw: string): string => {
       const s = raw.trim().toLowerCase()
-      if (s === 'томаты' || s === 'томат' || s === 'tomat') return 'Томат'
-      if (s === 'айсберг' || s === 'салат айсберг' || s === 'ayzberg' || s === 'aysberg') return 'Салат Айсберг'
-      if (s === 'капуста' || s === 'капуста белокачанная' || s === 'капуста белокочанная') return 'Капуста белокачанная'
-      if (s === 'лук' || s === 'лук салатный белый' || s === 'лук белый') return 'лук салатный белый'
-      if (s === 'морковь' || s === 'морковь мытая') return 'Морковь'
-      if (s === 'огурцы' || s === 'огурцы свежие') return 'Огурцы свежие'
-      if (s === 'лимон') return 'Лимон'
-      if (s === 'сельдерей') return 'Сельдерей'
-      if (s === 'шпинат') return 'Шпинат'
-      if (s === 'руккола') return 'Руккола'
-      if (s === 'lollo rosso' || s === 'лолло россо') return 'Lollo Rosso'
-      if (s === 'мята') return 'Мята'
+      if (s.includes('томат') || s.includes('tomat') || s.includes('помидор')) {
+        if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Томат'
+      }
+      if (s.includes('айсберг') || s.includes('айзберг') || s.includes('ayzberg') || s.includes('aysberg')) {
+        if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Салат Айсберг'
+      }
+      if (s.includes('капуст')) return 'Капуста белокачанная'
+      if (s.includes('лук')) {
+        if (!s.includes('пакет')) return 'лук салатный белый'
+      }
+      if (s.includes('морков')) return 'Морковь'
+      if (s.includes('огур')) return 'Огурцы свежие'
+      if (s.includes('лимон')) {
+        if (!s.includes('пакет') && !s.includes('кислот')) return 'Лимон'
+      }
+      if (s.includes('сельдер')) return 'Сельдерей'
+      if (s.includes('шпинат')) return 'Шпинат'
+      if (s.includes('руккол')) return 'Руккола'
+      if (s.includes('lollo') || s.includes('лолло')) return 'Lollo Rosso'
+      if (s.includes('мят')) return 'Мята'
       return raw.trim()
     }
 
@@ -1025,34 +1026,320 @@ export async function GET(request: NextRequest) {
     }
 
     // -------------------------------------------------------------------------
-    // 5. CHARTS: DAILY TRENDS & REAL SHIFT / CATEGORY BREAKDOWN (NO FAKE MULTIPLIERS!)
+    // 5. CHARTS: 6 EXECUTIVE OPERATIONAL ANALYTICS
     // -------------------------------------------------------------------------
-    const dateMap: Record<string, { date: string; arrivalsKg: number; outputBoxes: number; rejectedKg: number }> = {}
-
-    shopArrivals.forEach((sa) => {
-      const d = sa.date
-      if (!d) return
-      if (!dateMap[d]) dateMap[d] = { date: d, arrivalsKg: 0, outputBoxes: 0, rejectedKg: 0 }
-      dateMap[d].arrivalsKg += sa.quantity || 0
-    })
-
-    dailyProductionMap.forEach((p) => {
-      const d = p.date
-      if (!d) return
-      if (!dateMap[d]) dateMap[d] = { date: d, arrivalsKg: 0, outputBoxes: 0, rejectedKg: 0 }
-      dateMap[d].outputBoxes += p.outputBoxes
-      dateMap[d].rejectedKg += p.scrapKg
-    })
-
-    const dailyTrends = Object.values(dateMap)
+    
+    // CHART 1: PRODUCTION DYNAMICS (Raw Material Consumed vs Finished Product Output over time)
+    const productionDynamics = Array.from(dailyProductionMap.values())
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(-30)
-      .map((item) => ({
-        ...item,
-        arrivalsKg: Math.round(item.arrivalsKg),
-        outputBoxes: Math.round(item.outputBoxes),
-        rejectedKg: Math.round(item.rejectedKg),
+      .map((item) => {
+        const yieldPercent = item.consumedKg > 0 ? Math.round((item.outputKg / item.consumedKg) * 1000) / 10 : 0
+        return {
+          date: item.date,
+          consumedKg: Math.round(item.consumedKg * 10) / 10,
+          outputKg: Math.round(item.outputKg * 10) / 10,
+          outputBoxes: Math.round(item.outputBoxes),
+          scrapKg: Math.round(item.scrapKg * 10) / 10,
+          yieldPercent,
+        }
+      })
+
+    // Legacy dailyTrends for backward compatibility
+    const dailyTrends = productionDynamics.map((p) => ({
+      date: p.date,
+      arrivalsKg: p.consumedKg,
+      outputBoxes: p.outputBoxes,
+      rejectedKg: p.scrapKg,
+      yieldPercent: p.yieldPercent,
+    }))
+
+    // CHART 2: DEFECT ANALYSIS BY STAGE (Incoming, Processing, Storage - Physical kg only, NO monetary valuation)
+    // Strictly separates NATURAL_TECH_WASTE from ACTUAL_DEFECT
+    const defectByProductMap = new Map<
+      string,
+      {
+        product: string
+        incomingKg: number
+        processingKg: number
+        storageKg: number
+        totalDefectKg: number
+        incidentsCount: number
+        techWasteKg: number
+        acts: any[]
+      }
+    >()
+
+    // A. Incoming rejected acts
+    incomingActs.forEach((act) => {
+      if (act.decisionRating === 2) {
+        const pName = (act.productName || "Noma'lum xomashyo").trim()
+        const qty = act.warehouseKg || 0
+        const curr = defectByProductMap.get(pName) || {
+          product: pName,
+          incomingKg: 0,
+          processingKg: 0,
+          storageKg: 0,
+          totalDefectKg: 0,
+          incidentsCount: 0,
+          techWasteKg: 0,
+          acts: [],
+        }
+        curr.incomingKg += qty
+        curr.totalDefectKg += qty
+        curr.incidentsCount += 1
+        curr.acts.push({
+          id: `inc-act-${act.id}`,
+          actNumber: act.actNumber,
+          rejectionActNumber: act.rejectionActNumber || `RAD-${act.actNumber}`,
+          stage: 'INCOMING',
+          date: act.actDate,
+          quantityKg: qty,
+          reason: act.decisionText || act.notes || 'Sifat talabiga javob bermadi (Rad etilgan)',
+          responsible: act.supplierName || "Ta'minotchi",
+          inspector: act.inspectorName || 'Sifat nazoratchisi',
+          isTechWaste: false,
+        })
+        defectByProductMap.set(pName, curr)
+      }
+    })
+
+    // B. Executive wastage logs (Processing & Storage, separating tech waste)
+    wastageLogs.forEach((w) => {
+      const pName = (w.productName || "Noma'lum mahsulot").trim()
+      const qty = w.weightKg || 0
+      if (qty <= 0) return
+      const isTech = w.wastageType === 'NATURAL_TECH_WASTE'
+
+      const curr = defectByProductMap.get(pName) || {
+        product: pName,
+        incomingKg: 0,
+        processingKg: 0,
+        storageKg: 0,
+        totalDefectKg: 0,
+        incidentsCount: 0,
+        techWasteKg: 0,
+        acts: [],
+      }
+
+      if (isTech) {
+        curr.techWasteKg += qty
+      } else {
+        if (w.stage === 'INCOMING') curr.incomingKg += qty
+        else if (w.stage === 'STORAGE') curr.storageKg += qty
+        else curr.processingKg += qty
+        curr.totalDefectKg += qty
+        curr.incidentsCount += 1
+      }
+
+      curr.acts.push({
+        id: `wlog-${w.id}`,
+        actNumber: w.actNumber,
+        stage: w.stage,
+        date: w.incidentDate,
+        quantityKg: qty,
+        reason: w.detailedComment || w.reasonCategory || (isTech ? "Me'yoriy tabiiy tozalash chiqindisi" : 'Yaroqsiz mahsulot'),
+        responsible: w.responsiblePersonName || 'Aniqlanmagan',
+        inspector: w.reportedByName || "Mas'ul xodim",
+        isTechWaste: isTech,
+      })
+      defectByProductMap.set(pName, curr)
+    })
+
+    const defectsByStage = Array.from(defectByProductMap.values())
+      .filter((d) => d.totalDefectKg > 0 || d.techWasteKg > 0)
+      .sort((a, b) => b.totalDefectKg - a.totalDefectKg)
+      .slice(0, 10)
+      .map((d) => ({
+        ...d,
+        incomingKg: Math.round(d.incomingKg * 10) / 10,
+        processingKg: Math.round(d.processingKg * 10) / 10,
+        storageKg: Math.round(d.storageKg * 10) / 10,
+        totalDefectKg: Math.round(d.totalDefectKg * 10) / 10,
+        techWasteKg: Math.round(d.techWasteKg * 10) / 10,
       }))
+
+    // CHART 3: INVENTORY STOCK COVERAGE (Days Covered vs Min & Max thresholds)
+    const inventoryStockCoverage = productStockDetails
+      .filter((p) => p.currentStock > 0 || p.minStock !== null)
+      .slice(0, 12)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        unit: p.unit,
+        currentStock: p.currentStock,
+        avgDailyConsumptionKg: p.avgDailyConsumptionKg || 0,
+        stockCoverageDays: p.stockCoverageDays,
+        approvedMaxStorageDays: p.approvedMaxStorageDays,
+        maxRecommendedStockKg: p.maxRecommendedStockKg,
+        minStock: p.minStock,
+        status: p.status,
+        totalInKg: p.totalInKg,
+        totalOutKg: p.totalOutKg,
+      }))
+
+    // CHART 4: SUPPLIER OUTSTANDING DEBT (Not Yet Due vs Overdue in UZS)
+    // Derived strictly from authentic incoming receiving quality acts with real verified prices
+    const supplierDebtMap = new Map<
+      string,
+      {
+        supplierName: string
+        totalDebtUzs: number
+        notYetDueUzs: number
+        overdueUzs: number
+        actsCount: number
+        totalKg: number
+        lastDeliveryDate: string
+        invoices: any[]
+      }
+    >()
+
+    const todayDateStr = toYMD(now)
+    incomingActs.forEach((act) => {
+      if (act.pricePerKg && act.pricePerKg > 0 && act.warehouseKg && act.warehouseKg > 0) {
+        const sName = (act.supplierName || "Boshqa ta'minotchi").trim()
+        const amount = Math.round(act.warehouseKg * act.pricePerKg)
+
+        // Due date: 14 days after actDate
+        let isOverdue = false
+        let dueDateStr = act.actDate
+        try {
+          const actD = new Date(act.actDate)
+          if (!isNaN(actD.getTime())) {
+            const dueD = new Date(actD.getTime() + 14 * 24 * 60 * 60 * 1000)
+            dueDateStr = toYMD(dueD)
+            isOverdue = dueDateStr < todayDateStr
+          }
+        } catch {
+          isOverdue = true
+        }
+
+        const curr = supplierDebtMap.get(sName) || {
+          supplierName: sName,
+          totalDebtUzs: 0,
+          notYetDueUzs: 0,
+          overdueUzs: 0,
+          actsCount: 0,
+          totalKg: 0,
+          lastDeliveryDate: act.actDate,
+          invoices: [],
+        }
+
+        curr.totalDebtUzs += amount
+        if (isOverdue) {
+          curr.overdueUzs += amount
+        } else {
+          curr.notYetDueUzs += amount
+        }
+        curr.actsCount += 1
+        curr.totalKg += Math.round(act.warehouseKg * 10) / 10
+        if (act.actDate > curr.lastDeliveryDate) curr.lastDeliveryDate = act.actDate
+
+        curr.invoices.push({
+          id: `act-inv-${act.id}`,
+          actNumber: act.actNumber,
+          date: act.actDate,
+          dueDate: dueDateStr,
+          productName: act.productName,
+          warehouseKg: Math.round(act.warehouseKg * 10) / 10,
+          pricePerKg: act.pricePerKg,
+          amountUzs: amount,
+          isOverdue,
+          inspector: act.inspectorName || 'Sifat nazoratchisi',
+        })
+
+        supplierDebtMap.set(sName, curr)
+      }
+    })
+
+    const supplierDebts = Array.from(supplierDebtMap.values())
+      .sort((a, b) => b.totalDebtUzs - a.totalDebtUzs)
+      .slice(0, 10)
+
+    const totalSupplierDebtUzs = supplierDebts.reduce((sum, s) => sum + s.totalDebtUzs, 0)
+    const totalOverdueDebtUzs = supplierDebts.reduce((sum, s) => sum + s.overdueUzs, 0)
+
+    // CHART 5: PRODUCTION PLAN VS ACTUAL
+    const topCategories = Array.from(categoryOutputMap.entries())
+      .sort((a, b) => b[1].boxes - a[1].boxes)
+      .slice(0, 5)
+
+    const productionPlanVsActual = {
+      hasPlan: false,
+      message: "Tasdiqlangan ishlab chiqarish rejasi (ProductionPlan) kiritilmagan",
+      items: topCategories.map(([catName, val]) => ({
+        product: catName,
+        plannedKg: 0,
+        actualKg: Math.round(val.kg),
+        actualBoxes: Math.round(val.boxes),
+        deviationKg: Math.round(val.kg),
+        completionPercent: 0,
+        status: 'NO_PLAN',
+      })),
+    }
+
+    // CHART 6: SUPPLIER DELIVERY PERFORMANCE & QUALITY
+    const supplierPerfMap = new Map<
+      string,
+      {
+        supplierName: string
+        totalDeliveries: number
+        acceptedKg: number
+        rejectedKg: number
+        rejectionCount: number
+        qualityRatePercent: number
+        rejections: any[]
+      }
+    >()
+
+    incomingActs.forEach((act) => {
+      const sName = (act.supplierName || 'Boshqa').trim()
+      const qty = act.warehouseKg || 0
+      const isRej = act.decisionRating === 2
+      const curr = supplierPerfMap.get(sName) || {
+        supplierName: sName,
+        totalDeliveries: 0,
+        acceptedKg: 0,
+        rejectedKg: 0,
+        rejectionCount: 0,
+        qualityRatePercent: 100,
+        rejections: [],
+      }
+      curr.totalDeliveries += 1
+      if (isRej) {
+        curr.rejectedKg += qty
+        curr.rejectionCount += 1
+        curr.rejections.push({
+          actNumber: act.actNumber,
+          rejectionActNumber: act.rejectionActNumber || `RAD-${act.actNumber}`,
+          date: act.actDate,
+          product: act.productName,
+          quantityKg: qty,
+          reason: act.decisionText || act.notes || 'Sifat talabiga nomuvofiq',
+        })
+      } else {
+        curr.acceptedKg += qty
+      }
+      supplierPerfMap.set(sName, curr)
+    })
+
+    const supplierPerformance = Array.from(supplierPerfMap.values())
+      .filter((s) => s.totalDeliveries >= 2)
+      .map((s) => {
+        const totalKg = s.acceptedKg + s.rejectedKg
+        const rate = totalKg > 0 ? Math.round((s.acceptedKg / totalKg) * 1000) / 10 : 100
+        return {
+          supplierName: s.supplierName,
+          totalDeliveries: s.totalDeliveries,
+          acceptedKg: Math.round(s.acceptedKg),
+          rejectedKg: Math.round(s.rejectedKg),
+          rejectionCount: s.rejectionCount,
+          qualityRatePercent: rate,
+          rejections: s.rejections,
+        }
+      })
+      .sort((a, b) => b.acceptedKg + b.rejectedKg - (a.acceptedKg + a.rejectedKg))
+      .slice(0, 10)
 
     const stockDistribution = [
       { name: 'Yetarli', value: sufficientCount, color: '#10b981' },
@@ -1070,10 +1357,6 @@ export async function GET(request: NextRequest) {
       curr.rejectedKg += chk.rejectedKg || 0
       shiftAggMap.set(sName, curr)
     })
-
-    const topCategories = Array.from(categoryOutputMap.entries())
-      .sort((a, b) => b[1].boxes - a[1].boxes)
-      .slice(0, 5)
 
     const shiftComparison =
       shiftAggMap.size > 0
@@ -1388,6 +1671,12 @@ export async function GET(request: NextRequest) {
       },
       charts: {
         dailyTrends,
+        productionDynamics,
+        defectsByStage,
+        inventoryStockCoverage,
+        supplierDebts,
+        productionPlanVsActual,
+        supplierPerformance,
         stockDistribution,
         shiftComparison,
         employeeActivityChart,
@@ -1451,11 +1740,22 @@ export async function GET(request: NextRequest) {
           activeUsersWithActions: employeeStats.filter((e) => e.totalActions > 0).length,
           roleBreakdown: roleCountsMap,
         },
+        defectAnalytics: {
+          totalBrakKg: Math.round(totalActualBrakKg),
+          totalBrakDona: Math.round(totalActualBrakDona),
+          naturalTechWasteKg: Math.round(totalNaturalTechWasteKg),
+          defectRatePercent: Math.round(defectRatePercent * 10) / 10,
+        },
+        debts: {
+          totalSupplierDebtUzs,
+          totalOverdueDebtUzs,
+          indebtedSuppliersCount: supplierDebts.length,
+        },
         financialLoss: {
           totalBrakKg: Math.round(totalActualBrakKg),
           naturalTechWasteKg: Math.round(totalNaturalTechWasteKg),
-          avgRawCostPerKg: realAvgRawCostPerKg,
-          estimatedLossUzs: totalEstimatedLossUzs > 0 ? totalEstimatedLossUzs : null,
+          avgRawCostPerKg: null,
+          estimatedLossUzs: null,
         },
         kitchen: {
           mealsCount: safeMealLogs.length,
