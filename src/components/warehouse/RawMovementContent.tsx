@@ -264,13 +264,6 @@ export default function RawMovementContent({
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {lang === 'ru' ? 'Журнал регистрации и перемещения основного сырья на производство' : "Asosiy Xomashyoni Ro'yxatga Olish va Ishlab Chiqarishga Berish Jurnali"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
-            {formatDual(
-              "Xomashyo kelgan sana va vaqti, partiya, kirim og'irligi, saqlash harorati (8:10 va 17:00), sexga berilgan va qaytgan hajmlar hamda kun oxiridagi qoldiq balansi",
-              "Журнал учета поступления основного сырья, температурного режима хранения (8:10 и 17:00), отпуска в производственный цех и остатков на конец дня",
-              "Log for raw material intake, storage temperature (8:10 & 17:00), shop dispatch, returns and day-end balances"
-            )}
-          </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">

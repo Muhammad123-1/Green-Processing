@@ -595,13 +595,6 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
                 </span>
               )}
             </div>
-            <p className="text-xs md:text-sm text-orange-100 font-medium mt-1">
-              {formatDual(
-                "Xodimlar lavozimi · Ish vaqti (soatbay) · Tayyorlangan taomlar & retseptura · Tozalik & Sanitariya fotolari",
-                "Должности сотрудников · Рабочее время · Рецептуры и ингредиенты · Фотоотчеты санитарной обработки",
-                "Staff roles · Shift hours · Recipes & portions · Sanitation & cleaning photo logs"
-              )}
-            </p>
           </div>
         </div>
 

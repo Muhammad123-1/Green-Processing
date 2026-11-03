@@ -366,9 +366,6 @@ export default function FactoryProductionContent() {
               <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
                 {l.title}
               </h1>
-              <p className="text-slate-300 text-xs md:text-sm mt-0.5">
-                {l.subtitle}
-              </p>
             </div>
           </div>
           

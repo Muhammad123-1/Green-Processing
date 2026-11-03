@@ -195,7 +195,6 @@ export default function Header() {
       <div className="flex-1 min-w-0 flex items-center gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">{pageInfo.title}</h2>
-          <p className="text-xs text-slate-500 hidden md:block truncate">{pageInfo.subtitle}</p>
         </div>
 
         {/* Global Search Bar */}

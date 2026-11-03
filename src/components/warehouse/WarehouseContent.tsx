@@ -1243,9 +1243,6 @@ export default function WarehouseContent() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {l.title}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 max-w-xl">
-              {l.subtitle}
-            </p>
           </div>
 
           {/* Navigation Tabs */}
@@ -1544,13 +1541,6 @@ export default function WarehouseContent() {
                   <BarChart3 className="text-emerald-600 dark:text-emerald-400" size={22} />
                   <span>{formatDual("Umumiy Xomashyolar Balansi & Qoldiq Statistikasi", "Сводный баланс и статистика остатков сырья", "Aggregated Raw Material Balance & Stock")}</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-                  {formatDual(
-                    "Sex Ishlab Chiqarish Hisoboti va qabul aktlari bo'yicha jami kelgan, sexga rasxod qilingan va skladdagi sof qoldiq balansi (Kirim - Rasxod = Qoldiq)",
-                    "Сводка по отчетам цеха и актам приемки: общий приход, списание в цех и фактический чистый остаток на складе",
-                    "Aggregated shop arrival and expense balance for all primary raw materials"
-                  )}
-                </p>
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -2498,13 +2488,6 @@ export default function WarehouseContent() {
               <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
                 <span>{lang === 'ru' ? 'Журнал регистрации и перемещения основного сырья на производство' : "Asosiy Xomashyoni Ro'yxatga Olish va Ishlab Chiqarishga Berish Jurnali"}</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                {formatDual(
-                  "Xomashyo qabul qilingan sana/vaqti, partiya, kirim vazni, saqlash harorati (8:10 va 17:00), sexga berilgan va sexdan qaytgan hajmlar hamda kun oxiridagi sof qoldiq hisobi",
-                  "Учет поступления, температуры хранения (8:10 и 17:00), отпуска сырья в цех, возвратов из цеха и остатков на конец дня",
-                  "Raw material intake, storage temperature, dispatch to production, returns and end-of-day balances"
-                )}
-              </p>
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
@@ -2824,13 +2807,6 @@ export default function WarehouseContent() {
               <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
                 <span>{formatDual("ГП (Tayyor Mahsulot Ombori) & Balansi", "ГП (Склад готовой продукции)", "Finished Goods (FG) Warehouse")}</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-                {formatDual(
-                  "Sex Ishlab Chiqarish Hisoboti (Отчет ЦЕХ) orqali ishlab chiqarilgan barcha tayyor mahsulotlar (GP), kunlik chiqarish hajmlari va jami zaxiralar",
-                  "Сводка и баланс готовой продукции цеха (ГП): объемы выпуска, даты и журнал выработки",
-                  "Finished goods produced by the workshop, production volumes, and log"
-                )}
-              </p>
             </div>
 
             <button
@@ -3479,13 +3455,6 @@ export default function WarehouseContent() {
               <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
                 <span>{formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и статистика поставщиков сырья", "Suppliers Registry & Analytics")}</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-                {formatDual(
-                  "Korxonaga xomashyo yetkazib bergan barcha pastafshiklar, yetkazilgan umumiy hajmlar, partiyalar soni va zudlik bilan yangi buyurtma yuborish",
-                  "Все поставщики сырья, общий объем поставок, количество партий и быстрая отправка заказов",
-                  "All raw material suppliers, delivered volumes, delivery count, and fast ordering"
-                )}
-              </p>
             </div>
 
             <button

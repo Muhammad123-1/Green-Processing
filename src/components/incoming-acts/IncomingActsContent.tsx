@@ -656,7 +656,6 @@ export default function IncomingActsContent({
                   {t.formCode}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-1">{t.subtitle}</p>
             </div>
           </div>
         </div>

@@ -212,13 +212,6 @@ export default function SuppliersPage() {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
             {formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и аналитика поставщиков сырья", "Suppliers Registry & Analytics")}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl">
-            {formatDual(
-              "Prixod jurnali orqali kelgan barcha partiyalar tahlili, yetkazilgan umumiy xomashyo hajmlari, kontaktlar va yangi ta'minotchi kiritish",
-              "Анализ всех поступлений из журнала прихода, объемы поставок, контакты и управление поставщиками",
-              "Analysis of all deliveries from arrivals log, volumes, contacts, and supplier management"
-            )}
-          </p>
         </div>
 
         <button 

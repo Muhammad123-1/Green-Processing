@@ -325,9 +325,6 @@ export default function InspectionsContent() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-emerald-300 tracking-tight">
               Sifat Nazorati, Kirish Aktlari & Brak Hisobi
             </h1>
-            <p className="text-slate-300 text-sm mt-1 max-w-2xl">
-              Xomashyo kirish nazorati, GOST talablari, brak va isroflar hisobi hamda yetkazib beruvchilar reytingi
-            </p>
           </div>
 
           {/* Navigation Tabs */}

@@ -105,7 +105,6 @@ export default function ArrivalsContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="section-title">{t('arrivals')}</h1>
-          <p className="section-subtitle">{t('arrivalsSub')}</p>
         </div>
         <div className="flex gap-3">
           <button onClick={exportToExcel} className="btn-secondary">

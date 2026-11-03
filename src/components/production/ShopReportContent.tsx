@@ -919,11 +919,6 @@ export default function ShopReportContent({
             <h1 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
               {lang === 'ru' ? 'Производственный отчет ЦЕХ' : 'Sex Ishlab Chiqarish Hisoboti'}
             </h1>
-            <p className="hidden sm:block text-slate-600 dark:text-slate-400 text-xs mt-0.5 leading-snug line-clamp-1 font-semibold">
-              {lang === 'ru'
-                ? 'Формы ввода прихода, расхода и ежедневный отчет по выходу ГП'
-                : "Kirim, chiqim jadvallari va tayyor mahsulot (GP) hisobotini to'ldirish"}
-            </p>
           </div>
         </div>
 
@@ -977,63 +972,6 @@ export default function ShopReportContent({
                 : (lang === 'ru' ? 'Текст' : 'Matnli')}
             </span>
           </button>
-        </div>
-      </div>
-
-      {/* ENTERPRISE AUDIT & SHIFT WINDOW NOTICE */}
-      <div className="bg-slate-50 dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
-        <div className="flex items-center gap-2.5">
-          <div
-            className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold shrink-0 ${
-              isAdmin
-                ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
-                : shiftWindowActive
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
-            }`}
-          >
-            {isAdmin ? <ShieldAlert size={16} /> : shiftWindowActive ? <Clock size={16} /> : <Lock size={16} />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-black text-slate-900 dark:text-white">
-                {isAdmin
-                  ? (lang === 'ru' ? 'Режим Администратора' : "Administrator / Direktor Rejimi")
-                  : shiftWindowActive
-                  ? (lang === 'ru' ? 'Смена открыта (17:00 – 09:00)' : "Kechki navbat ochiq (17:00 – 09:00)")
-                  : (lang === 'ru' ? 'Дневной режим (09:00 – 17:00)' : "Kunduzgi rejim (09:00 – 17:00)")}
-              </span>
-              <span
-                className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                  isAdmin
-                    ? 'bg-purple-50 text-purple-600 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300'
-                    : shiftWindowActive
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
-                    : 'bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300'
-                }`}
-              >
-                {isAdmin ? 'ADMIN OVERRIDE' : shiftWindowActive ? 'TAHRIRLASH MUMKIN (24h)' : 'TAHRIRLASH QULFLANGAN'}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              {isAdmin
-                ? (lang === 'ru'
-                    ? 'Полный доступ: разрешено создание и редактирование записей любого срока давности.'
-                    : 'To\'liq huquq: Barcha sanalardagi ma\'lumotlarni tahrirlash ruxsati mavjud.')
-                : shiftWindowActive
-                ? (lang === 'ru'
-                    ? 'Разрешено исправление ошибок в записях младше 24 часов с указанием обязательной причины.'
-                    : 'Kiritilganiga 24 soat to\'lmagan xatoliklarni sababini ko\'rsatgan holda o\'zgartirishingiz mumkin.')
-                : (lang === 'ru'
-                    ? 'Редактирование ранее внесенных данных заблокировано. Новые записи (+ Добавить) разрешены.'
-                    : 'Mavjud yozuvlarni o\'zgartirish bloklangan. Faqat yangi kelgan xomashyo qabulini (+ Qo\'shish) kiritish mumkin.')}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-          <span>Rol: <strong className="text-slate-700 dark:text-slate-200">{userRole}</strong></span>
-          <span>•</span>
-          <span>Foydalanuvchi: <strong className="text-slate-700 dark:text-slate-200">{userName}</strong></span>
         </div>
       </div>
 

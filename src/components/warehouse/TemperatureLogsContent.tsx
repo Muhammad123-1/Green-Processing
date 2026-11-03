@@ -243,13 +243,6 @@ export default function TemperatureLogsContent() {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {lang === 'ru' ? 'Чек-лист контроля температуры сырья при хранении' : "Xomashyoni Saqlashdagi Harorat Nazorati Chek-Listi"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
-            {formatDual(
-              "Omborda xomashyoni saqlash harorati ko'rsatkichi (2°C dan past va 5°C dan yuqori bo'lmasligi shart). Kunlik nazorat vaqtlari: 8:00 va 17:00",
-              "Хом ашёни сақлашдаги ҳарорат кўрсаткичи (не ниже 2°C не выше 5°C). Время контроля: 8:00 и 17:00. Фиксация отклонений и корректирующих действий",
-              "Raw material storage temperature checklist (not below 2°C, not above 5°C). Control times: 8:00 & 17:00"
-            )}
-          </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">

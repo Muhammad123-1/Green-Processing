@@ -247,13 +247,6 @@ export default function ProductsPage() {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
             {formatDual("Mahsulotlar & Xomashyo Katalogi", "Каталог продукции и сырья", "Products & Materials Registry")}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-            {formatDual(
-              `Prixod orqali kelgan barcha ${products.length} ta xomashyo, qadoqlash va materiallar ro'yxati, harorat me'yorlari va GOST standartlari`,
-              `Реестр всех ${products.length} видов сырья и материалов из прихода, нормы температуры и стандарты ГОСТ`,
-              `Registry of all ${products.length} raw materials and products from arrivals, temperature norms, and standards`
-            )}
-          </p>
         </div>
 
         <button 

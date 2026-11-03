@@ -415,13 +415,6 @@ export default function OrdersContent() {
             <Truck className="text-blue-500" size={28} />
             <span>{formatDual("Ta'minot va Buyurtmalar Markazi (Snabjenets)", "Центр снабжения и заказов (Снабженец)", "Supply & Purchase Orders Center")}</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
-            {formatDual(
-              "Sklad real qoldig'iga qarab buyurtma berish, yetkazib beruvchilarni boshqarish va kelgan yukni prixod bilan solishtirish",
-              "Заказ сырья по реальным остаткам склада, управление поставщиками и сверка фактических поставок с приходом",
-              "Order raw materials by real stock, manage suppliers, and reconcile deliveries against arrivals"
-            )}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
