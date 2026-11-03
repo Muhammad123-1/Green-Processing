@@ -773,21 +773,54 @@ export default function DirectorPage() {
               {formatDual("Brak mahsulot", "Брак", "Reject")}
             </span>
             <div className="text-2xl sm:text-3xl font-black text-rose-700 dark:text-rose-400 mt-1">
-              {operationsSummary?.brak?.totalKg ? `${operationsSummary.brak.totalKg.toLocaleString()} kg` : "0 kg"}
+              {(operationsSummary?.brak?.totalKg || 0) > 0
+                ? (operationsSummary?.brak?.totalKg || 0) >= 1000
+                  ? `${((operationsSummary?.brak?.totalKg || 0) / 1000).toFixed(1)} tn`
+                  : `${(operationsSummary?.brak?.totalKg || 0).toLocaleString()} kg`
+                : (operationsSummary?.brak?.totalDona || 0) > 0
+                  ? `${(operationsSummary?.brak?.totalDona || 0).toLocaleString()} ${formatDual("dona", "шт", "pcs")}`
+                  : "0 kg"}
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold flex items-center gap-1.5 flex-wrap">
-              <span>{operationsSummary?.brak?.totalCount || 0} {formatDual("ta yaroqsiz", "брак", "defects")} ({operationsSummary?.brak?.defectRate || 0}%)</span>
-              {(operationsSummary?.brak?.totalDona || 0) > 0 && (
-                <span className="text-purple-600 dark:text-purple-400">
-                  + {(operationsSummary?.brak?.totalDona || 0).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
+              {(operationsSummary?.brak?.totalKg || 0) > 0 ? (
+                <>
+                  <span>
+                    {(operationsSummary?.brak?.totalKg || 0).toLocaleString()} kg {formatDual("xomashyo", "сырье", "raw")}
+                  </span>
+                  {(operationsSummary?.brak?.totalDona || 0) > 0 && (
+                    <span className="text-purple-600 dark:text-purple-400">
+                      + {(operationsSummary?.brak?.totalDona || 0).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
+                    </span>
+                  )}
+                </>
+              ) : (operationsSummary?.brak?.totalDona || 0) > 0 ? (
+                <>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+                    0 kg {formatDual("xomashyo (toza)", "сырье (чисто)", "raw (clean)")}
+                  </span>
+                  <span className="text-purple-600 dark:text-purple-400">
+                    • {operationsSummary?.brak?.totalCount || 0} {formatDual("ta qadoq braki", "брак тары", "pkg defects")}
+                  </span>
+                </>
+              ) : (
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+                  {formatDual("Zavodda brak qayd etilmagan", "Брака не зафиксировано", "No defect recorded")}
                 </span>
               )}
             </p>
 
             <div className="mt-4 pt-3 border-t border-rose-500/25 flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Holati:", "Статус:", "Status:")}</span>
+              <span className="text-slate-600 dark:text-slate-400 font-medium">
+                {(operationsSummary?.brak?.totalKg || 0) === 0 && (operationsSummary?.brak?.totalDona || 0) > 0
+                  ? formatDual("Manba:", "Источник:", "Source:")
+                  : formatDual("Holati:", "Статус:", "Status:")}
+              </span>
               <span className="font-bold text-rose-800 dark:text-rose-300">
-                {formatDual("Rad etilgan", "Отклонено", "Rejected")}
+                {(operationsSummary?.brak?.totalKg || 0) === 0 && (operationsSummary?.brak?.totalDona || 0) > 0
+                  ? formatDual("Qadoqlash sexi (Taralar)", "Цех упаковки (Тара)", "Packaging workshop")
+                  : (operationsSummary?.brak?.totalKg || 0) > 0
+                    ? formatDual("Qayd etilgan", "Зафиксировано", "Recorded")
+                    : formatDual("100% Toza", "100% Чисто", "100% Clean")}
               </span>
             </div>
           </div>

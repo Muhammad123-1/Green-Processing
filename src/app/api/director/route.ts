@@ -705,7 +705,7 @@ export async function GET(request: NextRequest) {
           wastageCategory: 'NATURAL_TECH_WASTE',
           stage: 'PROCESSING',
           defectNumber: `TECH-${prod.date}`,
-          productName: `Tabiiy texnologik chiqindi (${prod.date})`,
+          productName: "Tabiiy tozalash chiqindisi",
           batchNumber: `EXP-${prod.date}`,
           quantityKg: prod.scrapKg,
           unit: 'kg',
