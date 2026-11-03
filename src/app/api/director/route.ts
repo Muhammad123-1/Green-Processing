@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
       prisma.log.findMany({
         where: dateFilter,
         include: {
-          user: { select: { id: true, name: true, username: true } },
+          user: { select: { id: true, name: true, username: true, role: true } },
         },
         orderBy: { createdAt: 'desc' },
         take: 150,
@@ -1443,6 +1443,7 @@ export async function GET(request: NextRequest) {
         recentDefectLogs: defectLogs.slice(0, 30),
         recentWastageLogs: wastageLogs.slice(0, 50),
         recentShippingLogs: shippingLogs.slice(0, 30),
+        recentLogs: logs.slice(0, 100),
         employeeStats,
         recentSurveys: surveys.slice(0, 10),
         recentMealLogs: safeMealLogs.slice(0, 10),

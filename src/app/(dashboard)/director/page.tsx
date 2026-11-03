@@ -47,6 +47,10 @@ import {
   Thermometer,
   Building2,
   Hash,
+  Calculator,
+  ClipboardCheck,
+  CheckSquare,
+  Factory,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -108,6 +112,8 @@ export default function DirectorPage() {
   const [selectedOperationProduct, setSelectedOperationProduct] = useState<string>('ALL')
   const [visibleOperationsLimit, setVisibleOperationsLimit] = useState<number>(60)
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
+  const [selectedDepartment, setSelectedDepartment] = useState<'accounting' | 'quality' | 'inspector' | 'admin' | 'production' | null>(null)
+  const [deptPeriodFilter, setDeptPeriodFilter] = useState<'today' | 'week' | 'month' | 'all'>('today')
   const [selectedAuditAction, setSelectedAuditAction] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [archiveEvents, setArchiveEvents] = useState<any[]>([])
@@ -362,6 +368,403 @@ export default function DirectorPage() {
         i.user?.name?.toLowerCase().includes(q)
     )
   }, [details.recentInspections, details.recentShopArrivals, searchQuery])
+
+  // -------------------------------------------------------------------------
+  // 5 CORE DEPARTMENTS DEFINITIONS (Director Request #10)
+  // -------------------------------------------------------------------------
+  const departmentsList = useMemo(() => [
+    {
+      id: 'accounting' as const,
+      name: formatDual("Buxgalteriya", "Бухгалтерия", "Accounting"),
+      role: 'ACCOUNTING',
+      responsible: formatDual("Buxgalteriya bo'limi", "Бухгалтерия", "Accounting dept"),
+      description: formatDual(
+        "Kirim hisob-kitoblari, narxlar, shartnomalar va moliyaviy nazorat",
+        "Учет прихода, цены, расчеты с поставщиками и финконтроль",
+        "Inbound accounting, prices, supplier reconciliation & financial audit"
+      ),
+      icon: Calculator,
+      color: "emerald",
+      badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+      accentBg: "hover:border-emerald-500 dark:hover:border-emerald-500",
+      dotColor: "bg-emerald-500",
+    },
+    {
+      id: 'quality' as const,
+      name: formatDual("Sifat nazoratchisi", "Контролер качества (QC)", "Quality Control (QC)"),
+      role: 'QUALITY_CONTROL',
+      responsible: formatDual("Sifat Nazorati (QC)", "Контроль качества", "Quality Control"),
+      description: formatDual(
+        "Xomashyo sifat qabuli aktlari, smena QC cheklistlari va braklar nazorati",
+        "Акты контроля качества сырья, сменные чек-листы QC и брак",
+        "Raw material QC incoming acts, shift QC checklists & defect auditing"
+      ),
+      icon: ClipboardCheck,
+      color: "blue",
+      badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+      accentBg: "hover:border-blue-500 dark:hover:border-blue-500",
+      dotColor: "bg-blue-500",
+    },
+    {
+      id: 'inspector' as const,
+      name: formatDual("Sex nazoratchisi", "Контролер цеха", "Workshop Inspector"),
+      role: 'INSPECTOR',
+      responsible: formatDual("Sex Nazoratchisi / Texnolog", "Инспектор цеха / Технолог", "Inspector / Technologist"),
+      description: formatDual(
+        "Sex liniyalari nazorati, sanitariya, xomashyo liniyaga uzatilishi va texnologiya",
+        "Контроль линий цеха, санитария, передача сырья на линии и технологические нормы",
+        "Workshop line inspection, sanitation, material feeding & process control"
+      ),
+      icon: ShieldCheck,
+      color: "purple",
+      badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+      accentBg: "hover:border-purple-500 dark:hover:border-purple-500",
+      dotColor: "bg-purple-500",
+    },
+    {
+      id: 'admin' as const,
+      name: formatDual("Administrator", "Администратор", "Administrator"),
+      role: 'ADMIN',
+      responsible: formatDual("Tizim Administratori", "Системный администратор", "System Admin"),
+      description: formatDual(
+        "Tizim xavfsizligi, foydalanuvchilar auditi, zaxira nusxalash va konfiguratsiyalar",
+        "Безопасность системы, аудит пользователей, резервные копии и конфигурация",
+        "System security, user audits, backup archives & global configs"
+      ),
+      icon: ShieldAlert,
+      color: "rose",
+      badgeClass: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+      accentBg: "hover:border-rose-500 dark:hover:border-rose-500",
+      dotColor: "bg-rose-500",
+    },
+    {
+      id: 'production' as const,
+      name: formatDual("Ishlab chiqarish", "Производственный отдел", "Production"),
+      role: 'PRODUCTION',
+      responsible: formatDual("Sex boshlig'i / Ishlab chiqarish", "Начальник цеха / Производство", "Production Supervisor"),
+      description: formatDual(
+        "Xomashyo sarfi, tozalash va kesish, tayyor mahsulot qadoqlash hamda smena chiqimlari",
+        "Расход сырья, зачистка, фасовка готовой продукции и сменные отчеты",
+        "Raw material consumption, trimming, packaging & shift outputs"
+      ),
+      icon: Factory,
+      color: "amber",
+      badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+      accentBg: "hover:border-amber-500 dark:hover:border-amber-500",
+      dotColor: "bg-amber-500",
+    },
+  ], [formatDual])
+
+  // Helper to filter actions by period (Bugun / Shu hafta / Shu oy / Barchasi)
+  const filterActionsByPeriod = (actions: any[], periodFilter: 'today' | 'week' | 'month' | 'all') => {
+    if (periodFilter === 'all') return actions
+    const now = new Date()
+    const todayStr = now.toISOString().split('T')[0]
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    return actions.filter((act) => {
+      if (!act.date || isNaN(act.date.getTime())) return false
+      if (periodFilter === 'today') {
+        return (
+          act.dateStr === todayStr ||
+          (act.date.getFullYear() === now.getFullYear() &&
+            act.date.getMonth() === now.getMonth() &&
+            act.date.getDate() === now.getDate())
+        )
+      }
+      if (periodFilter === 'week') {
+        return act.date >= weekAgo
+      }
+      if (periodFilter === 'month') {
+        return act.date >= monthAgo
+      }
+      return true
+    })
+  }
+
+  // -------------------------------------------------------------------------
+  // MAP ALL ACTIONS TO 5 DEPARTMENTS
+  // -------------------------------------------------------------------------
+  const departmentActionsMap = useMemo(() => {
+    const map: Record<'accounting' | 'quality' | 'inspector' | 'admin' | 'production', any[]> = {
+      accounting: [],
+      quality: [],
+      inspector: [],
+      admin: [],
+      production: [],
+    }
+
+    // 1. Incoming acts (Quality Control & Accounting)
+    ;(details.recentIncomingActs || []).forEach((act: any) => {
+      const actDate = act.actDate ? new Date(act.actDate + 'T12:00:00Z') : new Date(act.createdAt)
+
+      // QC inspection act
+      map.quality.push({
+        id: `act-qc-${act.id}`,
+        dept: 'quality',
+        type: formatDual("QC Xomashyo tekshiruvi (Akt)", "QC Акт приемки сырья", "QC Raw Material Act"),
+        date: actDate,
+        dateStr: act.actDate || (act.createdAt ? new Date(act.createdAt).toISOString().split('T')[0] : ''),
+        details: `${act.productName || "Xomashyo"} — ${act.warehouseKg ? Number(act.warehouseKg).toLocaleString() + " kg" : ""} (${act.supplierName || "Ta'minotchi"}) • Baho: ${act.decisionRating || 4}/5 (${act.decisionText || "Qabul qilindi"})`,
+        badge: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300",
+        category: 'inspection',
+        user: act.inspectorName || formatDual("Sifat Nazorati", "Контролер QC", "QC Inspector"),
+        rawData: act,
+      })
+
+      // Accounting price reconciliation
+      if (act.pricePerKg && Number(act.pricePerKg) > 0) {
+        const totalSum = Number(act.warehouseKg || 0) * Number(act.pricePerKg)
+        map.accounting.push({
+          id: `act-acc-${act.id}`,
+          dept: 'accounting',
+          type: formatDual("Kirim hisob-fakturasi va narx tasdig'i", "Учет прихода и расчет цены", "Inbound Invoice & Price Reconciliation"),
+          date: actDate,
+          dateStr: act.actDate || (act.createdAt ? new Date(act.createdAt).toISOString().split('T')[0] : ''),
+          details: `${act.productName || "Xomashyo"} (${act.supplierName || "Ta'minotchi"}) — ${act.warehouseKg ? Number(act.warehouseKg).toLocaleString() + " kg" : ""} • Narxi: ${Number(act.pricePerKg).toLocaleString()} so'm/kg • Jami: ${totalSum ? totalSum.toLocaleString() + " so'm" : "-"}`,
+          badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
+          category: 'finance',
+          user: formatDual("Buxgalteriya", "Бухгалтерия", "Accounting"),
+          rawData: act,
+        })
+      }
+    })
+
+    // 2. Daily QC Checklists
+    ;(details.recentChecklists || []).forEach((c: any) => {
+      const cDate = c.date ? new Date(c.date + 'T12:00:00Z') : new Date(c.createdAt)
+
+      // Quality control
+      map.quality.push({
+        id: `chk-qc-${c.id}`,
+        dept: 'quality',
+        type: formatDual("Smena QC Sifat tekshiruvi", "Сменный контроль качества QC", "Shift QC Inspection"),
+        date: cDate,
+        dateStr: c.date || (c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : ''),
+        details: `${c.date} (Smena ${c.shift || 1}, ${c.lineName || "Liniya"}) — Chiqish: ${c.totalOutputBox || 0} quti, Brak: ${c.rejectedKg || 0} kg • Holat: ${c.status || "Bajarildi"}`,
+        badge: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300",
+        category: 'checklist',
+        user: c.inspector || formatDual("Sifat Nazorati", "QC", "QC"),
+        rawData: c,
+      })
+
+      // Workshop Inspector
+      map.inspector.push({
+        id: `chk-insp-${c.id}`,
+        dept: 'inspector',
+        type: formatDual("Sex smena va liniya nazorati", "Контроль смены и линий цеха", "Workshop Shift & Line Inspection"),
+        date: cDate,
+        dateStr: c.date || (c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : ''),
+        details: `${c.date} (Smena ${c.shift || 1}) — ${c.lineName || "Ishlab chiqarish liniyasi"} texnologik parametrlar va sanitariya tekshiruvi`,
+        badge: "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300",
+        category: 'checklist',
+        user: c.supervisor || formatDual("Sex Nazoratchisi", "Инспектор цеха", "Workshop Inspector"),
+        rawData: c,
+      })
+
+      // Production (Finished goods packaging)
+      map.production.push({
+        id: `chk-prod-${c.id}`,
+        dept: 'production',
+        type: formatDual("Tayyor mahsulot qadoqlash (Smena)", "Фасовка готовой продукции", "Finished Goods Packaging"),
+        date: cDate,
+        dateStr: c.date || (c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : ''),
+        details: `${c.date} (Smena ${c.shift || 1}) — ${c.totalOutputBox || 0} quti tayyor mahsulot ishlab chiqarilib qadoqlandi`,
+        badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+        category: 'checklist',
+        user: formatDual("Ishlab Chiqarish", "Производство", "Production"),
+        rawData: c,
+      })
+    })
+
+    // 3. Shop Arrivals
+    ;(details.recentShopArrivals || []).forEach((sa: any) => {
+      const saDate = sa.date ? new Date(sa.date + 'T12:00:00Z') : new Date(sa.createdAt)
+
+      // Inspector
+      map.inspector.push({
+        id: `arr-insp-${sa.id}`,
+        dept: 'inspector',
+        type: formatDual("Sexga xomashyo qabuli", "Прием сырья в цех", "Workshop Raw Material Arrival"),
+        date: saDate,
+        dateStr: sa.date || (sa.createdAt ? new Date(sa.createdAt).toISOString().split('T')[0] : ''),
+        details: `${sa.nomenclature || sa.productName || "Xomashyo"} — ${sa.quantity ? Number(sa.quantity).toLocaleString() + " kg" : "Qabul"} (Partiya #${sa.batch || "-"}) • Manba: ${sa.supplier || "Ombor"}`,
+        badge: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300",
+        category: 'transfer_received',
+        user: formatDual("Sex Nazoratchisi", "Инспектор цеха", "Workshop Inspector"),
+        rawData: sa,
+      })
+
+      // Production input
+      map.production.push({
+        id: `arr-prod-${sa.id}`,
+        dept: 'production',
+        type: formatDual("Liniyaga xomashyo uzatilishi", "Подача сырья на линию", "Raw Material Line Feeding"),
+        date: saDate,
+        dateStr: sa.date || (sa.createdAt ? new Date(sa.createdAt).toISOString().split('T')[0] : ''),
+        details: `${sa.nomenclature || sa.productName || "Xomashyo"} — ${sa.quantity ? Number(sa.quantity).toLocaleString() + " kg" : ""} ishlab chiqarish liniyasiga topshirildi`,
+        badge: "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300",
+        category: 'transfer_received',
+        user: formatDual("Ishlab Chiqarish", "Производство", "Production"),
+        rawData: sa,
+      })
+    })
+
+    // 4. Shop Expenses (Production)
+    ;(details.recentShopExpenses || []).forEach((exp: any) => {
+      const expDate = exp.date ? new Date(exp.date + 'T12:00:00Z') : new Date(exp.createdAt)
+      const matKeys = Object.keys(exp.materials || {})
+      const outKeys = Object.keys(exp.outputs || {})
+
+      map.production.push({
+        id: `exp-${exp.id}`,
+        dept: 'production',
+        type: formatDual("Sex xomashyo sarfi va chiqimi", "Расход сырья и выход продукции", "Shop Material Consumption & Output"),
+        date: expDate,
+        dateStr: exp.date || (exp.createdAt ? new Date(exp.createdAt).toISOString().split('T')[0] : ''),
+        details: `${exp.date} — Sarflangan: ${matKeys.length} xil xomashyo • Olingan: ${outKeys.length} xil tayyor mahsulot`,
+        badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+        category: 'expense',
+        user: formatDual("Ishlab Chiqarish", "Производство", "Production"),
+        rawData: exp,
+      })
+    })
+
+    // 5. Stock Transfers (Inspector)
+    ;(details.recentTransfers || []).forEach((tr: any) => {
+      const trDate = new Date(tr.createdAt)
+      map.inspector.push({
+        id: `tr-${tr.id}`,
+        dept: 'inspector',
+        type: formatDual("Ombordan sexga transfer", "Перемещение со склада в цех", "Warehouse to Workshop Transfer"),
+        date: trDate,
+        dateStr: trDate.toISOString().split('T')[0],
+        details: `${tr.product?.name || "Mahsulot"} — ${tr.issuedQuantity} ${tr.issuedUnit || "kg"} transfer qilindi -> ${tr.targetLocation || "Sex"}`,
+        badge: "bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300",
+        category: 'transfer_issued',
+        user: tr.issuedByName || formatDual("Sex Nazoratchisi", "Инспектор", "Inspector"),
+        rawData: tr,
+      })
+    })
+
+    // 6. Sales Orders (Accounting)
+    ;(details.recentSalesOrders || []).forEach((so: any) => {
+      const soDate = new Date(so.createdAt)
+      map.accounting.push({
+        id: `so-${so.id}`,
+        dept: 'accounting',
+        type: formatDual("Sotuv buyurtmasi va hisob-kitob", "Заказ на продажу и расчет", "Sales Order & Invoicing"),
+        date: soDate,
+        dateStr: soDate.toISOString().split('T')[0],
+        details: `${so.customer?.name || "Mijoz"} — ${so.totalAmount ? Number(so.totalAmount).toLocaleString() + " so'm" : "Buyurtma"} (${so.status || "Tasdiqlangan"})`,
+        badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
+        category: 'sales',
+        user: formatDual("Buxgalteriya", "Бухгалтерия", "Accounting"),
+        rawData: so,
+      })
+    })
+
+    // 7. Defect & Wastage Logs (Quality Control)
+    ;(details.recentDefectLogs || []).forEach((df: any) => {
+      const dfDate = new Date(df.createdAt)
+      map.quality.push({
+        id: `df-${df.id}`,
+        dept: 'quality',
+        type: formatDual("Brak va nuqsonlar qaydi", "Акт брака и дефектов", "Defect & Scrap Log"),
+        date: dfDate,
+        dateStr: dfDate.toISOString().split('T')[0],
+        details: `${df.productName || "Mahsulot"} — ${df.rejectedQuantity || df.quantity || 0} kg (${df.reason || "Sifatsiz"})`,
+        badge: "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300",
+        category: 'inspection',
+        user: df.inspector || formatDual("Sifat Nazorati", "QC", "QC"),
+        rawData: df,
+      })
+    })
+
+    ;(details.recentWastageLogs || []).forEach((w: any) => {
+      const wDate = w.incidentDate ? new Date(w.incidentDate + 'T12:00:00Z') : new Date(w.createdAt)
+      map.quality.push({
+        id: `w-${w.id}`,
+        dept: 'quality',
+        type: formatDual("Chiqindi va yo'qotish dalolatnomasi", "Акт отходов и потерь", "Wastage & Loss Audit"),
+        date: wDate,
+        dateStr: w.incidentDate || (w.createdAt ? new Date(w.createdAt).toISOString().split('T')[0] : ''),
+        details: `${w.productName || "Mahsulot"} — ${w.netWasteKg || w.totalWasteKg || 0} kg (${w.stage || "Sex"}) • ${w.lossType || "Chiqindi"}`,
+        badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+        category: 'inspection',
+        user: w.reportedByName || formatDual("Sifat Nazorati", "QC", "QC"),
+        rawData: w,
+      })
+    })
+
+    // 8. Shipping Logs (Quality Control)
+    ;(details.recentShippingLogs || []).forEach((shp: any) => {
+      const shpDate = shp.date ? new Date(shp.date + 'T12:00:00Z') : new Date(shp.createdAt)
+      map.quality.push({
+        id: `shp-${shp.id}`,
+        dept: 'quality',
+        type: formatDual("Yuklash oldi QC nazorati", "Контроль перед отгрузкой QC", "Pre-dispatch QC Inspection"),
+        date: shpDate,
+        dateStr: shp.date || (shp.createdAt ? new Date(shp.createdAt).toISOString().split('T')[0] : ''),
+        details: `${shp.orderNumber || "Buyurtma"} — Harorat: ${shp.truckTemp || "4"}°C, QC: ${shp.qcStatus || "Muvofiq"}`,
+        badge: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300",
+        category: 'inspection',
+        user: formatDual("Sifat Nazorati", "QC", "QC"),
+        rawData: shp,
+      })
+    })
+
+    // 9. System Logs (Admin & respective departments)
+    ;(details.recentLogs || []).forEach((lg: any) => {
+      const lgDate = new Date(lg.createdAt)
+      const role = lg.user?.role
+      const uid = lg.userId
+
+      let targetDept: 'accounting' | 'quality' | 'inspector' | 'admin' | 'production' = 'admin'
+      let actionType = formatDual("Tizim ma'muriyati amali", "Действие системного администратора", "System Administration Task")
+      let badge = "bg-slate-100 text-slate-800 dark:bg-dark-750 dark:text-slate-200"
+
+      if (role === 'ACCOUNTING' || uid === 8 || lg.action.includes('INVOICE') || lg.action.includes('PAYMENT')) {
+        targetDept = 'accounting'
+        actionType = formatDual("Buxgalteriya moliyaviy amali", "Финансовая операция бухгалтерии", "Accounting Financial Task")
+        badge = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+      } else if (role === 'QUALITY_CONTROL' || uid === 3 || lg.action.includes('INSPECTION') || lg.action.includes('QC')) {
+        targetDept = 'quality'
+        actionType = formatDual("Sifat nazorati tizim amali", "Системное действие QC", "QC System Action")
+        badge = "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
+      } else if (role === 'INSPECTOR' || role === 'TECHNOLOGY' || uid === 12 || uid === 4) {
+        targetDept = 'inspector'
+        actionType = formatDual("Sex nazoratchisi amali", "Действие инспектора цеха", "Workshop Inspector Action")
+        badge = "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+      } else if (role === 'PRODUCTION' || role === 'KITCHEN' || uid === 5 || uid === 13) {
+        targetDept = 'production'
+        actionType = formatDual("Ishlab chiqarish qaydi", "Запись производства", "Production Log")
+        badge = "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+      }
+
+      map[targetDept].push({
+        id: `log-${lg.id}`,
+        dept: targetDept,
+        type: actionType,
+        date: lgDate,
+        dateStr: lgDate.toISOString().split('T')[0],
+        details: `${lg.action} — ${lg.details || formatDual("Tizim amali muvaffaqiyatli bajarildi", "Операция успешно выполнена", "System operation executed successfully")}`,
+        badge,
+        category: 'system',
+        user: lg.user?.name || formatDual("Administrator", "Администратор", "Administrator"),
+        rawData: lg,
+      })
+    })
+
+    // Sort each department's actions descending by date
+    Object.keys(map).forEach((key) => {
+      const k = key as keyof typeof map
+      map[k].sort((a, b) => b.date.getTime() - a.date.getTime())
+    })
+
+    return map
+  }, [details, formatDual])
 
   const employeeActions = useMemo(() => {
     if (!selectedEmployee) return []
@@ -976,9 +1379,12 @@ export default function DirectorPage() {
           </div>
         </div>
 
-        {/* CARD 4: XODIMLAR FAOLLIGI (KIM NIMA ISH QILGAN) */}
+        {/* CARD 4: XODIMLAR FAOLIYATI (5 TA ASOSIY BO'LIM) */}
         <div
-          onClick={() => setActiveModal('employees')}
+          onClick={() => {
+            setSelectedDepartment(null)
+            setActiveModal('employees')
+          }}
           className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group relative overflow-hidden"
         >
           <div className="flex items-start justify-between mb-3">
@@ -991,19 +1397,19 @@ export default function DirectorPage() {
           </div>
 
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            {formatDual("Xodimlar auditi", "Аудит сотрудников", "Staff audit")}
+            {formatDual("Xodimlar faoliyati", "Деятельность отделов", "Department activities")}
           </span>
           <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-            {kpis?.employees?.activeUsersWithActions || 0} <span className="text-sm font-semibold text-slate-400">/ {kpis?.employees?.totalUsers || 0} {formatDual("xodim", "сотр.", "staff")}</span>
+            5 <span className="text-sm font-semibold text-slate-400">{formatDual("ta asosiy bo'lim", "ключевых отделов", "core departments")}</span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            {formatDual("Tizimda faoliyat olib borgan xodimlar", "Сотрудники, проявившие активность в системе", "Employees active in the system")}
+          <p className="text-xs text-slate-400 mt-1 truncate">
+            {formatDual("Buxgalteriya, Sifat, Sex, Admin, Ishlab chiqarish", "Бухгалтерия, Контроль качества, Цех, Админ, Производство", "Accounting, QC, Inspector, Admin, Production")}
           </p>
 
           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
-            <span className="text-slate-400">{formatDual("Eng faol:", "Наиболее активный:", "Most active:")}</span>
-            <span className="font-bold text-indigo-600">
-              {details.employeeStats?.[0]?.name || formatDual("Nazoratchi", "Инспектор", "Inspector")} ({details.employeeStats?.[0]?.totalActions || 0} {formatDual("amal", "действий", "actions")})
+            <span className="text-slate-400">{formatDual("Nazorat turi:", "Вид контроля:", "Monitoring:")}</span>
+            <span className="font-bold text-indigo-600 flex items-center gap-1">
+              {formatDual("Kunlik, haftalik, oylik", "День, неделя, месяц", "Daily, weekly, monthly")}
             </span>
           </div>
         </div>
@@ -1570,7 +1976,7 @@ export default function DirectorPage() {
                     {activeModal === 'warehouse' && formatDual("Ombor zaxirasi", "Складские остатки", "Warehouse stock")}
                     {activeModal === 'production' && formatDual("Ishlab chiqarish", "Производство", "Production")}
                     {activeModal === 'arrivals' && formatDual("Xomashyo qabuli", "Прием сырья", "Raw arrivals")}
-                    {activeModal === 'employees' && formatDual("Xodimlar auditi", "Аудит сотрудников", "Employee audit")}
+                    {activeModal === 'employees' && formatDual("Xodimlar faoliyati", "Деятельность отделов", "Department activities")}
                     {activeModal === 'surveys' && formatDual("Mijozlar so'rovnomalari", "Опросы клиентов", "Customer surveys")}
                     {activeModal === 'alerts' && formatDual("Shubhali holatlar", "Аномалии", "Discrepancies & alerts")}
                     {activeModal === 'archive' && formatDual("Umumiy Arxiv", "Общий архив", "Global Archive")}
@@ -1582,7 +1988,9 @@ export default function DirectorPage() {
                     )}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    {activeModal === 'operations'
+                    {activeModal === 'employees'
+                      ? formatDual("5 ta asosiy bo'lim faoliyati va kunlik, haftalik hamda oylik qilingan ishlar nazorati", "Контроль деятельности 5 ключевых отделов, ежедневных, еженедельных и ежемесячных задач", "Monitoring of 5 core departments and daily, weekly, and monthly completed tasks")
+                      : activeModal === 'operations'
                       ? operationsTab === 'prixod'
                         ? formatDual("Ombor va sexlarga xomashyo qabuli", "Прием сырья и материалов на склад и в цеха", "Inbound arrivals and materials")
                         : operationsTab === 'rasxod'
@@ -1949,101 +2357,295 @@ export default function DirectorPage() {
                 </div>
               )}
 
-              {/* SECTION: EMPLOYEES AUDIT */}
+              {/* SECTION: XODIMLAR FAOLIYATI (5 TA ASOSIY BO'LIM VA KUNLIK/HAFTALIK/OYLIK DRILL-DOWN) */}
               {activeModal === 'employees' && (
                 <div className="space-y-6">
-                  {selectedEmployee ? (
+                  {selectedDepartment ? (
                     <div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-dark-700">
-                        <div>
-                          <button
-                            onClick={() => setSelectedEmployee(null)}
-                            className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline mb-1 flex items-center gap-1"
-                          >
-                            &larr; {formatDual("Barcha xodimlar ro'yxatiga qaytish", "Назад ко всем сотрудникам", "Back to all staff")}
-                          </button>
-                          <h4 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                            <span>{selectedEmployee.name}</span>
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600">
-                              @{selectedEmployee.username} ({selectedEmployee.role})
-                            </span>
-                          </h4>
-                        </div>
-                        <span className="text-xs text-slate-500 font-bold">
-                          {formatDual("Jami", "Всего", "Total")} {employeeActions.length} {formatDual("ta saqlangan amal", "сохраненных действий", "saved actions")}
-                        </span>
-                      </div>
+                      {/* DEPARTMENT DRILL-DOWN VIEW */}
+                      {(() => {
+                        const currentDept = departmentsList.find((d) => d.id === selectedDepartment) || departmentsList[0]
+                        const allDeptActions = departmentActionsMap[selectedDepartment] || []
+                        const todayActions = filterActionsByPeriod(allDeptActions, 'today')
+                        const weekActions = filterActionsByPeriod(allDeptActions, 'week')
+                        const monthActions = filterActionsByPeriod(allDeptActions, 'month')
+                        const activeDeptActions = filterActionsByPeriod(allDeptActions, deptPeriodFilter)
+                        const DeptIcon = currentDept.icon
 
-                      {employeeActions.length === 0 ? (
-                        <p className="text-slate-400 italic p-6 text-center">{formatDual("Tanlangan davrda saqlangan amallar topilmadi", "За выбранный период действий не найдено", "No actions found for selected period")}</p>
-                      ) : (
-                        <div className="space-y-2.5">
-                          {employeeActions.map((act: any, idx: number) => (
-                            <div
-                              key={idx}
-                              onClick={() => setSelectedAuditAction(act)}
-                              className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-4 group"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${act.badge}`}>
-                                    {act.type}
-                                  </span>
-                                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                                    {new Date(act.date).toLocaleString(dateLocale)}
-                                  </span>
+                        return (
+                          <div className="space-y-5">
+                            {/* Top Navigation & Department Title */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-dark-700">
+                              <div>
+                                <button
+                                  onClick={() => setSelectedDepartment(null)}
+                                  className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline mb-2 flex items-center gap-1.5 transition-transform hover:-translate-x-0.5"
+                                >
+                                  &larr; {formatDual("Barcha 5 ta bo'limga qaytish", "Назад ко всем 5 отделам", "Back to all 5 departments")}
+                                </button>
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-10 h-10 rounded-2xl ${currentDept.badgeClass} flex items-center justify-center font-bold shadow-sm`}>
+                                    <DeptIcon size={20} />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                      <span>{currentDept.name}</span>
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-dark-700">
+                                        {currentDept.role}
+                                      </span>
+                                    </h4>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                      {formatDual("Mas'ul:", "Ответственный:", "Responsible:")} <b className="text-slate-700 dark:text-slate-300">{currentDept.responsible}</b> • {currentDept.description}
+                                    </p>
+                                  </div>
                                 </div>
-                                <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                                  {act.details}
-                                </p>
                               </div>
-                              <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 group-hover:translate-x-1 transition-transform">
-                                <span className="hidden sm:inline">{formatDual("Barcha ma'lumotlar", "Все данные", "Full details")}</span>
-                                <ChevronRight size={18} />
+
+                              <div className="text-left sm:text-right">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                  {formatDual("Jami qilingan ishlar", "Всего задач", "Total completed tasks")}
+                                </span>
+                                <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                                  {allDeptActions.length} <span className="text-xs font-semibold text-slate-400">{formatDual("ta", "дел", "tasks")}</span>
+                                </span>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
+
+                            {/* PERIOD SELECTOR TABS (Bugun / Shu hafta / Shu oy / Barchasi) */}
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-dark-800 rounded-2xl border border-slate-200 dark:border-dark-700">
+                                {[
+                                  {
+                                    id: 'today' as const,
+                                    label: formatDual("Bugun (Kunlik nazorat)", "Сегодня (Дневной контроль)", "Today (Daily)"),
+                                    count: todayActions.length,
+                                  },
+                                  {
+                                    id: 'week' as const,
+                                    label: formatDual("Shu hafta (Haftalik nazorat)", "Эта неделя (Недельный контроль)", "This week (Weekly)"),
+                                    count: weekActions.length,
+                                  },
+                                  {
+                                    id: 'month' as const,
+                                    label: formatDual("Shu oy (Oylik nazorat)", "Этот месяц (Месячный контроль)", "This month (Monthly)"),
+                                    count: monthActions.length,
+                                  },
+                                  {
+                                    id: 'all' as const,
+                                    label: formatDual("Barcha davr", "Весь период", "All time"),
+                                    count: allDeptActions.length,
+                                  },
+                                ].map((tab) => (
+                                  <button
+                                    key={tab.id}
+                                    onClick={() => setDeptPeriodFilter(tab.id)}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                      deptPeriodFilter === tab.id
+                                        ? 'bg-white dark:bg-dark-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/80 dark:border-dark-700'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                  >
+                                    <span>{tab.label}</span>
+                                    <span
+                                      className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                        deptPeriodFilter === tab.id
+                                          ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300'
+                                          : 'bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-300'
+                                      }`}
+                                    >
+                                      {tab.count}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+
+                              <span className="text-xs text-slate-400 font-medium">
+                                {deptPeriodFilter === 'today' && formatDual("Kun davomida bajarilgan amallar ro'yxati", "Задачи, выполненные в течение дня", "Tasks completed during the day")}
+                                {deptPeriodFilter === 'week' && formatDual("Oxirgi 7 kunlik ishlar monitoringi", "Мониторинг за последние 7 дней", "Past 7 days task monitoring")}
+                                {deptPeriodFilter === 'month' && formatDual("Oxirgi 30 kunlik ishlar nazorati", "Контроль за последние 30 дней", "Past 30 days task control")}
+                                {deptPeriodFilter === 'all' && formatDual("Tizimdagi barcha rasmiy qaydlar", "Все официальные записи", "All official records")}
+                              </span>
+                            </div>
+
+                            {/* Completed Actions List */}
+                            {activeDeptActions.length === 0 ? (
+                              <div className="bg-slate-50 dark:bg-dark-800 p-8 rounded-3xl border border-slate-200 dark:border-dark-700 text-center space-y-3">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-200/60 dark:bg-dark-700 text-slate-400 mx-auto flex items-center justify-center">
+                                  <Clock size={24} />
+                                </div>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                  {deptPeriodFilter === 'today'
+                                    ? formatDual("Bugun ushbu bo'lim tomonidan yangi amallar qayd etilmadi", "Сегодня этим отделом новых задач не выполнялось", "No actions recorded for this department today")
+                                    : formatDual("Tanlangan davrda ushbu bo'lim tomonidan amallar topilmadi", "За выбранный период действий не найдено", "No actions found for selected period")}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  {formatDual("Haftalik yoki oylik nazoratga o'tish uchun quyidagi tugmalardan birini tanlang:", "Для просмотра других периодов нажмите:", "Switch to other periods below:")}
+                                </p>
+                                <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                                  <button
+                                    onClick={() => setDeptPeriodFilter('week')}
+                                    className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100"
+                                  >
+                                    {formatDual("Haftalik nazorat", "Недельный контроль", "Weekly control")} ({weekActions.length})
+                                  </button>
+                                  <button
+                                    onClick={() => setDeptPeriodFilter('month')}
+                                    className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100"
+                                  >
+                                    {formatDual("Oylik nazorat", "Месячный контроль", "Monthly control")} ({monthActions.length})
+                                  </button>
+                                  <button
+                                    onClick={() => setDeptPeriodFilter('all')}
+                                    className="px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-300"
+                                  >
+                                    {formatDual("Barcha amallar", "Все действия", "All actions")} ({allDeptActions.length})
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-2.5">
+                                {activeDeptActions.map((act: any, idx: number) => (
+                                  <div
+                                    key={act.id || idx}
+                                    onClick={() => setSelectedAuditAction(act)}
+                                    className="bg-white dark:bg-dark-800 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-4 group"
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${act.badge}`}>
+                                          {act.type}
+                                        </span>
+                                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
+                                          <Clock size={12} />
+                                          {act.date ? new Date(act.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' }) : ''}{' '}
+                                          {act.date ? new Date(act.date).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' }) : ''}
+                                        </span>
+                                        {act.user && (
+                                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300">
+                                            {act.user}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                        {act.details}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 group-hover:translate-x-1 transition-transform">
+                                      <span className="hidden sm:inline">{formatDual("Barcha ma'lumotlar", "Все данные", "Full details")}</span>
+                                      <ChevronRight size={18} />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
                   ) : (
                     <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-3">
-                        {formatDual("Xodimlar faolligi", "Активность сотрудников", "Staff activity")}:
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {(details.employeeStats || []).map((emp: any) => (
-                          <div
-                            key={emp.userId}
-                            onClick={() => setSelectedEmployee(emp)}
-                            className="bg-slate-50 dark:bg-dark-800 p-4 rounded-2xl border border-slate-200 dark:border-dark-700 hover:border-indigo-400 cursor-pointer transition-all group"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
-                                {emp.name}
-                              </span>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600">
-                                {emp.role}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-400">@{emp.username}</p>
+                      {/* 5 CORE DEPARTMENTS OVERVIEW */}
+                      <div className="mb-4">
+                        <h4 className="font-black text-base text-slate-900 dark:text-white">
+                          {formatDual("Asosiy 5 ta bo'lim faoliyati", "Деятельность 5 ключевых отделов", "5 Core Department Activities")}:
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {formatDual(
+                            "Bo'lim ustiga bosib, kun davomida nima qilgani hamda haftalik va oylik nazoratiga kiring (Drill-down)",
+                            "Нажмите на отдел, чтобы увидеть выполненные задачи за день, неделю и месяц (Drill-down)",
+                            "Click on any department to inspect tasks completed today, this week, and this month (Drill-down)"
+                          )}
+                        </p>
+                      </div>
 
-                            <div className="grid grid-cols-3 gap-1 mt-3 pt-2.5 border-t border-slate-200 dark:border-dark-700 text-center text-[10px]">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {departmentsList.map((dept) => {
+                          const DeptIcon = dept.icon
+                          const allDeptActions = departmentActionsMap[dept.id] || []
+                          const todayActions = filterActionsByPeriod(allDeptActions, 'today')
+                          const weekActions = filterActionsByPeriod(allDeptActions, 'week')
+                          const monthActions = filterActionsByPeriod(allDeptActions, 'month')
+                          const latestAction = allDeptActions[0]
+
+                          return (
+                            <div
+                              key={dept.id}
+                              onClick={() => {
+                                setSelectedDepartment(dept.id)
+                                setDeptPeriodFilter('today')
+                              }}
+                              className={`bg-slate-50 dark:bg-dark-800 p-5 rounded-3xl border border-slate-200 dark:border-dark-700 ${dept.accentBg} hover:shadow-md cursor-pointer transition-all group flex flex-col justify-between`}
+                            >
                               <div>
-                                <span className="text-slate-400 block">{formatDual("Cheklist:", "Чек-лист:", "Checklist:")}</span>
-                                <b className="text-slate-800 dark:text-slate-200">{emp.checklistsCount}</b>
+                                <div className="flex items-start justify-between gap-2 mb-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-11 h-11 rounded-2xl ${dept.badgeClass} flex items-center justify-center font-bold shadow-xs`}>
+                                      <DeptIcon size={22} />
+                                    </div>
+                                    <div>
+                                      <h5 className="font-black text-base text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                                        {dept.name}
+                                      </h5>
+                                      <span className="text-[10px] font-bold text-slate-400">
+                                        {dept.responsible}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-dark-700 text-slate-700 dark:text-slate-300">
+                                    {dept.role}
+                                  </span>
+                                </div>
+
+                                <p className="text-xs text-slate-500 line-clamp-2 min-h-[32px] mb-3">
+                                  {dept.description}
+                                </p>
+
+                                {/* QILINGAN ISHLAR (REPLACED CHEKLIST) */}
+                                <div className="p-3.5 bg-white dark:bg-dark-900 rounded-2xl border border-slate-200/80 dark:border-dark-750">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                    {formatDual("Qilingan ishlar", "Выполненные задачи", "Completed tasks")}
+                                  </span>
+                                  <div className="text-2xl font-black text-slate-900 dark:text-white mt-0.5 flex items-baseline gap-1.5">
+                                    <span>{allDeptActions.length}</span>
+                                    <span className="text-xs font-semibold text-slate-400">{formatDual("ta amal", "действий", "actions")}</span>
+                                  </div>
+
+                                  <div className="grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 text-[10px]">
+                                    <div className="bg-slate-50 dark:bg-dark-800/80 p-1.5 rounded-lg text-center">
+                                      <span className="text-slate-400 block font-medium">{formatDual("Bugun:", "Сегодня:", "Today:")}</span>
+                                      <b className={todayActions.length > 0 ? "text-indigo-600 font-black text-xs" : "text-slate-600 dark:text-slate-400"}>
+                                        {todayActions.length}
+                                      </b>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-dark-800/80 p-1.5 rounded-lg text-center">
+                                      <span className="text-slate-400 block font-medium">{formatDual("Hafta:", "Неделя:", "Week:")}</span>
+                                      <b className="text-slate-800 dark:text-slate-200 text-xs">
+                                        {weekActions.length}
+                                      </b>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-dark-800/80 p-1.5 rounded-lg text-center">
+                                      <span className="text-slate-400 block font-medium">{formatDual("Oy:", "Месяц:", "Month:")}</span>
+                                      <b className="text-slate-800 dark:text-slate-200 text-xs">
+                                        {monthActions.length}
+                                      </b>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-slate-400 block">{formatDual("Qabul:", "Приемка:", "Arrival:")}</span>
-                                <b className="text-slate-800 dark:text-slate-200">{emp.inspectionsCount}</b>
-                              </div>
-                              <div>
-                                <span className="text-slate-400 block">{formatDual("Jami:", "Всего:", "Total:")}</span>
-                                <b className="text-indigo-600">{emp.totalActions} {formatDual("amal", "действий", "actions")}</b>
+
+                              <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-dark-700 flex items-center justify-between text-xs">
+                                <span className="text-slate-400 text-[11px] truncate max-w-[170px]">
+                                  {latestAction?.date
+                                    ? `${formatDual("Oxirgi:", "Посл.:", "Last:")} ${new Date(latestAction.date).toLocaleDateString(dateLocale, { month: 'numeric', day: 'numeric' })} ${new Date(latestAction.date).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}`
+                                    : formatDual("Amal yo'q", "Нет записей", "No entries")}
+                                </span>
+                                <span className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                  {formatDual("Ko'rish", "Открыть", "Inspect")} &rarr;
+                                </span>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   )}
@@ -2526,17 +3128,14 @@ export default function DirectorPage() {
               <div className="bg-indigo-50/80 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center text-sm shadow-sm">
-                    {(selectedEmployee?.name || 'X')[0]}
+                    {((selectedAuditAction.user || selectedEmployee?.name || 'B'))[0]}
                   </div>
                   <div>
                     <span className="text-[10px] text-indigo-800 dark:text-indigo-300 font-bold block uppercase tracking-wider">
-                      {formatDual("Bajaruvchi mas'ul xodim:", "Ответственный сотрудник:", "Responsible employee:")}
+                      {formatDual("Bajaruvchi mas'ul:", "Ответственный:", "Responsible:")}
                     </span>
                     <div className="font-black text-sm text-slate-900 dark:text-white">
-                      {selectedEmployee?.name || 'Xodim'}
-                      <span className="ml-2 text-xs font-bold text-slate-600 dark:text-slate-400">
-                        @{selectedEmployee?.username} ({selectedEmployee?.role})
-                      </span>
+                      {selectedAuditAction.user || selectedEmployee?.name || formatDual("Mas'ul xodim", "Сотрудник", "Staff member")}
                     </div>
                   </div>
                 </div>
@@ -2766,6 +3365,102 @@ export default function DirectorPage() {
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Dynamic Details: Shop Expense (Ishlab chiqarish) */}
+              {selectedAuditAction.category === 'expense' && selectedAuditAction.rawData && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {formatDual("Ishlab chiqarish sarfi va mahsulot chiqimi:", "Расход сырья и выпуск продукции:", "Production Consumption & Output Details:")}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3.5 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold mb-2">
+                        {formatDual("Sarflangan xomashyolar:", "Израсходованное сырье:", "Materials consumed:")}
+                      </span>
+                      <div className="space-y-1 text-xs">
+                        {Object.entries(selectedAuditAction.rawData.materials || {}).slice(0, 6).map(([mat, qty]: any) => (
+                          <div key={mat} className="flex items-center justify-between font-mono">
+                            <span className="text-slate-700 dark:text-slate-300 font-sans">{mat}:</span>
+                            <span className="font-bold text-amber-600">{Number(qty).toLocaleString()} kg</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3.5 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold mb-2">
+                        {formatDual("Olingan tayyor mahsulotlar:", "Полученная продукция:", "Produced outputs:")}
+                      </span>
+                      <div className="space-y-1 text-xs">
+                        {Object.entries(selectedAuditAction.rawData.outputs || {}).slice(0, 6).map(([out, val]: any) => (
+                          <div key={out} className="flex items-center justify-between font-mono">
+                            <span className="text-slate-700 dark:text-slate-300 font-sans">{out}:</span>
+                            <span className="font-bold text-emerald-600">{val?.kg ? Number(val.kg).toLocaleString() + ' kg' : (val?.boxes ? val.boxes + ' quti' : JSON.stringify(val))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Details: Finance / Sales (Buxgalteriya) */}
+              {(selectedAuditAction.category === 'finance' || selectedAuditAction.category === 'sales') && selectedAuditAction.rawData && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {formatDual("Buxgalteriya va moliyaviy hisob-kitob parametrlari:", "Параметры финансового учета и расчетов:", "Financial & Invoicing Accounting Parameters:")}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Kontragent:", "Контрагент:", "Counterparty:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.supplierName || selectedAuditAction.rawData.customer?.name || "Kompaniya"}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Mahsulot / Xomashyo:", "Номенклатура:", "Product / Material:")}</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.productName || selectedAuditAction.rawData.nomenclature || "Mahsulot"}
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Birlik narxi:", "Цена за единицу:", "Unit price:")}</span>
+                      <span className="text-xs font-mono font-bold text-emerald-600">
+                        {selectedAuditAction.rawData.pricePerKg ? `${Number(selectedAuditAction.rawData.pricePerKg).toLocaleString()} so'm/kg` : "-"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Details: System / Admin */}
+              {selectedAuditAction.category === 'system' && selectedAuditAction.rawData && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                    {formatDual("Tizim amali va audit tafsilotlari:", "Детали системного действия:", "System Action & Audit Details:")}
+                  </h4>
+                  <div className="bg-slate-50 dark:bg-dark-800 p-4 rounded-xl border border-slate-200 dark:border-dark-700 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400 font-semibold">{formatDual("Amal kodi:", "Код действия:", "Action code:")}</span>
+                      <span className="font-mono font-bold text-indigo-600">{selectedAuditAction.rawData.action || 'SYSTEM'}</span>
+                    </div>
+                    {selectedAuditAction.rawData.entity && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-semibold">{formatDual("Obyekt / Jadval:", "Объект:", "Entity:")}</span>
+                        <span className="font-mono text-slate-700 dark:text-slate-300">{selectedAuditAction.rawData.entity}</span>
+                      </div>
+                    )}
+                    <div className="pt-2 border-t border-slate-200 dark:border-dark-700">
+                      <span className="text-[10px] text-slate-400 font-semibold block mb-1">{formatDual("Amal tavsifi:", "Описание:", "Details:")}</span>
+                      <p className="text-xs font-medium text-slate-900 dark:text-white">
+                        {selectedAuditAction.rawData.details || selectedAuditAction.details}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
