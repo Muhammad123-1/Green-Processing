@@ -66,7 +66,6 @@ import {
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import ExecutiveSummaryReportModal from '@/components/director/ExecutiveSummaryReportModal'
-import ExecutiveDashboardContainer from '@/components/director/executive/ExecutiveDashboardContainer'
 import IncomingMaterialsAnalysis from '@/components/director/executive/IncomingMaterialsAnalysis'
 import ConsumptionMaterialsAnalysis from '@/components/director/executive/ConsumptionMaterialsAnalysis'
 import DefectMaterialsAnalysis from '@/components/director/executive/DefectMaterialsAnalysis'
@@ -189,11 +188,27 @@ export default function DirectorPage() {
         if (customTo) params.append('to', customTo)
       }
 
-      const res = await fetch(`/api/director?${params.toString()}`)
+      const execParams = new URLSearchParams()
+      if (period === 'custom') {
+        if (customFrom) execParams.append('dateFrom', customFrom)
+        if (customTo) execParams.append('dateTo', customTo)
+      }
+
+      const [res, execRes] = await Promise.all([
+        fetch(`/api/director?${params.toString()}`),
+        fetch(`/api/director/executive?${execParams.toString()}`).catch(() => null),
+      ])
+
       if (!res.ok) throw new Error('Failed to load')
       const json = await res.json()
       setData(json)
-      if (json?.details?.productBalances) {
+
+      if (execRes && execRes.ok) {
+        const execJson = await execRes.json()
+        if (execJson?.productBalances) {
+          setExecutiveProductBalances(execJson.productBalances)
+        }
+      } else if (json?.details?.productBalances) {
         setExecutiveProductBalances(json.details.productBalances)
       } else if (json?.operationsSummary?.ombor?.items) {
         setExecutiveProductBalances(json.operationsSummary.ombor.items)
@@ -526,12 +541,7 @@ export default function DirectorPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. ASOSIY ZAVOD BO'LIMLARI VA DIREKTOR ISH STOLI */}
-      {/* ========================================================================= */}
-      <ExecutiveDashboardContainer lang={directorLang} />
-
-      {/* ========================================================================= */}
-      {/* 3. VAQT VA GRAFIKLAR NAZORATI */}
+      {/* 2. VAQT VA GRAFIKLAR NAZORATI */}
       {/* ========================================================================= */}
       <div className="pt-4 border-t border-slate-200 dark:border-dark-750 space-y-6">
       <div className="bg-slate-100/80 dark:bg-dark-850 p-1.5 rounded-2xl flex flex-wrap items-center justify-between gap-2 border border-slate-200 dark:border-dark-750 no-print">
@@ -800,19 +810,25 @@ export default function DirectorPage() {
               {formatDual("Omborxona (Qoldiq)", "Склад (Остаток)", "Warehouse Stock")}
             </span>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-              {operationsSummary?.ombor?.totalKg
-                ? `${(operationsSummary.ombor.totalKg / 1000).toFixed(1)} tn`
-                : data?.kpis?.warehouse?.totalInventoryKg
-                  ? `${(data.kpis.warehouse.totalInventoryKg / 1000).toFixed(1)} tn`
-                  : "0 kg"}
+              {executiveProductBalances.length > 0
+                ? `${(executiveProductBalances.filter(p => (p.unit || 'kg') === 'kg').reduce((s, p) => s + (p.currentStockKg || 0), 0) / 1000).toFixed(1)} tn`
+                : operationsSummary?.ombor?.totalKg
+                  ? `${(operationsSummary.ombor.totalKg / 1000).toFixed(1)} tn`
+                  : data?.kpis?.warehouse?.totalInventoryKg
+                    ? `${(data.kpis.warehouse.totalInventoryKg / 1000).toFixed(1)} tn`
+                    : "0 kg"}
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-400 mt-1 font-semibold flex items-center gap-1.5 flex-wrap">
               <span>
-                {(operationsSummary?.ombor?.totalKg || data?.kpis?.warehouse?.totalInventoryKg || 0).toLocaleString()} kg {formatDual("xomashyo", "сырье", "raw")}
+                {executiveProductBalances.length > 0
+                  ? `${Math.round(executiveProductBalances.filter(p => (p.unit || 'kg') === 'kg').reduce((s, p) => s + (p.currentStockKg || 0), 0)).toLocaleString()} kg ${formatDual("xomashyo", "сырье", "raw")}`
+                  : `${(operationsSummary?.ombor?.totalKg || data?.kpis?.warehouse?.totalInventoryKg || 0).toLocaleString()} kg ${formatDual("xomashyo", "сырье", "raw")}`}
               </span>
-              {(operationsSummary?.ombor?.totalDona || 0) > 0 && (
-                <span className="text-indigo-600 dark:text-indigo-400">
-                  + {(operationsSummary?.ombor?.totalDona || 0).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
+              {(executiveProductBalances.length > 0 ? executiveProductBalances.filter(p => p.unit === 'dona').reduce((s, p) => s + (p.currentStockKg || 0), 0) : (operationsSummary?.ombor?.totalDona || 0)) > 0 && (
+                <span className="text-purple-600 dark:text-purple-400">
+                  + {Math.round(executiveProductBalances.length > 0
+                    ? executiveProductBalances.filter(p => p.unit === 'dona').reduce((s, p) => s + (p.currentStockKg || 0), 0)
+                    : (operationsSummary?.ombor?.totalDona || 0)).toLocaleString()} {formatDual("dona qadoq", "шт тары", "pcs")}
                 </span>
               )}
             </p>
@@ -822,10 +838,14 @@ export default function DirectorPage() {
                 {formatDual("Zaxira:", "Запас:", "Stock:")}
               </span>
               <span className="font-bold text-indigo-800 dark:text-indigo-300">
-                {operationsSummary?.ombor?.sufficientCount ?? data?.kpis?.warehouse?.sufficientCount ?? 0} {formatDual("ta yetarli", "в норме", "sufficient")}
+                {executiveProductBalances.length > 0
+                  ? executiveProductBalances.filter(p => p.inventoryStatus === 'SUFFICIENT' || p.status === 'NORMAL').length
+                  : (operationsSummary?.ombor?.sufficientCount ?? data?.kpis?.warehouse?.sufficientCount ?? 0)} {formatDual("ta yetarli", "в норме", "sufficient")}
                 {' • '}
-                {((operationsSummary?.ombor?.lowStockCount ?? data?.kpis?.warehouse?.lowStockCount ?? 0) +
-                  (operationsSummary?.ombor?.outOfStockCount ?? data?.kpis?.warehouse?.outOfStockCount ?? 0))} {formatDual("ta kam/tugagan", "дефицит", "low/out")}
+                {executiveProductBalances.length > 0
+                  ? executiveProductBalances.filter(p => p.inventoryStatus === 'LOW' || p.inventoryStatus === 'OUT_OF_STOCK' || p.status === 'CRITICAL').length
+                  : (((operationsSummary?.ombor?.lowStockCount ?? data?.kpis?.warehouse?.lowStockCount ?? 0) +
+                    (operationsSummary?.ombor?.outOfStockCount ?? data?.kpis?.warehouse?.outOfStockCount ?? 0)))} {formatDual("ta kam/tugagan", "дефицит", "low/out")}
               </span>
             </div>
           </div>
@@ -2340,19 +2360,44 @@ export default function DirectorPage() {
 
                   {/* 4. OMBOR: Dedicated Warehouse Stock Analysis */}
                   {operationsTab === 'ombor' && (
-                    <ProductBalanceTable
-                      products={
-                        executiveProductBalances.length > 0
-                          ? executiveProductBalances
-                          : operationsSummary?.ombor?.items?.length > 0
-                            ? operationsSummary.ombor.items
-                            : []
-                      }
-                      loading={loadingExecutiveBalances}
-                      lang={directorLang}
-                      onSelectProduct={(p) => setSelectedProduct(p)}
-                      onOpenStandards={() => setShowSettingsModal(true)}
-                    />
+                    <div className="space-y-4">
+                      {/* Top Action Buttons (Traceability Passport & Loss Standards) */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-dark-750">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href="/traceability"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors shadow-xs"
+                          >
+                            <ShieldCheck size={14} />
+                            <span>{formatDual("To'liq mahsulot zanjiri (Pasport)", "Паспорт прослеживаемости", "Traceability Passport")}</span>
+                          </Link>
+                          <button
+                            onClick={() => setShowSettingsModal(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors shadow-xs cursor-pointer"
+                          >
+                            <Sliders size={14} />
+                            <span>{formatDual("Yo'qotish me'yorlarini sozlash", "Настройка норм потерь", "Configure Loss Standards")}</span>
+                          </button>
+                        </div>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {formatDual("Barcha xomashyo va qadoqlar tahlili (Drill-down)", "Анализ всего сырья и тары (Drill-down)", "All materials & packaging drill-down")}
+                        </span>
+                      </div>
+
+                      <ProductBalanceTable
+                        products={
+                          executiveProductBalances.length > 0
+                            ? executiveProductBalances
+                            : operationsSummary?.ombor?.items?.length > 0
+                              ? operationsSummary.ombor.items
+                              : []
+                        }
+                        loading={loadingExecutiveBalances || loading}
+                        lang={directorLang}
+                        onSelectProduct={(p) => setSelectedProduct(p)}
+                        onOpenStandards={() => setShowSettingsModal(true)}
+                      />
+                    </div>
                   )}
                 </div>
               )}
