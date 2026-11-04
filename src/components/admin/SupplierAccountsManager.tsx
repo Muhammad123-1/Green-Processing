@@ -24,7 +24,9 @@ import {
   ExternalLink,
   UserCheck,
   UserX,
-  Truck
+  Truck,
+  MessageSquare,
+  Send
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -92,6 +94,58 @@ export default function SupplierAccountsManager() {
     password: string
   } | null>(null)
   const [copied, setCopied] = useState(false)
+
+  // Direct Chat with Supplier Modal
+  const [chatSupplier, setChatSupplier] = useState<SupplierItem | null>(null)
+  const [adminChatMessages, setAdminChatMessages] = useState<any[]>([])
+  const [adminChatInput, setAdminChatInput] = useState('')
+  const [adminChatSending, setAdminChatSending] = useState(false)
+
+  const fetchAdminChat = useCallback(async (sId: number) => {
+    try {
+      const res = await fetch(`/api/supplier-portal/chat?supplierId=${sId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAdminChatMessages(data.messages || [])
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    if (!chatSupplier) return
+    fetchAdminChat(chatSupplier.id)
+    const interval = setInterval(() => {
+      fetchAdminChat(chatSupplier.id)
+    }, 4500)
+    return () => clearInterval(interval)
+  }, [chatSupplier, fetchAdminChat])
+
+  const handleSendAdminChat = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!chatSupplier || !adminChatInput.trim() || adminChatSending) return
+
+    const textToSend = adminChatInput.trim()
+    setAdminChatInput('')
+    setAdminChatSending(true)
+
+    try {
+      const res = await fetch('/api/supplier-portal/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          supplierId: chatSupplier.id,
+          text: textToSend
+        })
+      })
+      if (res.ok) {
+        fetchAdminChat(chatSupplier.id)
+      }
+    } catch {
+      setAdminChatInput(textToSend)
+    } finally {
+      setAdminChatSending(false)
+    }
+  }
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -492,6 +546,15 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                           {userAccount ? (
                             <>
                               <button
+                                onClick={() => setChatSupplier(sup)}
+                                className="px-2.5 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                                title={formatDual("Ta'minotchi bilan chat", "Чат с поставщиком", "Chat with supplier")}
+                              >
+                                <MessageSquare size={13} />
+                                <span>{formatDual("Chat", "Чат", "Chat")}</span>
+                              </button>
+
+                              <button
                                 onClick={() => {
                                   setResetUser({
                                     id: userAccount.id,
@@ -830,6 +893,91 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                 {formatDual("Yopish", "Закрыть", "Close")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: Direct Chat with Supplier */}
+      {chatSupplier && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter">
+          <div className="bg-white dark:bg-dark-900 border-2 border-slate-300 dark:border-dark-700 rounded-3xl w-full max-w-xl shadow-2xl flex flex-col h-[580px] overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-850 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                  <Building2 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 dark:text-white text-sm sm:text-base">
+                    {chatSupplier.name}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {formatDual("Ta'minotchi bilan to'g'ridan-to'g'ri yozishma", "Прямой чат с поставщиком", "Direct chat with supplier")}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setChatSupplier(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-dark-800"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-100/70 dark:bg-dark-950/50 custom-scrollbar">
+              {adminChatMessages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 p-6">
+                  <MessageSquare size={36} className="text-slate-400 mb-2 opacity-50" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {formatDual("Yozishmalar tarixi bo'sh", "История сообщений пуста", "No messages yet")}
+                  </p>
+                </div>
+              ) : (
+                adminChatMessages.map((m: any) => {
+                  const isFromFactory = m.sender.toLowerCase().includes('green processing') || m.sender.toLowerCase().includes('ta\'minot')
+
+                  return (
+                    <div
+                      key={m.id}
+                      className={`flex flex-col ${isFromFactory ? 'items-end' : 'items-start'}`}
+                    >
+                      <span className="text-[10px] text-slate-500 font-bold mb-1 px-1">
+                        {m.sender} · {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <div
+                        className={`max-w-md p-3 rounded-2xl text-xs leading-relaxed shadow-xs ${
+                          isFromFactory
+                            ? 'bg-blue-600 text-white rounded-tr-none'
+                            : 'bg-white dark:bg-dark-800 text-slate-900 dark:text-white border border-slate-200 dark:border-dark-700 rounded-tl-none'
+                        }`}
+                      >
+                        <p>{m.text}</p>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <form onSubmit={handleSendAdminChat} className="p-3 border-t border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 flex items-center gap-2">
+              <input
+                type="text"
+                placeholder={formatDual("Ta'minotchiga xabar yozing...", "Напишите поставщику...", "Type message to supplier...")}
+                value={adminChatInput}
+                onChange={(e) => setAdminChatInput(e.target.value)}
+                className="flex-1 px-3.5 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
+              />
+              <button
+                type="submit"
+                disabled={adminChatSending || !adminChatInput.trim()}
+                className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md disabled:opacity-50"
+              >
+                {adminChatSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                <span>{formatDual("Yuborish", "Отправить", "Send")}</span>
+              </button>
+            </form>
           </div>
         </div>
       )}

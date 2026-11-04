@@ -355,28 +355,43 @@ html.light option {
 /* LIGHT MODE: Comprehensive, Clean & Beautiful UI Contrast */
 /* ========================================================================= */
 html.light body {
-  background-color: #f8fafc !important;
+  background-color: #eef2f6 !important;
   color: #0f172a !important;
 }
 
-/* Surface backgrounds in light mode */
-html.light .bg-dark-950 { background-color: #f1f5f9 !important; }
+/* Surface backgrounds in light mode - softer matte contrast, not glaring */
+html.light .bg-dark-950 { background-color: #e2e8f0 !important; }
 html.light .bg-dark-900 { background-color: #ffffff !important; }
-html.light .bg-dark-850 { background-color: #ffffff !important; }
-html.light .bg-dark-800 { background-color: #ffffff !important; }
-html.light .bg-dark-700 { background-color: #f1f5f9 !important; }
-html.light .bg-dark-600 { background-color: #e2e8f0 !important; }
+html.light .bg-dark-850 { background-color: #f8fafc !important; }
+html.light .bg-dark-800 { background-color: #f1f5f9 !important; }
+html.light .bg-dark-700 { background-color: #e2e8f0 !important; }
+html.light .bg-dark-600 { background-color: #cbd5e1 !important; }
 
-/* Borders in light mode */
+/* Borders in light mode - clearly defined, crisp contrast */
 html.light .border-dark-800,
 html.light .border-dark-750,
-html.light .border-dark-700 { border-color: #e2e8f0 !important; }
-html.light .border-dark-600 { border-color: #cbd5e1 !important; }
-html.light .border-white\/10 { border-color: #e2e8f0 !important; }
-html.light .border-white\/5 { border-color: #f1f5f9 !important; }
+html.light .border-dark-700 { border-color: #cbd5e1 !important; }
+html.light .border-dark-600 { border-color: #94a3b8 !important; }
+html.light .border-white\/10 { border-color: #cbd5e1 !important; }
+html.light .border-white\/5 { border-color: #e2e8f0 !important; }
 
 html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
 html.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
+
+/* Keep white text on dark banners and buttons */
+html.light .dark-banner,
+html.light .dark-banner * {
+  color: inherit;
+}
+html.light .dark-banner h1,
+html.light .dark-banner h2,
+html.light .dark-banner h3,
+html.light .dark-banner h4 {
+  color: #ffffff !important;
+}
+html.light .dark-banner p {
+  color: #cbd5e1 !important;
+}
 
 /* Keep white text ONLY on solid colored action buttons, solid dark gradients and badges in light mode */
 html.light .btn-primary,
@@ -435,14 +450,14 @@ html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *)
 html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #475569 !important; }
 html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #475569 !important; }
 
-/* In light mode, turn general white text to deep dark slate text (unless on solid colored pill/badge) */
-html.light h1.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
-html.light h2.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
-html.light h3.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
-html.light h4.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
-html.light span.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="bg-amber-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
-html.light p.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]),
-html.light div.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]) {
+/* In light mode, turn general white text to deep dark slate text (unless on solid colored pill/badge or dark banner) */
+html.light h1.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
+html.light h2.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
+html.light h3.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
+html.light h4.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
+html.light span.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="bg-amber-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
+html.light p.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
+html.light div.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *) {
   color: #0f172a !important;
 }
 

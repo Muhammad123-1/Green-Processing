@@ -26,6 +26,61 @@ export async function GET(req: NextRequest) {
       icon: string
     }> = []
 
+    // ---------------------------------------------------------------------------
+    // SUPPLIER ISOLATION: Faqatgina yangi buyurtma kelganda bildirishnoma (SMS) keladi!
+    // Boshqa hech qanday bildirishnoma (sex, ombor, brak, umumiy chat) ko'rinmaydi.
+    // ---------------------------------------------------------------------------
+    if (userRole === 'SUPPLIER') {
+      const user = await prisma.user.findUnique({
+        where: { id: session?.id },
+        include: { supplier: true }
+      })
+
+      const targetSupplierId = user?.supplierId || session?.supplierId
+      const targetSupplierName = user?.supplier?.name
+
+      if (targetSupplierId || targetSupplierName) {
+        // Find pending orders for this supplier
+        const pendingOrders = await prisma.order.findMany({
+          where: {
+            AND: [
+              {
+                OR: [
+                  ...(targetSupplierId ? [{ supplierId: targetSupplierId }] : []),
+                  ...(targetSupplierName ? [{ supplierName: { contains: targetSupplierName, mode: 'insensitive' as const } }] : [])
+                ]
+              },
+              { status: 'PENDING' }
+            ]
+          },
+          include: { product: true },
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        })
+
+        for (const ord of pendingOrders) {
+          notifications.push({
+            id: `supplier-order-${ord.id}`,
+            type: 'INFO',
+            priority: 'high',
+            title: `Yangi Buyurtma #${ord.id}: ${ord.product?.name}`,
+            titleRu: `Новый заказ #${ord.id}: ${ord.product?.name}`,
+            message: `Green Processing zavodidan yangi buyurtma keldi: ${ord.quantity.toLocaleString()} ${ord.unit || 'kg'}. Kutilayotgan sana: ${new Date(ord.expectedDate).toLocaleDateString()} (${ord.timeRange || '09:00 - 13:00'}).`,
+            messageRu: `Поступил заказ от завода: ${ord.quantity.toLocaleString()} ${ord.unit || 'кг'}. Ожидаемая дата: ${new Date(ord.expectedDate).toLocaleDateString()} (${ord.timeRange || '09:00 - 13:00'}).`,
+            source: "Green Processing Xarid",
+            sourceCategory: 'warehouse',
+            link: '/supplier-portal',
+            actionLabel: "Buyurtmani ko'rish",
+            actionLabelRu: "Открыть заказ",
+            createdAt: ord.createdAt.toISOString(),
+            icon: 'package'
+          })
+        }
+      }
+
+      return NextResponse.json({ notifications })
+    }
+
     const now = new Date()
     // Tashkent time UTC+5
     const tzOffsetMs = 5 * 60 * 60 * 1000
