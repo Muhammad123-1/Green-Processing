@@ -334,7 +334,7 @@ export default function SupplierPortalContent() {
             )}
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black !text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black !text-white tracking-tight" style={{ color: '#ffffff' }}>
             {formatDual(
               "Korxonadan Kelayotgan Buyurtmalar",
               "Заказы на поставку сырья от предприятия",
@@ -342,7 +342,7 @@ export default function SupplierPortalContent() {
             )}
           </h2>
 
-          <p className="text-xs sm:text-sm !text-slate-300 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm !text-slate-300 max-w-2xl leading-relaxed" style={{ color: '#cbd5e1' }}>
             {formatDual(
               "Sizga Green Processing zavodidan yuborilgan barcha xarid buyurtmalari ro'yxati, yetkazib berish muddati va qabul holatlari.",
               "Все заказы на сырье, отправленные вам заводом Green Processing, графики поставок и текущий статус приемки.",

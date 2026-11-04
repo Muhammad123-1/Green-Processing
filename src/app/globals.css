@@ -386,10 +386,15 @@ html.light .dark-banner * {
 html.light .dark-banner h1,
 html.light .dark-banner h2,
 html.light .dark-banner h3,
-html.light .dark-banner h4 {
+html.light .dark-banner h4,
+html.light [class*="from-slate-900"] h1,
+html.light [class*="from-slate-900"] h2,
+html.light [class*="from-slate-900"] h3,
+html.light [class*="from-slate-900"] h4 {
   color: #ffffff !important;
 }
-html.light .dark-banner p {
+html.light .dark-banner p,
+html.light [class*="from-slate-900"] p {
   color: #cbd5e1 !important;
 }
 
@@ -444,11 +449,11 @@ html.light a.bg-orange-600 * {
 }
 
 /* Light mode text mappings for readable high-contrast dark text (WCAG AAA compliant for elderly / directors) */
-html.light .text-slate-100:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #0f172a !important; }
-html.light .text-slate-200:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #1e293b !important; }
-html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #334155 !important; }
-html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #475569 !important; }
-html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *) { color: #475569 !important; }
+html.light .text-slate-100:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #0f172a !important; }
+html.light .text-slate-200:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #1e293b !important; }
+html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #334155 !important; }
+html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #475569 !important; }
+html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #475569 !important; }
 
 /* In light mode, turn general white text to deep dark slate text (unless on solid colored pill/badge or dark banner) */
 html.light h1.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
