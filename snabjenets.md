@@ -1,877 +1,850 @@
-# ERP SYSTEM — PROCUREMENT & ACCOUNTING INTEGRATION
+# ERP PROCUREMENT & ACCOUNTING — RELIABLE 4-WAY MATCHING AND SUPPLIER PAYABLES
+
+## 1. ROLE AND OBJECTIVE
+
+You are a Senior ERP Architect, Full-Stack Engineer, Database Engineer, and Financial Systems Specialist.
+
+Your task is to improve the existing factory ERP system by connecting:
+
+- Procurement (`/orders`)
+- Warehouse Management
+- Quality Control
+- Accounting (`/accounting`)
+- Executive Director Dashboard
+
+The application already exists. Inspect the current repository, database, APIs, authentication, and frontend before implementing anything.
+
+**Do not rebuild the application or introduce a separate ERP system.**
+
+The main goal is to ensure that purchasing, goods receipt, quality acceptance, supplier invoicing, payments, and supplier debt are calculated consistently using real business transactions.
+
+## 2. NON-NEGOTIABLE RULES
+
+- Never use fake business data or hardcoded financial balances.
+- Never duplicate supplier financial balances across modules.
+- Never treat purchase orders as confirmed supplier debt.
+- Never treat a payment request as a completed bank transfer.
+- Never pay automatically for rejected quantities.
+- Never permit a quantity to be invoiced twice through duplicate receipt allocations.
+- Never silently modify posted accounting records.
+- Never assign an accepted inventory batch number to a fully rejected delivery.
+- Never break existing Procurement, Warehouse, QC, Accounting, or Director functionality.
+- Preserve the current UI design and multilingual architecture.
+- Reuse existing models and APIs wherever possible.
+
+All critical calculations must be implemented in backend services or database queries.
+
+## 3. MAIN BUSINESS WORKFLOW
+
+Implement the following connected process:
+
+```text
+PROCUREMENT
+   |
+   v
+Purchase Request
+   |
+   v
+Approved Purchase Order
+   |
+   v
+WAREHOUSE
+   |
+   v
+Goods Receipt
+   |
+   v
+QUALITY CONTROL
+   |
+   +---- Rejected Quantity
+   |         |
+   |         v
+   |    Rejection Act
+   |
+   v
+Accepted Quantity
+   |
+   v
+ACCOUNTING
+   |
+   v
+Supplier Invoice
+   |
+   v
+4-Way Matching Validation
+   |
+   +---- MISMATCH --> ON HOLD
+   |
+   v
+Approved / Posted Invoice
+   |
+   v
+Recognized Supplier Payable
+   |
+   v
+Payment Approval
+   |
+   v
+Bank / Cash Confirmation
+   |
+   v
+Posted Payment Allocation
+   |
+   v
+Updated Supplier Balance
+   |
+   +---- Procurement Dashboard
+   +---- Accounting Dashboard
+   +---- Director Dashboard
+```
+
+Each step must reference the previous business records using real identifiers.
 
-## ROLE
+Do not create disconnected records that cannot be traced back to their source documents.
 
-You are a Senior Full-Stack Engineer, ERP Systems Architect, Database Engineer, and Enterprise Financial Systems Developer.
+## 4. PURCHASE ORDER CONTROL
 
-Your task is to extend my **existing factory ERP application** by improving and connecting two modules:
+The Procurement Department creates purchasing orders based on approved material requirements and existing inventory.
 
-1. Procurement Department (Supply Manager / Snabjenets).
-2. Accounting Department (Buxgalteriya).
+Each purchase order must contain:
 
-The factory processes vegetables and other raw materials into finished and semi-finished products.
-
-The application already contains a Director Dashboard, Warehouse Management, Inventory, Quality Control, Production, Supplier information, and other operational modules.
-
-**Do not build a new ERP system. Work within the existing application.**
-
----
-
-# 1. MAIN BUSINESS OBJECTIVE
-
-The Procurement Department must be able to answer:
-
-- Which suppliers do we owe money to?
-- How much do we owe each supplier?
-- How much has already been paid?
-- What is the remaining outstanding balance?
-- Which supplier invoices are overdue?
-- What products have we ordered?
-- What quantities are expected to arrive?
-- Which deliveries are delayed?
-- What materials does production currently need?
-- Which products are running low in the warehouse?
-- Which supplier offers the best purchasing conditions?
-
-The Accounting Department must be able to answer:
-
-- Which supplier invoices have been received?
-- Which invoices have been verified and approved?
-- How much money has been paid to each supplier?
-- When were payments made?
-- Which invoices remain unpaid or partially paid?
-- How much debt is currently outstanding?
-- Which payments are due soon or overdue?
-- Which payments are awaiting approval or confirmation?
-
-Both departments must use connected, consistent business records.
-
-The Procurement Department must not maintain a separate manually duplicated supplier debt database.
-
-Accounting must remain the authoritative source for recognized supplier payables and confirmed payments.
-
----
-
-# 2. STRICT EXISTING PROJECT RULES
-
-Before implementing anything:
-
-1. Inspect the existing codebase.
-2. Inspect existing Procurement and Accounting modules.
-3. Inspect supplier, product, inventory, order, and payment-related database models.
-4. Identify the existing technology stack.
-5. Reuse existing authentication and permissions.
-6. Reuse existing components and design patterns.
-7. Reuse existing business logic where it is correct.
-
-Do not:
-
-- Rebuild the application.
-- Create an independent procurement system.
-- Replace the existing database without justification.
-- Remove unrelated modules.
-- Break existing Warehouse, Production, or Director Dashboard functionality.
-- Duplicate existing supplier or product records.
-- Invent business data.
-- Add unnecessary libraries.
-- Make destructive database changes without approval.
-
-Preserve existing operational data and relationships.
-
----
-
-# 3. PROCUREMENT DASHBOARD — MINIMAL INTERFACE
-
-The procurement dashboard must be simple, practical, and focused on daily operational decisions.
-
-Remove unnecessary visual clutter from the Procurement interface.
-
-Do not fill the dashboard with decorative charts, repetitive cards, long explanations, or unrelated statistics.
-
-## MAIN KPI CARDS
-
-Display only the most important operational metrics.
-
-### KPI 1 — TOTAL SUPPLIER DEBT
-
-Total currently outstanding recognized supplier debt.
-
-Display:
-
-- Outstanding amount.
-- Number of suppliers with outstanding balances.
-- Overdue amount, if any.
-
-Do not combine currencies into a misleading total. Use separate currency totals or properly documented reporting-currency conversions.
-
-### KPI 2 — ACTIVE PURCHASE ORDERS
-
-Display:
-
-- Number of active purchase orders.
-- Total ordered quantity, grouped by compatible units where applicable.
-- Number of overdue deliveries.
-
-### KPI 3 — MATERIALS TO PURCHASE
-
-Display:
-
-- Number of materials requiring procurement.
-- Required quantities.
-- Urgent shortages.
-
-These values must be calculated using real production requests, available inventory, open purchase orders, and approved inventory thresholds.
-
-### KPI 4 — UPCOMING PAYMENTS
-
-Display:
-
-- Amount due within the selected period.
-- Number of invoices approaching their payment deadlines.
-- Amount already overdue.
-
-Payment information must come from Accounting.
-
----
-
-# 4. MAIN PROCUREMENT TABLE
-
-The main table should focus on supplier purchasing and financial visibility.
-
-Recommended fields:
-
-- Supplier name.
-- Active orders.
-- Ordered quantity.
-- Delivered quantity.
-- Pending quantity.
-- Recognized debt.
-- Confirmed payments.
-- Overdue amount.
-- Order or payment status.
-
-Avoid trying to display every detail in one table.
-
-Use a compact row structure.
-
-When a supplier is selected, open a detailed supplier view.
-
-### SUPPLIER DRILL-DOWN
-
-Level 1 — Supplier overview.
-
-Level 2 — Purchase orders, deliveries, invoices, or payment history.
-
-Level 3 — Individual order, invoice, or payment record.
-
-Level 4 — Supporting documents, responsible users, and audit history.
-
-Example:
-
-Supplier → Outstanding Debt → Invoice → Payments → Remaining Balance
-
-Another example:
-
-Supplier → Purchase Orders → Product → Delivery → Warehouse Receipt
-
-Preserve filters and navigation context.
-
----
-
-# 5. PROCUREMENT REQUIREMENT — MATERIAL REQUESTS
-
-The Procurement Department receives material requests from:
-
-- Production.
-- Warehouse.
-- Other authorized departments.
-
-Requests may be created for daily, weekly, monthly, or specific operational needs.
-
-Each request should record:
-
-- Request number.
-- Requesting department.
-- Product or material.
-- Requested quantity.
-- Unit of measurement.
-- Required delivery date.
-- Requesting employee.
-- Priority.
-- Status.
-- Optional supporting notes.
-
-Recommended request lifecycle:
-
-DRAFT → SUBMITTED → APPROVED → ORDERED → FULFILLED
-
-Support rejection and cancellation with recorded reasons where required.
-
-Do not allow duplicate purchasing decisions to be created accidentally from the same request.
-
-Connect requests to purchase orders when applicable.
-
----
-
-# 6. PROCUREMENT REQUIREMENT — INVENTORY PLANNING
-
-The procurement manager needs accurate warehouse information.
-
-Reuse the existing inventory system and product-specific storage standards.
-
-For each material, calculate:
-
-- Current usable stock.
-- Average daily consumption.
-- Estimated days of stock remaining.
-- Approved minimum or reorder threshold.
-- Maximum safe inventory.
-- Pending deliveries.
-- Required procurement quantity.
-
-Do not treat all physical stock as usable.
-
-Exclude rejected, quarantined, or otherwise unavailable quantities when calculating usable stock.
-
-## RECOMMENDED REPLENISHMENT CALCULATION
-
-Estimated Net Requirement:
-
-Required Quantity = Expected Consumption During Planning Horizon + Approved Safety Stock - Usable Available Stock - Eligible Confirmed Incoming Quantity
-
-Ensure that quantities already reserved for other requirements are handled correctly.
-
-The planning horizon, safety stock, and incoming delivery eligibility must follow approved business rules.
-
-Do not automatically purchase the calculated quantity.
-
-Require appropriate approval.
-
-## MAXIMUM STOCK CONSTRAINT
-
-Procurement must respect approved maximum safe inventory levels.
-
-Avoid ordering more perishable raw material than can reasonably be consumed or safely stored.
-
-The system should warn about excessive orders, not silently override business decisions.
-
----
-
-# 7. PROCUREMENT REQUIREMENT — SUPPLIER COMPARISON
-
-The Procurement Department must be able to compare supplier offers.
-
-Support recording commercial offers with:
-
-- Supplier.
-- Product.
-- Offered quantity.
-- Unit price.
+- Unique purchase order number.
+- Supplier ID.
+- Product line items.
+- Ordered quantities.
+- Units of measurement.
+- Agreed unit prices.
 - Currency.
 - Tax treatment.
-- Delivery cost.
-- Delivery lead time.
-- Payment terms.
-- Quality requirements.
-- Offer validity.
-- Supporting document.
-
-Comparison must consider more than price alone.
-
-A cheaper supplier may have poor quality, delayed deliveries, or unfavorable payment conditions.
-
-Use real purchasing history and approved supplier evaluations where available.
-
-Do not invent supplier ratings or scores.
-
-If there is insufficient data, display that limitation.
-
----
-
-# 8. PROCUREMENT REQUIREMENT — PURCHASE ORDERS
-
-The procurement manager must create and track official purchase orders.
-
-Each order must contain:
-
-- Purchase order number.
-- Supplier.
-- Product or material line items.
-- Quantity.
-- Unit price.
-- Currency.
-- Tax details where applicable.
 - Expected delivery date.
 - Payment terms.
-- Order total.
-- Related material request.
 - Created by.
 - Approval status.
-- Delivery status.
-
-Support partial deliveries.
-
-Recommended order lifecycle:
-
-DRAFT → PENDING_APPROVAL → APPROVED → SENT → PARTIALLY_RECEIVED → RECEIVED → CLOSED
-
-Also support CANCELLED and appropriate exception states.
-
-Do not assume that an approved purchase order has already been delivered.
-
-Do not create supplier debt merely because a purchase order was created.
-
-The order represents a purchasing commitment, while recognized accounts payable must follow accounting policies and approved supporting documents.
-
----
-
-# 9. PROCUREMENT REQUIREMENT — DELIVERY TRACKING
-
-Track the actual delivery process.
-
-Relevant information:
-
-- Supplier.
-- Purchase order.
-- Expected delivery date.
-- Actual delivery date.
-- Transport information.
-- Transport expenses, if recorded.
-- Received quantities.
-- Rejected quantities.
-- Delivery documents.
-- Responsible employees.
-
-If a delivery is delayed, show the delay clearly.
-
-If materials are rejected, connect the rejection act to the supplier and relevant order.
-
-Reuse the existing Warehouse and Quality Control workflows.
-
-Do not create duplicate inventory batches from procurement records.
-
-Accepted goods must enter inventory through the approved warehouse receiving workflow.
-
----
-
-# 10. PROCUREMENT REQUIREMENT — EMERGENCY PURCHASING
-
-Support urgent material or spare-part requests when necessary.
-
-Examples:
-
-- Critical raw material shortage.
-- Production equipment breakdown.
-- Unexpected supply interruption.
-- Supplier delivery failure.
-
-An urgent request should include:
-
-- Requested material.
-- Required quantity.
-- Reason for urgency.
-- Requesting department.
-- Required date.
-- Responsible employee.
-- Approval status.
-
-Urgent purchasing must still follow authorization rules.
-
-Do not bypass accounting, warehouse, or audit records.
-
----
-
-# 11. ACCOUNTING MODULE — SUPPLIER FINANCIAL CONTROL
-
-The Accounting Department is responsible for official financial records.
-
-Build or extend supplier accounts payable functionality.
-
-The module should provide:
-
-- Supplier invoices.
-- Recognized payable balances.
-- Payment requests.
-- Payment records.
-- Payment allocations.
-- Partial payments.
-- Advance payments.
-- Overdue liabilities.
-- Credit notes or approved adjustments.
-- Payment due dates.
-- Supporting accounting documents.
-
-Use existing accounting data and workflows wherever possible.
-
-Do not duplicate a full general ledger if the existing ERP already has one.
-
-If a general ledger is present, maintain consistency between supplier balances and accounting entries.
-
----
-
-# 12. SUPPLIER INVOICES
-
-Supplier invoices should be linked to their underlying business transactions.
-
-Where applicable, link:
-
-Purchase Order → Goods Receipt → Supplier Invoice
-
-Check the consistency of:
-
-- Ordered quantity.
-- Accepted quantity.
-- Invoiced quantity.
-- Agreed price.
-- Taxes.
-- Delivery terms.
-- Supplier identity.
-
-Differences must be visible.
-
-Do not automatically approve an invoice that differs from accepted receiving records or agreed purchasing terms.
-
-Support partial invoices, credit notes, and approved exceptions.
-
-The exact invoice approval and payable recognition rules must follow company accounting policy.
-
----
-
-# 13. PAYMENT MANAGEMENT
-
-Accounting should manage the official payment process.
-
-Each payment record should contain:
-
-- Payment ID.
-- Supplier.
-- Payment date.
-- Payment amount.
-- Currency.
-- Payment method.
-- Bank or cash reference.
-- Related invoice or payment allocations.
-- Recorded by.
-- Confirmed by, where required.
-- Payment status.
 - Supporting documents.
 
-Recommended payment states:
+### Purchase Order Statuses
 
-DRAFT → PENDING_APPROVAL → APPROVED → PROCESSING → CONFIRMED
+- DRAFT
+- PENDING_APPROVAL
+- APPROVED
+- SENT
+- PARTIALLY_RECEIVED
+- RECEIVED
+- CLOSED
+- CANCELLED
 
-Also support FAILED, CANCELLED, or REVERSED where appropriate.
+Purchase order quantities and prices must be preserved as agreed contractual values.
 
-**Important:** A payment request or approval is not the same as a completed payment.
+Changes after approval require an authorized amendment and audit history.
 
-A supplier balance must be reduced only according to the approved accounting treatment of confirmed or posted transactions.
+A purchase order must not automatically create a posted supplier payable.
 
----
+## 5. GOODS RECEIPT AND QC VALIDATION
 
-# 14. SUPPLIER DEBT CALCULATIONS
+When a delivery arrives, the Warehouse and Quality Control departments must record the actual results.
 
-Supplier debt must be calculated from actual accounting records.
+Track three separate quantities:
 
-For standard recognized payables:
+1. Delivered Quantity
+2. Accepted Quantity
+3. Rejected Quantity
 
-Outstanding Payable = Recognized Invoice Amounts - Applied Payments - Applied Credit Notes ± Approved Accounting Adjustments
+Also support temporarily held or quarantined quantities if the existing QC process requires them.
 
-Apply payments and credits only once.
+### Validation
 
-Handle:
+Delivered Quantity = Accepted Quantity + Rejected Quantity + Pending Inspection Quantity
 
+Apply this equality after accounting for any documented measurement adjustments or shortages.
+
+Accepted quantities must not exceed the actual verified delivered quantity.
+
+### Example
+
+Ordered: 1,000 kg
+
+Delivered: 1,000 kg
+
+Accepted: 950 kg
+
+Rejected: 50 kg
+
+Only the accepted 950 kg enters usable inventory.
+
+Rejected materials must be linked to a rejection act.
+
+The rejection act must contain:
+
+- Act number.
+- Supplier.
+- Product.
+- Rejected quantity.
+- Rejection reason.
+- Inspection date.
+- QC inspector.
+- Evidence.
+
+Use existing Warehouse and QC data models where available.
+
+Support multiple and partial deliveries against one purchase order.
+
+## 6. STRICT 4-WAY MATCHING ENGINE
+
+Implement a matching service that validates four sources:
+
+1. Approved Purchase Order
+2. Verified Goods Receipt
+3. QC Accepted Quantity
+4. Supplier Invoice
+
+Validation must happen at the purchase order line and invoice line level, not only at the document total level.
+
+### Matching Checks
+
+**A. Supplier Match**
+
+The invoice supplier must match the relevant approved purchase order supplier.
+
+**B. Product Match**
+
+The invoiced product or material must match the approved order and receipt lines.
+
+**C. Quantity Match**
+
+The cumulative invoice quantity must not exceed the QC-accepted quantity available for invoicing, subject to explicitly authorized and configured exceptions.
+
+Prevent the same accepted quantity from being matched to multiple invoices.
+
+**D. Price Match**
+
+Compare invoice unit price against the approved purchase order price.
+
+Differences must follow an approved tolerance policy.
+
+Do not invent tolerance percentages.
+
+**E. Amount Match**
+
+Validate line totals, taxes, discounts, and authorized additional charges according to the actual contract and accounting rules.
+
+**F. Duplicate Invoice Check**
+
+Detect duplicate invoice references for the same supplier according to the configured uniqueness rules.
+
+**G. QC Status Check**
+
+Goods awaiting mandatory quality inspection must not pass matching as accepted inventory.
+
+### Matching Results
+
+- MATCHED
+- PARTIAL_MATCH
+- MISMATCH
+- ON_HOLD
+- REQUIRES_APPROVAL
+
+For the initial implementation, default to blocking unexplained mismatches until the company approves a documented exception policy.
+
+Every exception must record the approving user, reason, timestamp, and affected records.
+
+Do not silently accept mismatched invoices.
+
+## 7. SUPPLIER INVOICE MANAGEMENT
+
+Supplier invoices must reference real purchase orders and relevant goods receipts.
+
+Required information:
+
+- Invoice ID.
+- Supplier invoice number.
+- Supplier ID.
+- Purchase order reference.
+- Matched goods receipt lines.
+- Invoice date.
+- Due date.
+- Line quantities and amounts.
+- Tax and approved additional charges.
+- Currency.
+- Matching result.
+- Approval status.
+- Posting status.
+- Supporting document.
+
+### Suggested Invoice Workflow
+
+DRAFT → RECEIVED → MATCHING → VERIFIED → APPROVED → POSTED
+
+If matching fails, move the invoice into ON_HOLD or another appropriate exception status.
+
+Invoices must not become payable merely because a supplier uploaded a document.
+
+Use the approved accounting policy to determine recognition and posting.
+
+Support partial invoices, multiple invoices against a purchase order, and supplier credit notes.
+
+Do not invoice the same accepted receipt quantity more than once.
+
+## 8. SUPPLIER DEBT — SINGLE SOURCE OF TRUTH
+
+Accounting must be the source of truth for recognized supplier payables.
+
+Procurement and the Director Dashboard must read the same authoritative accounting results.
+
+Do not create a separate, independently editable debt balance for each department.
+
+### Standard Invoice Balance
+
+Outstanding Invoice Balance =
+Posted Invoice Amount
+- Applied Posted Payments
+- Applied Credit Notes
+± Approved Accounting Adjustments
+
+### Supplier Outstanding Balance
+
+Supplier Outstanding Payables =
+Sum of Outstanding Posted Supplier Invoices
+
+Calculate the balance separately for each currency unless an approved reporting exchange-rate policy exists.
+
+### Important Cases
+
+Support:
+
+- Unpaid invoices.
 - Partially paid invoices.
-- Multiple payments against one invoice.
-- One payment allocated across multiple invoices.
+- Fully paid invoices.
+- Overdue invoices.
 - Supplier advances.
 - Refunds.
-- Reversals.
-- Multiple currencies.
-- Overdue invoices.
-- Payment disputes.
+- Credit notes.
+- Payment reversals.
+- Multiple invoices.
+- Multiple payment allocations.
+- Uninvoiced accepted receipts.
 
-Do not subtract unrelated supplier advances from a specific invoice unless they have been formally allocated or offset under approved accounting rules.
+Supplier advances must remain distinguishable from payable balances until formally allocated or offset.
 
-Do not treat purchase orders as recognized debt.
+Uninvoiced accepted receipts must be visible as a separate reconciliation category and treated according to the approved accounting policy.
 
-Do not confuse physical delivery quantity with invoice amount.
+Never calculate recognized payable simply as total purchase orders minus payments.
 
-Use decimal-safe financial calculations.
+## 9. PAYMENT WORKFLOW
 
-### Required debt statuses
+The Accounting Department can initiate payment processing.
 
-- UNPAID
-- PARTIALLY_PAID
-- PAID
-- OVERDUE
-- DISPUTED, if the company uses a dispute process
+Clicking "Make Payment" must not automatically mark a bank transfer as successful.
 
-An overdue invoice is an unpaid invoice whose contractual due date has passed, subject to the company's approved payment terms and applicable accounting rules.
+### Payment Workflow
 
----
+```text
+Payment Draft
+    |
+    v
+Approval Required
+    |
+    v
+Approved
+    |
+    v
+Submitted / Processing
+    |
+    v
+Bank or Cash Confirmation
+    |
+    v
+Posted Payment
+    |
+    v
+Payment Allocation
+    |
+    v
+Updated Outstanding Payable
+```
 
-# 15. PROCUREMENT ↔ ACCOUNTING INTEGRATION
+Support FAILED, CANCELLED, and REVERSED states.
 
-This is one of the most important requirements.
+### Payment Fields
 
-The Procurement Department must be able to see relevant supplier financial information without manually duplicating it.
+- Payment ID.
+- Supplier ID.
+- Amount.
+- Currency.
+- Payment method.
+- Source bank or cash account.
+- External transaction reference.
+- Payment date.
+- Created by.
+- Approved by.
+- Confirmation status.
+- Posting status.
+- Supporting documents.
 
-### Procurement permissions
+### Critical Rule
 
-The Procurement Manager can view:
+If a payment is manually recorded without a bank integration, do not claim that the actual transfer has occurred until it has been verified through the configured accounting confirmation process.
 
-- Supplier outstanding balance.
-- Invoice status.
-- Amount paid.
-- Remaining debt.
+Bank balances must come from reliable bank statements, integrations, or reconciled accounting records.
+
+### Payment Allocation
+
+One payment may pay multiple invoices.
+
+One invoice may be settled through multiple payments.
+
+Implement an explicit Payment Allocation relationship.
+
+Prevent allocation of more than the eligible confirmed payment amount.
+
+Prevent over-allocation of invoices unless an approved advance or credit workflow applies.
+
+## 10. SUPPLIER RECONCILIATION STATEMENT
+
+Implement a read-only supplier reconciliation view accessible from Procurement and Accounting according to user permissions.
+
+Uzbek UI label:
+
+**Solishtirma dalolatnoma**
+
+It must display:
+
+- Supplier name.
+- Opening balance.
+- Posted invoice transactions.
+- Applied payments.
+- Credit notes and adjustments.
+- Closing balance.
+- Date range.
+- Invoice references.
+- Payment references.
+- Transaction status.
+
+Use a single chronological source of transactions.
+
+Do not maintain a manually duplicated reconciliation balance.
+
+### Calculation
+
+Closing Balance =
+Opening Balance
++ Recognized Payables During Period
+- Applied Payments During Period
+- Applied Credits During Period
+± Approved Adjustments
+
+Opening and closing balances must be calculated consistently as of the selected dates.
+
+Allow drill-down into the underlying source documents.
+
+If the existing system supports signed reconciliation documents, preserve the signed version as a historical document without making it the live balance source.
+
+## 11. PROCUREMENT DASHBOARD (/orders)
+
+Simplify the existing Procurement interface.
+
+The most important information must be immediately visible.
+
+### Primary KPI Cards
+
+1. Supplier Outstanding Debt.
+2. Active Purchase Orders.
+3. Materials Requiring Procurement.
+4. Upcoming Supplier Payments.
+
+### Main Supplier Table
+
+Show:
+
+- Supplier.
+- Active orders.
+- Ordered and pending quantities in appropriate units.
+- Outstanding debt.
 - Overdue amount.
-- Payment due date.
-- Relevant payment history.
-- Procurement-related invoice references.
+- Payment status.
 
-By default, Procurement should have read-only access to posted accounting transactions.
+Do not display unrelated financial statistics.
 
-Procurement must not directly change confirmed payment amounts or posted financial balances.
+### Supplier Drill-Down
 
-### Accounting permissions
+Supplier → Orders / Debt → Invoice or Delivery → Payment / Receipt → Source Document
 
-Accounting can:
+Procurement users should have read-only access to posted accounting balances and transactions.
 
-- Review supplier invoices.
-- Record and validate payment documents.
-- Manage payment approvals according to authorization.
-- Confirm or post payments through the approved workflow.
-- Allocate payments to invoices.
-- Apply authorized adjustments.
-- View corresponding purchasing and warehouse documents.
+They must not directly modify confirmed financial records.
 
-### Director permissions
+### Inventory Signals
 
-The Director should be able to see:
+Use the existing warehouse stock and product-specific norms.
 
-- Total supplier debt.
-- Total overdue supplier debt.
-- Supplier debt breakdown.
-- Active purchasing commitments.
-- Upcoming payments.
-- Critical procurement shortages.
-- Important payment or delivery discrepancies.
+Show:
 
-The Director should be able to drill down into the underlying invoices, purchasing records, and payment documents.
+- Critical shortages.
+- Low inventory.
+- Sufficient inventory.
+- Excess inventory.
+- Confirmed pending deliveries.
 
-Approval permissions must be configured explicitly, rather than assumed from the Director role.
+Calculate material requirements using actual demand, stock, reservations, and eligible incoming quantities.
 
----
+Respect maximum safe storage limits.
 
-# 16. END-TO-END BUSINESS WORKFLOW
+## 12. ACCOUNTING DASHBOARD (/accounting)
 
-Implement the following connected workflow using real records.
+Preserve the current Accounting module.
 
-**STEP 1 — MATERIAL REQUEST**
+Make the supplier-payable workflow clear and minimal.
 
-Production submits a requirement.
+### Main KPI Cards
 
-**STEP 2 — STOCK CHECK**
-
-Procurement checks available usable inventory and pending deliveries.
-
-**STEP 3 — SUPPLIER SELECTION**
-
-Procurement reviews supplier offers, terms, and approved quality information.
-
-**STEP 4 — PURCHASE ORDER**
-
-Procurement creates an order and obtains required approval.
-
-**STEP 5 — DELIVERY**
-
-Supplier delivers materials.
-
-**STEP 6 — WAREHOUSE & QUALITY CONTROL**
-
-Warehouse and Quality Control inspect the delivery.
-
-Accepted and rejected quantities are recorded separately.
-
-**STEP 7 — DOCUMENT MATCHING**
-
-Accounting reviews purchase order, goods receipt, and supplier invoice.
-
-**STEP 8 — PAYABLE RECOGNITION**
-
-The payable is recognized under the company's approved accounting rules.
-
-**STEP 9 — PAYMENT**
-
-Accounting processes, confirms, and allocates payments.
-
-**STEP 10 — UPDATED SUPPLIER BALANCE**
-
-The supplier balance updates from posted financial records.
-
-Procurement and the Director can view the new balance without manually entering it again.
-
-Every step must remain traceable to the relevant source documents.
-
----
-
-# 17. PROCUREMENT UI — REMOVE UNNECESSARY ELEMENTS
-
-The existing Procurement Dashboard should be simplified.
-
-### Keep the following primary sections
-
-1. Overview
-2. Material Requests
-3. Purchase Orders
-4. Suppliers
-5. Supplier Debts & Payments
-6. Deliveries
-
-Supplier comparisons, contracts, emergency purchasing, and supporting documents should be accessible contextually within the relevant sections instead of becoming unnecessary top-level dashboard cards.
-
-### Compact dashboard layout
-
-**Top KPI cards:**
-
-- Supplier Debt
-- Active Orders
-- Materials Needed
-- Upcoming Payments
-
-**Main content:**
-
-- Supplier summary table.
-- Purchase orders requiring attention.
-- Critical material shortages.
-- Overdue deliveries or payments.
-
-### Design requirements
-
-- Preserve the existing dark theme.
-- Preserve the overall ERP design system.
-- Avoid excessive text.
-- Avoid large decorative sections.
-- Avoid redundant charts.
-- Use real metrics.
-- Use compact tables.
-- Make rows clickable.
-- Use drill-down drawers or detail views.
-- Keep Uzbek labels short and correct.
-- Preserve Russian and English localization where already available.
-
-Remove redundant Procurement UI elements only after checking that they are not needed for existing workflows.
-
-Do not delete useful functionality or underlying records merely to simplify the interface.
-
----
-
-# 18. ACCOUNTING UI — MINIMAL AND FUNCTIONAL
-
-The Accounting Dashboard should focus on financial control.
-
-### Primary KPIs
-
-- Outstanding Supplier Payables.
+- Total Supplier Payables.
 - Overdue Payables.
-- Payments Due.
-- Confirmed Payments.
+- Payments Awaiting Processing.
+- Confirmed Payments for the selected period.
 
-### Primary views
+### Main Views
 
 - Supplier Balances.
-- Invoices.
-- Payments.
+- Supplier Invoices.
 - Payment Requests.
-- Reconciliation and Exceptions, where supported.
+- Payments.
+- Reconciliation.
+- Matching Exceptions.
 
-Use a compact, professional accounting interface.
+### Supplier Table
 
-Avoid unnecessary graphics.
+Each supplier row should show:
 
-Financial values, dates, statuses, documents, and discrepancies must be immediately understandable.
+- Supplier name.
+- Recognized outstanding balance.
+- Overdue balance.
+- Next payment due date.
+- Payment status.
 
----
+### Make Payment Action
 
-# 19. AUDIT AND SECURITY
+When an accountant selects a supplier or invoice, open a payment form.
 
-All important procurement and financial activities must be traceable.
+Automatically populate relevant, verified information:
 
-Track:
+- Supplier.
+- Currency.
+- Outstanding eligible invoices.
+- Suggested payment amount.
 
-- Who created an order.
-- Who approved it.
-- Who changed supplier terms.
-- Who accepted a delivery.
-- Who rejected materials.
-- Who recorded an invoice.
-- Who approved a payment.
-- Who confirmed a payment.
-- Who modified or reversed a financial record.
+Allow authorized partial payments.
 
-Do not silently alter posted financial records.
+Never permit unverified invoice amounts to be silently paid.
 
-Use approved corrections, reversals, and audit trails.
+The action must create a payment request or execute the existing approved accounting workflow.
 
-Protect financial information with server-side authorization.
+Do not simulate a successful bank payment.
 
-Prevent duplicate invoice posting, duplicate payments, and inconsistent payment allocations.
+## 13. DIRECTOR DASHBOARD INTEGRATION
 
-Use database transactions and appropriate concurrency controls.
+The Director must be able to monitor the same real financial information.
 
----
+Display only critical executive metrics:
 
-# 20. IMPLEMENTATION PHASES
+- Total outstanding supplier debt.
+- Overdue supplier debt.
+- Active purchasing commitments.
+- Critical material shortages.
+- Unresolved invoice matching exceptions.
 
-Do not implement the entire Procurement and Accounting system at once.
+Avoid adding redundant cards if equivalent metrics already exist.
 
-### PHASE 1 — EXISTING PROJECT ANALYSIS
+### Drill-Down
 
-Inspect the repository.
+Supplier Debt → Supplier → Invoice → Payment History → Remaining Balance
+
+Matching Exceptions → Supplier → Purchase Order → Receipt → QC → Invoice Mismatch
+
+The Director must be able to identify the source of a problem without switching between disconnected modules.
+
+## 14. DATABASE RELATIONSHIPS
+
+Inspect the existing database before proposing new tables.
+
+Ensure the data model supports the following logical entities:
+
+- Suppliers
+- Products
+- PurchaseRequests
+- PurchaseOrders
+- PurchaseOrderLines
+- GoodsReceipts
+- GoodsReceiptLines
+- QualityInspections
+- RejectionActs
+- SupplierInvoices
+- SupplierInvoiceLines
+- InvoiceMatches
+- PaymentRequests
+- Payments
+- PaymentAllocations
+- SupplierCreditNotes
+- SupplierAdvances, if applicable
+- AuditLogs
+
+Do not create duplicate tables when suitable entities already exist.
+
+Use proper foreign keys and unique constraints.
+
+### Required Relationships
+
+- One supplier → many purchase orders.
+- One purchase order → many order lines.
+- One order line → multiple receipts.
+- One receipt → QC inspection records.
+- One supplier invoice → multiple invoice lines.
+- Invoice lines → matched receipt/order quantities.
+- One supplier → many invoices.
+- One invoice → multiple payment allocations.
+- One payment → multiple invoice allocations.
+
+Use immutable financial posting references where appropriate.
+
+Use decimal-safe numeric types for financial amounts and weights.
+
+Enforce critical invariants with database transactions and constraints.
+
+## 15. DATA CONSISTENCY AND REAL-TIME UPDATES
+
+When Accounting posts a valid payment allocation, all relevant views must reflect the updated balance:
+
+- Accounting
+- Procurement
+- Director Dashboard
+
+Use the existing data-fetching, cache invalidation, and state-management architecture.
+
+Do not maintain separate local calculations of supplier debt across frontend modules.
+
+Important:
+
+A changed payment form is not a completed financial transaction.
+
+Update recognized financial balances only after the authorized backend transaction has been successfully committed.
+
+Use idempotency keys and transaction-level protections for payment posting to prevent accidental duplicates.
+
+Handle concurrent invoice matching and payment allocation safely.
+
+Provide Loading, Success, Empty, Error, and Unauthorized states.
+
+## 16. SECURITY AND PERMISSIONS
+
+Enforce authorization on the backend.
+
+### Procurement
+
+Can:
+
+- Create purchasing requests and orders according to permissions.
+- Track supplier deliveries.
+- View relevant supplier balances.
+- View payment and invoice statuses.
+
+Cannot:
+
+- Directly post bank payments.
+- Modify posted invoice balances.
+- Manually overwrite supplier debt.
+
+### Warehouse and QC
+
+Can:
+
+- Record verified received quantities.
+- Approve or reject materials under assigned permissions.
+- Create rejection acts.
+
+Cannot:
+
+- Change supplier payment balances.
+
+### Accounting
+
+Can:
+
+- Review invoices.
+- Perform matching.
+- Process payment approvals.
+- Post authorized transactions.
+- Maintain reconciliation records.
+
+### Director
+
+Can:
+
+- View consolidated information.
+- Investigate source documents.
+- Approve specific transactions only when explicitly authorized.
+
+Every important financial and operational action must be auditable.
+
+## 17. IMPORTANT EDGE CASES TO TEST
+
+Ensure the system correctly handles:
+
+1. Purchase order for 1,000 kg, but only 950 kg accepted.
+2. Supplier invoices 1,000 kg despite 950 kg being accepted.
+3. Purchase order delivered in multiple shipments.
+4. A single receipt matched to multiple partial invoices without double-counting.
+5. One supplier invoice paid in several installments.
+6. One payment allocated to several invoices.
+7. Supplier advance paid before delivery.
+8. Supplier credit note issued after rejection or return.
+9. Duplicate supplier invoice number.
+10. Duplicate payment submission.
+11. Payment approved but not confirmed by the bank.
+12. Payment failure or reversal.
+13. Different purchase and payment currencies.
+14. Invoice with additional taxes or approved delivery charges.
+15. Supplier delivers materials before a matching invoice exists.
+16. Goods remain under QC inspection.
+17. Invoice and accepted quantity are different.
+18. Invoice has an unauthorized price increase.
+19. Two accountants attempt to pay the same invoice simultaneously.
+20. Supplier balance viewed for a historical date.
+
+For each case, define expected backend behavior and required validation.
+
+## 18. IMPLEMENTATION PHASES
+
+### PHASE 1 — EXISTING CODE AUDIT
+
+Inspect Procurement, Accounting, Warehouse, QC, and the Director Dashboard.
 
 Identify:
 
-- Existing Procurement features.
-- Existing Accounting features.
-- Existing Suppliers models.
-- Existing Purchase Orders.
-- Existing Warehouse Receiving.
-- Existing payment-related database tables.
-- Existing financial calculations.
-- Existing API endpoints.
-- Existing UI components.
+- Existing models.
+- Existing payment workflows.
+- Existing APIs.
+- Existing supplier balances.
+- Existing receiving logic.
 - Missing relationships.
-- Duplicated or unnecessary Procurement interface elements.
+- Calculation errors.
+- Duplicate business logic.
 
-Provide a concise analysis.
+Do not modify code during this phase.
 
-Do not modify any code in this phase.
-
-### PHASE 2 — SUPPLIER DEBT & ACCOUNTING CONNECTION
-
-After approval:
-
-- Establish the source of truth for supplier payables.
-- Connect procurement supplier records to accounting balances.
-- Implement the supplier debt summary.
-- Implement confirmed payment visibility.
-- Implement remaining debt and overdue calculations.
-- Add supplier financial drill-down.
-
-### PHASE 3 — PURCHASE ORDER MANAGEMENT
+### PHASE 2 — RECEIPT AND QC CONNECTION
 
 After approval:
 
-- Connect material requests.
-- Implement or extend purchase orders.
-- Track ordered, received, and outstanding quantities.
-- Integrate with warehouse receiving.
+Connect Purchase Orders to verified goods receipts and QC acceptance.
 
-### PHASE 4 — PROCUREMENT PLANNING
+Support partial delivery and rejection acts.
 
-After approval:
-
-- Connect available warehouse inventory.
-- Use approved product storage limits.
-- Calculate stock coverage.
-- Identify actual material requirements.
-- Introduce shortage and excess inventory warnings.
-
-### PHASE 5 — SUPPLIER COMPARISON & DELIVERY TRACKING
+### PHASE 3 — MATCHING ENGINE
 
 After approval:
 
-- Supplier offer comparison.
-- Supplier terms and contract references.
-- Delivery tracking.
-- Late delivery alerts.
-- Supplier quality history.
-- Emergency procurement workflow.
+Implement invoice matching and mismatch handling.
 
-### PHASE 6 — UI SIMPLIFICATION & VERIFICATION
+Prevent unauthorized over-invoicing and duplicate quantity matching.
+
+### PHASE 4 — ACCOUNTING AND PAYMENTS
 
 After approval:
 
-- Remove redundant interface elements.
-- Simplify Procurement and Accounting layouts.
-- Verify all calculations.
-- Test role permissions.
-- Test invoice/payment reconciliation.
-- Verify links to existing warehouse and director modules.
-- Test loading, empty, and error states.
-- Check Uzbek localization.
+Implement or correct supplier invoices, recognized payables, payment posting, and payment allocations.
 
-Complete and verify one phase before starting the next.
+### PHASE 5 — SHARED SUPPLIER BALANCES
 
----
+After approval:
 
-# 21. REQUIRED ACCEPTANCE CRITERIA
+Connect the authoritative accounting balances to Procurement and the Director Dashboard.
 
-The implementation is successful only when:
+### PHASE 6 — RECONCILIATION AND UI SIMPLIFICATION
 
-1. Procurement can see exactly which suppliers have outstanding balances.
-2. Supplier debt values match the authoritative accounting records.
-3. Confirmed supplier payments are reflected correctly.
-4. Partial payments produce accurate outstanding balances.
-5. Purchase orders are not incorrectly counted as recognized debt.
-6. Active orders and pending deliveries are visible.
-7. Procurement can see relevant warehouse shortages.
-8. Product-specific inventory limits are respected.
-9. Accepted deliveries connect correctly to warehouse records.
-10. Rejected deliveries remain traceable through rejection acts.
-11. Supplier invoice and payment records remain auditable.
-12. The Director can drill down into relevant purchasing and payment details.
-13. No fake data is used.
-14. Procurement and Accounting do not maintain conflicting duplicate financial balances.
-15. Existing ERP functionality remains intact.
-16. The interface is simple and free from unnecessary clutter.
+After approval:
 
----
+Implement the supplier reconciliation view.
 
-# 22. WHAT YOU MUST DO RIGHT NOW
+Remove redundant UI elements.
 
-**DO NOT START CODING YET.**
+Verify all drill-down navigation.
 
-First, inspect the existing project.
+### PHASE 7 — INTEGRATION TESTING
 
-Then provide:
+After approval:
 
-1. Current Procurement Module assessment.
-2. Current Accounting Module assessment.
-3. Existing database entities and reusable relationships.
-4. Missing functionality.
-5. Proposed Procurement ↔ Accounting integration.
-6. Supplier debt calculation architecture.
-7. Proposed simplified Procurement Dashboard structure.
-8. Necessary backend/API changes.
-9. Required database migrations.
-10. Step-by-step implementation plan.
+Test calculations, partial deliveries, duplicate prevention, financial posting, permissions, concurrency, and regression risks.
 
-Classify findings as:
+Do not proceed to a new phase before the approved phase has been tested.
+
+## 19. YOUR TASK RIGHT NOW
+
+DO NOT START IMPLEMENTING YET.
+
+First inspect the existing repository.
+
+Return:
+
+1. Current architecture assessment.
+2. Existing Procurement and Accounting capabilities.
+3. Missing controls in the purchasing-to-payment workflow.
+4. Proposed 4-way matching architecture.
+5. Supplier payable and payment calculation rules.
+6. Required database model changes.
+7. Required API changes.
+8. Proposed minimal UI improvements.
+9. Implementation order.
+10. Any essential accounting policy decisions that require confirmation.
+
+Classify each finding as:
 
 - ALREADY IMPLEMENTED
-- NEEDS IMPROVEMENT
+- NEEDS CORRECTION
 - MISSING
 - REQUIRES BUSINESS CONFIRMATION
 
-Clearly distinguish verified code findings from assumptions.
+Do not claim any feature is missing without inspecting the relevant code.
 
-Do not claim to have inspected anything you cannot actually access.
+Do not change production data or existing application files without explicit implementation approval.
 
-Wait for my approval before making implementation changes.
+## FINAL OBJECTIVE
 
-## FINAL PRODUCT PRINCIPLE
+Build one connected purchasing and accounting workflow.
 
-**Procurement manages purchasing and supplier relationships.**
+**Procurement orders.**
 
-**Warehouse controls physical material movements.**
+**Warehouse records delivery.**
 
-**Quality Control determines material acceptance and quality status.**
+**Quality Control verifies accepted quantities.**
 
-**Accounting manages official payables and payments.**
+**Accounting matches invoices and confirms payments.**
 
-**The Director monitors overall performance and accountability.**
+**The Director monitors the entire process.**
 
-All departments must operate on connected, consistent, real business records.
+Every payable must have a valid financial source.
 
-The final system must remain simple, reliable, auditable, and easy to navigate.
+Every accepted quantity must be traceable.
+
+Every confirmed payment must have a verifiable transaction.
+
+Every supplier balance must be consistent across the ERP.
+
+Keep the implementation accurate, minimal, auditable, and integrated with the existing application.
+
+
+---
+
+## 20. TASDIQLANGAN BIZNES QOIDALARI VA TA'MINOTCHI PORTALI (CONFIRMED POLICIES)
+
+*Ushbu qoidalar korxona ma'muriyati tomonidan 2026-yil 4-noyabrda rasman tasdiqlandi va tizimga to'liq joriy etildi:*
+
+1. **Brak (yaroqsiz) xomashyo va ta'minotchi oldidagi qarz hisobi:**
+   - **Qoida:** Korxona ta'minotchi keltirgan umumiy hajm (masalan, 1000 kg) uchun to'liq to'lov qiladi. Ichki sifat nazorati (QC) tomonidan aniqlangan brak (masalan, 50 kg) korxonaning o'z texnologik yo'qotishi / sarf-xarajati sifatida hisobga olinadi. Ta'minotchining fakturasi to'liq qabul qilingan/kelgan og'irlik (1000 kg) bo'yicha to'lanadi.
+
+2. **Narx tafovuti (Price Tolerance):**
+   - **Qoida:** Qat'iy 0% tolerance! Narxlar shartnoma va buyurtmadagi kelishilgan summaga 1 so'mgacha mos kelishi shart. Har qanday narx tafovuti darhol qat'iy `ON_HOLD` / `MISMATCH` istisnosini keltirib chiqaradi va to'lovga ruxsat berilmaydi.
+
+3. **Yetkazib Beruvchi Portali va Maxfiylik Izolyatsiyasi (Supplier Portal & Strict Isolation):**
+   - **Qoida:** Admin ta'minotchi uchun tizimga kirish akkaunti (Login va Parol) ochib beradi (`/admin/suppliers` yoki `/suppliers?tab=accounts`).
+   - Ta'minotchi roli: `SUPPLIER`.
+   - **Xavfsizlik:** Ta'minotchi tizimga kirganida **FAQAT va FAQAT** unga korxonadan yuborilgan buyurtmalar (`/supplier-portal`) ko'rinadi. Korxonaning boshqa barcha bo'limlari (ombor, ishlab chiqarish, sifat, buxgalteriya, xodimlar, sozlamalar) undan butunlay yashirilgan va bloklangan (`middleware.ts`).
+   - **Ko'p tillilik:** Portal to'liq 3 ta tilda: **O'zbekcha / Русский / English** ishlaydi.
+   - Ta'minotchi o'ziga kelgan buyurtmalarni ko'radi, ularni chop eta oladi va zavodga yuborishda mashina raqami hamda haydovchi telefonini kiritib **"🚚 Yo'lga chiqdik (В пути)"** yoki **"✅ Yetkazildi"** holatiga o'tkaza oladi. Bu xabar zavod ichki chatiga avtomatik yuboriladi.

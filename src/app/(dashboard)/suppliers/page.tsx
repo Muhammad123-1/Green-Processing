@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { 
   Plus, 
@@ -21,10 +22,12 @@ import {
   Boxes,
   TrendingUp,
   PackageCheck,
-  Filter
+  Filter,
+  KeyRound
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
+import SupplierAccountsManager from '@/components/admin/SupplierAccountsManager'
 
 interface Supplier {
   id: number
@@ -58,6 +61,16 @@ const emptyForm = {
 
 export default function SuppliersPage() {
   const { lang, formatDual } = useLanguage()
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState<'catalog' | 'accounts'>('catalog')
+
+  useEffect(() => {
+    const tabParam = searchParams?.get('tab')
+    if (tabParam === 'accounts') {
+      setActiveTab('accounts')
+    }
+  }, [searchParams])
+
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [search, setSearch] = useState('')
   const [unitFilter, setUnitFilter] = useState<'ALL' | 'KG' | 'DONA'>('ALL')
@@ -224,14 +237,54 @@ export default function SuppliersPage() {
           </h1>
         </div>
 
-        <button 
-          onClick={openNew} 
-          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 px-5 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap active:scale-95"
+        {activeTab === 'catalog' && (
+          <button 
+            onClick={openNew} 
+            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 px-5 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap active:scale-95"
+          >
+            <Plus size={18} />
+            <span>{formatDual("+ Yangi Ta'minotchi", "+ Добавить поставщика", "+ New Supplier")}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Navigation Tabs: Catalog vs Portal Accounts */}
+      <div className="flex bg-dark-900/90 p-1.5 rounded-2xl border border-dark-750 w-full sm:w-max max-w-full overflow-x-auto shadow-sm">
+        <button
+          onClick={() => setActiveTab('catalog')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            activeTab === 'catalog'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+              : 'text-slate-400 hover:text-white'
+          }`}
         >
-          <Plus size={18} />
-          <span>{formatDual("+ Yangi Ta'minotchi", "+ Добавить поставщика", "+ New Supplier")}</span>
+          <Building2 size={16} />
+          <span>{formatDual("1. Ta'minotchilar Katalogi", "1. Каталог поставщиков", "1. Suppliers Catalog")}</span>
+          <span className="px-2 py-0.5 rounded-md bg-dark-950/60 text-[11px] text-slate-300">
+            {suppliers.length}
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('accounts')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            activeTab === 'accounts'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <KeyRound size={16} />
+          <span>{formatDual("2. Portal Login & Parollari", "2. Логины и Пароли Портала", "2. Portal Logins & Access")}</span>
         </button>
       </div>
+
+      {/* TAB 2: PORTAL ACCOUNTS MANAGER */}
+      {activeTab === 'accounts' && (
+        <SupplierAccountsManager />
+      )}
+
+      {/* TAB 1: SUPPLIERS CATALOG */}
+      {activeTab === 'catalog' && (
+        <>
 
       {/* KPI Cards (Accurate Separation: Weight tn/kg vs Packaging dona) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
@@ -834,6 +887,8 @@ export default function SuppliersPage() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   )

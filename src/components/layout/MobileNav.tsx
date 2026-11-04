@@ -10,8 +10,11 @@ import {
   ClipboardList, 
   Menu,
   ChefHat,
-  ArrowDownRight
+  ArrowDownRight,
+  Truck,
+  LogOut
 } from 'lucide-react'
+import { logout } from '@/app/actions/auth'
 import { useSidebar } from '@/store/sidebar'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useChatBadge } from '@/store/chatBadge'
@@ -29,6 +32,44 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
 
   if (!mounted) {
     return null
+  }
+
+  // STRICT PRIVACY FOR SUPPLIER: Only My Orders and Logout
+  if (userRole === 'SUPPLIER') {
+    return (
+      <nav aria-label="Ta'minotchi mobil navigatsiyasi" className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-dark-900/95 backdrop-blur-lg border-t border-dark-750 px-6 py-2 safe-bottom">
+        <div className="flex items-center justify-around max-w-sm mx-auto">
+          <Link
+            href="/supplier-portal"
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              pathname.startsWith('/supplier-portal')
+                ? 'text-emerald-400 font-bold'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <div className={`w-9 h-8 flex items-center justify-center rounded-xl transition-all ${
+              pathname.startsWith('/supplier-portal') ? 'bg-emerald-500/15 text-emerald-400' : 'bg-transparent'
+            }`}>
+              <Truck size={20} />
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+              {formatDual('Buyurtmalarim', 'Заказы', 'Orders')}
+            </span>
+          </Link>
+          <button
+            onClick={() => logout()}
+            className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-rose-400 hover:text-rose-300 transition-all"
+          >
+            <div className="w-9 h-8 flex items-center justify-center rounded-xl bg-transparent">
+              <LogOut size={20} />
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+              {formatDual('Chiqish', 'Выйти', 'Logout')}
+            </span>
+          </button>
+        </div>
+      </nav>
+    )
   }
 
   const isDirector = userRole === 'DIRECTOR'

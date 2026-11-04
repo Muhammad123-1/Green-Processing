@@ -10,11 +10,22 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const data: Record<string, unknown> = { name: body.name, role: body.role }
     if (body.password) data.password = body.password
     if (body.medicalClearance !== undefined) data.medicalClearance = body.medicalClearance
+    if (body.supplierId !== undefined) data.supplierId = body.supplierId ? parseInt(body.supplierId) : null
 
     const user = await prisma.user.update({
       where: { id: parseInt(id) },
       data,
-      select: { id: true, name: true, username: true, role: true, medicalClearance: true, isActive: true, createdAt: true },
+      select: { 
+        id: true, 
+        name: true, 
+        username: true, 
+        role: true, 
+        medicalClearance: true, 
+        isActive: true, 
+        supplierId: true,
+        supplier: { select: { id: true, name: true } },
+        createdAt: true 
+      },
     })
     return NextResponse.json(user)
   } catch {

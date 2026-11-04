@@ -28,6 +28,7 @@ const roleColors: Record<string, string> = {
   HR: 'bg-pink-500/15 text-pink-400 border border-pink-500/30',
   KITCHEN: 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
   SECURITY: 'bg-slate-500/15 text-slate-300 border border-slate-500/30',
+  SUPPLIER: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
   OPERATOR: 'badge-info',
   READONLY: 'badge-warning',
 }
@@ -45,6 +46,7 @@ const roleLabelsMap: Record<string, { uz: string; ru: string; en: string }> = {
   HR: { uz: 'Kadrlar Bo\'limi (HR)', ru: 'Отдел кадров (HR)', en: 'Human Resources (HR)' },
   KITCHEN: { uz: 'Xodimlar Oshxonasi', ru: 'Кухня персонала', en: 'Staff Kitchen' },
   SECURITY: { uz: 'Xavfsizlik Xizmati', ru: 'Служба безопасности', en: 'Security Service' },
+  SUPPLIER: { uz: "Ta'minotchi (Tashqi Portal)", ru: 'Поставщик (Внешний кабинет)', en: 'Supplier (External Portal)' },
   OPERATOR: { uz: 'Operator', ru: 'Оператор', en: 'Operator' },
   READONLY: { uz: "Faqat ko'rish", ru: 'Только чтение', en: 'Read-only' },
 }

@@ -66,6 +66,10 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       title: t('orders'), 
       subtitle: t('ordersSub') 
     },
+    '/supplier-portal': { 
+      title: formatDual("Yetkazib Beruvchi Portali", "Кабинет Поставщика", "Supplier Portal"), 
+      subtitle: formatDual("Korxonadan kelgan xarid buyurtmalari ro'yxati", "Список заказов на поставку от предприятия", "Factory purchase orders and delivery status") 
+    },
     '/supply': { 
       title: t('orders'), 
       subtitle: t('ordersSub') 

@@ -65,7 +65,12 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   // Set session cookie
-  const sessionData = JSON.stringify({ id: user.id, role: user.role, name: user.name })
+  const sessionData = JSON.stringify({ 
+    id: user.id, 
+    role: user.role, 
+    name: user.name,
+    supplierId: user.supplierId 
+  })
   // Using next/headers cookies
   const cookieStore = await cookies()
   cookieStore.set(COOKIE_NAME, Buffer.from(sessionData).toString('base64'), {
@@ -91,6 +96,7 @@ export async function login(prevState: any, formData: FormData) {
     case 'HR': redirectUrl = '/hr'; break;
     case 'SECURITY': redirectUrl = '/security'; break;
     case 'ADMIN': redirectUrl = '/dashboard'; break;
+    case 'SUPPLIER': redirectUrl = '/supplier-portal'; break;
   }
 
   redirect(redirectUrl)
@@ -109,7 +115,7 @@ export async function getSession() {
 
   try {
     const data = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString('utf-8'))
-    return data as { id: number; role: string; name: string }
+    return data as { id: number; role: string; name: string; supplierId?: number | null }
   } catch {
     return null
   }

@@ -4,7 +4,17 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, username: true, role: true, medicalClearance: true, isActive: true, createdAt: true },
+      select: { 
+        id: true, 
+        name: true, 
+        username: true, 
+        role: true, 
+        medicalClearance: true, 
+        isActive: true, 
+        supplierId: true,
+        supplier: { select: { id: true, name: true } },
+        createdAt: true 
+      },
       orderBy: { createdAt: 'asc' },
     })
     return NextResponse.json(users)
@@ -26,9 +36,20 @@ export async function POST(request: NextRequest) {
         username: body.username,
         password: body.password, // In production: hash with bcrypt
         role: body.role || 'OPERATOR',
+        supplierId: body.supplierId ? parseInt(body.supplierId) : null,
         isActive: true,
       },
-      select: { id: true, name: true, username: true, role: true, medicalClearance: true, isActive: true, createdAt: true },
+      select: { 
+        id: true, 
+        name: true, 
+        username: true, 
+        role: true, 
+        medicalClearance: true, 
+        isActive: true, 
+        supplierId: true,
+        supplier: { select: { id: true, name: true } },
+        createdAt: true 
+      },
     })
 
     return NextResponse.json(user, { status: 201 })

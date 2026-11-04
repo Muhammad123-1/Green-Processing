@@ -45,6 +45,7 @@ model User {
   role             String   @default("OPERATOR") // Backwards compatibility
   roleId           Int?
   departmentId     Int?
+  supplierId       Int?
   medicalClearance Boolean  @default(true)
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
@@ -52,6 +53,7 @@ model User {
 
   roleRelation     Role?        @relation(fields: [roleId], references: [id])
   department       Department?  @relation(fields: [departmentId], references: [id])
+  supplier         Supplier?    @relation(fields: [supplierId], references: [id])
   
   inspections      Inspection[]
   logs             Log[]
@@ -408,6 +410,7 @@ model Supplier {
   defects        DefectLog[]
   inventoryBatches InventoryBatch[]
   purchaseOrders PurchaseOrder[]
+  users            User[]
 }
 
 model Inspection {
@@ -479,6 +482,8 @@ model Order {
   imageUrl           String?
   price              Float?   
   notes              String?
+  driverPhone        String?
+  vehicleNumber      String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

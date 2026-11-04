@@ -20,6 +20,7 @@ function getRedirectPathForRole(role?: string) {
     case 'HR': return '/hr';
     case 'SECURITY': return '/security';
     case 'ADMIN': return '/dashboard';
+    case 'SUPPLIER': return '/supplier-portal';
     default: return '/dashboard';
   }
 }
@@ -43,14 +44,28 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // If user is authenticated and trying to access login page, redirect to their portal
-  if (isAuthenticated && pathname === '/login') {
+  // If user is authenticated
+  if (isAuthenticated) {
+    let userRole = ''
     try {
       const sessionData = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString('utf-8'))
-      const targetPath = getRedirectPathForRole(sessionData.role)
-      return NextResponse.redirect(new URL(targetPath, request.url))
+      userRole = sessionData.role || ''
     } catch {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      // invalid session cookie
+    }
+
+    // Trying to access login page, redirect to their home
+    if (pathname === '/login') {
+      const targetPath = getRedirectPathForRole(userRole)
+      return NextResponse.redirect(new URL(targetPath, request.url))
+    }
+
+    // STRICT PRIVACY & ISOLATION FOR SUPPLIER ROLE:
+    // Supplier can ONLY access /supplier-portal, nothing else in the enterprise ERP!
+    if (userRole === 'SUPPLIER') {
+      if (!pathname.startsWith('/supplier-portal')) {
+        return NextResponse.redirect(new URL('/supplier-portal', request.url))
+      }
     }
   }
 
