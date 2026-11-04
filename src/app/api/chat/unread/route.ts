@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    const allUsers = await prisma.user.findMany({ select: { id: true, name: true, role: true } })
+    const allUsers = await prisma.user.findMany({ select: { id: true, name: true, role: true, supplierId: true } })
     const userByName = new Map<string, number>()
     allUsers.forEach((u) => {
       userByName.set(u.name.toLowerCase(), u.id)
@@ -60,6 +60,15 @@ export async function GET(req: NextRequest) {
         if (!participantIds.includes(userId)) {
           return false
         }
+      } else if (msg.groupId.startsWith('supplier_')) {
+        const sId = parseInt(msg.groupId.replace('supplier_', ''), 10)
+        // If current user is a SUPPLIER, only show for their own company
+        if (userRole === 'SUPPLIER') {
+          if (session.supplierId !== sId) return false
+        } else {
+          // Factory staff: SUPPLY, ADMIN, and DIRECTOR receive supplier messages
+          if (!isAdminOrDirector && userRole !== 'SUPPLY') return false
+        }
       } else if (msg.groupId === 'management') {
         if (!isAdminOrDirector && userRole !== 'ACCOUNTING') return false
       } else if (msg.groupId === 'qa_warehouse') {
@@ -80,7 +89,7 @@ export async function GET(req: NextRequest) {
       // Unread count per sender name
       unreadBySender[msg.sender] = (unreadBySender[msg.sender] || 0) + 1
 
-      // Unread count per user ID (for DMs)
+      // Unread count per user ID (for DMs and Suppliers)
       if (msg.groupId.startsWith('dm_')) {
         const parts = msg.groupId.replace('dm_', '').split('_')
         const participantIds = parts.map((p) => parseInt(p, 10)).filter((n) => !isNaN(n))
@@ -88,6 +97,12 @@ export async function GET(req: NextRequest) {
         if (otherId) {
           unreadByUser[otherId] = (unreadByUser[otherId] || 0) + 1
         }
+      } else if (msg.groupId.startsWith('supplier_')) {
+        const sId = parseInt(msg.groupId.replace('supplier_', ''), 10)
+        const supplierUsers = allUsers.filter(u => u.supplierId === sId)
+        supplierUsers.forEach(su => {
+          unreadByUser[su.id] = (unreadByUser[su.id] || 0) + 1
+        })
       } else {
         const senderUserId = userByName.get(msg.sender.toLowerCase())
         if (senderUserId && senderUserId !== userId) {

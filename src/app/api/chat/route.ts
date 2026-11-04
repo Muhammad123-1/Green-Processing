@@ -99,14 +99,32 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const userIdentifier = session.name || session.role
+    const groupId = body.groupId || 'general'
+
+    let sender = userIdentifier
+
+    // When writing to a supplier channel, ensure clear sender identification
+    if (groupId.startsWith('supplier_')) {
+      if (session.role === 'SUPPLIER') {
+        const u = await prisma.user.findUnique({
+          where: { id: session.id },
+          include: { supplier: true }
+        })
+        const comp = u?.supplier?.shortName || u?.supplier?.name || "Ta'minotchi"
+        sender = `${u?.name || session.name} (${comp})`
+      } else {
+        // Factory staff (Supply, Admin, Director)
+        sender = `Green Processing Ta'minot (${session.name || 'Ta\'minot'})`
+      }
+    }
 
     const message = await prisma.chatMessage.create({
       data: {
-        sender: userIdentifier,
+        sender,
         text: body.text || null,
         imageUrl: body.imageUrl || null,
-        groupId: body.groupId || 'general',
-        readBy: [userIdentifier]
+        groupId,
+        readBy: [sender, userIdentifier, session.role, String(session.id)]
       }
     })
     

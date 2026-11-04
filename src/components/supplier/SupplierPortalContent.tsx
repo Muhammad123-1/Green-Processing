@@ -318,23 +318,24 @@ export default function SupplierPortalContent() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* 1. Header Banner - Crisp dark-banner that NEVER washes out in light mode */}
-      <div className="dark-banner bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-700/90 p-5 sm:p-7 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
+      {/* 1. Header Banner - Crisp dual-theme adaptive */}
+      <div className="relative overflow-hidden bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 sm:p-7 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative z-10 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
               <Truck size={14} />
               GREEN PROCESSING • {formatDual("YETKAZIB BERUVCHI PORTALI", "КАБИНЕТ ПОСТАВЩИКА", "SUPPLIER PORTAL")}
             </span>
             {supplier?.name && (
-              <span className="px-3 py-1 rounded-lg bg-teal-500/20 border border-teal-500/40 text-teal-200 text-xs font-bold flex items-center gap-1">
+              <span className="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-500/20 border border-teal-200 dark:border-teal-500/40 text-teal-700 dark:text-teal-200 text-xs font-bold flex items-center gap-1">
                 <Building2 size={13} />
                 {supplier.name}
               </span>
             )}
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black !text-white tracking-tight" style={{ color: '#ffffff' }}>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {formatDual(
               "Korxonadan Kelayotgan Buyurtmalar",
               "Заказы на поставку сырья от предприятия",
@@ -342,7 +343,7 @@ export default function SupplierPortalContent() {
             )}
           </h2>
 
-          <p className="text-xs sm:text-sm !text-slate-300 max-w-2xl leading-relaxed" style={{ color: '#cbd5e1' }}>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
             {formatDual(
               "Sizga Green Processing zavodidan yuborilgan barcha xarid buyurtmalari ro'yxati, yetkazib berish muddati va qabul holatlari.",
               "Все заказы на сырье, отправленные вам заводом Green Processing, графики поставок и текущий статус приемки.",
@@ -352,13 +353,13 @@ export default function SupplierPortalContent() {
         </div>
 
         {/* Language switch + Refresh */}
-        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+        <div className="relative z-10 flex flex-wrap items-center gap-2.5 self-start md:self-auto">
           {/* Quick Language Pills */}
-          <div className="flex bg-slate-950/90 p-1 rounded-xl border border-slate-700/80 shadow-md">
+          <div className="flex bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 shadow-sm">
             <button
               onClick={() => setLang('uz')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                lang === 'uz' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                lang === 'uz' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               🇺🇿 O'zbek
@@ -366,7 +367,7 @@ export default function SupplierPortalContent() {
             <button
               onClick={() => setLang('ru')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                lang === 'ru' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                lang === 'ru' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               🇷🇺 Русский
@@ -374,7 +375,7 @@ export default function SupplierPortalContent() {
             <button
               onClick={() => setLang('en')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                lang === 'en' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                lang === 'en' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               🇬🇧 English
@@ -387,10 +388,10 @@ export default function SupplierPortalContent() {
               fetchChat()
             }}
             disabled={loading}
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition-colors shadow-md"
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-dark-700 transition-colors shadow-sm"
             title={formatDual("Yangilash", "Обновить", "Refresh")}
           >
-            <RefreshCw size={17} className={loading ? 'animate-spin text-emerald-400' : ''} />
+            <RefreshCw size={17} className={loading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''} />
           </button>
         </div>
       </div>
@@ -475,7 +476,14 @@ export default function SupplierPortalContent() {
               </div>
             ) : (
               chatMessages.map((msg) => {
-                const isFromSupplier = !msg.sender.toLowerCase().includes('green processing') && !msg.sender.toLowerCase().includes('ta\'minot')
+                const sName = (supplier?.name || '').toLowerCase()
+                const isFromSupplier = Boolean(sName && msg.sender.toLowerCase().includes(sName)) ||
+                  (!msg.sender.toLowerCase().includes('green processing') &&
+                   !msg.sender.toLowerCase().includes('ta\'minot') &&
+                   !msg.sender.toLowerCase().includes('supply') &&
+                   !msg.sender.toLowerCase().includes('admin') &&
+                   !msg.sender.toLowerCase().includes('direktor') &&
+                   !msg.sender.toLowerCase().includes('zavod'))
 
                 return (
                   <div

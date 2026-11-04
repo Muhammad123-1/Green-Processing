@@ -39,6 +39,8 @@ export interface UserItem {
   medicalClearance?: boolean
   isActive: boolean
   createdAt?: string
+  supplierId?: number | null
+  supplier?: { id: number; name: string } | null
 }
 
 export interface ChatMessageItem {
@@ -109,6 +111,7 @@ const ROLE_INFO: Record<string, { labelUz: string; labelRu: string; labelEn: str
   HR: { labelUz: 'Kadrlar Bo\'limi', labelRu: 'Отдел кадров', labelEn: 'HR Officer', color: 'text-pink-500', bg: 'bg-pink-500/10 border-pink-500/30' },
   SECURITY: { labelUz: 'Xavfsizlik Xizmati', labelRu: 'Служба безопасности', labelEn: 'Security', color: 'text-slate-400', bg: 'bg-slate-500/10 border-slate-500/30' },
   OPERATOR: { labelUz: 'Operator', labelRu: 'Оператор', labelEn: 'Operator', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' },
+  SUPPLIER: { labelUz: 'Yetkazib Beruvchi (Ta\'minotchi)', labelRu: 'Поставщик сырья', labelEn: 'Supplier', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-500/15 border-teal-300 dark:border-teal-500/30' },
 }
 
 export default function ChatContent({
@@ -173,6 +176,29 @@ export default function ChatContent({
       if (res.ok) {
         const data: UserItem[] = await res.json()
         setUsersList(data)
+
+        // Check if query params specify a supplierId or userId
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+        const paramSupplierId = params ? params.get('supplierId') : null
+        const paramUserId = params ? params.get('userId') : null
+
+        if (paramSupplierId) {
+          const sIdNum = parseInt(paramSupplierId, 10)
+          const target = data.find(u => u.supplierId === sIdNum || u.supplier?.id === sIdNum)
+          if (target) {
+            selectUserDirectChat(target, true)
+            return
+          }
+        }
+        if (paramUserId) {
+          const uIdNum = parseInt(paramUserId, 10)
+          const target = data.find(u => u.id === uIdNum)
+          if (target) {
+            selectUserDirectChat(target, true)
+            return
+          }
+        }
+
         // Default to first colleague or first channel if none selected
         if (!selectedUser && !selectedChannel && data.length > 0) {
           const colleague = data.find(u => u.name !== userName && u.id !== currentUserId) || data[0]
@@ -192,8 +218,26 @@ export default function ChatContent({
     fetchUsers()
   }, [])
 
-  // Helper to compute DM group ID
-  const computeDmGroupId = (myId: number, otherId: number) => {
+  // Helper to compute DM group ID (unifies supplier chat into supplier_${id})
+  const computeDmGroupId = (myId: number, other: UserItem | number) => {
+    const otherObj = typeof other === 'number'
+      ? usersList.find(u => u.id === other)
+      : other
+
+    if (otherObj) {
+      if (otherObj.role === 'SUPPLIER' || otherObj.supplierId || otherObj.supplier?.id) {
+        const sId = otherObj.supplierId || otherObj.supplier?.id
+        if (sId) return `supplier_${sId}`
+      }
+    }
+
+    if (userRole === 'SUPPLIER') {
+      const me = usersList.find(u => u.id === myId)
+      const sId = me?.supplierId || me?.supplier?.id
+      if (sId) return `supplier_${sId}`
+    }
+
+    const otherId = typeof other === 'number' ? other : other?.id
     if (myId && otherId) {
       const min = Math.min(myId, otherId)
       const max = Math.max(myId, otherId)
@@ -226,7 +270,7 @@ export default function ChatContent({
   const selectUserDirectChat = (user: UserItem, openMobile = true) => {
     setSelectedUser(user)
     setSelectedChannel(null)
-    const dmId = computeDmGroupId(currentUserId, user.id)
+    const dmId = computeDmGroupId(currentUserId, user)
     setActiveGroupId(dmId)
     // Clear unread immediately for this user in local state
     setUnreadByUser((prev) => {
@@ -528,7 +572,7 @@ export default function ChatContent({
                 filteredUsers.map((u) => {
                   const isCurrent = u.name === userName || u.id === currentUserId
                   const isSelected = selectedUser?.id === u.id
-                  const dmId = computeDmGroupId(currentUserId, u.id)
+                  const dmId = computeDmGroupId(currentUserId, u)
                   const unreadCount = unreadByUser[u.id] || unreadByGroup[dmId] || 0
                   const hasUnread = unreadCount > 0 && !isSelected
                   const roleConfig = ROLE_INFO[u.role] || ROLE_INFO.OPERATOR
@@ -548,8 +592,8 @@ export default function ChatContent({
                     >
                       {/* Avatar with status dot and pulsating red unread badge */}
                       <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-900 dark:from-dark-700 dark:to-dark-600 flex items-center justify-center text-white font-extrabold text-xs shadow-sm border border-slate-300/30">
-                          {initials || <UserIcon size={16} />}
+                        <div className={`w-10 h-10 rounded-xl ${u.role === 'SUPPLIER' ? 'bg-gradient-to-tr from-teal-700 to-emerald-700' : 'bg-gradient-to-tr from-slate-700 to-slate-900 dark:from-dark-700 dark:to-dark-600'} flex items-center justify-center text-white font-extrabold text-xs shadow-sm border border-slate-300/30`}>
+                          {u.role === 'SUPPLIER' ? <Truck size={17} /> : (initials || <UserIcon size={16} />)}
                         </div>
                         {/* Active online dot */}
                         <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-dark-900 ${u.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
@@ -577,10 +621,15 @@ export default function ChatContent({
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${roleConfig.bg} ${roleConfig.color} truncate max-w-[170px]`}>
                             {getRoleLabel(u.role)}
                           </span>
+                          {u.supplier?.name && (
+                            <span className="text-[10px] font-black text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-500/10 px-1.5 py-0.2 rounded border border-teal-200 dark:border-teal-500/20 truncate max-w-[150px]">
+                              🚚 {u.supplier.name}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -680,8 +729,8 @@ export default function ChatContent({
                 /* Selected DM Header */
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
-                      {selectedUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                    <div className={`w-10 h-10 rounded-xl ${selectedUser.role === 'SUPPLIER' ? 'bg-gradient-to-tr from-teal-600 to-emerald-600' : 'bg-gradient-to-tr from-emerald-600 to-teal-500'} flex items-center justify-center text-white font-extrabold text-sm shadow-sm`}>
+                      {selectedUser.role === 'SUPPLIER' ? <Truck size={20} /> : (selectedUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase())}
                     </div>
                     <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-dark-900 ${selectedUser.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                   </div>
@@ -689,6 +738,11 @@ export default function ChatContent({
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-sm font-black text-slate-900 dark:text-white">
                         {selectedUser.name}
+                        {selectedUser.supplier?.name && (
+                          <span className="text-xs text-teal-600 dark:text-teal-400 font-bold ml-1.5">
+                            ({selectedUser.supplier.name})
+                          </span>
+                        )}
                       </h3>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                         {getRoleLabel(selectedUser.role)}
@@ -696,7 +750,9 @@ export default function ChatContent({
                     </div>
                     <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 flex-wrap">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      {lang === 'ru' ? 'Личный диалог (1-на-1)' : lang === 'en' ? 'Direct 1-on-1 Message' : 'Shaxsiy yozishma (1-ga-1 muloqot)'} • @{selectedUser.username}
+                      {selectedUser.role === 'SUPPLIER'
+                        ? (lang === 'ru' ? 'Официальный диалог с поставщиком сырья' : lang === 'en' ? 'Official dialogue with raw material supplier' : "Yetkazib beruvchi bilan rasmiy muloqot")
+                        : (lang === 'ru' ? 'Личный диалог (1-на-1)' : lang === 'en' ? 'Direct 1-on-1 Message' : 'Shaxsiy yozishma (1-ga-1 muloqot)')} • @{selectedUser.username}
                     </p>
                   </div>
                 </div>
@@ -764,7 +820,12 @@ export default function ChatContent({
               </div>
             ) : (
               messages.map((msg) => {
-                const isMe = msg.sender === userName || msg.sender.startsWith(userName) || msg.sender === userRole
+                const isMe =
+                  msg.sender === userName ||
+                  msg.sender.startsWith(userName) ||
+                  msg.sender === userRole ||
+                  (msg.sender.includes('Ta\'minot') && (userRole === 'SUPPLY' || userRole === 'ADMIN' || userRole === 'DIRECTOR')) ||
+                  (userRole === 'SUPPLIER' && (msg.sender.includes(userName) || (selectedUser?.supplier?.name && msg.sender.includes(selectedUser.supplier.name))))
                 const seenByOthers = msg.readBy ? msg.readBy.filter(r => r !== msg.sender && r !== userName) : []
 
                 return (

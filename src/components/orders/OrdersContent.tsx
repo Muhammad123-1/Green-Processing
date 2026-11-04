@@ -24,7 +24,8 @@ import {
   Sparkles,
   Link as LinkIcon,
   Phone,
-  Info
+  Info,
+  MessageSquare
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -595,6 +596,14 @@ export default function OrdersContent() {
             <DollarSign size={16} />
             <span>{formatDual("Ta'minotchi Qarzdorligi (Buxgalteriya)", "Долги поставщикам (Бухгалтерия)", "Supplier Debts (Accounting)")}</span>
           </button>
+
+          <a
+            href="/chat"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-dark-700 transition-all"
+          >
+            <MessageSquare size={16} />
+            <span>{formatDual("Ta'minotchilar Bilan Chat", "Чат с поставщиками", "Chat with Suppliers")}</span>
+          </a>
         </div>
       </div>
       {/* ========================================================================= */}
@@ -1121,6 +1130,15 @@ export default function OrdersContent() {
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-dark-750">
+                        {order.supplierId && (
+                          <a
+                            href={`/chat?supplierId=${order.supplierId}`}
+                            className="p-2 rounded-xl text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/15 hover:bg-blue-100 dark:hover:bg-blue-500/25 border border-blue-200 dark:border-blue-500/30 transition-colors"
+                            title={formatDual("Ta'minotchi bilan chat", "Чат с поставщиком", "Chat with supplier")}
+                          >
+                            <MessageSquare size={16} />
+                          </a>
+                        )}
                         <button
                           onClick={() => handleOpenReconcile(order)}
                           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/25 transition-all"
@@ -1265,6 +1283,16 @@ export default function OrdersContent() {
 
                           <td className="py-4 px-4 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {order.supplierId && (
+                                <a
+                                  href={`/chat?supplierId=${order.supplierId}`}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-500/15 hover:bg-blue-100 dark:hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 transition-all shadow-xs active:scale-95"
+                                  title={formatDual("Ta'minotchi bilan chat", "Чат с поставщиком", "Chat with supplier")}
+                                >
+                                  <MessageSquare size={13} />
+                                  <span>{formatDual("Chat", "Чат", "Chat")}</span>
+                                </a>
+                              )}
                               <button
                                 onClick={() => handleOpenReconcile(order)}
                                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/25 transition-all active:scale-95"
