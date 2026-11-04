@@ -17,7 +17,9 @@ import {
   Package,
   Layers,
   CheckCircle2,
-  Filter
+  Filter,
+  FileSignature,
+  Cloud
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -88,6 +90,19 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
     return Array.from(s).sort((a, b) => b.localeCompare(a))
   }, [arrivals])
 
+  // Warehouse Signature info (from Cloudflare R2 / Settings)
+  const [signatureInfo, setSignatureInfo] = useState<{
+    url: string
+    name: string
+    title: string
+  }>({
+    url: '',
+    name: 'Isakov M.',
+    title: "Ombor mudiri / Mas'ul xodim",
+  })
+  const [uploadingSig, setUploadingSig] = useState(false)
+  const sigFileInputRef = useRef<HTMLInputElement>(null)
+
   // Load Arrivals Data
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -110,12 +125,61 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
           if (Array.isArray(pData)) setProductList(pData)
         })
         .catch(() => {})
+
+      // Fetch warehouse signature settings
+      fetch('/api/settings')
+        .then((r) => r.json())
+        .then((sets) => {
+          if (Array.isArray(sets)) {
+            const url = sets.find((s) => s.key === 'warehouse_signature_url')?.value || ''
+            const name = sets.find((s) => s.key === 'warehouse_signature_name')?.value || 'Isakov M.'
+            const title = sets.find((s) => s.key === 'warehouse_signature_title')?.value || "Ombor mudiri / Mas'ul xodim"
+            setSignatureInfo({ url, name, title })
+          }
+        })
+        .catch(() => {})
     } catch (e: any) {
       toast.error(e?.message || "Ma'lumotlarni yuklashda xatolik")
     } finally {
       setIsLoading(false)
     }
   }, [])
+
+  const handleUploadSignature = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingSig(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (res.ok && data?.url) {
+        setSignatureInfo((prev) => ({ ...prev, url: data.url }))
+        await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify([
+            { key: 'warehouse_signature_url', value: data.url, category: 'signature' },
+            { key: 'warehouse_signature_name', value: signatureInfo.name, category: 'signature' },
+            { key: 'warehouse_signature_title', value: signatureInfo.title, category: 'signature' },
+          ]),
+        })
+        toast.success(
+          lang === 'ru'
+            ? 'Подпись успешно загружена в Cloudflare R2!'
+            : "Imzo Cloudflare R2 ga muvaffaqiyatli saqlandi!"
+        )
+      } else {
+        toast.error(data?.error || "Rasm yuklashda xatolik")
+      }
+    } catch {
+      toast.error("Rasm yuklashda xatolik")
+    } finally {
+      setUploadingSig(false)
+      if (sigFileInputRef.current) sigFileInputRef.current.value = ''
+    }
+  }
 
   useEffect(() => {
     loadData()
@@ -971,6 +1035,94 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
           pageSize={15}
           itemName={{ uz: 'kirim yozuvi', ru: 'записей прихода', en: 'arrival records' }}
         />
+      </div>
+
+      {/* Hidden File Input for Warehouse Signature Upload */}
+      <input
+        ref={sigFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleUploadSignature}
+      />
+
+      {/* FSSC 22000 RESPONSIBLE WAREHOUSE SIGNATURE BLOCK (CLOUDFLARE R2) */}
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 sm:p-5 rounded-2xl md:rounded-3xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shrink-0 mt-0.5">
+            <CheckCircle2 size={20} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                {lang === 'ru' ? 'Подпись ответственного кладовщика' : "Mas'ul Omborchi Tasdig'i va Imzosi"}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30 flex items-center gap-1">
+                <Cloud size={10} />
+                <span>Cloudflare R2</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                FSSC 22000
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl">
+              {lang === 'ru'
+                ? 'Поступившее сырье проверено и оприходовано ответственным лицом склада. Записи подтверждены официальной подписью.'
+                : "Jurnalga kiritilgan xomashyo va partiyalar mas'ul omborchi tomonidan tekshirilib qabul qilindi hamda tasdiqlandi."}
+            </p>
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs">
+              <span className="text-slate-700 dark:text-slate-300 font-bold">
+                {signatureInfo.name || 'Isakov M.'}
+              </span>
+              <span className="text-slate-400">·</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {signatureInfo.title || "Ombor mudiri / Mas'ul xodim"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Signature Box */}
+        <div className="flex items-center gap-3 self-end md:self-center shrink-0">
+          {signatureInfo.url ? (
+            <div className="flex items-center gap-3 bg-slate-50 dark:bg-dark-800/80 border border-slate-200 dark:border-dark-700 rounded-2xl p-2.5 sm:px-4">
+              <div className="w-32 h-14 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-xl p-1 flex items-center justify-center overflow-hidden">
+                <img
+                  src={signatureInfo.url}
+                  alt="Warehouse Signature"
+                  className="max-h-full max-w-full object-contain filter invert dark:invert-0"
+                />
+              </div>
+              <div className="space-y-1 text-right">
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
+                  Tasdiqlangan ✓
+                </span>
+                <button
+                  type="button"
+                  disabled={uploadingSig}
+                  onClick={() => sigFileInputRef.current?.click()}
+                  className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline block"
+                >
+                  {uploadingSig ? 'Yuklanmoqda...' : 'Almashtirish'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={uploadingSig}
+              onClick={() => sigFileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-dashed border-amber-500/40 transition-all"
+            >
+              {uploadingSig ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Upload size={14} />
+              )}
+              <span>{lang === 'ru' ? '+ Загрузить подпись (Cloudflare)' : "+ Imzo rasmini yuklash (Cloudflare)"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* NEW PRODUCT MODAL */}

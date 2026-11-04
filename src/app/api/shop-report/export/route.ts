@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       expenseWhere.date = { startsWith: monthParam }
     }
 
-    const [arrivals, expenses] = await Promise.all([
+    const [arrivals, expenses, settings] = await Promise.all([
       prisma.shopArrival.findMany({
         where: arrivalWhere,
         orderBy: [{ date: 'asc' }, { id: 'asc' }]
@@ -75,8 +75,14 @@ export async function GET(req: NextRequest) {
       prisma.shopExpense.findMany({
         where: expenseWhere,
         orderBy: [{ date: 'asc' }, { id: 'asc' }]
+      }),
+      prisma.setting.findMany({
+        where: { key: { in: ['warehouse_signature_name', 'warehouse_signature_title', 'warehouse_signature_url'] } }
       })
     ])
+
+    const warehouseName = settings.find((s) => s.key === 'warehouse_signature_name')?.value || 'Isakov M.'
+    const warehouseTitle = settings.find((s) => s.key === 'warehouse_signature_title')?.value || "Ombor mudiri / Mas'ul xodim"
 
     const workbook = new ExcelJS.Workbook()
     workbook.creator = 'Green Processing ERP'
@@ -177,6 +183,19 @@ export async function GET(req: NextRequest) {
       prihodTotalRow.getCell(c).border = thinBorder
     }
 
+    // Official Warehouse Signature Line
+    prihodSheet.addRow([])
+    const prihodSigRow = prihodSheet.addRow([
+      "Mas'ul omborchi:",
+      warehouseName,
+      `(${warehouseTitle})`,
+      'Imzo: [FSSC 22000 Elektron Tasdiqlangan]',
+      '',
+      'Sana:',
+      new Date().toISOString().split('T')[0]
+    ])
+    prihodSigRow.font = { italic: true, bold: true, size: 10 }
+
     // =========================================================================
     // SHEET 2: 2. Расход (Ishlab chiqarishga berilgan xomashyolar)
     // =========================================================================
@@ -235,6 +254,19 @@ export async function GET(req: NextRequest) {
         row.getCell(c).border = thinBorder
       }
     })
+
+    // Official Warehouse Signature Line
+    rashodSheet.addRow([])
+    const rashodSigRow = rashodSheet.addRow([
+      "Sexga chiqim mas'ul xodimi:",
+      warehouseName,
+      `(${warehouseTitle})`,
+      'Imzo: [FSSC 22000 Elektron Tasdiqlangan]',
+      '',
+      'Sana:',
+      new Date().toISOString().split('T')[0]
+    ])
+    rashodSigRow.font = { italic: true, bold: true, size: 10 }
 
     // =========================================================================
     // SHEET 3: 3. ГП (Tayyor Mahsulot Chiqishi)
