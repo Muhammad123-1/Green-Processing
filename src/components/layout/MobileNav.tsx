@@ -57,9 +57,9 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
       ? [
           {
             label: formatDual('Kirim', 'Приход', 'Arrivals'),
-            href: '/warehouse?tab=prihod',
+            href: '/prihod',
             icon: ArrowDownRight,
-            active: pathname.startsWith('/warehouse'),
+            active: pathname.startsWith('/prihod'),
           },
         ]
       : [

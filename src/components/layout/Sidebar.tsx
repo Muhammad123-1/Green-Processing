@@ -66,9 +66,9 @@ const navSections = [
     title: 'Ombor va Ishlab chiqarish',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
-      { key: 'prihod', href: '/warehouse?tab=prihod', icon: ArrowDownRight, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'SUPPLY'] },
-      { key: 'rashod', href: '/warehouse?tab=rashod', icon: ArrowUpRight, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION'] },
-      { key: 'gp', href: '/warehouse?tab=gp', icon: Boxes, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
+      { key: 'prihod', href: '/prihod', icon: ArrowDownRight, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'SUPPLY'] },
+      { key: 'rashod', href: '/rashod', icon: ArrowUpRight, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION'] },
+      { key: 'gp', href: '/gp', icon: Boxes, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'QUALITY_CONTROL'] },
       { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
