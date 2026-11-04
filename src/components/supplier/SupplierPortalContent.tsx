@@ -129,7 +129,6 @@ export default function SupplierPortalContent() {
   const [chatInput, setChatInput] = useState('')
   const [chatSending, setChatSending] = useState(false)
   const [chatImage, setChatImage] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
@@ -173,12 +172,6 @@ export default function SupplierPortalContent() {
     }, 4500)
     return () => clearInterval(timer)
   }, [fetchOrders, fetchChat])
-
-  useEffect(() => {
-    if (portalTab === 'chat') {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [chatMessages, portalTab])
 
   // Send message to Factory Supply
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -513,7 +506,6 @@ export default function SupplierPortalContent() {
                 )
               })
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Chat Input */}
