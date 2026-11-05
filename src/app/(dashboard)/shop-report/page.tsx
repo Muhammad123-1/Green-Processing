@@ -4,7 +4,7 @@ import { getSession } from '@/app/actions/auth'
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Sex Ishlab Chiqarish Hisoboti | Green Processing',
+  title: 'Kirim va Chiqim Hisoboti | Green Processing',
 }
 
 export default async function ShopReportPage() {

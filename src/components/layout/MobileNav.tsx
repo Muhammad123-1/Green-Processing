@@ -105,7 +105,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
         ]
       : [
           {
-            label: formatDual('Sex', 'Цех', 'Shop'),
+            label: formatDual('Kirim/Chiqim', 'Приход/Расход', 'In/Out'),
             href: '/shop-report',
             icon: ChefHat,
             active: pathname.startsWith('/shop-report') || pathname.startsWith('/production'),

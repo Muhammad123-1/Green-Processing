@@ -931,7 +931,7 @@ export default function ShopReportContent({
               </span>
             </div>
             <h1 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-              {lang === 'ru' ? 'Производственный отчет ЦЕХ' : 'Sex Ishlab Chiqarish Hisoboti'}
+              {lang === 'ru' ? 'Отчет по приходу и расходу' : lang === 'en' ? 'Inflow and Outflow Report' : 'Kirim va Chiqim Hisoboti'}
             </h1>
           </div>
         </div>

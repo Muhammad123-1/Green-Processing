@@ -746,7 +746,7 @@ export default function IncomingMaterialsAnalysis({
                 href="/shop-report"
                 className="inline-flex text-xs font-bold text-emerald-600 hover:underline"
               >
-                Sex hisoboti (Приход) jurnaliga o‘tish →
+                Kirim va chiqim hisoboti jurnaliga o‘tish →
               </a>
             </div>
           </aside>
