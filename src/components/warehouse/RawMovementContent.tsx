@@ -28,7 +28,7 @@ import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/Infin
 import { checkWarehouseWriteOffPermission, checkWarehouseWriteOffDeletePermission } from '@/lib/auditRules'
 export default function RawMovementContent({
   userRole = 'WAREHOUSE',
-  userName = 'Skladchi'
+  userName = 'Omborchi'
 }: {
   userRole?: string
   userName?: string

@@ -52,9 +52,9 @@ import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/Infin
 const tBase = {
   uz: {
     title: "Omborxona (WMS)",
-    subtitle: "Xomashyolar qoldig'i, FEFO nazorati, Sklad chiqimi (Two-Way Handshake) va Harorat jurnali",
+    subtitle: "Xomashyolar qoldig'i, FEFO nazorati, Ombor chiqimi (Two-Way Handshake) va Harorat jurnali",
     tabStock: "Xomashyolar Qoldig'i (FEFO)",
-    tabTransfers: "Sklad Chiqimi & Transfer (Handshake)",
+    tabTransfers: "Ombor Chiqimi & Transfer (Handshake)",
     tabTemp: "Harorat Nazorati Jurnali (Ombor)",
     tabSuppliers: "Ta'minotchilar (Yetkazib Beruvchilar)",
     totalItems: "Jami xomashyolar",
@@ -527,7 +527,7 @@ export default function WarehouseContent() {
       unit: m.unit,
       expectedDate: getTomorrowDateStr(),
       timeRange: '09:00 - 12:00',
-      notes: `${m.nameUz} uchun zaxirani to'ldirish buyurtmasi. Skladdagi joriy qoldiq: ${m.currentStockKg.toLocaleString()} ${m.unit}. Asosiy ta'minotchi: ${m.topSupplier}.`
+      notes: `${m.nameUz} uchun zaxirani to'ldirish buyurtmasi. Ombordagi joriy qoldiq: ${m.currentStockKg.toLocaleString()} ${m.unit}. Asosiy ta'minotchi: ${m.topSupplier}.`
     })
     setShowOrderModal(true)
   }
@@ -668,9 +668,9 @@ export default function WarehouseContent() {
     }
 
     const defaultNotes = item.status === 'red'
-      ? "Skladda kritik qoldiq tugagan! Zudlik bilan yetkazib berilishi lozim."
+      ? "Omborda kritik qoldiq tugagan! Zudlik bilan yetkazib berilishi lozim."
       : item.status === 'yellow'
-      ? "Skladda qoldiq kamaymoqda. Zaxirani to'ldirish uchun buyurtma."
+      ? "Omborda qoldiq kamaymoqda. Zaxirani to'ldirish uchun buyurtma."
       : "Zaxira uchun rejaviy buyurtma."
 
     setOrderForm({
@@ -706,7 +706,7 @@ export default function WarehouseContent() {
           unit: orderForm.unit,
           expectedDate: orderForm.expectedDate,
           timeRange: orderForm.timeRange,
-          warehouseNotes: orderForm.notes || "Skladda xomashyo tugagan / qolmagan",
+          warehouseNotes: orderForm.notes || "Omborda xomashyo tugagan / qolmagan",
           notes: null,
           status: 'PENDING'
         })
@@ -1236,7 +1236,7 @@ export default function WarehouseContent() {
               className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-white bg-white dark:bg-dark-750/60 hover:bg-emerald-50 dark:hover:bg-emerald-600/20 border border-slate-200 hover:border-emerald-500/40 dark:border-dark-700 transition-all whitespace-nowrap ml-1"
             >
               <ArrowDownLeft size={15} className="text-emerald-500" />
-              <span>{formatDual("Xomashyo Kirimi (Приход)", "Приход сырья", "Inbound (Arrivals)")}</span>
+              <span>{formatDual("Xomashyo Kirimi", "Приход сырья", "Inbound (Arrivals)")}</span>
               <ArrowRight size={12} className="opacity-60 text-slate-400" />
             </Link>
           </div>
@@ -1287,7 +1287,7 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            {/* Card 2: Jami Rasxod */}
+            {/* Card 2: Jami Chiqim */}
             <div 
               onClick={() => router.push('/rashod')}
               className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-amber-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
@@ -1296,7 +1296,7 @@ export default function WarehouseContent() {
               <div className="relative z-10 flex items-start justify-between">
                 <div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
-                    {formatDual("Jami Rasxod", "Расход в цех", "Total Expensed")}
+                    {formatDual("Jami Chiqim", "Расход в цех", "Total Expensed")}
                   </span>
                   <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
                     {macroLoading ? (
@@ -1326,13 +1326,13 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            {/* Card 3: Joriy Sklad Qoldig'i */}
+            {/* Card 3: Joriy Ombor Qoldig'i */}
             <div className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-cyan-500/50 transition-all relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
-                    {formatDual("Sklad Qoldig'i", "Остаток склада", "Net Stock")}
+                    {formatDual("Ombor Qoldig'i", "Остаток склада", "Net Stock")}
                   </span>
                   <div className="text-lg sm:text-2xl md:text-3xl font-black text-cyan-600 dark:text-cyan-400">
                     {macroLoading ? (
@@ -1598,8 +1598,8 @@ export default function WarehouseContent() {
                   <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/60 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                     <th className="p-4">{formatDual("Xomashyo Nomi", "Сырье", "Raw Material")}</th>
                     <th className="p-4 text-center">{formatDual("Jami Kirim", "Всего Приход", "Total Arrival")}</th>
-                    <th className="p-4 text-center">{formatDual("Jami Rasxod (Sexga)", "Всего Расход (Цех)", "Total Expensed")}</th>
-                    <th className="p-4 text-center">{formatDual("Skladdagi Qoldiq", "Остаток на складе", "Current Stock")}</th>
+                    <th className="p-4 text-center">{formatDual("Jami Chiqim (Sexga)", "Всего Расход (Цех)", "Total Expensed")}</th>
+                    <th className="p-4 text-center">{formatDual("Ombordagi Qoldiq", "Остаток на складе", "Current Stock")}</th>
                     <th className="p-4 text-center">{formatDual("Zaxira Holati", "Уровень запаса", "Stock Level")}</th>
                     <th className="p-4 text-center">{formatDual("Status (Svetofor)", "Светофор", "Status")}</th>
                     <th className="p-4">{formatDual("Asosiy Yetkazib Beruvchi", "Главный поставщик", "Primary Supplier")}</th>
@@ -1775,8 +1775,8 @@ export default function WarehouseContent() {
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white">
                   {batchesView === 'prihod'
-                    ? formatDual("ПРИХОД (Kirim qilinayotgan mahsulotlar & partiyalar)", "ПРИХОД (Поступления сырья по партиям)", "Arrivals by Batches")
-                    : formatDual("Sklad Qoldiqlari & FEFO Partiyalar Nazorati", "Остатки склада и партии FEFO", "FEFO Stock Batches")}
+                    ? formatDual("Kirim qilinayotgan mahsulotlar & partiyalar", "ПРИХОД (Поступления сырья по партиям)", "Arrivals by Batches")
+                    : formatDual("Ombor Qoldiqlari & FEFO Partiyalar Nazorati", "Остатки склада и партии FEFO", "FEFO Stock Batches")}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {batchesView === 'prihod'
@@ -1796,7 +1796,7 @@ export default function WarehouseContent() {
                 }`}
               >
                 <Tag size={14} />
-                <span>{formatDual("1. Prihod Partiyalari", "1. Партии Прихода", "1. Arrival Batches")}</span>
+                <span>{formatDual("1. Kirim Partiyalari", "1. Партии Прихода", "1. Arrival Batches")}</span>
                 <span className="px-1.5 py-0.2 rounded-md bg-amber-500/10 dark:bg-dark-900/60 text-[10px] text-amber-800 dark:text-slate-300 font-bold">
                   {macroData?.batches.length || 0}
                 </span>
@@ -2171,10 +2171,10 @@ export default function WarehouseContent() {
                               ? 'bg-rose-500/20 hover:bg-rose-600 text-rose-700 dark:text-rose-300 border-rose-500/40 animate-pulse'
                               : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-400 border-amber-500/30'
                           }`}
-                          title={formatDual("Ta'minotga talabnoma (Zakaz)", "Заявка в снабжение", "Order to Supply")}
+                          title={formatDual("Ta'minotga talabnoma (Buyurtma)", "Заявка в снабжение", "Order to Supply")}
                         >
                           <ShoppingCart size={14} />
-                          <span>Zakaz</span>
+                          <span>Buyurtma</span>
                         </button>
                         <button
                           onClick={() => handleOpenQuickTransfer(item)}
@@ -2328,7 +2328,7 @@ export default function WarehouseContent() {
                               title={formatDual("Ta'minot bo'limiga buyurtma / talabnoma yuborish", "Отправить заявку в отдел снабжения", "Send purchase request to supply")}
                             >
                               <ShoppingCart size={14} />
-                              <span>{formatDual("Zakaz", "Заказ", "Order")}</span>
+                              <span>{formatDual("Buyurtma", "Заказ", "Order")}</span>
                             </button>
                             <button
                               onClick={() => handleOpenReceiveModal(item)}
@@ -2383,7 +2383,7 @@ export default function WarehouseContent() {
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
                 <Scale className="text-emerald-400" size={22} />
-                <span>Sklad Chiqimlari & Two-Way Handshake Nazorati</span>
+                <span>Ombor Chiqimlari & Two-Way Handshake Nazorati</span>
               </h3>
               <p className="text-xs text-slate-400 mt-1">
                 Oshxona va Zagotovkaga berilgan mahsulotlar va ularning tortish orqali qabul qilinish holati
@@ -2432,7 +2432,7 @@ export default function WarehouseContent() {
                       <th className="p-4">{formatDual("Hujjat Raqami & Sana", "№ Документа & Дата", "Doc № & Date")}</th>
                       <th className="p-4">{formatDual("Mahsulot", "Продукт", "Product")}</th>
                       <th className="p-4">{formatDual("Qayerga", "Куда", "Destination")}</th>
-                      <th className="p-4 text-center">{formatDual("Sklad Bergan", "Отпущено со склада", "Warehouse Issued")}</th>
+                      <th className="p-4 text-center">{formatDual("Ombor Bergan", "Отпущено со склада", "Warehouse Issued")}</th>
                       <th className="p-4 text-center">{formatDual("Qabul Qilingan", "Принято", "Received")}</th>
                       <th className="p-4 text-center">{formatDual("Farq / Yo'qotish", "Разница / Потери", "Difference / Loss")}</th>
                       <th className="p-4">{formatDual("Holat / Izoh", "Статус / Примечание", "Status / Notes")}</th>
@@ -2535,7 +2535,7 @@ export default function WarehouseContent() {
                   <Send size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{formatDual("Skladdan Chiqim Berish", "Отпуск сырья со склада", "Warehouse Dispatch")}</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{formatDual("Ombordan Chiqim Berish", "Отпуск сырья со склада", "Warehouse Dispatch")}</h3>
                   <p className="text-xs text-slate-400">{formatDual("Oshxona yoki Zagotovkaga xomashyo o'tkazish", "Перемещение сырья на кухню или в заготовку", "Transfer raw materials to Kitchen or Prep")}</p>
                 </div>
               </div>
@@ -3226,7 +3226,7 @@ export default function WarehouseContent() {
                           {formatDual("Kamera orqali rasmga oling yoki fayl tanlang", "Сфотографировать на камеру или выбрать файл", "Take photo with camera or choose file")}
                         </p>
                         <p className="text-[11px] text-slate-400 mt-1">
-                          {formatDual("Skladchilar telefonidan bevosita rasmga olib yuklashi mumkin", "Складчик может сразу сделать фото с телефона", "Warehouse staff can take photos directly from smartphone")}
+                          {formatDual("Omborchilar telefonidan bevosita rasmga olib yuklashi mumkin", "Складчик может сразу сделать фото с телефона", "Warehouse staff can take photos directly from smartphone")}
                         </p>
                       </>
                     )}
@@ -3332,7 +3332,7 @@ export default function WarehouseContent() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">
-                    {formatDual("Ta'minotga Zayavka (Buyurtma)", "Заявка в отдел снабжения", "Purchase Request")}
+                    {formatDual("Ta'minotga Buyurtma (Talabnoma)", "Заявка в отдел снабжения", "Purchase Request")}
                   </h3>
                   <p className="text-xs text-slate-400">
                     {formatDual("Kamaygan xomashyoni sotib olish uchun talabnoma yuborish", "Отправка заявки на закупку сырья в снабжение и общий чат", "Send order request to supply and chat")}
@@ -3427,10 +3427,10 @@ export default function WarehouseContent() {
                 </div>
               </div>
 
-              {/* Skladchi Izohi (Faqat Ta'minotga ko'rinadi) */}
+              {/* Omborchi Izohi (Faqat Ta'minotga ko'rinadi) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  {formatDual("Skladchi Izohi (Ta'minot Bo'limiga)", "Примечание склада (Для снабжения)", "Warehouse Note (For Supply)")}
+                  {formatDual("Omborchi Izohi (Ta'minot Bo'limiga)", "Примечание склада (Для снабжения)", "Warehouse Note (For Supply)")}
                 </label>
                 <input
                   type="text"
@@ -3445,7 +3445,7 @@ export default function WarehouseContent() {
                 <ShoppingCart size={16} className="flex-shrink-0" />
                 <span>
                   {formatDual(
-                    "Sklad talabnomasi Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasida aks etadi. Ta'minotchi va narxni Ta'minot bo'limi biriktiradi.",
+                    "Ombor talabnomasi Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasida aks etadi. Ta'minotchi va narxni Ta'minot bo'limi biriktiradi.",
                     "Заявка со склада поступит в раздел «Заявки со склада» отдела снабжения. Поставщика и цену назначит отдел снабжения.",
                     "Requisition will appear in the supply shortages section. Supply department will assign the supplier and price."
                   )}
@@ -3467,7 +3467,7 @@ export default function WarehouseContent() {
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/30 transition-all disabled:opacity-50"
                 >
                   {orderLoading && <Loader2 size={16} className="animate-spin" />}
-                  <span>{formatDual("Ta'minotga Zayavka Yuborish", "Отправить заявку в снабжение", "Submit Purchase Request")}</span>
+                  <span>{formatDual("Ta'minotga Buyurtma Yuborish", "Отправить заявку в снабжение", "Submit Purchase Request")}</span>
                 </button>
               </div>
             </form>

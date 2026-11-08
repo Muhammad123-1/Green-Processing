@@ -271,7 +271,7 @@ export default function SupplyShortagesContent() {
     setDeliveryDate(tomorrow.toISOString().split('T')[0])
     setDeliveryTimeRange('09:00 - 12:00')
     setAgreedPrice('')
-    setSupplyNotes(`Skladda ${prod.name} tugagan (Qoldiq: ${prod.stock} ${prod.unit}). Zudlik bilan yetkazib berish buyurtmasi.`)
+    setSupplyNotes(`Omborda ${prod.name} tugagan (Qoldiq: ${prod.stock} ${prod.unit}). Zudlik bilan yetkazib berish buyurtmasi.`)
   }
 
   // Submit direct purchase order
@@ -412,7 +412,7 @@ export default function SupplyShortagesContent() {
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
               {formatDual(
-                "Sklad xodimlaridan tushgan talabnomalar, qolmagan mahsulotlar va ta'minotchilarga buyurtma taqsimlash zanjiri. Bir marta bosish bilan buyurtma to'g'ri ta'minotchi portaliga tushadi.",
+                "Ombor xodimlaridan tushgan talabnomalar, qolmagan mahsulotlar va ta'minotchilarga buyurtma taqsimlash zanjiri. Bir marta bosish bilan buyurtma to'g'ri ta'minotchi portaliga tushadi.",
                 "Заявки сотрудников склада при нехватке сырья и распределение заказов по поставщикам. Заказ сразу поступает в личный кабинет поставщика.",
                 "Requisitions from warehouse staff and procurement assignment. Orders automatically flow directly into supplier portals."
               )}
@@ -459,7 +459,7 @@ export default function SupplyShortagesContent() {
             {metrics.pendingRequisitions}
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            {formatDual("Sklad so'ragan, zakaz berish kerak", "Заявки со склада без поставщика", "Warehouse requests without supplier")}
+            {formatDual("Ombor so'ragan, buyurtma berish kerak", "Заявки со склада без поставщика", "Warehouse requests without supplier")}
           </p>
         </div>
 
@@ -470,7 +470,7 @@ export default function SupplyShortagesContent() {
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-              {formatDual("Skladda Tugagan (0 kg)", "Закончилось (0 кг)", "Out of Stock (0 kg)")}
+              {formatDual("Omborda Tugagan (0 kg)", "Закончилось (0 кг)", "Out of Stock (0 kg)")}
             </span>
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
               <Package size={18} />
@@ -522,7 +522,7 @@ export default function SupplyShortagesContent() {
             {metrics.deliveredOrders}
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            {formatDual("Yopilgan zayavkalar", "Выполненные заявки", "Completed requisitions")}
+            {formatDual("Bajarilgan buyurtmalar", "Выполненные заявки", "Completed requisitions")}
           </p>
         </div>
       </div>
@@ -539,7 +539,7 @@ export default function SupplyShortagesContent() {
             }`}
           >
             <AlertTriangle size={15} />
-            <span>{formatDual("1. Sklad Talabnomalari & Zayavkalar", "1. Заявки со склада", "1. Warehouse Requisitions")}</span>
+            <span>{formatDual("1. Ombor Talabnomalari & Buyurtmalar", "1. Заявки со склада", "1. Warehouse Requisitions")}</span>
             <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-dark-900 text-[10px] font-extrabold">
               {requisitions.length}
             </span>
@@ -554,7 +554,7 @@ export default function SupplyShortagesContent() {
             }`}
           >
             <Package size={15} />
-            <span>{formatDual("2. Skladda Tugagan Xomashyolar (0 kg)", "2. Закончилось на складе", "2. Out of Stock Catalog")}</span>
+            <span>{formatDual("2. Omborda Tugagan Xomashyolar (0 kg)", "2. Закончилось на складе", "2. Out of Stock Catalog")}</span>
             <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-dark-900 text-[10px] font-extrabold">
               {outOfStockProducts.length}
             </span>
@@ -644,7 +644,7 @@ export default function SupplyShortagesContent() {
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
                 {formatDual(
-                  "Sklad xodimlari mahsulot tugadi deb talabnoma yuborganda ular shu yerda paydo bo'ladi.",
+                  "Ombor xodimlari mahsulot tugadi deb talabnoma yuborganda ular shu yerda paydo bo'ladi.",
                   "Когда склад запросит сырье, заявки сразу появятся на этой странице для назначения поставщика.",
                   "When warehouse staff submits an out-of-stock request, it will appear here for supplier assignment."
                 )}
@@ -695,14 +695,14 @@ export default function SupplyShortagesContent() {
                         {/* Inventory Context Pill */}
                         <div className="flex flex-wrap items-center gap-3 text-xs">
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
-                            <span className="text-slate-500">Skladdagi real qoldiq:</span>
+                            <span className="text-slate-500">Ombordagi real qoldiq:</span>
                             <span className={`font-black ${item.currentStock <= 0 ? 'text-rose-500 animate-pulse' : 'text-amber-500'}`}>
                               {item.currentStock} {item.unit || 'kg'}
                             </span>
                           </div>
 
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
-                            <span className="text-slate-500">Sklad so'ragan miqdor:</span>
+                            <span className="text-slate-500">Ombor so'ragan miqdor:</span>
                             <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
                               {item.quantity.toLocaleString()} {item.unit || 'kg'}
                             </span>
@@ -716,10 +716,10 @@ export default function SupplyShortagesContent() {
                           </div>
                         </div>
 
-                        {/* Skladchi notes (Warehouse Izohi) */}
+                        {/* Omborchi notes (Warehouse Izohi) */}
                         {(item.warehouseNotes || (!item.supplierId && item.notes)) && (
                           <div className="p-3 bg-amber-500/10 dark:bg-amber-500/5 rounded-xl border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
-                            <span className="font-bold text-amber-600 dark:text-amber-400 block mb-0.5">📦 Skladchi izohi (Ombordan kelgan):</span>
+                            <span className="font-bold text-amber-600 dark:text-amber-400 block mb-0.5">📦 Omborchi izohi (Ombordan kelgan):</span>
                             <p className="italic">"{item.warehouseNotes || item.notes}"</p>
                           </div>
                         )}
@@ -773,7 +773,7 @@ export default function SupplyShortagesContent() {
                               className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all transform active:scale-95"
                             >
                               <Send size={15} />
-                              <span>{formatDual("Ta'minotchiga Zakaz Berish 🚀", "Отправить заказ поставщику 🚀", "Dispatch to Supplier 🚀")}</span>
+                              <span>{formatDual("Ta'minotchiga Buyurtma Berish 🚀", "Отправить заказ поставщику 🚀", "Dispatch to Supplier 🚀")}</span>
                             </button>
                           ) : (
                             <button
@@ -801,7 +801,7 @@ export default function SupplyShortagesContent() {
             <Info size={18} className="flex-shrink-0 text-amber-500" />
             <span>
               {formatDual(
-                "Ushbu ro'yxatda skladdagi qoldig'i 0 ga tushgan yoki me'yordan kamaygan barcha xomashyolar jamlangan. Har bir xomashyoni to'g'ridan-to'g'ri ta'minotchiga buyurtma qilish mumkin.",
+                "Ushbu ro'yxatda ombordagi qoldig'i 0 ga tushgan yoki me'yordan kamaygan barcha xomashyolar jamlangan. Har bir xomashyoni to'g'ridan-to'g'ri ta'minotchiga buyurtma qilish mumkin.",
                 "Здесь отображаются все позиции с нулевым или критическим остатком. Вы можете сразу отправить заказ поставщику в один клик.",
                 "Here are all depleted or critically low stock materials. You can dispatch orders to suppliers directly."
               )}
@@ -856,7 +856,7 @@ export default function SupplyShortagesContent() {
                   className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
                 >
                   <ShoppingCart size={14} />
-                  <span>{formatDual("Ta'minotchiga Zakaz Berish", "Заказать у поставщика", "Order From Supplier")}</span>
+                  <span>{formatDual("Ta'minotchiga Buyurtma Berish", "Заказать у поставщика", "Order From Supplier")}</span>
                 </button>
               </div>
             ))}
@@ -882,7 +882,7 @@ export default function SupplyShortagesContent() {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                    {formatDual("Ta'minotchiga Zakaz Jo'natish", "Отправка заказа поставщику", "Dispatch Order to Supplier")}
+                    {formatDual("Ta'minotchiga Buyurtma Jo'natish", "Отправка заказа поставщику", "Dispatch Order to Supplier")}
                   </h3>
                   <p className="text-xs text-slate-500">
                     {formatDual("Buyurtma darhol ta'minotchining shaxsiy kabinetida aks etadi", "Заказ сразу поступит в личный кабинет поставщика", "Order flows instantly to supplier portal")}
@@ -908,16 +908,16 @@ export default function SupplyShortagesContent() {
                   {dispatchModalItem.product?.name}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                  <span>Skladdagi qoldiq: <b className="text-rose-500">{dispatchModalItem.currentStock} {dispatchModalItem.unit}</b></span>
+                  <span>Ombordagi qoldiq: <b className="text-rose-500">{dispatchModalItem.currentStock} {dispatchModalItem.unit}</b></span>
                   <span>•</span>
                   <span>Talab qilingan: <b className="text-emerald-500">{dispatchModalItem.quantity} {dispatchModalItem.unit}</b></span>
                 </div>
 
-                {/* Skladchi Izohi (Warehouse Note to Supply) */}
+                {/* Omborchi Izohi (Warehouse Note to Supply) */}
                 {(dispatchModalItem.warehouseNotes || (!dispatchModalItem.supplierId && dispatchModalItem.notes)) && (
                   <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs">
                     <span className="text-amber-600 dark:text-amber-400 font-bold block mb-0.5">
-                      📦 Skladchi Izohi (Ombordan kelgan):
+                      📦 Omborchi izohi (Ombordan kelgan):
                     </span>
                     <p className="text-slate-800 dark:text-slate-200 font-medium italic">
                       "{dispatchModalItem.warehouseNotes || dispatchModalItem.notes}"
@@ -1028,7 +1028,7 @@ export default function SupplyShortagesContent() {
                 <Truck size={18} className="flex-shrink-0" />
                 <span>
                   {formatDual(
-                    "Zakaz tasdiqlangach, u tanlangan ta'minotchining shaxsiy kabinetida aks etadi va uning chatiga rasmiy xabarnoma jo'natiladi.",
+                    "Buyurtma tasdiqlangach, u tanlangan ta'minotchining shaxsiy kabinetida aks etadi va uning chatiga rasmiy xabarnoma jo'natiladi.",
                     "После подтверждения заказ сразу появится в кабинете поставщика и в чате снабжения.",
                     "Order will immediately appear in the supplier's cabinet and send an automated chat notification."
                   )}
@@ -1057,7 +1057,7 @@ export default function SupplyShortagesContent() {
                   ) : (
                     <>
                       <Send size={14} />
-                      <span>{formatDual("Ta'minotchiga Zakaz Yuborish 🚀", "Отправить заказ 🚀", "Dispatch Order 🚀")}</span>
+                      <span>{formatDual("Ta'minotchiga Buyurtma Yuborish 🚀", "Отправить заказ 🚀", "Dispatch Order 🚀")}</span>
                     </>
                   )}
                 </button>
@@ -1084,7 +1084,7 @@ export default function SupplyShortagesContent() {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                    {formatDual("Tugagan Mahsulotga Zakaz Berish", "Заказ закончившегося сырья", "Order Depleted Stock")}
+                    {formatDual("Tugagan Mahsulotga Buyurtma Berish", "Заказ закончившегося сырья", "Order Depleted Stock")}
                   </h3>
                   <p className="text-xs text-slate-500">
                     {formatDual("Ta'minotchi portaliga to'g'ridan-to'g'ri buyurtma jo'natish", "Прямая отправка в кабинет поставщика", "Direct dispatch to supplier portal")}
@@ -1222,7 +1222,7 @@ export default function SupplyShortagesContent() {
                   ) : (
                     <>
                       <Send size={14} />
-                      <span>{formatDual("Ta'minotchiga Zakaz Yuborish 🚀", "Отправить заказ 🚀", "Dispatch Order 🚀")}</span>
+                      <span>{formatDual("Ta'minotchiga Buyurtma Yuborish 🚀", "Отправить заказ 🚀", "Dispatch Order 🚀")}</span>
                     </>
                   )}
                 </button>

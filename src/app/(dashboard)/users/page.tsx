@@ -40,7 +40,7 @@ const roleLabelsMap: Record<string, { uz: string; ru: string; en: string }> = {
   INSPECTOR: { uz: 'Sex Nazoratchisi', ru: 'Цеховой инспектор', en: 'Shop Inspector' },
   PRODUCTION: { uz: 'Ishlab Chiqarish', ru: 'Производство', en: 'Production' },
   TECHNOLOGY: { uz: 'Bosh Texnolog', ru: 'Главный технолог', en: 'Chief Technologist' },
-  WAREHOUSE: { uz: 'Ombor (Sklad Mudiri)', ru: 'Склад (Заведующий складом)', en: 'Warehouse Manager' },
+  WAREHOUSE: { uz: 'Ombor Mudiri', ru: 'Склад (Заведующий складом)', en: 'Warehouse Manager' },
   SUPPLY: { uz: "Ta'minot Bo'limi", ru: 'Отдел снабжения', en: 'Supply Department' },
   ACCOUNTING: { uz: 'Buxgalteriya', ru: 'Бухгалтерия', en: 'Accounting' },
   HR: { uz: 'Kadrlar Bo\'limi (HR)', ru: 'Отдел кадров (HR)', en: 'Human Resources (HR)' },

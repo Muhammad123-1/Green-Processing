@@ -60,6 +60,7 @@ const navSections = [
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'shopQC', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'dailyChecklist', href: '/inspector/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'WAREHOUSE'] },
     ]
   },
   {
@@ -70,8 +71,6 @@ const navSections = [
       { key: 'prihod', href: '/prihod', icon: ArrowDownLeft, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
       { key: 'rashod', href: '/rashod', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'gp', href: '/gp', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
-      { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
-      { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
       { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
@@ -110,7 +109,7 @@ const navSections = [
       { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT'] },
       { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
       { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
-      { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'SUPPLY', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   }
 ]

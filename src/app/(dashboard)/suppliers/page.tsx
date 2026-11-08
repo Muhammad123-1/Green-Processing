@@ -24,7 +24,8 @@ import {
   PackageCheck,
   Filter,
   KeyRound,
-  ExternalLink
+  ExternalLink,
+  Package
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
@@ -81,6 +82,19 @@ export default function SuppliersPage() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [viewProductsSupplier, setViewProductsSupplier] = useState<Supplier | null>(null)
+  const [productModalSearch, setProductModalSearch] = useState('')
+
+  const modalProductsList = useMemo(() => {
+    if (!viewProductsSupplier) return []
+    const list = viewProductsSupplier.productsDetails && viewProductsSupplier.productsDetails.length > 0
+      ? viewProductsSupplier.productsDetails
+      : (viewProductsSupplier.products || []).map(p => ({ name: p, qty: 0, unit: '' }))
+    
+    if (!productModalSearch.trim()) return list
+    const q = productModalSearch.trim().toLowerCase()
+    return list.filter(item => item.name.toLowerCase().includes(q))
+  }, [viewProductsSupplier, productModalSearch])
 
   const fetchSuppliers = useCallback(async () => {
     setLoading(true)
@@ -230,7 +244,7 @@ export default function SuppliersPage() {
           <div className="flex items-center gap-2 mb-1.5">
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 flex items-center gap-1.5">
               <Truck size={14} />
-              {formatDual("Ta'minot & Prixod Tahlili", "Снабжение и анализ прихода", "Supply & Inflow Analysis")}
+              {formatDual("Ta'minot & Kirim Tahlili", "Снабжение и анализ прихода", "Supply & Inflow Analysis")}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -439,7 +453,7 @@ export default function SuppliersPage() {
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
             <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-              {formatDual("Ta'minotchilar va prixod tahlili yuklanmoqda...", "Загрузка поставщиков и анализа прихода...", "Loading suppliers and arrivals analysis...")}
+              {formatDual("Ta'minotchilar va kirim tahlili yuklanmoqda...", "Загрузка поставщиков и анализа прихода...", "Loading suppliers and arrivals analysis...")}
             </p>
           </div>
         ) : filtered.length === 0 ? (
@@ -475,28 +489,24 @@ export default function SuppliersPage() {
                     </span>
                   </div>
 
-                  {s.products && s.products.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {s.products.map((p, pIdx) => {
-                        const detail = s.productsDetails?.find((d) => d.name.toLowerCase() === p.toLowerCase())
-                        const unit = detail?.unit || ''
-                        const isDona = unit === 'dona'
-                        return (
-                          <span
-                            key={pIdx}
-                            className={`px-2 py-0.5 rounded-md border text-[10px] font-medium flex items-center gap-1 ${
-                              isDona
-                                ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300'
-                                : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                            }`}
-                          >
-                            <span>{p}</span>
-                            {unit && <span className="text-[8px] opacity-70 font-mono">({unit})</span>}
-                          </span>
-                        )
-                      })}
-                    </div>
-                  )}
+                  {s.products && s.products.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewProductsSupplier(s)
+                        setProductModalSearch('')
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 hover:bg-emerald-50 dark:bg-dark-800/80 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-dark-700 hover:border-emerald-300 dark:hover:border-emerald-700/60 text-slate-800 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-emerald-300 text-xs font-bold transition-all shadow-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Package size={14} className="text-emerald-600 dark:text-emerald-400" />
+                        <span>{s.products.length} turdagi mahsulot</span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1">
+                        {formatDual("Ko'rish", "Смотреть", "View")} →
+                      </span>
+                    </button>
+                  ) : null}
 
                   <div className="grid grid-cols-3 gap-2 bg-slate-50 dark:bg-dark-800/60 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700/60 text-center">
                     <div>
@@ -616,31 +626,26 @@ export default function SuppliersPage() {
                       </td>
 
                       {/* Products */}
-                      <td className="py-4 px-5 max-w-[240px]">
-                        <div className="flex flex-wrap gap-1">
-                          {s.products && s.products.length > 0 ? (
-                            s.products.map((p, pIdx) => {
-                              const detail = s.productsDetails?.find((d) => d.name.toLowerCase() === p.toLowerCase())
-                              const unit = detail?.unit || ''
-                              const isDona = unit === 'dona'
-                              return (
-                                <span
-                                  key={pIdx}
-                                  className={`px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 ${
-                                    isDona
-                                      ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300'
-                                      : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                                  }`}
-                                >
-                                  <span>{p}</span>
-                                  {unit && <span className="text-[9px] opacity-70 font-mono">({unit})</span>}
-                                </span>
-                              )
-                            })
-                          ) : (
-                            <span className="text-xs text-slate-400 dark:text-slate-500">-</span>
-                          )}
-                        </div>
+                      <td className="py-4 px-5">
+                        {s.products && s.products.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setViewProductsSupplier(s)
+                              setProductModalSearch('')
+                            }}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 dark:bg-dark-800/80 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-dark-700 hover:border-emerald-300 dark:hover:border-emerald-700/60 text-slate-800 hover:text-emerald-700 dark:text-slate-200 dark:hover:text-emerald-300 text-xs font-bold transition-all shadow-xs group cursor-pointer"
+                            title={formatDual("Barcha keltirilgan mahsulotlarni ko'rish", "Посмотреть всю продукцию", "View all supplied products")}
+                          >
+                            <Package size={14} className="text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                            <span>{s.products.length} xil mahsulot</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-semibold group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800 transition-colors">
+                              {formatDual("Ko'rish", "Смотреть", "View")} →
+                            </span>
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">-</span>
+                        )}
                       </td>
 
                       {/* Total Volume (Separating weight in kg/tn and packaging in dona) */}
@@ -906,6 +911,188 @@ export default function SuppliersPage() {
                 className="px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/30 transition-all flex-1"
               >
                 {formatDual("O'chirish", "Удалить", "Delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Supplier Products Details Modal */}
+      {viewProductsSupplier && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-enter" 
+          onClick={() => setViewProductsSupplier(null)}
+        >
+          <div 
+            className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl max-h-[90vh] overflow-hidden flex flex-col max-w-2xl w-full shadow-2xl" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-dark-750 flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-dark-800/40">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0">
+                  <Package size={22} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base sm:text-lg">
+                    {formatDual("Yetkazib Berilgan Mahsulotlar Ro'yxati", "Список поставленной продукции", "Delivered Products List")}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
+                      {viewProductsSupplier.name}
+                    </span>
+                    {viewProductsSupplier.shortName && (
+                      <span className="text-xs text-slate-400">
+                        ({viewProductsSupplier.shortName})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={() => setViewProductsSupplier(null)} 
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Quick KPI Stats Summary inside Modal */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 border-b border-slate-200 dark:border-dark-750 bg-slate-50/30 dark:bg-dark-850">
+              <div className="p-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200/80 dark:border-dark-700 text-center">
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {formatDual("Jami Turlar", "Всего видов", "Total Types")}
+                </div>
+                <div className="text-base font-black text-slate-900 dark:text-white mt-0.5">
+                  {viewProductsSupplier.products?.length || 0} xil
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200/80 dark:border-dark-700 text-center">
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {formatDual("Partiyalar", "Партий", "Batches")}
+                </div>
+                <div className="text-base font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
+                  {viewProductsSupplier.deliveriesCount || 0} ta
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200/80 dark:border-dark-700 text-center">
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {formatDual("Jami Miqdor", "Общий объем", "Total Volume")}
+                </div>
+                <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-1 space-y-0.5">
+                  {viewProductsSupplier.totalKg && viewProductsSupplier.totalKg > 0 ? (
+                    <div>{(viewProductsSupplier.totalKg).toLocaleString()} kg</div>
+                  ) : null}
+                  {viewProductsSupplier.totalDona && viewProductsSupplier.totalDona > 0 ? (
+                    <div>{(viewProductsSupplier.totalDona).toLocaleString()} dona</div>
+                  ) : null}
+                  {!viewProductsSupplier.totalKg && !viewProductsSupplier.totalDona && <div>0</div>}
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200/80 dark:border-dark-700 text-center">
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {formatDual("Oxirgi Kirim", "Посл. поставка", "Last Delivery")}
+                </div>
+                <div className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mt-1">
+                  {viewProductsSupplier.lastDeliveryDate || '-'}
+                </div>
+              </div>
+            </div>
+
+            {/* Search filter within modal */}
+            <div className="p-3.5 border-b border-slate-200 dark:border-dark-750">
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder={formatDual("Ushbu ta'minotchining mahsulotlari ichidan qidirish...", "Поиск по товарам поставщика...", "Search supplier products...")}
+                  value={productModalSearch}
+                  onChange={(e) => setProductModalSearch(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Products List Table */}
+            <div className="flex-1 overflow-y-auto p-4 max-h-[50vh]">
+              {modalProductsList.length > 0 ? (
+                <div className="border border-slate-200 dark:border-dark-750 rounded-2xl overflow-hidden">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-dark-800/80 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider">
+                        <th className="py-3 px-4 w-12 text-center">№</th>
+                        <th className="py-3 px-4">{formatDual("Mahsulot Nomi", "Наименование товара", "Product Name")}</th>
+                        <th className="py-3 px-4 text-center">{formatDual("Birlik", "Ед. изм.", "Unit")}</th>
+                        <th className="py-3 px-4 text-right">{formatDual("Yetkazilgan Miqdor", "Объем", "Quantity")}</th>
+                        <th className="py-3 px-4 text-center">{formatDual("Toifasi", "Категория", "Category")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
+                      {modalProductsList.map((item, idx) => {
+                        const isDona = item.unit === 'dona'
+                        return (
+                          <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-dark-800/40 transition-colors">
+                            <td className="py-3 px-4 text-center font-mono text-slate-400 font-bold">
+                              {idx + 1}
+                            </td>
+                            <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                              {item.name}
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className={`px-2 py-0.5 rounded-md border text-[10px] font-mono font-bold ${
+                                isDona
+                                  ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300'
+                                  : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                              }`}>
+                                {item.unit || '-'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right font-black text-slate-900 dark:text-white font-mono text-xs sm:text-sm">
+                              {item.qty > 0 ? item.qty.toLocaleString() : '-'} {item.unit}
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                isDona
+                                  ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30'
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
+                              }`}>
+                                {isDona ? "Tara & Qadoqlash" : "Xomashyo"}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                  <Package size={36} className="opacity-40 mb-2" />
+                  <p className="text-xs font-semibold">
+                    {formatDual("Hech qanday mahsulot topilmadi", "Товары не найдены", "No products found")}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-200 dark:border-dark-750 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-dark-800/40">
+              <a
+                href={`/suppliers/${viewProductsSupplier.id}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/25 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition-all"
+              >
+                <span>{formatDual("Ta'minotchi Profiliga O'tish", "Перейти в профиль", "Go to Supplier Profile")}</span>
+                <ExternalLink size={13} />
+              </a>
+
+              <button
+                onClick={() => setViewProductsSupplier(null)}
+                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors"
+              >
+                {formatDual("Yopish", "Закрыть", "Close")}
               </button>
             </div>
           </div>

@@ -2,7 +2,7 @@ import SupplyShortagesContent from '@/components/supply/SupplyShortagesContent'
 
 export const metadata = {
   title: 'Ombordan Qolmagan Mahsulotlar | Supply Shortages',
-  description: "Sklad talabnomalari va ta'minotchilarga buyurtma jo'natish tizimi",
+  description: "Ombor talabnomalari va ta'minotchilarga buyurtma jo'natish tizimi",
 }
 
 export default function SupplyShortagesPage() {

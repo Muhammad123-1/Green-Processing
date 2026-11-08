@@ -2165,7 +2165,7 @@ export default function ShopReportContent({
                 placeholder={
                   lang === 'ru'
                     ? 'Например: Ошибка при взвешивании на приеме, уточнен номер партии, опечатка оператора...'
-                    : 'Masalan: Qabulda tarozida xato kiritilgan, partiya raqami aniqlashtirildi, skladchi xatosi...'
+                    : 'Masalan: Qabulda tarozida xato kiritilgan, partiya raqami aniqlashtirildi, omborchi xatosi...'
                 }
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none font-medium"
               />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import {
   Save,
@@ -14,9 +14,17 @@ import {
   Upload,
   Trash2,
   CheckCircle2,
-  Image as ImageIcon
+  Phone,
+  User,
+  ShieldCheck,
+  Truck,
+  Package,
+  Layers,
+  Thermometer,
+  FileText
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useSearchParams } from 'next/navigation'
 
 interface SettingItem {
   key: string
@@ -25,42 +33,74 @@ interface SettingItem {
 }
 
 export default function SettingsPage() {
-  const { formatDual } = useLanguage()
+  const { formatDual, lang } = useLanguage()
+  const searchParams = useSearchParams()
+
   const [settings, setSettings] = useState<SettingItem[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [uploadingSig, setUploadingSig] = useState(false)
-  const sigFileInputRef = useRef<HTMLInputElement>(null)
+
+  // Active Tab: 'supply' | 'qc' | 'warehouse' | 'general'
+  const tabParam = searchParams ? searchParams.get('tab') : null
+  const [activeTab, setActiveTab] = useState<'supply' | 'qc' | 'warehouse' | 'general'>(
+    tabParam === 'supply' ? 'supply' : tabParam === 'qc' ? 'qc' : tabParam === 'warehouse' ? 'warehouse' : 'supply'
+  )
+
+  // Uploading states per department
+  const [uploadingDept, setUploadingDept] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [currentUploadKey, setCurrentUploadKey] = useState<string>('')
 
   useEffect(() => {
     fetchSettings()
   }, [])
 
+  useEffect(() => {
+    if (tabParam && ['supply', 'qc', 'warehouse', 'general'].includes(tabParam)) {
+      setActiveTab(tabParam as any)
+    }
+  }, [tabParam])
+
   async function fetchSettings() {
     try {
       const res = await fetch('/api/settings')
-      if (res.ok) setSettings(await res.json())
+      if (res.ok) {
+        const data = await res.json()
+        setSettings(Array.isArray(data) ? data : [])
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  function getSetting(key: string) {
-    return settings.find((s) => s.key === key)?.value || ''
+  function getSetting(key: string, defaultValue = '') {
+    return settings.find((s) => s.key === key)?.value || defaultValue
   }
 
-  function setSetting(key: string, value: string) {
+  function setSetting(key: string, value: string, category = 'general') {
     setSettings((prev) => {
       const exists = prev.find((s) => s.key === key)
-      if (exists) return prev.map((s) => s.key === key ? { ...s, value } : s)
-      return [...prev, { key, value, category: 'general' }]
+      if (exists) return prev.map((s) => (s.key === key ? { ...s, value } : s))
+      return [...prev, { key, value, category }]
     })
   }
 
-  async function handleSignatureUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // Trigger file upload for specific signature
+  function triggerUpload(signatureUrlKey: string, dept: string) {
+    setCurrentUploadKey(signatureUrlKey)
+    setUploadingDept(dept)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+      fileInputRef.current.click()
+    }
+  }
+
+  // Handle image upload to Cloudflare R2 / API
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingSig(true)
+    if (!file || !currentUploadKey) return
+
+    setLoading(false)
     const formData = new FormData()
     formData.append('file', file)
 
@@ -71,43 +111,34 @@ export default function SettingsPage() {
       })
       const data = await res.json()
       if (res.ok && data?.url) {
-        setSetting('warehouse_signature_url', data.url)
-        if (!getSetting('warehouse_signature_name')) {
-          setSetting('warehouse_signature_name', 'Isakov M.')
-        }
-        if (!getSetting('warehouse_signature_title')) {
-          setSetting('warehouse_signature_title', "Ombor mudiri / Mas'ul xodim")
-        }
+        setSetting(currentUploadKey, data.url, 'signature')
 
-        // Auto-save to settings in DB
+        // Auto-save this signature update immediately
         await fetch('/api/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify([
-            { key: 'warehouse_signature_url', value: data.url, category: 'signature' },
-            { key: 'warehouse_signature_name', value: getSetting('warehouse_signature_name') || 'Isakov M.', category: 'signature' },
-            { key: 'warehouse_signature_title', value: getSetting('warehouse_signature_title') || "Ombor mudiri / Mas'ul xodim", category: 'signature' },
-          ]),
+          body: JSON.stringify([{ key: currentUploadKey, value: data.url, category: 'signature' }]),
         })
 
         toast.success(
           formatDual(
-            "Imzo Cloudflare R2 ga muvaffaqiyatli yuklandi!",
-            "Подпись успешно загружена в Cloudflare R2!",
-            "Signature uploaded to Cloudflare R2 successfully!"
+            "Elektron imzo rasmi muvaffaqiyatli yuklandi!",
+            "Электронная подпись успешно загружена!",
+            "Signature image uploaded successfully!"
           )
         )
       } else {
-        toast.error(data?.error || formatDual("Rasm yuklashda xatolik", "Ошибка загрузки", "Upload failed"))
+        toast.error(data?.error || "Rasm yuklashda xatolik yuz berdi")
       }
     } catch {
-      toast.error(formatDual("Rasm yuklashda xatolik", "Ошибка загрузки", "Upload failed"))
+      toast.error("Tarmoq xatosi: Rasm yuklanmadi")
     } finally {
-      setUploadingSig(false)
-      if (sigFileInputRef.current) sigFileInputRef.current.value = ''
+      setUploadingDept(null)
+      setCurrentUploadKey('')
     }
   }
 
+  // Save all settings to DB
   async function handleSave() {
     setSaving(true)
     try {
@@ -116,268 +147,705 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       })
-      if (res.ok) toast.success('Sozlamalar saqlandi')
-      else toast.error('Saqlashda xatolik')
-    } catch { toast.error('Xatolik') } finally { setSaving(false) }
+      if (res.ok) {
+        toast.success(
+          formatDual(
+            "Barcha sozlamalar muvaffaqiyatli saqlandi!",
+            "Все настройки успешно сохранены!",
+            "All settings saved successfully!"
+          )
+        )
+      } else {
+        toast.error("Saqlashda xatolik yuz berdi")
+      }
+    } catch {
+      toast.error("Tarmoq xatosi")
+    } finally {
+      setSaving(false)
+    }
   }
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="spinner" /></div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-slate-400">
+        <Loader2 size={32} className="animate-spin text-blue-500 mr-2" />
+        <span>Sozlamalar yuklanmoqda...</span>
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5 animate-enter">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="max-w-4xl mx-auto space-y-6 animate-enter pb-16">
+      {/* Hidden file input for signature image uploads */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-6 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs">
         <div>
-          <h1 className="section-title">
-            {formatDual("Tizim Sozlamalari", "Настройки системы", "System Settings")}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+              GREEN PROCESSING • ERP PROFIL
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            {formatDual("Xodimlar Sozlamalari & Elektron Imzolar", "Настройки сотрудников & Электронные подписи", "Staff Profiles & Digital Signatures")}
           </h1>
-          <p className="section-subtitle">
-            {formatDual("Korxona parametrlari, rekvizitlar va shablon konfiguratsiyasi", "Параметры предприятия, реквизиты и шаблоны", "Enterprise parameters, credentials and template configs")}
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {formatDual(
+              "Ta'minot, Sifat Nazorati va Ombor xodimlarining ismi-familiyasi, telefon raqami va rasmiy faksimile imzolari",
+              "ФИО, телефоны и факсимиле подписи сотрудников снабжения, службы качества и склада",
+              "Full name, phone and digital signature management for Supply, QC, and Warehouse staff"
+            )}
           </p>
         </div>
-        <button onClick={handleSave} disabled={saving} className="btn-primary">
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all active:scale-95 shrink-0"
+        >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {formatDual("Saqlash", "Сохранить", "Save")}
+          <span>{formatDual("Saqlash", "Сохранить", "Save Settings")}</span>
         </button>
       </div>
 
-      {/* Company Info */}
-      <div className="form-section">
-        <div className="flex items-center gap-2 mb-2">
-          <Building size={16} className="text-blue-400" />
-          <h3 className="font-semibold text-white text-sm">{formatDual("Korxona ma'lumotlari", "Информация о предприятии", "Company Details")}</h3>
-        </div>
-        <div className="divider !mt-2" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <label className="label">{formatDual("Korxona nomi", "Название компании", "Company Name")}</label>
-            <input className="input-field" value={getSetting('company_name')}
-              onChange={(e) => setSetting('company_name', e.target.value)}
-              placeholder="Korxona nomi" />
-          </div>
-          <div>
-            <label className="label">{formatDual("Telefon", "Телефон", "Phone")}</label>
-            <input className="input-field" value={getSetting('company_phone')}
-              onChange={(e) => setSetting('company_phone', e.target.value)}
-              placeholder="+998 XX XXX XX XX" />
-          </div>
-          <div>
-            <label className="label">{formatDual("Standart nazoratchi", "Стандартный контролер", "Default Inspector")}</label>
-            <input className="input-field" value={getSetting('default_inspector')}
-              onChange={(e) => setSetting('default_inspector', e.target.value)}
-              placeholder="Sifat nazorati bo'limi" />
-          </div>
-          <div className="md:col-span-2">
-            <label className="label">{formatDual("Manzil", "Адрес", "Address")}</label>
-            <input className="input-field" value={getSetting('company_address')}
-              onChange={(e) => setSetting('company_address', e.target.value)}
-              placeholder="Korxona manzili" />
-          </div>
-        </div>
+      {/* Department Navigation Tabs */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-dark-800/80 rounded-2xl border border-slate-200 dark:border-dark-700/80 shadow-xs">
+        <button
+          onClick={() => setActiveTab('supply')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            activeTab === 'supply'
+              ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+          }`}
+        >
+          <Truck size={15} />
+          <span>{formatDual("Ta'minot Bo'limi (Supply)", "Отдел снабжения", "Supply Department")}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('qc')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            activeTab === 'qc'
+              ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+          }`}
+        >
+          <ShieldCheck size={15} />
+          <span>{formatDual("Sifat Nazorati (QA/QC)", "Служба качества (QC)", "Quality Control")}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('warehouse')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            activeTab === 'warehouse'
+              ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+          }`}
+        >
+          <Package size={15} />
+          <span>{formatDual("Omborxona", "Склад", "Warehouse")}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('general')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            activeTab === 'general'
+              ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+          }`}
+        >
+          <Building size={15} />
+          <span>{formatDual("Korxona Rekvizitlari", "Реквизиты компании", "Company Profile")}</span>
+        </button>
       </div>
 
-      {/* Warehouse Staff Signature Management (Cloudflare R2) */}
-      <div className="form-section">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <FileSignature size={16} className="text-amber-400" />
-            <h3 className="font-semibold text-white text-sm">
-              {formatDual("Mas'ul Xodimlar Imzosi (Elektron Imzo Rasmi)", "Подпись ответственного лица (Электронная подпись)", "Authorized Staff Signature")}
-            </h3>
-          </div>
-          <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">
-            <Cloud size={12} />
-            <span>Cloudflare R2</span>
-          </span>
-        </div>
-        <div className="divider !mt-2" />
-        <p className="text-xs text-slate-400 mb-4">
-          {formatDual(
-            "Xodim imzo rasmini yuklaydi. Ushbu imzo rasmi to'g'ridan-to'g'ri Cloudflare R2 bulutida saqlanadi va Kirim (Приход), Chiqim (Расход) hamda rasmiy FSSC 22000 jurnallarida tasdiqlovchi imzo sifatida ko'rinadi.",
-            "Сотрудник загружает изображение подписи. Оно хранится в Cloudflare R2 и отображается в журналах Прихода, Расхода и отчетах FSSC 22000.",
-            "Staff uploads signature image. Stored on Cloudflare R2 and displayed in Arrival, Dispatch, and FSSC 22000 journals."
-          )}
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="label">
-              {formatDual("Mas'ul Omborchi F.I.Sh", "ФИО ответственного кладовщика", "Warehouse Staff Full Name")}
-            </label>
-            <input
-              className="input-field"
-              value={getSetting('warehouse_signature_name') || 'Isakov M.'}
-              onChange={(e) => setSetting('warehouse_signature_name', e.target.value)}
-              placeholder="Isakov M."
-            />
-          </div>
-          <div>
-            <label className="label">
-              {formatDual("Lavozimi / Vazifasi", "Должность", "Position / Role")}
-            </label>
-            <input
-              className="input-field"
-              value={getSetting('warehouse_signature_title') || "Ombor mudiri / Mas'ul xodim"}
-              onChange={(e) => setSetting('warehouse_signature_title', e.target.value)}
-              placeholder="Ombor mudiri / Mas'ul xodim"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="label mb-1.5 block">
-              {formatDual("Imzo rasmi (PNG, JPG, WEBP)", "Изображение подписи", "Signature Image")}
-            </label>
-
-            {/* Hidden File Input */}
-            <input
-              ref={sigFileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleSignatureUpload}
-            />
-
-            {getSetting('warehouse_signature_url') ? (
-              <div className="bg-dark-800/90 border border-dark-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-40 h-20 bg-dark-900 border border-dark-600 rounded-xl p-2 flex items-center justify-center relative overflow-hidden group shadow-inner">
-                    <img
-                      src={getSetting('warehouse_signature_url')}
-                      alt="Warehouse Signature"
-                      className="max-h-full max-w-full object-contain filter invert dark:invert-0 drop-shadow"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-white text-sm">
-                        {getSetting('warehouse_signature_name') || 'Isakov M.'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                        <CheckCircle2 size={11} />
-                        <span>Cloudflare R2</span>
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400">
-                      {getSetting('warehouse_signature_title') || "Ombor mudiri / Mas'ul xodim"}
-                    </p>
-                    <p className="text-[11px] font-mono text-slate-500 truncate max-w-xs">
-                      {getSetting('warehouse_signature_url')}
-                    </p>
-                  </div>
+      {/* ========================================================================= */}
+      {/* TAB 1: TA'MINOT BO'LIMI SOZLAMALARI (SUPPLY)                              */}
+      {/* ========================================================================= */}
+      {activeTab === 'supply' && (
+        <div className="space-y-5 animate-scale-up">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                  <Truck size={20} />
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={uploadingSig}
-                    onClick={() => sigFileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white transition-colors"
-                  >
-                    {uploadingSig ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                    <span>{formatDual("Almashtirish", "Заменить", "Replace")}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSetting('warehouse_signature_url', '')}
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                    title={formatDual("Imzoni o'chirish", "Удалить подпись", "Delete signature")}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                    {formatDual("Ta'minot Bo'limi Xodimi Ma'lumotlari", "Данные сотрудника снабжения", "Supply Staff Details")}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {formatDual(
+                      "Xarid buyurtmalari va ta'minotchi shartnomalarida avtomatik ko'rsatiladigan rekvizitlar",
+                      "Реквизиты, автоматически отображаемые в заказах поставщикам",
+                      "Details automatically populated in supplier purchase orders"
+                    )}
+                  </p>
                 </div>
               </div>
-            ) : (
-              <div
-                onClick={() => sigFileInputRef.current?.click()}
-                className="border-2 border-dashed border-dark-600 hover:border-amber-500/60 bg-dark-800/40 hover:bg-dark-800/80 rounded-2xl p-6 text-center cursor-pointer transition-all group"
-              >
-                {uploadingSig ? (
-                  <div className="flex flex-col items-center justify-center gap-2 py-2">
-                    <Loader2 size={28} className="animate-spin text-amber-500" />
-                    <span className="text-xs font-bold text-slate-300">
-                      {formatDual("Cloudflare R2 ga yuklanmoqda...", "Загрузка в Cloudflare R2...", "Uploading to Cloudflare R2...")}
-                    </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Full Name */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Mas'ul Ta'minotchi F.I.Sh *", "ФИО ответственного снабженца *", "Supply Manager Full Name *")}
+                </label>
+                <div className="relative">
+                  <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={getSetting('supply_signature_name', 'Toirov A.')}
+                    onChange={(e) => setSetting('supply_signature_name', e.target.value, 'supply')}
+                    placeholder="Masalan: Toirov Alisher"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Phone number */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Telefon Raqami (Ta'minot buyurtmalarida chiqadi) *", "Телефон снабжения *", "Phone Number *")}
+                </label>
+                <div className="relative">
+                  <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={getSetting('supply_phone', '+998 90 123 45 67')}
+                    onChange={(e) => setSetting('supply_phone', e.target.value, 'supply')}
+                    placeholder="+998 90 123 45 67"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Position Title */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Rasmiy Lavozimi", "Должность", "Official Position")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('supply_signature_title', "Bosh Ta'minotchi")}
+                  onChange={(e) => setSetting('supply_signature_title', e.target.value, 'supply')}
+                  placeholder="Bosh Ta'minotchi"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              {/* Default Note / Requirement */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Standart Yetkazish Talabi (Izoh)", "Стандартное требование доставки", "Standard Order Delivery Terms")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('supply_order_notes', "Harorat 2°C – 5°C oraliqda bo'lishi va TTN sertifikati taqdim etilishi shart.")}
+                  onChange={(e) => setSetting('supply_order_notes', e.target.value, 'supply')}
+                  placeholder="Yuk yetkazilganda harorat nazorat qilinadi"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Signature Upload Card */}
+            <div className="pt-2">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 block flex items-center justify-between">
+                <span>{formatDual("Ta'minotchi Elektron Imzosi (Faksimile)", "Электронная подпись снабженца (Факсимиле)", "Supply Digital Signature Image")}</span>
+                <span className="text-[11px] text-slate-400 font-normal">PNG / JPG (shaffof fon tavsiya etiladi)</span>
+              </label>
+
+              {getSetting('supply_signature_url') ? (
+                <div className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-40 h-20 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-2 flex items-center justify-center relative overflow-hidden shadow-xs">
+                      <img
+                        src={getSetting('supply_signature_url')}
+                        alt="Supply Signature"
+                        className="max-h-full max-w-full object-contain filter invert dark:invert-0 drop-shadow"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">
+                          {getSetting('supply_signature_name', 'Toirov A.')}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          Faol imzo ✓
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {getSetting('supply_signature_title', "Bosh Ta'minotchi")}
+                      </p>
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 py-2">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Upload size={20} />
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={uploadingDept === 'supply'}
+                      onClick={() => triggerUpload('supply_signature_url', 'supply')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-800 dark:text-slate-200 transition"
+                    >
+                      {uploadingDept === 'supply' ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                      <span>{formatDual("Almashtirish", "Заменить", "Replace")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSetting('supply_signature_url', '', 'supply')}
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition"
+                      title="O'chirish"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => triggerUpload('supply_signature_url', 'supply')}
+                  className="border-2 border-dashed border-slate-300 dark:border-dark-700 hover:border-slate-400 dark:hover:border-dark-600 bg-slate-50/50 dark:bg-dark-800/40 hover:bg-slate-100/50 dark:hover:bg-dark-800/80 rounded-2xl p-6 text-center cursor-pointer transition group"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 py-1">
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-600 flex items-center justify-center group-hover:scale-105 transition">
+                      <Upload size={18} />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-white block">
-                        {formatDual("Imzo rasmini yuklash uchun bosing", "Нажмите для загрузки подписи", "Click to upload signature image")}
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                        {formatDual("Ta'minotchi imzo rasmini yuklash uchun bosing", "Нажмите для загрузки подписи снабженца", "Click to upload supply signature")}
                       </span>
                       <span className="text-[11px] text-slate-400 block mt-0.5">
-                        PNG, JPG yoki shaffof fonli rasm (Cloudflare R2 saqlash)
+                        Buyurtma va xarid hujjatlarida avtomatik qo'yiladi
                       </span>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: SIFAT NAZORATI SOZLAMALARI (QC / INSPECTOR)                        */}
+      {/* ========================================================================= */}
+      {activeTab === 'qc' && (
+        <div className="space-y-5 animate-scale-up">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                    {formatDual("Sifat Nazoratchisi (QA/QC) Ma'lumotlari", "Данные инспектора контроля качества", "QC Inspector Profile Details")}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {formatDual(
+                      "Kiruvchi xomashyo aktlari, harorat jurnali (F-01) va laboratoriya xulosalarida chiqadigan imzo va rekvizitlar",
+                      "Реквизиты и подпись, отображаемые в журналах входного контроля сырья (Ф-01) и актах QC",
+                      "Official credentials displayed on raw material intake acts and F-01 temperature journals"
+                    )}
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Full Name */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Mas'ul Sifat Nazoratchisi F.I.Sh *", "ФИО специалиста по качеству *", "QC Inspector Full Name *")}
+                </label>
+                <div className="relative">
+                  <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={getSetting('qc_signature_name', 'Xodjayeva D.')}
+                    onChange={(e) => setSetting('qc_signature_name', e.target.value, 'qc')}
+                    placeholder="Masalan: Xodjayeva Dilfuza"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Phone number */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Telefon Raqami *", "Телефон отдела качества *", "Phone Number *")}
+                </label>
+                <div className="relative">
+                  <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={getSetting('qc_phone', '+998 90 987 65 43')}
+                    onChange={(e) => setSetting('qc_phone', e.target.value, 'qc')}
+                    placeholder="+998 90 987 65 43"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Official Position */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Lavozimi / Mutaxassisligi", "Должность", "Role / Position")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('qc_signature_title', "Sifat Nazorati Mutaxassisi (QA/QC)")}
+                  onChange={(e) => setSetting('qc_signature_title', e.target.value, 'qc')}
+                  placeholder="Sifat Nazorati Mutaxassisi (QA/QC)"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              {/* Standard Cold-Chain Norm */}
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Standart Sovuq Zanjir Harorat Normasi", "Стандартная норма температуры", "Standard Cold-Chain Norm")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('qc_standard_temp_range', "2°C – 5°C")}
+                  onChange={(e) => setSetting('qc_standard_temp_range', e.target.value, 'qc')}
+                  placeholder="2°C – 5°C"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono font-medium"
+                />
+              </div>
+            </div>
+
+            {/* QC Signature Upload Card */}
+            <div className="pt-2">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 block flex items-center justify-between">
+                <span>{formatDual("Sifat Nazoratchisi Elektron Imzosi (Faksimile)", "Электронная подпись инспектора QC", "QC Inspector Signature Image")}</span>
+                <span className="text-[11px] text-slate-400 font-normal">Kirim aktlari va F-01 jurnalida tasdiqlanadi</span>
+              </label>
+
+              {getSetting('qc_signature_url') ? (
+                <div className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-40 h-20 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-2 flex items-center justify-center relative overflow-hidden shadow-xs">
+                      <img
+                        src={getSetting('qc_signature_url')}
+                        alt="QC Signature"
+                        className="max-h-full max-w-full object-contain filter invert dark:invert-0 drop-shadow"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">
+                          {getSetting('qc_signature_name', 'Xodjayeva D.')}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          Tasdiqlangan imzo ✓
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {getSetting('qc_signature_title', "Sifat Nazorati Mutaxassisi")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={uploadingDept === 'qc'}
+                      onClick={() => triggerUpload('qc_signature_url', 'qc')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-800 dark:text-slate-200 transition"
+                    >
+                      {uploadingDept === 'qc' ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                      <span>{formatDual("Almashtirish", "Заменить", "Replace")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSetting('qc_signature_url', '', 'qc')}
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition"
+                      title="O'chirish"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => triggerUpload('qc_signature_url', 'qc')}
+                  className="border-2 border-dashed border-slate-300 dark:border-dark-700 hover:border-slate-400 dark:hover:border-dark-600 bg-slate-50/50 dark:bg-dark-800/40 hover:bg-slate-100/50 dark:hover:bg-dark-800/80 rounded-2xl p-6 text-center cursor-pointer transition group"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 py-1">
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-600 flex items-center justify-center group-hover:scale-105 transition">
+                      <Upload size={18} />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                        {formatDual("Sifat nazoratchisi imzo rasmini yuklash uchun bosing", "Нажмите для загрузки подписи инспектора качества", "Click to upload QC signature image")}
+                      </span>
+                      <span className="text-[11px] text-slate-400 block mt-0.5">
+                        Harorat jurnallari va kiruvchi sifat aktlarida avtomatik qo'yiladi
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Numbering */}
-      <div className="form-section">
-        <div className="flex items-center gap-2 mb-2">
-          <Hash size={16} className="text-purple-400" />
-          <h3 className="font-semibold text-white text-sm">{formatDual("Akt raqamlash", "Нумерация актов", "Act Numbering")}</h3>
-        </div>
-        <div className="divider !mt-2" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label">{formatDual("Prefiks", "Префикс", "Prefix")}</label>
-            <input className="input-field" value={getSetting('act_number_prefix')}
-              onChange={(e) => setSetting('act_number_prefix', e.target.value)}
-              placeholder="КС" />
+      {/* ========================================================================= */}
+      {/* TAB 3: OMBORCHI SOZLAMALARI (WAREHOUSE)                                   */}
+      {/* ========================================================================= */}
+      {activeTab === 'warehouse' && (
+        <div className="space-y-5 animate-scale-up">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                  <Package size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                    {formatDual("Mas'ul Omborchi (Ombor mudiri) Ma'lumotlari", "Данные заведующего складом", "Warehouse Manager Details")}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {formatDual(
+                      "Kirim, Chiqim va sexga berilgan xomashyo dalolatnomalaridagi ombor imzosi",
+                      "Подпись и реквизиты зав. складом для приходных и расходных накладных",
+                      "Warehouse signatures for inbound and production dispatch reports"
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Mas'ul Omborchi F.I.Sh *", "ФИО зав. складом *", "Warehouse Manager Full Name *")}
+                </label>
+                <div className="relative">
+                  <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={getSetting('warehouse_signature_name', 'Isakov M.')}
+                    onChange={(e) => setSetting('warehouse_signature_name', e.target.value, 'warehouse')}
+                    placeholder="Isakov M."
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Ombor Telefoni *", "Телефон склада *", "Warehouse Phone *")}
+                </label>
+                <div className="relative">
+                  <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={getSetting('warehouse_phone', '+998 90 555 44 33')}
+                    onChange={(e) => setSetting('warehouse_phone', e.target.value, 'warehouse')}
+                    placeholder="+998 90 555 44 33"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Lavozimi / Vazifasi", "Должность", "Position")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('warehouse_signature_title', "Ombor mudiri / Mas'ul xodim")}
+                  onChange={(e) => setSetting('warehouse_signature_title', e.target.value, 'warehouse')}
+                  placeholder="Ombor mudiri / Mas'ul xodim"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Warehouse Signature Upload */}
+            <div className="pt-2">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 block flex items-center justify-between">
+                <span>{formatDual("Omborchi Elektron Imzosi (Faksimile)", "Электронная подпись кладовщика", "Warehouse Signature Image")}</span>
+                <span className="text-[11px] text-slate-400 font-normal">Kirim va Chiqim jurnallarida qo'yiladi</span>
+              </label>
+
+              {getSetting('warehouse_signature_url') ? (
+                <div className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-40 h-20 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-2 flex items-center justify-center relative overflow-hidden shadow-xs">
+                      <img
+                        src={getSetting('warehouse_signature_url')}
+                        alt="Warehouse Signature"
+                        className="max-h-full max-w-full object-contain filter invert dark:invert-0 drop-shadow"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">
+                          {getSetting('warehouse_signature_name', 'Isakov M.')}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          Tasdiqlangan imzo ✓
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {getSetting('warehouse_signature_title', "Ombor mudiri")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={uploadingDept === 'warehouse'}
+                      onClick={() => triggerUpload('warehouse_signature_url', 'warehouse')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-800 dark:text-slate-200 transition"
+                    >
+                      {uploadingDept === 'warehouse' ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                      <span>{formatDual("Almashtirish", "Заменить", "Replace")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSetting('warehouse_signature_url', '', 'warehouse')}
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition"
+                      title="O'chirish"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => triggerUpload('warehouse_signature_url', 'warehouse')}
+                  className="border-2 border-dashed border-slate-300 dark:border-dark-700 hover:border-slate-400 dark:hover:border-dark-600 bg-slate-50/50 dark:bg-dark-800/40 hover:bg-slate-100/50 dark:hover:bg-dark-800/80 rounded-2xl p-6 text-center cursor-pointer transition group"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 py-1">
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-600 flex items-center justify-center group-hover:scale-105 transition">
+                      <Upload size={18} />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                        {formatDual("Omborchi imzo rasmini yuklash uchun bosing", "Нажмите для загрузки подписи зав. складом", "Click to upload warehouse signature")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="label">{formatDual("Format", "Формат", "Format")}</label>
-            <input className="input-field" value={getSetting('act_number_format')}
-              onChange={(e) => setSetting('act_number_format', e.target.value)}
-              placeholder="PREFIX-YEAR-NUMBER" />
-            <p className="text-xs text-slate-500 mt-1">{formatDual("Misol: КС-2026-0001", "Пример: КС-2026-0001", "Example: КС-2026-0001")}</p>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: KORXONA REKVIZITLARI VA UMUMIY SOZLAMALAR                          */}
+      {/* ========================================================================= */}
+      {activeTab === 'general' && (
+        <div className="space-y-5 animate-scale-up">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 shadow-xs space-y-5">
+            <div className="flex items-center gap-2.5 border-b border-slate-200 dark:border-dark-750 pb-3">
+              <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                <Building size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                  {formatDual("Korxona Rekvizitlari", "Реквизиты компании", "Company Profile")}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {formatDual("Hujjatlar, aktlar va hisobotlarda chop etiladigan korxona ma'lumotlari", "Информация для печати на официальных бланках", "Credentials printed on official documents and acts")}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Korxona nomi", "Название компании", "Company Name")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('company_name', 'Green Processing LLC')}
+                  onChange={(e) => setSetting('company_name', e.target.value)}
+                  placeholder="Green Processing LLC"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Korxona Telefoni", "Телефон компании", "Company Phone")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('company_phone', '+998 71 200 00 00')}
+                  onChange={(e) => setSetting('company_phone', e.target.value)}
+                  placeholder="+998 XX XXX XX XX"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono font-medium"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Yuridik Manzil", "Адрес", "Address")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('company_address', "Toshkent viloyati, Yuqori Chirchiq tumani")}
+                  onChange={(e) => setSetting('company_address', e.target.value)}
+                  placeholder="Korxona manzili"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Akt Prefiksi", "Префикс актов", "Act Prefix")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('act_number_prefix', 'КС')}
+                  onChange={(e) => setSetting('act_number_prefix', e.target.value, 'numbering')}
+                  placeholder="КС"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                  {formatDual("Akt Raqamlash Formati", "Формат нумерации", "Numbering Format")}
+                </label>
+                <input
+                  type="text"
+                  value={getSetting('act_number_format', 'PREFIX-YEAR-NUMBER')}
+                  onChange={(e) => setSetting('act_number_format', e.target.value, 'numbering')}
+                  placeholder="PREFIX-YEAR-NUMBER"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono font-medium"
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Template */}
-      <div className="form-section">
-        <div className="flex items-center gap-2 mb-2">
-          <FileSpreadsheet size={16} className="text-emerald-400" />
-          <h3 className="font-semibold text-white text-sm">{formatDual("Excel shablon", "Шаблон Excel", "Excel Template")}</h3>
-        </div>
-        <div className="divider !mt-2" />
-        <div>
-          <label className="label">{formatDual("Shablon fayl yo'li", "Путь к файлу шаблона", "Template File Path")}</label>
-          <input className="input-field" value={getSetting('excel_template_path')}
-            onChange={(e) => setSetting('excel_template_path', e.target.value)}
-            placeholder="templates/ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx" />
-          <p className="text-xs text-slate-500 mt-1">
-            {formatDual(
-              "Asl Excel fayli avtomatik ravishda \"templates\" papkasidan qidiriladi. Shablon faylni \"templates\" papkasiga nusxalang.",
-              "Исходный файл Excel автоматически ищется в папке \"templates\". Скопируйте файл шаблона в папку \"templates\".",
-              "Original Excel file is searched automatically in \"templates\" folder. Copy template file to \"templates\" folder."
-            )}
-          </p>
-        </div>
-
-        <div className="mt-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-          <p className="text-sm text-blue-300 font-medium mb-2">📋 {formatDual("Shablon qo'yish yo'riqnomasi:", "Инструкция по установке шаблона:", "Template setup instructions:")}</p>
-          <ol className="text-xs text-blue-200/70 space-y-1 list-decimal list-inside">
-            <li>{formatDual("Loyiha papkasida \"templates\" nomli papka yarating", "В папке проекта создайте папку \"templates\"", "Create a folder named \"templates\" in the project directory")}</li>
-            <li>{formatDual("Asl Excel faylini (ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx) o'sha papkaga nusxalang", "Скопируйте исходный файл Excel (ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx) в эту папку", "Copy original Excel file (ВХОДНОЕ_СЫРЬЕ_АКТЫ 2026.xlsx) into that folder")}</li>
-            <li>{formatDual("Tizim avtomatik ravishda shu faylni topadi va ishlatadi", "Система автоматически найдет и будет использовать этот файл", "System will automatically locate and use this file")}</li>
-            <li>{formatDual("Agar shablon topilmasa, oddiy Excel fayli yaratiladi", "Если шаблон не найден, создается стандартный файл Excel", "If template is not found, a standard Excel file is generated")}</li>
-          </ol>
-        </div>
-      </div>
-
-      <div className="flex justify-end pb-6">
-        <button onClick={handleSave} disabled={saving} className="btn-primary">
+      {/* Floating Save Button at bottom */}
+      <div className="flex justify-end pt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all active:scale-95"
+        >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {formatDual("Saqlash", "Сохранить", "Save")}
+          <span>{formatDual("Barcha Sozlamalarni Saqlash", "Сохранить все настройки", "Save All Settings")}</span>
         </button>
       </div>
     </div>

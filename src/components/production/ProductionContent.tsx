@@ -268,12 +268,12 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           unit: selectedProd?.unit || 'kg',
           expectedDate: requestForm.expectedDate,
           timeRange: requestForm.timeRange,
-          notes: "Oshxona ehtiyoji uchun zayavka"
+          notes: "Oshxona ehtiyoji uchun buyurtma"
         })
       })
 
       if (res.ok) {
-        toast.success("Zayavka ta'minot bo'limiga yuborildi!")
+        toast.success("Buyurtma ta'minot bo'limiga yuborildi!")
         setShowRequestModal(false)
         setRequestForm({
           productId: '',
@@ -283,7 +283,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           timeRange: '08:00 - 10:00'
         })
       } else {
-        toast.error("Zayavka yuborishda xatolik")
+        toast.error("Buyurtma yuborishda xatolik")
       }
     } catch {
       toast.error("Tarmoq xatosi")
@@ -319,7 +319,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
             Oshxona va Zagotovka Boshqaruvi
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Skladdan qabul qilish (Two-Way Handshake), tortish farqlari, ko'p-joylashuvli zaxiralar va taom tayyorlash
+            Ombordan qabul qilish (Two-Way Handshake), tortish farqlari, ko'p-joylashuvli zaxiralar va taom tayyorlash
           </p>
         </div>
 
@@ -337,7 +337,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-dark-800 hover:bg-dark-700 text-slate-200 border border-dark-700 transition-all"
           >
             <ShoppingCart size={16} />
-            <span>Ta'minotga Zayavka</span>
+            <span>Ta'minotga Buyurtma</span>
           </button>
           <button
             onClick={() => {
@@ -356,7 +356,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
         </div>
       </div>
 
-      {/* Handshake Alert Banner (If pending shipments from Sklad) */}
+      {/* Handshake Alert Banner (If pending shipments from Ombor) */}
       {(dashboardData.pendingHandshakes || []).length > 0 && (
         <div className="bg-gradient-to-r from-amber-950/60 via-amber-900/40 to-dark-900 border-2 border-amber-500/40 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
           <div className="flex flex-wrap items-center gap-3">
@@ -365,10 +365,10 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
             </div>
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>🔔 Skladdan Kelgan Yuklar Tasdiqlash Kutilmoqda ({dashboardData.pendingHandshakes.length} ta)</span>
+                <span>🔔 Ombordan Kelgan Yuklar Tasdiqlash Kutilmoqda ({dashboardData.pendingHandshakes.length} ta)</span>
               </h3>
               <p className="text-xs text-amber-200/80">
-                Sklad xomashyo chiqardi. Haqiqiy vaznni tortib, "Qabul qildim" tugmasi orqali tasdiqlang!
+                Ombor xomashyo chiqardi. Haqiqiy vaznni tortib, "Qabul qildim" tugmasi orqali tasdiqlang!
               </p>
             </div>
           </div>
@@ -395,7 +395,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           <div className="text-3xl font-bold text-white">
             {dashboardData.kpis?.pendingHandshakesCount || 0}
           </div>
-          <div className="text-xs text-slate-400 mt-1">Skladdan kelgan tranzit yuklar</div>
+          <div className="text-xs text-slate-400 mt-1">Ombordan kelgan tranzit yuklar</div>
         </div>
 
         <div 
@@ -452,7 +452,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
           }`}
         >
           <Scale size={16} />
-          <span>🤝 Skladdan Qabul (Handshake & Tortish)</span>
+          <span>🤝 Ombordan Qabul (Handshake & Tortish)</span>
           {(dashboardData.pendingHandshakes || []).length > 0 && (
             <span className="px-2 py-0.5 text-xs bg-red-600 text-white rounded-full font-bold">
               {dashboardData.pendingHandshakes.length}
@@ -518,7 +518,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
               <div className="card p-8 text-center text-slate-500 border border-dark-700 bg-dark-900/40">
                 <CheckCircle2 size={36} className="mx-auto mb-2 text-emerald-500" />
                 <p className="font-semibold text-slate-300">Barcha kelgan yuklar qabul qilingan!</p>
-                <p className="text-xs mt-1">Sklad yangi mahsulot chiqarganda bu yerda avtomatik ko'rinadi.</p>
+                <p className="text-xs mt-1">Ombor yangi mahsulot chiqarganda bu yerda avtomatik ko'rinadi.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -536,12 +536,12 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                           {transfer.product?.name || 'Mahsulot'}
                         </h3>
                         <p className="text-xs text-slate-400">
-                          Yuboruvchi: <span className="text-slate-200">{transfer.issuedByName || 'Sklad'}</span> • {new Date(transfer.issuedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          Yuboruvchi: <span className="text-slate-200">{transfer.issuedByName || 'Ombor'}</span> • {new Date(transfer.issuedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
 
                       <div className="text-right">
-                        <div className="text-xs text-slate-400">Sklad bergan miqdor:</div>
+                        <div className="text-xs text-slate-400">Ombor bergan miqdor:</div>
                         <div className="text-2xl font-black text-amber-400 font-mono">
                           {transfer.issuedQuantity} {transfer.issuedUnit}
                         </div>
@@ -581,7 +581,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                       <th className="py-3 px-4">Transfer & Sana</th>
                       <th className="py-3 px-4">Mahsulot</th>
                       <th className="py-3 px-4">Bo'lim</th>
-                      <th className="py-3 px-4 text-center">Sklad Berdi</th>
+                      <th className="py-3 px-4 text-center">Ombor Berdi</th>
                       <th className="py-3 px-4 text-center">Qabul Qilindi (Tortildi)</th>
                       <th className="py-3 px-4 text-center">Farq / Yo'qotish</th>
                       <th className="py-3 px-4">Sabab / Izoh</th>
@@ -685,7 +685,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                   <tr className="bg-dark-800 border-b border-dark-700 text-xs font-bold text-slate-300 uppercase">
                     <th className="py-3.5 px-4">Mahsulot Nomi</th>
                     <th className="py-3.5 px-4">Kategoriya</th>
-                    <th className="py-3.5 px-4 text-center text-blue-400">🏢 Markaziy Sklad</th>
+                    <th className="py-3.5 px-4 text-center text-blue-400">🏢 Markaziy Ombor</th>
                     <th className="py-3.5 px-4 text-center text-amber-400">🔪 Zagotovka Sexi</th>
                     <th className="py-3.5 px-4 text-center text-emerald-400">🍲 Oshxona</th>
                     <th className="py-3.5 px-4 text-center font-bold text-white">📦 JAMI Zaxira</th>
@@ -878,7 +878,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                   <Scale size={22} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Skladdan Qabul Qilish (Tortish)</h3>
+                  <h3 className="text-lg font-bold text-white">Ombordan Qabul Qilish (Tortish)</h3>
                   <p className="text-xs text-slate-400">Transfer #{selectedTransfer.transferNumber}</p>
                 </div>
               </div>
@@ -898,7 +898,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                   <span className="font-bold text-white text-sm">{selectedTransfer.product?.name}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Sklad chiqargan vazn:</span>
+                  <span className="text-slate-500 block">Ombor chiqargan vazn:</span>
                   <span className="font-bold text-amber-400 text-sm font-mono">
                     {selectedTransfer.issuedQuantity} {selectedTransfer.issuedUnit}
                   </span>
@@ -955,7 +955,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                     <option value="Go'sht suvi oqishi / Idish og'irligi">Go'sht suvi oqishi / Idish og'irligi</option>
                     <option value="Muz erishi / Namlik yo'qolishi">Muz erishi / Namlik yo'qolishi</option>
                     <option value="Sifat yaroqsiz qismi olib tashlandi">Sifat yaroqsiz qismi olib tashlandi</option>
-                    <option value="Sklad noto'g'ri o'lchagan">Sklad noto'g'ri o'lchagan</option>
+                    <option value="Ombor noto'g'ri o'lchagan">Ombor noto'g'ri o'lchagan</option>
                     <option value="Boshqa">Boshqa sabab (qo'lda yozish)</option>
                   </select>
 
@@ -1098,7 +1098,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                   <ShoppingCart size={22} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Ta'minotga Zayavka</h3>
+                  <h3 className="text-lg font-bold text-white">Ta'minotga Buyurtma</h3>
                   <p className="text-xs text-slate-400">Oshxona ehtiyojlari uchun xarid so'rovi</p>
                 </div>
               </div>
@@ -1191,7 +1191,7 @@ export default function ProductionContent({ isKitchen = true }: { isKitchen?: bo
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
                 >
                   {savingRequest && <Loader2 size={16} className="animate-spin" />}
-                  <span>Zayavka Yuborish</span>
+                  <span>Buyurtma Yuborish</span>
                 </button>
               </div>
             </form>

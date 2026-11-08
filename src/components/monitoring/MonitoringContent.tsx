@@ -370,7 +370,7 @@ export default function MonitoringContent() {
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-6 rounded bg-indigo-600"></div>
                     <h2 className="text-base sm:text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                      {formatDual('Sexdan Tayyor Mahsulot Chiqishi (Prixod GP)', 'Выпуск готовой продукции цеха', 'Finished Goods Output (Shop)')}
+                      {formatDual('Sexdan Tayyor Mahsulot Chiqishi (Kirim GP)', 'Выпуск готовой продукции цеха', 'Finished Goods Output (Shop)')}
                     </h2>
                     <span className="px-2.5 py-0.5 ml-1 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold">
                       {periodLabel}
@@ -469,7 +469,7 @@ export default function MonitoringContent() {
                       <div className="w-2.5 h-6 rounded bg-emerald-600"></div>
                       <h2 className="text-base sm:text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">
                         {period === 'day'
-                          ? formatDual("Kunlik Xomashyo Kirimi (Prixod Xomashyo)", 'Приемка сырья за день', 'Raw Material Inbound Arrivals')
+                          ? formatDual("Kunlik Xomashyo Kirimi", 'Приемка сырья за день', 'Raw Material Inbound Arrivals')
                           : formatDual(`Xomashyo Kirimi (${periodLabel})`, `Приемка сырья (${periodLabel})`, `Inbound Arrivals (${periodLabel})`)}
                       </h2>
                     </div>

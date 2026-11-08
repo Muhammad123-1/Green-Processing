@@ -1294,18 +1294,29 @@ model SurveyAnswer {
 // -----------------------------------------------------------------------------
 
 model ShopArrival {
-  id           Int       @id @default(autoincrement())
-  date         String
-  nomenclature String
-  quantity     Float
-  supplier     String?
-  batch        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now()) @updatedAt
-  isEdited     Boolean   @default(false)
-  editReason   String?
-  editedAt     DateTime?
-  editedBy     String?
+  id                 Int       @id @default(autoincrement())
+  date               String
+  arrivalTime        String?   // Kelgan vaqt (masalan: 08:30, 14:15)
+  nomenclature       String
+  quantity           Float     // Faktik qabul qilingan miqdor (kg)
+  invoiceQuantity    Float?    // Nakladnoy bo'yicha miqdor (kg)
+  boxCount           Int?      // Faktik quti / yashik soni
+  supplier           String?   // Ta'minotchi nomi
+  ttnNumber          String?   // TTN yoki Sertifikat raqami
+  batch              String?   // Partiya raqami
+  temperature        Float?    // Yetkazib berilgandagi harorat (°C) - Sifat nazoratchisi kiritadi
+  organoleptic       String?   // Organoleptika va TP ga yaroqliligi (Texnolog fikri)
+  finalDecision      String?   @default("Принято") // Принято / Брак / Условно
+  warehouseSign      String?   // Zav. sklad imzosi (Qabul qildi)
+  technologistSign   String?   // Texnolog imzosi (Yaroqli)
+  qcSign             String?   // Sifat mutaxassisi imzosi (Qaror tasdiqlandi)
+  qcCheckedAt        DateTime? // Sifat nazorati va harorat kiritilgan vaqt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
+  isEdited           Boolean   @default(false)
+  editReason         String?
+  editedAt           DateTime?
+  editedBy           String?
 }
 
 model ShopExpense {

@@ -457,7 +457,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
               </table>
             </div>
             <p className="px-2 py-1.5 text-[10px] text-slate-500 bg-slate-50 border-t border-slate-200">
-              Kun oxiridagi qoldiq avtomatik hisoblanadi: boshlanish + prixod − rasxod
+              Kun oxiridagi qoldiq avtomatik hisoblanadi: boshlang'ich qoldiq + kirim − chiqim
             </p>
           </div>
         </div>

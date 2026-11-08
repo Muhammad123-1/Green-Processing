@@ -564,7 +564,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                {lang === 'ru' ? 'Приход сырья (Kirim)' : 'Xomashyo Kirimi (Приход)'}
+                {lang === 'ru' ? 'Приход сырья' : 'Xomashyo Kirimi'}
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                 FSSC 22000

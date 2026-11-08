@@ -25,7 +25,8 @@ import {
   Link as LinkIcon,
   Phone,
   Info,
-  MessageSquare
+  MessageSquare,
+  Settings
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -187,7 +188,7 @@ export default function OrdersContent() {
       expectedDate: tomorrowStr,
       timeRange: '09:00 - 12:00',
       price: '',
-      notes: `${formatDual("Sklad real qoldig'i", "Реальный остаток", "Real stock")}: ${item.totalQuantity} ${item.unit}. ${formatDual("Minimal norma", "Мин. норма", "Min norm")}: ${item.minStockLevel} ${item.unit}`
+      notes: `${formatDual("Ombor real qoldig'i", "Реальный остаток", "Real stock")}: ${item.totalQuantity} ${item.unit}. ${formatDual("Minimal norma", "Мин. норма", "Min norm")}: ${item.minStockLevel} ${item.unit}`
     })
     setShowOrderModal(true)
   }
@@ -235,10 +236,10 @@ export default function OrdersContent() {
       deliveredQuantity: arr.quantity.toString(),
       acceptedQuantity: arr.quantity.toString(),
       rejectedQuantity: '0',
-      notes: `${formatDual("Prixoddan olindi", "Сверено с приходом", "Synced from arrival")}: Partiya ${arr.batch || arr.id} (${arr.date}) - ${arr.supplier || "Ta'minotchi"}`,
+      notes: `${formatDual("Kirimdan olindi", "Сверено с приходом", "Synced from arrival")}: Partiya ${arr.batch || arr.id} (${arr.date}) - ${arr.supplier || "Ta'minotchi"}`,
       arrivalBatch: arr.batch || `PRX-${arr.id}`
     }))
-    toast.success(formatDual("Prixod ma'lumotlari kiritildi!", "Данные прихода подставлены!", "Arrival data applied!"))
+    toast.success(formatDual("Kirim ma'lumotlari kiritildi!", "Данные прихода подставлены!", "Arrival data applied!"))
   }
 
   // Submit New Order
@@ -414,34 +415,42 @@ export default function OrdersContent() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-enter">
       {/* Header Banner - Dual theme adaptive */}
-      <div className="relative overflow-hidden bg-white dark:bg-dark-900 p-5 sm:p-7 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+      <div className="relative overflow-hidden bg-white dark:bg-dark-900 p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-            <span className="px-3 py-1 text-xs font-bold rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/25">
-              {formatDual("Ta'minot & Sklad Zanjiri", "Цепочка поставок и склад", "Supply & Warehouse Chain")}
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+              {formatDual("Ta'minot & Ombor Zanjiri", "Цепочка поставок и склад", "Supply & Warehouse Chain")}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <Sparkles size={13} className="text-amber-500" />
-              {formatDual("Haqiqiy Prixod & Qoldiq Balansi", "Реальный приход & остатки", "Real Inflow & Balance")}
+              <Sparkles size={13} className="text-slate-400" />
+              {formatDual("Haqiqiy Kirim & Qoldiq Balansi", "Реальный приход & остатки", "Real Inflow & Balance")}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <Truck className="text-blue-600 dark:text-blue-400" size={28} />
-            <span>{formatDual("Ta'minot va Buyurtmalar Markazi (Snabjenets)", "Центр снабжения и заказов (Снабженец)", "Supply & Purchase Orders Center")}</span>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <Truck className="text-slate-700 dark:text-slate-300" size={26} />
+            <span>{formatDual("Ta'minot va Buyurtmalar Markazi", "Центр снабжения и заказов", "Supply & Purchase Orders Center")}</span>
           </h1>
         </div>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-3">
+        <div className="relative z-10 flex flex-wrap items-center gap-2.5">
+          <Link
+            href="/settings?tab=supply"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 transition-all font-semibold text-xs sm:text-sm active:scale-95 shadow-xs"
+            title={formatDual("Ta'minot xodimi ma'lumotlari va elektron imzosi", "Настройки сотрудника снабжения и подпись", "Supply Staff Profile & Signature")}
+          >
+            <Settings size={16} className="text-slate-400" />
+            <span>{formatDual("Sozlamalar & Imzo", "Настройки & Подпись", "Settings & Signature")}</span>
+          </Link>
+
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="p-3 rounded-2xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 transition-all shadow-xs active:scale-95"
+            className="p-2.5 rounded-2xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 transition-all shadow-xs active:scale-95"
             title={formatDual("Yangilash", "Обновить", "Refresh")}
           >
-            <RefreshCw size={18} className={refreshing ? 'animate-spin text-blue-500' : ''} />
+            <RefreshCw size={17} className={refreshing ? 'animate-spin text-blue-500' : ''} />
           </button>
+
           <button
             onClick={() => {
               const tomorrow = new Date()
@@ -459,123 +468,147 @@ export default function OrdersContent() {
               })
               setShowOrderModal(true)
             }}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/25 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all active:scale-95"
           >
-            <Plus size={18} />
-            <span>{formatDual("+ Yangi Buyurtma (Sklad Talabnomasi)", "+ Новая заявка (Со склада)", "+ New Order (Warehouse Requisition)")}</span>
+            <Plus size={17} />
+            <span>{formatDual("+ Yangi Xarid Buyurtmasi", "+ Новый заказ закупа", "+ New Purchase Order")}</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Cards: 7 Key Indicators */}
+      {/* KPI Cards: 7 Key Indicators - Refined Professional Corporate Palette */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-        {/* 1. Out of stock (Red) */}
+        {/* 1. Out of stock */}
         <div 
           onClick={() => { setActiveTab('inventory'); setStockFilter('RED'); }}
-          className={`p-4 rounded-2xl cursor-pointer transition-all border-l-4 border-l-red-500 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-xs hover:shadow-md ${stockFilter === 'RED' && activeTab === 'inventory' ? 'ring-2 ring-red-500/50 bg-red-50/60 dark:bg-red-500/10' : 'hover:bg-slate-50 dark:hover:bg-dark-800/80'}`}
+          className={`p-4 rounded-2xl cursor-pointer transition-all bg-white dark:bg-dark-900 border shadow-xs ${
+            stockFilter === 'RED' && activeTab === 'inventory'
+              ? 'border-slate-400 dark:border-slate-500 ring-1 ring-slate-400/50 bg-slate-50 dark:bg-dark-850'
+              : 'border-slate-200 dark:border-dark-750 hover:border-slate-300 dark:hover:border-dark-700'
+          }`}
         >
-          <div className="flex items-center justify-between text-red-600 dark:text-red-400 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider">{formatDual("Tugagan", "Закончилось", "Out of Stock")}</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{formatDual("Tugagan", "Закончилось", "Out of Stock")}</span>
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.outOfStockCount || 0}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{formatDual("0 yoki kritik", "0 или критично", "0 or critical")}</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDual("0 yoki kritik", "0 или критично", "0 or critical")}</div>
         </div>
 
-        {/* 2. Low stock (Yellow) */}
+        {/* 2. Low stock */}
         <div 
           onClick={() => { setActiveTab('inventory'); setStockFilter('YELLOW'); }}
-          className={`p-4 rounded-2xl cursor-pointer transition-all border-l-4 border-l-amber-500 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-xs hover:shadow-md ${stockFilter === 'YELLOW' && activeTab === 'inventory' ? 'ring-2 ring-amber-500/50 bg-amber-50/60 dark:bg-amber-500/10' : 'hover:bg-slate-50 dark:hover:bg-dark-800/80'}`}
+          className={`p-4 rounded-2xl cursor-pointer transition-all bg-white dark:bg-dark-900 border shadow-xs ${
+            stockFilter === 'YELLOW' && activeTab === 'inventory'
+              ? 'border-slate-400 dark:border-slate-500 ring-1 ring-slate-400/50 bg-slate-50 dark:bg-dark-850'
+              : 'border-slate-200 dark:border-dark-750 hover:border-slate-300 dark:hover:border-dark-700'
+          }`}
         >
-          <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider">{formatDual("Kamaygan", "Мало", "Low Stock")}</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{formatDual("Kamaygan", "Мало", "Low Stock")}</span>
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.lowStockCount || 0}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">&lt; {formatDual("Me'yor", "Норма", "Norm")}</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">&lt; {formatDual("Me'yor", "Норма", "Norm")}</div>
         </div>
 
-        {/* 3. Sufficient (Green) */}
+        {/* 3. Sufficient */}
         <div 
           onClick={() => { setActiveTab('inventory'); setStockFilter('GREEN'); }}
-          className={`p-4 rounded-2xl cursor-pointer transition-all border-l-4 border-l-emerald-500 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-xs hover:shadow-md ${stockFilter === 'GREEN' && activeTab === 'inventory' ? 'ring-2 ring-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-500/10' : 'hover:bg-slate-50 dark:hover:bg-dark-800/80'}`}
+          className={`p-4 rounded-2xl cursor-pointer transition-all bg-white dark:bg-dark-900 border shadow-xs ${
+            stockFilter === 'GREEN' && activeTab === 'inventory'
+              ? 'border-slate-400 dark:border-slate-500 ring-1 ring-slate-400/50 bg-slate-50 dark:bg-dark-850'
+              : 'border-slate-200 dark:border-dark-750 hover:border-slate-300 dark:hover:border-dark-700'
+          }`}
         >
-          <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider">{formatDual("Yetarli", "В норме", "Sufficient")}</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{formatDual("Yetarli", "В норме", "Sufficient")}</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.sufficientCount || 0}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">&gt;= {formatDual("Yetarli zaxira", "Достаточно", "In stock")}</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">&gt;= {formatDual("Yetarli zaxira", "Достаточно", "In stock")}</div>
         </div>
 
         {/* 4. Order Needed */}
         <div 
           onClick={() => { setActiveTab('inventory'); setStockFilter('RED'); }}
-          className="p-4 rounded-2xl cursor-pointer bg-white dark:bg-dark-900 hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-all border-l-4 border-l-blue-500 border border-slate-200 dark:border-dark-750 shadow-xs hover:shadow-md"
+          className="p-4 rounded-2xl cursor-pointer transition-all bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-xs hover:border-slate-300 dark:hover:border-dark-700"
         >
-          <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider">{formatDual("Ehtiyoj", "Потребность", "Needed")}</span>
-            <ShoppingCart size={14} />
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{formatDual("Ehtiyoj", "Потребность", "Needed")}</span>
+            <ShoppingCart size={14} className="text-slate-400" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.orderNeededCount || 0}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{formatDual("Buyurtma kerak", "Нужен заказ", "Order needed")}</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDual("Buyurtma kerak", "Нужен заказ", "Order needed")}</div>
         </div>
 
         {/* 5. Pending orders */}
         <div 
           onClick={() => { setActiveTab('orders'); setOrderFilter('PENDING'); }}
-          className={`p-4 rounded-2xl cursor-pointer transition-all border-l-4 border-l-indigo-500 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-xs hover:shadow-md ${orderFilter === 'PENDING' && activeTab === 'orders' ? 'ring-2 ring-indigo-500/50 bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-slate-50 dark:hover:bg-dark-800/80'}`}
+          className={`p-4 rounded-2xl cursor-pointer transition-all bg-white dark:bg-dark-900 border shadow-xs ${
+            orderFilter === 'PENDING' && activeTab === 'orders'
+              ? 'border-slate-400 dark:border-slate-500 ring-1 ring-slate-400/50 bg-slate-50 dark:bg-dark-850'
+              : 'border-slate-200 dark:border-dark-750 hover:border-slate-300 dark:hover:border-dark-700'
+          }`}
         >
-          <div className="flex items-center justify-between text-indigo-600 dark:text-indigo-400 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider">{formatDual("Kutilmoqda", "Ожидается", "Pending")}</span>
-            <Clock size={14} />
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{formatDual("Kutilmoqda", "Ожидается", "Pending")}</span>
+            <Clock size={14} className="text-slate-400" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.pendingOrdersCount || 0}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{formatDual("Faol zayavka", "Активный заказ", "Active orders")}</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDual("Faol buyurtma", "Активный заказ", "Active orders")}</div>
         </div>
 
         {/* 6. Today deliveries */}
         <div 
           onClick={() => { setActiveTab('orders'); setOrderFilter('TODAY'); }}
-          className={`p-4 rounded-2xl cursor-pointer transition-all border-l-4 border-l-cyan-500 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-xs hover:shadow-md ${orderFilter === 'TODAY' && activeTab === 'orders' ? 'ring-2 ring-cyan-500/50 bg-cyan-50/60 dark:bg-cyan-500/10' : 'hover:bg-slate-50 dark:hover:bg-dark-800/80'}`}
+          className={`p-4 rounded-2xl cursor-pointer transition-all bg-white dark:bg-dark-900 border shadow-xs ${
+            orderFilter === 'TODAY' && activeTab === 'orders'
+              ? 'border-slate-400 dark:border-slate-500 ring-1 ring-slate-400/50 bg-slate-50 dark:bg-dark-850'
+              : 'border-slate-200 dark:border-dark-750 hover:border-slate-300 dark:hover:border-dark-700'
+          }`}
         >
-          <div className="flex items-center justify-between text-cyan-600 dark:text-cyan-400 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider">{formatDual("Bugun", "Сегодня", "Today")}</span>
-            <Truck size={14} />
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{formatDual("Bugun", "Сегодня", "Today")}</span>
+            <Truck size={14} className="text-slate-400" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.todayDeliveriesCount || 0}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{formatDual("Kelishi kerak", "Ожидается привоз", "Expected today")}</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDual("Kelishi kerak", "Ожидается привоз", "Expected today")}</div>
         </div>
 
         {/* 7. Delayed orders */}
         <div 
           onClick={() => { setActiveTab('orders'); setOrderFilter('DELAYED'); }}
-          className={`p-4 rounded-2xl cursor-pointer transition-all border-l-4 border-l-rose-600 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-xs hover:shadow-md ${orderFilter === 'DELAYED' && activeTab === 'orders' ? 'ring-2 ring-rose-600/50 bg-rose-50/60 dark:bg-rose-600/10' : 'hover:bg-slate-50 dark:hover:bg-dark-800/80'}`}
+          className={`p-4 rounded-2xl cursor-pointer transition-all bg-white dark:bg-dark-900 border shadow-xs ${
+            orderFilter === 'DELAYED' && activeTab === 'orders'
+              ? 'border-slate-400 dark:border-slate-500 ring-1 ring-slate-400/50 bg-slate-50 dark:bg-dark-850'
+              : 'border-slate-200 dark:border-dark-750 hover:border-slate-300 dark:hover:border-dark-700'
+          }`}
         >
-          <div className="flex items-center justify-between text-rose-600 dark:text-rose-400 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider">{formatDual("Kechikkan", "Просрочено", "Delayed")}</span>
-            <AlertTriangle size={14} />
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{formatDual("Kechikkan", "Просрочено", "Delayed")}</span>
+            <AlertTriangle size={14} className="text-amber-500" />
           </div>
-          <div className="text-2xl font-black text-rose-600 dark:text-rose-400">{metrics.delayedOrdersCount || 0}</div>
-          <div className="text-[11px] text-rose-500 mt-0.5">{formatDual("Yetkazilmadi", "Не доставлено", "Not delivered")}</div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{metrics.delayedOrdersCount || 0}</div>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDual("Yetkazilmadi", "Не доставлено", "Not delivered")}</div>
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-dark-700/80 pb-3">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-100 dark:bg-dark-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-700/80 shadow-xs">
+      {/* Tabs Navigation - Restrained Modern Look */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-dark-750 pb-3">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-100 dark:bg-dark-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-700/80 shadow-xs">
           <button
             onClick={() => setActiveTab('inventory')}
-            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
               activeTab === 'inventory'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-black'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-dark-700'
+                ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
             }`}
           >
-            <Package size={16} />
-            <span>{formatDual("Sklad Qoldiqlari & Xarid Signallari", "Остатки на складе & Сигналы закупа", "Stock & Reorder Signals")}</span>
+            <Package size={15} />
+            <span>{formatDual("Ombor Qoldiqlari & Xarid Signallari", "Остатки на складе & Сигналы закупа", "Stock & Reorder Signals")}</span>
             {metrics.orderNeededCount > 0 && (
-              <span className="px-2 py-0.5 text-[11px] bg-red-500 text-white rounded-full font-bold animate-pulse">
+              <span className="px-2 py-0.5 text-[11px] bg-slate-700 dark:bg-dark-600 text-slate-200 rounded-full font-bold">
                 {metrics.orderNeededCount}
               </span>
             )}
@@ -583,48 +616,29 @@ export default function OrdersContent() {
 
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
               activeTab === 'orders'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-black'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-dark-700'
+                ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
             }`}
           >
-            <Truck size={16} />
-            <span>{formatDual("Xarid Zayavkalari & Prixod Solishtiruv", "Заказы закупа & Сверка с приходом", "Orders & Arrival Reconciliation")}</span>
-            <span className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
-              activeTab === 'orders' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-300'
-            }`}>
+            <Truck size={15} />
+            <span>{formatDual("Xarid Buyurtmalari & Kirim Solishtiruvi", "Заказы закупа & Сверка с приходом", "Orders & Arrival Reconciliation")}</span>
+            <span className="px-2 py-0.5 text-[11px] rounded-full font-bold bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-300">
               {orders.length}
             </span>
           </button>
-
-          <button
-            onClick={() => setActiveTab('debts')}
-            className="hidden"
-          >
-            <DollarSign size={16} />
-            <span>Ta&apos;minotchi qarzdorligi</span>
-            <span>{formatDual("Ta'minotchi Qarzdorligi (Buxgalteriya)", "Долги поставщикам (Бухгалтерия)", "Supplier Debts (Accounting)")}</span>
-          </button>
-
-          <a
-            href="/chat"
-            className="hidden"
-          >
-            <MessageSquare size={16} />
-            <span>{formatDual("Ta'minotchilar Bilan Chat", "Чат с поставщиками", "Chat with Suppliers")}</span>
-          </a>
         </div>
 
-        {/* Shortages Requisition Link */}
+        {/* Shortages Requisition Link - Subdued Subtle Accent */}
         <Link
           href="/supply/shortages"
-          className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-md shadow-amber-500/20 transition-all ml-auto"
+          className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-bold text-xs sm:text-sm transition-all ml-auto"
         >
-          <AlertTriangle size={16} />
+          <AlertTriangle size={15} />
           <span>{formatDual("Ombordan Qolmaganlar (Talabnomalar)", "Заявки со склада (Дефицит)", "Warehouse Shortages")}</span>
           {metrics.outOfStockCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-slate-950 text-amber-400 text-[10px] font-black">
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold">
               {metrics.outOfStockCount}
             </span>
           )}
@@ -652,7 +666,7 @@ export default function OrdersContent() {
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
               <button
                 onClick={() => setCategoryFilter('ALL')}
-                className={`px-3 py-1.5 text-xs rounded-xl font-bold whitespace-nowrap transition-all ${
+                className={`px-3 py-1.5 text-xs rounded-xl font-semibold whitespace-nowrap transition-all ${
                   categoryFilter === 'ALL' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
               >
@@ -660,27 +674,27 @@ export default function OrdersContent() {
               </button>
               <button
                 onClick={() => setCategoryFilter('RAW_MATERIAL')}
-                className={`px-3 py-1.5 text-xs rounded-xl font-bold whitespace-nowrap transition-all ${
-                  categoryFilter === 'RAW_MATERIAL' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
+                className={`px-3 py-1.5 text-xs rounded-xl font-semibold whitespace-nowrap transition-all ${
+                  categoryFilter === 'RAW_MATERIAL' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
               >
-                🥬 {formatDual("Xomashyo", "Сырьё", "Raw Materials")}
+                {formatDual("Xomashyo", "Сырьё", "Raw Materials")}
               </button>
               <button
                 onClick={() => setCategoryFilter('PACKAGING')}
-                className={`px-3 py-1.5 text-xs rounded-xl font-bold whitespace-nowrap transition-all ${
-                  categoryFilter === 'PACKAGING' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
+                className={`px-3 py-1.5 text-xs rounded-xl font-semibold whitespace-nowrap transition-all ${
+                  categoryFilter === 'PACKAGING' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
               >
-                📦 {formatDual("Qadoqlash", "Упаковка", "Packaging")}
+                {formatDual("Qadoqlash", "Упаковка", "Packaging")}
               </button>
               <button
                 onClick={() => setCategoryFilter('CHEMICALS')}
-                className={`px-3 py-1.5 text-xs rounded-xl font-bold whitespace-nowrap transition-all ${
-                  categoryFilter === 'CHEMICALS' ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
+                className={`px-3 py-1.5 text-xs rounded-xl font-semibold whitespace-nowrap transition-all ${
+                  categoryFilter === 'CHEMICALS' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
               >
-                🧪 {formatDual("Kimyo", "Химия", "Chemicals")}
+                {formatDual("Kimyo", "Химия", "Chemicals")}
               </button>
             </div>
 
@@ -688,35 +702,38 @@ export default function OrdersContent() {
             <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 shrink-0">
               <button
                 onClick={() => setStockFilter('ALL')}
-                className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
-                  stockFilter === 'ALL' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                className={`px-3 py-1 text-xs rounded-lg font-semibold transition-all ${
+                  stockFilter === 'ALL' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {formatDual("Barchasi", "Все", "All")}
               </button>
               <button
                 onClick={() => setStockFilter('RED')}
-                className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
-                  stockFilter === 'RED' ? 'bg-red-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                className={`px-3 py-1 text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
+                  stockFilter === 'RED' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                🔴 {formatDual("Tugagan", "Критично", "Out")}
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>{formatDual("Tugagan", "Критично", "Out")}</span>
               </button>
               <button
                 onClick={() => setStockFilter('YELLOW')}
-                className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
-                  stockFilter === 'YELLOW' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                className={`px-3 py-1 text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
+                  stockFilter === 'YELLOW' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                🟡 {formatDual("Kam", "Мало", "Low")}
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span>{formatDual("Kam", "Мало", "Low")}</span>
               </button>
               <button
                 onClick={() => setStockFilter('GREEN')}
-                className={`px-3 py-1 text-xs rounded-lg font-bold transition-all ${
-                  stockFilter === 'GREEN' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                className={`px-3 py-1 text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
+                  stockFilter === 'GREEN' ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                🟢 {formatDual("Yetarli", "В норме", "Norm")}
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>{formatDual("Yetarli", "В норме", "Norm")}</span>
               </button>
             </div>
           </div>
@@ -725,7 +742,7 @@ export default function OrdersContent() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400 bg-white dark:bg-dark-900/60 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs">
               <Loader2 className="animate-spin text-blue-500 mb-3" size={32} />
-              <p className="font-semibold text-sm">{formatDual("Sklad real qoldiqlari tahlil qilinmoqda...", "Анализ реальных остатков на складе...", "Analyzing real stock balances...")}</p>
+              <p className="font-semibold text-sm">{formatDual("Ombor real qoldiqlari tahlil qilinmoqda...", "Анализ реальных остатков на складе...", "Analyzing real stock balances...")}</p>
             </div>
           ) : filteredInventory.length === 0 ? (
             <div className="text-center py-16 text-slate-500 bg-white dark:bg-dark-900/60 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs">
@@ -767,19 +784,19 @@ export default function OrdersContent() {
                         {/* Status Badge */}
                         <div>
                           {item.status === 'red' && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/25">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               {formatDual("Tugagan", "Критично", "Out")}
                             </span>
                           )}
                           {item.status === 'yellow' && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                               {formatDual("Kamaygan", "Мало", "Low")}
                             </span>
                           )}
                           {item.status === 'green' && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               {formatDual("Yetarli", "В норме", "Norm")}
                             </span>
@@ -790,7 +807,7 @@ export default function OrdersContent() {
                       {/* Stock metrics */}
                       <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-dark-800/80 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700/60 text-xs">
                         <div>
-                          <span className="text-slate-500 dark:text-slate-400 text-[10px] block">{formatDual("Sklad Qoldig'i:", "Остаток на складе:", "Warehouse stock:")}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-[10px] block">{formatDual("Ombor Qoldig'i:", "Остаток на складе:", "Warehouse stock:")}</span>
                           <span className="text-base font-extrabold text-slate-900 dark:text-white font-mono">
                             {item.totalQuantity.toLocaleString()} {item.unit}
                           </span>
@@ -842,7 +859,7 @@ export default function OrdersContent() {
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/25 transition-all active:scale-95"
                         >
                           <ShoppingCart size={13} />
-                          <span>{formatDual("Zayavka", "Заказать", "Order")}</span>
+                          <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
                         </button>
                       </div>
                     </div>
@@ -858,7 +875,7 @@ export default function OrdersContent() {
                       <tr className="bg-slate-50 dark:bg-dark-800/90 border-b border-slate-200 dark:border-dark-750 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                         <th className="py-4 px-4">{formatDual("Mahsulot / Xomashyo", "Товар / Сырье", "Product")}</th>
                         <th className="py-4 px-4">{formatDual("Kategoriya", "Категория", "Category")}</th>
-                        <th className="py-4 px-4 text-center">{formatDual("Sklad Qoldig'i", "Остаток на складе", "Warehouse Stock")}</th>
+                        <th className="py-4 px-4 text-center">{formatDual("Ombor Qoldig'i", "Остаток на складе", "Warehouse Stock")}</th>
                         <th className="py-4 px-4 text-center">{formatDual("Minimal Norma", "Мин. остаток", "Min Stock")}</th>
                         <th className="py-4 px-4 text-center">{formatDual("Holat (Svetofor)", "Статус", "Status")}</th>
                         <th className="py-4 px-4 text-center">{formatDual("Xarid Ehtiyoji", "Потребность закупа", "Needed")}</th>
@@ -870,10 +887,10 @@ export default function OrdersContent() {
                       {inventoryPagination.displayedItems.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-dark-800/40 transition-colors">
                           <td className="py-4 px-4 font-semibold text-slate-900 dark:text-white">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <div className={`w-3 h-3 rounded-full shrink-0 ${
-                                item.status === 'red' ? 'bg-red-500 animate-pulse shadow-md shadow-red-500/50' :
-                                item.status === 'yellow' ? 'bg-amber-500 shadow-xs shadow-amber-500/30' : 'bg-emerald-500'
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                item.status === 'red' ? 'bg-rose-500' :
+                                item.status === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'
                               }`} />
                               <div>
                                 <span className="font-bold text-slate-900 dark:text-white block">{item.name}</span>
@@ -893,40 +910,36 @@ export default function OrdersContent() {
                           </td>
 
                           <td className="py-4 px-4 text-center font-mono font-bold text-slate-900 dark:text-white">
-                            <span className={`px-3 py-1 rounded-xl text-sm ${
-                              item.totalQuantity === 0 ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 font-black' :
-                              item.status === 'yellow' ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30' :
-                              'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
-                            }`}>
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-800 dark:text-slate-200">
                               {item.totalQuantity.toLocaleString()} {item.unit}
                             </span>
                           </td>
 
-                          <td className="py-4 px-4 text-center font-mono text-slate-600 dark:text-slate-300 text-xs font-semibold">
+                          <td className="py-4 px-4 text-center font-mono text-slate-600 dark:text-slate-400 text-xs font-semibold">
                             {item.minStockLevel > 0 ? `${item.minStockLevel.toLocaleString()} ${item.unit}` : '-'}
                           </td>
 
                           <td className="py-4 px-4 text-center">
                             {item.status === 'red' && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30">
-                                <span className="w-2 h-2 rounded-full bg-red-500" /> {formatDual("Tugagan", "Критично", "Out")}
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> {formatDual("Tugagan", "Критично", "Out")}
                               </span>
                             )}
                             {item.status === 'yellow' && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
-                                <span className="w-2 h-2 rounded-full bg-amber-500" /> {formatDual("Kamaygan", "Мало", "Low")}
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {formatDual("Kamaygan", "Мало", "Low")}
                               </span>
                             )}
                             {item.status === 'green' && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500" /> {formatDual("Yetarli", "В норме", "Norm")}
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {formatDual("Yetarli", "В норме", "Norm")}
                               </span>
                             )}
                           </td>
 
                           <td className="py-4 px-4 text-center font-mono font-bold">
                             {item.neededQuantity > 0 ? (
-                              <span className="text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 px-2.5 py-1 rounded-lg text-xs font-bold">
+                              <span className="text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1 rounded-lg text-xs font-mono font-bold">
                                 +{item.neededQuantity.toLocaleString()} {item.unit}
                               </span>
                             ) : (
@@ -937,7 +950,7 @@ export default function OrdersContent() {
                           <td className="py-4 px-4 text-xs text-slate-700 dark:text-slate-300">
                             {item.primarySupplier ? (
                               <div className="flex items-center gap-1.5 truncate max-w-[180px] font-medium">
-                                <Building2 size={13} className="text-blue-500 shrink-0" />
+                                <Building2 size={13} className="text-slate-400 shrink-0" />
                                 <span className="truncate">{item.primarySupplier}</span>
                               </div>
                             ) : (
@@ -948,16 +961,10 @@ export default function OrdersContent() {
                           <td className="py-4 px-4 text-right">
                             <button
                               onClick={() => handleQuickOrder(item)}
-                              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 ${
-                                item.status === 'red'
-                                  ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/25'
-                                  : item.status === 'yellow'
-                                  ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/25'
-                                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25'
-                              }`}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition-all active:scale-95"
                             >
                               <ShoppingCart size={14} />
-                              <span>{formatDual("Zayavka Berish", "Заказать", "Order")}</span>
+                              <span>{formatDual("Buyurtma Berish", "Заказать", "Order")}</span>
                             </button>
                           </td>
                         </tr>
@@ -984,7 +991,7 @@ export default function OrdersContent() {
         </div>
       )}
       {/* ========================================================================= */}
-      {/* TAB 2: Xarid Zayavkalari & Prixod Solishtiruv (Reconciliation) */}
+      {/* TAB 2: Xarid Buyurtmalari & Kirim Solishtiruvi (Reconciliation) */}
       {/* ========================================================================= */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
@@ -994,7 +1001,7 @@ export default function OrdersContent() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
-                placeholder={formatDual("Mahsulot, ta'minotchi yoki zayavka ID bo'yicha qidirish...", "Поиск по товару, поставщику или номеру заказа...", "Search by product, supplier or order ID...")}
+                placeholder={formatDual("Mahsulot, ta'minotchi yoki buyurtma ID bo'yicha qidirish...", "Поиск по товару, поставщику или номеру заказа...", "Search by product, supplier or order ID...")}
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
@@ -1059,12 +1066,12 @@ export default function OrdersContent() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400 bg-white dark:bg-dark-900/60 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs">
               <Loader2 className="animate-spin text-blue-500 mb-3" size={32} />
-              <p className="font-semibold text-sm">{formatDual("Xarid zayavkalari yuklanmoqda...", "Загрузка заказов...", "Loading orders...")}</p>
+              <p className="font-semibold text-sm">{formatDual("Xarid buyurtmalari yuklanmoqda...", "Загрузка заказов...", "Loading orders...")}</p>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-16 text-slate-500 bg-white dark:bg-dark-900/60 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs">
               <Truck size={40} className="mx-auto mb-3 text-slate-400 dark:text-slate-600" />
-              <p className="font-semibold">{formatDual("Hech qanday zayavka topilmadi", "Заказов не найдено", "No orders found")}</p>
+              <p className="font-semibold">{formatDual("Hech qanday buyurtma topilmadi", "Заказов не найдено", "No orders found")}</p>
             </div>
           ) : (
             <>
@@ -1179,7 +1186,7 @@ export default function OrdersContent() {
                           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/25 transition-all"
                         >
                           <FileCheck2 size={14} />
-                          <span>{formatDual("Solishtirish (Prixod)", "Сверить с приходом", "Reconcile")}</span>
+                          <span>{formatDual("Kirim bilan solishtirish", "Сверить с приходом", "Reconcile")}</span>
                         </button>
                         {order.status === 'PENDING' && (
                           <button
@@ -1202,7 +1209,7 @@ export default function OrdersContent() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 dark:bg-dark-800/90 border-b border-slate-200 dark:border-dark-750 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                        <th className="py-4 px-4">{formatDual("Zayavka & Kelish Sanasi", "Заказ & Дата", "Order & Date")}</th>
+                        <th className="py-4 px-4">{formatDual("Buyurtma & Kelish Sanasi", "Заказ & Дата", "Order & Date")}</th>
                         <th className="py-4 px-4">{formatDual("Mahsulot", "Товар / Сырье", "Product")}</th>
                         <th className="py-4 px-4">{formatDual("Yetkazib Beruvchi", "Поставщик", "Supplier")}</th>
                         <th className="py-4 px-4 text-center">{formatDual("Buyurtma", "Заказ", "Ordered")}</th>
@@ -1418,7 +1425,7 @@ export default function OrdersContent() {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                    {formatDual("Yangi Xomashyo Buyurtmasi (Sklad Talabnomasi)", "Новая заявка на сырье (Со склада)", "New Material Requisition")}
+                    {formatDual("Yangi Xomashyo Buyurtmasi (Ombor Talabnomasi)", "Новая заявка на сырье (Со склада)", "New Material Requisition")}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual("Ta'minot bo'limiga buyurtma yuborish. Ta'minotchi va narxni Ta'minot bo'limi belgilaydi.", "Заявка в отдел снабжения. Поставщика и цену определяет снабжение.", "Order sent to Supply Department. Supply assigns supplier and price.")}
@@ -1526,10 +1533,10 @@ export default function OrdersContent() {
                 </div>
               </div>
 
-              {/* Skladchi Izohi */}
+              {/* Omborchi Izohi */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  {formatDual("Skladchi Izohi (Ta'minot Bo'limiga)", "Примечание склада (Для снабжения)", "Warehouse Note (For Supply)")}
+                  {formatDual("Omborchi Izohi (Ta'minot Bo'limiga)", "Примечание склада (Для снабжения)", "Warehouse Note (For Supply)")}
                 </label>
                 <textarea
                   rows={3}
@@ -1567,7 +1574,7 @@ export default function OrdersContent() {
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/30 transition-all disabled:opacity-50"
                 >
                   {savingOrder && <Loader2 size={16} className="animate-spin" />}
-                  <span>{formatDual("Zayavkani Tasdiqlash", "Подтвердить заказ", "Confirm Order")}</span>
+                  <span>{formatDual("Buyurtmani Tasdiqlash", "Подтвердить заказ", "Confirm Order")}</span>
                 </button>
               </div>
             </form>
@@ -1594,9 +1601,9 @@ export default function OrdersContent() {
                   <FileCheck2 size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">{formatDual("Xarid Zayavkasi & Prixodni Solishtirish", "Сверка заказа и фактического прихода", "Reconcile Order & Arrival")}</h3>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">{formatDual("Xarid Buyurtmasi & Kirimni Solishtirish", "Сверка заказа и фактического прихода", "Reconcile Order & Arrival")}</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {formatDual("Zayavka", "Заказ", "Order")} #{selectedOrder.id} • <span className="font-bold text-slate-700 dark:text-slate-200">{selectedOrder.productName}</span>
+                    {formatDual("Buyurtma", "Заказ", "Order")} #{selectedOrder.id} • <span className="font-bold text-slate-700 dark:text-slate-200">{selectedOrder.productName}</span>
                   </p>
                 </div>
               </div>
@@ -1625,12 +1632,12 @@ export default function OrdersContent() {
                 </div>
               </div>
 
-              {/* Matched ShopArrival Suggestions (Avtomatik Topilgan Prixodlar) */}
+              {/* Matched ShopArrival Suggestions (Avtomatik Topilgan Kirimlar) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles size={13} className="text-amber-500" />
-                    {formatDual("Tizimda Topilgan Mos Prixodlar (ShopArrival)", "Совпадающие приходы на складе", "Matched Arrivals on Stock")}
+                    {formatDual("Tizimda Topilgan Mos Kirimlar (ShopArrival)", "Совпадающие приходы на складе", "Matched Arrivals on Stock")}
                   </span>
                   {loadingMatchedArrivals && <Loader2 size={13} className="animate-spin text-blue-500" />}
                 </div>
@@ -1664,7 +1671,7 @@ export default function OrdersContent() {
                   </div>
                 ) : (
                   <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-dark-800/40 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700/50 italic">
-                    {formatDual("Aynan mos keluvchi oxirgi prixod topilmadi. Quyida qo'lda kiriting.", "Автоматических приходов не найдено. Введите вручную ниже.", "No exact arrival found. Enter manually below.")}
+                    {formatDual("Aynan mos keluvchi oxirgi kirim topilmadi. Quyida qo'lda kiriting.", "Автоматических приходов не найдено. Введите вручную ниже.", "No exact arrival found. Enter manually below.")}
                   </div>
                 )}
               </div>
@@ -1733,7 +1740,7 @@ export default function OrdersContent() {
               {/* Status Selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  {formatDual("Zayavka Holati", "Статус заказа", "Order Status")}
+                  {formatDual("Buyurtma Holati", "Статус заказа", "Order Status")}
                 </label>
                 <select
                   value={reconcileForm.status}
@@ -1756,7 +1763,7 @@ export default function OrdersContent() {
                     onChange={(e) => setReconcileForm({ ...reconcileForm, syncArrival: e.target.checked })}
                     className="w-4 h-4 rounded text-blue-600 focus:ring-0 bg-white dark:bg-dark-900 border-slate-300 dark:border-dark-700"
                   />
-                  <span>{formatDual("Ushbu partiyani ombor prixodiga (ShopArrival) avtomatik kiritish", "Автоматически записать в приход склада (ShopArrival)", "Auto-record to Warehouse ShopArrival")}</span>
+                  <span>{formatDual("Ushbu partiyani ombor kirimiga (ShopArrival) avtomatik kiritish", "Автоматически записать в приход склада (ShopArrival)", "Auto-record to Warehouse ShopArrival")}</span>
                 </label>
 
                 {reconcileForm.syncArrival && (

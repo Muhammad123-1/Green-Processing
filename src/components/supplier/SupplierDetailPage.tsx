@@ -279,10 +279,10 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Zayavka yaratib bo\'lmadi')
+        throw new Error(data.error || 'Buyurtma yaratib bo\'lmadi')
       }
 
-      toast.success(formatDual("Yangi xarid zayavkasi yuborildi!", "Заказ успешно отправлен!", "Order created!"))
+      toast.success(formatDual("Yangi xarid buyurtmasi yuborildi!", "Заказ успешно отправлен!", "Order created!"))
       setShowNewOrderModal(false)
       setOrderForm({
         productId: '',
@@ -383,7 +383,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-500/25 transition-all active:scale-95"
           >
             <Plus size={16} />
-            <span>{formatDual("+ Yangi Zayavka Yuborish", "+ Новый заказ", "+ New Purchase Order")}</span>
+            <span>{formatDual("+ Yangi Buyurtma Yuborish", "+ Новый заказ", "+ New Purchase Order")}</span>
           </button>
         </div>
       </div>
@@ -548,7 +548,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
         {/* Total Orders */}
         <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl shadow-xs">
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
-            <span>{formatDual("Jami Zayavkalar", "Всего заказов", "Total Orders")}</span>
+            <span>{formatDual("Jami Buyurtmalar", "Всего заказов", "Total Orders")}</span>
             <Package size={14} className="text-blue-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
@@ -612,7 +612,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
           }`}
         >
           <Package size={16} />
-          <span>{formatDual("1. Xarid Zayavkalari (Buyurtmalar)", "1. Заказы на поставку", "1. Purchase Orders")}</span>
+          <span>{formatDual("1. Xarid Buyurtmalari", "1. Заказы на поставку", "1. Purchase Orders")}</span>
           <span className="px-2 py-0.5 rounded-md bg-white/20 text-xs">{orders.length}</span>
         </button>
 
@@ -625,7 +625,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
           }`}
         >
           <Truck size={16} />
-          <span>{formatDual("2. Zavodga Kirim Tarixi (Prihod)", "2. История приходов на склад", "2. Arrivals History")}</span>
+          <span>{formatDual("2. Zavodga Kirim Tarixi", "2. История приходов на склад", "2. Arrivals History")}</span>
           <span className="px-2 py-0.5 rounded-md bg-white/20 text-xs">{arrivals.length}</span>
         </button>
 
@@ -667,7 +667,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
                 {formatDual("Korxonadan Ushbu Ta'minotchiga Yuborilgan Buyurtmalar", "Заказы отправленные данному поставщику", "Purchase Orders to this Supplier")}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {formatDual("Barcha xarid zayavkalari, muddatlari va qabul aktlari", "Все заказы предприятия, сроки и статус приемки", "All purchase orders, schedules and acceptance")}
+                {formatDual("Barcha xarid buyurtmalari, muddatlari va qabul aktlari", "Все заказы предприятия, сроки и статус приемки", "All purchase orders, schedules and acceptance")}
               </p>
             </div>
             <button
@@ -696,7 +696,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 dark:bg-dark-800/80 border-b border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider">
-                  <th className="py-3.5 px-4">{formatDual("ZAYAVKA №", "ЗАКАЗ №", "ORDER #")}</th>
+                  <th className="py-3.5 px-4">{formatDual("BUYURTMA №", "ЗАКАЗ №", "ORDER #")}</th>
                   <th className="py-3.5 px-4">{formatDual("MAHSULOT / XOMASHYO", "ТОВАР / СЫРЬЕ", "PRODUCT")}</th>
                   <th className="py-3.5 px-4 text-center">{formatDual("BUYURTMA", "ЗАКАЗАНО", "ORDERED")}</th>
                   <th className="py-3.5 px-4 text-center">{formatDual("KELGAN", "ПРИВЕЗЕНО", "DELIVERED")}</th>
@@ -1009,7 +1009,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-3">
               <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                 <Plus size={18} className="text-emerald-500" />
-                <span>{formatDual("Yangi Xarid Zayavkasi", "Новый заказ поставщику", "New Purchase Order")}</span>
+                <span>{formatDual("Yangi Xarid Buyurtmasi", "Новый заказ поставщику", "New Purchase Order")}</span>
               </h3>
               <button
                 onClick={() => setShowNewOrderModal(false)}
@@ -1137,7 +1137,7 @@ export default function SupplierDetailPage({ supplierId, currentUserRole = '' }:
                   className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
                 >
                   {submittingOrder ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  <span>{formatDual("Zayavkani Yuborish", "Отправить заказ", "Send Order")}</span>
+                  <span>{formatDual("Buyurtmani Yuborish", "Отправить заказ", "Send Order")}</span>
                 </button>
               </div>
             </form>

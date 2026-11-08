@@ -241,7 +241,7 @@ export default function ProductsPage() {
           <div className="flex items-center gap-2 mb-1.5">
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
               <Boxes size={14} />
-              {formatDual("Prixod Nomenklaturasi", "Номенклатура прихода", "Inflow Catalog")}
+              {formatDual("Kirim Nomenklaturasi", "Номенклатура прихода", "Inflow Catalog")}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -268,7 +268,7 @@ export default function ProductsPage() {
             {stats.totalCount} ta
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-            {formatDual("Prixodda qayd etilgan", "Зафиксировано в приходе", "Recorded in arrivals")}
+            {formatDual("Kirimda qayd etilgan", "Зафиксировано в приходе", "Recorded in arrivals")}
           </p>
         </div>
 
@@ -370,7 +370,7 @@ export default function ProductsPage() {
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
             <p className="text-sm font-semibold text-slate-300">
-              {formatDual("Prixod nomenklaturasi yuklanmoqda...", "Загрузка номенклатуры прихода...", "Loading products catalog...")}
+              {formatDual("Kirim nomenklaturasi yuklanmoqda...", "Загрузка номенклатуры прихода...", "Loading products catalog...")}
             </p>
           </div>
         ) : filtered.length === 0 ? (
@@ -415,10 +415,10 @@ export default function ProductsPage() {
                     </span>
                   </div>
 
-                  {/* Prixod metrics */}
+                  {/* Kirim metrics */}
                   <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2 rounded-xl border border-dark-700/60 text-center">
                     <div>
-                      <div className="text-[9px] uppercase font-bold text-slate-400">Jami Prixod</div>
+                      <div className="text-[9px] uppercase font-bold text-slate-400">Jami Kirim</div>
                       <div className={`font-black text-xs mt-0.5 ${p.unit === 'dona' ? 'text-amber-400' : 'text-emerald-400'}`}>
                         {p.unit === 'dona'
                           ? `${(p.totalArrivalKg || 0).toLocaleString()} dona`
@@ -474,7 +474,7 @@ export default function ProductsPage() {
                     <th className="py-4 px-5">{formatDual("Kod", "Код", "Code")}</th>
                     <th className="py-4 px-5">{formatDual("Kategoriya", "Категория", "Category")}</th>
                     <th className="py-4 px-5 text-center">{formatDual("Birlik", "Ед. изм.", "Unit")}</th>
-                    <th className="py-4 px-5 text-center">{formatDual("Jami Prixod", "Общий приход", "Total Inflow")}</th>
+                    <th className="py-4 px-5 text-center">{formatDual("Jami Kirim", "Общий приход", "Total Inflow")}</th>
                     <th className="py-4 px-5 text-center">{formatDual("Partiyalar", "Партий", "Batches")}</th>
                     <th className="py-4 px-5 text-center">{formatDual("Harorat Norma", "Норма темп.", "Temp Norm")}</th>
                     <th className="py-4 px-5">{formatDual("GOST / Standart", "ГОСТ", "Standard")}</th>

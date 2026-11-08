@@ -293,7 +293,7 @@ export default function HrContent() {
                     className="w-full bg-dark-800 border border-dark-700 rounded-lg p-2.5 text-white focus:border-orange-500"
                   >
                     <option value="Ishlab chiqarish (Sex)">Ishlab chiqarish (Sex)</option>
-                    <option value="Omborxona (Sklad)">Omborxona (Sklad)</option>
+                    <option value="Omborxona">Omborxona</option>
                     <option value="Sifat nazorati (Lab)">Sifat nazorati (Lab)</option>
                     <option value="Ma'muriyat (Ofis)">Ma'muriyat (Ofis)</option>
                     <option value="Sotuv va Ta'minot">Sotuv va Ta'minot</option>

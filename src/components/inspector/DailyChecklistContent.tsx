@@ -49,86 +49,86 @@ export interface PackagingProductItem {
 export const defaultPackagingItems: PackagingProductItem[] = [
   {
     id: 'lemon',
-    nameUz: 'Лимон',
-    nameSub: 'Лимон / Lemon',
-    packWeight: '1 пакетда 2 dona',
+    nameUz: 'Limon',
+    nameSub: 'Limon / Lemon',
+    packWeight: '1 paketda 2 dona',
     packWeightSub: '2 pcs per pack',
-    packsPerBox: '12 та пакет',
+    packsPerBox: '12 ta paket',
     packsPerBoxSub: '12 packs',
-    boxTotalWeight: '12 пакет (24 dona / box)',
+    boxTotalWeight: '12 paket (24 dona / quti)',
     boxTotalWeightSub: '24 pcs / box',
-    weightTolerance: '2 dona / пакет (100% соғлом)',
-    inspectionFrequency: 'Ҳар 5-пакет',
+    weightTolerance: "2 dona / paket (100% sog'lom)",
+    inspectionFrequency: 'Har 5-paket',
     statusOk: true,
   },
   {
     id: 'cucumber',
-    nameUz: 'Бодринг',
-    nameSub: 'Огурец / Cucumber',
-    packWeight: '1 kg / 1 пакет',
+    nameUz: 'Bodring',
+    nameSub: 'Bodring / Cucumber',
+    packWeight: '1 kg / 1 paket',
     packWeightSub: '1 kg / 1 pack',
-    packsPerBox: '6 та пакет',
+    packsPerBox: '6 ta paket',
     packsPerBoxSub: '6 packs',
-    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeight: '6 kg / 1 quti',
     boxTotalWeightSub: '6 kg / 1 box',
     weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
-    inspectionFrequency: 'Ҳар 5-пакет',
+    inspectionFrequency: 'Har 5-paket',
     statusOk: true,
   },
   {
     id: 'tomato',
-    nameUz: 'Томат',
-    nameSub: 'Томаты / Tomato',
-    packWeight: '1 kg / 1 пакет',
+    nameUz: 'Tomat',
+    nameSub: 'Pomidor / Tomato',
+    packWeight: '1 kg / 1 paket',
     packWeightSub: '1 kg / 1 pack',
-    packsPerBox: '6 та пакет',
+    packsPerBox: '6 ta paket',
     packsPerBoxSub: '6 packs',
-    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeight: '6 kg / 1 quti',
     boxTotalWeightSub: '6 kg / 1 box',
     weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
-    inspectionFrequency: 'Ҳар 5-пакет',
+    inspectionFrequency: 'Har 5-paket',
     statusOk: true,
   },
   {
     id: 'iceberg',
-    nameUz: 'Айсберг',
-    nameSub: 'Айсберг / Iceberg',
-    packWeight: '1 kg / 1 пакет',
+    nameUz: 'Aysberg',
+    nameSub: 'Aysberg / Iceberg',
+    packWeight: '1 kg / 1 paket',
     packWeightSub: '1 kg / 1 pack',
-    packsPerBox: '6 та пакет',
+    packsPerBox: '6 ta paket',
     packsPerBoxSub: '6 packs',
-    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeight: '6 kg / 1 quti',
     boxTotalWeightSub: '6 kg / 1 box',
     weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
-    inspectionFrequency: 'Ҳар 5-пакет',
+    inspectionFrequency: 'Har 5-paket',
     statusOk: true,
   },
   {
     id: 'onion',
-    nameUz: 'Пиёз',
-    nameSub: 'Лук / Onion',
-    packWeight: '0.5 kg / 1 пакет',
+    nameUz: 'Piyoz',
+    nameSub: 'Piyoz / Onion',
+    packWeight: '0.5 kg / 1 paket',
     packWeightSub: '0.5 kg / 1 pack',
-    packsPerBox: '12 та пакет',
+    packsPerBox: '12 ta paket',
     packsPerBoxSub: '12 packs',
-    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeight: '6 kg / 1 quti',
     boxTotalWeightSub: '6 kg / 1 box',
     weightTolerance: '492.5 g - 507.5 g (0.5 kg ± 7.5g)',
-    inspectionFrequency: 'Ҳар 5-пакет',
+    inspectionFrequency: 'Har 5-paket',
     statusOk: true,
   },
   {
     id: 'coleslaw',
-    nameUz: 'Коул Слоу',
-    nameSub: 'Коул Слоу / Cole Slaw',
-    packWeight: '0.5 kg / 1 пакет',
+    nameUz: 'Koul Slou',
+    nameSub: 'Koul Slou / Cole Slaw',
+    packWeight: '0.5 kg / 1 paket',
     packWeightSub: '0.5 kg / 1 pack',
-    packsPerBox: '12 та пакет',
+    packsPerBox: '12 ta paket',
     packsPerBoxSub: '12 packs',
-    boxTotalWeight: '6 kg / 1 коробка',
+    boxTotalWeight: '6 kg / 1 quti',
     boxTotalWeightSub: '6 kg / 1 box',
     weightTolerance: '492.5 g - 507.5 g (0.5 kg ± 7.5g)',
-    inspectionFrequency: 'Ҳар 5-пакет',
+    inspectionFrequency: 'Har 5-paket',
     statusOk: true,
   },
 ]
@@ -632,10 +632,10 @@ export default function DailyChecklistContent() {
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Ensure lemon has "Ҳар 5-пакет" as requested by user
+          // Ensure lemon has "Har 5-paket" as requested by user
           const updated = parsed.map((item: PackagingProductItem) => {
             if (item.id === 'lemon') {
-              return { ...item, inspectionFrequency: 'Ҳар 5-пакет' }
+              return { ...item, inspectionFrequency: 'Har 5-paket' }
             }
             return item
           })
@@ -663,27 +663,27 @@ export default function DailyChecklistContent() {
       id: newId,
       nameUz: '',
       nameSub: '',
-      packWeight: '1 kg / 1 пакет',
+      packWeight: '1 kg / 1 paket',
       packWeightSub: '1 kg / 1 pack',
-      packsPerBox: '6 та пакет',
+      packsPerBox: '6 ta paket',
       packsPerBoxSub: '6 packs',
-      boxTotalWeight: '6 kg / 1 коробка',
+      boxTotalWeight: '6 kg / 1 quti',
       boxTotalWeightSub: '6 kg / 1 box',
       weightTolerance: '990 g - 1010 g (1 kg ± 10g)',
-      inspectionFrequency: 'Ҳар 5-пакет',
+      inspectionFrequency: 'Har 5-paket',
       statusOk: true,
       isCustom: true,
     }
     const next = [...packagingItems, newItem]
     updatePackagingItemsAndSave(next)
-    toast.success(`${newIndex}-маҳсулот қатори қўшилди! Номи ва меъёрларини киритинг.`)
+    toast.success(lang === 'ru' ? `${newIndex}-й продукт добавлен!` : `${newIndex}-mahsulot qatori qo'shildi! Nomi va me'yorlarini kiriting.`)
   }
 
   const handleDeleteProduct = (id: string) => {
-    if (confirm("Ушбу маҳсулотни рўйхатдан ўчиришни тасдиқлайсизми?")) {
+    if (confirm(lang === 'ru' ? "Удалить этот продукт из списка?" : "Ushbu mahsulotni ro'yxatdan o'chirishni tasdiqlaysizmi?")) {
       const next = packagingItems.filter((item) => item.id !== id)
       updatePackagingItemsAndSave(next)
-      toast.info("Маҳсулот рўйхатдан ўчирилди")
+      toast.info(lang === 'ru' ? "Продукт удален" : "Mahsulot ro'yxatdan o'chirildi")
     }
   }
 
@@ -708,9 +708,9 @@ export default function DailyChecklistContent() {
   }
 
   const handleResetPackagingToDefault = () => {
-    if (confirm("Барча қўшимча маҳсулотларни ўчириб, стандарт 6 талик рўйхатни тиклашни хоҳлайсизми?")) {
+    if (confirm("Barcha qo'shimcha mahsulotlarni o'chirib, standart 6 talik ro'yxatni tiklashni xohlaysizmi?")) {
       updatePackagingItemsAndSave(defaultPackagingItems)
-      toast.success("Стандарт 6 талик маҳсулотлар тикланди")
+      toast.success("Standart 6 talik mahsulotlar tiklandi")
     }
   }
 
@@ -757,7 +757,7 @@ export default function DailyChecklistContent() {
       setSupervisor(doc.supervisor || '')
       setInspector(doc.inspector || '')
       setBatchNo(doc.batchNumber || '')
-      setLine(doc.lineName || '1-Линия')
+      setLine(doc.lineName || '1-Liniya')
       setRejected(doc.rejectedKg ? String(doc.rejectedKg) : '')
       setTotalOutput(doc.totalOutputBox ? String(doc.totalOutputBox) : '')
 
@@ -1180,14 +1180,14 @@ export default function DailyChecklistContent() {
                             <div className="space-y-1">
                               <input
                                 type="text"
-                                placeholder="Маҳсулот номи (Мас: Сабзи)"
+                                placeholder="Mahsulot nomi (Mas: Sabzi)"
                                 value={item.nameUz}
                                 onChange={(e) => handleProductFieldChange(item.id, 'nameUz', e.target.value)}
                                 className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
                               />
                               <input
                                 type="text"
-                                placeholder="Таржимаси (Морковь / Carrot)"
+                                placeholder="Tarjimasi (Sabzi / Carrot)"
                                 value={item.nameSub || ''}
                                 onChange={(e) => handleProductFieldChange(item.id, 'nameSub', e.target.value)}
                                 className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded px-2 py-0.5 text-[10px] text-slate-500 outline-none"
@@ -1206,7 +1206,7 @@ export default function DailyChecklistContent() {
                           {isCustom ? (
                             <input
                               type="text"
-                              placeholder="1 kg / 1 пакет"
+                              placeholder="1 kg / 1 paket"
                               value={item.packWeight}
                               onChange={(e) => handleProductFieldChange(item.id, 'packWeight', e.target.value)}
                               className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
@@ -1224,7 +1224,7 @@ export default function DailyChecklistContent() {
                           {isCustom ? (
                             <input
                               type="text"
-                              placeholder="6 та пакет"
+                              placeholder="6 ta paket"
                               value={item.packsPerBox}
                               onChange={(e) => handleProductFieldChange(item.id, 'packsPerBox', e.target.value)}
                               className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
@@ -1242,7 +1242,7 @@ export default function DailyChecklistContent() {
                           {isCustom ? (
                             <input
                               type="text"
-                              placeholder="6 kg / 1 коробка"
+                              placeholder="6 kg / 1 quti"
                               value={item.boxTotalWeight}
                               onChange={(e) => handleProductFieldChange(item.id, 'boxTotalWeight', e.target.value)}
                               className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
@@ -1277,7 +1277,7 @@ export default function DailyChecklistContent() {
                           {isCustom ? (
                             <input
                               type="text"
-                              placeholder="Ҳар 5-пакет"
+                              placeholder="Har 5-paket"
                               value={item.inspectionFrequency}
                               onChange={(e) => handleProductFieldChange(item.id, 'inspectionFrequency', e.target.value)}
                               className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 shadow-sm"
@@ -1285,7 +1285,7 @@ export default function DailyChecklistContent() {
                           ) : (
                             <div>
                               <div className="font-bold text-blue-600 dark:text-blue-400">{item.inspectionFrequency}</div>
-                              <div className="text-[9px] text-slate-400">Каждый 5-пакет / Every 5th pack</div>
+                              <div className="text-[9px] text-slate-400">Har 5-paket / Every 5th pack</div>
                             </div>
                           )}
                         </td>
@@ -1302,14 +1302,14 @@ export default function DailyChecklistContent() {
                                   : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                               }`}
                             >
-                              {item.statusOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                              {item.statusOk ? (lang === 'ru' ? '✓ В норме (OK)' : '✓ Mos (OK)') : (lang === 'ru' ? '✗ Откл.' : '✗ Mos emas')}
                             </button>
                             {isCustom && (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteProduct(item.id)}
                                 className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                                title="Маҳсулотни ўчириш"
+                                title={lang === 'ru' ? 'Удалить продукт' : "Mahsulotni o'chirish"}
                               >
                                 <Trash2 size={15} />
                               </button>
@@ -1382,13 +1382,13 @@ export default function DailyChecklistContent() {
                   {/* Row 1: Xomashyo */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">1. Хомашё</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Сырье / Raw Material</div>
+                      <div className="text-slate-900 dark:text-white font-black">1. Xomashyo</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Xomashyo / Raw Material</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Сақлаш камераси / Storage</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Saqlash kamerasi / Storage</div>
                       <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">
-                        Меъёр: +1°C … +5°C
+                        Me'yor: +1°C … +5°C
                       </div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[11px] text-slate-600 dark:text-slate-400">
@@ -1428,7 +1428,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.rawMaterialOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.rawMaterialOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1451,7 +1451,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -1459,19 +1459,19 @@ export default function DailyChecklistContent() {
                   {/* Row 2: Tozalash */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">2. Тозалаш</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Очистка / Cleaning</div>
+                      <div className="text-slate-900 dark:text-white font-black">2. Tozalash</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Tozalash / Cleaning</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Ифлос зона / Dirty area</div>
-                      <div className="text-[11px] text-slate-500">100% чириш ва ёт нарсаларсиз</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Iflos zona / Dirty area</div>
+                      <div className="text-[11px] text-slate-500">100% chirish va yot narsalarsiz</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Узлуксиз
+                      Uzluksiz
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Соғлом / Чисто:</span>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Sog'lom / Sof:</span>
                         <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                           <input
                             type="text"
@@ -1494,7 +1494,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.cleaningOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.cleaningOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1517,7 +1517,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -1525,19 +1525,19 @@ export default function DailyChecklistContent() {
                   {/* Row 3: To'g'rash kalibri */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">3. Тўғраш калибри</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Калибр нарезки / Slicer</div>
+                      <div className="text-slate-900 dark:text-white font-black">3. To'g'rash kalibri</div>
+                      <div className="text-[10px] text-slate-500 font-normal">To'g'rash kalibri / Slicer</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Сабзавот тўғрагич / Slicer</div>
-                      <div className="text-[11px] text-slate-500">Спецификация бўйича</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Sabzavot to'g'ragich / Slicer</div>
+                      <div className="text-[11px] text-slate-500">Spetsifikatsiya bo'yicha</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Ҳар 1 соат
+                      Har 1 soat
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Калибр / Ўлчам:</span>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Kalibr / O'lcham:</span>
                         <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                           <input
                             type="text"
@@ -1546,7 +1546,7 @@ export default function DailyChecklistContent() {
                             placeholder="45"
                             className="w-14 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
                           />
-                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-1.5">мм</span>
+                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-1.5">mm</span>
                         </div>
                       </div>
                     </td>
@@ -1560,7 +1560,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.cuttingOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.cuttingOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1583,7 +1583,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -1591,13 +1591,13 @@ export default function DailyChecklistContent() {
                   {/* Row 4: Dezinfeksiya t° (CCP-2) */}
                   <tr className="bg-red-50/30 dark:bg-red-950/20 hover:bg-red-50/60 dark:hover:bg-red-950/30 transition-colors border-l-4 border-l-red-500">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-red-700 dark:text-red-400 font-black">4. Дезраствор t°</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Температура дез. / Temp</div>
+                      <div className="text-red-700 dark:text-red-400 font-black">4. Dezinfeksiya eritmasi t°</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Dezinfeksiya harorati / Temp</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold text-slate-900 dark:text-white">Дезинфекция ваннаси / Bath</div>
+                      <div className="font-bold text-slate-900 dark:text-white">Dezinfeksiya vannasi / Bath</div>
                       <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
-                        Норма: +1°C … +3°C (макс +3°C)
+                        Me'yor: +1°C … +3°C (maks +3°C)
                       </div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
@@ -1640,7 +1640,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.dezTempOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.dezTempOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1663,7 +1663,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center bg-rose-50/70 dark:bg-rose-950/20 border-r border-slate-200 dark:border-dark-750">
                       <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 leading-tight">
-                        ККТ-2 / CCP-2<br />(Harorat / Temp)
+                        CCP-2<br />(Harorat / Temp)
                       </span>
                     </td>
                   </tr>
@@ -1671,13 +1671,13 @@ export default function DailyChecklistContent() {
                   {/* Row 5: Faol xlor (CCP-1) */}
                   <tr className="bg-red-50/30 dark:bg-red-950/20 hover:bg-red-50/60 dark:hover:bg-red-950/30 transition-colors border-l-4 border-l-red-500">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-red-700 dark:text-red-400 font-black">5. Фаол хлор</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Активный хлор / Chlorine</div>
+                      <div className="text-red-700 dark:text-red-400 font-black">5. Faol xlor</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Faol xlor / Active chlorine</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold text-slate-900 dark:text-white">Дезинфекция ваннаси / Bath</div>
+                      <div className="font-bold text-slate-900 dark:text-white">Dezinfeksiya vannasi / Bath</div>
                       <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
-                        Норма: Қатъий 300 мг/л (ppm)
+                        Me'yor: Qat'iy 300 mg/l (ppm)
                       </div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 font-mono text-[10px] text-slate-600 dark:text-slate-400 leading-tight">
@@ -1720,7 +1720,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.dezChlorineOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.dezChlorineOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1743,7 +1743,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center bg-rose-50/70 dark:bg-rose-950/20 border-r border-slate-200 dark:border-dark-750">
                       <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 leading-tight">
-                        ККТ-1 / CCP-1<br />(Xlor / Chlorine)
+                        CCP-1<br />(Xlor / Chlorine)
                       </span>
                     </td>
                   </tr>
@@ -1751,19 +1751,19 @@ export default function DailyChecklistContent() {
                   {/* Row 6: Konservant */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">6. Консервант</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Консервант / Preservative</div>
+                      <div className="text-slate-900 dark:text-white font-black">6. Konservant</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Konservant / Preservative</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Салат майдончаси / Salad area</div>
-                      <div className="text-[11px] text-slate-500">≤1г/кг (Карам 85%, Сабзи 15%)</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Salat maydonchasi / Salad area</div>
+                      <div className="text-[11px] text-slate-500">≤1g/kg (Karam 85%, Sabzi 15%)</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Ҳар эритмада
+                      Har eritmada
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Коул-Слоу Доза:</span>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Koul-Slou Doza:</span>
                         <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2.5 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                           <input
                             type="text"
@@ -1772,7 +1772,7 @@ export default function DailyChecklistContent() {
                             placeholder="1"
                             className="w-14 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
                           />
-                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-1.5">г/кг</span>
+                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-1.5">g/kg</span>
                         </div>
                       </div>
                     </td>
@@ -1786,7 +1786,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.preservativeOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.preservativeOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1809,7 +1809,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -1817,12 +1817,12 @@ export default function DailyChecklistContent() {
                   {/* Row 7: Qoldiq xlor */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">7. Қолдиқ хлор</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Остаточный хлор / Residual</div>
+                      <div className="text-slate-900 dark:text-white font-black">7. Qoldiq xlor</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Qoldiq xlor / Residual chlorine</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Чиллер чиқиши / Chiller outlet</div>
-                      <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">Қолдиқ хлор = 0 мг/л</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Chiller chiqishi / Chiller outlet</div>
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">Qoldiq xlor = 0 mg/l</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] font-mono text-slate-500">
                       09:00 13:00 17:00
@@ -1849,7 +1849,7 @@ export default function DailyChecklistContent() {
                               : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'
                           }`}
                         >
-                          ⚠ Хлор бор / Есть
+                          ⚠ Xlor bor
                         </button>
                       </div>
                     </td>
@@ -1863,7 +1863,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.residualChlorineOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.residualChlorineOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1886,7 +1886,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -1894,15 +1894,15 @@ export default function DailyChecklistContent() {
                   {/* Row 8: Tsentrifuga */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">8. Центрифуга</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Сушка / Centrifuge</div>
+                      <div className="text-slate-900 dark:text-white font-black">8. Sentrifuga</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Quritish / Centrifuge</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Центрифуга / Dryer</div>
-                      <div className="text-[11px] text-slate-500">30сек, 950об/мин, салфетка қуруқ</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Sentrifuga / Dryer</div>
+                      <div className="text-[11px] text-slate-500">30 soniya, 950 ayl/daq, salfetka quruq</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Ҳар 1 соат
+                      Har 1 soat
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="inline-flex p-0.5 bg-slate-100 dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-dark-700">
@@ -1915,7 +1915,7 @@ export default function DailyChecklistContent() {
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                           }`}
                         >
-                          ✓ Салфетка: Қуруқ (OK)
+                          ✓ Salfetka: Quruq (OK)
                         </button>
                         <button
                           type="button"
@@ -1926,7 +1926,7 @@ export default function DailyChecklistContent() {
                               : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
                           }`}
                         >
-                          ⚠ Нам / Wet
+                          ⚠ Nam
                         </button>
                       </div>
                     </td>
@@ -1940,7 +1940,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.dryingOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.dryingOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -1963,7 +1963,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -1971,15 +1971,15 @@ export default function DailyChecklistContent() {
                   {/* Row 9: Vizual nazorat */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">9. Визуал назорат</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Инспекция / Inspection</div>
+                      <div className="text-slate-900 dark:text-white font-black">9. Vizual nazorat</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Vizual nazorat / Inspection</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Инспекция столи / Table</div>
-                      <div className="text-[11px] text-slate-500">Юпқа ёйилиш, 100% ёт нарсасиз</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Inspeksiya stoli / Table</div>
+                      <div className="text-[11px] text-slate-500">Yupqa yoyish, 100% yot narsalarsiz</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Доимий
+                      Doimiy
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="inline-flex p-0.5 bg-slate-100 dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-dark-700">
@@ -1992,7 +1992,7 @@ export default function DailyChecklistContent() {
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                           }`}
                         >
-                          ✓ 100% Тоза / Clean
+                          ✓ 100% Toza (Clean)
                         </button>
                         <button
                           type="button"
@@ -2003,7 +2003,7 @@ export default function DailyChecklistContent() {
                               : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'
                           }`}
                         >
-                          ⚠ Ёт жисм / Нуқсон
+                          ⚠ Yot jism / Nuqson
                         </button>
                       </div>
                     </td>
@@ -2017,7 +2017,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.inspectionOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.inspectionOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2040,7 +2040,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -2048,21 +2048,21 @@ export default function DailyChecklistContent() {
                   {/* Row 10: Vazn nazorati */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">10. Вазн назорати</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Контроль веса / Weight</div>
+                      <div className="text-slate-900 dark:text-white font-black">10. Vazn nazorati</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Vazn nazorati / Weight control</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Қадоқлаш / Packaging</div>
-                      <div className="text-[11px] text-slate-500">Спецификация бўйича</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Qadoqlash / Packaging</div>
+                      <div className="text-[11px] text-slate-500">Spetsifikatsiya bo'yicha</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Ҳар 5-пакет
+                      Har 5-paket
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="flex items-center gap-2 flex-wrap">
                         {/* Limon */}
                         <div className="inline-flex items-center bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
-                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mr-1.5 uppercase">Лимон:</span>
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mr-1.5 uppercase">Limon:</span>
                           <input
                             type="text"
                             placeholder="2"
@@ -2070,7 +2070,7 @@ export default function DailyChecklistContent() {
                             onChange={(e) => handleChange('weightLemon', e.target.value)}
                             className="w-8 text-center font-bold text-xs bg-transparent text-slate-900 dark:text-white outline-none"
                           />
-                          <span className="text-[10px] font-semibold text-slate-400 ml-1">дона</span>
+                          <span className="text-[10px] font-semibold text-slate-400 ml-1">dona</span>
                         </div>
 
                         {/* 1 kg */}
@@ -2110,7 +2110,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.weightOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.weightOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2133,7 +2133,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -2141,15 +2141,15 @@ export default function DailyChecklistContent() {
                   {/* Row 11: Germetiklik */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">11. Герметиклик</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Герметичность / Sealing</div>
+                      <div className="text-slate-900 dark:text-white font-black">11. Germetiklik</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Germetiklik / Sealing</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Қадоқлаш / Package Sealing</div>
-                      <div className="text-[11px] text-slate-500">100% герметик, чок текис ва мустаҳкам</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Qadoqlash / Package Sealing</div>
+                      <div className="text-[11px] text-slate-500">100% germetik, chok tekis va mustahkam</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Узлуксиз
+                      Uzluksiz
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="inline-flex p-0.5 bg-slate-100 dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-dark-700">
@@ -2162,7 +2162,7 @@ export default function DailyChecklistContent() {
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                           }`}
                         >
-                          ✓ Герметик / OK
+                          ✓ Germetik (OK)
                         </button>
                         <button
                           type="button"
@@ -2173,7 +2173,7 @@ export default function DailyChecklistContent() {
                               : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'
                           }`}
                         >
-                          ⚠ Ҳаво бор / Утечка
+                          ⚠ Havo bor / Oqish
                         </button>
                       </div>
                     </td>
@@ -2187,7 +2187,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.sealingStatusOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.sealingStatusOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2210,7 +2210,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -2218,11 +2218,11 @@ export default function DailyChecklistContent() {
                   {/* Row 12: Metallodetektor (CCP-3) */}
                   <tr className="bg-red-50/30 dark:bg-red-950/20 hover:bg-red-50/60 dark:hover:bg-red-950/30 transition-colors border-l-4 border-l-red-500">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-red-700 dark:text-red-400 font-black">12. Металлодетектор</div>
+                      <div className="text-red-700 dark:text-red-400 font-black">12. Metallodetektor</div>
                       <div className="text-[10px] text-slate-500 font-normal">Metal Detector</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-bold text-slate-900 dark:text-white">Рамка / Детектор металлов</div>
+                      <div className="font-bold text-slate-900 dark:text-white">Ramka / Metallodetektor</div>
                       <div className="text-[11px] text-red-600 dark:text-red-400 font-extrabold mt-0.5">
                         Fe ≥2.0mm, Non-Fe ≥3.0mm, SS ≥3.0mm
                       </div>
@@ -2233,9 +2233,9 @@ export default function DailyChecklistContent() {
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {[
-                          { key: 'metalFe', label: 'Fe (Темир)' },
+                          { key: 'metalFe', label: 'Fe (Temir)' },
                           { key: 'metalNonFe', label: 'Non-Fe' },
-                          { key: 'metalSs', label: 'SS (Зангламас)' },
+                          { key: 'metalSs', label: 'SS (Zanglamas)' },
                         ].map((m) => (
                           <button
                             key={m.key}
@@ -2259,7 +2259,7 @@ export default function DailyChecklistContent() {
                               : 'bg-white dark:bg-dark-900 text-slate-400 border-slate-300 dark:border-dark-700'
                           }`}
                         >
-                          {form.metalSignal ? '🔔 Сигнал Бор' : '🔕 Сигнал Йўқ'}
+                          {form.metalSignal ? '🔔 Signal Bor' : "🔕 Signal Yo'q"}
                         </button>
                       </div>
                     </td>
@@ -2273,7 +2273,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.metalOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.metalOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2296,7 +2296,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center bg-rose-50/70 dark:bg-rose-950/20 border-r border-slate-200 dark:border-dark-750">
                       <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 leading-tight">
-                        ККТ-3 / CCP-3<br />(Metall / Metal)
+                        CCP-3<br />(Metall / Metal)
                       </span>
                     </td>
                   </tr>
@@ -2304,17 +2304,17 @@ export default function DailyChecklistContent() {
                   {/* Row 13: Ombordagi rejim */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">13. Омбор режими</div>
-                      <div className="text-[10px] text-slate-500 font-normal">Склад ГП / Warehouse</div>
+                      <div className="text-slate-900 dark:text-white font-black">13. Ombor rejimi</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Tayyor mahsulot ombori / Warehouse</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">ТМО / Склад ГП</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">TMO / Tayyor mahsulot ombori</div>
                       <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">
-                        +1°C … +5°C, вакуумли ва тоза
+                        +1°C … +5°C, vakuumli va toza
                       </div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[10px] text-slate-500 leading-tight">
-                      Эрталаб / Кечқурун
+                      Ertalab / Kechqurun
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -2338,7 +2338,7 @@ export default function DailyChecklistContent() {
                               : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-400'
                           }`}
                         >
-                          {form.fgStoreVacuum ? '✓ Вакуум: Зич / OK' : '⚠ Вакуум Бузилган'}
+                          {form.fgStoreVacuum ? '✓ Vakuum: Zich (OK)' : '⚠ Vakuum Buzilgan'}
                         </button>
                       </div>
                     </td>
@@ -2352,7 +2352,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.fgStoreOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.fgStoreOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2375,7 +2375,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -2383,15 +2383,15 @@ export default function DailyChecklistContent() {
                   {/* Row 14: Gigiyena */}
                   <tr className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                     <td className="p-3 font-bold border-r border-slate-200 dark:border-dark-750">
-                      <div className="text-slate-900 dark:text-white font-black">14. Гигиена</div>
+                      <div className="text-slate-900 dark:text-white font-black">14. Gigiyena</div>
                       <div className="text-[10px] text-slate-500 font-normal">Sanitation &amp; Hygiene</div>
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
-                      <div className="font-semibold text-slate-900 dark:text-white">Ускуна ва ходимлар</div>
-                      <div className="text-[11px] text-slate-500">100% тозалик, спецодежда, ниқоб, қўлқоп</div>
+                      <div className="font-semibold text-slate-900 dark:text-white">Uskuna va xodimlar</div>
+                      <div className="text-[11px] text-slate-500">100% tozalik, maxsus kiyim, niqob, qo'lqop</div>
                     </td>
                     <td className="p-3 text-center border-r border-slate-200 dark:border-dark-750 text-[11px] text-slate-500">
-                      Смена бошида
+                      Smena boshida
                     </td>
                     <td className="p-3 border-r border-slate-200 dark:border-dark-750">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -2404,7 +2404,7 @@ export default function DailyChecklistContent() {
                               : 'bg-white dark:bg-dark-900 text-slate-500 border-slate-300 dark:border-dark-700'
                           }`}
                         >
-                          {form.hygieneClean ? '✓ 100% Тозалик OK' : '✗ Тозалик Камчилик'}
+                          {form.hygieneClean ? '✓ 100% Tozalik (OK)' : '✗ Tozalikda kamchilik'}
                         </button>
                         <button
                           type="button"
@@ -2415,7 +2415,7 @@ export default function DailyChecklistContent() {
                               : 'bg-white dark:bg-dark-900 text-slate-500 border-slate-300 dark:border-dark-700'
                           }`}
                         >
-                          {form.hygieneGear ? '✓ Спецодежда / Ниқоб OK' : '✗ Спецодежда Йўқ'}
+                          {form.hygieneGear ? '✓ Maxsus kiyim / Niqob OK' : "✗ Maxsus kiyim yo'q"}
                         </button>
                       </div>
                     </td>
@@ -2429,7 +2429,7 @@ export default function DailyChecklistContent() {
                             : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700 hover:bg-rose-100'
                         }`}
                       >
-                        {form.hygieneOk ? '✓ Мос (OK)' : '✗ Н/К'}
+                        {form.hygieneOk ? '✓ Mos (OK)' : '✗ Mos emas'}
                       </button>
                     </td>
                     <td className="p-2 border-r border-slate-200 dark:border-dark-750">
@@ -2452,7 +2452,7 @@ export default function DailyChecklistContent() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        ОПРП / OPRP
+                        OPRP
                       </span>
                     </td>
                   </tr>
@@ -2495,7 +2495,7 @@ export default function DailyChecklistContent() {
                       <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
                         {t.inspectorCard}
                       </h4>
-                      <span className="text-[10px] text-slate-400 font-medium">Контролер ОКК / QC Inspector</span>
+                      <span className="text-[10px] text-slate-400 font-medium">Sifat Nazoratchisi / QC Inspector</span>
                     </div>
                   </div>
 
@@ -2521,7 +2521,7 @@ export default function DailyChecklistContent() {
                       </label>
                       <input
                         type="text"
-                        placeholder="Электрон имзо / Тасдиқ"
+                        placeholder="Elektron imzo / Tasdiq"
                         value={form.inspectorSign}
                         onChange={(e) => handleChange('inspectorSign', e.target.value)}
                         className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
@@ -2551,7 +2551,7 @@ export default function DailyChecklistContent() {
                       <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
                         {t.supervisorCard}
                       </h4>
-                      <span className="text-[10px] text-slate-400 font-medium">Мастер смены / Shift Supervisor</span>
+                      <span className="text-[10px] text-slate-400 font-medium">Smena Boshlig'i / Shift Supervisor</span>
                     </div>
                   </div>
 
@@ -2577,7 +2577,7 @@ export default function DailyChecklistContent() {
                       </label>
                       <input
                         type="text"
-                        placeholder="Электрон имзо / Тасдиқ"
+                        placeholder="Elektron imzo / Tasdiq"
                         value={form.supervisorSign}
                         onChange={(e) => handleChange('supervisorSign', e.target.value)}
                         className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors"
@@ -2607,7 +2607,7 @@ export default function DailyChecklistContent() {
                       <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
                         {t.qaCard}
                       </h4>
-                      <span className="text-[10px] text-slate-400 font-medium">Инженер по качеству / QA Engineer</span>
+                      <span className="text-[10px] text-slate-400 font-medium">Sifat Muhandisi / QA Engineer</span>
                     </div>
                   </div>
 
@@ -2630,7 +2630,7 @@ export default function DailyChecklistContent() {
                       </label>
                       <input
                         type="text"
-                        placeholder="Электрон имзо / Тасдиқ"
+                        placeholder="Elektron imzo / Tasdiq"
                         value={form.qaEngineerSign}
                         onChange={(e) => handleChange('qaEngineerSign', e.target.value)}
                         className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors"
@@ -2697,9 +2697,9 @@ export default function DailyChecklistContent() {
           <div className="flex flex-wrap gap-3 justify-between items-center bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
             <div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                Архив: Сақланган Кунлик Чек-листлар
+                Arxiv: Saqlangan Kunlik Chek-listlar
               </h2>
-              <p className="text-xs text-slate-500">Барча смена якуни бўйича тўлдирилган расмий журналлар</p>
+              <p className="text-xs text-slate-500">Barcha smena yakuni bo'yicha to'ldirilgan rasmiy jurnallar</p>
             </div>
             <button
               onClick={fetchHistory}
@@ -2707,21 +2707,21 @@ export default function DailyChecklistContent() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors"
             >
               {loadingHistory ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
-              <span>Янгилаш</span>
+              <span>Yangilash</span>
             </button>
           </div>
 
           {loadingHistory ? (
             <div className="p-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
               <Loader2 size={28} className="animate-spin text-blue-600" />
-              <span className="text-sm font-semibold">Архив юкланмоқда...</span>
+              <span className="text-sm font-semibold">Arxiv yuklanmoqda...</span>
             </div>
           ) : history.length === 0 ? (
             <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
               <Database size={48} className="text-slate-300 dark:text-dark-700 mb-3" />
-              <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">Архив бўш</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">Arxiv bo'sh</h3>
               <p className="text-xs text-slate-500 max-w-sm">
-                Ҳозирча сақланган кунлик чек-листлар йўқ. &quot;Чек-лист&quot; бўлимидан янги сменани тўлдириб сақланг.
+                Hozircha saqlangan kunlik chek-listlar yo'q. &quot;Chek-list&quot; bo'limidan yangi smenani to'ldirib saqlang.
               </p>
             </div>
           ) : (
@@ -2730,13 +2730,13 @@ export default function DailyChecklistContent() {
                 <table className="w-full text-left text-xs">
                   <thead className="text-[10px] font-bold text-slate-500 uppercase bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700">
                     <tr>
-                      <th className="px-5 py-3.5">Сана / Смена</th>
-                      <th className="px-5 py-3.5">Линия / Партия №</th>
-                      <th className="px-5 py-3.5">Умумий чиқиш</th>
-                      <th className="px-5 py-3.5">Брак (кг)</th>
-                      <th className="px-5 py-3.5">Масъуллар</th>
-                      <th className="px-5 py-3.5 text-center">Ҳолат</th>
-                      <th className="px-5 py-3.5 text-right">Ҳаракат</th>
+                      <th className="px-5 py-3.5">Sana / Smena</th>
+                      <th className="px-5 py-3.5">Liniya / Partiya №</th>
+                      <th className="px-5 py-3.5">Umumiy chiqish</th>
+                      <th className="px-5 py-3.5">Brak (kg)</th>
+                      <th className="px-5 py-3.5">Mas'ullar</th>
+                      <th className="px-5 py-3.5 text-center">Holat</th>
+                      <th className="px-5 py-3.5 text-right">Harakat</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-medium">
@@ -2747,32 +2747,32 @@ export default function DailyChecklistContent() {
                             <Clock size={13} className="text-blue-500" />
                             <span className="font-bold text-slate-900 dark:text-white">{doc.date}</span>
                             <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                              {doc.shift}-Смена
+                              {doc.shift}-Smena
                             </span>
                           </div>
                         </td>
                         <td className="px-5 py-3.5">
-                          <div className="font-semibold text-slate-800 dark:text-slate-200">{doc.lineName || '1-Линия'}</div>
-                          <div className="text-[11px] font-mono text-slate-400">Партия: {doc.batchNumber || '—'}</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-200">{doc.lineName || '1-Liniya'}</div>
+                          <div className="text-[11px] font-mono text-slate-400">Partiya: {doc.batchNumber || '—'}</div>
                         </td>
                         <td className="px-5 py-3.5 text-emerald-600 dark:text-emerald-400 font-bold font-mono">
-                          {doc.totalOutputBox ? `${doc.totalOutputBox} кор` : '—'}
+                          {doc.totalOutputBox ? `${doc.totalOutputBox} quti` : '—'}
                         </td>
                         <td className="px-5 py-3.5 text-red-500 font-bold font-mono">
-                          {doc.rejectedKg ? `${doc.rejectedKg} кг` : '—'}
+                          {doc.rejectedKg ? `${doc.rejectedKg} kg` : '—'}
                         </td>
                         <td className="px-5 py-3.5 text-slate-600 dark:text-slate-400">
                           <div className="text-[11px]">
-                            Уста: <span className="font-bold text-slate-800 dark:text-slate-200">{doc.supervisor || '—'}</span>
+                            Usta: <span className="font-bold text-slate-800 dark:text-slate-200">{doc.supervisor || '—'}</span>
                           </div>
                           <div className="text-[11px]">
-                            ОТК: <span className="font-bold text-slate-800 dark:text-slate-200">{doc.inspector || '—'}</span>
+                            Sifat nazorati: <span className="font-bold text-slate-800 dark:text-slate-200">{doc.inspector || '—'}</span>
                           </div>
                         </td>
                         <td className="px-5 py-3.5 text-center">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase">
                             <CheckCircle2 size={11} />
-                            <span>Тасдиқланган</span>
+                            <span>Tasdiqlangan</span>
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-right">
@@ -2780,15 +2780,15 @@ export default function DailyChecklistContent() {
                             <button
                               onClick={() => loadFromArchive(doc)}
                               className="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 font-bold text-xs flex items-center gap-1 transition-colors"
-                              title="Чек-листни очиш"
+                              title="Chek-listni ochish"
                             >
                               <Eye size={13} />
-                              <span>Кўриш</span>
+                              <span>Ko'rish</span>
                             </button>
                             <button
                               onClick={() => window.open(`/api/daily-checklist/${doc.id}/export`, '_blank')}
                               className="px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 font-bold text-xs flex items-center gap-1 transition-colors"
-                              title="Excel юклаб олиш"
+                              title="Excel yuklab olish"
                             >
                               <FileSpreadsheet size={13} />
                               <span>Excel</span>

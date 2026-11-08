@@ -341,7 +341,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                {lang === 'ru' ? 'Расход в цех (Chiqim)' : 'Sexga Chiqim (Расход в цех)'}
+                {lang === 'ru' ? 'Расход в цех' : 'Sexga Chiqim'}
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                 FSSC 22000

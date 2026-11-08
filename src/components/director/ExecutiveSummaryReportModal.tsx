@@ -250,7 +250,7 @@ export default function ExecutiveSummaryReportModal({
                   <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 mb-2">
                     <span className="font-black text-slate-900 text-xs uppercase flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                      1. {formatDual("Xomashyo Qabuli (Prixod)", "Приемка сырья (Приход)", "Raw Material Arrivals")}
+                      1. {formatDual("Xomashyo Qabuli (Kirim)", "Приемка сырья (Приход)", "Raw Material Arrivals")}
                     </span>
                     <span className="text-[10px] font-bold text-blue-700">{arrivals.totalCount || 0} {formatDual("partiya", "партий", "batches")}</span>
                   </div>

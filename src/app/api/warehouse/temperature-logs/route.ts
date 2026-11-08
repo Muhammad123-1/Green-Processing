@@ -2,267 +2,324 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 
-async function ensureTable() {
-  try {
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "TemperatureLog" (
-        "id" SERIAL PRIMARY KEY,
-        "date" TEXT NOT NULL,
-        "time" TEXT NOT NULL,
-        "icebergTemp" DOUBLE PRECISION,
-        "onionTemp" DOUBLE PRECISION,
-        "tomatoTemp" DOUBLE PRECISION,
-        "carrotTemp" DOUBLE PRECISION,
-        "cabbageTemp" DOUBLE PRECISION,
-        "deviation" TEXT DEFAULT 'Норма',
-        "correctiveAction" TEXT,
-        "responsible" TEXT NOT NULL,
-        "inspectorId" INTEGER,
-        "notes" TEXT,
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-    `)
+export const dynamic = 'force-dynamic'
 
-    await prisma.$executeRawUnsafe(`ALTER TABLE "TemperatureLog" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;`).catch(() => {})
-
-    // Check count and seed if empty
-    const countRes: any = await prisma.$queryRawUnsafe(`SELECT COUNT(*)::int as count FROM "TemperatureLog"`)
-    const count = countRes?.[0]?.count || 0
-
-    if (count === 0) {
-      const sampleTempRows = [
-        { date: '2025-06-02', time: '8:00', icebergTemp: 3.2, onionTemp: 3.5, tomatoTemp: 4.1, carrotTemp: 3.8, cabbageTemp: 3.0, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-        { date: '2025-06-02', time: '17:00', icebergTemp: 3.5, onionTemp: 3.8, tomatoTemp: 4.2, carrotTemp: 4.0, cabbageTemp: 3.2, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-        { date: '2025-06-03', time: '8:00', icebergTemp: 3.1, onionTemp: 3.6, tomatoTemp: 3.9, carrotTemp: 3.7, cabbageTemp: 3.1, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-        { date: '2025-06-03', time: '17:00', icebergTemp: 3.4, onionTemp: 4.0, tomatoTemp: 4.3, carrotTemp: 3.9, cabbageTemp: 3.4, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-        { date: '2025-06-04', time: '8:00', icebergTemp: 3.0, onionTemp: 3.4, tomatoTemp: 3.8, carrotTemp: 3.5, cabbageTemp: 3.0, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-        { date: '2025-06-04', time: '17:00', icebergTemp: 3.3, onionTemp: 3.9, tomatoTemp: 4.1, carrotTemp: 3.8, cabbageTemp: 3.3, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-        { date: '2025-06-05', time: '8:00', icebergTemp: 3.2, onionTemp: 3.7, tomatoTemp: 4.0, carrotTemp: 3.6, cabbageTemp: 3.2, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-        { date: '2025-06-05', time: '17:00', icebergTemp: 3.6, onionTemp: 4.1, tomatoTemp: 4.4, carrotTemp: 4.1, cabbageTemp: 3.5, deviation: 'Норма', correctiveAction: '-', responsible: 'Иванов И.' },
-      ]
-
-      for (const row of sampleTempRows) {
-        await prisma.$executeRawUnsafe(`
-          INSERT INTO "TemperatureLog" ("date", "time", "icebergTemp", "onionTemp", "tomatoTemp", "carrotTemp", "cabbageTemp", "deviation", "correctiveAction", "responsible")
-          VALUES ('${row.date}', '${row.time}', ${row.icebergTemp}, ${row.onionTemp}, ${row.tomatoTemp}, ${row.carrotTemp}, ${row.cabbageTemp}, '${row.deviation}', '${row.correctiveAction}', '${row.responsible}')
-        `)
-      }
-    }
-  } catch (err) {
-    console.error('Error ensuring TemperatureLog table:', err)
-  }
-}
-
+/**
+ * GET /api/warehouse/temperature-logs
+ * Returns incoming raw material arrivals from ShopArrival formatted for:
+ * "ЖУРНАЛ ПРИЁМКИ ВХОДНОГО КОНТРОЛЯ СЫРЬЯ" (Xomashyo Kirish Nazorati va Qabul Harorati Jurnali)
+ */
 export async function GET(request: NextRequest) {
   try {
-    await ensureTable()
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
+    const month = searchParams.get('month')
+    const search = (searchParams.get('search') || '').trim().toLowerCase()
+    const tempStatus = searchParams.get('tempStatus') || 'all' // 'all' | 'missing' | 'normal' | 'deviation'
 
-    if ((prisma as any).temperatureLog?.findMany) {
-      try {
-        const where: any = {}
-        if (date) where.date = date
-        const logs = await (prisma as any).temperatureLog.findMany({
-          where,
-          orderBy: [{ date: 'desc' }, { id: 'desc' }]
-        })
-        return NextResponse.json(logs)
-      } catch (prismaErr) {
-        console.warn('Prisma findMany fallback to raw SQL:', prismaErr)
+    let sql = `SELECT * FROM "ShopArrival" WHERE 1=1`
+    const params: any[] = []
+
+    if (date) {
+      params.push(date)
+      sql += ` AND "date" = $${params.length}`
+    } else if (month) {
+      params.push(`${month}%`)
+      sql += ` AND "date" LIKE $${params.length}`
+    }
+
+    if (search) {
+      params.push(`%${search}%`)
+      const pIdx = params.length
+      sql += ` AND ("nomenclature" ILIKE $${pIdx} OR "supplier" ILIKE $${pIdx} OR "batch" ILIKE $${pIdx} OR "ttnNumber" ILIKE $${pIdx})`
+    }
+
+    sql += ` ORDER BY "date" DESC, "id" DESC`
+
+    const rawArrivals: any[] = await prisma.$queryRawUnsafe(sql, ...params)
+
+    // Compute stats across the selected period/dataset
+    let missingTempCount = 0
+    let normalCount = 0
+    let deviationCount = 0
+
+    for (const item of rawArrivals) {
+      if (item.temperature === null || item.temperature === undefined) {
+        missingTempCount++
+      } else if (Number(item.temperature) >= 2.0 && Number(item.temperature) <= 5.0) {
+        normalCount++
+      } else {
+        deviationCount++
       }
     }
 
-    const query = date
-      ? `SELECT * FROM "TemperatureLog" WHERE "date" = '${date.replace(/'/g, "''")}' ORDER BY "date" DESC, "id" DESC`
-      : `SELECT * FROM "TemperatureLog" ORDER BY "date" DESC, "id" DESC`
-    
-    const logs = await prisma.$queryRawUnsafe(query)
-    return NextResponse.json(logs)
-  } catch (error: any) {
-    console.error('Error fetching warehouse temperature logs:', error)
-    return NextResponse.json([], { status: 200 })
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    await ensureTable()
-    const session = await getSession()
-    if (!session) return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
-
-    const body = await request.json()
-    const {
-      date,
-      time,
-      icebergTemp,
-      onionTemp,
-      tomatoTemp,
-      carrotTemp,
-      cabbageTemp,
-      deviation,
-      correctiveAction,
-      responsible,
-      notes
-    } = body
-
-    if (!date || !time) {
-      return NextResponse.json({ error: 'Sana va vaqt kiritilishi shart' }, { status: 400 })
+    // Apply tempStatus filtering
+    let arrivals = rawArrivals
+    if (tempStatus === 'missing') {
+      arrivals = rawArrivals.filter((a: any) => a.temperature === null || a.temperature === undefined)
+    } else if (tempStatus === 'normal') {
+      arrivals = rawArrivals.filter((a: any) => a.temperature !== null && a.temperature !== undefined && Number(a.temperature) >= 2.0 && Number(a.temperature) <= 5.0)
+    } else if (tempStatus === 'deviation') {
+      arrivals = rawArrivals.filter((a: any) => a.temperature !== null && a.temperature !== undefined && (Number(a.temperature) < 2.0 || Number(a.temperature) > 5.0))
     }
 
-    const tIceberg = icebergTemp !== undefined && icebergTemp !== '' ? parseFloat(icebergTemp) : null
-    const tOnion = onionTemp !== undefined && onionTemp !== '' ? parseFloat(onionTemp) : null
-    const tTomato = tomatoTemp !== undefined && tomatoTemp !== '' ? parseFloat(tomatoTemp) : null
-    const tCarrot = carrotTemp !== undefined && carrotTemp !== '' ? parseFloat(carrotTemp) : null
-    const tCabbage = cabbageTemp !== undefined && cabbageTemp !== '' ? parseFloat(cabbageTemp) : null
-    const dev = deviation || 'Норма'
-    const act = correctiveAction || '-'
-    const resp = responsible || session.name || 'Mas\'ul xodim'
-    const note = notes || null
+    // Find available distinct months from ShopArrival
+    const monthRows: any[] = await prisma.$queryRawUnsafe(`
+      SELECT DISTINCT SUBSTRING("date" FROM 1 FOR 7) as "month"
+      FROM "ShopArrival"
+      WHERE "date" IS NOT NULL AND LENGTH("date") >= 7
+      ORDER BY "month" DESC
+      LIMIT 100
+    `)
+    const availableMonths = monthRows.map(r => r.month).filter(Boolean)
 
-    if ((prisma as any).temperatureLog?.create) {
-      try {
-        const newLog = await (prisma as any).temperatureLog.create({
-          data: {
-            date,
-            time,
-            icebergTemp: tIceberg,
-            onionTemp: tOnion,
-            tomatoTemp: tTomato,
-            carrotTemp: tCarrot,
-            cabbageTemp: tCabbage,
-            deviation: dev,
-            correctiveAction: act,
-            responsible: resp,
-            inspectorId: session.id,
-            notes: note
-          }
-        })
-        return NextResponse.json(newLog, { status: 201 })
-      } catch (prismaErr) {
-        console.warn('Prisma create fallback to raw SQL:', prismaErr)
-      }
-    }
-
-    const inserted: any = await prisma.$queryRawUnsafe(`
-      INSERT INTO "TemperatureLog" (
-        "date", "time", "icebergTemp", "onionTemp", "tomatoTemp", "carrotTemp", "cabbageTemp",
-        "deviation", "correctiveAction", "responsible", "inspectorId", "notes", "createdAt", "updatedAt"
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
-      ) RETURNING *;
-    `, date, time, tIceberg, tOnion, tTomato, tCarrot, tCabbage, dev, act, resp, session.id, note)
-
-    return NextResponse.json(inserted[0] || inserted, { status: 201 })
+    return NextResponse.json({
+      arrivals,
+      stats: {
+        totalCount: rawArrivals.length,
+        missingTempCount,
+        normalCount,
+        deviationCount
+      },
+      availableMonths
+    })
   } catch (error: any) {
-    console.error('Error creating warehouse temperature log:', error)
+    console.error('Error fetching arrivals for temperature-logs:', error)
     return NextResponse.json({ error: error.message || 'Xatolik yuz berdi' }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest) {
+/**
+ * PATCH /api/warehouse/temperature-logs
+ * Sifat Nazoratchisi / Inspector faqat harorat, organoleptika va sifat xulosasini kiritadi.
+ * Omborchi ma'lumotlari (miqdor, ta'minotchi, xomashyo) tegilmaydi!
+ */
+export async function PATCH(request: NextRequest) {
   try {
-    await ensureTable()
     const session = await getSession()
-    if (!session) return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
+    if (!session) {
+      return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
+    }
 
     const body = await request.json()
-    const {
-      id,
-      date,
-      time,
-      icebergTemp,
-      onionTemp,
-      tomatoTemp,
-      carrotTemp,
-      cabbageTemp,
-      deviation,
-      correctiveAction,
-      responsible,
-      notes
-    } = body
+    const { id, temperature, organoleptic, finalDecision, technologistSign, warehouseSign } = body
 
     if (!id) {
       return NextResponse.json({ error: 'ID talab qilinadi' }, { status: 400 })
     }
 
-    const tIceberg = icebergTemp !== undefined && icebergTemp !== '' ? parseFloat(icebergTemp) : null
-    const tOnion = onionTemp !== undefined && onionTemp !== '' ? parseFloat(onionTemp) : null
-    const tTomato = tomatoTemp !== undefined && tomatoTemp !== '' ? parseFloat(tomatoTemp) : null
-    const tCarrot = carrotTemp !== undefined && carrotTemp !== '' ? parseFloat(carrotTemp) : null
-    const tCabbage = cabbageTemp !== undefined && cabbageTemp !== '' ? parseFloat(cabbageTemp) : null
-    const dev = deviation || 'Норма'
-    const act = correctiveAction || '-'
-    const resp = responsible || session.name
-    const note = notes || null
+    const existingRows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "ShopArrival" WHERE "id" = $1`, parseInt(id))
+    if (!existingRows || existingRows.length === 0) {
+      return NextResponse.json({ error: 'Kirim yozuvi topilmadi' }, { status: 404 })
+    }
+    const existing = existingRows[0]
 
-    if ((prisma as any).temperatureLog?.update) {
-      try {
-        const updated = await (prisma as any).temperatureLog.update({
-          where: { id: parseInt(id) },
-          data: {
-            date,
-            time,
-            icebergTemp: tIceberg,
-            onionTemp: tOnion,
-            tomatoTemp: tTomato,
-            carrotTemp: tCarrot,
-            cabbageTemp: tCabbage,
-            deviation: dev,
-            correctiveAction: act,
-            responsible: resp,
-            notes: note
-          }
-        })
-        return NextResponse.json(updated)
-      } catch (prismaErr) {
-        console.warn('Prisma update fallback to raw SQL:', prismaErr)
+    const role = (session.role || '').toUpperCase()
+    const isQC = role === 'QUALITY_CONTROL' || role === 'INSPECTOR'
+    const isAdminOrDirector = role === 'ADMIN' || role === 'DIRECTOR'
+    const isWarehouse = role === 'WAREHOUSE'
+
+    let tempVal = existing.temperature
+    if (temperature !== undefined) {
+      if (temperature === '' || temperature === null) {
+        tempVal = null
+      } else {
+        const parsed = parseFloat(temperature)
+        if (isNaN(parsed)) {
+          return NextResponse.json({ error: 'Harorat raqam bo\'lishi kerak' }, { status: 400 })
+        }
+        tempVal = parsed
       }
     }
 
-    const updated: any = await prisma.$queryRawUnsafe(`
-      UPDATE "TemperatureLog" SET
-        "date" = $1, "time" = $2, "icebergTemp" = $3, "onionTemp" = $4,
-        "tomatoTemp" = $5, "carrotTemp" = $6, "cabbageTemp" = $7,
-        "deviation" = $8, "correctiveAction" = $9, "responsible" = $10,
-        "notes" = $11, "updatedAt" = NOW()
-      WHERE "id" = $12
-      RETURNING *;
-    `, date, time, tIceberg, tOnion, tTomato, tCarrot, tCabbage, dev, act, resp, note, parseInt(id))
+    const organoVal = organoleptic !== undefined ? organoleptic : existing.organoleptic
+    const decisionVal = finalDecision !== undefined ? finalDecision : (existing.finalDecision || 'Принято')
+    const techSignVal = technologistSign !== undefined ? technologistSign : existing.technologistSign
+    const qcSignVal = (isQC || isAdminOrDirector) ? (session.name || 'Sifat Nazoratchisi') : existing.qcSign
+    const qcCheckedAtVal = (isQC || isAdminOrDirector) ? new Date() : existing.qcCheckedAt
+    const whSignVal = (isWarehouse || isAdminOrDirector) && warehouseSign !== undefined ? warehouseSign : existing.warehouseSign
 
-    return NextResponse.json(updated[0] || updated)
+    const updatedRows: any[] = await prisma.$queryRawUnsafe(`
+      UPDATE "ShopArrival"
+      SET "temperature" = $1,
+          "organoleptic" = $2,
+          "finalDecision" = $3,
+          "technologistSign" = $4,
+          "qcSign" = $5,
+          "qcCheckedAt" = $6,
+          "warehouseSign" = $7,
+          "updatedAt" = NOW()
+      WHERE "id" = $8
+      RETURNING *
+    `, tempVal, organoVal, decisionVal, techSignVal, qcSignVal, qcCheckedAtVal, whSignVal, parseInt(id))
+
+    return NextResponse.json(updatedRows[0] || {})
   } catch (error: any) {
-    console.error('Error updating warehouse temperature log:', error)
+    console.error('Error updating temperature log:', error)
     return NextResponse.json({ error: error.message || 'Xatolik yuz berdi' }, { status: 500 })
   }
 }
 
+/**
+ * POST /api/warehouse/temperature-logs
+ * Yangi kirim va harorat yozuvi kiritish (Birgalikda qabul)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const {
+      date,
+      arrivalTime,
+      nomenclature,
+      quantity,
+      invoiceQuantity,
+      boxCount,
+      supplier,
+      ttnNumber,
+      batch,
+      temperature,
+      organoleptic,
+      finalDecision,
+      warehouseSign,
+      technologistSign,
+      qcSign
+    } = body
+
+    if (!date || !nomenclature || quantity === undefined || quantity === '') {
+      return NextResponse.json({ error: 'Sana, xomashyo nomi va miqdori kiritilishi shart' }, { status: 400 })
+    }
+
+    const role = (session.role || '').toUpperCase()
+    const isQC = role === 'QUALITY_CONTROL' || role === 'INSPECTOR'
+    const isWarehouse = role === 'WAREHOUSE'
+    const isAdminOrDirector = role === 'ADMIN' || role === 'DIRECTOR'
+
+    const tempVal = temperature !== undefined && temperature !== '' && temperature !== null ? parseFloat(temperature) : null
+    const invQty = invoiceQuantity !== undefined && invoiceQuantity !== '' && invoiceQuantity !== null ? parseFloat(invoiceQuantity) : null
+    const bCount = boxCount !== undefined && boxCount !== '' && boxCount !== null ? parseInt(boxCount) : null
+    const arrTime = arrivalTime || new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+    const whSign = warehouseSign || (isWarehouse || isAdminOrDirector ? session.name : null)
+    const qSign = qcSign || (isQC || (isAdminOrDirector && tempVal !== null) ? session.name : null)
+    const qcTime = tempVal !== null ? new Date() : null
+
+    const insertedRows: any[] = await prisma.$queryRawUnsafe(`
+      INSERT INTO "ShopArrival" (
+        "date", "arrivalTime", "nomenclature", "quantity", "invoiceQuantity", "boxCount",
+        "supplier", "ttnNumber", "batch", "temperature", "organoleptic", "finalDecision",
+        "warehouseSign", "technologistSign", "qcSign", "qcCheckedAt", "createdAt", "updatedAt"
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
+      ) RETURNING *
+    `, date, arrTime, String(nomenclature).trim(), parseFloat(quantity), invQty, bCount,
+       supplier ? String(supplier).trim() : null,
+       ttnNumber ? String(ttnNumber).trim() : null,
+       batch ? String(batch).trim() : null,
+       tempVal,
+       organoleptic ? String(organoleptic).trim() : null,
+       finalDecision || 'Принято',
+       whSign, technologistSign || null, qSign, qcTime
+    )
+
+    return NextResponse.json(insertedRows[0] || {}, { status: 201 })
+  } catch (error: any) {
+    console.error('Error creating arrival temperature log:', error)
+    return NextResponse.json({ error: error.message || 'Xatolik yuz berdi' }, { status: 500 })
+  }
+}
+
+/**
+ * PUT /api/warehouse/temperature-logs
+ * To'liq tahrirlash (Sifat Nazoratchisi faqat o'ziga tegishli inputlarni yangilay oladi)
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const id = parseInt(body.id)
+    if (!id) return NextResponse.json({ error: 'ID talab qilinadi' }, { status: 400 })
+
+    const existingRows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "ShopArrival" WHERE "id" = $1`, id)
+    if (!existingRows || existingRows.length === 0) return NextResponse.json({ error: 'Yozuv topilmadi' }, { status: 404 })
+    const existing = existingRows[0]
+
+    const role = (session.role || '').toUpperCase()
+    const isQC = role === 'QUALITY_CONTROL' || role === 'INSPECTOR'
+    const isAdminOrDirector = role === 'ADMIN' || role === 'DIRECTOR'
+
+    // QC maydonlari
+    let tempVal = existing.temperature
+    if (body.temperature !== undefined) {
+      tempVal = body.temperature === '' || body.temperature === null ? null : parseFloat(body.temperature)
+    }
+    const organoVal = body.organoleptic !== undefined ? body.organoleptic : existing.organoleptic
+    const decisionVal = body.finalDecision !== undefined ? body.finalDecision : existing.finalDecision
+    const techSignVal = body.technologistSign !== undefined ? body.technologistSign : existing.technologistSign
+    const qcSignVal = (isQC || isAdminOrDirector) ? (session.name || 'Sifat Nazoratchisi') : existing.qcSign
+    const qcCheckedAtVal = (isQC || isAdminOrDirector) ? new Date() : existing.qcCheckedAt
+
+    // Skladchi maydonlari (agar Sifat nazoratchisi bo'lsa, mavjud qiymat qoladi!)
+    const dateVal = !isQC && body.date ? body.date : existing.date
+    const arrTimeVal = !isQC && body.arrivalTime !== undefined ? body.arrivalTime : existing.arrivalTime
+    const nomVal = !isQC && body.nomenclature ? body.nomenclature : existing.nomenclature
+    const qtyVal = !isQC && body.quantity !== undefined ? parseFloat(body.quantity) : existing.quantity
+    const invQtyVal = !isQC && body.invoiceQuantity !== undefined ? (body.invoiceQuantity ? parseFloat(body.invoiceQuantity) : null) : existing.invoiceQuantity
+    const bCountVal = !isQC && body.boxCount !== undefined ? (body.boxCount ? parseInt(body.boxCount) : null) : existing.boxCount
+    const suppVal = !isQC && body.supplier !== undefined ? body.supplier : existing.supplier
+    const ttnVal = !isQC && body.ttnNumber !== undefined ? body.ttnNumber : existing.ttnNumber
+    const batchVal = !isQC && body.batch !== undefined ? body.batch : existing.batch
+    const whSignVal = !isQC && body.warehouseSign !== undefined ? body.warehouseSign : existing.warehouseSign
+
+    const updatedRows: any[] = await prisma.$queryRawUnsafe(`
+      UPDATE "ShopArrival"
+      SET "date" = $1, "arrivalTime" = $2, "nomenclature" = $3, "quantity" = $4,
+          "invoiceQuantity" = $5, "boxCount" = $6, "supplier" = $7, "ttnNumber" = $8,
+          "batch" = $9, "temperature" = $10, "organoleptic" = $11, "finalDecision" = $12,
+          "warehouseSign" = $13, "technologistSign" = $14, "qcSign" = $15, "qcCheckedAt" = $16,
+          "updatedAt" = NOW()
+      WHERE "id" = $17
+      RETURNING *
+    `, dateVal, arrTimeVal, nomVal, qtyVal, invQtyVal, bCountVal, suppVal, ttnVal,
+       batchVal, tempVal, organoVal, decisionVal, whSignVal, techSignVal, qcSignVal, qcCheckedAtVal, id)
+
+    return NextResponse.json(updatedRows[0] || {})
+  } catch (error: any) {
+    console.error('Error putting temperature log:', error)
+    return NextResponse.json({ error: error.message || 'Xatolik yuz berdi' }, { status: 500 })
+  }
+}
+
+/**
+ * DELETE /api/warehouse/temperature-logs
+ * Faqat ADMIN va DIRECTOR o'chira oladi. Sifat nazoratchisi o'chira olmaydi!
+ */
 export async function DELETE(request: NextRequest) {
   try {
-    await ensureTable()
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 401 })
 
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-    if (!id) return NextResponse.json({ error: 'ID berilmadi' }, { status: 400 })
-
-    if ((prisma as any).temperatureLog?.delete) {
-      try {
-        await (prisma as any).temperatureLog.delete({
-          where: { id: parseInt(id) }
-        })
-        return NextResponse.json({ success: true })
-      } catch (prismaErr) {
-        console.warn('Prisma delete fallback to raw SQL:', prismaErr)
-      }
+    const role = (session.role || '').toUpperCase()
+    if (role !== 'ADMIN' && role !== 'DIRECTOR') {
+      return NextResponse.json({ error: 'Kirim yozuvini faqat Admin yoki Direktor o\'chira oladi' }, { status: 403 })
     }
 
-    await prisma.$executeRawUnsafe(`DELETE FROM "TemperatureLog" WHERE "id" = $1`, parseInt(id))
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    if (!id) return NextResponse.json({ error: 'ID talab qilinadi' }, { status: 400 })
+
+    await prisma.$queryRawUnsafe(`DELETE FROM "ShopArrival" WHERE "id" = $1`, parseInt(id))
+
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Error deleting warehouse temperature log:', error)
-    return NextResponse.json({ error: 'O\'chirishda xatolik' }, { status: 500 })
+    console.error('Error deleting arrival:', error)
+    return NextResponse.json({ error: 'O\'chirishda xatolik yuz berdi' }, { status: 500 })
   }
 }
