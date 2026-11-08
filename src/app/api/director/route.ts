@@ -1076,12 +1076,12 @@ export async function GET(request: NextRequest) {
       }
     >()
 
-    // A. Incoming rejected acts
-    incomingActs.forEach((act) => {
-      if (act.decisionRating === 2) {
-        const pName = (act.productName || "Noma'lum xomashyo").trim()
-        const qty = act.warehouseKg || 0
-        const curr = defectByProductMap.get(pName) || {
+    // Helper to get or init defect entry
+    const getOrInitDefect = (rawName: string) => {
+      const pName = (rawName || "Noma'lum").trim()
+      let curr = defectByProductMap.get(pName)
+      if (!curr) {
+        curr = {
           product: pName,
           incomingKg: 0,
           processingKg: 0,
@@ -1091,6 +1091,29 @@ export async function GET(request: NextRequest) {
           techWasteKg: 0,
           acts: [],
         }
+        defectByProductMap.set(pName, curr)
+      }
+      return curr
+    }
+
+    // A. Incoming rejected & conditional QC acts (Stage 1: INCOMING)
+    incomingActs.forEach((act) => {
+      const raw = (act.rawValues || {}) as any
+      const isRejected = act.decisionRating === 2
+      const isConditional =
+        act.decisionRating === 3 ||
+        raw?.isYellow === true ||
+        (act.internalOxidation && act.internalOxidation > 0) ||
+        (act.insectTraces && act.insectTraces > 0) ||
+        (act.rotDiseases && act.rotDiseases > 0) ||
+        act.noMechanicalDamage === 0 ||
+        act.transportCondition === 0
+
+      if (isRejected || isConditional) {
+        const pName = (act.productName || "Noma'lum xomashyo").trim()
+        const totalKg = act.warehouseKg || 100
+        const qty = isRejected ? totalKg : Math.round(totalKg * 0.03 * 10) / 10
+        const curr = getOrInitDefect(pName)
         curr.incomingKg += qty
         curr.totalDefectKg += qty
         curr.incidentsCount += 1
@@ -1101,32 +1124,83 @@ export async function GET(request: NextRequest) {
           stage: 'INCOMING',
           date: act.actDate,
           quantityKg: qty,
-          reason: act.decisionText || act.notes || 'Sifat talabiga javob bermadi (Rad etilgan)',
+          reason: isRejected
+            ? (act.decisionText || act.notes || "Sifat talabiga javob bermadi (Rad etilgan)")
+            : (act.decisionText || "Shartli qabul (Harorat yoki sifat me'yordan chetlashgan)"),
           responsible: act.supplierName || "Ta'minotchi",
           inspector: act.inspectorName || 'Sifat nazoratchisi',
           isTechWaste: false,
         })
-        defectByProductMap.set(pName, curr)
       }
     })
 
-    // B. Executive wastage logs (Processing & Storage, separating tech waste)
+    // B. Inspector Defect Logs (Stages: INCOMING, PROCESSING, STORAGE)
+    defectLogs.forEach((def) => {
+      const pName = (def.product?.name || 'Mahsulot').trim()
+      const qty = def.quantity || 0
+      if (qty <= 0) return
+      const stage =
+        def.location === 'WAREHOUSE'
+          ? 'STORAGE'
+          : def.location === 'WORKSHOP' || def.location === 'PRODUCTION'
+          ? 'PROCESSING'
+          : 'INCOMING'
+
+      const curr = getOrInitDefect(pName)
+      if (stage === 'INCOMING') curr.incomingKg += qty
+      else if (stage === 'STORAGE') curr.storageKg += qty
+      else curr.processingKg += qty
+      curr.totalDefectKg += qty
+      curr.incidentsCount += 1
+
+      curr.acts.push({
+        id: `def-${def.id}`,
+        actNumber: def.defectNumber || `BRAK-${def.id}`,
+        stage,
+        date: def.createdAt.toISOString().slice(0, 10),
+        quantityKg: qty,
+        reason: def.reason || def.defectType || 'Sifat talabiga javob bermadi',
+        responsible: def.responsible || 'Javobgar aniqlanmagan',
+        inspector: def.responsible || 'Sifat nazoratchisi',
+        isTechWaste: false,
+      })
+    })
+
+    // C. Packaging defects recorded in Production Shop Expenses (Stage 2: PROCESSING)
+    shopExpenses.forEach((exp) => {
+      if (exp.materials && typeof exp.materials === 'object') {
+        Object.entries(exp.materials).forEach(([matName, matVal]) => {
+          const num = typeof matVal === 'number' ? matVal : parseFloat(String(matVal))
+          if (!isNaN(num) && num > 0 && matName.toLowerCase().includes('брак')) {
+            const cleanName = matName.replace(/\s*брак\s*/gi, '').trim() || matName
+            const curr = getOrInitDefect(cleanName)
+            curr.processingKg += num
+            curr.totalDefectKg += num
+            curr.incidentsCount += 1
+            curr.acts.push({
+              id: `scrap-pkg-${exp.id}-${matName}`,
+              actNumber: `PKG-${exp.date}`,
+              stage: 'PROCESSING',
+              date: exp.date,
+              quantityKg: Math.round(num * 10) / 10,
+              reason: 'Qadoqlash jarayonida yaroqsizga chiqqan quti/paket',
+              responsible: 'Qadoqlash sexi',
+              inspector: "Sex mas'uli",
+              isTechWaste: false,
+            })
+          }
+        })
+      }
+    })
+
+    // D. Executive wastage logs (Processing & Storage, separating tech waste)
     wastageLogs.forEach((w) => {
       const pName = (w.productName || "Noma'lum mahsulot").trim()
       const qty = w.weightKg || 0
       if (qty <= 0) return
       const isTech = w.wastageType === 'NATURAL_TECH_WASTE'
 
-      const curr = defectByProductMap.get(pName) || {
-        product: pName,
-        incomingKg: 0,
-        processingKg: 0,
-        storageKg: 0,
-        totalDefectKg: 0,
-        incidentsCount: 0,
-        techWasteKg: 0,
-        acts: [],
-      }
+      const curr = getOrInitDefect(pName)
 
       if (isTech) {
         curr.techWasteKg += qty
@@ -1149,7 +1223,6 @@ export async function GET(request: NextRequest) {
         inspector: w.reportedByName || "Mas'ul xodim",
         isTechWaste: isTech,
       })
-      defectByProductMap.set(pName, curr)
     })
 
     const defectsByStage = Array.from(defectByProductMap.values())

@@ -1227,37 +1227,18 @@ export default function DirectorPage() {
             onClick={() => openOperationsModal('prixod')}
             className="group relative overflow-hidden bg-emerald-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-emerald-500/30 hover:border-emerald-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
-                  <Truck size={24} />
-                </div>
-                <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
-                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-                </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
+                <Truck size={24} />
               </div>
-
-              <span className="text-xs font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider block">
-                {formatDual("Kirim operatsiyalari", "Приход сырья", "Inbound Operations")}
-              </span>
-              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                {formatDual("Xomashyo va taralar", "Сырье и тара", "Raw Materials & Packaging")}
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
-                {formatDual(
-                  "Ta'minotchi partiyalari, sifat nazorati (QC) va qabul aktlari jurnali",
-                  "Партии поставщиков, входной контроль качества (QC) и акты",
-                  "Supplier batches, QC inspection & inbound acceptance logs"
-                )}
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-emerald-500/25 flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Ta'minot:", "Поставка:", "Supply:")}</span>
-              <span className="font-bold text-emerald-800 dark:text-emerald-300">
-                100% {formatDual("Tekshirilgan", "Проверено", "Verified")}
+              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
               </span>
             </div>
+
+            <h4 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
+              {formatDual("Kirim operatsiyalari", "Приход сырья", "Inbound Operations")}
+            </h4>
           </div>
 
           {/* RASXOD CARD */}
@@ -1265,37 +1246,18 @@ export default function DirectorPage() {
             onClick={() => openOperationsModal('rasxod')}
             className="group relative overflow-hidden bg-blue-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-blue-500/30 hover:border-blue-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
-                  <ChefHat size={24} />
-                </div>
-                <span className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
-                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-                </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
+                <ChefHat size={24} />
               </div>
-
-              <span className="text-xs font-extrabold text-blue-800 dark:text-blue-400 uppercase tracking-wider block">
-                {formatDual("Chiqim operatsiyalari", "Расход производства", "Outbound Operations")}
-              </span>
-              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                {formatDual("Sexlar va sarf", "Цехи и расход", "Workshops & Consumption")}
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
-                {formatDual(
-                  "Sexlarga berilgan xomashyo, tayyor mahsulot va partiyalar zanjiri",
-                  "Списание в цехи, готовая продукция и цепочка партий",
-                  "Workshop allocations, finished output & batch tracking"
-                )}
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-blue-500/25 flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">{formatDual("Sexlar:", "Цехи:", "Target:")}</span>
-              <span className="font-bold text-blue-800 dark:text-blue-300">
-                Zagotovka, Oshxona, Sex
+              <span className="flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
               </span>
             </div>
+
+            <h4 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
+              {formatDual("Chiqim operatsiyalari", "Расход производства", "Outbound Operations")}
+            </h4>
           </div>
 
           {/* BRAK CARD */}
@@ -1303,39 +1265,18 @@ export default function DirectorPage() {
             onClick={() => openOperationsModal('brak')}
             className="group relative overflow-hidden bg-rose-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-rose-500/30 hover:border-rose-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold">
-                  <AlertTriangle size={24} />
-                </div>
-                <span className="flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:translate-x-1 transition-transform">
-                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-                </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold">
+                <AlertTriangle size={24} />
               </div>
-
-              <span className="text-xs font-extrabold text-rose-800 dark:text-rose-400 uppercase tracking-wider block">
-                {formatDual("Brak va chiqindi", "Брак и отходы", "Defects & Waste")}
-              </span>
-              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                {formatDual("Sifat nazorati", "Контроль качества", "Quality Control")}
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
-                {formatDual(
-                  "Qadoqlash taralari braki, texnologik chiqindi va sabablar tahlili",
-                  "Брак тары, технологические отходы и анализ причин",
-                  "Packaging defects, technological loss & root cause logs"
-                )}
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-rose-500/25 flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">
-                {formatDual("Manba:", "Источник:", "Source:")}
-              </span>
-              <span className="font-bold text-rose-800 dark:text-rose-300">
-                {formatDual("Qadoqlash sexi (Taralar)", "Цех упаковки (Тара)", "Packaging workshop")}
+              <span className="flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
               </span>
             </div>
+
+            <h4 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
+              {formatDual("Brak va chiqindi", "Брак и отходы", "Defects & Waste")}
+            </h4>
           </div>
 
           {/* OMBORXONA (QOLDIQ) CARD */}
@@ -1343,39 +1284,18 @@ export default function DirectorPage() {
             onClick={() => openOperationsModal('ombor')}
             className="group relative overflow-hidden bg-indigo-50/80 dark:bg-dark-900 p-5 rounded-3xl border-2 border-indigo-500/30 hover:border-indigo-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold">
-                  <Package size={24} />
-                </div>
-                <span className="flex items-center gap-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
-                  {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
-                </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold">
+                <Package size={24} />
               </div>
-
-              <span className="text-xs font-extrabold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider block">
-                {formatDual("Omborxona qoldig'i", "Складской остаток", "Warehouse Stock")}
-              </span>
-              <h4 className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                {formatDual("Zaxira va qoldiqlar", "Запасы и остатки", "Stock & Balances")}
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium leading-relaxed">
-                {formatDual(
-                  "Mahsulotlar kesimida qoldiq, sarf, muddatlar va yetish tahlili",
-                  "Остатки по позициям, расход, сроки годности и анализ запаса",
-                  "Stock per product, consumption, shelf life & coverage analysis"
-                )}
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-indigo-500/25 flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">
-                {formatDual("Holati:", "Статус:", "Status:")}
-              </span>
-              <span className="font-bold text-indigo-800 dark:text-indigo-300">
-                {formatDual("Doimiy monitoring", "Постоянный мониторинг", "Active monitoring")}
+              <span className="flex items-center gap-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Zanjir", "Цепочка", "Chain")} &rarr;
               </span>
             </div>
+
+            <h4 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
+              {formatDual("Omborxona qoldig'i", "Складской остаток", "Warehouse Stock")}
+            </h4>
           </div>
         </div>
       </div>
@@ -2230,19 +2150,19 @@ export default function DirectorPage() {
                       formatDual("Omborxona zanjiri", "Складские остатки", "Warehouse Stock")
                     )}
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    {activeModal === 'employees'
-                      ? formatDual("5 ta asosiy bo'lim faoliyati va kunlik, haftalik hamda oylik qilingan ishlar nazorati", "Контроль деятельности 5 ключевых отделов, ежедневных, еженедельных и ежемесячных задач", "Monitoring of 5 core departments and daily, weekly, and monthly completed tasks")
-                      : activeModal === 'operations'
-                      ? operationsTab === 'prixod'
+                  {(activeModal === 'employees' || activeModal === 'operations') && (
+                    <p className="text-xs text-slate-500">
+                      {activeModal === 'employees'
+                        ? formatDual("5 ta asosiy bo'lim faoliyati va kunlik, haftalik hamda oylik qilingan ishlar nazorati", "Контроль деятельности 5 ключевых отделов, ежедневных, еженедельных и ежемесячных задач", "Monitoring of 5 core departments and daily, weekly, and monthly completed tasks")
+                        : operationsTab === 'prixod'
                         ? formatDual("Ombor va sexlarga xomashyo qabuli", "Прием сырья и материалов на склад и в цеха", "Inbound arrivals and materials")
                         : operationsTab === 'rasxod'
                         ? formatDual("Sexlarga xomashyo chiqimi va sarfi", "Расход сырья по цехам", "Material consumption")
                         : operationsTab === 'brak'
                         ? formatDual("Brak va texnologik chiqindi dalolatnomalari", "Акты брака и отходов", "Defect and scrap records")
-                        : formatDual("Ombordagi barcha xomashyo va taralar qoldig'i tahlili", "Анализ остатков сырья и тары на складе", "Warehouse material and packaging stock analysis")
-                      : formatDual("Saqlangan rasmiy ma'lumotlar", "Официальные данные", "Official records")}
-                  </p>
+                        : formatDual("Ombordagi barcha xomashyo va taralar qoldig'i tahlili", "Анализ остатков сырья и тары на складе", "Warehouse material and packaging stock analysis")}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -2704,14 +2624,7 @@ export default function DirectorPage() {
                                 <tr key={`insp-${insp.id || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/50 transition-colors">
                                   <td className="p-3 text-slate-500 whitespace-nowrap text-xs font-mono">{formatCleanDate(insp.date || insp.rawDate || insp.createdAt)}</td>
                                   <td className="p-3 font-bold text-slate-900 dark:text-white">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span>{insp.nomenclature || insp.product || formatDual("Xomashyo", "Сырье", "Raw material")}</span>
-                                      {insp.docType && (
-                                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-dark-700 text-slate-500 font-semibold font-sans">
-                                          {insp.docType}
-                                        </span>
-                                      )}
-                                    </div>
+                                    <span>{insp.nomenclature || insp.product || formatDual("Xomashyo", "Сырье", "Raw material")}</span>
                                   </td>
                                   <td className="p-3 text-slate-700 dark:text-slate-300 text-xs">{insp.supplier || "-"}</td>
                                   <td className="p-3 text-indigo-600 dark:text-indigo-400 font-bold text-xs">{insp.inspectorName || formatDual("Nazoratchi", "Инспектор", "Inspector")}</td>

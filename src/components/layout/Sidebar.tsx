@@ -65,8 +65,8 @@ const navSections = [
     title: 'Ombor va Ishlab chiqarish',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
-      { key: 'rashod', href: '/rashod', icon: ArrowUpRight, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION'] },
-      { key: 'gp', href: '/gp', icon: Boxes, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
+      { key: 'rashod', href: '/rashod', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
+      { key: 'gp', href: '/gp', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'QUALITY_CONTROL'] },
       { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
@@ -82,7 +82,7 @@ const navSections = [
     items: [
       { key: 'sales', href: '/sales', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SALES'] },
       { key: 'orders', href: '/orders', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'WAREHOUSE'] },
-      { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'ACCOUNTING'] },
+      { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'SUPPLY', 'ACCOUNTING'] },
       { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
     ]
@@ -237,10 +237,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 'director',
                 'archive',
                 'warehouse',
-                'rashod',
-                'gp',
                 'accounting',
-                'supplierDebts',
                 'reports',
                 'chat',
                 'settings',
