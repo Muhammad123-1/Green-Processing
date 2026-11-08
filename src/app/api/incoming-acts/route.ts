@@ -140,13 +140,25 @@ export async function POST(req: NextRequest) {
     const rating = Number(decisionRating) || 4
     const resolvedDecisionText = decisionText || getRatingText(rating, 'uz')
 
+    let cleanTemp: string | null = temperature ? String(temperature).trim() : null
+    if (cleanTemp) {
+      const norm = cleanTemp.replace(',', '.')
+      const m = norm.match(/^(-?\d+(?:\.\d+)?)/)
+      if (m) {
+        const num = parseFloat(m[1])
+        if (!isNaN(num)) {
+          cleanTemp = String(Math.round(num * 10) / 10)
+        }
+      }
+    }
+
     const newAct = await prisma.incomingRawMaterialAct.create({
       data: {
         actNumber: String(actNumber || Date.now().toString().slice(-4)),
         actDate: String(actDate),
         productName: String(productName).trim(),
         supplierName: String(supplierName).trim(),
-        temperature: temperature ? String(temperature) : null,
+        temperature: cleanTemp,
         transportCondition: transportCondition !== undefined ? Number(transportCondition) : 1,
         hasDocumentation: hasDocumentation !== undefined ? Number(hasDocumentation) : 1,
         structure: structure !== undefined ? Number(structure) : 1,

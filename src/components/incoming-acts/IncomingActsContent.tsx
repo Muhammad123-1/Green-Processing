@@ -97,6 +97,22 @@ const PRODUCT_LIST = [
   { id: 'ОГУРЦЫ СВЕЖИЕ', label: 'ОГУРЦЫ', color: '#00B050', bg: 'bg-[#00B050] text-black font-bold' }
 ]
 
+export function formatTemperature(val: any): string {
+  if (val === null || val === undefined) return '-'
+  const str = String(val).trim()
+  if (!str || str === '-') return '-'
+
+  const normalized = str.replace(',', '.')
+  const match = normalized.match(/^(-?\d+(?:\.\d+)?)/)
+  if (match) {
+    const num = parseFloat(match[1])
+    if (!isNaN(num)) {
+      return String(Math.round(num * 10) / 10)
+    }
+  }
+  return str
+}
+
 export default function IncomingActsContent({
   userRole = 'INSPECTOR',
   userName = 'Sifat Nazoratchisi'
@@ -1134,7 +1150,7 @@ export default function IncomingActsContent({
 
                       {/* Col 6: Температура */}
                       <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-mono whitespace-nowrap text-slate-800 dark:text-slate-200">
-                        {act.temperature || raw.col6 || '-'}
+                        {formatTemperature(act.temperature || raw.col6)}
                       </td>
 
                       {/* Col 7: Условия упаковки */}
@@ -1820,7 +1836,7 @@ export default function IncomingActsContent({
                 </div>
                 <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700">
                   <span className="text-[11px] text-slate-400 block">Harorat</span>
-                  <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">{selectedActForView.temperature || '-'}</span>
+                  <span className="text-sm font-bold font-mono text-slate-900 dark:text-white">{formatTemperature(selectedActForView.temperature)}</span>
                 </div>
                 <div className="p-3 bg-white dark:bg-dark-850 rounded-xl border border-slate-200 dark:border-dark-700">
                   <span className="text-[11px] text-slate-400 block">Ombor (kg)</span>

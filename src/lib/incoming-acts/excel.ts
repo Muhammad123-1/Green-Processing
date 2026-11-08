@@ -167,7 +167,17 @@ export async function parseIncomingActsFromBuffer(buffer: Buffer): Promise<Incom
     }
 
     const supplierName = col5 || "Noma'lum ta'minotchi"
-    const rawCol6 = cleanText(row.getCell(6).value)
+    let rawCol6 = cleanText(row.getCell(6).value)
+    if (rawCol6) {
+      const norm = rawCol6.replace(',', '.')
+      const m = norm.match(/^(-?\d+(?:\.\d+)?)/)
+      if (m) {
+        const num = parseFloat(m[1])
+        if (!isNaN(num)) {
+          rawCol6 = String(Math.round(num * 10) / 10)
+        }
+      }
+    }
     const rawCol7 = cleanText(row.getCell(7).value)
     const rawCol8 = cleanText(row.getCell(8).value)
     const rawCol9 = cleanText(row.getCell(9).value)

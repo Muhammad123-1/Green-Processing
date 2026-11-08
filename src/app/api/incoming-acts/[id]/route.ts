@@ -75,6 +75,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const rating = Number(decisionRating) || 4
     const resolvedDecisionText = decisionText || getRatingText(rating, 'uz')
 
+    let cleanTemp: string | null | undefined = undefined
+    if (temperature !== undefined) {
+      if (!temperature) {
+        cleanTemp = null
+      } else {
+        const str = String(temperature).trim()
+        const norm = str.replace(',', '.')
+        const m = norm.match(/^(-?\d+(?:\.\d+)?)/)
+        if (m) {
+          const num = parseFloat(m[1])
+          cleanTemp = isNaN(num) ? str : String(Math.round(num * 10) / 10)
+        } else {
+          cleanTemp = str
+        }
+      }
+    }
+
     const updated = await prisma.incomingRawMaterialAct.update({
       where: { id: actId },
       data: {
@@ -82,7 +99,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         actDate: actDate !== undefined ? String(actDate) : undefined,
         productName: productName !== undefined ? String(productName).trim() : undefined,
         supplierName: supplierName !== undefined ? String(supplierName).trim() : undefined,
-        temperature: temperature !== undefined ? (temperature ? String(temperature) : null) : undefined,
+        temperature: cleanTemp,
         transportCondition: transportCondition !== undefined ? Number(transportCondition) : undefined,
         hasDocumentation: hasDocumentation !== undefined ? Number(hasDocumentation) : undefined,
         structure: structure !== undefined ? Number(structure) : undefined,
