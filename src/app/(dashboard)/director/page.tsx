@@ -1307,168 +1307,124 @@ export default function DirectorPage() {
         {/* CARD 1: XOMASHYO VA TA'MINOT */}
         <div
           onClick={() => setActiveModal('arrivals')}
-          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-blue-400 dark:hover:border-blue-500 cursor-pointer transition-all group relative overflow-hidden"
+          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-blue-400 dark:hover:border-blue-500 cursor-pointer transition-all group relative overflow-hidden flex flex-col justify-between"
         >
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              <Truck size={24} />
+          <div>
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                <Truck size={24} />
+              </div>
+              <span className="flex items-center text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
+              </span>
             </div>
-            <span className="flex items-center text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
-              {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
+
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+              {formatDual("Xomashyo qabuli", "Прием сырья", "Raw arrivals")}
             </span>
-          </div>
-
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            {formatDual("Xomashyo qabuli", "Прием сырья", "Raw arrivals")}
-          </span>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-            {kpis?.arrivals?.acceptedKg ? (kpis.arrivals.acceptedKg / 1000).toFixed(1) + ` ${formatDual("tn", "тн", "tn")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("partiya", "партий", "batches")}`}
-          </div>
-          <p className="text-xs text-slate-400 mt-1">
-            {kpis?.arrivals?.acceptedKg ? `${kpis.arrivals.acceptedKg.toLocaleString()} kg ${formatDual("qabul qilingan", "принято", "accepted")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("ta qabul", "приемок", "receipts")}`}
-          </p>
-
-          <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs">
-            <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Qabul:", "Принято:", "Accepted:")}</span>
-              <span className="font-bold text-emerald-600">
-                {kpis?.arrivals?.acceptedKg ? `${(kpis.arrivals.acceptedKg / 1000).toFixed(1)} tn` : '-'}
-              </span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
+              {kpis?.arrivals?.acceptedKg ? (kpis.arrivals.acceptedKg / 1000).toFixed(1) + ` ${formatDual("tn", "тн", "tn")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("partiya", "партий", "batches")}`}
             </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Rad etilgan:", "Отклонено:", "Rejected:")}</span>
-              <span className={`font-bold ${kpis?.arrivals?.rejectedKg > 0 ? 'text-red-500' : 'text-slate-500'}`}>
-                {kpis?.arrivals?.rejectedKg ? `${kpis.arrivals.rejectedKg} kg` : '0 kg'}
-              </span>
-            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              {kpis?.arrivals?.acceptedKg ? `${kpis.arrivals.acceptedKg.toLocaleString()} kg ${formatDual("qabul qilingan", "принято", "accepted")}` : `${kpis?.arrivals?.totalCount || 0} ${formatDual("ta qabul", "приемок", "receipts")}`}
+            </p>
           </div>
         </div>
 
         {/* CARD 2: ISHLAB CHIQARISH VA SMENA NATIJALARI */}
         <div
           onClick={() => setActiveModal('production')}
-          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-emerald-400 dark:hover:border-emerald-500 cursor-pointer transition-all group relative overflow-hidden"
+          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-emerald-400 dark:hover:border-emerald-500 cursor-pointer transition-all group relative overflow-hidden flex flex-col justify-between"
         >
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-              <ChefHat size={24} />
+          <div>
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                <ChefHat size={24} />
+              </div>
+              <span className="flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
+              </span>
             </div>
-            <span className="flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
-              {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
+
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+              {formatDual("Ishlab chiqarish", "Производство", "Production")}
             </span>
-          </div>
-
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            {formatDual("Ishlab chiqarish", "Производство", "Production")}
-          </span>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-            {kpis?.production?.totalOutputBoxes ? `${kpis.production.totalOutputBoxes.toLocaleString()} ${formatDual("quti", "кор.", "boxes")}` : `${kpis?.production?.checklistsCount || 0} ${formatDual("smena", "смен", "shifts")}`}
-          </div>
-          <p className="text-xs text-slate-400 mt-1">
-            {kpis?.production?.totalOutputKg ? `${kpis.production.totalOutputKg.toLocaleString()} kg ${formatDual("tayyor mahsulot", "готовой прод.", "finished product")}` : `${kpis?.production?.checklistsCount || 0} ${formatDual("ta smena", "смен", "shifts")}`}
-          </p>
-
-          <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs">
-            <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Sarfdan (Yield):", "Выход (Yield):", "Yield:")}</span>
-              <span className="font-bold text-emerald-600">
-                {kpis?.production?.avgYieldPercent ? `${kpis.production.avgYieldPercent.toFixed(1)}%` : '-'}
-              </span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
+              {kpis?.production?.totalOutputBoxes ? `${kpis.production.totalOutputBoxes.toLocaleString()} ${formatDual("quti", "кор.", "boxes")}` : `${kpis?.production?.checklistsCount || 0} ${formatDual("smena", "смен", "shifts")}`}
             </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Zaxiradan:", "К запасу:", "Stock-Rel:")}</span>
-              <span className="font-bold text-indigo-600">
-                {kpis?.production?.stockRelativeOutputPercent ? `${kpis.production.stockRelativeOutputPercent.toFixed(1)}%` : '-'}
-              </span>
-            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              {kpis?.production?.totalOutputKg ? `${kpis.production.totalOutputKg.toLocaleString()} kg ${formatDual("tayyor mahsulot", "готовой прод.", "finished product")}` : `${kpis?.production?.checklistsCount || 0} ${formatDual("ta smena", "смен", "shifts")}`}
+            </p>
           </div>
         </div>
 
-        {/* CARD 3: OMBOR HOLATI (SVETOFOR VA TRANSFERLAR) */}
+        {/* CARD 3: OMBOR HOLATI */}
         <div
           onClick={() => setActiveModal('warehouse')}
-          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-purple-400 dark:hover:border-purple-500 cursor-pointer transition-all group relative overflow-hidden"
+          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-purple-400 dark:hover:border-purple-500 cursor-pointer transition-all group relative overflow-hidden flex flex-col justify-between"
         >
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
-              <Package size={24} />
-            </div>
-            <span className="flex items-center text-xs font-bold text-purple-600 dark:text-purple-400 group-hover:translate-x-1 transition-transform">
-              {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
-            </span>
-          </div>
-
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            {formatDual("Ombor zaxirasi", "Складские остатки", "Stock balance")}
-          </span>
-          <div className="flex flex-wrap items-center gap-2 mt-1.5">
-            <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> {kpis?.warehouse?.sufficientCount || 0} {formatDual("yetarli", "в норме", "sufficient")}
-            </span>
-            <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span> {kpis?.warehouse?.lowStockCount || 0} {formatDual("kam", "мало", "low")}
-            </span>
-            {(kpis?.warehouse?.excessStockCount || 0) > 0 && (
-              <span className="flex items-center gap-1 text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded-lg">
-                <span className="w-2 h-2 rounded-full bg-purple-500"></span> {kpis?.warehouse?.excessStockCount} {formatDual("ortiqcha", "избыток", "excess")}
-              </span>
-            )}
-            <span className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-red-500"></span> {kpis?.warehouse?.outOfStockCount || 0} {formatDual("tugagan", "закончилось", "out of stock")}
-            </span>
-          </div>
-          <p className="text-xs text-slate-400 mt-2">
-            {kpis?.warehouse?.totalInventoryKg ? `${kpis.warehouse.totalInventoryKg.toLocaleString()} kg (${kpis?.warehouse?.totalProductsCount || 0} ${formatDual("xil xomashyo", "вид. сырья", "raw materials")})` : `${formatDual("Jami", "Всего", "Total")} ${kpis?.warehouse?.totalProductsCount || 0} ${formatDual("xil mahsulot", "вид. прод.", "product types")}`}
-          </p>
-
-          <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs">
-            <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Transferlar:", "Трансферы:", "Transfers:")}</span>
-              <span className="font-bold text-slate-700 dark:text-slate-300">
-                {kpis?.warehouse?.transfersCount || 0} {formatDual("ta", "шт", "pcs")}
+          <div>
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                <Package size={24} />
+              </div>
+              <span className="flex items-center text-xs font-bold text-purple-600 dark:text-purple-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
               </span>
             </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block">{formatDual("Kamomad:", "Недостача:", "Shortage:")}</span>
-              <span className={`font-bold ${kpis?.warehouse?.transfersDiscrepancyKg > 0 ? 'text-red-500' : 'text-slate-500'}`}>
-                {kpis?.warehouse?.transfersDiscrepancyKg || 0} kg
+
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+              {formatDual("Ombor zaxirasi", "Складские остатки", "Stock balance")}
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
+              {kpis?.warehouse?.totalInventoryKg ? (kpis.warehouse.totalInventoryKg / 1000).toFixed(1) + ` ${formatDual("tn", "тн", "tn")}` : `${kpis?.warehouse?.totalProductsCount || 0} ${formatDual("xil", "вид.", "types")}`}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {kpis?.warehouse?.sufficientCount || 0} {formatDual("yetarli", "в норме", "sufficient")}
+              </span>
+              <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> {kpis?.warehouse?.lowStockCount || 0} {formatDual("kam", "мало", "low")}
+              </span>
+              {(kpis?.warehouse?.excessStockCount || 0) > 0 && (
+                <span className="flex items-center gap-1 text-[11px] font-bold text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> {kpis?.warehouse?.excessStockCount} {formatDual("ortiqcha", "избыток", "excess")}
+                </span>
+              )}
+              <span className="flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-lg">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> {kpis?.warehouse?.outOfStockCount || 0} {formatDual("tugagan", "закончилось", "out of stock")}
               </span>
             </div>
           </div>
         </div>
 
-        {/* CARD 4: XODIMLAR FAOLIYATI (5 TA ASOSIY BO'LIM) */}
+        {/* CARD 4: XODIMLAR FAOLIYATI */}
         <div
           onClick={() => {
             setSelectedDepartment(null)
             setActiveModal('employees')
           }}
-          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group relative overflow-hidden"
+          className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer transition-all group relative overflow-hidden flex flex-col justify-between"
         >
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-              <Users size={24} />
+          <div>
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                <Users size={24} />
+              </div>
+              <span className="flex items-center text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+                {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
+              </span>
             </div>
-            <span className="flex items-center text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
-              {formatDual("Ko'rish", "Открыть", "Inspect")} <ChevronRight size={14} />
-            </span>
-          </div>
 
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            {formatDual("Xodimlar faoliyati", "Деятельность отделов", "Department activities")}
-          </span>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-            5 <span className="text-sm font-semibold text-slate-400">{formatDual("ta asosiy bo'lim", "ключевых отделов", "core departments")}</span>
-          </div>
-          <p className="text-xs text-slate-400 mt-1 truncate">
-            {formatDual("Buxgalteriya, Sifat, Sex, Admin, Ishlab chiqarish", "Бухгалтерия, Контроль качества, Цех, Админ, Производство", "Accounting, QC, Inspector, Admin, Production")}
-          </p>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
-            <span className="text-slate-400">{formatDual("Nazorat turi:", "Вид контроля:", "Monitoring:")}</span>
-            <span className="font-bold text-indigo-600 flex items-center gap-1">
-              {formatDual("Kunlik, haftalik, oylik", "День, неделя, месяц", "Daily, weekly, monthly")}
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+              {formatDual("Xodimlar faoliyati", "Деятельность отделов", "Department activities")}
             </span>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
+              5 <span className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400">{formatDual("ta asosiy bo'lim", "ключевых отделов", "core departments")}</span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-medium">
+              {formatDual("Buxgalteriya, Sifat, Sex, Admin, Ishlab chiqarish", "Бухгалтерия, Контроль качества, Цех, Админ, Производство", "Accounting, QC, Inspector, Admin, Production")}
+            </p>
           </div>
         </div>
       </div>
