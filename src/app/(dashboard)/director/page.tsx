@@ -1408,7 +1408,7 @@ export default function DirectorPage() {
           </span>
         </div>
 
-        {/* PRIMARY 4 CHARTS — 2-COLUMN RESPONSIVE GRID */}
+        {/* PRIMARY CHARTS — RESPONSIVE GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* CHART 1: PRODUCTION DYNAMICS */}
           <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-indigo-500/30 transition-all flex flex-col justify-between">
@@ -1634,7 +1634,7 @@ export default function DirectorPage() {
           </div>
 
           {/* CHART 3: INVENTORY STOCK COVERAGE */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-emerald-500/30 transition-all flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-emerald-500/30 transition-all flex flex-col justify-between">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -1734,105 +1734,6 @@ export default function DirectorPage() {
             </div>
             <p className="text-[11px] text-slate-400 mt-2 text-right">
               {formatDual("Xomashyo ustiga bosing → ombor qoldig'i tahlili", "Кликните сырье → аудит запасов", "Click item → stock audit")}
-            </p>
-          </div>
-
-          {/* CHART 4: SUPPLIER OUTSTANDING DEBT */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-blue-500/30 transition-all flex flex-col justify-between">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
-              <div>
-                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <DollarSign size={16} className="text-blue-500" />
-                  {formatDual("4. Ta'minotchilar oldidagi qarz", "4. Задолженность поставщикам", "4. Supplier Outstanding Debt")}
-                </h3>
-                <p className="text-xs text-slate-400">
-                  {formatDual("Rasmiy xomashyo qabul aktlari bo'yicha haqiqiy qarz", "Фактическая задолженность по официальным актам приемки", "Payables from verified incoming receiving acts")}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                  UZS
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 text-xs mb-3 px-1">
-              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                {formatDual("Muddati yetmagan", "Срок не истек", "Not yet due")}
-              </span>
-              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                {formatDual("Muddati o'tgan qarz", "Просроченная задолженность", "Overdue")}
-              </span>
-            </div>
-
-            <div className="h-[280px] w-full cursor-pointer">
-              {mounted && supplierDebts.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    layout="vertical"
-                    data={supplierDebts}
-                    margin={{ top: 5, right: 30, left: 15, bottom: 5 }}
-                    onClick={(e: any) => {
-                      if (e && e.activePayload && e.activePayload[0]) {
-                        const payload = e.activePayload[0].payload
-                        setChartDrillModal({
-                          type: 'debt',
-                          title: `${formatDual("Ta'minotchi qarz taqsimoti", "Детализация задолженности", "Supplier Debt Breakdown")} — ${payload.supplierName}`,
-                          subtitle: formatDual("Invoyslar, qabul aktlari va to'lov muddatlari", "Акты приемки, инвойсы и сроки оплаты", "Verified receiving acts, invoices & due dates"),
-                          data: payload,
-                        })
-                      }
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
-                    <XAxis
-                      type="number"
-                      tick={{ fontSize: 11 }}
-                      stroke="#94a3b8"
-                      tickFormatter={(val) =>
-                        val >= 1000000000
-                          ? `${(val / 1000000000).toFixed(1)} mlrd`
-                          : val >= 1000000
-                            ? `${(val / 1000000).toFixed(0)} mln`
-                            : `${val}`
-                      }
-                    />
-                    <YAxis
-                      dataKey="supplierName"
-                      type="category"
-                      tick={{ fontSize: 10 }}
-                      stroke="#94a3b8"
-                      width={100}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1e293b',
-                        borderColor: '#334155',
-                        borderRadius: '12px',
-                        color: '#fff',
-                        fontSize: '12px',
-                      }}
-                      formatter={(val: any, name: any) => [
-                        `${Number(val).toLocaleString()} UZS`,
-                        name === 'notYetDueUzs'
-                          ? formatDual("Muddati yetmagan", "В пределах срока", "Not yet due")
-                          : formatDual("Muddati o'tgan", "Просрочено", "Overdue"),
-                      ]}
-                    />
-                    <Bar dataKey="notYetDueUzs" stackId="debt" fill="#3b82f6" />
-                    <Bar dataKey="overdueUzs" stackId="debt" fill="#ef4444" radius={[0, 6, 6, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
-                  {formatDual("Tasdiqlangan qarzlar jurnali topilmadi", "Нет данных о задолженности", "No debt records found")}
-                </div>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400 mt-2 text-right">
-              {formatDual("Ta'minotchi ustiga bosing → 4 bosqichli burg'ulash", "Кликните поставщика → детальный аудит", "Click supplier → 4-level drill down")}
             </p>
           </div>
         </div>
