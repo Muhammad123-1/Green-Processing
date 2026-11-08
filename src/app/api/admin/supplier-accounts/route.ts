@@ -14,10 +14,12 @@ export async function GET() {
       where: { isActive: true },
       include: {
         users: {
+          where: { role: 'SUPPLIER' },
           select: {
             id: true,
             name: true,
             username: true,
+            password: true,
             role: true,
             isActive: true,
             createdAt: true
@@ -33,7 +35,14 @@ export async function GET() {
     // Also get all users with role 'SUPPLIER'
     const supplierUsers = await prisma.user.findMany({
       where: { role: 'SUPPLIER' },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        password: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
         supplier: {
           select: { id: true, name: true, phone: true, category: true }
         }

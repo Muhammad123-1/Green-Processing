@@ -35,6 +35,7 @@ interface SupplierAccountUser {
   id: number
   name: string
   username: string
+  password?: string
   role: string
   isActive: boolean
   createdAt: string
@@ -57,6 +58,7 @@ interface SupplierItem {
     id: number
     name: string
     username: string
+    password?: string
     isActive: boolean
     createdAt: string
   }>
@@ -87,7 +89,18 @@ export default function SupplierAccountsManager() {
   const [newPassword, setNewPassword] = useState('')
   const [resetting, setResetting] = useState(false)
 
-  // Copied success banner modal (to share credentials)
+  // Password visibility state per row
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({})
+
+  const togglePasswordVisibility = (userId: number) => {
+    setVisiblePasswords(prev => ({ ...prev, [userId]: !prev[userId] }))
+  }
+
+  const copyShareText = (supName: string, username: string, pass: string) => {
+    const text = `Green Processing Zavodi — Yetkazib Beruvchi Portali:\nSayt: https://green-processing.uz/supplier-portal\nLogin: ${username}\nParol: ${pass}\n(Ushbu login va parol bilan portalga kirib buyurtmalarni kuzatishingiz mumkin)`
+    navigator.clipboard.writeText(text)
+    toast.success(formatDual("Yuborish uchun SMS matni nusxalandi!", "Текст для отправки скопирован!", "Copied text for supplier!"))
+  }
   const [createdCredentials, setCreatedCredentials] = useState<{
     supplierName: string
     username: string
@@ -456,6 +469,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                 <th className="py-4 px-5">{formatDual("TA'MINOTCHI KORXONASI", "ПРЕДПРИЯТИЕ ПОСТАВЩИКА", "SUPPLIER COMPANY")}</th>
                 <th className="py-4 px-4">{formatDual("TELEFON", "ТЕЛЕФОН", "PHONE")}</th>
                 <th className="py-4 px-4">{formatDual("PORTAL LOGIN (USERNAME)", "ЛОГИН ПОРТАЛА", "PORTAL USERNAME")}</th>
+                <th className="py-4 px-4">{formatDual("PORTAL PAROLI (PASSWORD)", "ПАРОЛЬ ПОРТАЛА", "PORTAL PASSWORD")}</th>
                 <th className="py-4 px-4 text-center">{formatDual("HOLAT", "СТАТУС", "STATUS")}</th>
                 <th className="py-4 px-4 text-center">{formatDual("BUYURTMALAR", "ЗАКАЗЫ", "ORDERS")}</th>
                 <th className="py-4 px-5 text-right">{formatDual("AMALLAR", "ДЕЙСТВИЯ", "ACTIONS")}</th>
@@ -464,14 +478,14 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
             <tbody className="divide-y divide-dark-750/70">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-400">
+                  <td colSpan={7} className="p-12 text-center text-slate-400">
                     <Loader2 size={28} className="animate-spin text-emerald-400 mx-auto mb-2" />
                     <span>{formatDual("Yuklanmoqda...", "Загрузка...", "Loading...")}</span>
                   </td>
                 </tr>
               ) : filteredSuppliers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-500">
+                  <td colSpan={7} className="p-12 text-center text-slate-500">
                     {formatDual("Ta'minotchilar topilmadi", "Поставщики не найдены", "No suppliers found")}
                   </td>
                 </tr>
@@ -484,10 +498,13 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                     <tr key={sup.id} className="hover:bg-dark-800/40 transition-colors">
                       {/* Company Name */}
                       <td className="py-4 px-5">
-                        <div className="font-extrabold text-white text-sm flex items-center gap-2">
-                          <Building2 size={16} className="text-emerald-400 flex-shrink-0" />
-                          <span>{sup.name}</span>
-                        </div>
+                        <a
+                          href={`/suppliers/${sup.id}`}
+                          className="font-extrabold text-white hover:text-emerald-400 text-sm flex items-center gap-2 group transition-colors"
+                        >
+                          <Building2 size={16} className="text-emerald-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                          <span className="underline decoration-slate-600 group-hover:decoration-emerald-400">{sup.name}</span>
+                        </a>
                         {sup.shortName && (
                           <span className="text-[10px] text-slate-400 block ml-6">
                             ({sup.shortName})
@@ -503,16 +520,57 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                       {/* Portal Login */}
                       <td className="py-4 px-4">
                         {userAccount ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-teal-500/15 border border-teal-500/30 text-teal-300 font-mono font-bold text-xs">
                               <KeyRound size={12} />
                               @{userAccount.username}
                             </span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(userAccount.username)
+                                toast.success(formatDual("Login nusxalandi!", "Логин скопирован!", "Login copied!"))
+                              }}
+                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+                              title={formatDual("Logini nusxalash", "Скопировать логин", "Copy login")}
+                            >
+                              <Copy size={12} />
+                            </button>
                           </div>
                         ) : (
                           <span className="text-slate-500 italic text-[11px]">
                             {formatDual("Akkaunt ochilmagan", "Доступ не создан", "No account yet")}
                           </span>
+                        )}
+                      </td>
+
+                      {/* Portal Password (PAROLI KO'RINIB TURADI) */}
+                      <td className="py-4 px-4">
+                        {userAccount?.password ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono font-black text-xs tracking-wider">
+                              <Lock size={12} className="text-amber-400" />
+                              <span>{visiblePasswords[userAccount.id] ? userAccount.password : '••••••••'}</span>
+                            </span>
+                            <button
+                              onClick={() => togglePasswordVisibility(userAccount.id)}
+                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+                              title={visiblePasswords[userAccount.id] ? formatDual("Yashirish", "Скрыть", "Hide") : formatDual("Ko'rsatish", "Показать", "Show")}
+                            >
+                              {visiblePasswords[userAccount.id] ? <EyeOff size={13} /> : <Eye size={13} />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(userAccount.password!)
+                                toast.success(formatDual("Parol nusxalandi!", "Пароль скопирован!", "Password copied!"))
+                              }}
+                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+                              title={formatDual("Parolni nusxalash", "Скопировать пароль", "Copy password")}
+                            >
+                              <Copy size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-slate-600">—</span>
                         )}
                       </td>
 
@@ -542,9 +600,27 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
 
                       {/* Actions */}
                       <td className="py-4 px-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          {/* Direct link to Supplier's personal page */}
+                          <a
+                            href={`/suppliers/${sup.id}`}
+                            className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                            title={formatDual("Ta'minotchi shaxsiy sahifasini ochish", "Открыть страницу поставщика", "Open supplier page")}
+                          >
+                            <ExternalLink size={13} />
+                            <span>{formatDual("Sahifasi", "Страница", "Page")}</span>
+                          </a>
+
                           {userAccount ? (
                             <>
+                              <button
+                                onClick={() => copyShareText(sup.name, userAccount.username, userAccount.password || '')}
+                                className="p-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-dark-700 transition-all"
+                                title={formatDual("SMS / Telegram xabarini nusxalash", "Скопировать для отправки поставщику", "Copy SMS for supplier")}
+                              >
+                                <Send size={13} className="text-blue-400" />
+                              </button>
+
                               <button
                                 onClick={() => setChatSupplier(sup)}
                                 className="px-2.5 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-bold transition-all flex items-center gap-1"
@@ -560,6 +636,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                                     id: userAccount.id,
                                     name: userAccount.name,
                                     username: userAccount.username,
+                                    password: userAccount.password,
                                     role: 'SUPPLIER',
                                     isActive: userAccount.isActive,
                                     createdAt: userAccount.createdAt,

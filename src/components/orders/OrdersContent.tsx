@@ -1218,7 +1218,17 @@ export default function OrdersContent() {
                           <td className="py-4 px-4 text-xs">
                             <div className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-200">
                               <Building2 size={14} className="text-blue-500 shrink-0" />
-                              <span className="truncate max-w-[170px]">{order.supplierName}</span>
+                              {order.supplierId ? (
+                                <a
+                                  href={`/suppliers/${order.supplierId}`}
+                                  className="truncate max-w-[170px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors"
+                                  title={formatDual("Ta'minotchi sahifasini ochish", "Открыть страницу поставщика", "Open supplier page")}
+                                >
+                                  {order.supplierName}
+                                </a>
+                              ) : (
+                                <span className="truncate max-w-[170px]">{order.supplierName}</span>
+                              )}
                             </div>
                             {order.price && (
                               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono block mt-0.5 font-bold">

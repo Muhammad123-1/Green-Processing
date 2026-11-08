@@ -23,7 +23,8 @@ import {
   TrendingUp,
   PackageCheck,
   Filter,
-  KeyRound
+  KeyRound,
+  ExternalLink
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
@@ -540,6 +541,13 @@ export default function SuppliersPage() {
                     )}
 
                     <div className="flex items-center gap-1.5">
+                      <a
+                        href={`/suppliers/${s.id}`}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
+                      >
+                        <ExternalLink size={12} />
+                        <span>Sahifasi</span>
+                      </a>
                       <button 
                         onClick={() => openEdit(s)}
                         className="px-2.5 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 border border-dark-700 text-slate-300 hover:text-amber-400 text-xs font-bold transition-all flex items-center gap-1"
@@ -584,9 +592,12 @@ export default function SuppliersPage() {
                             <Building2 size={18} />
                           </div>
                           <div>
-                            <div className="font-extrabold text-white text-sm hover:text-emerald-400 transition-colors">
+                            <a
+                              href={`/suppliers/${s.id}`}
+                              className="font-extrabold text-white text-sm hover:text-emerald-400 transition-colors underline decoration-slate-600 hover:decoration-emerald-400 block"
+                            >
                               {s.name}
-                            </div>
+                            </a>
                             {s.shortName && (
                               <div className="text-xs text-slate-400 mt-0.5">{s.shortName}</div>
                             )}
@@ -693,6 +704,14 @@ export default function SuppliersPage() {
                       {/* Actions */}
                       <td className="py-4 px-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <a 
+                            href={`/suppliers/${s.id}`}
+                            className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
+                            title={formatDual("Ta'minotchi sahifasi", "Страница поставщика", "Supplier page")}
+                          >
+                            <ExternalLink size={13} />
+                            <span>{formatDual("Sahifasi", "Страница", "Page")}</span>
+                          </a>
                           <button 
                             onClick={() => openEdit(s)}
                             className="p-2 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700 text-slate-400 hover:text-amber-400 transition-all"
