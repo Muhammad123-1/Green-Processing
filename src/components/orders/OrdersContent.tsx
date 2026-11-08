@@ -31,9 +31,11 @@ import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import SupplierDebtsTable from '@/components/accounting/SupplierDebtsTable'
+import { useSearchParams } from 'next/navigation'
 
 export default function OrdersContent() {
   const { lang, formatDual } = useLanguage()
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'debts'>('inventory')
 
   const [loading, setLoading] = useState(true)
@@ -113,13 +115,17 @@ export default function OrdersContent() {
     loadData()
   }, [])
 
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'debts' || tab === 'orders' || tab === 'inventory') {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
+
   async function loadData() {
     setLoading(true)
     try {
-      const [dashRes, prodRes] = await Promise.all([
-        fetch('/api/supply/dashboard'),
-        fetch('/api/products')
-      ])
+      const dashRes = await fetch('/api/supply/dashboard')
 
       if (dashRes.ok) {
         const dashData = await dashRes.json()
@@ -127,13 +133,16 @@ export default function OrdersContent() {
         setInventory(dashData.inventory || [])
         setOrders(dashData.orders || [])
         setSuppliers(dashData.suppliers || [])
+        setProducts(dashData.inventory || [])
+      } else {
+        const error = await dashRes.json().catch(() => null)
+        throw new Error(error?.error || "Supply dashboard ma'lumotlarini yuklab bo'lmadi")
       }
-
-      if (prodRes.ok) {
-        const prodData = await prodRes.json()
-        setProducts(prodData || [])
+    } catch (error: any) {
+      if (error?.message) {
+        toast.error(error.message)
+        return
       }
-    } catch {
       toast.error(formatDual("Ma'lumotlarni yuklashda xatolik yuz berdi", "Ошибка при загрузке данных", "Failed to load data"))
     } finally {
       setLoading(false)
@@ -143,17 +152,20 @@ export default function OrdersContent() {
   async function refreshData() {
     setRefreshing(true)
     try {
-      const res = await fetch('/api/supply/dashboard')
-      if (res.ok) {
-        const data = await res.json()
-        setMetrics(data.metrics || {})
-        setInventory(data.inventory || [])
-        setOrders(data.orders || [])
-        setSuppliers(data.suppliers || [])
-        toast.success(formatDual("Ma'lumotlar yangilandi", "Данные обновлены", "Data refreshed"))
+      const res = await fetch('/api/supply/dashboard?fresh=true')
+      if (!res.ok) {
+        const error = await res.json().catch(() => null)
+        throw new Error(error?.error || "Supply dashboard ma'lumotlarini yangilab bo'lmadi")
       }
-    } catch {
-      toast.error(formatDual("Yangilashda xatolik", "Ошибка обновления", "Refresh error"))
+      const data = await res.json()
+      setMetrics(data.metrics || {})
+      setInventory(data.inventory || [])
+      setOrders(data.orders || [])
+      setSuppliers(data.suppliers || [])
+      setProducts(data.inventory || [])
+      toast.success(formatDual("Ma'lumotlar yangilandi", "Данные обновлены", "Data refreshed"))
+    } catch (error: any) {
+      toast.error(error?.message || formatDual("Yangilashda xatolik", "Ошибка обновления", "Refresh error"))
     } finally {
       setRefreshing(false)
     }
@@ -587,19 +599,16 @@ export default function OrdersContent() {
 
           <button
             onClick={() => setActiveTab('debts')}
-            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
-              activeTab === 'debts'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-black'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-dark-700'
-            }`}
+            className="hidden"
           >
             <DollarSign size={16} />
+            <span>Ta&apos;minotchi qarzdorligi</span>
             <span>{formatDual("Ta'minotchi Qarzdorligi (Buxgalteriya)", "Долги поставщикам (Бухгалтерия)", "Supplier Debts (Accounting)")}</span>
           </button>
 
           <a
             href="/chat"
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-dark-700 transition-all"
+            className="hidden"
           >
             <MessageSquare size={16} />
             <span>{formatDual("Ta'minotchilar Bilan Chat", "Чат с поставщиками", "Chat with Suppliers")}</span>
@@ -1541,8 +1550,8 @@ export default function OrdersContent() {
                 </div>
               </div>
 
-              {/* Summary of Total Estimated Cost */}
-              {form.quantity && form.price && (
+              {/* Estimated-total display intentionally removed from the order form. */}
+              {false && (
                 <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 rounded-2xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300 font-mono">
                   <span>{formatDual("Jami kutilayotgan summa:", "Ориентировочная сумма:", "Total estimated amount:")}</span>
                   <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">

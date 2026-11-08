@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
     ])
 
     // 4. Aggregate finished products (outputs)
-    const productMap = new Map<string, { product: string; total: number; boxes: number; packs: number }>()
+    const productMap = new Map<string, { product: string; total: number }>()
     const dailyOutputMap = new Map<string, number>()
 
     expenses.forEach((exp) => {
@@ -91,16 +91,11 @@ export async function GET(req: NextRequest) {
       let dayKg = 0
       Object.entries(outputs).forEach(([name, val]) => {
         const kg = typeof val === 'object' && val !== null ? val.kg || 0 : typeof val === 'number' ? val : 0
-        const boxes = typeof val === 'object' && val !== null ? val.korobki || 0 : 0
-        const packs = typeof val === 'object' && val !== null ? val.upakovki || 0 : 0
-
         if (!productMap.has(name)) {
-          productMap.set(name, { product: name, total: 0, boxes: 0, packs: 0 })
+          productMap.set(name, { product: name, total: 0 })
         }
         const cur = productMap.get(name)!
         cur.total += kg
-        cur.boxes += boxes
-        cur.packs += packs
         dayKg += kg
       })
       dailyOutputMap.set(exp.date, (dailyOutputMap.get(exp.date) || 0) + dayKg)
@@ -114,8 +109,6 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.total - a.total)
 
     const totalKg = Math.round(productList.reduce((sum, p) => sum + p.total, 0) * 10) / 10
-    const totalBoxes = productList.reduce((sum, p) => sum + p.boxes, 0)
-    const totalPacks = productList.reduce((sum, p) => sum + p.packs, 0)
 
     // 5. Aggregate arrivals
     const arrivalMap = new Map<string, { product: string; quantity: number; count: number; suppliers: Set<string>; batches: Set<string> }>()
@@ -185,8 +178,6 @@ export async function GET(req: NextRequest) {
       operationalDaysCount: expenses.length,
       products: productList,
       totalKg,
-      totalBoxes,
-      totalPacks,
       arrivals: period === 'day' ? arrivalsList : aggregatedArrivals,
       individualArrivals: arrivalsList.slice(0, 100),
       totalArrivalsKg,

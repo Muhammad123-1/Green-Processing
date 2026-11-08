@@ -236,7 +236,7 @@ export default function ProductsPage() {
   return (
     <div className="space-y-5 animate-enter max-w-7xl mx-auto pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-5 sm:p-6 rounded-3xl shadow-xl">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 sm:p-6 rounded-3xl shadow-sm dark:shadow-xl">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
@@ -244,7 +244,7 @@ export default function ProductsPage() {
               {formatDual("Prixod Nomenklaturasi", "Номенклатура прихода", "Inflow Catalog")}
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {formatDual("Mahsulotlar & Xomashyo Katalogi", "Каталог продукции и сырья", "Products & Materials Registry")}
           </h1>
         </div>
@@ -260,19 +260,19 @@ export default function ProductsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm dark:shadow-lg">
           <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
             {formatDual("Jami Nomenklatura", "Всего номенклатур", "Total SKU")}
           </span>
-          <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+          <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
             {stats.totalCount} ta
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Prixodda qayd etilgan", "Зафиксировано в приходе", "Recorded in arrivals")}
           </p>
         </div>
 
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm dark:shadow-lg">
           <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block mb-1">
             {formatDual("Xomashyo & Oziq-ovqat", "Сырье и овощи", "Raw Vegetables")}
           </span>
@@ -284,7 +284,7 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm dark:shadow-lg">
           <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
             {formatDual("Qadoqlash & Idishlar", "Упаковка и тара", "Packaging")}
           </span>
@@ -296,7 +296,7 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm dark:shadow-lg">
           <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
             {formatDual("Kimyo & Dezinfeksiya", "Химия и дезинфекция", "Chemicals")}
           </span>
@@ -310,9 +310,9 @@ export default function ProductsPage() {
       </div>
 
       {/* Filter and Tabs Section */}
-      <div className="bg-dark-900 border border-dark-750 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl shadow-sm overflow-hidden">
         {/* Category Tabs */}
-        <div className="flex border-b border-dark-750 overflow-x-auto no-scrollbar bg-dark-850/50">
+        <div className="flex border-b border-slate-200 dark:border-dark-750 overflow-x-auto no-scrollbar bg-slate-50 dark:bg-dark-850/50">
           {[
             { id: 'ALL', uz: `Barchasi (${products.length})`, ru: `Все (${products.length})`, en: `All (${products.length})` },
             { id: 'RAW_MATERIAL', uz: '🥦 Xomashyo (Sabzavot)', ru: '🥦 Сырье (Овощи)', en: '🥦 Raw Materials' },
@@ -329,7 +329,7 @@ export default function ProductsPage() {
                 className={`py-3 px-4 text-xs font-bold transition-all whitespace-nowrap border-b-2 ${
                   isSel
                     ? 'text-emerald-400 border-emerald-400 bg-emerald-500/10'
-                    : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-dark-800'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-transparent hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
               >
                 {formatDual(tab.uz, tab.ru, tab.en)}
@@ -349,14 +349,14 @@ export default function ProductsPage() {
                 "Поиск по названию, коду, категории или ГОСТ...",
                 "Search by name, code, category, or standard..."
               )}
-              className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <button 
             onClick={fetchProducts} 
-            className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white border border-dark-700 transition-colors shrink-0"
+            className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700 transition-colors shrink-0"
             title="Yangilash"
           >
             <RefreshCw size={15} className={loading ? 'animate-spin text-emerald-400' : ''} />
@@ -365,7 +365,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Products Content: Dual View */}
-      <div className="bg-dark-900 border border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm dark:shadow-xl">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
@@ -469,7 +469,7 @@ export default function ProductsPage() {
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-dark-800/60 border-b border-dark-750 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <tr className="bg-slate-50 dark:bg-dark-800/60 border-b border-slate-200 dark:border-dark-750 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                     <th className="py-4 px-5">{formatDual("Mahsulot Nomi", "Наименование", "Product Name")}</th>
                     <th className="py-4 px-5">{formatDual("Kod", "Код", "Code")}</th>
                     <th className="py-4 px-5">{formatDual("Kategoriya", "Категория", "Category")}</th>
@@ -483,7 +483,7 @@ export default function ProductsPage() {
                 </thead>
                 <tbody className="divide-y divide-dark-750">
                   {productsPagination.displayedItems.map((p) => (
-                    <tr key={p.id} className="hover:bg-dark-800/40 transition-colors">
+                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                       {/* Name & Photo */}
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">

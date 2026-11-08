@@ -620,3 +620,12 @@ html.light .section-subtitle { color: #64748b !important; }
 }
 
 
+/* Monitoring focuses on finished-goods weight; packaging counts are excluded. */
+.monitoring-packaging-column,
+.monitoring-finished-output-table th:nth-child(3),
+.monitoring-finished-output-table th:nth-child(4),
+.monitoring-finished-output-table td:nth-child(3),
+.monitoring-finished-output-table td:nth-child(4) {
+  display: none;
+}
+

@@ -38,6 +38,7 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 export default function GPContent({ userRole, userName }: GPContentProps) {
   const { lang, formatDual } = useLanguage()
   const isAdmin = userRole === 'ADMIN'
+  const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -105,6 +106,7 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
   }
 
   const updateGP = (idx: number, patch: any) => {
+    if (isReadOnly) return
     const row = gpList[idx]
     if (!row) return
     if (!row._new) {
@@ -118,6 +120,7 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
   }
 
   const addGP = () => {
+    if (isReadOnly) return
     setGpList((prev) => [blankGP(dateFilter || todayStr()), ...prev])
   }
 
@@ -322,44 +325,50 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
           </div>
 
           {/* Add Day Row Button */}
-          <button
-            onClick={addGP}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all"
-          >
-            <Plus size={14} />
-            <span>{lang === 'ru' ? 'Добавить день' : "+ Yangi Kun"}</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={addGP}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all"
+            >
+              <Plus size={14} />
+              <span>{lang === 'ru' ? 'Добавить день' : "+ Yangi Kun"}</span>
+            </button>
+          )}
 
           {/* Save Button */}
-          <button
-            onClick={saveGP}
-            disabled={savingGP || dirtyGP === 0}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
-              dirtyGP > 0
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 animate-pulse'
-                : 'bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            {savingGP ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Save size={14} />
-            )}
-            <span>
-              {lang === 'ru' ? 'Сохранить' : 'Saqlash'}
-              {dirtyGP > 0 ? ` (${dirtyGP})` : ''}
-            </span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={saveGP}
+              disabled={savingGP || dirtyGP === 0}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                dirtyGP > 0
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 animate-pulse'
+                  : 'bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              {savingGP ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Save size={14} />
+              )}
+              <span>
+                {lang === 'ru' ? 'Сохранить' : 'Saqlash'}
+                {dirtyGP > 0 ? ` (${dirtyGP})` : ''}
+              </span>
+            </button>
+          )}
 
           {/* Excel Import */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
-          >
-            <Upload size={14} />
-            <span>Excel Import</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
+            >
+              <Upload size={14} />
+              <span>Excel Import</span>
+            </button>
+          )}
 
           {/* Excel Export */}
           <button

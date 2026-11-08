@@ -106,6 +106,17 @@ export function checkEditPermission(params: {
     }
   }
 
+  // Supply role is strictly read-only for shop reports (arrivals, expenses, GP)
+  if (normalizedRole === 'SUPPLY') {
+    return {
+      allowed: false,
+      isAdmin: false,
+      isAfter24h: false,
+      isOutsideHours: false,
+      reason: "Ta'minotchi (Supply) xodimi uchun ushbu bo'lim faqat ko'rish rejimida ishlaydi. Ma'lumot kiritish yoki tahrirlash huquqi yo'q.",
+    }
+  }
+
   const in24h = isWithin24Hours(createdAt, now)
   if (!in24h) {
     return {

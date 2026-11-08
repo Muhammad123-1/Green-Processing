@@ -217,7 +217,6 @@ export async function GET(req: NextRequest) {
     let suppliersWithDebtCount = 0
 
     const suppliersList = Array.from(supplierDebtsMap.values())
-      .filter((s) => s.totalPurchasedUzs > 0 || s.totalPaidUzs > 0)
       .map((s) => {
         s.remainingDebtUzs = Math.max(0, s.totalPurchasedUzs - s.totalPaidUzs)
 

@@ -33,6 +33,8 @@ interface Props {
   /** Inbound arrivals list to calculate auto-day report */
   arrivals?: any[]
   onSaved: () => void | Promise<void>
+  /** Supply role can review, but must not alter or save a daily report. */
+  readOnly?: boolean
 }
 
 const keyM = (row: string, col: string) => `m|${row}|${col}`
@@ -122,7 +124,7 @@ const fmtTime = (iso?: string) => {
   }
 }
 
-export default function ShopReportDayForm({ date, onDateChange, record, prevEnd, arrivals, onSaved }: Props) {
+export default function ShopReportDayForm({ date, onDateChange, record, prevEnd, arrivals, onSaved, readOnly = false }: Props) {
   const { lang } = useLanguage()
   const saved = useMemo(() => getDayReport(record), [record])
   const savedCells = useMemo(() => reportToCells(saved), [saved])
@@ -221,6 +223,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
       value={cells[key] ?? ''}
       placeholder={opts?.placeholder}
       onChange={(e) => setCell(key, e.target.value)}
+      disabled={readOnly}
       className={`excel-cell-input w-full min-w-[64px] h-7 sm:h-8 px-1 text-center text-[11px] sm:text-xs font-mono outline-none bg-transparent placeholder:text-slate-300 ${
         opts?.highlight ? 'font-bold text-red-600' : ''
       } ${opts?.red ? 'text-red-600 font-bold' : ''} ${opts?.bold ? 'font-bold' : ''}`}
@@ -264,14 +267,14 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
 
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span className="text-xs sm:text-sm font-bold text-slate-500">Sana:</span>
-          <button
+          {!readOnly && <button
             type="button"
             onClick={() => changeDate(shiftDate(date, -1))}
             className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700"
             title="Oldingi kun"
           >
             <ChevronLeft size={16} />
-          </button>
+          </button>}
           <div className="flex flex-wrap items-center gap-1.5">
             <input
               type="date"
@@ -291,7 +294,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           >
             <ChevronRight size={16} />
           </button>
-          <button
+          {!readOnly && <button
             type="button"
             onClick={handleAutoFill}
             className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-colors"
@@ -299,8 +302,8 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           >
             <Sparkles size={14} />
             <span>Avto-to&apos;ldirish</span>
-          </button>
-          <button
+          </button>}
+          {!readOnly && <button
             type="button"
             onClick={handleReset}
             disabled={!dirty || saving}
@@ -308,8 +311,8 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
             title="O'zgarishlarni bekor qilish"
           >
             <RotateCcw size={14} /> Bekor
-          </button>
-          <button
+          </button>}
+          {!readOnly && <button
             type="button"
             onClick={handleSave}
             disabled={saving || !date}
@@ -317,7 +320,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             <span>Saqlash</span>
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -406,7 +409,7 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           <div className="border border-slate-300 rounded-lg overflow-hidden shadow-sm flex flex-col">
             <div className="bg-slate-100 p-1.5 flex items-center justify-between text-[11px] font-black text-slate-900 uppercase border-b border-slate-300">
               <span className="px-2">Остатки</span>
-              {hasPrevEnd && (
+              {!readOnly && hasPrevEnd && (
                 <button
                   type="button"
                   onClick={fillStartFromPrev}

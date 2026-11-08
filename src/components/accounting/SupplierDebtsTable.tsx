@@ -23,18 +23,20 @@ import { useLanguage } from '@/components/providers/LanguageProvider'
 interface SupplierDebtsTableProps {
   isProcurementView?: boolean
   onOpenPaymentModal?: (supplierName: string, remainingDebt: number) => void
+  initialStatusFilter?: 'ALL' | 'UNPAID' | 'PARTIAL' | 'PAID'
 }
 
 export default function SupplierDebtsTable({
   isProcurementView = false,
   onOpenPaymentModal,
+  initialStatusFilter = 'ALL',
 }: SupplierDebtsTableProps) {
   const { formatDual } = useLanguage()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null)
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'UNPAID' | 'PARTIAL' | 'PAID'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'UNPAID' | 'PARTIAL' | 'PAID'>(initialStatusFilter)
 
   useEffect(() => {
     fetchDebts()

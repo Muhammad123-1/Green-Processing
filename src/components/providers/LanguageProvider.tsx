@@ -41,6 +41,7 @@ const translations = {
     incomingActs: 'Xomashyo aktlari',
     disinfectionIncoming: 'Dezinfeksiya va yuvish vositalari',
     orders: 'Buyurtmalar',
+    supplierDebts: "Ta'minotchi qarzdorligi",
     production: 'Ishlab chiqarish',
     kitchen: 'Xodimlar oshxonasi',
       surveys: 'So\'rovnomalar',

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { getSupplyDashboardCache, setSupplyDashboardCache } from '@/lib/supplyDashboardCache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,42 +10,114 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 1. Parallel fetch of products, suppliers, orders, arrivals and shop expenses
+    const forceFresh = request.nextUrl.searchParams.get('fresh') === 'true'
+
+    // Return instant cached data when fresh
+    if (!forceFresh) {
+      const cached = getSupplyDashboardCache()
+      if (cached) {
+        return NextResponse.json(cached, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+            'X-Cache': 'HIT',
+          },
+        })
+      }
+    }
+
+    // 1. Parallel fetch of pruned product, supplier, order, arrival and shop expense records
     const [products, suppliers, rawOrders, arrivals, expenses] = await Promise.all([
       prisma.product.findMany({
         where: { isActive: true },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          category: true,
+          unit: true,
+          imageUrl: true,
+          minStockLevel: true,
           batches: {
             where: {
               qcStatus: 'APPROVED',
-              quantity: { gt: 0 }
+              quantity: { gt: 0 },
             },
-            orderBy: { expirationDate: 'asc' }
-          }
+            select: {
+              quantity: true,
+            },
+          },
         },
-        orderBy: { name: 'asc' }
+        orderBy: { name: 'asc' },
       }),
       prisma.supplier.findMany({
         where: { isActive: true },
-        orderBy: { name: 'asc' }
+        select: {
+          id: true,
+          name: true,
+          shortName: true,
+          phone: true,
+          category: true,
+        },
+        orderBy: { name: 'asc' },
       }),
       prisma.order.findMany({
-        include: {
-          product: true,
+        select: {
+          id: true,
+          productId: true,
+          supplierId: true,
+          supplierName: true,
+          quantity: true,
+          unit: true,
+          expectedDate: true,
+          timeRange: true,
+          actualDeliveryTime: true,
+          deliveredQuantity: true,
+          acceptedQuantity: true,
+          rejectedQuantity: true,
+          status: true,
+          price: true,
+          notes: true,
+          createdAt: true,
+          product: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+              category: true,
+              unit: true,
+            },
+          },
           inspections: {
+            select: {
+              id: true,
+              actNumber: true,
+              inspectionDate: true,
+              quantity: true,
+              status: true,
+              conclusion: true,
+            },
             orderBy: { inspectionDate: 'desc' },
-            take: 1
-          }
+            take: 1,
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       }),
       prisma.shopArrival.findMany({
-        orderBy: { date: 'desc' }
+        select: {
+          id: true,
+          date: true,
+          nomenclature: true,
+          quantity: true,
+          supplier: true,
+          batch: true,
+        },
+        orderBy: { date: 'desc' },
       }),
       prisma.shopExpense.findMany({
-        orderBy: { date: 'desc' },
-        take: 100
-      })
+        select: {
+          materials: true,
+        },
+      }),
     ])
 
     // 2. Aggregate ShopArrival by nomenclature
@@ -53,31 +126,20 @@ export async function GET(request: NextRequest) {
       count: number
       lastDate: string
       suppliersMap: Record<string, number>
-      recentArrivals: Array<{ id: number; date: string; quantity: number; supplier: string; batch: string }>
     }
 
     const arrivalStatsByNom = new Map<string, InflowStats>()
-    const seenClones = new Set<string>()
-
-    for (const arr of arrivals) {
+    for (let i = 0; i < arrivals.length; i++) {
+      const arr = arrivals[i]
       const nom = (arr.nomenclature || '').trim()
       if (!nom) continue
       const nomLower = nom.toLowerCase()
 
       let qty = Number(arr.quantity) || 0
-      if ((arr.id === 5001 || arr.id === 5445) && nomLower.includes('этикетк')) {
-        qty = 0
-      }
       if (qty < 0) qty = 0
 
       const sup = (arr.supplier || '').trim() || "Noma'lum"
       const date = (arr.date || '').trim()
-      const batchNum = (arr.batch || '').trim() || `#${arr.id}`
-
-      // Skip exact clone rows
-      const cloneKey = `${date}|${nomLower}|${qty}|${sup.toLowerCase()}|${batchNum.toLowerCase()}`
-      if (seenClones.has(cloneKey)) continue
-      seenClones.add(cloneKey)
 
       let stat = arrivalStatsByNom.get(nomLower)
       if (!stat) {
@@ -86,7 +148,6 @@ export async function GET(request: NextRequest) {
           count: 0,
           lastDate: date,
           suppliersMap: {},
-          recentArrivals: []
         }
         arrivalStatsByNom.set(nomLower, stat)
       }
@@ -97,21 +158,12 @@ export async function GET(request: NextRequest) {
         stat.lastDate = date
       }
       stat.suppliersMap[sup] = (stat.suppliersMap[sup] || 0) + qty
-
-      if (stat.recentArrivals.length < 5) {
-        stat.recentArrivals.push({
-          id: arr.id,
-          date,
-          quantity: qty,
-          supplier: sup,
-          batch: batchNum
-        })
-      }
     }
 
     // 3. Aggregate ShopExpense by material name
     const expenseByNom = new Map<string, number>()
-    for (const exp of expenses) {
+    for (let i = 0; i < expenses.length; i++) {
+      const exp = expenses[i]
       const mats = (exp.materials as Record<string, any>) || {}
       for (const [mName, mQty] of Object.entries(mats)) {
         if (!mName) continue
@@ -120,6 +172,9 @@ export async function GET(request: NextRequest) {
         expenseByNom.set(mKey, (expenseByNom.get(mKey) || 0) + q)
       }
     }
+
+    const arrivalEntries = Array.from(arrivalStatsByNom.entries())
+    const expenseEntries = Array.from(expenseByNom.entries())
 
     // 4. Default min stock resolver helper
     const getDefaultMinStock = (name: string, category?: string | null): number => {
@@ -149,6 +204,7 @@ export async function GET(request: NextRequest) {
     const inventoryStatus = products.map((product) => {
       const prodName = product.name.trim()
       const prodLower = prodName.toLowerCase()
+      const words = prodLower.split(/\s+/).filter((w: string) => w.length > 2)
 
       // Match inflow stats
       let arrivalKg = 0
@@ -157,9 +213,10 @@ export async function GET(request: NextRequest) {
       let lastArrivalDate = ''
       const matchedSuppliers: Record<string, number> = {}
 
-      for (const [arrNom, stat] of arrivalStatsByNom.entries()) {
-        const words = prodLower.split(/\s+/).filter((w: string) => w.length > 2)
-        const isMatch = arrNom === prodLower ||
+      for (let i = 0; i < arrivalEntries.length; i++) {
+        const [arrNom, stat] = arrivalEntries[i]
+        const isMatch =
+          arrNom === prodLower ||
           arrNom.includes(prodLower) ||
           prodLower.includes(arrNom) ||
           (words.length > 0 && words.every((w: string) => arrNom.includes(w)))
@@ -177,12 +234,13 @@ export async function GET(request: NextRequest) {
       }
 
       // Match expense
-      for (const [expNom, expQty] of expenseByNom.entries()) {
-        const words = prodLower.split(/\s+/).filter((w: string) => w.length > 2)
-        const isMatch = expNom === prodLower ||
+      for (let i = 0; i < expenseEntries.length; i++) {
+        const [expNom, expQty] = expenseEntries[i]
+        const isMatch =
+          expNom === prodLower ||
           expNom.includes(prodLower) ||
           prodLower.includes(expNom) ||
-          (words.length > 0 && words.some((w: string) => expNom.includes(w)))
+          (words.length > 0 && words.every((w: string) => expNom.includes(w)))
 
         if (isMatch) {
           expenseKg += expQty
@@ -195,9 +253,10 @@ export async function GET(request: NextRequest) {
       const totalQuantity = arrivalKg > 0 ? realArrivalBalance : legacyBatchTotal
 
       // Min stock & needed
-      const minStock = product.minStockLevel && product.minStockLevel > 0
-        ? product.minStockLevel
-        : getDefaultMinStock(prodName, product.category)
+      const minStock =
+        product.minStockLevel && product.minStockLevel > 0
+          ? product.minStockLevel
+          : getDefaultMinStock(prodName, product.category)
 
       let neededQuantity = 0
       let status: 'red' | 'yellow' | 'green' = 'green'
@@ -232,9 +291,10 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const matchedDbSupplier = suppliers.find(s => 
-        s.name.toLowerCase() === primarySupplierName.toLowerCase() ||
-        (primarySupplierName && s.name.toLowerCase().includes(primarySupplierName.toLowerCase()))
+      const matchedDbSupplier = suppliers.find(
+        (s) =>
+          s.name.toLowerCase() === primarySupplierName.toLowerCase() ||
+          (primarySupplierName && s.name.toLowerCase().includes(primarySupplierName.toLowerCase()))
       )
 
       return {
@@ -254,11 +314,47 @@ export async function GET(request: NextRequest) {
         lastArrivalDate,
         primarySupplier: primarySupplierName || null,
         primarySupplierId: matchedDbSupplier?.id || null,
-        batchesCount: product.batches.length
+        batchesCount: product.batches.length,
       }
     })
 
-    // 6. Process Orders & Delivery Reconciliation
+    // 6. Fast Order Matched Arrivals Cache
+    const orderMatchedArrivalsCache = new Map<string, any[]>()
+    const getOrderMatchedArrivals = (pName: string) => {
+      const key = (pName || '').toLowerCase().trim()
+      if (orderMatchedArrivalsCache.has(key)) {
+        return orderMatchedArrivalsCache.get(key)!
+      }
+      if (!key) {
+        orderMatchedArrivalsCache.set(key, [])
+        return []
+      }
+      const words = key.split(/\s+/).filter((w) => w.length > 2)
+      const res: any[] = []
+      for (let i = 0; i < arrivals.length; i++) {
+        const arr = arrivals[i]
+        const arrNom = (arr.nomenclature || '').toLowerCase()
+        const matchesProd =
+          arrNom.includes(key) ||
+          key.includes(arrNom) ||
+          (words.length > 0 && words.every((w) => arrNom.includes(w)))
+        if (matchesProd) {
+          res.push({
+            id: arr.id,
+            date: arr.date,
+            nomenclature: arr.nomenclature,
+            quantity: arr.quantity,
+            supplier: arr.supplier || "Noma'lum",
+            batch: arr.batch || `#${arr.id}`,
+          })
+          if (res.length >= 5) break
+        }
+      }
+      orderMatchedArrivalsCache.set(key, res)
+      return res
+    }
+
+    // 7. Process Orders & Delivery Reconciliation
     const now = new Date()
     const todayStr = now.toISOString().split('T')[0]
 
@@ -285,40 +381,25 @@ export async function GET(request: NextRequest) {
 
       // Reconciliation info
       const latestInspection = order.inspections?.[0]
-      const deliveredQty = order.deliveredQuantity ?? (latestInspection ? latestInspection.quantity : null)
-      const acceptedQty = order.acceptedQuantity ?? (latestInspection?.status === 'ACCEPTED' ? latestInspection.quantity : null)
-      const rejectedQty = order.rejectedQuantity ?? (latestInspection?.status === 'REJECTED' ? latestInspection.quantity : 0)
+      const deliveredQty =
+        order.deliveredQuantity ?? (latestInspection ? latestInspection.quantity : null)
+      const acceptedQty =
+        order.acceptedQuantity ?? (latestInspection?.status === 'ACCEPTED' ? latestInspection.quantity : null)
+      const rejectedQty =
+        order.rejectedQuantity ?? (latestInspection?.status === 'REJECTED' ? latestInspection.quantity : 0)
       const shortageQty = deliveredQty !== null ? order.quantity - deliveredQty : null
 
-      // Find matched recent ShopArrival records for this order's product
-      const pName = (order.product?.name || '').toLowerCase()
-
-      const matchedArrivals = arrivals
-        .filter(arr => {
-          const arrNom = (arr.nomenclature || '').toLowerCase()
-          const words = pName.split(/\s+/).filter((w: string) => w.length > 2)
-          const matchesProd = arrNom.includes(pName) || pName.includes(arrNom) || (words.length > 0 && words.some((w: string) => arrNom.includes(w)))
-          return matchesProd
-        })
-        .slice(0, 5)
-        .map(arr => ({
-          id: arr.id,
-          date: arr.date,
-          nomenclature: arr.nomenclature,
-          quantity: arr.quantity,
-          supplier: arr.supplier || "Noma'lum",
-          batch: arr.batch || `#${arr.id}`
-        }))
+      const matchedArrivals = getOrderMatchedArrivals(order.product?.name || '')
 
       return {
         id: order.id,
         productId: order.productId,
-        productName: order.product?.name || 'Noma\'lum',
+        productName: order.product?.name || "Noma'lum",
         productCode: order.product?.code || '',
         productCategory: order.product?.category || '',
         productUnit: order.unit || order.product?.unit || 'kg',
         supplierId: order.supplierId,
-        supplierName: order.supplierName || 'Ta\'minotchi ko\'rsatilmagan',
+        supplierName: order.supplierName || "Ta'minotchi ko'rsatilmagan",
         quantity: order.quantity,
         unit: order.unit || 'kg',
         price: order.price,
@@ -336,11 +417,11 @@ export async function GET(request: NextRequest) {
         inspectionActNumber: latestInspection?.actNumber,
         inspectionConclusion: latestInspection?.conclusion,
         createdAt: order.createdAt,
-        matchedArrivals
+        matchedArrivals,
       }
     })
 
-    return NextResponse.json({
+    const responsePayload = {
       metrics: {
         outOfStockCount,
         lowStockCount,
@@ -349,11 +430,20 @@ export async function GET(request: NextRequest) {
         pendingOrdersCount,
         todayDeliveriesCount,
         delayedOrdersCount,
-        totalOrdersCount: rawOrders.length
+        totalOrdersCount: rawOrders.length,
       },
       inventory: inventoryStatus,
       orders: processedOrders,
-      suppliers
+      suppliers,
+    }
+
+    setSupplyDashboardCache(responsePayload)
+
+    return NextResponse.json(responsePayload, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+        'X-Cache': 'MISS',
+      },
     })
   } catch (error) {
     console.error('Supply dashboard fetch error:', error)

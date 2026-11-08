@@ -101,24 +101,12 @@ export default function MonitoringContent() {
             <BarChart3 size={28} />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-900 dark:bg-indigo-500/20 dark:text-indigo-300 text-[10px] font-extrabold uppercase tracking-wider border border-indigo-300 dark:border-indigo-500/30">
-                {formatDual('Ishlab Chiqarish Monitoringi', 'Мониторинг производства цеха', 'Shop Production Monitoring')}
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 font-mono font-bold">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3 flex-wrap">
+              <span>{formatDual("Ishlab Chiqarish Monitoringi", 'Мониторинг производства', 'Production Monitoring')}</span>
+              <span className="text-xs px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-mono font-bold border border-indigo-200 dark:border-indigo-500/30">
                 {periodLabel}
               </span>
-            </div>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatDual("Ishlab Chiqarish & Kirim Monitoringi", 'Выпуск продукции и приход сырья', 'Production & Arrival Monitoring')}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-xs mt-1 leading-snug line-clamp-1 font-semibold">
-              {formatDual(
-                "Kunlik, haftalik, oylik va yillik sex hisobotlari (Prixod GP) hamda xomashyo kirimi",
-                'Ежедневный, недельный, месячный и годовой учет готовой продукции и сырья',
-                'Daily, weekly, monthly and yearly finished goods output and raw arrivals'
-              )}
-            </p>
           </div>
         </div>
 
@@ -293,8 +281,8 @@ export default function MonitoringContent() {
           </span>
         </div>
 
-        {/* Card 2: Boxes Output */}
-        <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+        {/* Packaging totals are not part of monitoring. */}
+        <div className="monitoring-packaging-column bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               {formatDual("Qutilar Soni", "Коробки", "Total Boxes")}
@@ -311,8 +299,7 @@ export default function MonitoringContent() {
           </span>
         </div>
 
-        {/* Card 3: Packs Output */}
-        <div className="bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
+        <div className="monitoring-packaging-column bg-white dark:bg-dark-900 p-4 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               {formatDual("Paketlar Soni", "Упаковки", "Total Packs")}
@@ -390,12 +377,12 @@ export default function MonitoringContent() {
                     </span>
                   </div>
                   <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">
-                    {totalKg.toLocaleString()} kg / {totalBoxes.toLocaleString()} quti
+                    {totalKg.toLocaleString()} kg
                   </div>
                 </div>
 
                 <div className="border border-slate-200 dark:border-dark-750 rounded-2xl overflow-x-auto shadow-sm">
-                  <table className="w-full text-left border-collapse">
+                  <table className="monitoring-finished-output-table w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-100 dark:bg-dark-800 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-dark-750">
                         <th className="p-3 w-12 text-center">№</th>
@@ -419,7 +406,7 @@ export default function MonitoringContent() {
                     <tbody className="divide-y divide-slate-200 dark:divide-dark-750 text-xs">
                       {filteredProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="p-8 text-center text-slate-400 italic">
+                          <td colSpan={4} className="p-8 text-center text-slate-400 italic">
                             {formatDual('Ushbu davrda chiqish ma\'lumotlari topilmadi', 'Данные за этот период не найдены', 'No output recorded for this period')}
                           </td>
                         </tr>

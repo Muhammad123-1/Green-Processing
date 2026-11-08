@@ -83,6 +83,7 @@ export default function ShopReportContent({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isAdmin = userRole === 'ADMIN' || userRole === 'DIRECTOR'
+  const isReadOnly = userRole.toUpperCase() === 'SUPPLY'
   const shiftWindowActive = isWithinShiftEditWindow()
 
   const [editReasonModal, setEditReasonModal] = useState<{
@@ -254,13 +255,14 @@ export default function ShopReportContent({
   }, [])
 
   useEffect(() => {
-    // Background auto-archive for past days or after 23:00
-    fetch('/api/shop-report/auto-archive')
-      .catch(() => {})
-      .finally(() => {
-        loadData()
-      })
-  }, [loadData])
+    // Report data must not wait for archive maintenance.  The old flow waited
+    // for a potentially large archive operation before loading the page.
+    void loadData()
+    // Supply is strictly read-only; its page visit must not initiate a write.
+    if (!isReadOnly) {
+      void fetch('/api/shop-report/auto-archive', { cache: 'no-store' }).catch(() => {})
+    }
+  }, [loadData, isReadOnly])
 
   // ---------------------------------------------------------------------------
   // Tab 1: Приход (Avto-partiya hisoblash: har oy yangilanadi, har mahsulot uchun 1, 2, 3...)
@@ -286,6 +288,7 @@ export default function ShopReportContent({
   }
 
   const updateArrival = (idx: number, patch: any) => {
+    if (isReadOnly) return
     const row = arrivals[idx]
     if (!row) return
     if (!row._new) {
@@ -322,6 +325,7 @@ export default function ShopReportContent({
   }
 
   const addArrival = () => {
+    if (isReadOnly) return
     const targetDate = arrFilter || todayStr()
     setArrivals((prev) => [
       {
@@ -618,7 +622,10 @@ export default function ShopReportContent({
     setExpenses((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch, _dirty: true } : r)))
   }
 
-  const addExpense = () => setExpenses((prev) => [blankExpense(expFilter || todayStr()), ...prev])
+  const addExpense = () => {
+    if (isReadOnly) return
+    setExpenses((prev) => [blankExpense(expFilter || todayStr()), ...prev])
+  }
 
   const removeNewExpense = (idx: number) => setExpenses((prev) => prev.filter((_, i) => i !== idx))
 
@@ -697,7 +704,10 @@ export default function ShopReportContent({
     setGpList((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch, _dirty: true } : r)))
   }
 
-  const addGP = () => setGpList((prev) => [blankGP(gpFilter || todayStr()), ...prev])
+  const addGP = () => {
+    if (isReadOnly) return
+    setGpList((prev) => [blankGP(gpFilter || todayStr()), ...prev])
+  }
 
   const removeNewGP = (idx: number) => setGpList((prev) => prev.filter((_, i) => i !== idx))
 
@@ -774,6 +784,7 @@ export default function ShopReportContent({
   // Import / Export / Archive navigation
   // ---------------------------------------------------------------------------
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isReadOnly) return
     const file = e.target.files?.[0]
     if (!file) return
     setIsLoading(true)
@@ -906,6 +917,7 @@ export default function ShopReportContent({
   )
 
   const saveButton = (count: number, saving: boolean, onClick: () => void) => (
+    isReadOnly ? null :
     <button
       onClick={onClick}
       disabled={saving || count === 0}
@@ -937,15 +949,15 @@ export default function ShopReportContent({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
-          <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />
-          <button
+          {!isReadOnly && <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />}
+          {!isReadOnly && <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
             className="flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm disabled:opacity-50"
           >
             {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             <span>{lang === 'ru' ? 'Импорт Excel' : 'Excel Import'}</span>
-          </button>
+          </button>}
           <button
             onClick={exportToExcelReal}
             className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm"
@@ -1032,13 +1044,13 @@ export default function ShopReportContent({
             </h2>
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(arrFilter, setArrFilter)}
-              <button
+              {!isReadOnly && <button
                 onClick={addArrival}
                 className="text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 border border-amber-200 dark:border-amber-900 px-2.5 py-1.5 rounded-lg hover:bg-amber-50"
               >
                 + Qo&apos;shish
-              </button>
-              <button
+              </button>}
+              {!isReadOnly && <button
                 type="button"
                 onClick={() => {
                   setTargetRowIdxForNewProduct(null)
@@ -1050,7 +1062,7 @@ export default function ShopReportContent({
               >
                 <Plus size={13} />
                 <span>{lang === 'ru' ? 'Новый продукт' : 'Yangi mahsulot'}</span>
-              </button>
+              </button>}
               {saveButton(dirtyArrivals, savingArrivals, saveArrivals)}
             </div>
           </div>
@@ -1096,7 +1108,7 @@ export default function ShopReportContent({
                 ) : null}
                 {arrivalsPagination.displayedItems.map(({ row, idx }) => {
                   const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
-                  const isRowEditable = Boolean(row._new) || perm.allowed
+                  const isRowEditable = !isReadOnly && (Boolean(row._new) || perm.allowed)
 
                   return (
                     <tr
@@ -1425,12 +1437,12 @@ export default function ShopReportContent({
             </h2>
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(expFilter, setExpFilter)}
-              <button
+              {!isReadOnly && <button
                 onClick={addExpense}
                 className="text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 border border-amber-200 dark:border-amber-900 px-2.5 py-1.5 rounded-lg hover:bg-amber-50"
               >
                 + Qo&apos;shish
-              </button>
+              </button>}
               {saveButton(dirtyExpenses, savingExpenses, saveExpenses)}
             </div>
           </div>
@@ -1480,7 +1492,7 @@ export default function ShopReportContent({
                 ) : null}
                 {expensesPagination.displayedItems.map(({ row, idx }) => {
                   const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
-                  const isRowEditable = Boolean(row._new) || perm.allowed
+                  const isRowEditable = !isReadOnly && (Boolean(row._new) || perm.allowed)
 
                   return (
                     <tr
@@ -1619,12 +1631,12 @@ export default function ShopReportContent({
             </h2>
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(gpFilter, setGpFilter)}
-              <button
+              {!isReadOnly && <button
                 onClick={addGP}
                 className="text-xs font-bold bg-white dark:bg-dark-800 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 px-2.5 py-1.5 rounded-lg hover:bg-emerald-50"
               >
                 + Qo&apos;shish
-              </button>
+              </button>}
               {saveButton(dirtyGP, savingGP, saveGP)}
             </div>
           </div>
@@ -1672,7 +1684,7 @@ export default function ShopReportContent({
                 ) : null}
                 {gpPagination.displayedItems.map(({ row, idx }) => {
                   const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
-                  const isRowEditable = Boolean(row._new) || perm.allowed
+                  const isRowEditable = !isReadOnly && (Boolean(row._new) || perm.allowed)
                   const rowSum = GP_FIELDS.reduce((acc, f) => acc + toNum(row[f.field]), 0)
 
                   return (
@@ -1807,6 +1819,7 @@ export default function ShopReportContent({
           prevEnd={prevEnd}
           arrivals={arrivals}
           onSaved={loadData}
+          readOnly={isReadOnly}
         />
       )}
 

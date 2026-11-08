@@ -98,9 +98,9 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
       ? [
           {
             label: formatDual('Kirim', 'Приход', 'Arrivals'),
-            href: '/prihod',
+            href: '/shop-report',
             icon: ArrowDownRight,
-            active: pathname.startsWith('/prihod'),
+            active: pathname.startsWith('/shop-report'),
           },
         ]
       : [

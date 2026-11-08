@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -79,6 +80,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
       }
     }
 
+    try {
+      invalidateSupplyDashboardCache()
+    } catch {}
+
     return NextResponse.json(order)
   } catch (error: any) {
     console.error('Update order error:', error)
@@ -97,6 +102,9 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await prisma.order.delete({
       where: { id: numId }
     })
+    try {
+      invalidateSupplyDashboardCache()
+    } catch {}
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('Delete order error:', error)

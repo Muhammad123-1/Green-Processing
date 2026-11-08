@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
 
 export async function GET() {
   try {
@@ -91,6 +92,10 @@ Izoh: ${order.notes || 'Yo\'q'}`
     } catch (chatErr) {
       console.warn('Could not post order notification to chat:', chatErr)
     }
+
+    try {
+      invalidateSupplyDashboardCache()
+    } catch {}
 
     return NextResponse.json(order, { status: 201 })
   } catch (error: any) {

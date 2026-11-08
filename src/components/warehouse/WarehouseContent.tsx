@@ -1260,7 +1260,7 @@ export default function WarehouseContent() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {/* Card 1: Jami Kirim */}
             <div 
-              onClick={() => router.push('/prihod')}
+              onClick={() => router.push('/shop-report')}
               className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-emerald-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors" />

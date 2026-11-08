@@ -42,6 +42,7 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 export default function RashodContent({ userRole, userName }: RashodContentProps) {
   const { lang, formatDual } = useLanguage()
   const isAdmin = userRole === 'ADMIN'
+  const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -171,6 +172,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
   }
 
   const updateExpense = (idx: number, patch: any) => {
+    if (isReadOnly) return
     const row = expenses[idx]
     if (!row) return
     if (!row._new) {
@@ -184,6 +186,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
   }
 
   const addExpense = () => {
+    if (isReadOnly) return
     setExpenses((prev) => [blankExpense(dateFilter || todayStr()), ...prev])
   }
 
@@ -388,44 +391,50 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
           </div>
 
           {/* Add Day Row Button */}
-          <button
-            onClick={addExpense}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all"
-          >
-            <Plus size={14} />
-            <span>{lang === 'ru' ? 'Добавить день' : "+ Yangi Kun"}</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={addExpense}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all"
+            >
+              <Plus size={14} />
+              <span>{lang === 'ru' ? 'Добавить день' : "+ Yangi Kun"}</span>
+            </button>
+          )}
 
           {/* Save Button */}
-          <button
-            onClick={saveExpenses}
-            disabled={savingExpenses || dirtyExpenses === 0}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
-              dirtyExpenses > 0
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 animate-pulse'
-                : 'bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            {savingExpenses ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Save size={14} />
-            )}
-            <span>
-              {lang === 'ru' ? 'Сохранить' : 'Saqlash'}
-              {dirtyExpenses > 0 ? ` (${dirtyExpenses})` : ''}
-            </span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={saveExpenses}
+              disabled={savingExpenses || dirtyExpenses === 0}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                dirtyExpenses > 0
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 animate-pulse'
+                  : 'bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              {savingExpenses ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Save size={14} />
+              )}
+              <span>
+                {lang === 'ru' ? 'Сохранить' : 'Saqlash'}
+                {dirtyExpenses > 0 ? ` (${dirtyExpenses})` : ''}
+              </span>
+            </button>
+          )}
 
           {/* Excel Import */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
-          >
-            <Upload size={14} />
-            <span>Excel Import</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
+            >
+              <Upload size={14} />
+              <span>Excel Import</span>
+            </button>
+          )}
 
           {/* Excel Export */}
           <button

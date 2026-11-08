@@ -37,6 +37,7 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 export default function PrihodContent({ userRole, userName }: PrihodContentProps) {
   const { lang, formatDual } = useLanguage()
   const isAdmin = userRole === 'ADMIN'
+  const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -245,6 +246,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
 
   // Add new arrival row
   const addArrival = () => {
+    if (isReadOnly) return
     const targetDate = dateFilter || todayStr()
     setArrivals((prev) => [
       {
@@ -624,58 +626,66 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
           </div>
 
           {/* Add Row Button */}
-          <button
-            onClick={addArrival}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all"
-          >
-            <Plus size={14} />
-            <span>{lang === 'ru' ? 'Добавить' : "+ Qo'shish"}</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={addArrival}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all"
+            >
+              <Plus size={14} />
+              <span>{lang === 'ru' ? 'Добавить' : "+ Qo'shish"}</span>
+            </button>
+          )}
 
           {/* New Product Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setTargetRowIdxForNewProduct(null)
-              setNewProductName('')
-              setNewProductModalOpen(true)
-            }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-900/60 hover:bg-amber-50 dark:hover:bg-dark-750 transition-colors"
-          >
-            <Sparkles size={13} />
-            <span>{lang === 'ru' ? 'Новый продукт' : 'Yangi mahsulot'}</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              type="button"
+              onClick={() => {
+                setTargetRowIdxForNewProduct(null)
+                setNewProductName('')
+                setNewProductModalOpen(true)
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-dark-800 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-900/60 hover:bg-amber-50 dark:hover:bg-dark-750 transition-colors"
+            >
+              <Sparkles size={13} />
+              <span>{lang === 'ru' ? 'Новый продукт' : 'Yangi mahsulot'}</span>
+            </button>
+          )}
 
           {/* Save Button */}
-          <button
-            onClick={saveArrivals}
-            disabled={savingArrivals || dirtyArrivals === 0}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
-              dirtyArrivals > 0
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 animate-pulse'
-                : 'bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            {savingArrivals ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Save size={14} />
-            )}
-            <span>
-              {lang === 'ru' ? 'Сохранить' : 'Saqlash'}
-              {dirtyArrivals > 0 ? ` (${dirtyArrivals})` : ''}
-            </span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={saveArrivals}
+              disabled={savingArrivals || dirtyArrivals === 0}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                dirtyArrivals > 0
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 animate-pulse'
+                  : 'bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              {savingArrivals ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Save size={14} />
+              )}
+              <span>
+                {lang === 'ru' ? 'Сохранить' : 'Saqlash'}
+                {dirtyArrivals > 0 ? ` (${dirtyArrivals})` : ''}
+              </span>
+            </button>
+          )}
 
           {/* Excel Import (Image 2 style) */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
-          >
-            <Upload size={14} />
-            <span>Excel Import</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
+            >
+              <Upload size={14} />
+              <span>Excel Import</span>
+            </button>
+          )}
 
           {/* Excel Export (Image 2 style) */}
           <button

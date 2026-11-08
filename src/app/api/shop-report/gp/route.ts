@@ -20,6 +20,9 @@ export async function PUT(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (session.role === 'SUPPLY') {
+      return NextResponse.json({ error: "Supply roli shop-report ma'lumotlarini faqat ko'rishi mumkin" }, { status: 403 })
+    }
 
     const body = await req.json()
     const rows: any[] = Array.isArray(body?.rows) ? body.rows : []

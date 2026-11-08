@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/shop-report/auto-archive",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}
