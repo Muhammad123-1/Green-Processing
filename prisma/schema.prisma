@@ -481,7 +481,8 @@ model Order {
   status             String   @default("PENDING") // PENDING, DELIVERED, PARTIAL, DELAYED, CANCELLED
   imageUrl           String?
   price              Float?   
-  notes              String?
+  notes              String?  // Ta'minot izohi (Ta'minotchi ko'radi)
+  warehouseNotes     String?  // Sklad izohi (Faqat Ta'minot bo'limi ko'radi)
   driverPhone        String?
   vehicleNumber      String?
   createdAt          DateTime @default(now())

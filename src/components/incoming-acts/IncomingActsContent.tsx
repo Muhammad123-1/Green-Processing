@@ -104,9 +104,9 @@ export default function IncomingActsContent({
   userRole?: string
   userName?: string
 }) {
-  const { lang } = useLanguage()
+  const { lang, formatDual } = useLanguage()
   const activeLang: 'uz' | 'ru' | 'en' =
-    lang.includes('ru') ? 'ru' : lang.includes('en') ? 'en' : 'uz'
+    lang === 'ru' || lang.startsWith('ru') ? 'ru' : lang === 'en' || lang.startsWith('en') ? 'en' : 'uz'
 
   // State
   const [acts, setActs] = useState<IncomingAct[]>([])
@@ -179,42 +179,46 @@ export default function IncomingActsContent({
   // Translations
   const t = {
     uz: {
-      title: 'ВХОДНОЕ СЫРЬЕ (АКТЫ)',
+      title: 'KIRUVCHI XOMASHYO (AKTLAR)',
       subtitle: 'Xomashyo sifatini qabul qilish va nazorat qilish aktlari jurnali (Mijozning asl Excel formati)',
-      formCode: 'Forma: Ф-2/03 | ООО "GREEN PROCESSING"',
+      formCode: 'Forma: F-2/03 | "GREEN PROCESSING" MChJ',
       newAct: 'Yangi akt yaratish',
       importExcel: 'Excel Import',
       exportExcel: 'Excel yuklab olish',
       refresh: 'Yangilash',
-      authenticView: 'Asl Excel ko\'rinishi (Mijoz formati / Ranglar)',
+      authenticView: "Asl Excel ko'rinishi (Ranglar va mezonlar)",
       numericView: 'Raqamli rejim (1 / 0 va 2-5 baholash)',
       totalActs: 'Jami aktlar',
       totalWeight: 'Jami qabul qilingan',
-      searchPlaceholder: 'Partiya, ta\'minotchi, nazoratchi, akt №...',
+      searchPlaceholder: "Partiya, ta'minotchi, nazoratchi, akt №...",
       allProducts: 'Barcha mahsulotlar',
       resetFilters: 'Tozalash',
-      number: '№ п/п',
-      date: 'Дата поступления и составления акта',
-      supplier: 'Наименование ПОСТАВЩИКА',
-      temp: 'Температура сырья',
-      transport: 'Оценка условий упаковки и транспортирования',
-      docs: 'Сопровождающая документация',
-      batch: '№ партии',
-      rating: 'Допуск',
-      issuedGroup: 'Отпущено в производство',
-      kgWarehouse: 'кг',
-      kgShop: 'КГ ЦЕХ',
-      shopDate: 'Дата',
-      rejectionNo: 'НЕДОПУСК № акта забраковки',
-      inspector: 'ФИО, Подпись ответственного',
-      price: 'цена',
+      number: '№',
+      date: 'Kirim va akt tuzilgan sana',
+      supplier: "Yetkazib beruvchi (Ta'minotchi)",
+      temp: 'Xomashyo harorati',
+      transport: 'Qadoqlash va tashish sharoiti',
+      docs: 'Kuzatuv hujjatlari',
+      batch: 'Partiya №',
+      rating: 'Sifat xulosasi (Ruxsat)',
+      issuedGroup: 'Ishlab chiqarishga berildi',
+      kgWarehouse: 'Ombor (kg)',
+      kgShop: 'Sexga (kg)',
+      shopDate: 'Berilgan sana',
+      rejectionNo: 'Rad etish akt № (Brak)',
+      inspector: "Mas'ul nazoratchi (QC)",
+      price: "Narxi (so'm)",
       actions: 'Amallar',
       noData: 'Hech qanday akt topilmadi',
-      noDataDesc: 'Filtr parametrlarini o\'zgartiring yoki yangi akt kiriting.',
+      noDataDesc: "Filtr parametrlarini o'zgartiring yoki yangi akt kiriting.",
       close: 'Yopish',
       save: 'Saqlash',
       saving: 'Saqlanmoqda...',
-      pageInfo: 'Sahifa:'
+      pageInfo: 'Sahifa:',
+      tabRaw: 'Xomashyolar (Asosiy xomashyo)',
+      tabDez: 'Dezinfeksiya va yuvish vositalari',
+      rawLabel: 'Xomashyo:',
+      decision: 'Xulosa:'
     },
     ru: {
       title: 'ВХОДНОЕ СЫРЬЕ (АКТЫ)',
@@ -240,19 +244,23 @@ export default function IncomingActsContent({
       batch: '№ партии',
       rating: 'Допуск',
       issuedGroup: 'Отпущено в производство',
-      kgWarehouse: 'кг',
+      kgWarehouse: 'Склад (кг)',
       kgShop: 'КГ ЦЕХ',
-      shopDate: 'Дата',
+      shopDate: 'Дата выдачи',
       rejectionNo: 'НЕДОПУСК № акта забраковки',
-      inspector: 'ФИО, Подпись ответственного за контролем входного сырья',
-      price: 'цена',
+      inspector: 'ФИО ответственного за контроль',
+      price: 'Цена (сум)',
       actions: 'Действия',
       noData: 'Акты не найдены',
       noDataDesc: 'Измените параметры поиска или создайте новый акт.',
       close: 'Закрыть',
       save: 'Сохранить',
       saving: 'Сохранение...',
-      pageInfo: 'Страница:'
+      pageInfo: 'Страница:',
+      tabRaw: 'Сырье (Основное)',
+      tabDez: 'Дезинфицирующие и моющие средства',
+      rawLabel: 'Сырье:',
+      decision: 'Решение:'
     },
     en: {
       title: 'INCOMING RAW MATERIAL ACTS',
@@ -269,28 +277,32 @@ export default function IncomingActsContent({
       searchPlaceholder: 'Batch, supplier, inspector, act #...',
       allProducts: 'All materials',
       resetFilters: 'Reset',
-      number: '№ p/p',
+      number: '№',
       date: 'Arrival and Act Date',
       supplier: 'Supplier Name',
       temp: 'Temperature',
-      transport: 'Transport Condition',
+      transport: 'Transport & Packaging Condition',
       docs: 'Accompanying Docs',
       batch: 'Batch #',
-      rating: 'Verdict',
+      rating: 'Quality Verdict',
       issuedGroup: 'Issued to Production',
-      kgWarehouse: 'kg',
+      kgWarehouse: 'Warehouse (kg)',
       kgShop: 'Shop (kg)',
-      shopDate: 'Date',
+      shopDate: 'Issue Date',
       rejectionNo: 'Rejection Act #',
-      inspector: 'Inspector Name & Signature',
-      price: 'Price',
+      inspector: 'QC Inspector Name',
+      price: 'Price (UZS)',
       actions: 'Actions',
       noData: 'No acts found',
       noDataDesc: 'Change filters or create a new act.',
       close: 'Close',
       save: 'Save',
       saving: 'Saving...',
-      pageInfo: 'Page:'
+      pageInfo: 'Page:',
+      tabRaw: 'Raw Materials (Main)',
+      tabDez: 'Disinfection & Detergents',
+      rawLabel: 'Material:',
+      decision: 'Verdict:'
     }
   }[activeLang]
 
@@ -630,14 +642,14 @@ export default function IncomingActsContent({
         <div className="flex flex-wrap items-center gap-2">
           <div className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
             <span>🥗</span>
-            <span>Xomashyolar (Asosiy xomashyo)</span>
+            <span>{t.tabRaw}</span>
           </div>
           <Link
             href="/incoming-acts/disinfection"
             className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300"
           >
             <FlaskConical className="w-4 h-4 text-teal-500" />
-            <span>Dezinfeksiya va yuvish vositalari</span>
+            <span>{t.tabDez}</span>
           </Link>
         </div>
       </div>
@@ -712,7 +724,7 @@ export default function IncomingActsContent({
         <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
           <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
             <Layers className="w-4 h-4 text-slate-400" />
-            Xomashyo:
+            {t.rawLabel}
           </span>
           {PRODUCT_LIST.map(prod => {
             const isSelected = selectedProduct === prod.id

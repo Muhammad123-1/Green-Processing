@@ -84,11 +84,12 @@ interface SupplierScore {
   grade: 'EXCELLENT' | 'GOOD' | 'WARNING'
 }
 
-const statusBadge = (status: string) => {
+const statusBadge = (status: string, formatDual?: any) => {
+  const t = formatDual || ((uz: string) => uz)
   switch (status) {
-    case 'ACCEPTED': return <span className="badge-success"><CheckCircle size={10} />Qabul</span>
-    case 'REJECTED': return <span className="badge-danger"><XCircle size={10} />Rad etildi</span>
-    case 'CONDITIONAL': return <span className="badge-warning"><AlertTriangle size={10} />Shartli</span>
+    case 'ACCEPTED': return <span className="badge-success"><CheckCircle size={10} />{t('Qabul', 'Принято', 'Accepted')}</span>
+    case 'REJECTED': return <span className="badge-danger"><XCircle size={10} />{t('Rad etildi', 'Отклонено', 'Rejected')}</span>
+    case 'CONDITIONAL': return <span className="badge-warning"><AlertTriangle size={10} />{t('Shartli', 'Условно', 'Conditional')}</span>
     default: return <span className="badge-info">{status}</span>
   }
 }
@@ -319,11 +320,11 @@ export default function InspectionsContent() {
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <ShieldCheck size={14} />
-                Sifat Nazorati (QA / QC) & Laboratoriya
+                {formatDual("Sifat Nazorati (QA / QC) & Laboratoriya", "Контроль качества (QA / QC) & Лаборатория", "Quality Assurance (QA / QC) & Laboratory")}
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-emerald-300 tracking-tight">
-              Sifat Nazorati, Kirish Aktlari & Brak Hisobi
+              {formatDual("Sifat Nazorati, Kirish Aktlari & Brak Hisobi", "Контроль качества, акты приемки и учет брака", "Quality Control, Receiving Acts & Scrap Accounting")}
             </h1>
           </div>
 
@@ -338,7 +339,7 @@ export default function InspectionsContent() {
               }`}
             >
               <FileText size={16} />
-              <span>📋 Kiruvchi Xomashyo Aktlari</span>
+              <span>{formatDual("📋 Kiruvchi Xomashyo Aktlari", "📋 Акты приемки сырья", "📋 Receiving Acts")}</span>
             </button>
             <button
               onClick={() => setActiveTab('journals')}
@@ -349,7 +350,7 @@ export default function InspectionsContent() {
               }`}
             >
               <ClipboardCheck size={16} />
-              <span>📊 Sex Nazoratchilari Jurnallari (Audit)</span>
+              <span>{formatDual("📊 Sex Nazoratchilari Jurnallari (Audit)", "📊 Журналы цехового контроля (Аудит)", "📊 Shop QC Logs (Audit)")}</span>
             </button>
             <button
               onClick={() => setActiveTab('sqs')}
@@ -360,7 +361,7 @@ export default function InspectionsContent() {
               }`}
             >
               <Award size={16} />
-              <span>🛡️ Ta'minotchilar Auditi (SQS)</span>
+              <span>{formatDual("🛡️ Ta'minotchilar Auditi (SQS)", "🛡️ Аудит поставщиков (SQS)", "🛡️ Supplier Quality Audit (SQS)")}</span>
             </button>
             <button
               onClick={() => setActiveTab('defects')}
@@ -371,7 +372,7 @@ export default function InspectionsContent() {
               }`}
             >
               <AlertOctagon size={16} />
-              <span>⚠️ Brak & Isrof Tahlili</span>
+              <span>{formatDual("⚠️ Brak & Isrof Tahlili", "⚠️ Анализ брака и потерь", "⚠️ Defect & Scrap Analysis")}</span>
             </button>
           </div>
         </div>
@@ -394,7 +395,7 @@ export default function InspectionsContent() {
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
-                  placeholder="Qidirish: akt raqami, mahsulot, ta'minotchi..."
+                  placeholder={formatDual("Qidirish: akt raqami, mahsulot, ta'minotchi...", "Поиск: номер акта, продукт, поставщик...", "Search: act number, product, supplier...")}
                   className="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1) }}
@@ -406,10 +407,10 @@ export default function InspectionsContent() {
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
               >
-                <option value="">Barcha holatlar</option>
-                <option value="ACCEPTED">🟢 Qabul qilindi</option>
-                <option value="REJECTED">🔴 Rad etildi</option>
-                <option value="CONDITIONAL">🟡 Shartli qabul</option>
+                <option value="">{formatDual("Barcha holatlar", "Все статусы", "All statuses")}</option>
+                <option value="ACCEPTED">{formatDual("🟢 Qabul qilindi", "🟢 Принято", "🟢 Accepted")}</option>
+                <option value="REJECTED">{formatDual("🔴 Rad etildi", "🔴 Отклонено", "🔴 Rejected")}</option>
+                <option value="CONDITIONAL">{formatDual("🟡 Shartli qabul", "🟡 Условно принято", "🟡 Conditional")}</option>
               </select>
             </div>
 
@@ -441,7 +442,7 @@ export default function InspectionsContent() {
                 className="btn-success flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-emerald-400 border border-emerald-500/30 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
               >
                 <FileSpreadsheet size={16} />
-                To'liq Jurnal (.xlsx)
+                {formatDual("To'liq Jurnal (.xlsx)", "Полный журнал (.xlsx)", "Full Registry (.xlsx)")}
               </button>
             </div>
           </div>
@@ -455,22 +456,22 @@ export default function InspectionsContent() {
             ) : inspections.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                 <FileText size={48} className="mb-4 opacity-30" />
-                <p className="font-semibold text-lg text-slate-300">Aktlar topilmadi</p>
-                <p className="text-sm mt-1">Filtrni o'zgartiring yoki yangi akt yarating</p>
+                <p className="font-semibold text-lg text-slate-300">{formatDual("Aktlar topilmadi", "Акты не найдены", "No acts found")}</p>
+                <p className="text-sm mt-1">{formatDual("Filtrni o'zgartiring yoki yangi akt yarating", "Измените фильтр или создайте новый акт", "Change filter or create a new act")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="p-4">Akt raqami</th>
-                      <th className="p-4">Sana</th>
-                      <th className="p-4">Ta'minotchi</th>
-                      <th className="p-4">Mahsulot</th>
-                      <th className="p-4">Partiya</th>
-                      <th className="p-4">Miqdor</th>
-                      <th className="p-4">Holat</th>
-                      <th className="p-4 text-right">Amallar</th>
+                      <th className="p-4">{formatDual("Akt raqami", "Номер акта", "Act Number")}</th>
+                      <th className="p-4">{formatDual("Sana", "Дата", "Date")}</th>
+                      <th className="p-4">{formatDual("Ta'minotchi", "Поставщик", "Supplier")}</th>
+                      <th className="p-4">{formatDual("Mahsulot", "Продукт", "Product")}</th>
+                      <th className="p-4">{formatDual("Partiya", "Партия", "Batch")}</th>
+                      <th className="p-4">{formatDual("Miqdor", "Количество", "Quantity")}</th>
+                      <th className="p-4">{formatDual("Holat", "Статус", "Status")}</th>
+                      <th className="p-4 text-right">{formatDual("Amallar", "Действия", "Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
@@ -484,13 +485,13 @@ export default function InspectionsContent() {
                         <td className="p-4 text-slate-300 whitespace-nowrap">
                           {new Date(item.inspectionDate).toLocaleDateString('uz-UZ')}
                         </td>
-                        <td className="p-4 max-w-[160px] truncate font-medium text-slate-200">{item.supplier.name}</td>
-                        <td className="p-4 max-w-[160px] truncate font-bold text-white">{item.product.name}</td>
-                        <td className="p-4 font-mono text-slate-300">{item.batchNumber}</td>
+                        <td className="p-4 max-w-[160px] truncate font-medium text-slate-200">{item.supplier?.name || '—'}</td>
+                        <td className="p-4 max-w-[160px] truncate font-bold text-white">{item.product?.name || '—'}</td>
+                        <td className="p-4 font-mono text-slate-300">{item.batchNumber || '—'}</td>
                         <td className="p-4 text-slate-200 font-mono font-bold whitespace-nowrap">
                           {item.quantity} {item.quantityUnit}
                         </td>
-                        <td className="p-4">{statusBadge(item.status)}</td>
+                        <td className="p-4">{statusBadge(item.status, formatDual)}</td>
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-1.5">
                             <Link

@@ -7,14 +7,58 @@ type Params = { params: Promise<{ id: string }> }
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const { id } = await params
-    const inspection = await prisma.inspection.findUnique({
-      where: { id: parseInt(id) },
+    const numId = parseInt(id)
+    let inspection = await prisma.inspection.findUnique({
+      where: { id: numId },
       include: {
         supplier: true,
         product: true,
         user: true,
       },
     })
+
+    if (!inspection) {
+      const act = await prisma.incomingRawMaterialAct.findUnique({
+        where: { id: numId }
+      })
+      if (act) {
+        let dateIso = act.createdAt.toISOString()
+        if (act.actDate) {
+          if (act.actDate.includes('.')) {
+            const p = act.actDate.split('.')
+            if (p.length === 3) dateIso = new Date(`${p[2]}-${p[1]}-${p[0]}`).toISOString()
+          } else {
+            const d = new Date(act.actDate)
+            if (!isNaN(d.getTime())) dateIso = d.toISOString()
+          }
+        }
+
+        const st = act.decisionRating === 2 ? 'REJECTED' : act.decisionRating === 3 ? 'CONDITIONAL' : 'ACCEPTED'
+
+        inspection = {
+          id: act.id,
+          actNumber: act.actNumber ? (act.actNumber.startsWith('№') ? act.actNumber : `№ ${act.actNumber}`) : `№ ${act.id}`,
+          inspectionDate: new Date(dateIso),
+          batchNumber: act.batchNumber || `LOT-${act.id}`,
+          quantity: act.warehouseKg || 0,
+          quantityUnit: 'kg',
+          temperature: parseFloat((act.temperature || '').replace(',', '.')) || null,
+          temperatureUnit: '°C',
+          packaging: act.transportCondition === 1 ? 'Qoniqarli' : 'Qoniqarsiz',
+          color: act.leafColor === 1 ? 'Muvofiq' : 'Nomaqbul',
+          smell: act.tasteSmell === 1 ? 'Muvofiq' : 'Nomaqbul',
+          appearance: act.structure === 1 ? 'Muvofiq' : 'Nomaqbul',
+          status: st,
+          inspector: act.inspectorName || 'Sifat Nazoratchisi',
+          conclusion: act.decisionText || (act.decisionRating === 2 ? 'Rad etilgan' : 'Muvofiq'),
+          notes: act.notes || null,
+          sheetName: act.productName,
+          supplier: { name: act.supplierName || 'Ta\'minotchi' },
+          product: { name: act.productName || 'Xomashyo' },
+          user: { name: act.inspectorName || 'Sifat Nazoratchisi' },
+        } as any
+      }
+    }
 
     if (!inspection) {
       return NextResponse.json({ error: 'Inspection not found' }, { status: 404 })

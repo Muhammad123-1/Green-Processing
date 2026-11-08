@@ -361,59 +361,59 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
   const [fsscForm, setFsscForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
-    lineName: '1-Qadoqlash Liniyasi',
-    productName: 'Aysberg Salati 500g',
-    batchNumber: 'FG-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-01',
-    nominalWeight: '500',
-    actualWeight: '504',
-    packageCheckNo: '5',
+    lineName: '',
+    productName: '',
+    batchNumber: '',
+    nominalWeight: '',
+    actualWeight: '',
+    packageCheckNo: '',
     sealIntegrityOk: true,
     metalDetectorOk: true,
     labelCorrectOk: true,
-    gasMixLevel: 'O2: 3%, CO2: 5%',
-    correctiveAction: '-',
-    responsible: userName || 'Sifat Nazoratchisi'
+    gasMixLevel: '',
+    correctiveAction: '',
+    responsible: userName || ''
   })
 
   const [dezForm, setDezForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
-    vannaNumber: '1-Vanna (Dezinfeksiya & Yuvish)',
-    solutionType: 'Xlor eritmasi',
-    concentrationPpm: '65.0',
-    phLevel: '6.8',
-    waterTemp: '3.5',
-    correctiveAction: '-',
-    responsible: userName || 'Sifat Nazoratchisi'
+    vannaNumber: '',
+    solutionType: '',
+    concentrationPpm: '',
+    phLevel: '',
+    waterTemp: '',
+    correctiveAction: '',
+    responsible: userName || ''
   })
 
   const [calForm, setCalForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
-    productName: 'Айсберг',
-    batchNumber: 'RAW-001',
-    diameterMm: '45.0',
-    sampleTemp: '3.2',
-    bladeSharpness: "A'lo (Yangi)",
-    wastePercent: '4.5',
-    correctiveAction: '-',
-    responsible: userName || 'Sex Nazoratchisi'
+    productName: '',
+    batchNumber: '',
+    diameterMm: '',
+    sampleTemp: '',
+    bladeSharpness: '',
+    wastePercent: '',
+    correctiveAction: '',
+    responsible: userName || ''
   })
 
   const [degForm, setDegForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
-    productType: 'Айсберг',
-    batchNumber: 'FG-001',
+    productType: '',
+    batchNumber: '',
     colorOk: true,
     smellOk: true,
     crunchOk: true,
     tasteOk: true,
     foreignFlavorOk: true,
     overallScore: '5',
-    conclusion: 'Ruxsat berildi (Standartga to\'liq mos)',
-    correctiveAction: '-',
-    responsible: userName || 'Degustator'
+    conclusion: '',
+    correctiveAction: '',
+    responsible: userName || ''
   })
 
   const [procForm, setProcForm] = useState({
@@ -431,11 +431,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
     gpTomatoTemp: '',
     gpOnionTemp: '',
     correctiveAction: '',
-    responsible: userName || 'Sex Nazoratchisi'
+    responsible: userName || ''
   })
 
-  // Dynamic Product Types for Degustation (Local Storage + DB)
-  const [productTypes, setProductTypes] = useState<string[]>(['Айсберг', 'Коулслоу', 'Романо', 'Салат Микс'])
+  // Dynamic Product Types for Degustation & FSSC (Local Storage + DB)
+  const [productTypes, setProductTypes] = useState<string[]>(['Айсберг', 'Коулслоу', 'Романо', 'Салат Микс', 'Томат', 'Бодринг', 'Пиёз'])
   
   const [dbProducts, setDbProducts] = useState<string[]>([])
 
@@ -457,24 +457,133 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
   const [rcvForm, setRcvForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
-    supplierName: 'Agro Fresh Agro',
-    productName: 'Karam (Cabbage)',
-    batchNumber: 'SUP-20260815-01',
-    quantityKg: '1500',
-    vehicleNumber: '01 A 777 AA',
+    supplierName: '',
+    productName: '',
+    batchNumber: '',
+    quantityKg: '',
+    vehicleNumber: '',
     vehicleCleanOk: true,
-    cargoTemp: '3.8',
+    cargoTemp: '',
     hasLabCertificate: true,
     organolepticScore: '5',
     status: 'ACCEPTED',
     rejectReason: '',
-    responsible: userName || 'Kirish Nazoratchisi'
+    responsible: userName || ''
   })
 
-  // Real-time FSSC Validations (Direktor talabiga asosan xatolar bloklanadi)
-  const fsscNameValidation = validateProductName(fsscForm.productName)
-  const fsscWeightValidation = validatePackageWeight(fsscForm.nominalWeight, fsscForm.actualWeight)
-  const isFsscValid = fsscNameValidation.isValid && fsscWeightValidation.isValid
+  // Real-time FSSC Validations (bo'sh bo'lganda xato chiqarmaydi)
+  const fsscNameValidation = fsscForm.productName ? validateProductName(fsscForm.productName) : { isValid: true, error: null }
+  const fsscWeightValidation = (fsscForm.nominalWeight && fsscForm.actualWeight)
+    ? validatePackageWeight(fsscForm.nominalWeight, fsscForm.actualWeight)
+    : { isValid: true, error: null, warning: false, helperText: null }
+  const isFsscValid = Boolean(
+    fsscForm.productName.trim() &&
+    fsscNameValidation.isValid &&
+    fsscForm.nominalWeight &&
+    fsscForm.actualWeight &&
+    fsscWeightValidation.isValid
+  )
+
+  const handleOpenAddModal = (type: string) => {
+    setEditingId(null)
+    const today = new Date().toISOString().slice(0, 10)
+    const now = new Date().toTimeString().slice(0, 5)
+    if (type === 'fssc') {
+      setFsscForm({
+        date: today,
+        time: now,
+        lineName: '',
+        productName: '',
+        batchNumber: '',
+        nominalWeight: '',
+        actualWeight: '',
+        packageCheckNo: '',
+        sealIntegrityOk: true,
+        metalDetectorOk: true,
+        labelCorrectOk: true,
+        gasMixLevel: '',
+        correctiveAction: '',
+        responsible: userName || ''
+      })
+    } else if (type === 'disinfection') {
+      setDezForm({
+        date: today,
+        time: now,
+        vannaNumber: '',
+        solutionType: '',
+        concentrationPpm: '',
+        phLevel: '',
+        waterTemp: '',
+        correctiveAction: '',
+        responsible: userName || ''
+      })
+    } else if (type === 'calibration') {
+      setCalForm({
+        date: today,
+        time: now,
+        productName: '',
+        batchNumber: '',
+        diameterMm: '',
+        sampleTemp: '',
+        bladeSharpness: '',
+        wastePercent: '',
+        correctiveAction: '',
+        responsible: userName || ''
+      })
+    } else if (type === 'degustation') {
+      setDegForm({
+        date: today,
+        time: now,
+        productType: '',
+        batchNumber: '',
+        colorOk: true,
+        smellOk: true,
+        crunchOk: true,
+        tasteOk: true,
+        foreignFlavorOk: true,
+        overallScore: '5',
+        conclusion: '',
+        correctiveAction: '',
+        responsible: userName || ''
+      })
+    } else if (type === 'temperature') {
+      setProcForm({
+        date: today,
+        time: now,
+        cleanZoneTemp: '',
+        dirtyZoneTemp: '',
+        pfColeCarrotBatch: '',
+        pfColeCabbageBatch: '',
+        pfIcebergBatch: '',
+        pfOnionBatch: '',
+        pfTomatoBatch: '',
+        gpColeTemp: '',
+        gpIcebergTemp: '',
+        gpTomatoTemp: '',
+        gpOnionTemp: '',
+        correctiveAction: '',
+        responsible: userName || ''
+      })
+    } else if (type === 'receiving') {
+      setRcvForm({
+        date: today,
+        time: now,
+        supplierName: '',
+        productName: '',
+        batchNumber: '',
+        quantityKg: '',
+        vehicleNumber: '',
+        vehicleCleanOk: true,
+        cargoTemp: '',
+        hasLabCertificate: true,
+        organolepticScore: '5',
+        status: 'ACCEPTED',
+        rejectReason: '',
+        responsible: userName || ''
+      })
+    }
+    setModalType(type)
+  }
 
   useEffect(() => {
     fetchAllData()
@@ -882,7 +991,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
 
             {/* Add Button */}
             <button 
-              onClick={() => setModalType(activeTab)}
+              onClick={() => handleOpenAddModal(activeTab)}
               className={`flex items-center gap-1.5 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0 ${activeItem.btnColor}`}
             >
               <Plus size={14} />
@@ -920,7 +1029,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             {!isArchive && (
                               <button
-                                onClick={() => setModalType('fssc')}
+                                onClick={() => handleOpenAddModal('fssc')}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
                               >
                                 <Plus size={14} />
@@ -1017,7 +1126,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             {!isArchive && (
                               <button
-                                onClick={() => setModalType('disinfection')}
+                                onClick={() => handleOpenAddModal('disinfection')}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium transition-all"
                               >
                                 <Plus size={14} />
@@ -1093,7 +1202,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <Ruler size={36} className="mx-auto text-slate-400 dark:text-slate-600 mb-2" />
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             <button
-                              onClick={() => setModalType('calibration')}
+                              onClick={() => handleOpenAddModal('calibration')}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium transition-all"
                             >
                               <Plus size={14} />
@@ -1171,7 +1280,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             {!isArchive && (
                               <button
-                                onClick={() => setModalType('degustation')}
+                                onClick={() => handleOpenAddModal('degustation')}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
                               >
                                 <Plus size={14} />
@@ -1263,7 +1372,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             {!isArchive && (
                               <button
-                                onClick={() => setModalType('temperature')}
+                                onClick={() => handleOpenAddModal('temperature')}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-all"
                               >
                                 <Plus size={14} />
@@ -1343,7 +1452,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                             <p className="font-bold text-xs text-slate-700 dark:text-slate-400 mb-3">{d.emptyMsg}</p>
                             {!isArchive && (
                               <button
-                                onClick={() => setModalType('receiving')}
+                                onClick={() => handleOpenAddModal('receiving')}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md active:scale-95"
                               >
                                 <Plus size={14} />
@@ -1442,33 +1551,65 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                     <span>{lang === 'ru' ? 'Справочник названий' : 'Standart nomlar'}</span>
                   </button>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Masalan: Aysberg (1 kg paket)"
-                  value={fsscForm.productName}
-                  onChange={e => setFsscForm({...fsscForm, productName: e.target.value})}
-                  className={`w-full bg-slate-50 dark:bg-dark-800 border rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium outline-none transition-all ${
-                    !fsscNameValidation.isValid ? 'border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20' : 'border-slate-300 dark:border-dark-700'
-                  }`}
-                  required
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    list="fssc-product-list"
+                    placeholder="Masalan: Aysberg (1 kg paket)"
+                    value={fsscForm.productName}
+                    onChange={e => setFsscForm({...fsscForm, productName: e.target.value})}
+                    className={`flex-1 bg-slate-50 dark:bg-dark-800 border rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium outline-none transition-all ${
+                      fsscForm.productName.trim() && !fsscNameValidation.isValid ? 'border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20' : 'border-slate-300 dark:border-dark-700'
+                    }`}
+                    required
+                  />
+                  {fsscForm.productName.trim() && !combinedProductTypes.includes(fsscForm.productName.trim()) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const val = fsscForm.productName.trim()
+                        if (val && !productTypes.includes(val)) {
+                          saveProductTypes([...productTypes, val])
+                          toast.success(`"${val}" ro'yxatga qo'shildi!`)
+                        }
+                      }}
+                      className="px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shrink-0"
+                      title="Yangi mahsulotni tanlov ro'yxatiga saqlash"
+                    >
+                      <Plus size={13} />
+                      <span>{lang === 'ru' ? 'Добавить' : 'Saqlash'}</span>
+                    </button>
+                  )}
+                </div>
+
+                <datalist id="fssc-product-list">
+                  {combinedProductTypes.map(p => (
+                    <option key={p} value={p} />
+                  ))}
+                  {STANDARD_QC_PRODUCTS.map(p => (
+                    <option key={p.name} value={p.name} />
+                  ))}
+                </datalist>
                 
                 {/* Standard quick chips */}
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
                   <span className="text-[10px] text-slate-400 font-bold">{lang === 'ru' ? 'Быстрый выбор:' : 'Tezkor tanlash:'}</span>
-                  {STANDARD_QC_PRODUCTS.slice(0, 4).map((p) => (
-                    <button
-                      key={p.name}
-                      type="button"
-                      onClick={() => setFsscForm({ ...fsscForm, productName: p.name, nominalWeight: String(p.nominal) })}
-                      className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-800 hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-950/60 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-700 font-semibold transition-all"
-                    >
-                      {p.name.split(' ')[0]} ({p.nominal}g)
-                    </button>
-                  ))}
+                  {combinedProductTypes.slice(0, 6).map((p) => {
+                    const std = STANDARD_QC_PRODUCTS.find(s => s.name === p)
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setFsscForm({ ...fsscForm, productName: p, ...(std ? { nominalWeight: String(std.nominal) } : {}) })}
+                        className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-800 hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-950/60 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-700 font-semibold transition-all"
+                      >
+                        {p} {std ? `(${std.nominal}g)` : ''}
+                      </button>
+                    )
+                  })}
                 </div>
 
-                {!fsscNameValidation.isValid && fsscNameValidation.error && (
+                {fsscForm.productName.trim() && !fsscNameValidation.isValid && fsscNameValidation.error && (
                   <div className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold mt-1.5 flex items-center gap-1">
                     <XCircle size={13} className="shrink-0 text-rose-500" />
                     <span>{fsscNameValidation.error}</span>
@@ -1479,11 +1620,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Partiya Raqami</label>
-                  <input type="text" value={fsscForm.batchNumber} onChange={e => setFsscForm({...fsscForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
+                  <input type="text" placeholder="Masalan: FG-20261108-01" value={fsscForm.batchNumber} onChange={e => setFsscForm({...fsscForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Liniya</label>
-                  <input type="text" value={fsscForm.lineName} onChange={e => setFsscForm({...fsscForm, lineName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
+                  <input type="text" placeholder="Masalan: 1-Qadoqlash Liniyasi" value={fsscForm.lineName} onChange={e => setFsscForm({...fsscForm, lineName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
                 </div>
               </div>
 
@@ -1493,7 +1634,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   <input
                     type="number"
                     step="1"
-                    placeholder="1000 yoki 500"
+                    placeholder="Masalan: 500 yoki 1000"
                     value={fsscForm.nominalWeight}
                     onChange={e => setFsscForm({...fsscForm, nominalWeight: e.target.value})}
                     className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold"
@@ -1567,7 +1708,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
 
               <div className="col-span-full mb-3">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
-                <input type="text" value={fsscForm.responsible} onChange={e => setFsscForm({...fsscForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                <input type="text" placeholder="Masalan: Sifat Nazoratchisi" value={fsscForm.responsible} onChange={e => setFsscForm({...fsscForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
               </div>
 
               <div className="col-span-full mb-3">
@@ -1626,32 +1767,32 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.timeVat}</label>
-                <input type="text" value={dezForm.vannaNumber} onChange={e => setDezForm({...dezForm, vannaNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                <input type="text" placeholder="Masalan: 1-Vanna (Dezinfeksiya & Yuvish)" value={dezForm.vannaNumber} onChange={e => setDezForm({...dezForm, vannaNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.concPpm}</label>
-                  <input type="number" step="0.1" value={dezForm.concentrationPpm} onChange={e => setDezForm({...dezForm, concentrationPpm: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold" placeholder="50-100" required />
+                  <input type="number" step="0.1" value={dezForm.concentrationPpm} onChange={e => setDezForm({...dezForm, concentrationPpm: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold" placeholder="50-100 (Masalan: 65.0)" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.phLevel}</label>
-                  <input type="number" step="0.1" value={dezForm.phLevel} onChange={e => setDezForm({...dezForm, phLevel: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-medium" placeholder="6.5-7.5" />
+                  <input type="number" step="0.1" value={dezForm.phLevel} onChange={e => setDezForm({...dezForm, phLevel: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-medium" placeholder="6.5-7.5 (Masalan: 6.8)" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.waterTemp}</label>
-                  <input type="number" step="0.1" value={dezForm.waterTemp} onChange={e => setDezForm({...dezForm, waterTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" placeholder="+2...+6" />
+                  <input type="number" step="0.1" value={dezForm.waterTemp} onChange={e => setDezForm({...dezForm, waterTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" placeholder="+2...+6 (Masalan: 3.5)" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.corrAction}</label>
-                  <input type="text" value={dezForm.correctiveAction} onChange={e => setDezForm({...dezForm, correctiveAction: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
+                  <input type="text" placeholder="Masalan: Me'yorda, chora ko'rilmadi" value={dezForm.correctiveAction} onChange={e => setDezForm({...dezForm, correctiveAction: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
-                  <input type="text" value={dezForm.responsible} onChange={e => setDezForm({...dezForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                  <input type="text" placeholder="Masalan: Sifat Nazoratchisi" value={dezForm.responsible} onChange={e => setDezForm({...dezForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
                 </div>
               </div>
 
@@ -1695,32 +1836,64 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.productBatch}</label>
-                  <input type="text" value={calForm.productName} onChange={e => setCalForm({...calForm, productName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      list="qc-cal-products-datalist"
+                      placeholder="Masalan: Aysberg"
+                      value={calForm.productName}
+                      onChange={e => setCalForm({...calForm, productName: e.target.value})}
+                      className="flex-1 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium"
+                      required
+                    />
+                    {calForm.productName.trim() && !combinedProductTypes.includes(calForm.productName.trim()) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = calForm.productName.trim()
+                          if (val && !productTypes.includes(val)) {
+                            saveProductTypes([...productTypes, val])
+                            toast.success(`"${val}" ro'yxatga qo'shildi!`)
+                          }
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shrink-0"
+                        title="Yangi mahsulotni tanlov ro'yxatiga saqlash"
+                      >
+                        <Plus size={13} />
+                        <span>{lang === 'ru' ? 'Добавить' : 'Saqlash'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <datalist id="qc-cal-products-datalist">
+                    {combinedProductTypes.map(p => (
+                      <option key={p} value={p} />
+                    ))}
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Partiya Raqami</label>
-                  <input type="text" value={calForm.batchNumber} onChange={e => setCalForm({...calForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" />
+                  <input type="text" placeholder="Masalan: RAW-001" value={calForm.batchNumber} onChange={e => setCalForm({...calForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.dimMm}</label>
-                  <input type="number" step="0.1" value={calForm.diameterMm} onChange={e => setCalForm({...calForm, diameterMm: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-purple-600 dark:text-purple-400 text-xs font-mono font-bold" />
+                  <input type="number" step="0.1" placeholder="Masalan: 45.0" value={calForm.diameterMm} onChange={e => setCalForm({...calForm, diameterMm: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-purple-600 dark:text-purple-400 text-xs font-mono font-bold" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.tempSample}</label>
-                  <input type="number" step="0.1" value={calForm.sampleTemp} onChange={e => setCalForm({...calForm, sampleTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
+                  <input type="number" step="0.1" placeholder="Masalan: 3.2" value={calForm.sampleTemp} onChange={e => setCalForm({...calForm, sampleTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.wastePct}</label>
-                  <input type="number" step="0.1" value={calForm.wastePercent} onChange={e => setCalForm({...calForm, wastePercent: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" />
+                  <input type="number" step="0.1" placeholder="Masalan: 4.5" value={calForm.wastePercent} onChange={e => setCalForm({...calForm, wastePercent: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" />
                 </div>
               </div>
 
               <div className="col-span-full mb-3">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
-                <input type="text" value={calForm.responsible} onChange={e => setCalForm({...calForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                <input type="text" placeholder="Masalan: Sex Nazoratchisi" value={calForm.responsible} onChange={e => setCalForm({...calForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
               </div>
 
               <div className="col-span-full mb-3">
@@ -1763,20 +1936,43 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Mahsulot Turi</label>
-                  <select 
-                    value={degForm.productType} 
-                    onChange={e => setDegForm({...degForm, productType: e.target.value})} 
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium"
-                  >
-                    {combinedProductTypes.length === 0 && <option value="Айсберг">Айсберг</option>}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      list="qc-deg-products-datalist"
+                      placeholder="Masalan: Aysberg yoki Koulslou"
+                      value={degForm.productType}
+                      onChange={e => setDegForm({...degForm, productType: e.target.value})}
+                      className="flex-1 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium"
+                      required
+                    />
+                    {degForm.productType.trim() && !combinedProductTypes.includes(degForm.productType.trim()) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = degForm.productType.trim()
+                          if (val && !productTypes.includes(val)) {
+                            saveProductTypes([...productTypes, val])
+                            toast.success(`"${val}" ro'yxatga qo'shildi!`)
+                          }
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shrink-0"
+                        title="Yangi mahsulotni ro'yxatga qo'shish"
+                      >
+                        <Plus size={13} />
+                        <span>{lang === 'ru' ? 'Добавить' : 'Saqlash'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <datalist id="qc-deg-products-datalist">
                     {combinedProductTypes.map(t => (
-                      <option key={t} value={t}>{t}</option>
+                      <option key={t} value={t} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Partiya Raqami</label>
-                  <input type="text" value={degForm.batchNumber} onChange={e => setDegForm({...degForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
+                  <input type="text" placeholder="Masalan: FG-001" value={degForm.batchNumber} onChange={e => setDegForm({...degForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
                 </div>
               </div>
 
@@ -1802,11 +1998,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.conclusion}</label>
-                  <input type="text" value={degForm.conclusion} onChange={e => setDegForm({...degForm, conclusion: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
+                  <input type="text" placeholder="Masalan: Ruxsat berildi (Standartga to'liq mos)" value={degForm.conclusion} onChange={e => setDegForm({...degForm, conclusion: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
-                  <input type="text" value={degForm.responsible} onChange={e => setDegForm({...degForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                  <input type="text" placeholder="Masalan: Degustator" value={degForm.responsible} onChange={e => setDegForm({...degForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
                 </div>
               </div>
 
@@ -1850,11 +2046,11 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.cleanZone}</label>
-                  <input type="number" step="0.1" value={procForm.cleanZoneTemp} onChange={e => setProcForm({...procForm, cleanZoneTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-blue-600 dark:text-blue-400 text-xs font-mono font-bold" />
+                  <input type="number" step="0.1" placeholder="Masalan: 3.5" value={procForm.cleanZoneTemp} onChange={e => setProcForm({...procForm, cleanZoneTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-blue-600 dark:text-blue-400 text-xs font-mono font-bold" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.dirtyZone}</label>
-                  <input type="number" step="0.1" value={procForm.dirtyZoneTemp} onChange={e => setProcForm({...procForm, dirtyZoneTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" />
+                  <input type="number" step="0.1" placeholder="Masalan: 4.0" value={procForm.dirtyZoneTemp} onChange={e => setProcForm({...procForm, dirtyZoneTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" />
                 </div>
               </div>
 
@@ -1864,23 +2060,23 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Koul-slou (Sabzi)</label>
-                    <input type="text" value={procForm.pfColeCarrotBatch} onChange={e => setProcForm({...procForm, pfColeCarrotBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                    <input type="text" placeholder="Masalan: PF-CAR-01" value={procForm.pfColeCarrotBatch} onChange={e => setProcForm({...procForm, pfColeCarrotBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Koul-slou (Karam)</label>
-                    <input type="text" value={procForm.pfColeCabbageBatch} onChange={e => setProcForm({...procForm, pfColeCabbageBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                    <input type="text" placeholder="Masalan: PF-CAB-01" value={procForm.pfColeCabbageBatch} onChange={e => setProcForm({...procForm, pfColeCabbageBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Aysberg</label>
-                    <input type="text" value={procForm.pfIcebergBatch} onChange={e => setProcForm({...procForm, pfIcebergBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                    <input type="text" placeholder="Masalan: PF-ICE-01" value={procForm.pfIcebergBatch} onChange={e => setProcForm({...procForm, pfIcebergBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Piyoz</label>
-                    <input type="text" value={procForm.pfOnionBatch} onChange={e => setProcForm({...procForm, pfOnionBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                    <input type="text" placeholder="Masalan: PF-ON-01" value={procForm.pfOnionBatch} onChange={e => setProcForm({...procForm, pfOnionBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Pomidor</label>
-                    <input type="text" value={procForm.pfTomatoBatch} onChange={e => setProcForm({...procForm, pfTomatoBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                    <input type="text" placeholder="Masalan: PF-TOM-01" value={procForm.pfTomatoBatch} onChange={e => setProcForm({...procForm, pfTomatoBatch: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -1889,30 +2085,30 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
                   
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Koul-slou °C</label>
-                    <input type="number" step="0.1" value={procForm.gpColeTemp} onChange={e => setProcForm({...procForm, gpColeTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                    <input type="number" step="0.1" placeholder="Masalan: 3.8" value={procForm.gpColeTemp} onChange={e => setProcForm({...procForm, gpColeTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Aysberg °C</label>
-                    <input type="number" step="0.1" value={procForm.gpIcebergTemp} onChange={e => setProcForm({...procForm, gpIcebergTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                    <input type="number" step="0.1" placeholder="Masalan: 3.5" value={procForm.gpIcebergTemp} onChange={e => setProcForm({...procForm, gpIcebergTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Pomidor °C</label>
-                    <input type="number" step="0.1" value={procForm.gpTomatoTemp} onChange={e => setProcForm({...procForm, gpTomatoTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                    <input type="number" step="0.1" placeholder="Masalan: 4.1" value={procForm.gpTomatoTemp} onChange={e => setProcForm({...procForm, gpTomatoTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">Piyoz °C</label>
-                    <input type="number" step="0.1" value={procForm.gpOnionTemp} onChange={e => setProcForm({...procForm, gpOnionTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
+                    <input type="number" step="0.1" placeholder="Masalan: 3.9" value={procForm.gpOnionTemp} onChange={e => setProcForm({...procForm, gpOnionTemp: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-blue-600" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase">{d.corrAction}</label>
-                    <input type="text" value={procForm.correctiveAction} onChange={e => setProcForm({...procForm, correctiveAction: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-medium text-amber-700" />
+                    <input type="text" placeholder="Masalan: Chora ko'rilmadi" value={procForm.correctiveAction} onChange={e => setProcForm({...procForm, correctiveAction: e.target.value})} className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-lg px-2 py-1.5 text-xs font-medium text-amber-700" />
                   </div>
                 </div>
               </div>
 
               <div className="col-span-full mb-3">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
-                <input type="text" value={procForm.responsible} onChange={e => setProcForm({...procForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                <input type="text" placeholder="Masalan: Sex Nazoratchisi" value={procForm.responsible} onChange={e => setProcForm({...procForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
               </div>
 
               <div className="col-span-full mb-3">
@@ -1955,33 +2151,65 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.supplier}</label>
-                  <input type="text" value={rcvForm.supplierName} onChange={e => setRcvForm({...rcvForm, supplierName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                  <input type="text" placeholder="Masalan: Agro Fresh Agro" value={rcvForm.supplierName} onChange={e => setRcvForm({...rcvForm, supplierName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.productBatch}</label>
-                  <input type="text" value={rcvForm.productName} onChange={e => setRcvForm({...rcvForm, productName: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium" required />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      list="qc-rcv-products-datalist"
+                      placeholder="Masalan: Karam (Cabbage)"
+                      value={rcvForm.productName}
+                      onChange={e => setRcvForm({...rcvForm, productName: e.target.value})}
+                      className="flex-1 bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-medium"
+                      required
+                    />
+                    {rcvForm.productName.trim() && !combinedProductTypes.includes(rcvForm.productName.trim()) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = rcvForm.productName.trim()
+                          if (val && !productTypes.includes(val)) {
+                            saveProductTypes([...productTypes, val])
+                            toast.success(`"${val}" ro'yxatga qo'shildi!`)
+                          }
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shrink-0"
+                        title="Yangi mahsulotni tanlov ro'yxatiga saqlash"
+                      >
+                        <Plus size={13} />
+                        <span>{lang === 'ru' ? 'Добавить' : 'Saqlash'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <datalist id="qc-rcv-products-datalist">
+                    {combinedProductTypes.map(p => (
+                      <option key={p} value={p} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Partiya Raqami</label>
-                  <input type="text" value={rcvForm.batchNumber} onChange={e => setRcvForm({...rcvForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" required />
+                  <input type="text" placeholder="Masalan: SUP-20260815-01" value={rcvForm.batchNumber} onChange={e => setRcvForm({...rcvForm, batchNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400 text-xs font-mono font-bold" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.qtyKg}</label>
-                  <input type="number" step="0.1" value={rcvForm.quantityKg} onChange={e => setRcvForm({...rcvForm, quantityKg: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
+                  <input type="number" step="0.1" placeholder="Masalan: 1500" value={rcvForm.quantityKg} onChange={e => setRcvForm({...rcvForm, quantityKg: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold" required />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.cargoTemp} (°C)</label>
-                  <input type="number" step="0.1" value={rcvForm.cargoTemp} onChange={e => setRcvForm({...rcvForm, cargoTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
+                  <input type="number" step="0.1" placeholder="Masalan: 3.8" value={rcvForm.cargoTemp} onChange={e => setRcvForm({...rcvForm, cargoTemp: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Mashina Raqami</label>
-                  <input type="text" value={rcvForm.vehicleNumber} onChange={e => setRcvForm({...rcvForm, vehicleNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-medium" />
+                  <input type="text" placeholder="Masalan: 01 A 777 AA" value={rcvForm.vehicleNumber} onChange={e => setRcvForm({...rcvForm, vehicleNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-medium" />
                 </div>
               </div>
 
@@ -1998,7 +2226,7 @@ export default function ShopQCContent({ userRole = 'OPERATOR', userName = '', is
 
               <div className="col-span-full mb-3">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{d.responsible}</label>
-                <input type="text" value={rcvForm.responsible} onChange={e => setRcvForm({...rcvForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
+                <input type="text" placeholder="Masalan: Kirish Nazoratchisi" value={rcvForm.responsible} onChange={e => setRcvForm({...rcvForm, responsible: e.target.value})} className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium font-bold" required />
               </div>
 
               <div className="col-span-full mb-3">

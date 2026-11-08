@@ -33,6 +33,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       updateData.price = body.price && !isNaN(parseFloat(body.price)) ? parseFloat(body.price) : null
     }
     if (body.notes !== undefined) updateData.notes = body.notes
+    if (body.warehouseNotes !== undefined) updateData.warehouseNotes = body.warehouseNotes
     if (body.deliveredQuantity !== undefined) {
       updateData.deliveredQuantity = body.deliveredQuantity !== null && !isNaN(parseFloat(body.deliveredQuantity)) ? parseFloat(body.deliveredQuantity) : null
     }

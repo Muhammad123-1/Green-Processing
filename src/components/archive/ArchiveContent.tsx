@@ -1,8 +1,23 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Archive, ArrowDownToLine, ArrowUpFromLine, Calculator, CheckCircle2, Calendar as CalendarIcon, Loader2, X, User as UserIcon, Clock, ChevronRight, ChevronLeft } from 'lucide-react'
+import {
+  Archive,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Calculator,
+  CheckCircle2,
+  Calendar as CalendarIcon,
+  Loader2,
+  X,
+  User as UserIcon,
+  Clock,
+  ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight
+} from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
 const isPlainObject = (v: any) => v !== null && typeof v === 'object' && !Array.isArray(v)
@@ -55,13 +70,20 @@ function DataView({ data, level = 0 }: { data: any; level?: number }) {
   return <span className="font-mono font-bold text-slate-900 dark:text-white">{formatValue(data)}</span>
 }
 
+const ITEMS_PER_PAGE = 20
+
 export default function ArchiveContent() {
   const { formatDual } = useLanguage()
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [filterDate, setFilterDate] = useState('')
   const [typeFilter, setTypeFilter] = useState('ALL')
   const [selected, setSelected] = useState<any | null>(null)
+  const [jumpPageInput, setJumpPageInput] = useState('')
+  const timelineRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!selected) return
@@ -89,36 +111,78 @@ export default function ArchiveContent() {
     try { return new Date(iso).toLocaleString('uz-UZ', { dateStyle: 'medium', timeStyle: 'short' }) } catch { return iso }
   }
 
-  const fetchArchive = async (date: string) => {
+  const fetchArchive = async (targetPage: number, targetType: string, targetDate: string) => {
     setLoading(true)
     try {
-      const url = date ? `/api/archive?date=${date}` : '/api/archive'
-      const res = await fetch(url)
+      const params = new URLSearchParams()
+      params.set('page', String(targetPage))
+      params.set('limit', String(ITEMS_PER_PAGE))
+      if (targetType && targetType !== 'ALL') params.set('type', targetType)
+      if (targetDate) params.set('date', targetDate)
+
+      const res = await fetch(`/api/archive?${params.toString()}`)
       if (!res.ok) {
         console.error('API Error status:', res.status)
         setEvents([])
+        setTotal(0)
+        setTotalPages(1)
         return
       }
       const data = await res.json()
       if (Array.isArray(data)) {
         setEvents(data)
+        setTotal(data.length)
+        setTotalPages(Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE)))
+      } else if (data && Array.isArray(data.events)) {
+        setEvents(data.events)
+        setTotal(data.total || 0)
+        setTotalPages(data.totalPages || 1)
       } else {
         console.error('API Error:', data)
         setEvents([])
+        setTotal(0)
+        setTotalPages(1)
       }
     } catch (e) {
       console.error('Archive fetch error:', e)
       setEvents([])
+      setTotal(0)
+      setTotalPages(1)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchArchive(filterDate)
-  }, [filterDate])
+    fetchArchive(page, typeFilter, filterDate)
+  }, [page, typeFilter, filterDate])
 
-  const filteredEvents = Array.isArray(events) ? events.filter(e => typeFilter === 'ALL' || e.type === typeFilter) : []
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === page) return
+    setPage(newPage)
+    if (timelineRef.current) {
+      timelineRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handleTypeChange = (newType: string) => {
+    setTypeFilter(newType)
+    setPage(1)
+  }
+
+  const handleDateChange = (newDate: string) => {
+    setFilterDate(newDate)
+    setPage(1)
+  }
+
+  const handleJumpSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const p = parseInt(jumpPageInput, 10)
+    if (!isNaN(p) && p >= 1 && p <= totalPages) {
+      handlePageChange(p)
+      setJumpPageInput('')
+    }
+  }
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -140,6 +204,26 @@ export default function ArchiveContent() {
     }
   }
 
+  // Calculate pagination visible page numbers (smart window)
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (page <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages)
+      } else if (page >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(1, '...', page - 1, page, page + 1, '...', totalPages)
+      }
+    }
+    return pages
+  }
+
+  const startRecord = total === 0 ? 0 : (page - 1) * ITEMS_PER_PAGE + 1
+  const endRecord = Math.min(page * ITEMS_PER_PAGE, total)
+
   return (
     <div className="flex flex-col min-h-full md:h-full space-y-3 md:space-y-5 animate-enter p-1 sm:p-2 md:p-4">
       {/* Header */}
@@ -153,15 +237,15 @@ export default function ArchiveContent() {
               <h1 className="text-base sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight">
                 {formatDual("Umumiy Arxiv (Lenta)", "Общий архив (Лента)", "Global Archive (Feed)")}
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">
-                {events.length} ta amal
+              <span className="text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">
+                {total.toLocaleString()} ta amal · {ITEMS_PER_PAGE} tadan
               </span>
             </div>
             <p className="hidden sm:block text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
               {formatDual(
-                "Direktor va boshqaruv uchun zavoddagi barcha amaliyotlar xronologik tarixi",
-                "Хронологическая лента всех операций завода для директора и руководства",
-                "Chronological timeline of all factory operations for executive management"
+                "Har bir sahifada 20 tadan operatsiya bosqichma-bosqich yuklanadi",
+                "Загрузка операций порциями по 20 записей на страницу",
+                "Chronological timeline loaded in batches of 20 operations per page"
               )}
             </p>
           </div>
@@ -177,7 +261,7 @@ export default function ArchiveContent() {
           </Link>
           <select
             value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value)}
+            onChange={e => handleTypeChange(e.target.value)}
             className="flex-1 sm:flex-none min-w-[140px] bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
           >
             <option value="ALL">{formatDual("Barcha turlar", "Все типы", "All types")}</option>
@@ -189,12 +273,12 @@ export default function ArchiveContent() {
           <input
             type="date"
             value={filterDate}
-            onChange={e => setFilterDate(e.target.value)}
+            onChange={e => handleDateChange(e.target.value)}
             className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
           />
           {filterDate && (
             <button
-              onClick={() => setFilterDate('')}
+              onClick={() => handleDateChange('')}
               className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-colors"
             >
               {formatDual("Tozalash", "Сброс", "Clear")}
@@ -204,58 +288,181 @@ export default function ArchiveContent() {
       </div>
 
       {/* Timeline / List */}
-      <div className="flex-1 md:overflow-y-auto custom-scrollbar bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm p-3 sm:p-4 md:p-6">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center h-40 text-slate-400 space-y-3">
-            <Loader2 className="animate-spin text-indigo-600" size={32} />
-            <p className="font-bold text-sm">{formatDual("Yuklanmoqda...", "Загрузка...", "Loading...")}</p>
-          </div>
-        ) : filteredEvents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-slate-400">
-            <Archive size={48} className="mb-3 opacity-20" />
-            <p className="font-bold">{formatDual("Hech qanday ma'lumot topilmadi", "Ничего не найдено", "No records found")}</p>
-          </div>
-        ) : (
-          <div className="space-y-3 sm:space-y-4">
-            {filteredEvents.map((evt, idx) => (
-              <div key={evt.id} className="flex gap-2.5 sm:gap-4 group">
-                <div className="flex flex-col items-center shrink-0">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center z-10 group-hover:scale-110 transition-transform">
-                    {getIcon(evt.type)}
+      <div
+        ref={timelineRef}
+        className="flex-1 md:overflow-y-auto custom-scrollbar bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm p-3 sm:p-4 md:p-6 flex flex-col justify-between"
+      >
+        <div>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 text-slate-400 space-y-3">
+              <Loader2 className="animate-spin text-indigo-600" size={36} />
+              <p className="font-bold text-sm text-slate-600 dark:text-slate-400">
+                {formatDual("20 ta amal yuklanmoqda...", "Загрузка 20 записей...", "Loading 20 operations...")}
+              </p>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-slate-400">
+              <Archive size={52} className="mb-3 opacity-20" />
+              <p className="font-bold text-slate-600 dark:text-slate-400">
+                {formatDual("Hech qanday ma'lumot topilmadi", "Ничего не найдено", "No records found")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 sm:space-y-4">
+              {events.map((evt, idx) => (
+                <div key={evt.id} className="flex gap-2.5 sm:gap-4 group">
+                  <div className="flex flex-col items-center shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center z-10 group-hover:scale-110 transition-transform shadow-xs">
+                      {getIcon(evt.type)}
+                    </div>
+                    {idx !== events.length - 1 && (
+                      <div className="w-px h-full bg-slate-200 dark:bg-dark-700 mt-1.5"></div>
+                    )}
                   </div>
-                  {idx !== filteredEvents.length - 1 && (
-                    <div className="w-px h-full bg-slate-200 dark:bg-dark-700 mt-1.5"></div>
-                  )}
+                  
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelected(evt)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') setSelected(evt) }}
+                    className="flex-1 min-w-0 bg-slate-50 dark:bg-dark-800/80 border border-slate-200 dark:border-dark-750 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-2 sm:mb-3 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-white dark:hover:bg-dark-800 hover:shadow-md cursor-pointer transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                      <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${getBadgeColor(evt.type)}`}>
+                        {typeLabel(evt.type)}
+                      </span>
+                      <span className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-dark-900 px-2.5 py-0.5 rounded-md border border-slate-200 dark:border-dark-700 shrink-0">
+                        {evt.date}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug mb-1 break-words">
+                      {evt.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed break-words">
+                      {evt.desc}
+                    </p>
+                    <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-slate-200 dark:border-dark-700 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 gap-2">
+                      <span className="flex items-center gap-1.5 truncate">
+                        <UserIcon size={13} className="shrink-0" /> <span className="truncate">{evt.author}</span>
+                      </span>
+                      <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
+                        {formatDual("Batafsil", "Подробнее", "Details")} <ChevronRight size={13} />
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelected(evt)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') setSelected(evt) }}
-                  className="flex-1 min-w-0 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-750 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-2 sm:mb-4 hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
-                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${getBadgeColor(evt.type)}`}>
-                      {typeLabel(evt.type)}
-                    </span>
-                    <span className="text-[11px] sm:text-xs font-bold text-slate-500 bg-white dark:bg-dark-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-dark-700 shrink-0">
-                      {evt.date}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug mb-1 break-words">
-                    {evt.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed break-words">
-                    {evt.desc}
-                  </p>
-                  <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-slate-200 dark:border-dark-700 text-[11px] sm:text-xs text-slate-500 gap-2">
-                    <span className="flex items-center gap-1.5 truncate"><UserIcon size={13} className="shrink-0" /> <span className="truncate">{evt.author}</span></span>
-                    <span className="flex items-center gap-1 text-indigo-500 font-bold shrink-0">{formatDual("Batafsil", "Подробнее", "Details")} <ChevronRight size={13} /></span>
-                  </div>
-                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Bar (20 per page) */}
+        {!loading && total > 0 && (
+          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-dark-750 flex flex-col md:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
+            {/* Range info */}
+            <div className="text-slate-600 dark:text-slate-400 font-medium text-center md:text-left">
+              {formatDual(
+                `${startRecord}–${endRecord} ko'rsatilmoqda (Jami: ${total.toLocaleString()} ta)`,
+                `Показано ${startRecord}–${endRecord} (Всего: ${total.toLocaleString()})`,
+                `Showing ${startRecord}–${endRecord} of ${total.toLocaleString()}`
+              )}
+            </div>
+
+            {/* Pagination controls */}
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              {/* First Page */}
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={page === 1}
+                className="p-2 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title={formatDual("Birinchi sahifa", "Первая страница", "First page")}
+              >
+                <ChevronsLeft size={16} />
+              </button>
+
+              {/* Prev Page */}
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed font-bold flex items-center gap-1 transition-colors"
+              >
+                <ChevronLeft size={16} />
+                <span className="hidden sm:inline">{formatDual("Oldingi", "Назад", "Prev")}</span>
+              </button>
+
+              {/* Numbered Page Buttons */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((p, i) => {
+                  if (typeof p === 'string') {
+                    return (
+                      <span key={`ellipsis-${i}`} className="px-2 text-slate-400 font-bold select-none">
+                        ...
+                      </span>
+                    )
+                  }
+                  const isActive = p === page
+                  return (
+                    <button
+                      key={`page-${p}`}
+                      onClick={() => handlePageChange(p)}
+                      className={`min-w-[36px] h-9 rounded-xl font-bold transition-all text-xs sm:text-sm ${
+                        isActive
+                          ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                          : 'border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                })}
               </div>
-            ))}
+
+              {/* Next Page */}
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed font-bold flex items-center gap-1 transition-colors"
+              >
+                <span className="hidden sm:inline">{formatDual("Keyingi", "Вперед", "Next")}</span>
+                <ChevronRight size={16} />
+              </button>
+
+              {/* Last Page */}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page === totalPages}
+                className="p-2 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title={formatDual("Oxirgi sahifa", "Последняя страница", "Last page")}
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </div>
+
+            {/* Jump to page */}
+            {totalPages > 5 && (
+              <form onSubmit={handleJumpSubmit} className="flex items-center gap-1.5">
+                <span className="text-slate-500 text-xs hidden lg:inline">
+                  {formatDual("Sahifa:", "Стр:", "Page:")}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  placeholder={String(page)}
+                  value={jumpPageInput}
+                  onChange={e => setJumpPageInput(e.target.value)}
+                  className="w-14 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white text-xs text-center font-bold outline-none focus:border-indigo-500"
+                />
+                <span className="text-slate-400 text-xs">/ {totalPages}</span>
+                <button
+                  type="submit"
+                  disabled={!jumpPageInput}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-200 dark:bg-dark-750 hover:bg-indigo-600 hover:text-white text-slate-700 dark:text-slate-200 text-xs font-bold disabled:opacity-40 transition-colors"
+                >
+                  {formatDual("O'tish", "Перейти", "Go")}
+                </button>
+              </form>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 import {
   FileSpreadsheet,
   Plus,
@@ -66,13 +67,13 @@ interface StatsData {
 const emptyForm = {
   orderNumber: '',
   arrivalDate: new Date().toISOString().slice(0, 10),
-  substanceName: 'Гипохлорид натрия',
-  productType: 'ГОСТ 11086-76',
-  supplierName: 'ЧП "TURK SHANAY BIZNES"',
+  substanceName: '',
+  productType: '',
+  supplierName: '',
   batchNumber: '',
-  accompanyingDoc: 'Сертификат качества',
-  activeChlorinePercent: '12',
-  quantityReceived: '400',
+  accompanyingDoc: '',
+  activeChlorinePercent: '',
+  quantityReceived: '',
   unit: 'кг',
   manufactureDate: '',
   expiryDate: '',
@@ -80,8 +81,8 @@ const emptyForm = {
   accessPermit: 'допущено',
   releasedKg: '',
   releasedDate: '',
-  inspectorName: 'Камбарова А.М.',
-  pricePerKg: '7000',
+  inspectorName: '',
+  pricePerKg: '',
   registrationCert: '',
   conformityDeclaration: '',
   category: 'DEZ',
@@ -89,6 +90,13 @@ const emptyForm = {
 }
 
 export default function DisinfectionActsContent() {
+  const { lang, formatDual } = useLanguage()
+  const activeLang: 'uz' | 'ru' | 'en' = useMemo(() => {
+    if (lang === 'ru' || lang === 'ru_en') return 'ru'
+    if (lang === 'en') return 'en'
+    return 'uz'
+  }, [lang])
+
   const [acts, setActs] = useState<DisinfectionAct[]>([])
   const [stats, setStats] = useState<StatsData>({
     totalActs: 0,
@@ -334,29 +342,45 @@ export default function DisinfectionActsContent() {
               </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black text-white tracking-wide">
-              Журнал регистрации поступления моющих, дезинфицирующих и химических средств
+              {activeLang === 'ru'
+                ? 'Журнал регистрации моющих и дезинфицирующих средств'
+                : activeLang === 'en'
+                ? 'Disinfection and Cleaning Agents Journal'
+                : 'Dezinfeksiya va yuvish vositalari jurnali'}
             </h1>
             <p className="text-xs md:text-sm text-teal-200/80 mt-1">
-              Korxonaga qabul qilinayotgan barcha dezinfeksiya, yuvish vositalari hamda kimyoviy qo'shimchalarning (kislota, konservantlar) sifat va partiya nazorati
+              {activeLang === 'ru'
+                ? 'Учёт поступления, расхода и остатков партии на складе'
+                : activeLang === 'en'
+                ? 'Tracking receipts, usage, and lot balances'
+                : "Vositalar kirimi, sexga chiqimi va ombor qoldig'i monitoringi"}
             </p>
           </div>
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">Jami partiyalar</span>
+              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+                {formatDual('Jami partiyalar', 'Всего партий', 'Total batches')}
+              </span>
               <span className="text-lg font-black text-white">{stats.totalActs} ta</span>
             </div>
             <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">Qabul (Hajm)</span>
+              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+                {formatDual('Qabul (Hajm)', 'Принято', 'Received')}
+              </span>
               <span className="text-lg font-black text-emerald-400">{stats.totalReceivedKg.toLocaleString()} kg</span>
             </div>
             <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">Sexga berildi</span>
+              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+                {formatDual('Sexga berildi', 'Отпущено', 'Issued')}
+              </span>
               <span className="text-lg font-black text-amber-300">{stats.totalReleasedKg.toLocaleString()} kg</span>
             </div>
             <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">Qoldiq omborda</span>
+              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+                {formatDual('Qoldiq omborda', 'Остаток', 'Balance')}
+              </span>
               <span className="text-lg font-black text-cyan-300">{(stats.totalReceivedKg - stats.totalReleasedKg).toLocaleString()} kg</span>
             </div>
           </div>
@@ -473,30 +497,58 @@ export default function DisinfectionActsContent() {
             <thead>
               {/* Row 1 Header */}
               <tr className="bg-slate-100 dark:bg-dark-800 text-slate-800 dark:text-slate-200 border-b border-slate-300 dark:border-dark-700 text-center font-bold">
-                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 w-10">№<br />п/п</th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[100px]">ДАТА<br />ПОСТУПЛЕНИЯ</th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[190px] text-left">Наименование<br />средства</th>
-                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[110px]">Вид<br />изделия</th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[160px] text-left">Поставщик</th>
-                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[70px]">№<br />партии</th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[140px]">Сопровождающий<br />документ</th>
+                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 w-10">№</th>
+                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[100px]">
+                  {formatDual('QABUL SANASI', 'ДАТА ПОСТУПЛЕНИЯ', 'ARRIVAL DATE')}
+                </th>
+                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[190px] text-left">
+                  {formatDual('Vosita nomi', 'Наименование средства', 'Substance name')}
+                </th>
+                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[110px]">
+                  {formatDual('Mahsulot turi', 'Вид изделия', 'Product type')}
+                </th>
+                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[160px] text-left">
+                  {formatDual('Yetkazib beruvchi', 'Поставщик', 'Supplier')}
+                </th>
+                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[70px]">
+                  {formatDual('Partiya №', '№ партии', 'Batch #')}
+                </th>
+                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[140px]">
+                  {formatDual('Kuzatuv hujjati', 'Сопровождающий документ', 'Accompanying doc')}
+                </th>
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[100px] bg-cyan-50/50 dark:bg-cyan-950/20 text-cyan-800 dark:text-cyan-300">
-                  Активный хлор /<br />Концентрация, %
+                  {formatDual('Faol xlor / %, ppm', 'Активный хлор / %', 'Active chlorine / %')}
                 </th>
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[85px] bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300">
-                  Поступило<br />(кг)
+                  {formatDual('Qabul (kg)', 'Поступило (кг)', 'Received (kg)')}
                 </th>
-                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[95px]">Дата<br />изготовления</th>
-                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[95px]">Годен<br />до</th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[130px]">Оценка условий<br />транспортирования</th>
-                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[90px]">Допуск</th>
+                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[95px]">
+                  {formatDual('Ishlab chiqarilgan', 'Дата изготовления', 'Manufacture date')}
+                </th>
+                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[95px]">
+                  {formatDual('Yaroqlilik', 'Годен до', 'Expiry date')}
+                </th>
+                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[130px]">
+                  {formatDual('Tashish sharoiti', 'Условия транспортирования', 'Transport condition')}
+                </th>
+                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[90px]">
+                  {formatDual('Ruxsat', 'Допуск', 'Verdict')}
+                </th>
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-dark-700 min-w-[85px] bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
-                  Отпущено:<br />кг
+                  {formatDual('Chiqim (kg)', 'Отпущено (кг)', 'Issued (kg)')}
                 </th>
-                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[95px]">Отпущено:<br />Дата</th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[140px] text-left">ФИО, Подпись<br />ответственного</th>
-                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[85px]">Цена<br />кг\шт</th>
-                <th className="py-2.5 px-2 min-w-[80px]">Amallar</th>
+                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[95px]">
+                  {formatDual('Chiqim sanasi', 'Дата отпуска', 'Issue date')}
+                </th>
+                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-dark-700 min-w-[140px] text-left">
+                  {formatDual("Mas'ul F.I.Sh", 'ФИО ответственного', 'Inspector name')}
+                </th>
+                <th className="py-2.5 px-2.5 border-r border-slate-300 dark:border-dark-700 min-w-[85px]">
+                  {formatDual('Narxi', 'Цена', 'Price')}
+                </th>
+                <th className="py-2.5 px-2 min-w-[80px]">
+                  {formatDual('Amallar', 'Действия', 'Actions')}
+                </th>
               </tr>
               {/* Row 2 Subheader / Column numbers */}
               <tr className="bg-slate-200/70 dark:bg-dark-700 text-slate-500 dark:text-slate-400 border-b border-slate-300 dark:border-dark-600 text-center font-mono text-[10px]">

@@ -180,7 +180,7 @@ export default function DashboardContent() {
             </div>
           </div>
           <Link
-            href="/inspections"
+            href="/incoming-acts"
             className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
             {t('seeAll')}
@@ -213,7 +213,7 @@ export default function DashboardContent() {
                   <tr key={item.id} className="table-row">
                     <td className="font-mono text-blue-400 font-medium">{item.actNumber}</td>
                     <td className="text-slate-300">
-                      {new Date(item.inspectionDate).toLocaleDateString(lang.includes('ru') ? 'ru-RU' : 'uz-UZ')}
+                      {item.inspectionDate}
                     </td>
                     <td className="text-slate-200">{item.supplier.name}</td>
                     <td className="text-slate-200">{item.product.name}</td>
@@ -227,7 +227,7 @@ export default function DashboardContent() {
                     </td>
                     <td>
                       <Link
-                        href={`/inspections/${item.id}`}
+                        href="/incoming-acts"
                         className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
                       >
                         {t('view')} →
@@ -244,24 +244,24 @@ export default function DashboardContent() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <QuickAction
-          href="/inspections/new"
+          href="/incoming-acts"
           icon={<ClipboardList size={20} />}
-          label={t('quickNewAct')}
-          description={t('quickNewActDesc')}
+          label={lang === 'ru' ? 'Акты приёмки' : lang === 'en' ? 'Quality Acts' : 'Xomashyo Sifat Aktlari'}
+          description={lang === 'ru' ? 'Журнал входного контроля' : lang === 'en' ? 'Incoming inspection journal' : 'Kiruvchi xomashyo sifat jurnali'}
           color="blue"
         />
         <QuickAction
-          href="/products"
+          href="/inspector"
           icon={<Package size={20} />}
-          label={t('quickProd')}
-          description={t('quickProdDesc')}
+          label={lang === 'ru' ? 'Цеховой контроль' : lang === 'en' ? 'Shop QC' : 'Sex Sifat Nazorati'}
+          description={lang === 'ru' ? 'FSSC 22000, CCP и журналы' : lang === 'en' ? 'FSSC 22000, CCP logs' : 'FSSC 22000, KKT va jurnallar'}
           color="purple"
         />
         <QuickAction
-          href="/suppliers"
+          href="/inspector/daily-checklist"
           icon={<Truck size={20} />}
-          label={t('quickSupp')}
-          description={t('quickSuppDesc')}
+          label={lang === 'ru' ? 'Чек-лист смены' : lang === 'en' ? 'Daily Checklist' : 'Smena Yakuni Chek-listi'}
+          description={lang === 'ru' ? 'Сводный акт контроля смены' : lang === 'en' ? 'Shift end summary report' : 'Yagona smena tekshiruv dalolatnomasi'}
           color="cyan"
         />
       </div>

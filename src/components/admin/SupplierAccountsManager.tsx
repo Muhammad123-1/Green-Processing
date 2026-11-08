@@ -373,18 +373,18 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 border border-dark-750 p-6 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-gradient-to-r dark:from-dark-900 dark:via-dark-850 dark:to-dark-900 border border-slate-200 dark:border-dark-750 p-6 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-3 py-1 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-700 dark:text-teal-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
               <KeyRound size={14} />
               {formatDual("ADMIN BOSHATUVCHI", "АДМИНИСТРИРОВАНИЕ", "ADMIN MANAGEMENT")}
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
             {formatDual("Ta'minotchi Portal Akkauntlari (Login & Parol)", "Аккаунты Поставщиков (Логин и Пароль)", "Supplier Portal Accounts")}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
             {formatDual(
               "Yetkazib beruvchilarga shaxsiy login va parol ochib bering. Ular tizimga kirganda faqat o'zlariga tegishli buyurtmalarni ko'rishadi.",
               "Создавайте логины и пароли для поставщиков. При входе им будут доступны только их заказы без доступа к остальной части ERP.",
@@ -409,34 +409,34 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-dark-900 border border-dark-750 p-4 rounded-2xl">
-          <div className="text-xs font-bold text-slate-400 uppercase">
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl shadow-sm">
+          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
             {formatDual("Jami Ta'minotchilar", "Всего поставщиков", "Total Suppliers")}
           </div>
-          <div className="text-2xl font-black text-white mt-1">
+          <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
             {suppliers.length}
           </div>
         </div>
-        <div className="bg-dark-900 border border-dark-750 p-4 rounded-2xl">
-          <div className="text-xs font-bold text-teal-400 uppercase">
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl shadow-sm">
+          <div className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase">
             {formatDual("Portali Mavjud Ta'minotchilar", "С доступом к порталу", "With Portal Access")}
           </div>
-          <div className="text-2xl font-black text-teal-400 mt-1">
-            {totalWithAccount} <span className="text-xs text-slate-400 font-semibold">/ {suppliers.length}</span>
+          <div className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">
+            {totalWithAccount} <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">/ {suppliers.length}</span>
           </div>
         </div>
-        <div className="bg-dark-900 border border-dark-750 p-4 rounded-2xl">
-          <div className="text-xs font-bold text-emerald-400 uppercase">
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl shadow-sm">
+          <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
             {formatDual("Faol Akkauntlar", "Активные аккаунты", "Active Accounts")}
           </div>
-          <div className="text-2xl font-black text-emerald-400 mt-1">
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
             {supplierUsers.filter(u => u.isActive).length}
           </div>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div className="bg-dark-900 border border-dark-750 p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -448,24 +448,24 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
             )}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-dark-800 border border-dark-700 rounded-xl text-xs font-medium text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
           />
         </div>
         <button
           onClick={fetchData}
-          className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-dark-700 transition-colors"
+          className="p-2.5 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700 transition-colors"
           title={formatDual("Yangilash", "Обновить", "Refresh")}
         >
-          <RefreshCw size={16} className={loading ? 'animate-spin text-emerald-400' : ''} />
+          <RefreshCw size={16} className={loading ? 'animate-spin text-emerald-500 dark:text-emerald-400' : ''} />
         </button>
       </div>
 
       {/* Suppliers Table & Accounts List */}
-      <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-dark-750 bg-dark-800/80 text-slate-400 font-bold uppercase tracking-wider">
+              <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                 <th className="py-4 px-5">{formatDual("TA'MINOTCHI KORXONASI", "ПРЕДПРИЯТИЕ ПОСТАВЩИКА", "SUPPLIER COMPANY")}</th>
                 <th className="py-4 px-4">{formatDual("TELEFON", "ТЕЛЕФОН", "PHONE")}</th>
                 <th className="py-4 px-4">{formatDual("PORTAL LOGIN (USERNAME)", "ЛОГИН ПОРТАЛА", "PORTAL USERNAME")}</th>
@@ -475,11 +475,11 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                 <th className="py-4 px-5 text-right">{formatDual("AMALLAR", "ДЕЙСТВИЯ", "ACTIONS")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-dark-750/70">
+            <tbody className="divide-y divide-slate-100 dark:divide-dark-750/70">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="p-12 text-center text-slate-400">
-                    <Loader2 size={28} className="animate-spin text-emerald-400 mx-auto mb-2" />
+                    <Loader2 size={28} className="animate-spin text-emerald-500 dark:text-emerald-400 mx-auto mb-2" />
                     <span>{formatDual("Yuklanmoqda...", "Загрузка...", "Loading...")}</span>
                   </td>
                 </tr>
@@ -495,25 +495,25 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                   const userAccount = hasAccount ? sup.users[0] : null
 
                   return (
-                    <tr key={sup.id} className="hover:bg-dark-800/40 transition-colors">
+                    <tr key={sup.id} className="hover:bg-slate-50/70 dark:hover:bg-dark-800/40 transition-colors">
                       {/* Company Name */}
                       <td className="py-4 px-5">
                         <a
                           href={`/suppliers/${sup.id}`}
-                          className="font-extrabold text-white hover:text-emerald-400 text-sm flex items-center gap-2 group transition-colors"
+                          className="font-extrabold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 text-sm flex items-center gap-2 group transition-colors"
                         >
-                          <Building2 size={16} className="text-emerald-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                          <span className="underline decoration-slate-600 group-hover:decoration-emerald-400">{sup.name}</span>
+                          <Building2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                          <span className="underline decoration-slate-300 dark:decoration-slate-600 group-hover:decoration-emerald-500">{sup.name}</span>
                         </a>
                         {sup.shortName && (
-                          <span className="text-[10px] text-slate-400 block ml-6">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 block ml-6">
                             ({sup.shortName})
                           </span>
                         )}
                       </td>
 
                       {/* Phone */}
-                      <td className="py-4 px-4 text-slate-300 font-mono">
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 font-mono">
                         {sup.phone || "—"}
                       </td>
 
@@ -521,7 +521,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                       <td className="py-4 px-4">
                         {userAccount ? (
                           <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-teal-500/15 border border-teal-500/30 text-teal-300 font-mono font-bold text-xs">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-teal-50 dark:bg-teal-500/15 border border-teal-200 dark:border-teal-500/30 text-teal-700 dark:text-teal-300 font-mono font-bold text-xs">
                               <KeyRound size={12} />
                               @{userAccount.username}
                             </span>
@@ -530,14 +530,14 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                                 navigator.clipboard.writeText(userAccount.username)
                                 toast.success(formatDual("Login nusxalandi!", "Логин скопирован!", "Login copied!"))
                               }}
-                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+                              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                               title={formatDual("Logini nusxalash", "Скопировать логин", "Copy login")}
                             >
                               <Copy size={12} />
                             </button>
                           </div>
                         ) : (
-                          <span className="text-slate-500 italic text-[11px]">
+                          <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">
                             {formatDual("Akkaunt ochilmagan", "Доступ не создан", "No account yet")}
                           </span>
                         )}
@@ -547,13 +547,13 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                       <td className="py-4 px-4">
                         {userAccount?.password ? (
                           <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono font-black text-xs tracking-wider">
-                              <Lock size={12} className="text-amber-400" />
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 font-mono font-black text-xs tracking-wider">
+                              <Lock size={12} className="text-amber-500 dark:text-amber-400" />
                               <span>{visiblePasswords[userAccount.id] ? userAccount.password : '••••••••'}</span>
                             </span>
                             <button
                               onClick={() => togglePasswordVisibility(userAccount.id)}
-                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+                              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                               title={visiblePasswords[userAccount.id] ? formatDual("Yashirish", "Скрыть", "Hide") : formatDual("Ko'rsatish", "Показать", "Show")}
                             >
                               {visiblePasswords[userAccount.id] ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -563,14 +563,14 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                                 navigator.clipboard.writeText(userAccount.password!)
                                 toast.success(formatDual("Parol nusxalandi!", "Пароль скопирован!", "Password copied!"))
                               }}
-                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+                              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
                               title={formatDual("Parolni nusxalash", "Скопировать пароль", "Copy password")}
                             >
                               <Copy size={12} />
                             </button>
                           </div>
                         ) : (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-slate-400 dark:text-slate-600">—</span>
                         )}
                       </td>
 
@@ -578,23 +578,23 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                       <td className="py-4 px-4 text-center">
                         {userAccount ? (
                           userAccount.isActive ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                               <ShieldCheck size={12} />
                               {formatDual("Faol", "Активен", "Active")}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30">
                               <UserX size={12} />
                               {formatDual("Bloklangan", "Блокирован", "Blocked")}
                             </span>
                           )
                         ) : (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-slate-400 dark:text-slate-600">—</span>
                         )}
                       </td>
 
                       {/* Orders Count */}
-                      <td className="py-4 px-4 text-center font-bold text-slate-300">
+                      <td className="py-4 px-4 text-center font-bold text-slate-700 dark:text-slate-300">
                         {sup._count?.orders || 0}
                       </td>
 
@@ -604,7 +604,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                           {/* Direct link to Supplier's personal page */}
                           <a
                             href={`/suppliers/${sup.id}`}
-                            className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 text-xs font-bold transition-all flex items-center gap-1"
                             title={formatDual("Ta'minotchi shaxsiy sahifasini ochish", "Открыть страницу поставщика", "Open supplier page")}
                           >
                             <ExternalLink size={13} />
@@ -615,15 +615,15 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                             <>
                               <button
                                 onClick={() => copyShareText(sup.name, userAccount.username, userAccount.password || '')}
-                                className="p-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-dark-700 transition-all"
+                                className="p-1.5 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-dark-700 transition-all"
                                 title={formatDual("SMS / Telegram xabarini nusxalash", "Скопировать для отправки поставщику", "Copy SMS for supplier")}
                               >
-                                <Send size={13} className="text-blue-400" />
+                                <Send size={13} className="text-blue-600 dark:text-blue-400" />
                               </button>
 
                               <button
                                 onClick={() => setChatSupplier(sup)}
-                                className="px-2.5 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                                className="px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-500/15 hover:bg-teal-100 dark:hover:bg-teal-500/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-500/30 text-xs font-bold transition-all flex items-center gap-1"
                                 title={formatDual("Ta'minotchi bilan chat", "Чат с поставщиком", "Chat with supplier")}
                               >
                                 <MessageSquare size={13} />
@@ -644,7 +644,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                                   })
                                   setNewPassword('')
                                 }}
-                                className="px-2.5 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border border-dark-700 text-xs font-bold transition-all flex items-center gap-1"
+                                className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700 text-xs font-bold transition-all flex items-center gap-1"
                                 title={formatDual("Parolni yangilash", "Сменить пароль", "Reset password")}
                               >
                                 <Lock size={12} />
@@ -655,8 +655,8 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                                 onClick={() => handleToggleActive(userAccount as any)}
                                 className={`p-1.5 rounded-xl border transition-all ${
                                   userAccount.isActive
-                                    ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border-rose-500/30'
-                                    : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30'
+                                    ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border-rose-200 dark:border-rose-500/30'
+                                    : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border-emerald-200 dark:border-emerald-500/30'
                                 }`}
                                 title={userAccount.isActive ? formatDual("Bloklash", "Блокировать", "Block") : formatDual("Faollashtirish", "Активировать", "Activate")}
                               >
@@ -665,7 +665,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
 
                               <button
                                 onClick={() => handleDeleteAccount(userAccount.id, sup.name)}
-                                className="p-1.5 rounded-xl bg-dark-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-dark-700 transition-all"
+                                className="p-1.5 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-dark-700 transition-all"
                                 title={formatDual("O'chirish", "Удалить", "Delete")}
                               >
                                 <Trash2 size={15} />
@@ -677,7 +677,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                                 setShowCreateModal(true)
                                 handleSelectSupplier(sup.id.toString())
                               }}
-                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs"
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-400 hover:text-white border border-emerald-200 dark:border-emerald-500/30 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs"
                             >
                               <Plus size={13} />
                               <span>{formatDual("Login yaratish", "Создать доступ", "Create Login")}</span>
@@ -697,24 +697,24 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
       {/* MODAL 1: Create Supplier Login & Password */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-enter">
-          <div className="bg-dark-900 border border-dark-700 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-dark-750 pb-4">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <KeyRound size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
                     {formatDual("Ta'minotchi uchun Portal Logini Ochish", "Создание доступа для поставщика", "Create Supplier Portal Login")}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual("Tizimga kirish uchun maxsus login va parol", "Данные для входа в кабинет поставщика", "Credentials for the supplier portal")}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-dark-800"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-dark-800"
               >
                 <X size={18} />
               </button>
@@ -723,13 +723,13 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
             <form onSubmit={handleCreateAccount} className="space-y-4 text-xs">
               {/* Select Supplier */}
               <div>
-                <label className="block font-bold text-slate-300 mb-1.5">
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   {formatDual("Ta'minotchi Korxonasi", "Предприятие поставщика", "Supplier Company")} *
                 </label>
                 <select
                   value={selectedSupplierId}
                   onChange={(e) => handleSelectSupplier(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-emerald-500"
                   required
                 >
                   <option value="">{formatDual("— Ta'minotchini tanlang —", "— Выберите поставщика —", "— Select Supplier —")}</option>
@@ -743,7 +743,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
 
               {/* Contact Name */}
               <div>
-                <label className="block font-bold text-slate-300 mb-1.5">
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   {formatDual("Mas'ul Shaxs F.I.Sh / Profil Nomi", "Ф.И.О. контактного лица", "Contact Person / Profile Name")}
                 </label>
                 <input
@@ -751,23 +751,23 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="masalan: Jasur M."
-                  className="w-full px-3.5 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               {/* Username */}
               <div>
-                <label className="block font-bold text-slate-300 mb-1.5">
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   {formatDual("Login (Foydalanuvchi nomi)", "Логин (Имя пользователя)", "Username (Login)")} *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono">@</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-mono">@</span>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                     placeholder="kibray_baraka"
-                    className="w-full pl-8 pr-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500"
+                    className="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
                     required
                   />
                 </div>
@@ -776,13 +776,13 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
               {/* Password with generator */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="font-bold text-slate-300">
+                  <label className="font-bold text-slate-700 dark:text-slate-300">
                     {formatDual("Parol", "Пароль", "Password")} *
                   </label>
                   <button
                     type="button"
                     onClick={generatePassword}
-                    className="text-emerald-400 hover:text-emerald-300 text-[11px] font-bold flex items-center gap-1"
+                    className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 text-[11px] font-bold flex items-center gap-1"
                   >
                     <Sparkles size={12} />
                     <span>{formatDual("⚡ Tasodifiy parol", "⚡ Сгенерировать", "⚡ Generate")}</span>
@@ -794,13 +794,13 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Kamida 6 belgi"
-                    className="w-full px-3.5 pr-10 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3.5 pr-10 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -808,7 +808,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
               </div>
 
               {/* Info Note */}
-              <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300 text-[11px] leading-relaxed">
+              <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 text-teal-800 dark:text-teal-300 text-[11px] leading-relaxed">
                 🔒 {formatDual(
                   "Ushbu ta'minotchi tizimga kirganida faqat uning o'ziga korxona tomonidan berilgan buyurtmalar ko'rinadi. Boshqa korxona ma'lumotlariga kirish to'liq yopiq bo'ladi.",
                   "Поставщик увидит только предназначенные ему заказы завода. Доступ к другим разделам ERP будет полностью изолирован.",
@@ -817,11 +817,11 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-dark-750">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-dark-750">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 font-bold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 font-bold"
                 >
                   {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
@@ -842,24 +842,24 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
       {/* MODAL 2: Reset Password */}
       {resetUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-enter">
-          <div className="bg-dark-900 border border-dark-700 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-dark-750 pb-4">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-750 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                   <Lock size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
                     {formatDual("Parolni O'zgartirish", "Смена пароля", "Reset Password")}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {resetUser.supplier?.name || resetUser.name} (@{resetUser.username})
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setResetUser(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-dark-800"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-dark-800"
               >
                 <X size={18} />
               </button>
@@ -867,7 +867,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
 
             <form onSubmit={handleResetPassword} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-300 mb-1.5">
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   {formatDual("Yangi Parol", "Новый пароль", "New Password")} *
                 </label>
                 <div className="relative">
@@ -876,7 +876,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Yangi parol kiriting"
-                    className="w-full px-3.5 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-white font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white font-mono focus:outline-none focus:border-amber-500"
                     required
                   />
                   <button
@@ -887,18 +887,18 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
                       for (let i = 0; i < 8; i++) p += chars.charAt(Math.floor(Math.random() * chars.length))
                       setNewPassword(p)
                     }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 text-[11px] font-bold"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-amber-600 dark:text-amber-400 hover:text-amber-500 text-[11px] font-bold"
                   >
                     ⚡ {formatDual("Generatsiya", "Генерировать", "Generate")}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-dark-750">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-dark-750">
                 <button
                   type="button"
                   onClick={() => setResetUser(null)}
-                  className="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 font-bold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 font-bold"
                 >
                   {formatDual("Bekor qilish", "Отмена", "Cancel")}
                 </button>
@@ -919,35 +919,35 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
       {/* MODAL 3: Success Credentials Share Card */}
       {createdCredentials && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter">
-          <div className="bg-dark-900 border border-emerald-500/50 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5">
+          <div className="bg-white dark:bg-dark-900 border border-emerald-500/50 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <Check size={26} />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
                   {formatDual("Akkaunt Tayyor!", "Аккаунт готов!", "Account Ready!")}
                 </h3>
-                <p className="text-xs text-slate-400">{createdCredentials.supplierName}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{createdCredentials.supplierName}</p>
               </div>
             </div>
 
-            <div className="bg-dark-950 border border-dark-750 p-4 rounded-2xl space-y-2.5 font-mono text-xs">
-              <div className="flex items-center justify-between border-b border-dark-800 pb-2">
+            <div className="bg-slate-50 dark:bg-dark-950 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl space-y-2.5 font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-800 pb-2">
                 <span className="text-slate-500">Login:</span>
-                <span className="font-bold text-emerald-400 select-all">{createdCredentials.username}</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 select-all">{createdCredentials.username}</span>
               </div>
-              <div className="flex items-center justify-between border-b border-dark-800 pb-2">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-800 pb-2">
                 <span className="text-slate-500">Parol:</span>
-                <span className="font-bold text-amber-400 select-all">{createdCredentials.password}</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400 select-all">{createdCredentials.password}</span>
               </div>
               <div className="flex items-center justify-between pt-1">
                 <span className="text-slate-500">Kirish havolasi:</span>
-                <span className="text-slate-300 text-[11px] truncate max-w-[180px]">/login</span>
+                <span className="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[180px]">/login</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
               {formatDual(
                 "Ushbu login va parolni nusxalab, ta'minotchiga (Telegram, WhatsApp yoki SMS orqali) yuborishingiz mumkin.",
                 "Скопируйте эти данные и отправьте поставщику через мессенджер.",
@@ -965,7 +965,7 @@ Tizimga kirgach, buyurtmalarni ko'rishingiz va "Yo'lga chiqdik" deb belgilashing
               </button>
               <button
                 onClick={() => setCreatedCredentials(null)}
-                className="px-4 py-3 rounded-2xl bg-dark-800 hover:bg-dark-750 text-slate-300 font-bold text-xs"
+                className="px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 font-bold text-xs"
               >
                 {formatDual("Yopish", "Закрыть", "Close")}
               </button>

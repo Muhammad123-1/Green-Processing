@@ -22,24 +22,96 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
+    // If defectLog table is empty and location is ALL or INSPECTION, aggregate from IncomingRawMaterialAct
+    let allDefects = [...defects]
+    if (defects.length === 0 && (!location || location === 'ALL' || location === 'INSPECTION')) {
+      const rawActs = await prisma.incomingRawMaterialAct.findMany({
+        where: {
+          OR: [
+            { decisionRating: 2 },
+            { rejectionActNumber: { not: null } },
+            { internalOxidation: 1 },
+            { insectTraces: 1 },
+            { rotDiseases: 1 },
+            { transportCondition: 0 },
+            { noMechanicalDamage: 0 }
+          ]
+        },
+        orderBy: [{ id: 'desc' }]
+      })
+
+      const mappedFromActs = rawActs.map(act => {
+        let defectType = 'MECHANICAL_DAMAGE'
+        let reason = 'Mexanik shikastlanish va ezilish'
+        if (act.rotDiseases === 1) {
+          defectType = 'ROTTEN'
+          reason = 'Chirish va zamburug\' alomatlari'
+        } else if (act.insectTraces === 1) {
+          defectType = 'FOREIGN_OBJECT'
+          reason = 'Zararkunanda va hasharot izlari'
+        } else if (act.internalOxidation === 1) {
+          defectType = 'TEMPERATURE_ABUSE'
+          reason = 'Ichki oksidlanish va qizarish (harorat rejimi buzilgan)'
+        } else if (act.decisionRating === 2) {
+          defectType = 'ROTTEN'
+          reason = act.notes || act.decisionText || 'Sifat talabiga javob bermaydi, rad etilgan'
+        }
+
+        let dateIso = act.createdAt.toISOString()
+        if (act.actDate) {
+          if (act.actDate.includes('.')) {
+            const p = act.actDate.split('.')
+            if (p.length === 3) dateIso = new Date(`${p[2]}-${p[1]}-${p[0]}`).toISOString()
+          } else {
+            const d = new Date(act.actDate)
+            if (!isNaN(d.getTime())) dateIso = d.toISOString()
+          }
+        }
+
+        const qty = act.warehouseKg || 10
+        const price = act.pricePerKg || 15000
+
+        return {
+          id: act.id,
+          defectNumber: act.rejectionActNumber || `BRAK-${act.actNumber || act.id}`,
+          productId: act.id,
+          batchNumber: act.batchNumber || `${act.id}`,
+          supplierId: act.id,
+          location: 'INSPECTION',
+          defectType,
+          quantity: qty,
+          unit: 'kg',
+          estimatedCost: Math.round(qty * price),
+          actionTaken: act.decisionRating === 2 ? 'RETURN_TO_SUPPLIER' : 'SCRAP_DISPOSAL',
+          reason: act.notes ? `${reason} (${act.notes})` : reason,
+          responsible: act.inspectorName || 'Sifat Nazoratchisi',
+          createdAt: dateIso,
+          product: { id: act.id, name: act.productName || 'Xomashyo', unit: 'kg', code: `PRD-${act.id}` },
+          supplier: { id: act.id, name: act.supplierName || 'Ta\'minotchi', shortName: act.supplierName }
+        }
+      })
+
+      allDefects = mappedFromActs
+    }
+
     // Calculate defect analytics KPIs
-    const totalDefectKg = defects.reduce((sum: number, d: any) => sum + (d.quantity || 0), 0)
-    const totalCost = defects.reduce((sum: number, d: any) => sum + (d.estimatedCost || 0), 0)
+    const totalDefectKg = allDefects.reduce((sum: number, d: any) => sum + (d.quantity || 0), 0)
+    const totalCost = allDefects.reduce((sum: number, d: any) => sum + (d.estimatedCost || 0), 0)
     
     // Group by location
     const byLocation: Record<string, number> = {}
     // Group by reason / defectType
     const byType: Record<string, number> = {}
 
-    defects.forEach((d: any) => {
+    allDefects.forEach((d: any) => {
       byLocation[d.location] = (byLocation[d.location] || 0) + (d.quantity || 0)
       byType[d.defectType] = (byType[d.defectType] || 0) + (d.quantity || 0)
     })
 
     return NextResponse.json({
-      data: defects,
+      data: allDefects,
       kpis: {
-        totalRecords: defects.length,
+        totalRecords: allDefects.length,
         totalDefectKg,
         totalCost,
         byLocation,

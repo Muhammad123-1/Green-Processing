@@ -71,6 +71,14 @@ const CHANNELS = [
     badge: 'QC / Sklad',
   },
   {
+    id: 'accounting_finance',
+    name: 'Buxgalteriya & Moliya',
+    desc: "To'lovlar, schyot-fakturalar va o'zaro hisob-kitoblar",
+    icon: DollarSign,
+    color: 'from-violet-600 to-indigo-600',
+    badge: 'Moliya',
+  },
+  {
     id: 'kitchen_supply',
     name: 'Oshxona & Ta\'minot',
     desc: 'Kunlik oziq-ovqat va menyu ta\'minoti',

@@ -32,6 +32,7 @@ import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import SupplierDebtsTable from '@/components/accounting/SupplierDebtsTable'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 export default function OrdersContent() {
   const { lang, formatDual } = useLanguage()
@@ -179,8 +180,8 @@ export default function OrdersContent() {
 
     setForm({
       productId: item.id.toString(),
-      supplierId: item.primarySupplierId ? item.primarySupplierId.toString() : '',
-      supplierName: item.primarySupplier || '',
+      supplierId: '',
+      supplierName: '',
       quantity: (item.neededQuantity > 0 ? item.neededQuantity : (item.minStockLevel || 1000)).toString(),
       unit: item.unit || 'kg',
       expectedDate: tomorrowStr,
@@ -251,26 +252,26 @@ export default function OrdersContent() {
     setSavingOrder(true)
     try {
       const selectedProd = products.find(p => p.id === parseInt(form.productId))
-      const selectedSup = suppliers.find(s => s.id === parseInt(form.supplierId))
 
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: form.productId,
-          supplierId: form.supplierId || null,
-          supplierName: form.supplierName || selectedSup?.name || null,
+          supplierId: null,
+          supplierName: null,
           quantity: form.quantity,
           unit: selectedProd?.unit || form.unit || 'kg',
           expectedDate: form.expectedDate,
           timeRange: form.timeRange,
-          price: form.price ? parseFloat(form.price) : null,
-          notes: form.notes
+          price: null,
+          warehouseNotes: form.notes?.trim() || null,
+          notes: null
         })
       })
 
       if (res.ok) {
-        toast.success(formatDual("Xarid zayavkasi muvaffaqiyatli yaratildi", "Заказ на поставку успешно создан", "Purchase order created successfully"))
+        toast.success(formatDual("Talabnoma muvaffaqiyatli yaratildi va Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasiga yuborildi!", "Заявка успешно создана и передана в отдел снабжения!", "Requisition created and sent to Supply!"))
         setShowOrderModal(false)
         setForm({
           productId: '',
@@ -461,7 +462,7 @@ export default function OrdersContent() {
             className="flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/25 transition-all active:scale-95"
           >
             <Plus size={18} />
-            <span>{formatDual("Yangi Zayavka (Xarid)", "Новый заказ", "New Purchase Order")}</span>
+            <span>{formatDual("+ Yangi Buyurtma (Sklad Talabnomasi)", "+ Новая заявка (Со склада)", "+ New Order (Warehouse Requisition)")}</span>
           </button>
         </div>
       </div>
@@ -614,6 +615,20 @@ export default function OrdersContent() {
             <span>{formatDual("Ta'minotchilar Bilan Chat", "Чат с поставщиками", "Chat with Suppliers")}</span>
           </a>
         </div>
+
+        {/* Shortages Requisition Link */}
+        <Link
+          href="/supply/shortages"
+          className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-md shadow-amber-500/20 transition-all ml-auto"
+        >
+          <AlertTriangle size={16} />
+          <span>{formatDual("Ombordan Qolmaganlar (Talabnomalar)", "Заявки со склада (Дефицит)", "Warehouse Shortages")}</span>
+          {metrics.outOfStockCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-slate-950 text-amber-400 text-[10px] font-black">
+              {metrics.outOfStockCount}
+            </span>
+          )}
+        </Link>
       </div>
       {/* ========================================================================= */}
       {/* TAB 1: Real-time Sklad Qoldiqlari & Xarid Signallari */}
@@ -1101,9 +1116,20 @@ export default function OrdersContent() {
                       {/* Product & Supplier */}
                       <div>
                         <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{order.productName}</h4>
+                        {order.warehouseNotes && (
+                          <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5 line-clamp-1" title={order.warehouseNotes}>
+                            📦 {order.warehouseNotes}
+                          </div>
+                        )}
                         <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 mt-0.5">
                           <Building2 size={13} className="text-blue-500 shrink-0" />
-                          <span className="font-semibold">{order.supplierName}</span>
+                          <span className="font-semibold">
+                            {order.supplierName || (
+                              <span className="text-amber-500 font-normal italic">
+                                {formatDual("Ta'minot ko'rib chiqmoqda", "Ожидает назначения", "Pending Supply")}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </div>
 
@@ -1213,6 +1239,11 @@ export default function OrdersContent() {
                                 {order.productCategory}
                               </span>
                             )}
+                            {order.warehouseNotes && (
+                              <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5 max-w-[220px] truncate" title={order.warehouseNotes}>
+                                📦 {order.warehouseNotes}
+                              </div>
+                            )}
                           </td>
 
                           <td className="py-4 px-4 text-xs">
@@ -1227,7 +1258,13 @@ export default function OrdersContent() {
                                   {order.supplierName}
                                 </a>
                               ) : (
-                                <span className="truncate max-w-[170px]">{order.supplierName}</span>
+                                <span className="truncate max-w-[170px]">
+                                  {order.supplierName || (
+                                    <span className="text-amber-500 font-normal italic">
+                                      {formatDual("Ta'minot ko'rib chiqmoqda", "Ожидает назначения", "Pending Supply")}
+                                    </span>
+                                  )}
+                                </span>
                               )}
                             </div>
                             {order.price && (
@@ -1380,9 +1417,11 @@ export default function OrdersContent() {
                   <ShoppingCart size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">{formatDual("Yangi Xarid Zayavkasi", "Новый заказ поставщику", "New Purchase Order")}</h3>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                    {formatDual("Yangi Xomashyo Buyurtmasi (Sklad Talabnomasi)", "Новая заявка на сырье (Со склада)", "New Material Requisition")}
+                  </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {formatDual("Ta'minotchiga zayavka berish va muddatini belgilash", "Оформление заказа на поставку сырья", "Create order for raw material supply")}
+                    {formatDual("Ta'minot bo'limiga buyurtma yuborish. Ta'minotchi va narxni Ta'minot bo'limi belgilaydi.", "Заявка в отдел снабжения. Поставщика и цену определяет снабжение.", "Order sent to Supply Department. Supply assigns supplier and price.")}
                   </p>
                 </div>
               </div>
@@ -1410,8 +1449,6 @@ export default function OrdersContent() {
                       ...prev,
                       productId: pId,
                       unit: p?.unit || prev.unit,
-                      supplierName: invItem?.primarySupplier || prev.supplierName,
-                      supplierId: invItem?.primarySupplierId ? invItem.primarySupplierId.toString() : prev.supplierId,
                       quantity: invItem?.neededQuantity > 0 ? invItem.neededQuantity.toString() : prev.quantity
                     }))
                   }}
@@ -1461,48 +1498,6 @@ export default function OrdersContent() {
                 </div>
               </div>
 
-              {/* Supplier selector / input */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    {formatDual("Ta'minotchi (Mavjud ro'yxatdan)", "Поставщик из списка", "Existing Supplier")}
-                  </label>
-                  <select
-                    value={form.supplierId}
-                    onChange={(e) => {
-                      const sId = e.target.value
-                      const s = suppliers.find(x => x.id === parseInt(sId))
-                      setForm(prev => ({
-                        ...prev,
-                        supplierId: sId,
-                        supplierName: s?.name || prev.supplierName
-                      }))
-                    }}
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-                  >
-                    <option value="">{formatDual("-- Ro'yxatdan tanlash --", "-- Выбрать из списка --", "-- Select from list --")}</option>
-                    {suppliers.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} {s.shortName ? `(${s.shortName})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    {formatDual("Yoki Yangi Ta'minotchi Nomi", "Или новый поставщик", "Or Custom Supplier Name")}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Masalan: Agro Standart MCHJ"
-                    value={form.supplierName}
-                    onChange={(e) => setForm({ ...form, supplierName: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
               {/* Date & Time Window */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1531,44 +1526,31 @@ export default function OrdersContent() {
                 </div>
               </div>
 
-              {/* Price & Notes */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    {formatDual("Kelishilgan Narx (so'm / birlik)", "Договорная цена (сум / ед)", "Price (UZS / unit)")}
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Masalan: 3200"
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    {formatDual("Izoh / Sifat Talabi", "Примечание", "Notes / Quality Specs")}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={formatDual("Harorat normasi, GOST talabi...", "Режим, требования...", "Temperature, specs...")}
-                    value={form.notes}
-                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-                  />
-                </div>
+              {/* Skladchi Izohi */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  {formatDual("Skladchi Izohi (Ta'minot Bo'limiga)", "Примечание склада (Для снабжения)", "Warehouse Note (For Supply)")}
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder={formatDual("Masalan: Tomat qolmadi, sexga zudlik bilan kerak...", "Например: Закончились томаты, срочно нужны в цех...", "E.g. Out of tomatoes, urgently needed in production...")}
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-none"
+                />
               </div>
 
-              {/* Estimated-total display intentionally removed from the order form. */}
-              {false && (
-                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 rounded-2xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300 font-mono">
-                  <span>{formatDual("Jami kutilayotgan summa:", "Ориентировочная сумма:", "Total estimated amount:")}</span>
-                  <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
-                    {(parseFloat(form.quantity) * parseFloat(form.price)).toLocaleString()} so'm
-                  </span>
-                </div>
-              )}
+              {/* Chain Info Banner */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 rounded-2xl text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2.5">
+                <Truck size={16} className="shrink-0 mt-0.5 text-blue-500" />
+                <span className="leading-relaxed">
+                  {formatDual(
+                    "Ushbu talabnoma to'g'ridan-to'g'ri Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasiga yuboriladi. Ta'minotchi tanlash va narxni kelishish Ta'minot bo'limi tomonidan amalga oshiriladi.",
+                    "Эта заявка напрямую поступит в отдел снабжения в раздел «Заявки со склада». Выбор поставщика и согласование цены производит отдел снабжения.",
+                    "This requisition goes directly to the Supply Department under Shortages. Supply will assign the supplier and negotiated price."
+                  )}
+                </span>
+              </div>
 
               {/* Modal Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-750">

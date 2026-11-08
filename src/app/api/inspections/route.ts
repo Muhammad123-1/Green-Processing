@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
-    const search = searchParams.get('search') || ''
-    const status = searchParams.get('status') || ''
+    const search = searchParams.get('search')?.trim() || ''
+    const status = searchParams.get('status')?.trim() || ''
     const supplierId = searchParams.get('supplierId') || ''
     const productId = searchParams.get('productId') || ''
     const dateFrom = searchParams.get('dateFrom') || ''
@@ -19,10 +19,10 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { actNumber: { contains: search } },
-        { batchNumber: { contains: search } },
-        { supplier: { name: { contains: search } } },
-        { product: { name: { contains: search } } },
+        { actNumber: { contains: search, mode: 'insensitive' } },
+        { batchNumber: { contains: search, mode: 'insensitive' } },
+        { supplier: { name: { contains: search, mode: 'insensitive' } } },
+        { product: { name: { contains: search, mode: 'insensitive' } } },
       ]
     }
 
@@ -56,6 +56,82 @@ export async function GET(request: NextRequest) {
       }),
       prisma.inspection.count({ where }),
     ])
+
+    // If Inspection table is empty, query IncomingRawMaterialAct (1,276 live acts)
+    if (total === 0) {
+      const actWhere: any = {}
+      if (search) {
+        actWhere.OR = [
+          { actNumber: { contains: search, mode: 'insensitive' } },
+          { batchNumber: { contains: search, mode: 'insensitive' } },
+          { supplierName: { contains: search, mode: 'insensitive' } },
+          { productName: { contains: search, mode: 'insensitive' } },
+          { inspectorName: { contains: search, mode: 'insensitive' } },
+        ]
+      }
+
+      if (status === 'ACCEPTED') actWhere.decisionRating = { in: [4, 5] }
+      else if (status === 'REJECTED') actWhere.decisionRating = 2
+      else if (status === 'CONDITIONAL') actWhere.decisionRating = 3
+
+      if (dateFrom && dateTo) {
+        actWhere.actDate = { gte: dateFrom, lte: dateTo }
+      } else if (dateFrom) {
+        actWhere.actDate = { gte: dateFrom }
+      } else if (dateTo) {
+        actWhere.actDate = { lte: dateTo }
+      }
+
+      const [rawActs, actTotal] = await Promise.all([
+        prisma.incomingRawMaterialAct.findMany({
+          where: actWhere,
+          skip,
+          take: limit,
+          orderBy: [{ id: 'desc' }]
+        }),
+        prisma.incomingRawMaterialAct.count({ where: actWhere })
+      ])
+
+      const mappedData = rawActs.map(act => {
+        let dateIso = act.createdAt.toISOString()
+        if (act.actDate) {
+          if (act.actDate.includes('.')) {
+            const p = act.actDate.split('.')
+            if (p.length === 3) dateIso = new Date(`${p[2]}-${p[1]}-${p[0]}`).toISOString()
+          } else {
+            const d = new Date(act.actDate)
+            if (!isNaN(d.getTime())) dateIso = d.toISOString()
+          }
+        }
+
+        const st = act.decisionRating === 2 ? 'REJECTED' : act.decisionRating === 3 ? 'CONDITIONAL' : 'ACCEPTED'
+
+        return {
+          id: act.id,
+          actNumber: act.actNumber ? (act.actNumber.startsWith('№') ? act.actNumber : `№ ${act.actNumber}`) : `№ ${act.id}`,
+          inspectionDate: dateIso,
+          batchNumber: act.batchNumber || `LOT-${act.id}`,
+          quantity: act.warehouseKg || 0,
+          quantityUnit: 'kg',
+          temperature: parseFloat((act.temperature || '').replace(',', '.')) || null,
+          temperatureUnit: '°C',
+          conclusion: act.decisionText || (act.decisionRating === 2 ? 'Rad etilgan' : 'Muvofiq'),
+          status: st,
+          notes: act.notes || null,
+          supplier: { id: act.id, name: act.supplierName || 'Ta\'minotchi' },
+          product: { id: act.id, name: act.productName || 'Xomashyo', unit: 'kg' },
+          createdAt: act.createdAt.toISOString()
+        }
+      })
+
+      return NextResponse.json({
+        data: mappedData,
+        total: actTotal,
+        page,
+        limit,
+        totalPages: Math.ceil(actTotal / limit),
+      })
+    }
 
     return NextResponse.json({
       data: inspections,

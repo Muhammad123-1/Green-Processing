@@ -225,15 +225,15 @@ export default function SuppliersPage() {
   return (
     <div className="space-y-5 animate-enter max-w-7xl mx-auto pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-dark-900 border border-dark-750 p-5 sm:p-6 rounded-3xl shadow-xl">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 sm:p-6 rounded-3xl shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1.5">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 flex items-center gap-1.5">
               <Truck size={14} />
               {formatDual("Ta'minot & Prixod Tahlili", "Снабжение и анализ прихода", "Supply & Inflow Analysis")}
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и аналитика поставщиков", "Suppliers Registry & Analytics")}
           </h1>
         </div>
@@ -250,18 +250,22 @@ export default function SuppliersPage() {
       </div>
 
       {/* Navigation Tabs: Catalog vs Portal Accounts */}
-      <div className="flex bg-dark-900/90 p-1.5 rounded-2xl border border-dark-750 w-full sm:w-max max-w-full overflow-x-auto shadow-sm">
+      <div className="flex bg-slate-100 dark:bg-dark-900/90 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-750 w-full sm:w-max max-w-full overflow-x-auto shadow-sm">
         <button
           onClick={() => setActiveTab('catalog')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
             activeTab === 'catalog'
-              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <Building2 size={16} />
           <span>{formatDual("1. Ta'minotchilar Katalogi", "1. Каталог поставщиков", "1. Suppliers Catalog")}</span>
-          <span className="px-2 py-0.5 rounded-md bg-dark-950/60 text-[11px] text-slate-300">
+          <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
+            activeTab === 'catalog'
+              ? 'bg-emerald-700/60 text-white'
+              : 'bg-slate-200 dark:bg-dark-950/60 text-slate-700 dark:text-slate-300'
+          }`}>
             {suppliers.length}
           </span>
         </button>
@@ -269,8 +273,8 @@ export default function SuppliersPage() {
           onClick={() => setActiveTab('accounts')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
             activeTab === 'accounts'
-              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <KeyRound size={16} />
@@ -290,80 +294,80 @@ export default function SuppliersPage() {
       {/* KPI Cards (Accurate Separation: Weight tn/kg vs Packaging dona) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Jami Hamkorlar */}
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               {formatDual("Hamkorlar", "Поставщиков", "Suppliers")}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <Building2 size={16} />
             </div>
           </div>
-          <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+          <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
             {stats.totalCount} ta
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Ro'yxatdagi korxonalar", "Зарегистрировано", "Registered companies")}
           </p>
         </div>
 
         {/* Card 2: Jami Xomashyo (Vazn: Tn / Kg) */}
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               {formatDual("Xomashyo (Vazn)", "Вес сырья (Кг / Тн)", "Raw Material (Weight)")}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <TrendingUp size={16} />
             </div>
           </div>
-          <div className="text-lg sm:text-2xl md:text-3xl font-black text-emerald-400">
+          <div className="text-lg sm:text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400">
             {stats.totalArrivalTonnes} tn
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {stats.totalArrivalKg.toLocaleString()} kg {formatDual("sof xomashyo", "сырья", "raw material")}
           </p>
         </div>
 
         {/* Card 3: Jami Qadoq & Taralar (Dona) */}
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
               {formatDual("Qadoq & Taralar (Dona)", "Тара и Упаковка (Шт)", "Packaging & Boxes (Pcs)")}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
               <Boxes size={16} />
             </div>
           </div>
-          <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-400">
+          <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400">
             {stats.totalArrivalDona.toLocaleString()} dona
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Qutilar, idishlar va paketlar", "Коробки, мешки, пакеты", "Boxes, bags and packages")}
           </p>
         </div>
 
         {/* Card 4: Partiyalar soni */}
-        <div className="bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-dark-750 shadow-lg relative overflow-hidden">
+        <div className="bg-white dark:bg-dark-900/90 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
               {formatDual("Jami Partiyalar", "Всего партий", "Total Batches")}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+            <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/20 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
               <PackageCheck size={16} />
             </div>
           </div>
-          <div className="text-lg sm:text-2xl md:text-3xl font-black text-white">
+          <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
             {stats.totalDeliveries} ta
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Kirim operatsiyalari", "Операций поступления", "Arrival operations")}
           </p>
         </div>
       </div>
 
       {/* Filter and Search Card */}
-      <div className="bg-dark-900 border border-dark-750 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
@@ -373,20 +377,20 @@ export default function SuppliersPage() {
               "Поиск по поставщику, продукции, телефону или адресу...", 
               "Search by supplier, products, phone or address..."
             )}
-            className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             value={search} 
             onChange={(e) => setSearch(e.target.value)} 
           />
         </div>
 
         {/* Unit Type Filter Pills */}
-        <div className="flex items-center gap-1.5 bg-dark-800 p-1 rounded-xl border border-dark-700 overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 overflow-x-auto">
           <button
             onClick={() => setUnitFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
               unitFilter === 'ALL'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {formatDual("Barchasi", "Все", "All")} ({suppliers.length})
@@ -396,7 +400,7 @@ export default function SuppliersPage() {
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
               unitFilter === 'KG'
                 ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <TrendingUp size={13} />
@@ -407,7 +411,7 @@ export default function SuppliersPage() {
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
               unitFilter === 'DONA'
                 ? 'bg-amber-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Boxes size={13} />
@@ -416,56 +420,56 @@ export default function SuppliersPage() {
         </div>
 
         <div className="flex items-center gap-2 justify-between md:justify-end">
-          <div className="text-xs text-slate-400 font-medium">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             {formatDual(`Topildi: ${filtered.length} ta`, `Найдено: ${filtered.length}`, `Found: ${filtered.length}`)}
           </div>
           <button 
             onClick={fetchSuppliers} 
-            className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white border border-dark-700 transition-colors"
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700 transition-colors"
             title="Yangilash"
           >
-            <RefreshCw size={15} className={loading ? 'animate-spin text-emerald-400' : ''} />
+            <RefreshCw size={15} className={loading ? 'animate-spin text-emerald-500 dark:text-emerald-400' : ''} />
           </button>
         </div>
       </div>
 
       {/* Suppliers Content: Dual View (Mobile Cards + Desktop Table) */}
-      <div className="bg-dark-900 border border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl">
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
-            <p className="text-sm font-semibold text-slate-300">
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
               {formatDual("Ta'minotchilar va prixod tahlili yuklanmoqda...", "Загрузка поставщиков и анализа прихода...", "Loading suppliers and arrivals analysis...")}
             </p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <Truck size={44} className="mb-3 opacity-30" />
-            <p className="font-semibold text-slate-400">{formatDual("Ta'minotchilar topilmadi", "Поставщики не найдены", "No suppliers found")}</p>
+            <p className="font-semibold text-slate-500 dark:text-slate-400">{formatDual("Ta'minotchilar topilmadi", "Поставщики не найдены", "No suppliers found")}</p>
           </div>
         ) : (
           <>
             {/* Mobile View: Touch Cards */}
-            <div className="block sm:hidden divide-y divide-dark-750">
+            <div className="block sm:hidden divide-y divide-slate-100 dark:divide-dark-750">
               {suppliersPagination.displayedItems.map((s) => (
-                <div key={s.id} className="p-4 space-y-3">
+                <div key={s.id} className="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-dark-800/30 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
                         <Building2 size={16} />
                       </div>
                       <div className="min-w-0">
-                        <div className="font-extrabold text-white text-xs truncate">
+                        <div className="font-extrabold text-slate-900 dark:text-white text-xs truncate">
                           {s.name}
                         </div>
                         {s.shortName && (
-                          <div className="text-[11px] text-slate-400 truncate">
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                             {s.shortName}
                           </div>
                         )}
                       </div>
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 shrink-0">
                       <ShieldCheck size={11} />
                       <span>{s.status || 'Faol'}</span>
                     </span>
@@ -482,8 +486,8 @@ export default function SuppliersPage() {
                             key={pIdx}
                             className={`px-2 py-0.5 rounded-md border text-[10px] font-medium flex items-center gap-1 ${
                               isDona
-                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-                                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300'
+                                : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
                             }`}
                           >
                             <span>{p}</span>
@@ -494,34 +498,34 @@ export default function SuppliersPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2.5 rounded-xl border border-dark-700/60 text-center">
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50 dark:bg-dark-800/60 p-2.5 rounded-xl border border-slate-200 dark:border-dark-700/60 text-center">
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Jami Yuk</div>
-                      <div className="font-black text-white text-xs mt-0.5 space-y-0.5">
+                      <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Jami Yuk</div>
+                      <div className="font-black text-slate-900 dark:text-white text-xs mt-0.5 space-y-0.5">
                         {s.totalKg && s.totalKg > 0 ? (
                           <div>
                             {(s.totalTonnes || 0) >= 1 ? `${s.totalTonnes} tn` : `${(s.totalKg || 0).toLocaleString()} kg`}
                           </div>
                         ) : null}
                         {s.totalDona && s.totalDona > 0 ? (
-                          <div className="text-amber-300 font-bold text-[11px]">
+                          <div className="text-amber-600 dark:text-amber-300 font-bold text-[11px]">
                             {s.totalDona.toLocaleString()} dona
                           </div>
                         ) : null}
                         {!s.totalKg && !s.totalDona ? (
-                          <div className="text-slate-500">—</div>
+                          <div className="text-slate-400 dark:text-slate-500">—</div>
                         ) : null}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Partiyalar</div>
-                      <div className="font-bold text-slate-200 text-xs mt-0.5">
+                      <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Partiyalar</div>
+                      <div className="font-bold text-slate-700 dark:text-slate-200 text-xs mt-0.5">
                         {s.deliveriesCount || 0} ta
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Oxirgi Yuk</div>
-                      <div className="font-mono text-[10px] text-slate-300 mt-0.5">
+                      <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Oxirgi Yuk</div>
+                      <div className="font-mono text-[10px] text-slate-600 dark:text-slate-300 mt-0.5">
                         {s.lastDeliveryDate || '-'}
                       </div>
                     </div>
@@ -531,33 +535,33 @@ export default function SuppliersPage() {
                     {s.phone ? (
                       <a
                         href={`tel:${s.phone.replace(/\s+/g, '')}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-400 hover:text-indigo-300 py-1"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 py-1"
                       >
                         <Phone size={13} />
                         <span>{s.phone}</span>
                       </a>
                     ) : (
-                      <span className="text-xs text-slate-500">-</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">-</span>
                     )}
 
                     <div className="flex items-center gap-1.5">
                       <a
                         href={`/suppliers/${s.id}`}
-                        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 dark:hover:bg-emerald-500/25 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
                       >
                         <ExternalLink size={12} />
                         <span>Sahifasi</span>
                       </a>
                       <button 
                         onClick={() => openEdit(s)}
-                        className="px-2.5 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 border border-dark-700 text-slate-300 hover:text-amber-400 text-xs font-bold transition-all flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 border border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 text-xs font-bold transition-all flex items-center gap-1"
                       >
                         <Edit size={13} />
                         <span>Tahrirlash</span>
                       </button>
                       <button 
                         onClick={() => setDeleteId(s.id)}
-                        className="p-1.5 rounded-lg bg-dark-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-dark-700"
+                        className="p-1.5 rounded-lg bg-slate-100 dark:bg-dark-800 hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-dark-700"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -571,7 +575,7 @@ export default function SuppliersPage() {
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-dark-800/60 border-b border-dark-750 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <tr className="bg-slate-50 dark:bg-dark-800/60 border-b border-slate-200 dark:border-dark-750 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     <th className="py-4 px-5">{formatDual("Nomi & Korxona", "Поставщик / Организация", "Supplier Organization")}</th>
                     <th className="py-4 px-5">{formatDual("Keltirgan Mahsulotlari", "Поставляемая продукция", "Supplied Products")}</th>
                     <th className="py-4 px-5 text-center">{formatDual("Jami Yetkazilgan Yuk", "Объем поставок", "Total Volume")}</th>
@@ -582,27 +586,27 @@ export default function SuppliersPage() {
                     <th className="py-4 px-5 text-right">{formatDual("Amallar", "Действия", "Actions")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-750">
+                <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
                   {suppliersPagination.displayedItems.map((s) => (
-                    <tr key={s.id} className="hover:bg-dark-800/40 transition-colors">
+                    <tr key={s.id} className="hover:bg-slate-50/70 dark:hover:bg-dark-800/40 transition-colors">
                       {/* Name & Info */}
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
                             <Building2 size={18} />
                           </div>
                           <div>
                             <a
                               href={`/suppliers/${s.id}`}
-                              className="font-extrabold text-white text-sm hover:text-emerald-400 transition-colors underline decoration-slate-600 hover:decoration-emerald-400 block"
+                              className="font-extrabold text-slate-900 dark:text-white text-sm hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors underline decoration-slate-300 dark:decoration-slate-600 hover:decoration-emerald-500 block"
                             >
                               {s.name}
                             </a>
                             {s.shortName && (
-                              <div className="text-xs text-slate-400 mt-0.5">{s.shortName}</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.shortName}</div>
                             )}
                             {s.address && (
-                              <div className="text-[11px] text-slate-500 truncate max-w-[200px] mt-0.5 flex items-center gap-1">
+                              <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[200px] mt-0.5 flex items-center gap-1">
                                 <MapPin size={10} />
                                 <span>{s.address}</span>
                               </div>
@@ -624,8 +628,8 @@ export default function SuppliersPage() {
                                   key={pIdx}
                                   className={`px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 ${
                                     isDona
-                                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-                                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                      ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300'
+                                      : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
                                   }`}
                                 >
                                   <span>{p}</span>
@@ -634,7 +638,7 @@ export default function SuppliersPage() {
                               )
                             })
                           ) : (
-                            <span className="text-xs text-slate-500">-</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500">-</span>
                           )}
                         </div>
                       </td>
@@ -643,10 +647,10 @@ export default function SuppliersPage() {
                       <td className="py-4 px-5 text-center">
                         {s.totalKg && s.totalKg > 0 ? (
                           <div>
-                            <div className="font-black text-white text-base">
+                            <div className="font-black text-slate-900 dark:text-white text-base">
                               {(s.totalTonnes || 0) >= 1 ? `${s.totalTonnes} tn` : `${(s.totalKg || 0).toLocaleString()} kg`}
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                               {(s.totalKg || 0).toLocaleString()} kg
                             </div>
                           </div>
@@ -654,7 +658,7 @@ export default function SuppliersPage() {
 
                         {s.totalDona && s.totalDona > 0 ? (
                           <div className={s.totalKg && s.totalKg > 0 ? 'mt-1.5' : ''}>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs shadow-xs">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold text-xs shadow-xs">
                               <Boxes size={12} />
                               <span>{s.totalDona.toLocaleString()} dona</span>
                             </span>
@@ -662,19 +666,19 @@ export default function SuppliersPage() {
                         ) : null}
 
                         {(!s.totalKg || s.totalKg === 0) && (!s.totalDona || s.totalDona === 0) ? (
-                          <span className="text-slate-500 text-xs">—</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
                         ) : null}
                       </td>
 
                       {/* Deliveries Count */}
                       <td className="py-4 px-5 text-center">
-                        <span className="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200">
+                        <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-750 font-bold text-xs text-slate-700 dark:text-slate-200">
                           {s.deliveriesCount || 0} ta
                         </span>
                       </td>
 
                       {/* Last Delivery Date */}
-                      <td className="py-4 px-5 text-center text-xs font-mono text-slate-300">
+                      <td className="py-4 px-5 text-center text-xs font-mono text-slate-600 dark:text-slate-300">
                         {s.lastDeliveryDate || '-'}
                       </td>
 
@@ -683,19 +687,19 @@ export default function SuppliersPage() {
                         {s.phone ? (
                           <a
                             href={`tel:${s.phone.replace(/\s+/g, '')}`}
-                            className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-400 hover:text-indigo-300 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                           >
                             <Phone size={13} />
                             <span>{s.phone}</span>
                           </a>
                         ) : (
-                          <span className="text-slate-500 text-xs">—</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
                         )}
                       </td>
 
                       {/* Status */}
                       <td className="py-4 px-5 text-center">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                           <ShieldCheck size={12} />
                           <span>{s.status || 'Faol'}</span>
                         </span>
@@ -706,7 +710,7 @@ export default function SuppliersPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <a 
                             href={`/suppliers/${s.id}`}
-                            className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
                             title={formatDual("Ta'minotchi sahifasi", "Страница поставщика", "Supplier page")}
                           >
                             <ExternalLink size={13} />
@@ -714,14 +718,14 @@ export default function SuppliersPage() {
                           </a>
                           <button 
                             onClick={() => openEdit(s)}
-                            className="p-2 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700 text-slate-400 hover:text-amber-400 transition-all"
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 border border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-all"
                             title={formatDual("Tahrirlash", "Редактировать", "Edit")}
                           >
                             <Edit size={14} />
                           </button>
                           <button 
                             onClick={() => setDeleteId(s.id)}
-                            className="p-2 rounded-xl bg-dark-800 hover:bg-rose-500/20 border border-dark-700 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-all"
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-dark-800 hover:bg-rose-50 dark:hover:bg-rose-500/20 border border-slate-200 dark:border-dark-700 hover:border-rose-200 dark:hover:border-rose-500/30 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"
                             title={formatDual("O'chirish", "Удалить", "Delete")}
                           >
                             <Trash2 size={14} />
@@ -754,35 +758,35 @@ export default function SuppliersPage() {
 
       {/* Edit / Create Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter" onClick={() => setShowModal(false)}>
-          <div className="bg-dark-900 border border-dark-700 rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 max-w-lg w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between pb-4 border-b border-dark-700 mb-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-enter" onClick={() => setShowModal(false)}>
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 max-w-lg w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700 mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <Truck size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-lg">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-lg">
                     {editId 
                       ? formatDual("Ta'minotchini tahrirlash", "Редактировать поставщика", "Edit Supplier")
                       : formatDual("Yangi ta'minotchi qo'shish", "Новый поставщик", "New Supplier")
                     }
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual("Hamkor korxona rekvizitlari va sertifikati", "Реквизиты и сертификаты компании-партнера", "Company details and certificates")}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800"><X size={20} /></button>
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800"><X size={20} /></button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">
-                  {formatDual("Nomi / Tashkilot", "Наименование", "Company Name")} <span className="text-red-400">*</span>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                  {formatDual("Nomi / Tashkilot", "Наименование", "Company Name")} <span className="text-red-500">*</span>
                 </label>
                 <input 
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500" 
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500" 
                   placeholder="OOO «AgroFood»" 
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} 
@@ -790,11 +794,11 @@ export default function SuppliersPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                   {formatDual("Qisqa nom", "Краткое имя", "Short Name")}
                 </label>
                 <input 
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500" 
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500" 
                   placeholder="AgroFood" 
                   value={form.shortName}
                   onChange={(e) => setForm((f) => ({ ...f, shortName: e.target.value }))} 
@@ -803,25 +807,25 @@ export default function SuppliersPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5 flex items-center gap-1">
-                    <Phone size={12} className="text-emerald-400" />
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5 flex items-center gap-1">
+                    <Phone size={12} className="text-emerald-500 dark:text-emerald-400" />
                     <span>{formatDual("Telefon", "Телефон", "Phone")}</span>
                   </label>
                   <input 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono" 
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 font-mono" 
                     placeholder="+998 90 123 45 67" 
                     value={form.phone}
                     onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} 
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5 flex items-center gap-1">
-                    <Mail size={12} className="text-emerald-400" />
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5 flex items-center gap-1">
+                    <Mail size={12} className="text-emerald-500 dark:text-emerald-400" />
                     <span>{formatDual("Email / Vakil", "Email / Представитель", "Email / Rep")}</span>
                   </label>
                   <input 
                     type="text" 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500" 
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500" 
                     placeholder="info@company.uz" 
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} 
@@ -830,12 +834,12 @@ export default function SuppliersPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5 flex items-center gap-1">
-                  <MapPin size={12} className="text-emerald-400" />
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5 flex items-center gap-1">
+                  <MapPin size={12} className="text-emerald-500 dark:text-emerald-400" />
                   <span>{formatDual("Manzil", "Адрес", "Address")}</span>
                 </label>
                 <input 
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500" 
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500" 
                   placeholder="Toshkent vil., Zangiota tumani..." 
                   value={form.address}
                   onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} 
@@ -843,12 +847,12 @@ export default function SuppliersPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5 flex items-center gap-1">
-                  <Award size={12} className="text-emerald-400" />
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5 flex items-center gap-1">
+                  <Award size={12} className="text-emerald-500 dark:text-emerald-400" />
                   <span>{formatDual("Sertifikat / Sifat standarti", "Сертификат / Стандарт", "Certificate")}</span>
                 </label>
                 <input 
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500" 
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500" 
                   placeholder="ISO 22000:2018 / GlobalG.A.P / Halol" 
                   value={form.certificate}
                   onChange={(e) => setForm((f) => ({ ...f, certificate: e.target.value }))} 
@@ -856,10 +860,10 @@ export default function SuppliersPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6 pt-4 border-t border-dark-700">
+            <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-dark-700">
               <button 
                 onClick={() => setShowModal(false)} 
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors flex-1"
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 transition-colors flex-1"
               >
                 {formatDual("Bekor qilish", "Отмена", "Cancel")}
               </button>
@@ -878,12 +882,12 @@ export default function SuppliersPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter" onClick={() => setDeleteId(null)}>
-          <div className="bg-dark-900 border border-dark-700 rounded-3xl p-6 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-white font-bold text-lg mb-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-enter" onClick={() => setDeleteId(null)}>
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl p-6 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-slate-900 dark:text-white font-bold text-lg mb-2">
               {formatDual("Ta'minotchini o'chirish", "Удаление поставщика", "Delete Supplier")}
             </p>
-            <p className="text-slate-400 text-sm mb-6">
+            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
               {formatDual(
                 "Ushbu ta'minotchi korxonani o'chirishni tasdiqlaysizmi?",
                 "Вы действительно хотите удалить этого контрагента-поставщика?",
@@ -893,7 +897,7 @@ export default function SuppliersPage() {
             <div className="flex gap-3">
               <button 
                 onClick={() => setDeleteId(null)} 
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white bg-dark-800 hover:bg-dark-700 transition-colors flex-1"
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-700 transition-colors flex-1"
               >
                 {formatDual("Bekor qilish", "Отмена", "Cancel")}
               </button>

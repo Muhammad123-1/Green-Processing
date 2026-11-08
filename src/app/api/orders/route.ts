@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
         status: body.status || 'PENDING',
         price: numPrice,
         notes: body.notes?.trim() || null,
+        warehouseNotes: body.warehouseNotes?.trim() || (numSupplierId ? null : body.notes?.trim()) || null,
         deliveredQuantity: numDelivered,
         acceptedQuantity: numAccepted,
         rejectedQuantity: numRejected,

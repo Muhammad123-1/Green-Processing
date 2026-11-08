@@ -31,7 +31,9 @@ import { Archive,
   FlaskConical,
   Thermometer,
   ArrowUpRight,
-  Boxes
+  ArrowDownLeft,
+  Boxes,
+  AlertTriangle
  } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -52,7 +54,7 @@ const navSections = [
     key: 'navQC',
     title: 'Sifat Nazorati (QC)',
     items: [
-      { key: 'newInspection', href: '/inspections/new', icon: ClipboardList, highlight: true, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
+      { key: 'newInspection', href: '/inspections/new', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
@@ -65,9 +67,10 @@ const navSections = [
     title: 'Ombor va Ishlab chiqarish',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'prihod', href: '/prihod', icon: ArrowDownLeft, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
       { key: 'rashod', href: '/rashod', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'gp', href: '/gp', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
-      { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'QUALITY_CONTROL'] },
+      { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'traceability', href: '/traceability', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
@@ -82,8 +85,9 @@ const navSections = [
     items: [
       { key: 'sales', href: '/sales', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SALES'] },
       { key: 'orders', href: '/orders', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'WAREHOUSE'] },
+      { key: 'supplyShortages', href: '/supply/shortages', icon: AlertTriangle, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY'] },
       { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'SUPPLY', 'ACCOUNTING'] },
-      { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
+      { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
     ]
   },
@@ -103,7 +107,7 @@ const navSections = [
       { key: 'customTables', href: '/custom-tables', icon: Table2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'users', href: '/users', icon: Users, roles: ['ADMIN', 'DIRECTOR', 'HR'] },
       { key: 'supervisors', href: '/supervisors', icon: UserCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
-      { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR'] },
+      { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT'] },
       { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
       { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
       { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
@@ -237,6 +241,9 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 'director',
                 'archive',
                 'warehouse',
+                'prihod',
+                'rashod',
+                'gp',
                 'accounting',
                 'reports',
                 'chat',
@@ -261,14 +268,28 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                   const itemTab = item.href.split('?tab=')[1]
                   const basePath = item.href.split('?')[0]
                   isActive = pathname === basePath && currentTab === itemTab
+                } else if (item.href === '/inspections/new') {
+                  isActive = pathname === '/inspections/new'
+                } else if (item.href === '/inspections') {
+                  isActive = pathname === '/inspections' || (pathname.startsWith('/inspections/') && pathname !== '/inspections/new')
+                } else if (item.href === '/incoming-acts/disinfection') {
+                  isActive = pathname.startsWith('/incoming-acts/disinfection')
+                } else if (item.href === '/incoming-acts') {
+                  isActive = pathname === '/incoming-acts' || (pathname.startsWith('/incoming-acts/') && !pathname.startsWith('/incoming-acts/disinfection'))
+                } else if (item.href === '/inspector/daily-checklist') {
+                  isActive = pathname.startsWith('/inspector/daily-checklist')
+                } else if (item.href === '/inspector') {
+                  isActive = pathname === '/inspector'
                 } else if (item.href === '/warehouse') {
                   isActive = pathname === '/warehouse' && (!currentTab || currentTab === 'inventory')
+                } else if (item.href === '/supply/shortages') {
+                  isActive = pathname === '/supply/shortages'
                 } else if (item.href === '/orders') {
-                  isActive = pathname === '/orders' && currentTab !== 'debts'
+                  isActive = (pathname === '/orders' && currentTab !== 'debts') || pathname === '/supply'
+                } else if (item.href === '/dashboard' || item.href === '/director') {
+                  isActive = pathname === item.href
                 } else {
-                  isActive = pathname === item.href || 
-                    (item.href !== '/dashboard' && pathname.startsWith(item.href)) ||
-                    (item.href === '/orders' && pathname.startsWith('/supply'))
+                  isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                 }
 
                 const isChat = item.key === 'chat'

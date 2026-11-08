@@ -21,9 +21,14 @@ import {
   Plus,
   Trash2,
   BookOpen,
+  Layers,
+  Package,
+  Sliders,
+  CheckSquare,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import QCInspectorGuideModal from '@/components/inspector/QCInspectorGuideModal'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export interface PackagingProductItem {
   id: string
@@ -371,11 +376,238 @@ const initialForm: ChecklistForm = {
 
 export default function DailyChecklistContent() {
   const router = useRouter()
+  const { lang: currentLang } = useLanguage()
+  const lang = (currentLang === 'ru' ? 'ru' : currentLang === 'en' ? 'en' : 'uz') as 'uz' | 'ru' | 'en'
+
   const [view, setView] = useState<'form' | 'archive'>('form')
+  const [activeSection, setActiveSection] = useState<'all' | 'packaging' | 'process' | 'signoff'>('all')
   const [showGuideModal, setShowGuideModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [history, setHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+
+  // Translations
+  const t = {
+    uz: {
+      title: "Sifat Nazoratchisi Kunlik Ish Chek-listi",
+      subTitle: "FSSC 22000 v6 / ISO 22000:2018 standartlari asosida sifat va xavfsizlik monitoringi",
+      btnGuide: "Qo'llanma",
+      tabChecklist: "Chek-list jurnali",
+      tabArchive: "Arxiv",
+      btnSave: "Saqlash (Arxivga)",
+      metaDate: "Sana",
+      metaShift: "Smena",
+      shift1: "1-Smena",
+      shift2: "2-Smena",
+      metaInspector: "Sifat Nazoratchisi",
+      metaInspectorPh: "F.I.Sh kiriting",
+      metaLine: "Liniya",
+      metaLinePh: "Masalan: 1-Liniya",
+      metaSupervisor: "Smena Boshlig'i (Master)",
+      metaSupervisorPh: "Master F.I.Sh",
+      metaBatch: "Partiya №",
+      metaBatchPh: "Partiya raqami",
+      metaRejected: "Jami Brak (kg)",
+      metaOutput: "Tayyor Mahsulot (quti)",
+      secAll: "Barchasi",
+      secPackaging: "1. Qadoqlash Standartlari",
+      secProcess: "2. Texnologik Nazorat & CCP",
+      secSignoff: "3. Smena Yakuni & Imzolar",
+      secPackagingDesc: "Mahsulotlar vazni, quti sig'imi va og'ish me'yorlari",
+      secProcessDesc: "14 ta kritik texnologik va sanitariya nazorat bosqichlari",
+      secSignoffDesc: "Mas'ullar tomonidan smenani tasdiqlash va imzolash",
+      btnResetDefault: "Standartga qaytish",
+      btnAddProduct: "Yangi mahsulot qo'shish",
+      thNo: "№",
+      thProduct: "Mahsulot nomi",
+      thPackWeight: "1 paketdagi vazni / soni",
+      thPacksBox: "1 qutidagi paket",
+      thBoxWeight: "1 quti umumiy vazni",
+      thWeightNorm: "Vazn me'yori & Chekinish",
+      thInspectionTime: "Vaqti & Nazorat",
+      thStatus: "Holati",
+      thStage: "№ / Bosqich",
+      thControlPoint: "Nazorat nuqtasi va Me'yor",
+      thTime: "Vaqti",
+      thActualValue: "Haqiqiy ko'rsatkich (Fakt)",
+      thMatch: "Mosligi",
+      thDiscrepancy: "Aniqlangan nuqson",
+      thAction: "Ko'rilgan chora & Imzo",
+      thCategory: "Toifasi",
+      statusOk: "✓ Me'yorda (OK)",
+      statusFail: "✗ Nuqson",
+      inspectorCard: "Sifat Nazoratchisi",
+      supervisorCard: "Smena Boshlig'i",
+      qaCard: "Bosh Texnolog / Sifat Muhandisi",
+      signFullName: "F.I.Sh",
+      signSignature: "Elektron imzo / Tasdiq",
+      signTime: "Vaqt",
+    },
+    ru: {
+      title: "Ежедневный чек-лист контролера ОКК",
+      subTitle: "Мониторинг качества и безопасности по стандартам FSSC 22000 v6 / ISO 22000:2018",
+      btnGuide: "Руководство",
+      tabChecklist: "Чек-лист журнал",
+      tabArchive: "Архив",
+      btnSave: "Сохранить (В архив)",
+      metaDate: "Дата",
+      metaShift: "Смена",
+      shift1: "1-Смена",
+      shift2: "2-Смена",
+      metaInspector: "Контролер ОКК",
+      metaInspectorPh: "Введите Ф.И.О",
+      metaLine: "Линия",
+      metaLinePh: "Например: 1-Линия",
+      metaSupervisor: "Мастер смены",
+      metaSupervisorPh: "Ф.И.О мастера",
+      metaBatch: "Партия №",
+      metaBatchPh: "Номер партии",
+      metaRejected: "Всего Брак (кг)",
+      metaOutput: "Готовая продукция (кор.)",
+      secAll: "Все разделы",
+      secPackaging: "1. Стандарты упаковки",
+      secProcess: "2. Технологический процесс & ККТ",
+      secSignoff: "3. Подтверждение смены",
+      secPackagingDesc: "Вес упаковки, вместимость коробок и допуски",
+      secProcessDesc: "14 этапов контроля параметров безопасности и ККТ",
+      secSignoffDesc: "Подтверждение и подписи ответственных лиц",
+      btnResetDefault: "Сбросить к стандарту",
+      btnAddProduct: "Добавить продукт",
+      thNo: "№",
+      thProduct: "Наименование продукта",
+      thPackWeight: "Вес / Кол-во в пакете",
+      thPacksBox: "Пакетов в коробке",
+      thBoxWeight: "Общий вес коробки",
+      thWeightNorm: "Требования к весу & Допуск",
+      thInspectionTime: "Время & Контроль",
+      thStatus: "Статус",
+      thStage: "№ / Этап",
+      thControlPoint: "Точка контроля и Норма",
+      thTime: "Время",
+      thActualValue: "Фактический показатель",
+      thMatch: "Соответствие",
+      thDiscrepancy: "Описание отклонения",
+      thAction: "Принятые меры & Подпись",
+      thCategory: "Категория",
+      statusOk: "✓ В норме (OK)",
+      statusFail: "✗ Отклонение",
+      inspectorCard: "Контролер ОКК",
+      supervisorCard: "Мастер смены",
+      qaCard: "Главный технолог / Инженер по качеству",
+      signFullName: "Ф.И.О",
+      signSignature: "Электронная подпись",
+      signTime: "Время",
+    },
+    en: {
+      title: "Daily QC Inspector Checklist",
+      subTitle: "Quality and food safety monitoring according to FSSC 22000 v6 / ISO 22000:2018",
+      btnGuide: "Guide",
+      tabChecklist: "Checklist Log",
+      tabArchive: "Archive",
+      btnSave: "Save (To Archive)",
+      metaDate: "Date",
+      metaShift: "Shift",
+      shift1: "1st Shift",
+      shift2: "2nd Shift",
+      metaInspector: "QC Inspector",
+      metaInspectorPh: "Enter full name",
+      metaLine: "Line",
+      metaLinePh: "e.g. Packaging Line 1",
+      metaSupervisor: "Shift Supervisor",
+      metaSupervisorPh: "Supervisor name",
+      metaBatch: "Batch №",
+      metaBatchPh: "Batch number",
+      metaRejected: "Total Rejected (kg)",
+      metaOutput: "Total Output (boxes)",
+      secAll: "All Sections",
+      secPackaging: "1. Packaging Specifications",
+      secProcess: "2. Process & CCP Monitoring",
+      secSignoff: "3. Shift Sign-Off",
+      secPackagingDesc: "Package weights, box counts, and tolerances",
+      secProcessDesc: "14 critical process, sanitation and CCP stages",
+      secSignoffDesc: "Shift confirmation and sign-offs by responsible leads",
+      btnResetDefault: "Reset to default",
+      btnAddProduct: "Add Product",
+      thNo: "№",
+      thProduct: "Product Name",
+      thPackWeight: "Pack Weight / Count",
+      thPacksBox: "Packs per Box",
+      thBoxWeight: "Box Total Weight",
+      thWeightNorm: "Weight Norm & Tolerance",
+      thInspectionTime: "Time & Frequency",
+      thStatus: "Status",
+      thStage: "№ / Stage",
+      thControlPoint: "Control Point & Standard",
+      thTime: "Time",
+      thActualValue: "Actual Metric",
+      thMatch: "Compliance",
+      thDiscrepancy: "Discrepancy Description",
+      thAction: "Corrective Action & Sign",
+      thCategory: "Category",
+      statusOk: "✓ Pass (OK)",
+      statusFail: "✗ Non-Conforming",
+      inspectorCard: "QC Inspector",
+      supervisorCard: "Shift Supervisor",
+      qaCard: "Quality Assurance Engineer",
+      signFullName: "Full Name",
+      signSignature: "E-Signature / Approval",
+      signTime: "Time",
+    }
+  }[lang as 'uz' | 'ru' | 'en'] || {
+    title: "Sifat Nazoratchisi Kunlik Ish Chek-listi",
+    subTitle: "FSSC 22000 v6 / ISO 22000:2018 standartlari asosida sifat va xavfsizlik monitoringi",
+    btnGuide: "Qo'llanma",
+    tabChecklist: "Chek-list jurnali",
+    tabArchive: "Arxiv",
+    btnSave: "Saqlash (Arxivga)",
+    metaDate: "Sana",
+    metaShift: "Smena",
+    shift1: "1-Smena",
+    shift2: "2-Smena",
+    metaInspector: "Sifat Nazoratchisi",
+    metaInspectorPh: "F.I.Sh kiriting",
+    metaLine: "Liniya",
+    metaLinePh: "Masalan: 1-Liniya",
+    metaSupervisor: "Smena Boshlig'i (Master)",
+    metaSupervisorPh: "Master F.I.Sh",
+    metaBatch: "Partiya №",
+    metaBatchPh: "Partiya raqami",
+    metaRejected: "Jami Brak (kg)",
+    metaOutput: "Tayyor Mahsulot (quti)",
+    secAll: "Barchasi",
+    secPackaging: "1. Qadoqlash Standartlari",
+    secProcess: "2. Texnologik Nazorat & CCP",
+    secSignoff: "3. Smena Yakuni & Imzolar",
+    secPackagingDesc: "Mahsulotlar vazni, quti sig'imi va og'ish me'yorlari",
+    secProcessDesc: "14 ta kritik texnologik va sanitariya nazorat bosqichlari",
+    secSignoffDesc: "Mas'ullar tomonidan smenani tasdiqlash va imzolash",
+    btnResetDefault: "Standartga qaytish",
+    btnAddProduct: "Yangi mahsulot qo'shish",
+    thNo: "№",
+    thProduct: "Mahsulot nomi",
+    thPackWeight: "1 paketdagi vazni / soni",
+    thPacksBox: "1 qutidagi paket",
+    thBoxWeight: "1 quti umumiy vazni",
+    thWeightNorm: "Vazn me'yori & Chekinish",
+    thInspectionTime: "Vaqti & Nazorat",
+    thStatus: "Holati",
+    thStage: "№ / Bosqich",
+    thControlPoint: "Nazorat nuqtasi va Me'yor",
+    thTime: "Vaqti",
+    thActualValue: "Haqiqiy ko'rsatkich (Fakt)",
+    thMatch: "Mosligi",
+    thDiscrepancy: "Aniqlangan nuqson",
+    thAction: "Ko'rilgan chora & Imzo",
+    thCategory: "Toifasi",
+    statusOk: "✓ Me'yorda (OK)",
+    statusFail: "✗ Nuqson",
+    inspectorCard: "Sifat Nazoratchisi",
+    supervisorCard: "Smena Boshlig'i",
+    qaCard: "Bosh Texnolog / Sifat Muhandisi",
+    signFullName: "F.I.Sh",
+    signSignature: "Elektron imzo / Tasdiq",
+    signTime: "Vaqt",
+  }
 
   // Top Metadata
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
@@ -383,7 +615,7 @@ export default function DailyChecklistContent() {
   const [supervisor, setSupervisor] = useState('')
   const [inspector, setInspector] = useState('')
   const [batchNo, setBatchNo] = useState('')
-  const [line, setLine] = useState('1-Линия')
+  const [line, setLine] = useState('1-Liniya')
   const [rejected, setRejected] = useState('')
   const [totalOutput, setTotalOutput] = useState('')
 
@@ -612,25 +844,28 @@ export default function DailyChecklistContent() {
   return (
     <div className="space-y-6 animate-enter pb-24">
       {/* Top Header & Tab Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-750 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
         <div className="flex items-center gap-3.5">
           <button
             onClick={() => router.push('/inspector')}
-            className="w-10 h-10 rounded-xl bg-white dark:bg-dark-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors border border-slate-200 dark:border-dark-700 shadow-sm"
+            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 transition-colors border border-slate-200 dark:border-dark-700 shadow-sm shrink-0"
             title="Orqaga"
           >
             <ArrowLeft size={18} />
           </button>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-2.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider border border-blue-200 dark:border-blue-800">
+              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider border border-emerald-200 dark:border-emerald-800">
                 FSSC 22000 v6 / ISO 22000
               </span>
-              <span className="text-xs text-slate-400 font-semibold">• 3 Tilda</span>
+              <span className="text-xs text-slate-400 font-semibold">• QC Daily Checklist</span>
             </div>
             <h1 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              СНБ (ОТК) Назоратчисининг Кунлик Иш Чек-листи
+              {t.title}
             </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              {t.subTitle}
+            </p>
           </div>
         </div>
 
@@ -639,34 +874,34 @@ export default function DailyChecklistContent() {
           <button
             type="button"
             onClick={() => setShowGuideModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 text-xs font-bold transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 text-xs font-bold transition-all shadow-sm active:scale-95"
           >
             <BookOpen size={15} className="text-emerald-600 dark:text-emerald-400" />
-            <span>📘 Qo'llanma</span>
+            <span>📘 {t.btnGuide}</span>
           </button>
 
           <div className="flex flex-wrap bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 shadow-inner">
             <button
               onClick={() => setView('form')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                 view === 'form'
-                  ? 'bg-white dark:bg-dark-900 text-blue-700 dark:text-blue-400 shadow-sm'
+                  ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <FileText size={15} />
-              <span>Чек-лист (Excel жадвал)</span>
+              <span>{t.tabChecklist}</span>
             </button>
             <button
               onClick={() => setView('archive')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                 view === 'archive'
-                  ? 'bg-white dark:bg-dark-900 text-blue-700 dark:text-blue-400 shadow-sm'
+                  ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Database size={15} />
-              <span>Архив ({history.length})</span>
+              <span>{t.tabArchive} ({history.length})</span>
             </button>
           </div>
 
@@ -674,51 +909,37 @@ export default function DailyChecklistContent() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-600/25 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-600/25 transition-all disabled:opacity-50 active:scale-95"
             >
               {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-              <span>Сақлаш (Архивга)</span>
+              <span>{t.btnSave}</span>
             </button>
           )}
         </div>
       </div>
 
       {view === 'form' ? (
-        <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-750 rounded-2xl shadow-xl overflow-hidden print:border-none print:shadow-none">
-          {/* ========================================================================= */}
-          {/* EXCEL TITLE BANNER */}
-          {/* ========================================================================= */}
-          <div className="bg-[#1F4E78] text-white py-4 px-6 text-center border-b-2 border-[#1B365D]">
-            <h2 className="text-sm sm:text-base md:text-lg font-black tracking-wide uppercase leading-snug">
-              СНБ (ОТК) НАЗОРАТЧИСИНИНГ КУНЛИК ИШ ЧЕК-ЛИСТИ / ЕЖЕДНЕВНЫЙ ЧЕК-ЛИСТ КОНТРОЛЕРА ОКК / DAILY QC CHECKLIST
-            </h2>
-            <p className="text-[11px] sm:text-xs text-blue-200 font-medium mt-1">
-              (FSSC 22000 v6 / ISO 22000:2018 — Уч тилда: O&apos;zbekcha / Русский / English)
-            </p>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* METADATA GRID (Rows 4-5 of Excel) */}
-          {/* ========================================================================= */}
-          <div className="p-4 sm:p-5 border-b border-slate-300 dark:border-dark-700 bg-slate-50/80 dark:bg-dark-850">
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl shadow-xl overflow-hidden print:border-none print:shadow-none">
+          {/* METADATA GRID */}
+          <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-dark-750 bg-slate-50/50 dark:bg-dark-850">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Row 1 / Col 1: Sana */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Сана / Дата / Date
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.metaDate}
                 </label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Row 1 / Col 2: Smena */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Смена / Shift
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.metaShift}
                 </label>
                 <div className="grid grid-cols-2 gap-2 mt-0.5">
                   <button
@@ -730,7 +951,7 @@ export default function DailyChecklistContent() {
                         : 'bg-slate-50 dark:bg-dark-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-100'
                     }`}
                   >
-                    1-Смена
+                    {t.shift1}
                   </button>
                   <button
                     type="button"
@@ -741,77 +962,77 @@ export default function DailyChecklistContent() {
                         : 'bg-slate-50 dark:bg-dark-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-100'
                     }`}
                   >
-                    2-Смена
+                    {t.shift2}
                   </button>
                 </div>
               </div>
 
               {/* Row 1 / Col 3: Nazoratchi */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Назоратчи / Контролер / Inspector
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.metaInspector}
                 </label>
                 <input
                   type="text"
-                  placeholder="Ф.И.Ш киритинг"
+                  placeholder={t.metaInspectorPh}
                   value={inspector}
                   onChange={(e) => {
                     setInspector(e.target.value)
                     handleChange('inspectorName', e.target.value)
                   }}
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Row 1 / Col 4: Liniya */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Линия / Линия / Line
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.metaLine}
                 </label>
                 <input
                   type="text"
-                  placeholder="Масалан: 1-Линия"
+                  placeholder={t.metaLinePh}
                   value={line}
                   onChange={(e) => setLine(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Row 2 / Col 1: Smena boshlig'i */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Смена бошлиғи / Мастер / Supervisor
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.metaSupervisor}
                 </label>
                 <input
                   type="text"
-                  placeholder="Мастер Ф.И.Ш"
+                  placeholder={t.metaSupervisorPh}
                   value={supervisor}
                   onChange={(e) => {
                     setSupervisor(e.target.value)
                     handleChange('supervisorName', e.target.value)
                   }}
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Row 2 / Col 2: Partiya raqami */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Партия № / Партия № / Batch №
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1">
+                  {t.metaBatch}
                 </label>
                 <input
                   type="text"
-                  placeholder="Партия рақами"
+                  placeholder={t.metaBatchPh}
                   value={batchNo}
                   onChange={(e) => setBatchNo(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Row 2 / Col 3: Brak */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Брак / Брак / Rejected: кг (kg)
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 block mb-1">
+                  {t.metaRejected}
                 </label>
                 <div className="relative">
                   <input
@@ -820,18 +1041,18 @@ export default function DailyChecklistContent() {
                     placeholder="0"
                     value={rejected}
                     onChange={(e) => setRejected(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 pl-2.5 pr-8 py-1.5 rounded-lg text-xs font-black font-mono text-red-600 outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 pl-2.5 pr-8 py-1.5 rounded-lg text-xs font-black font-mono text-rose-600 outline-none focus:border-rose-500"
                   />
                   <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                    кг
+                    kg
                   </span>
                 </div>
               </div>
 
               {/* Row 2 / Col 4: Umumiy chiqish */}
-              <div className="bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-2.5 shadow-sm">
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
-                  Умумий чиқиш / Выход / Total Output: коробка / box
+              <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl p-3 shadow-sm">
+                <label className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 block mb-1">
+                  {t.metaOutput}
                 </label>
                 <div className="relative">
                   <input
@@ -840,84 +1061,100 @@ export default function DailyChecklistContent() {
                     placeholder="0"
                     value={totalOutput}
                     onChange={(e) => setTotalOutput(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 pl-2.5 pr-10 py-1.5 rounded-lg text-xs font-black font-mono text-emerald-600 outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 pl-2.5 pr-10 py-1.5 rounded-lg text-xs font-black font-mono text-emerald-600 outline-none focus:border-emerald-500"
                   />
                   <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                    кор
+                    quti
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ========================================================================= */}
-          {/* SECTION 1: PACKAGING SPECIFICATIONS (Excel rows 7-14) */}
-          {/* ========================================================================= */}
-          <div className="border-b border-slate-300 dark:border-dark-700">
-            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+          {/* SECTION SWITCHER PILLS */}
+          <div className="px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-dark-750 bg-slate-100/60 dark:bg-dark-800/60 flex items-center gap-2 overflow-x-auto custom-scrollbar">
+            {[
+              { id: 'all', label: t.secAll, icon: Layers, count: packagingItems.length + 14 },
+              { id: 'packaging', label: t.secPackaging, icon: Package, count: packagingItems.length },
+              { id: 'process', label: t.secProcess, icon: Sliders, count: 14 },
+              { id: 'signoff', label: t.secSignoff, icon: CheckSquare, count: 3 },
+            ].map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeSection === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveSection(tab.id as any)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${
+                    isActive
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white dark:bg-dark-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-750'
+                  }`}
+                >
+                  <Icon size={14} />
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-dark-800 text-slate-500'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* SECTION 1: PACKAGING SPECIFICATIONS */}
+          {(activeSection === 'all' || activeSection === 'packaging') && (
+          <div className="border-b border-slate-200 dark:border-dark-750">
+            <div className="bg-slate-50 dark:bg-dark-850 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 dark:border-dark-750">
               <div className="flex items-center gap-2.5">
-                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
-                  1. МАҲСУЛОТ ВА ҚАДОҚЛАШ СТАНДАРТЛАРИ / СТАНДАРТЫ УПАКОВКИ И КОРОБОК / PACKAGING SPECIFICATIONS
-                </h3>
-                <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded">
-                  {packagingItems.length} та маҳсулот
+                <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                  1
                 </span>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wide">
+                    {t.secPackaging}
+                  </h3>
+                  <span className="text-[10px] text-slate-400">
+                    {t.secPackagingDesc} • {packagingItems.length} ta mahsulot
+                  </span>
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {packagingItems.length > 6 && (
                   <button
                     type="button"
                     onClick={handleResetPackagingToDefault}
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white/10 hover:bg-white/20 text-white transition-all border border-white/20"
-                    title="Стандарт 6 талик рўйхатни тиклаш"
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 transition-all border border-slate-300 dark:border-dark-600"
+                    title={t.btnResetDefault}
                   >
-                    Стандартга қайтиш
+                    {t.btnResetDefault}
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={handleAddProduct}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all active:scale-95"
                 >
                   <Plus size={14} />
-                  <span>Янги маҳсулот қўшиш</span>
+                  <span>{t.btnAddProduct}</span>
                 </button>
               </div>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[980px] text-xs">
-                <thead className="bg-[#2F5597] text-white text-[10px] font-bold uppercase sticky top-0">
+                <thead className="bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase sticky top-0 border-b border-slate-200 dark:border-dark-750">
                   <tr>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-10 text-center">№</th>
-                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[180px]">
-                      Маҳсулот номи
-                      <div className="font-normal text-[9px] text-blue-200">Наименование / Product</div>
-                    </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-40 text-center">
-                      1 пакетдаги вазни / сони
-                      <div className="font-normal text-[9px] text-blue-200">Weight / Qty per pack</div>
-                    </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-36 text-center">
-                      1 коробкадаги пакет сони
-                      <div className="font-normal text-[9px] text-blue-200">Packs per box</div>
-                    </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-44 text-center">
-                      1 коробка умумий вазни
-                      <div className="font-normal text-[9px] text-blue-200">Total box weight / qty</div>
-                    </th>
-                    <th className="p-2.5 border-r border-[#1F4E78]">
-                      Вазн ва меъёр талаби
-                      <div className="font-normal text-[9px] text-blue-200">Weight norm &amp; tolerance</div>
-                    </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-36 text-center">
-                      Вақти ва Текширув
-                      <div className="font-normal text-[9px] text-blue-200">Time &amp; Inspection</div>
-                    </th>
-                    <th className="p-2.5 text-center w-32 bg-[#1B365D]">
-                      Мақоми / Status
-                      <div className="font-normal text-[9px] text-blue-200">ОПРП / OPRP</div>
-                    </th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 w-10 text-center">{t.thNo}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 min-w-[180px]">{t.thProduct}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 w-40 text-center">{t.thPackWeight}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 w-36 text-center">{t.thPacksBox}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 w-44 text-center">{t.thBoxWeight}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750">{t.thWeightNorm}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 w-36 text-center">{t.thInspectionTime}</th>
+                    <th className="p-2.5 text-center w-32 bg-slate-200/60 dark:bg-dark-750">{t.thStatus}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
@@ -1094,61 +1331,51 @@ export default function DailyChecklistContent() {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-900/60 transition-all shadow-sm active:scale-95"
               >
                 <Plus size={16} />
-                <span>+ Янги маҳсулот қўшиш (Янги маҳсулот чиқса)</span>
+                <span>+ {t.btnAddProduct}</span>
               </button>
               <span className="text-[11px] text-slate-400 font-medium">
-                Қўшилган янги маҳсулотлар ўзгартирилмагунча браузерда доимий сақланади
+                {lang === 'ru' ? 'Добавленные продукты сохраняются в браузере' : "Qo'shilgan mahsulotlar brauzerda doimiy saqlanadi"}
               </span>
             </div>
           </div>
+          )}
 
           {/* ========================================================================= */}
-          {/* SECTION 2: PROCESS & SAFETY CHECKLIST (Excel rows 16-31, Image 3) */}
+          {/* SECTION 2: PROCESS & SAFETY CHECKLIST */}
           {/* ========================================================================= */}
-          <div className="border-b border-slate-300 dark:border-dark-700">
-            <div className="bg-[#1F4E78] text-white px-4 py-2.5 flex flex-wrap gap-2 items-center justify-between">
-              <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
-                2. ТЕХНОЛОГИК ЖАРАЁН ВА ХАВФСИЗЛИК ЧЕК-ЛИСТИ / ТЕХНОЛОГИЧЕСКИЙ ПРОЦЕСС И БЕЗОПАСНОСТЬ / PROCESS &amp; SAFETY CHECKLIST
-              </h3>
-              <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded">14 та назорат босқичи</span>
+          {(activeSection === 'all' || activeSection === 'process') && (
+          <div className="border-b border-slate-200 dark:border-dark-750">
+            <div className="bg-slate-50 dark:bg-dark-850 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 dark:border-dark-750">
+              <div className="flex items-center gap-2.5">
+                <span className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+                  2
+                </span>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wide">
+                    {t.secProcess}
+                  </h3>
+                  <span className="text-[10px] text-slate-400">
+                    {t.secProcessDesc}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800">
+                14 ta nazorat bosqichi
+              </span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[1250px] text-xs">
-                <thead className="bg-[#2F5597] text-white text-[10px] font-bold uppercase sticky top-0">
+                <thead className="bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase sticky top-0 border-b border-slate-200 dark:border-dark-750">
                   <tr>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-32">
-                      № / Босқич
-                      <div className="font-normal text-[9px] text-blue-200">Этап / Process</div>
-                    </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] min-w-[220px]">
-                      Назорат нуқтаси ва Меъёр
-                      <div className="font-normal text-[9px] text-blue-200">Точка контроля и Норма / Norm</div>
-                    </th>
-                    <th className="p-2.5 border-r border-[#1F4E78] w-28 text-center">
-                      Вақти
-                      <div className="font-normal text-[9px] text-blue-200">Время / Time</div>
-                    </th>
-                    <th className="p-3 border-r border-[#1F4E78] min-w-[380px] text-left">
-                      Ҳақиқий кўрсаткич (Қийматлар)
-                      <div className="font-normal text-[9px] text-blue-200">Факт. показатель / Actual Value</div>
-                    </th>
-                    <th className="p-3 border-r border-[#1F4E78] w-28 text-center">
-                      Мослиги
-                      <div className="font-normal text-[9px] text-blue-200">Соотв. / Status</div>
-                    </th>
-                    <th className="p-3 border-r border-[#1F4E78] min-w-[140px] text-left">
-                      Аниқланган нуқсон
-                      <div className="font-normal text-[9px] text-blue-200">Описание отклонения / Discrepancy</div>
-                    </th>
-                    <th className="p-3 border-r border-[#1F4E78] min-w-[140px] text-left">
-                      Кўрилган чора ва Имзо
-                      <div className="font-normal text-[9px] text-blue-200">Принятые меры / Corrective Action</div>
-                    </th>
-                    <th className="p-3 text-center w-28 bg-[#1B365D]">
-                      Мақоми
-                      <div className="font-normal text-[9px] text-blue-200">CCP / OPRP</div>
-                    </th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 w-32">{t.thStage}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 min-w-[220px]">{t.thControlPoint}</th>
+                    <th className="p-2.5 border-r border-slate-200 dark:border-dark-750 w-28 text-center">{t.thTime}</th>
+                    <th className="p-3 border-r border-slate-200 dark:border-dark-750 min-w-[380px] text-left">{t.thActualValue}</th>
+                    <th className="p-3 border-r border-slate-200 dark:border-dark-750 w-28 text-center">{t.thMatch}</th>
+                    <th className="p-3 border-r border-slate-200 dark:border-dark-750 min-w-[140px] text-left">{t.thDiscrepancy}</th>
+                    <th className="p-3 border-r border-slate-200 dark:border-dark-750 min-w-[140px] text-left">{t.thAction}</th>
+                    <th className="p-3 text-center w-28 bg-slate-200/60 dark:bg-dark-750">{t.thCategory}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
@@ -1434,9 +1661,9 @@ export default function DailyChecklistContent() {
                         className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
-                      <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
-                        ККТ-2 / CCP-2<br />(Температура)
+                    <td className="p-3 text-center bg-rose-50/70 dark:bg-rose-950/20 border-r border-slate-200 dark:border-dark-750">
+                      <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 leading-tight">
+                        ККТ-2 / CCP-2<br />(Harorat / Temp)
                       </span>
                     </td>
                   </tr>
@@ -1514,9 +1741,9 @@ export default function DailyChecklistContent() {
                         className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
-                      <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
-                        ККТ-1 / CCP-1<br />(Хлор / Chlorine)
+                    <td className="p-3 text-center bg-rose-50/70 dark:bg-rose-950/20 border-r border-slate-200 dark:border-dark-750">
+                      <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 leading-tight">
+                        ККТ-1 / CCP-1<br />(Xlor / Chlorine)
                       </span>
                     </td>
                   </tr>
@@ -2067,9 +2294,9 @@ export default function DailyChecklistContent() {
                         className="w-full min-w-[110px] bg-white dark:bg-dark-900 border border-red-200 dark:border-red-900/50 hover:border-red-300 dark:hover:border-red-800 focus:border-red-500 px-2 py-1.5 rounded text-xs text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400"
                       />
                     </td>
-                    <td className="p-3 text-center bg-[#FCE4D6] dark:bg-red-950/40">
-                      <span className="text-[10px] font-black text-[#C00000] dark:text-red-400 block leading-tight">
-                        ККТ-3 / CCP-3<br />(Металл / Metal)
+                    <td className="p-3 text-center bg-rose-50/70 dark:bg-rose-950/20 border-r border-slate-200 dark:border-dark-750">
+                      <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 leading-tight">
+                        ККТ-3 / CCP-3<br />(Metall / Metal)
                       </span>
                     </td>
                   </tr>
@@ -2233,184 +2460,199 @@ export default function DailyChecklistContent() {
               </table>
             </div>
           </div>
+          )}
 
           {/* ========================================================================= */}
-          {/* SECTION 3: SHIFT SIGN-OFF (Excel rows 33-35, Image 4) */}
+          {/* SECTION 3: SHIFT SIGN-OFF */}
           {/* ========================================================================= */}
-          <div className="bg-[#1F4E78] text-white px-4 py-2.5">
-            <h3 className="text-xs sm:text-sm font-black uppercase tracking-wide">
-              СМЕНА ЯКУНИ БЎЙИЧА ТАСДИҚЛАШ / ПОДТВЕРЖДЕНИЕ СМЕНЫ / SHIFT SIGN-OFF
-            </h3>
-          </div>
-
-          <div className="p-4 sm:p-5 bg-slate-50/60 dark:bg-dark-850">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Block 1: QC Inspector */}
-              <div className="bg-white dark:bg-dark-900 border-2 border-blue-200 dark:border-blue-900/50 rounded-2xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-blue-100 dark:border-blue-900/30">
-                  <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center font-bold text-xs">
-                    1
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
-                      СНБ (ОТК) Назоратчиси
-                    </h4>
-                    <span className="text-[10px] text-slate-400 font-medium">Контролер ОКК / QC Inspector</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Ф.И.Ш / ФИО
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Назоратчи Ф.И.Ш"
-                      value={form.inspectorName || inspector}
-                      onChange={(e) => {
-                        handleChange('inspectorName', e.target.value)
-                        setInspector(e.target.value)
-                      }}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Имзо / Подпись
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Электрон имзо / Тасдиқ"
-                      value={form.inspectorSign}
-                      onChange={(e) => handleChange('inspectorSign', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Вақт / Время
-                    </label>
-                    <input
-                      type="time"
-                      value={form.inspectorTime}
-                      onChange={(e) => handleChange('inspectorTime', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500"
-                    />
-                  </div>
+          {(activeSection === 'all' || activeSection === 'signoff') && (
+          <div className="border-b border-slate-200 dark:border-dark-750">
+            <div className="bg-slate-50 dark:bg-dark-850 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 dark:border-dark-750">
+              <div className="flex items-center gap-2.5">
+                <span className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
+                  3
+                </span>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wide">
+                    {t.secSignoff}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {t.secSignoffDesc}
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Block 2: Shift Supervisor */}
-              <div className="bg-white dark:bg-dark-900 border-2 border-amber-200 dark:border-amber-900/50 rounded-2xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-amber-100 dark:border-amber-900/30">
-                  <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center font-bold text-xs">
-                    2
+            <div className="p-4 sm:p-6 bg-white dark:bg-dark-900">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                {/* Block 1: QC Inspector */}
+                <div className="bg-slate-50/60 dark:bg-dark-850 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-dark-750">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                      1
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
+                        {t.inspectorCard}
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-medium">Контролер ОКК / QC Inspector</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
-                      Смена бошлиғи
-                    </h4>
-                    <span className="text-[10px] text-slate-400 font-medium">Мастер смены / Shift Supervisor</span>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signFullName}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={t.metaInspectorPh}
+                        value={form.inspectorName || inspector}
+                        onChange={(e) => {
+                          handleChange('inspectorName', e.target.value)
+                          setInspector(e.target.value)
+                        }}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signSignature}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Электрон имзо / Тасдиқ"
+                        value={form.inspectorSign}
+                        onChange={(e) => handleChange('inspectorSign', e.target.value)}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signTime}
+                      </label>
+                      <input
+                        type="time"
+                        value={form.inspectorTime}
+                        onChange={(e) => handleChange('inspectorTime', e.target.value)}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Ф.И.Ш / ФИО
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Мастер Ф.И.Ш"
-                      value={form.supervisorName || supervisor}
-                      onChange={(e) => {
-                        handleChange('supervisorName', e.target.value)
-                        setSupervisor(e.target.value)
-                      }}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
-                    />
+                {/* Block 2: Shift Supervisor */}
+                <div className="bg-slate-50/60 dark:bg-dark-850 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-dark-750">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
+                        {t.supervisorCard}
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-medium">Мастер смены / Shift Supervisor</span>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Имзо / Подпись
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Электрон имзо / Тасдиқ"
-                      value={form.supervisorSign}
-                      onChange={(e) => handleChange('supervisorSign', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Вақт / Время
-                    </label>
-                    <input
-                      type="time"
-                      value={form.supervisorTime}
-                      onChange={(e) => handleChange('supervisorTime', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500"
-                    />
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signFullName}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={t.metaSupervisorPh}
+                        value={form.supervisorName || supervisor}
+                        onChange={(e) => {
+                          handleChange('supervisorName', e.target.value)
+                          setSupervisor(e.target.value)
+                        }}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signSignature}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Электрон имзо / Тасдиқ"
+                        value={form.supervisorSign}
+                        onChange={(e) => handleChange('supervisorSign', e.target.value)}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signTime}
+                      </label>
+                      <input
+                        type="time"
+                        value={form.supervisorTime}
+                        onChange={(e) => handleChange('supervisorTime', e.target.value)}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Block 3: QA Engineer */}
-              <div className="bg-white dark:bg-dark-900 border-2 border-emerald-200 dark:border-emerald-900/50 rounded-2xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-emerald-100 dark:border-emerald-900/30">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                    3
+                {/* Block 3: QA Engineer */}
+                <div className="bg-slate-50/60 dark:bg-dark-850 border border-slate-200 dark:border-dark-750 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-dark-750">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
+                        {t.qaCard}
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-medium">Инженер по качеству / QA Engineer</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase leading-tight">
-                      Сифат мутахассиси
-                    </h4>
-                    <span className="text-[10px] text-slate-400 font-medium">Инженер по качеству / QA Engineer</span>
-                  </div>
-                </div>
 
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Ф.И.Ш / ФИО
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Сифат мутахассиси Ф.И.Ш"
-                      value={form.qaEngineerName}
-                      onChange={(e) => handleChange('qaEngineerName', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Имзо / Подпись
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Электрон имзо / Тасдиқ"
-                      value={form.qaEngineerSign}
-                      onChange={(e) => handleChange('qaEngineerSign', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">
-                      Вақт / Время
-                    </label>
-                    <input
-                      type="time"
-                      value={form.qaEngineerTime}
-                      onChange={(e) => handleChange('qaEngineerTime', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1.5 rounded-lg font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500"
-                    />
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signFullName}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={lang === 'ru' ? 'Ф.И.О инженера' : "Sifat muhandisi F.I.Sh"}
+                        value={form.qaEngineerName}
+                        onChange={(e) => handleChange('qaEngineerName', e.target.value)}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signSignature}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Электрон имзо / Тасдиқ"
+                        value={form.qaEngineerSign}
+                        onChange={(e) => handleChange('qaEngineerSign', e.target.value)}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        {t.signTime}
+                      </label>
+                      <input
+                        type="time"
+                        value={form.qaEngineerTime}
+                        onChange={(e) => handleChange('qaEngineerTime', e.target.value)}
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 px-3 py-2 rounded-xl font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+          )}
 
           {/* ========================================================================= */}
           {/* BOTTOM ACTIONS BAR */}
@@ -2422,7 +2664,7 @@ export default function DailyChecklistContent() {
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-dark-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
             >
               <RotateCcw size={14} />
-              <span>Янгидан тўлдириш</span>
+              <span>{lang === 'ru' ? 'Заполнить заново' : lang === 'en' ? 'Reset form' : "Yangidan to'ldirish"}</span>
             </button>
 
             <div className="flex flex-wrap items-center gap-2.5">
@@ -2432,7 +2674,7 @@ export default function DailyChecklistContent() {
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-dark-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               >
                 <Printer size={14} />
-                <span>Чоп этиш</span>
+                <span>{lang === 'ru' ? 'Печать' : lang === 'en' ? 'Print' : "Chop etish"}</span>
               </button>
 
               <button
@@ -2442,7 +2684,7 @@ export default function DailyChecklistContent() {
                 className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white px-7 py-2.5 rounded-xl font-black text-xs shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                <span>Сақлаш ва Архивга топшириш</span>
+                <span>{t.btnSave}</span>
               </button>
             </div>
           </div>

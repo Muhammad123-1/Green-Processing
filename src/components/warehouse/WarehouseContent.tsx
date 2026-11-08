@@ -37,6 +37,7 @@ import {
   TrendingDown,
   ArrowDownRight,
   ArrowUpRight,
+  ArrowDownLeft,
   Phone,
   ShieldCheck,
   Boxes,
@@ -344,7 +345,7 @@ export default function WarehouseContent() {
     (l as any)[key] = formatDual((tBase.uz as any)[key] || '', (tBase.ru as any)[key] || '', (tBase.en as any)[key] || '');
   }
 
-  const [activeTab, setActiveTab] = useState<'inventory' | 'transfers' | 'temperature' | 'suppliers'>('inventory')
+  const [activeTab, setActiveTab] = useState<'inventory' | 'transfers'>('inventory')
 
   // Inbound & Outbound states (Kirim va Chiqim)
   const [prihodSearch, setPrihodSearch] = useState('')
@@ -694,19 +695,19 @@ export default function WarehouseContent() {
 
     setOrderLoading(true)
     try {
-      const selectedSup = suppliers.find(s => s.id === parseInt(orderForm.supplierId))
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: orderForm.productId,
-          supplierId: orderForm.supplierId ? parseInt(orderForm.supplierId) : null,
-          supplierName: selectedSup?.name || null,
+          supplierId: null,
+          supplierName: null,
           quantity: parseFloat(orderForm.quantity),
           unit: orderForm.unit,
           expectedDate: orderForm.expectedDate,
           timeRange: orderForm.timeRange,
-          notes: orderForm.notes,
+          warehouseNotes: orderForm.notes || "Skladda xomashyo tugagan / qolmagan",
+          notes: null,
           status: 'PENDING'
         })
       })
@@ -714,8 +715,8 @@ export default function WarehouseContent() {
       if (res.ok) {
         toast.success(
           lang === 'ru' 
-            ? 'Заявка успешно отправлена в отдел снабжения и общий чат!' 
-            : "Ta'minot bo'limiga buyurtma muvaffaqiyatli yuborildi! Umumiy chatga xabarnoma jo'natildi."
+            ? 'Заявка успешно отправлена в отдел снабжения («Заявки со склада») и общий чат!' 
+            : "Ta'minot bo'limiga «Ombordan qolmagan mahsulotlar» sahifasiga talabnoma muvaffaqiyatli yuborildi! Umumiy chatga xabarnoma jo'natildi."
         )
         setShowOrderModal(false)
         setOrderForm(initialOrderForm)
@@ -1230,24 +1231,13 @@ export default function WarehouseContent() {
               <Scale size={15} />
               <span>{formatDual("Chiqim Aktlari (Transfer)", "Акты списания & трансфер", "Dispatches / Transfers")}</span>
             </button>
-            <button
-              onClick={() => setActiveTab('suppliers')}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'suppliers'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              <Truck size={15} />
-              <span>{l.tabSuppliers}</span>
-            </button>
             <Link
-              href="/temperature-logs"
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-white bg-white dark:bg-dark-750/60 hover:bg-cyan-50 dark:hover:bg-cyan-600/20 border border-slate-200 hover:border-cyan-500/40 dark:border-dark-700 transition-all whitespace-nowrap ml-1"
+              href="/prihod"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-white bg-white dark:bg-dark-750/60 hover:bg-emerald-50 dark:hover:bg-emerald-600/20 border border-slate-200 hover:border-emerald-500/40 dark:border-dark-700 transition-all whitespace-nowrap ml-1"
             >
-              <Thermometer size={15} className="text-cyan-500" />
-              <span>{formatDual("Harorat nazorati (F-01)", "Контроль температур Ф-01", "Temp Logs")}</span>
-              <ExternalLink size={12} className="opacity-60 text-slate-400" />
+              <ArrowDownLeft size={15} className="text-emerald-500" />
+              <span>{formatDual("Xomashyo Kirimi (Приход)", "Приход сырья", "Inbound (Arrivals)")}</span>
+              <ArrowRight size={12} className="opacity-60 text-slate-400" />
             </Link>
           </div>
         </div>
@@ -1260,7 +1250,7 @@ export default function WarehouseContent() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {/* Card 1: Jami Kirim */}
             <div 
-              onClick={() => router.push('/shop-report')}
+              onClick={() => router.push('/prihod')}
               className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-emerald-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors" />
@@ -1383,31 +1373,27 @@ export default function WarehouseContent() {
               </div>
             </div>
 
-            {/* Card 4: Ta'minotchilar */}
+            {/* Card 4: Chiqim Aktlari */}
             <div 
-              onClick={() => setActiveTab('suppliers')}
+              onClick={() => setActiveTab('transfers')}
               className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden group cursor-pointer hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-500/25 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
-                    {formatDual("Ta'minotchilar", "Поставщики", "Suppliers")}
+                    {formatDual("Chiqim Tarixi", "История списаний", "Dispatches History")}
                   </span>
                   <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
-                    {macroLoading ? (
-                      <span className="text-slate-400 text-sm">...</span>
-                    ) : (
-                      `${macroData?.summary.totalSuppliersCount || 0} ta`
-                    )}
+                    {transfersPagination.totalCount || 0} ta
                   </div>
                   <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-                    {formatDual("Faol hamkorlar", "Активные партнеры", "Active partners")}
+                    {formatDual("Chiqim aktlari", "Акты перемещений", "Transfer acts")}
                   </div>
                 </div>
                 <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-500/15 border border-indigo-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
-                  <Truck size={18} className="sm:hidden" />
-                  <Truck size={24} className="hidden sm:block" />
+                  <Scale size={18} className="sm:hidden" />
+                  <Scale size={24} className="hidden sm:block" />
                 </div>
               </div>
               <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-between group-hover:text-indigo-500 dark:group-hover:text-indigo-300">
@@ -1415,35 +1401,6 @@ export default function WarehouseContent() {
                 <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform sm:w-3.5 sm:h-3.5" />
               </div>
             </div>
-          </div>
-
-          {/* Quick Access to Harorat Nazorati */}
-          <div>
-            <Link
-              href="/temperature-logs"
-              className="bg-white dark:bg-gradient-to-r dark:from-cyan-950/40 dark:via-dark-900 dark:to-dark-850 border border-slate-200 dark:border-cyan-500/30 hover:border-cyan-500/70 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md flex items-center justify-between group transition-all"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/20 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition-transform flex-shrink-0">
-                  <Thermometer size={22} />
-                </div>
-                <div>
-                  <div className="text-[10px] sm:text-[11px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
-                    {formatDual("Alohida Jurnal Sahifasi", "Отдельная страница журнала", "Dedicated Journal")}
-                  </div>
-                  <div className="text-sm sm:text-base font-black text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">
-                    {formatDual("Harorat Nazorati Chek-listi (F-01)", "Контроль температуры сырья при хранении (Ф-01)", "Storage Temperature Log (F-01)")}
-                  </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 hidden sm:block">
-                    {formatDual("2°C–5°C me'yor: Aysberg, Piyoz, Pomidor, Sabzi, Karam nazorati", "Норма 2°C–5°C: Айсберг, Лук, Томаты, Морковь, Капуста", "2°C–5°C norm validation for 5 vegetables")}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 px-3 py-1.5 rounded-xl border border-cyan-200 dark:border-cyan-500/20 group-hover:bg-cyan-500 group-hover:text-white transition-all flex-shrink-0 ml-2">
-                <span>{formatDual("Ochish", "Открыть", "Open")}</span>
-                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
           </div>
 
           {/* 2. Executive Macro Balance Table (Kirim - Chiqim = Qoldiq) */}
@@ -2005,8 +1962,8 @@ export default function WarehouseContent() {
           {/* VIEW B: FEFO & STORAGE ZONES */}
           {batchesView === 'fefo' && (
             <div className="space-y-4">
-              {/* Filters & Search */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              {/* Filters & Search & Shortage Requisition Button */}
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input 
@@ -2014,35 +1971,51 @@ export default function WarehouseContent() {
                     placeholder={l.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs"
+                    className="w-full pl-11 pr-4 py-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs"
                   />
                 </div>
                 <div className="flex bg-slate-100 dark:bg-dark-800/50 p-1.5 rounded-2xl w-full sm:w-max max-w-full overflow-x-auto border border-slate-200 dark:border-dark-700/50 backdrop-blur-sm">
                   <button 
                     onClick={() => setStatusFilter('all')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'all' ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${statusFilter === 'all' ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
                   >
                     {l.filterAll}
                   </button>
                   <button 
                     onClick={() => setStatusFilter('red')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'red' ? 'bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400'}`}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${statusFilter === 'red' ? 'bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400'}`}
                   >
                     {l.statusCritical}
                   </button>
                   <button 
                     onClick={() => setStatusFilter('yellow')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'yellow' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border border-yellow-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-yellow-600 dark:hover:text-yellow-500'}`}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${statusFilter === 'yellow' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border border-yellow-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-yellow-600 dark:hover:text-yellow-500'}`}
                   >
                     {l.statusWarning}
                   </button>
                   <button 
                     onClick={() => setStatusFilter('green')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${statusFilter === 'green' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'}`}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${statusFilter === 'green' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'}`}
                   >
                     {l.filterOk}
                   </button>
                 </div>
+
+                <button
+                  onClick={() => {
+                    const redItem = inventory.find(i => i.status === 'red') || inventory.find(i => i.status === 'yellow') || inventory[0]
+                    if (redItem) {
+                      handleOpenOrderModal(redItem)
+                    } else {
+                      toast.error("Mahsulotlar ro'yxati topilmadi")
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                  title="Ta'minot bo'limiga xomashyo talabnomasi yuborish"
+                >
+                  <ShoppingCart size={15} />
+                  <span>{formatDual("+ Talabnoma Yuborish (Mahsulot qolmadi)", "+ Заявка на сырьё", "+ Shortage Request")}</span>
+                </button>
               </div>
 
           {/* Inventory Table */}
@@ -2192,12 +2165,24 @@ export default function WarehouseContent() {
                       {/* Mobile Actions */}
                       <div className="flex items-center gap-2 pt-0.5">
                         <button
+                          onClick={() => handleOpenOrderModal(item)}
+                          className={`flex items-center justify-center gap-1 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all cursor-pointer ${
+                            item.status === 'red'
+                              ? 'bg-rose-500/20 hover:bg-rose-600 text-rose-700 dark:text-rose-300 border-rose-500/40 animate-pulse'
+                              : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                          }`}
+                          title={formatDual("Ta'minotga talabnoma (Zakaz)", "Заявка в снабжение", "Order to Supply")}
+                        >
+                          <ShoppingCart size={14} />
+                          <span>Zakaz</span>
+                        </button>
+                        <button
                           onClick={() => handleOpenQuickTransfer(item)}
                           disabled={item.totalQuantity <= 0}
                           className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold text-xs py-2.5 rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                         >
                           <Send size={14} />
-                          <span>Chiqim berish (FEFO)</span>
+                          <span>Chiqim (FEFO)</span>
                         </button>
                         <button
                           onClick={() => handleOpenReceiveModal(item)}
@@ -2530,464 +2515,6 @@ export default function WarehouseContent() {
                 itemName={{ uz: 'chiqim hujjati', ru: 'документов', en: 'documents' }}
               />
             )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: TEMPERATURE LOG */}
-      {activeTab === 'temperature' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                <Thermometer className="text-emerald-400" size={22} />
-                {lang === 'ru' ? 'Журнал температурного режима' : 'Harorat rejimi jurnali (Omborxona)'}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                {lang === 'ru' 
-                  ? 'Ежедневный замер температур сырья (8:00, 17:00), выявление отклонений и фиксация корректировок' 
-                  : 'Xomashyolarning kunlik harorat rejimi (8:00, 17:00), me\'yordan og\'ishlar va ko\'rilgan choralar'}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <button
-                onClick={() => {
-                  setTempForm(initialTempForm)
-                  setEditingTempId(null)
-                  setShowTempModal(true)
-                }}
-                className="btn-primary flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 px-4 py-2.5 rounded-xl font-medium text-sm transition-all"
-              >
-                <Plus size={18} />
-                <span>{l.addTemp}</span>
-              </button>
-
-              <button
-                onClick={handleDownloadTempExcel}
-                disabled={exportingTemp}
-                className="px-4 py-2.5 rounded-xl border border-dark-600 bg-dark-800 hover:bg-dark-700 text-slate-200 font-medium text-sm flex items-center gap-2 transition-all shadow hover:border-emerald-500/50 disabled:opacity-50"
-              >
-                {exportingTemp ? (
-                  <RefreshCw size={16} className="animate-spin text-emerald-400" />
-                ) : (
-                  <FileSpreadsheet size={16} className="text-emerald-400" />
-                )}
-                <span>{exportingTemp ? (lang === 'ru' ? 'Скачивание...' : 'Yuklanmoqda...') : l.exportExcel}</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
-            {tempLoading ? (
-              <div className="p-12 flex flex-col items-center justify-center">
-                <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
-                <p className="text-slate-400 text-sm font-medium">Yuklanmoqda...</p>
-              </div>
-            ) : filteredTempLogs.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
-                <Thermometer size={48} className="mx-auto mb-3 opacity-20" />
-                <p className="text-base font-semibold text-slate-400">{l.empty}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/40 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="p-4">{l.tempDate}</th>
-                      <th className="p-4">{l.tempTime}</th>
-                      <th className="p-4 text-center">Айсберг (°C)</th>
-                      <th className="p-4 text-center">Лук (°C)</th>
-                      <th className="p-4 text-center">Томат (°C)</th>
-                      <th className="p-4 text-center">Морковь (°C)</th>
-                      <th className="p-4 text-center">Капуста (°C)</th>
-                      <th className="p-4">{l.tempDeviation}</th>
-                      <th className="p-4">{l.tempResp}</th>
-                      <th className="p-4 text-right">Amallar</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-dark-750">
-                    {tempLogsPagination.displayedItems.map((log) => (
-                      <tr key={log.id} className="hover:bg-dark-800/30 transition-colors">
-                        <td className="p-4 font-mono font-bold text-white">{log.date}</td>
-                        <td className="p-4 font-semibold text-emerald-400">{log.time}</td>
-                        <td className="p-4 text-center font-mono">{log.icebergTemp ?? '-'}</td>
-                        <td className="p-4 text-center font-mono">{log.onionTemp ?? '-'}</td>
-                        <td className="p-4 text-center font-mono">{log.tomatoTemp ?? '-'}</td>
-                        <td className="p-4 text-center font-mono">{log.carrotTemp ?? '-'}</td>
-                        <td className="p-4 text-center font-mono">{log.cabbageTemp ?? '-'}</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${log.deviation.includes('ВНИМАНИЕ') ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                            {log.deviation}
-                          </span>
-                        </td>
-                        <td className="p-4 text-slate-300 font-medium">{log.responsible}</td>
-                        <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => openEditTemp(log)} className="p-1.5 hover:bg-dark-700 text-slate-400 hover:text-emerald-400 rounded-lg">
-                              <Edit2 size={16} />
-                            </button>
-                            <button onClick={() => handleDeleteTemp(log.id)} className="p-1.5 hover:bg-dark-700 text-slate-400 hover:text-red-400 rounded-lg">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
-            {!tempLoading && filteredTempLogs.length > 0 && (
-              <InfiniteTableFooter
-                currentCount={tempLogsPagination.visibleCount}
-                totalCount={tempLogsPagination.totalCount}
-                hasMore={tempLogsPagination.hasMore}
-                showAll={tempLogsPagination.showAll}
-                onLoadMore={tempLogsPagination.loadMore}
-                onToggleShowAll={tempLogsPagination.toggleShowAll}
-                sentinelRef={tempLogsPagination.sentinelRef}
-                pageSize={10}
-                itemName={{ uz: 'harorat yozuvi', ru: 'записей', en: 'logs' }}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: SUPPLIERS (YETKAZIB BERUVCHILAR / PASTAFSHIKLAR) */}
-      {activeTab === 'suppliers' && (
-        <div className="space-y-6">
-          {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-6 rounded-3xl shadow-sm">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="px-2.5 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Truck size={14} />
-                  {formatDual("Ta'minot Boshqaruvi", "Управление поставками", "Supply Management")}
-                </span>
-              </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
-                <span>{formatDual("Ta'minotchilar (Yetkazib Beruvchilar) Nazorati", "Реестр и статистика поставщиков сырья", "Suppliers Registry & Analytics")}</span>
-              </h3>
-            </div>
-
-            <button
-              onClick={() => fetchMacroStats()}
-              disabled={macroLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-xs transition-all shadow-xs hover:border-emerald-500/40"
-            >
-              <RefreshCw size={14} className={macroLoading ? 'animate-spin text-emerald-400' : ''} />
-              <span>{formatDual("Yangilash", "Обновить", "Refresh")}</span>
-            </button>
-          </div>
-
-          {/* Supplier KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-dark-900/90 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">
-              <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
-                {formatDual("Jami Hamkorlar", "Всего поставщиков", "Total Suppliers")}
-              </span>
-              <div className="text-2xl md:text-3xl font-black text-white">
-                {macroData?.suppliers.length || 0} ta
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {formatDual("Doimiy ro'yxatdan o'tgan pastafshiklar", "Зарегистрированные поставщики", "Registered suppliers")}
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-dark-900/90 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">
-              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
-                {formatDual("Jami Keltirilgan Yuk", "Общий объем поставок", "Total Delivered Volume")}
-              </span>
-              <div className="text-2xl md:text-3xl font-black text-emerald-400">
-                {macroData?.summary.totalArrivalTonnes || 0} tn
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {macroData?.summary.totalArrivalKg.toLocaleString() || 0} kg {formatDual("xomashyo qabul qilingan", "сырья принято", "raw materials received")}
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-dark-900/90 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">
-              <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
-                {formatDual("Eng Yirik Hamkor", "Главный поставщик", "Top Supplier Partner")}
-              </span>
-              <div className="text-xl md:text-2xl font-black text-white truncate" title={macroData?.suppliers[0]?.name || '-'}>
-                {macroData?.suppliers[0]?.name || '-'}
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {macroData?.suppliers[0]?.totalTonnes || 0} tn {formatDual("yetkazib bergan", "поставлено", "delivered")}
-              </p>
-            </div>
-          </div>
-
-          {/* Suppliers Table Container */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-slate-200 dark:border-dark-750 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/70 dark:bg-dark-850/50">
-              <div className="relative flex-1 w-full sm:max-w-md">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input
-                  type="text"
-                  placeholder={formatDual(
-                    "Ta'minotchi nomi, mahsuloti yoki telefoni bo'yicha...",
-                    "Поиск по поставщику, продукту или телефону...",
-                    "Search supplier, product or phone..."
-                  )}
-                  value={supplierSearch}
-                  onChange={(e) => setSupplierSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-              <div className="text-xs text-slate-400 font-semibold">
-                {formatDual(
-                  `Topildi: ${filteredSuppliers.length} ta ta'minotchi`,
-                  `Найдено: ${filteredSuppliers.length} поставщиков`,
-                  `Found: ${filteredSuppliers.length} suppliers`
-                )}
-              </div>
-            </div>
-
-            {/* Mobile View: Supplier Cards */}
-            <div className="block sm:hidden divide-y divide-dark-750">
-              {macroLoading && !macroData ? (
-                <div className="p-10 text-center text-slate-400">
-                  <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={24} />
-                  <span className="text-xs">{formatDual("Ta'minotchilar yuklanmoqda...", "Загрузка поставщиков...", "Loading suppliers...")}</span>
-                </div>
-              ) : filteredSuppliers.length === 0 ? (
-                <div className="p-10 text-center text-slate-500">
-                  <Truck size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-xs">{formatDual("Ta'minotchi topilmadi", "Поставщики не найдены", "No suppliers found")}</p>
-                </div>
-              ) : (
-                filteredSuppliers.map((s, idx) => (
-                  <div key={idx} className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold shrink-0">
-                          <Building2 size={16} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-extrabold text-white text-xs truncate">
-                            {s.name}
-                          </div>
-                          <div className="text-[11px] text-slate-400 truncate">
-                            {s.contactPerson}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
-                        <ShieldCheck size={11} />
-                        <span>{s.status}</span>
-                      </span>
-                    </div>
-
-                    {s.products.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {s.products.map((p, pIdx) => (
-                          <span
-                            key={pIdx}
-                            className="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-[10px] font-medium text-emerald-300"
-                          >
-                            {p}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-3 gap-2 bg-dark-800/60 p-2.5 rounded-xl border border-dark-700/60 text-center">
-                      <div>
-                        <div className="text-[10px] uppercase font-bold text-slate-400">Jami Yuk</div>
-                        <div className="font-black text-white text-xs mt-0.5">
-                          {s.totalKg && s.totalKg > 0
-                            ? s.totalTonnes >= 1
-                              ? `${s.totalTonnes} tn`
-                              : `${s.totalKg.toLocaleString()} kg`
-                            : ''}
-                          {s.totalKg && s.totalKg > 0 && s.totalDona && s.totalDona > 0 ? ' • ' : ''}
-                          {s.totalDona && s.totalDona > 0 ? `${s.totalDona.toLocaleString()} dona` : ''}
-                          {!s.totalKg && !s.totalDona ? '0 kg' : ''}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase font-bold text-slate-400">Partiyalar</div>
-                        <div className="font-bold text-slate-200 text-xs mt-0.5">
-                          {s.deliveriesCount} ta
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase font-bold text-slate-400">Oxirgi Yuk</div>
-                        <div className="font-mono text-[10px] text-slate-300 mt-0.5">
-                          {s.lastDeliveryDate}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 pt-1">
-                      <a
-                        href={`tel:${s.phone.replace(/\s+/g, '')}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-400 hover:text-indigo-300 py-1"
-                      >
-                        <Phone size={13} />
-                        <span>{s.phone}</span>
-                      </a>
-
-                      <button
-                        onClick={() => handleOpenSupplierOrder(s)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all shadow hover:shadow-amber-500/10"
-                      >
-                        <ShoppingCart size={13} />
-                        <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Desktop View: Suppliers Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-dark-750 bg-dark-800/60 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    <th className="p-4">{formatDual("Ta'minotchi (Korxona)", "Поставщик / Организация", "Supplier Organization")}</th>
-                    <th className="p-4">{formatDual("Keltirgan Mahsulotlari", "Поставляемая продукция", "Supplied Products")}</th>
-                    <th className="p-4 text-center">{formatDual("Jami Yetkazilgan Yuk", "Общий объем", "Total Volume")}</th>
-                    <th className="p-4 text-center">{formatDual("Partiyalar", "Партий", "Batches")}</th>
-                    <th className="p-4 text-center">{formatDual("Oxirgi Yetkazish", "Посл. поставка", "Last Delivery")}</th>
-                    <th className="p-4">{formatDual("Aloqa / Telefon", "Контакты", "Contact")}</th>
-                    <th className="p-4 text-center">{formatDual("Holat", "Статус", "Status")}</th>
-                    <th className="p-4 text-right">{formatDual("Buyurtma", "Заказ", "Order")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-dark-750">
-                  {macroLoading && !macroData ? (
-                    <tr>
-                      <td colSpan={8} className="p-12 text-center text-slate-400">
-                        <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={28} />
-                        <span>{formatDual("Ta'minotchilar yuklanmoqda...", "Загрузка поставщиков...", "Loading suppliers...")}</span>
-                      </td>
-                    </tr>
-                  ) : filteredSuppliers.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="p-12 text-center text-slate-500">
-                        <Truck size={36} className="mx-auto mb-2 opacity-30" />
-                        <p>{formatDual("Ta'minotchi topilmadi", "Поставщики не найдены", "No suppliers found")}</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredSuppliers.map((s, idx) => (
-                      <tr key={idx} className="hover:bg-dark-800/30 transition-colors">
-                        {/* Supplier Info */}
-                        <td className="p-4">
-                          <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold flex-shrink-0">
-                              <Building2 size={18} />
-                            </div>
-                            <div>
-                              <div className="font-extrabold text-white text-sm">
-                                {s.name}
-                              </div>
-                              <div className="text-xs text-slate-400 mt-0.5">
-                                {s.contactPerson}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Products tags */}
-                        <td className="p-4 max-w-[240px]">
-                          <div className="flex flex-wrap gap-1">
-                            {s.products.length > 0 ? (
-                              s.products.map((p, pIdx) => (
-                                <span
-                                  key={pIdx}
-                                  className="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-[11px] font-medium text-emerald-300"
-                                >
-                                  {p}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="text-xs text-slate-500">-</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Total Volume */}
-                        <td className="p-4 text-center">
-                          {s.totalKg && s.totalKg > 0 ? (
-                            <div>
-                              <div className="font-black text-white text-base">
-                                {s.totalTonnes >= 1 ? `${s.totalTonnes} tn` : `${s.totalKg.toLocaleString()} kg`}
-                              </div>
-                              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                                {s.totalKg.toLocaleString()} kg
-                              </div>
-                            </div>
-                          ) : null}
-                          {s.totalDona && s.totalDona > 0 ? (
-                            <div className={s.totalKg && s.totalKg > 0 ? 'mt-1.5' : ''}>
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs">
-                                <Boxes size={12} />
-                                <span>{s.totalDona.toLocaleString()} dona</span>
-                              </span>
-                            </div>
-                          ) : null}
-                          {!s.totalKg && !s.totalDona ? (
-                            <span className="text-slate-500 text-xs">—</span>
-                          ) : null}
-                        </td>
-
-                        {/* Deliveries Count */}
-                        <td className="p-4 text-center">
-                          <span className="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200">
-                            {s.deliveriesCount} ta
-                          </span>
-                        </td>
-
-                        {/* Last Delivery Date */}
-                        <td className="p-4 text-center text-xs font-mono text-slate-300">
-                          {s.lastDeliveryDate}
-                        </td>
-
-                        {/* Contact */}
-                        <td className="p-4">
-                          <a
-                            href={`tel:${s.phone.replace(/\s+/g, '')}`}
-                            className="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-400 hover:text-indigo-300 transition-colors"
-                          >
-                            <Phone size={13} />
-                            <span>{s.phone}</span>
-                          </a>
-                        </td>
-
-                        {/* Status */}
-                        <td className="p-4 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                            <ShieldCheck size={12} />
-                            <span>{s.status}</span>
-                          </span>
-                        </td>
-
-                        {/* Action */}
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => handleOpenSupplierOrder(s)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all shadow hover:shadow-amber-500/10"
-                            title="Ushbu ta'minotchiga yangi buyurtma yuborish"
-                          >
-                            <ShoppingCart size={13} />
-                            <span>{formatDual("Buyurtma", "Заказать", "Order")}</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       )}
@@ -3379,174 +2906,6 @@ export default function WarehouseContent() {
               <button onClick={() => setShowZoneModal(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700">Bekor qilish</button>
               <button onClick={() => handleUpdateZone(showZoneModal.batchId, showZoneModal.currentZoneId)} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all">Saqlash</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: TEMPERATURE LOG */}
-      {showTempModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
-          onClick={() => setShowTempModal(false)}
-        >
-          <div 
-            className="w-full max-w-2xl bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <Thermometer size={22} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">
-                    {editingTempId ? (lang === 'ru' ? 'Редактировать запись' : 'Yozuvni tahrirlash') : l.addTemp}
-                  </h3>
-                </div>
-              </div>
-              <button onClick={() => setShowTempModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveTemp} className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">{l.tempDate} *</label>
-                  <input
-                    type="date"
-                    required
-                    value={tempForm.date}
-                    onChange={(e) => setTempForm({ ...tempForm, date: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">{l.tempTime} *</label>
-                  <input
-                    type="text"
-                    required
-                    value={tempForm.time}
-                    onChange={(e) => setTempForm({ ...tempForm, time: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-dark-800 p-4 rounded-xl border border-dark-700 space-y-3">
-                <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                  Harorat (°C)
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">{l.tempIceberg}</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      placeholder="3.5"
-                      value={tempForm.icebergTemp}
-                      onChange={(e) => setTempForm({ ...tempForm, icebergTemp: e.target.value })}
-                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-2.5 py-1.5 text-white text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">{l.tempOnion}</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      placeholder="4.0"
-                      value={tempForm.onionTemp}
-                      onChange={(e) => setTempForm({ ...tempForm, onionTemp: e.target.value })}
-                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-2.5 py-1.5 text-white text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">{l.tempTomato}</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      placeholder="3.8"
-                      value={tempForm.tomatoTemp}
-                      onChange={(e) => setTempForm({ ...tempForm, tomatoTemp: e.target.value })}
-                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-2.5 py-1.5 text-white text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">{l.tempCarrot}</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      placeholder="3.2"
-                      value={tempForm.carrotTemp}
-                      onChange={(e) => setTempForm({ ...tempForm, carrotTemp: e.target.value })}
-                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-2.5 py-1.5 text-white text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">{l.tempCabbage}</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      placeholder="4.1"
-                      value={tempForm.cabbageTemp}
-                      onChange={(e) => setTempForm({ ...tempForm, cabbageTemp: e.target.value })}
-                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-2.5 py-1.5 text-white text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">{l.tempDeviation} *</label>
-                  <select
-                    value={tempForm.deviation}
-                    onChange={(e) => setTempForm({ ...tempForm, deviation: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="Норма">Норма (Qoniqarli)</option>
-                    <option value="ВНИМАНИЕ: Нарушение">ВНИМАНИЕ: Нарушение (Og'ish bor)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">{l.tempResp} *</label>
-                  <input
-                    type="text"
-                    required
-                    value={tempForm.responsible}
-                    onChange={(e) => setTempForm({ ...tempForm, responsible: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">{l.tempAction}</label>
-                <input
-                  type="text"
-                  placeholder="Masalan: Отрегулирован хладагент yoki -"
-                  value={tempForm.correctiveAction || ''}
-                  onChange={(e) => setTempForm({ ...tempForm, correctiveAction: e.target.value })}
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-700">
-                <button
-                  type="button"
-                  onClick={() => setShowTempModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors"
-                >
-                  {l.cancel}
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all"
-                >
-                  {l.save}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
@@ -3986,23 +3345,33 @@ export default function WarehouseContent() {
             </div>
 
             <form onSubmit={handleSaveOrder} className="space-y-4 pt-4">
-              {/* Product Info Card */}
-              <div className="p-4 bg-dark-800/80 rounded-2xl border border-dark-700 flex flex-wrap gap-2 items-center justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Mahsulot</span>
-                  <h4 className="text-lg font-black text-white">{orderingItem.name}</h4>
-                  <span className="text-xs text-slate-400">{orderingItem.category || 'Xomashyo'}</span>
+              {/* Product Info Card & Selector */}
+              <div className="p-4 bg-dark-800/80 rounded-2xl border border-dark-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Mahsulotni tanlash</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${orderingItem.totalQuantity === 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                    Qoldiq: {orderingItem.totalQuantity} {orderingItem.unit}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1.5 justify-end">
-                    <span className="text-xs font-semibold text-slate-400">Joriy qoldiq:</span>
-                    <span className={`text-sm font-black ${orderingItem.totalQuantity === 0 ? 'text-rose-400' : 'text-amber-400'}`}>
-                      {orderingItem.totalQuantity} {orderingItem.unit}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    Min. me'yor: {orderingItem.minStockLevel} {orderingItem.unit}
-                  </div>
+
+                <select
+                  value={orderingItem.id}
+                  onChange={(e) => {
+                    const found = inventory.find(i => i.id === parseInt(e.target.value))
+                    if (found) handleOpenOrderModal(found)
+                  }}
+                  className="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-amber-500"
+                >
+                  {inventory.map(inv => (
+                    <option key={inv.id} value={inv.id}>
+                      {inv.name} (Qoldiq: {inv.totalQuantity} {inv.unit}) {inv.status === 'red' ? '🔴 Tugagan' : inv.status === 'yellow' ? '🟡 Kam' : ''}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-dark-700">
+                  <span>Kategoriya: <b className="text-slate-300">{orderingItem.category || 'Xomashyo'}</b></span>
+                  <span>Min. me'yor: <b className="text-slate-300">{orderingItem.minStockLevel} {orderingItem.unit}</b></span>
                 </div>
               </div>
 
@@ -4058,31 +3427,14 @@ export default function WarehouseContent() {
                 </div>
               </div>
 
-              {/* Supplier Selection (Optional) */}
+              {/* Skladchi Izohi (Faqat Ta'minotga ko'rinadi) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  {formatDual("Tavsiya Etilgan Ta'minotchi (Ixtiyoriy)", "Поставщик (Опционально)", "Supplier (Optional)")}
-                </label>
-                <select
-                  value={orderForm.supplierId}
-                  onChange={(e) => setOrderForm({ ...orderForm, supplierId: e.target.value })}
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
-                >
-                  <option value="">{formatDual("Ta'minotchi o'zi tanlasin...", "Отдел снабжения выберет сам...", "Supply team will choose...")}</option>
-                  {suppliers.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Notes / Reason */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  {formatDual("Izoh / Zudlik Sababi", "Примечание / Срочность", "Notes / Urgency")}
+                  {formatDual("Skladchi Izohi (Ta'minot Bo'limiga)", "Примечание склада (Для снабжения)", "Warehouse Note (For Supply)")}
                 </label>
                 <input
                   type="text"
-                  placeholder="Masalan: Zudlik bilan yetkazilsin, oshxonada bugun kerak..."
+                  placeholder={formatDual("Masalan: Tomat qolmadi, sexga zudlik bilan kerak...", "Например: Томат закончился, срочно нужен в цех...", "E.g. Out of stock, urgently needed in production...")}
                   value={orderForm.notes}
                   onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
                   className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
@@ -4093,9 +3445,9 @@ export default function WarehouseContent() {
                 <ShoppingCart size={16} className="flex-shrink-0" />
                 <span>
                   {formatDual(
-                    "Talabnoma yuborilgach, u Ta'minot (Snabjeniye) bo'limi va korxonaning Umumiy chatida darhol aks etadi.",
-                    "После отправки заявка сразу появится в отделе снабжения и в общем чате предприятия.",
-                    "After submitting, the order will immediately appear in the supply department and the team chat."
+                    "Sklad talabnomasi Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasida aks etadi. Ta'minotchi va narxni Ta'minot bo'limi biriktiradi.",
+                    "Заявка со склада поступит в раздел «Заявки со склада» отдела снабжения. Поставщика и цену назначит отдел снабжения.",
+                    "Requisition will appear in the supply shortages section. Supply department will assign the supplier and price."
                   )}
                 </span>
               </div>

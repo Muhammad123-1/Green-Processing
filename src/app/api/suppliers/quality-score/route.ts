@@ -28,35 +28,63 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch all active suppliers with inspections and defect logs
-    const suppliers = await prisma.supplier.findMany({
-      where: { isActive: true },
-      include: {
-        inspections: {
-          where: inspectionWhere,
-          select: {
-            id: true,
-            quantity: true,
-            status: true,
-            rating: true,
-            conclusion: true,
-            inspectionDate: true,
-            product: { select: { id: true, name: true } }
-          }
-        },
-        defects: {
-          where: {
-            ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
-            ...(productId ? { productId: parseInt(productId) } : {})
+    const [suppliers, rawActs, selectedProduct] = await Promise.all([
+      prisma.supplier.findMany({
+        where: { isActive: true },
+        include: {
+          inspections: {
+            where: inspectionWhere,
+            select: {
+              id: true,
+              quantity: true,
+              status: true,
+              rating: true,
+              conclusion: true,
+              inspectionDate: true,
+              product: { select: { id: true, name: true } }
+            }
           },
-          select: {
-            id: true,
-            quantity: true,
-            defectType: true,
-            reason: true,
-            createdAt: true
+          defects: {
+            where: {
+              ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
+              ...(productId ? { productId: parseInt(productId) } : {})
+            },
+            select: {
+              id: true,
+              quantity: true,
+              defectType: true,
+              reason: true,
+              createdAt: true
+            }
           }
         }
+      }),
+      prisma.incomingRawMaterialAct.findMany({
+        select: {
+          supplierName: true,
+          productName: true,
+          warehouseKg: true,
+          decisionRating: true,
+          actDate: true,
+          notes: true
+        }
+      }),
+      productId ? prisma.product.findUnique({ where: { id: parseInt(productId) } }) : null
+    ])
+
+    // Group raw acts by lowercase supplier name
+    const actsBySup = new Map<string, any[]>()
+    rawActs.forEach(act => {
+      // Filter by product if selected
+      if (selectedProduct && act.productName) {
+        if (!act.productName.toLowerCase().includes(selectedProduct.name.toLowerCase()) &&
+            !selectedProduct.name.toLowerCase().includes(act.productName.toLowerCase())) {
+          return
+        }
       }
+      const sName = (act.supplierName || '').trim().toLowerCase()
+      if (!actsBySup.has(sName)) actsBySup.set(sName, [])
+      actsBySup.get(sName)!.push(act)
     })
 
     const scores = suppliers.map((sup: any) => {
@@ -93,6 +121,33 @@ export async function GET(req: NextRequest) {
         }
       })
 
+      // If no inspections in Inspection table, use IncomingRawMaterialAct
+      const supActs = actsBySup.get(sup.name.trim().toLowerCase()) || 
+                      actsBySup.get((sup.shortName || '').trim().toLowerCase()) || []
+
+      if (supActs.length > 0) {
+        totalDeliveries += supActs.length
+        supActs.forEach((act: any) => {
+          const qty = act.warehouseKg || 0
+          totalDeliveredKg += qty
+          if (act.productName) {
+            productsMap[act.productName] = (productsMap[act.productName] || 0) + qty
+          }
+          if (act.decisionRating) {
+            totalRating += act.decisionRating
+            ratedDeliveries++
+          }
+          if (act.decisionRating === 2) {
+            totalRejectedKg += qty
+          } else if (act.decisionRating === 3) {
+            totalAcceptedKg += qty * 0.85
+            totalRejectedKg += qty * 0.15
+          } else {
+            totalAcceptedKg += qty
+          }
+        })
+      }
+
       const avgRating = ratedDeliveries > 0 ? totalRating / ratedDeliveries : null;
 
       // Add defect logs kg
@@ -117,7 +172,7 @@ export async function GET(req: NextRequest) {
         totalDeliveredKg: Math.round(totalDeliveredKg),
         totalAcceptedKg: Math.round(totalAcceptedKg),
         totalRejectedKg: Math.round(totalRejectedKg),
-        defectCount: sup.defects?.length || 0,
+        defectCount: (sup.defects?.length || 0),
         qualityScore: parseFloat(qualityScore.toFixed(1)),
         avgRating,
         products: Object.keys(productsMap).join(', '),

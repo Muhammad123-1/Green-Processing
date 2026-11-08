@@ -1,11 +1,19 @@
-import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
+import PrihodContent from '@/components/warehouse/PrihodContent'
+import { getSession } from '@/app/actions/auth'
 
 export const metadata = {
   title: 'Xomashyo Kirimi (Приход) | Green Processing',
 }
 
 export default async function PrihodPage() {
-  // The standalone arrival journal has been retired. Preserve old bookmarks
-  // without exposing a duplicate data-entry page.
-  redirect('/shop-report')
+  const session = await getSession()
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400">Yuklanmoqda...</div>}>
+      <PrihodContent
+        userRole={session?.role || 'WAREHOUSE'}
+        userName={session?.name || 'Omborchi'}
+      />
+    </Suspense>
+  )
 }

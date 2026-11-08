@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Wallet, TrendingUp, TrendingDown, Plus, FileText, Landmark, Loader2, ArrowRight, Truck } from 'lucide-react'
+import Link from 'next/link'
+import { Wallet, TrendingUp, TrendingDown, Plus, FileText, Landmark, Loader2, ArrowRight, Truck, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import SupplierDebtsTable from './SupplierDebtsTable'
@@ -91,6 +92,13 @@ export default function AccountingContent() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/chat"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-dark-800 hover:bg-dark-750 text-slate-200 border border-dark-700 transition-all"
+          >
+            <MessageSquare size={17} className="text-emerald-400" />
+            <span>{formatDual("Tezkor Chat", "Корпоративный Чат", "Live Chat")}</span>
+          </Link>
           <button
             onClick={() => setShowTxModal(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20 transition-all"

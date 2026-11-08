@@ -273,9 +273,9 @@ export default function SupplierPortalContent() {
     switch (status) {
       case 'PENDING':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/30">
-            <Clock3 size={13} className="animate-spin text-amber-500 dark:text-amber-400" />
-            <span>{formatDual("Kutilmoqda", "В ожидании", "Pending")}</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span>{formatDual("Yangi Buyurtma (Kutilmoqda)", "Новый заказ (Ожидается)", "New Order (Pending)")}</span>
           </span>
         )
       case 'IN_TRANSIT':
