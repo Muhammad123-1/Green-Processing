@@ -17,14 +17,14 @@ export async function GET(request: NextRequest) {
         select: { supplierId: true }
       })
       targetSupplierId = user?.supplierId || session.supplierId || null
-    } else if (session.role === 'SUPPLY' || session.role === 'ADMIN' || session.role === 'DIRECTOR') {
+    } else if (session.role === 'SUPPLY' || session.role === 'ADMIN') {
       const { searchParams } = new URL(request.url)
       const qId = searchParams.get('supplierId')
       if (qId && !isNaN(parseInt(qId))) {
         targetSupplierId = parseInt(qId)
       }
     } else {
-      return NextResponse.json({ error: 'Ruxsat berilmagan' }, { status: 403 })
+      return NextResponse.json({ error: 'Ruxsat berilmagan. Faqat korxona ta\'minot bo\'limiga ruxsat etilgan.' }, { status: 403 })
     }
 
     if (!targetSupplierId) {
@@ -92,14 +92,14 @@ export async function POST(request: NextRequest) {
       targetSupplierId = user?.supplierId || session.supplierId || null
       const companyName = user?.supplier?.shortName || user?.supplier?.name || "Ta'minotchi"
       senderName = `${user?.name || session.name} (${companyName})`
-    } else if (session.role === 'SUPPLY' || session.role === 'ADMIN' || session.role === 'DIRECTOR') {
+    } else if (session.role === 'SUPPLY' || session.role === 'ADMIN') {
       if (!supplierId) {
         return NextResponse.json({ error: "Ta'minotchi tanlanmadi" }, { status: 400 })
       }
       targetSupplierId = parseInt(supplierId)
       senderName = `Green Processing Ta'minot (${session.name || 'Zavod'})`
     } else {
-      return NextResponse.json({ error: 'Faqat ta\'minotchi va ta\'minot bo\'limi yozisha oladi' }, { status: 403 })
+      return NextResponse.json({ error: 'Faqat ta\'minotchi va korxona ta\'minot bo\'limi yozisha oladi' }, { status: 403 })
     }
 
     if (!targetSupplierId) {

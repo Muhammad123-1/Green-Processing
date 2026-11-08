@@ -66,8 +66,8 @@ export async function GET(req: NextRequest) {
         if (userRole === 'SUPPLIER') {
           if (session.supplierId !== sId) return false
         } else {
-          // Factory staff: SUPPLY, ADMIN, and DIRECTOR receive supplier messages
-          if (!isAdminOrDirector && userRole !== 'SUPPLY') return false
+          // Faqat korxona ta'minot bo'limi (SUPPLY) va ADMIN ta'minotchi xabarlarini ko'radi
+          if (userRole !== 'SUPPLY' && userRole !== 'ADMIN') return false
         }
       } else if (msg.groupId === 'management') {
         if (!isAdminOrDirector && userRole !== 'ACCOUNTING') return false
@@ -98,11 +98,14 @@ export async function GET(req: NextRequest) {
           unreadByUser[otherId] = (unreadByUser[otherId] || 0) + 1
         }
       } else if (msg.groupId.startsWith('supplier_')) {
-        const sId = parseInt(msg.groupId.replace('supplier_', ''), 10)
-        const supplierUsers = allUsers.filter(u => u.supplierId === sId)
-        supplierUsers.forEach(su => {
-          unreadByUser[su.id] = (unreadByUser[su.id] || 0) + 1
-        })
+        // Faqat korxona ta'minot bo'limi (SUPPLY) va ADMIN uchun unreadByUser hisoblanadi
+        if (userRole === 'SUPPLY' || userRole === 'ADMIN') {
+          const sId = parseInt(msg.groupId.replace('supplier_', ''), 10)
+          const supplierUsers = allUsers.filter(u => u.supplierId === sId)
+          supplierUsers.forEach(su => {
+            unreadByUser[su.id] = (unreadByUser[su.id] || 0) + 1
+          })
+        }
       } else {
         const senderUserId = userByName.get(msg.sender.toLowerCase())
         if (senderUserId && senderUserId !== userId) {

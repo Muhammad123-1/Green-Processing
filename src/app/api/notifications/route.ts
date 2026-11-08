@@ -159,6 +159,16 @@ export async function GET(req: NextRequest) {
         if (!participantIds.includes(currentUserId)) continue
       }
 
+      // Skip supplier chat messages for all factory staff except SUPPLY and ADMIN
+      if (msg.groupId.startsWith('supplier_')) {
+        const sId = parseInt(msg.groupId.replace('supplier_', ''), 10)
+        if (userRole === 'SUPPLIER') {
+          if (session?.supplierId !== sId) continue
+        } else if (userRole !== 'SUPPLY' && userRole !== 'ADMIN') {
+          continue
+        }
+      }
+
       const ch = channelNames[msg.groupId] || { uz: 'Zavod Chati', ru: 'Чат завода', category: 'Chat' }
       const isDirectorMsg = msg.groupId === 'management' || msg.sender.toLowerCase().includes('direktor')
 

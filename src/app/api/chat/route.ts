@@ -11,6 +11,24 @@ export async function GET(request: NextRequest) {
     const groupId = searchParams.get('groupId') || 'general'
     const userIdentifier = session.name || session.role
 
+    // Role-based protection for supplier chat groups
+    if (groupId.startsWith('supplier_')) {
+      const targetSupplierId = parseInt(groupId.replace('supplier_', ''), 10)
+      if (session.role === 'SUPPLIER') {
+        const u = await prisma.user.findUnique({
+          where: { id: session.id },
+          select: { supplierId: true }
+        })
+        const mySupplierId = u?.supplierId || session.supplierId
+        if (!mySupplierId || mySupplierId !== targetSupplierId) {
+          return NextResponse.json({ error: 'Ruxsat etilmagan' }, { status: 403 })
+        }
+      } else if (session.role !== 'SUPPLY' && session.role !== 'ADMIN') {
+        // Faqat korxona ta'minot bo'limi (SUPPLY) ta'minotchilar bilan yozisha va ko'ra oladi
+        return NextResponse.json({ error: "Ta'minotchi bilan faqat korxona ta'minot bo'limi gaplasha oladi" }, { status: 403 })
+      }
+    }
+
     const messages = await prisma.chatMessage.findMany({
       where: { groupId },
       orderBy: { createdAt: 'asc' },
@@ -103,18 +121,25 @@ export async function POST(request: NextRequest) {
 
     let sender = userIdentifier
 
-    // When writing to a supplier channel, ensure clear sender identification
+    // When writing to a supplier channel, ensure clear sender identification and strict authorization
     if (groupId.startsWith('supplier_')) {
+      const targetSupplierId = parseInt(groupId.replace('supplier_', ''), 10)
       if (session.role === 'SUPPLIER') {
         const u = await prisma.user.findUnique({
           where: { id: session.id },
           include: { supplier: true }
         })
+        const mySupplierId = u?.supplierId || session.supplierId
+        if (!mySupplierId || mySupplierId !== targetSupplierId) {
+          return NextResponse.json({ error: 'Ruxsat etilmagan' }, { status: 403 })
+        }
         const comp = u?.supplier?.shortName || u?.supplier?.name || "Ta'minotchi"
         sender = `${u?.name || session.name} (${comp})`
-      } else {
-        // Factory staff (Supply, Admin, Director)
+      } else if (session.role === 'SUPPLY' || session.role === 'ADMIN') {
+        // Factory staff (Supply, Admin)
         sender = `Green Processing Ta'minot (${session.name || 'Ta\'minot'})`
+      } else {
+        return NextResponse.json({ error: "Ta'minotchi bilan faqat korxona ta'minot bo'limi gaplasha oladi" }, { status: 403 })
       }
     }
 

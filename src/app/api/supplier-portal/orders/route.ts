@@ -202,11 +202,14 @@ Buyurtma №${updated.id}: ${updated.product.name} (${updated.quantity} ${update
 Holat: ${statusLabel}
 ${driverPhone ? `Haydovchi tel: ${driverPhone}\n` : ''}${vehicleNumber ? `Mashina raqami: ${vehicleNumber}\n` : ''}${notes ? `Izoh: ${notes}` : ''}`
 
+      // Xabarni umumiy zavod chatiga (general) emas, aynan shu ta'minotchi bilan ta'minot bo'limi shaxsiy chatiga yozish
+      const targetGroupId = existingOrder.supplierId ? `supplier_${existingOrder.supplierId}` : 'kitchen_supply'
+
       await prisma.chatMessage.create({
         data: {
           sender: `TA'MINOTCHI (${supplierTitle})`,
           text: chatText,
-          groupId: 'general'
+          groupId: targetGroupId
         }
       })
     } catch (chatErr) {

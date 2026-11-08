@@ -182,7 +182,7 @@ export default function ChatContent({
         const paramSupplierId = params ? params.get('supplierId') : null
         const paramUserId = params ? params.get('userId') : null
 
-        if (paramSupplierId) {
+        if (paramSupplierId && (userRole === 'SUPPLY' || userRole === 'ADMIN')) {
           const sIdNum = parseInt(paramSupplierId, 10)
           const target = data.find(u => u.supplierId === sIdNum || u.supplier?.id === sIdNum)
           if (target) {
@@ -201,7 +201,14 @@ export default function ChatContent({
 
         // Default to first colleague or first channel if none selected
         if (!selectedUser && !selectedChannel && data.length > 0) {
-          const colleague = data.find(u => u.name !== userName && u.id !== currentUserId) || data[0]
+          let selectableUsers = data
+          if (userRole === 'SUPPLIER') {
+            selectableUsers = data.filter(u => u.role === 'SUPPLY' || u.role === 'ADMIN')
+          } else if (userRole !== 'SUPPLY' && userRole !== 'ADMIN') {
+            selectableUsers = data.filter(u => u.role !== 'SUPPLIER' && !u.supplierId)
+          }
+
+          const colleague = selectableUsers.find(u => u.name !== userName && u.id !== currentUserId) || selectableUsers[0]
           if (colleague) {
             selectUserDirectChat(colleague, false)
           }
@@ -226,6 +233,10 @@ export default function ChatContent({
 
     if (otherObj) {
       if (otherObj.role === 'SUPPLIER' || otherObj.supplierId || otherObj.supplier?.id) {
+        // Faqat korxona ta'minot bo'limi (SUPPLY) va ADMIN ta'minotchi bilan yozisha oladi
+        if (userRole !== 'SUPPLY' && userRole !== 'ADMIN' && userRole !== 'SUPPLIER') {
+          return 'general'
+        }
         const sId = otherObj.supplierId || otherObj.supplier?.id
         if (sId) return `supplier_${sId}`
       }
@@ -268,6 +279,13 @@ export default function ChatContent({
 
   // Switch to Direct Message with a User
   const selectUserDirectChat = (user: UserItem, openMobile = true) => {
+    // Agar tanlangan user ta'minotchi bo'lsa va joriy xodim SUPPLY yoki ADMIN bo'lmasa, taqiqlash
+    if ((user.role === 'SUPPLIER' || user.supplierId) && userRole !== 'SUPPLY' && userRole !== 'ADMIN') {
+      toast.error(lang === 'ru' ? 'С поставщиками сырья общается исключительно отдел снабжения' : "Ta'minotchilar bilan faqat korxona ta'minot bo'limi gaplasha oladi")
+      selectChannelChat(CHANNELS[0], openMobile)
+      return
+    }
+
     setSelectedUser(user)
     setSelectedChannel(null)
     const dmId = computeDmGroupId(currentUserId, user)
@@ -437,18 +455,36 @@ export default function ChatContent({
     }
   }
 
-  // Filter users by search
+  // Filter users by search & enforce role-based supplier isolation
   const filteredUsers = useMemo(() => {
+    let baseList = usersList
+    if (userRole === 'SUPPLIER') {
+      // Ta'minotchi faqat korxona ta'minot bo'limi (SUPPLY) va Admin bilan gaplashadi
+      baseList = usersList.filter(u => u.role === 'SUPPLY' || u.role === 'ADMIN')
+    } else if (userRole !== 'SUPPLY' && userRole !== 'ADMIN') {
+      // Ta'minotchi (SUPPLY) va Admin bo'lmagan korxona xodimlariga ta'minotchilar mutlaqo ko'rinmaydi
+      baseList = usersList.filter(u => u.role !== 'SUPPLIER' && !u.supplierId)
+    }
+
     const q = searchQuery.toLowerCase().trim()
-    if (!q) return usersList
-    return usersList.filter(u =>
+    if (!q) return baseList
+    return baseList.filter(u =>
       u.name.toLowerCase().includes(q) ||
       u.username.toLowerCase().includes(q) ||
       (ROLE_INFO[u.role]?.labelUz.toLowerCase().includes(q)) ||
       (ROLE_INFO[u.role]?.labelRu.toLowerCase().includes(q)) ||
-      u.role.toLowerCase().includes(q)
+      u.role.toLowerCase().includes(q) ||
+      (u.supplier?.name && u.supplier.name.toLowerCase().includes(q))
     )
-  }, [usersList, searchQuery])
+  }, [usersList, searchQuery, userRole])
+
+  // Agar ta'minot bo'limi bo'lmagan xodim ta'minotchi chatiga tushib qolsa, umumiy kanalga o'tkazish
+  useEffect(() => {
+    if (userRole !== 'SUPPLY' && userRole !== 'ADMIN' && (selectedUser?.role === 'SUPPLIER' || selectedUser?.supplierId)) {
+      setSelectedUser(null)
+      selectChannelChat(CHANNELS[0], false)
+    }
+  }, [userRole, selectedUser])
 
   // Helper to format Role Label
   const getRoleLabel = (role: string) => {
@@ -491,49 +527,55 @@ export default function ChatContent({
             </div>
 
             {/* Navigation Tabs (DMs vs Channels) */}
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-200/70 dark:bg-dark-800 rounded-xl">
-              <button
-                onClick={() => setNavTab('users')}
-                className={`relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                  navTab === 'users'
-                    ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <UserIcon size={14} />
-                <span>{lang === 'ru' ? 'Сотрудники' : lang === 'en' ? 'Colleagues' : 'Xodimlar'}</span>
-                {totalDmUnread > 0 ? (
-                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black animate-pulse shadow-sm">
-                    {totalDmUnread}
-                  </span>
-                ) : (
-                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500 text-white font-black">
-                    {usersList.length}
-                  </span>
-                )}
-              </button>
+            {userRole !== 'SUPPLIER' ? (
+              <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-200/70 dark:bg-dark-800 rounded-xl">
+                <button
+                  onClick={() => setNavTab('users')}
+                  className={`relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                    navTab === 'users'
+                      ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <UserIcon size={14} />
+                  <span>{lang === 'ru' ? 'Сотрудники' : lang === 'en' ? 'Colleagues' : 'Xodimlar'}</span>
+                  {totalDmUnread > 0 ? (
+                    <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black animate-pulse shadow-sm">
+                      {totalDmUnread}
+                    </span>
+                  ) : (
+                    <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500 text-white font-black">
+                      {filteredUsers.length}
+                    </span>
+                  )}
+                </button>
 
-              <button
-                onClick={() => setNavTab('channels')}
-                className={`relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                  navTab === 'channels'
-                    ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Layers size={14} />
-                <span>{lang === 'ru' ? 'Группы' : lang === 'en' ? 'Channels' : 'Guruhlar'}</span>
-                {totalChannelsUnread > 0 ? (
-                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black animate-pulse shadow-sm">
-                    {totalChannelsUnread}
-                  </span>
-                ) : (
-                  <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500 text-white font-black">
-                    {CHANNELS.length}
-                  </span>
-                )}
-              </button>
-            </div>
+                <button
+                  onClick={() => setNavTab('channels')}
+                  className={`relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                    navTab === 'channels'
+                      ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Layers size={14} />
+                  <span>{lang === 'ru' ? 'Группы' : lang === 'en' ? 'Channels' : 'Guruhlar'}</span>
+                  {totalChannelsUnread > 0 ? (
+                    <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black animate-pulse shadow-sm">
+                      {totalChannelsUnread}
+                    </span>
+                  ) : (
+                    <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500 text-white font-black">
+                      {CHANNELS.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="py-2.5 px-3 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl text-center text-xs font-bold text-teal-700 dark:text-teal-300">
+                {lang === 'ru' ? 'Чат с отделом снабжения завода' : lang === 'en' ? 'Chat with Factory Supply Department' : "Zavod Ta'minot Bo'limi Bilan Muloqot"}
+              </div>
+            )}
 
             {/* Search Input for Colleagues */}
             {navTab === 'users' && (

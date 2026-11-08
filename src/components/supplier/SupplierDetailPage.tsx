@@ -91,10 +91,12 @@ interface ArrivalItem {
 
 interface SupplierDetailProps {
   supplierId: number
+  currentUserRole?: string
 }
 
-export default function SupplierDetailPage({ supplierId }: SupplierDetailProps) {
+export default function SupplierDetailPage({ supplierId, currentUserRole = '' }: SupplierDetailProps) {
   const { lang, formatDual } = useLanguage()
+  const canAccessChat = currentUserRole === 'SUPPLY' || currentUserRole === 'ADMIN'
 
   const [loading, setLoading] = useState(true)
   const [supplier, setSupplier] = useState<any>(null)
@@ -188,11 +190,11 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailProps) 
   }, [supplierId])
 
   useEffect(() => {
-    if (tab !== 'chat') return
+    if (!canAccessChat || tab !== 'chat') return
     fetchChat()
     const timer = setInterval(fetchChat, 4000)
     return () => clearInterval(timer)
-  }, [tab, fetchChat])
+  }, [tab, canAccessChat, fetchChat])
 
   // Send chat message
   const handleSendChat = async (e: React.FormEvent) => {
@@ -627,17 +629,19 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailProps) 
           <span className="px-2 py-0.5 rounded-md bg-white/20 text-xs">{arrivals.length}</span>
         </button>
 
-        <button
-          onClick={() => setTab('chat')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
-            tab === 'chat'
-              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800'
-          }`}
-        >
-          <MessageSquare size={16} />
-          <span>{formatDual("3. Ta'minotchi bilan Chat (1-on-1)", "3. Чат с поставщиком", "3. Chat with Supplier")}</span>
-        </button>
+        {canAccessChat && (
+          <button
+            onClick={() => setTab('chat')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+              tab === 'chat'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800'
+            }`}
+          >
+            <MessageSquare size={16} />
+            <span>{formatDual("3. Ta'minotchi bilan Chat (1-on-1)", "3. Чат с поставщиком", "3. Chat with Supplier")}</span>
+          </button>
+        )}
 
         <button
           onClick={() => setTab('details')}
@@ -812,8 +816,8 @@ export default function SupplierDetailPage({ supplierId }: SupplierDetailProps) 
         </div>
       )}
 
-      {/* TAB 3: 1-ON-1 CHAT */}
-      {tab === 'chat' && (
+      {/* TAB 3: 1-ON-1 CHAT (ONLY FOR SUPPLY & ADMIN) */}
+      {canAccessChat && tab === 'chat' && (
         <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm flex flex-col h-[550px]">
           {/* Chat Header */}
           <div className="p-4 border-b border-slate-200 dark:border-dark-750 flex items-center justify-between bg-slate-50/50 dark:bg-dark-800/40">
