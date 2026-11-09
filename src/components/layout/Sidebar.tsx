@@ -61,6 +61,7 @@ const navSections = [
       { key: 'shopQC', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'dailyChecklist', href: '/inspector/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
   {
@@ -76,6 +77,7 @@ const navSections = [
       { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'DIRECTOR', 'KITCHEN', 'QUALITY_CONTROL', 'HR', 'INSPECTOR'] },
+      { key: 'warehouseSettings', href: '/settings?tab=warehouse', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
     ]
   },
   {
@@ -88,6 +90,7 @@ const navSections = [
       { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'SUPPLY', 'ACCOUNTING'] },
       { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
+      { key: 'supplySettings', href: '/settings?tab=supply', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY'] },
     ]
   },
   {
@@ -109,7 +112,7 @@ const navSections = [
       { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT'] },
       { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
       { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
-      { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE', 'SUPPLY', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   }
 ]
@@ -247,6 +250,9 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 'reports',
                 'chat',
                 'settings',
+                'qcSettings',
+                'warehouseSettings',
+                'supplySettings',
               ]
               return directorAllowedKeys.includes(item.key)
             }
@@ -266,7 +272,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 if (item.href.includes('?tab=')) {
                   const itemTab = item.href.split('?tab=')[1]
                   const basePath = item.href.split('?')[0]
-                  isActive = pathname === basePath && currentTab === itemTab
+                  isActive = (pathname === basePath && currentTab === itemTab) || pathname === `${basePath}/${itemTab}`
                 } else if (item.href === '/inspections/new') {
                   isActive = pathname === '/inspections/new'
                 } else if (item.href === '/inspections') {

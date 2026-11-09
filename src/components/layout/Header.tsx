@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Bell, Sun, Moon, Globe, Menu, Type, Check, ChevronDown, Search } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { useLanguage, LANGUAGE_OPTIONS, DIRECTOR_LANGUAGE_OPTIONS, Language, DirectorLanguage } from '@/components/providers/LanguageProvider'
@@ -146,12 +146,26 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       title: t('settings'), 
       subtitle: t('settingsSub') 
     },
+    '/settings/warehouse': { 
+      title: t('warehouseSettings') || 'Ombor Sozlamalari', 
+      subtitle: t('warehouseSettingsSub') || "Omborxona ma'lumotlari va elektron imzo" 
+    },
+    '/settings/supply': { 
+      title: t('supplySettings') || "Ta'minot Sozlamalari", 
+      subtitle: t('supplySettingsSub') || "Ta'minot xodimi ma'lumotlari va elektron imzo" 
+    },
+    '/settings/qc': { 
+      title: t('qcSettings') || 'Sifat Sozlamalari', 
+      subtitle: t('qcSettingsSub') || "Sifat nazoratchisi ma'lumotlari va elektron imzo" 
+    },
   }
   return map[pathname]
 }
 
 export default function Header() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const tab = searchParams ? searchParams.get('tab') : null
   const { theme, setTheme, fontSize, setFontSize } = useTheme()
   const { lang, setLang, directorLang, setDirectorLang, t, formatDual, formatDirector } = useLanguage()
   const [mounted, setMounted] = useState(false)
@@ -178,6 +192,25 @@ export default function Header() {
   let pageInfo = getPageInfo(pathname, t, formatDual) || { 
     title: 'Green Processing ERP', 
     subtitle: formatDual('Korporativ boshqaruv tizimi', 'Корпоративная система управления', 'Enterprise Management System') 
+  }
+
+  if (pathname === '/settings' && tab) {
+    if (tab === 'warehouse') {
+      pageInfo = {
+        title: t('warehouseSettings') || 'Ombor Sozlamalari',
+        subtitle: t('warehouseSettingsSub') || "Omborxona ma'lumotlari va elektron imzo",
+      }
+    } else if (tab === 'supply') {
+      pageInfo = {
+        title: t('supplySettings') || "Ta'minot Sozlamalari",
+        subtitle: t('supplySettingsSub') || "Ta'minot xodimi ma'lumotlari va elektron imzo",
+      }
+    } else if (tab === 'qc') {
+      pageInfo = {
+        title: t('qcSettings') || 'Sifat Sozlamalari',
+        subtitle: t('qcSettingsSub') || "Sifat nazoratchisi ma'lumotlari va elektron imzo",
+      }
+    }
   }
 
   if (isDirector) {
