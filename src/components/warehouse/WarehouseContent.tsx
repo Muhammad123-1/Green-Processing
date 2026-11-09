@@ -1232,7 +1232,7 @@ export default function WarehouseContent() {
               <span>{formatDual("Chiqim Aktlari (Transfer)", "Акты списания & трансфер", "Dispatches / Transfers")}</span>
             </button>
             <Link
-              href="/prihod"
+              href="/inbound"
               className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-white bg-white dark:bg-dark-750/60 hover:bg-emerald-50 dark:hover:bg-emerald-600/20 border border-slate-200 hover:border-emerald-500/40 dark:border-dark-700 transition-all whitespace-nowrap ml-1"
             >
               <ArrowDownLeft size={15} className="text-emerald-500" />
@@ -1250,7 +1250,7 @@ export default function WarehouseContent() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {/* Card 1: Jami Kirim */}
             <div 
-              onClick={() => router.push('/prihod')}
+              onClick={() => router.push('/inbound')}
               className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-emerald-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors" />
@@ -1289,7 +1289,7 @@ export default function WarehouseContent() {
 
             {/* Card 2: Jami Chiqim */}
             <div 
-              onClick={() => router.push('/rashod')}
+              onClick={() => router.push('/outbound')}
               className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-amber-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/20 transition-colors" />

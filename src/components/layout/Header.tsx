@@ -42,6 +42,30 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       title: t('warehouse'), 
       subtitle: formatDual("Ombor qoldiqlari, zaxira va partiyalar nazorati", "Остатки на складе, запасы и партии", "Warehouse stocks, reserves and batches") 
     },
+    '/inbound': {
+      title: t('prihod') || 'Xomashyo Kirimi',
+      subtitle: t('prihodSub') || 'Kiruvchi xomashyo partiyalari',
+    },
+    '/prihod': {
+      title: t('prihod') || 'Xomashyo Kirimi',
+      subtitle: t('prihodSub') || 'Kiruvchi xomashyo partiyalari',
+    },
+    '/outbound': {
+      title: t('rashod') || 'Sexga Chiqim',
+      subtitle: t('rashodSub') || 'Sexga berilgan xomashyo',
+    },
+    '/rashod': {
+      title: t('rashod') || 'Sexga Chiqim',
+      subtitle: t('rashodSub') || 'Sexga berilgan xomashyo',
+    },
+    '/finished-goods': {
+      title: t('gp') || 'Tayyor Mahsulotlar',
+      subtitle: t('gpSub') || 'Tayyor mahsulotlar hisoboti',
+    },
+    '/gp': {
+      title: t('gp') || 'Tayyor Mahsulotlar',
+      subtitle: t('gpSub') || 'Tayyor mahsulotlar hisoboti',
+    },
     '/production': { 
       title: t('production'), 
       subtitle: t('productionSub') 
