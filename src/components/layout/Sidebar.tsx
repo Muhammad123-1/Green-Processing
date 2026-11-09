@@ -58,26 +58,39 @@ const navSections = [
       { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'shopQC', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'dailyChecklist', href: '/inspector/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
   {
+    key: 'navInspector',
+    title: 'Nazoratchi (Inspector)',
+    items: [
+      { key: 'inspector', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'INSPECTOR'] },
+    ]
+  },
+  {
     key: 'navWarehouse',
-    title: 'Ombor va Ishlab chiqarish',
+    title: 'Omborxona',
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
       { key: 'prihod', href: '/inbound', icon: ArrowDownLeft, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
       { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
-      { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
-      { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
-      { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'DIRECTOR', 'KITCHEN', 'QUALITY_CONTROL', 'HR', 'INSPECTOR'] },
       { key: 'warehouseSettings', href: '/settings?tab=warehouse', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+    ]
+  },
+  {
+    key: 'navProduction',
+    title: 'Ishlab chiqarish',
+    items: [
+      { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
+      { key: 'productionJournals', href: '/production/journals', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'dailyChecklist', href: '/production/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
+      { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
     ]
   },
   {
@@ -253,6 +266,10 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 'qcSettings',
                 'warehouseSettings',
                 'supplySettings',
+                'production',
+                'productionJournals',
+                'dailyChecklist',
+                'inspector',
               ]
               return directorAllowedKeys.includes(item.key)
             }
@@ -281,8 +298,10 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                   isActive = pathname.startsWith('/incoming-acts/disinfection')
                 } else if (item.href === '/incoming-acts') {
                   isActive = pathname === '/incoming-acts' || (pathname.startsWith('/incoming-acts/') && !pathname.startsWith('/incoming-acts/disinfection'))
-                } else if (item.href === '/inspector/daily-checklist') {
-                  isActive = pathname.startsWith('/inspector/daily-checklist')
+                } else if (item.href === '/production/daily-checklist') {
+                  isActive = pathname.startsWith('/production/daily-checklist') || pathname.startsWith('/inspector/daily-checklist')
+                } else if (item.href === '/production/journals') {
+                  isActive = pathname.startsWith('/production/journals')
                 } else if (item.href === '/inspector') {
                   isActive = pathname === '/inspector'
                 } else if (item.href === '/warehouse') {

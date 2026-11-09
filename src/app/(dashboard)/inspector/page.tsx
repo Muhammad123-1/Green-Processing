@@ -1,10 +1,10 @@
 import { getSession } from '@/app/actions/auth'
-import ShopQCContent from '@/components/inspector/ShopQCContent'
+import InspectorEmptyContent from '@/components/inspector/InspectorEmptyContent'
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Sex Nazorati (Jurnallar) | Green Processing ERP',
-  description: 'Ishlab chiqarish harorati va sifat nazorati jurnallari',
+  title: 'Nazoratchi (Inspector) | Green Processing ERP',
+  description: "Nazoratchi bo'limi",
 }
 
 export default async function InspectorPage() {
@@ -13,5 +13,5 @@ export default async function InspectorPage() {
     redirect('/login')
   }
 
-  return <ShopQCContent />
+  return <InspectorEmptyContent />
 }

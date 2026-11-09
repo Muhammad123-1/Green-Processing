@@ -847,7 +847,7 @@ export default function DailyChecklistContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm">
         <div className="flex items-center gap-3.5">
           <button
-            onClick={() => router.push('/inspector')}
+            onClick={() => router.push('/production/journals')}
             className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 transition-colors border border-slate-200 dark:border-dark-700 shadow-sm shrink-0"
             title="Orqaga"
           >

@@ -1,5 +1,5 @@
-import DailyChecklistContent from '@/components/inspector/DailyChecklistContent'
+import { redirect } from 'next/navigation'
 
-export default function DailyChecklistPage() {
-  return <DailyChecklistContent />
+export default function DailyChecklistRedirectPage() {
+  redirect('/production/daily-checklist')
 }

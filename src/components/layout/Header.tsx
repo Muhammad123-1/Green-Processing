@@ -23,12 +23,20 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       subtitle: t('newInspectionSub') 
     },
     '/inspector': { 
-      title: t('shopQC'), 
-      subtitle: t('shopQCSub') 
+      title: t('inspector') || "Nazoratchi (Inspector) Bo'limi", 
+      subtitle: formatDual("Nazoratchi ishchi paneli", "Панель инспектора", "Inspector workspace") 
     },
     '/inspector/daily-checklist': { 
       title: t('dailyChecklist'), 
       subtitle: formatDual('Smena yakuni yagona tekshiruv dalolatnomasi', 'Ежедневный сводный акт контроля смены', 'Daily shift end quality summary report') 
+    },
+    '/production/daily-checklist': { 
+      title: t('dailyChecklist'), 
+      subtitle: formatDual('Smena yakuni yagona tekshiruv dalolatnomasi', 'Ежедневный сводный акт контроля смены', 'Daily shift end quality summary report') 
+    },
+    '/production/journals': { 
+      title: t('productionJournals') || 'Sex Nazorati Jurnallari', 
+      subtitle: t('shopQCSub') || formatDual('FSSC 22000, KKT-1 va operatsion nazorat jurnallari', 'Журналы контроля цеха FSSC 22000 и CCP', 'Shop floor control logs and CCP records') 
     },
     '/products': { 
       title: t('products'), 

@@ -251,14 +251,14 @@ export default function DashboardContent() {
           color="blue"
         />
         <QuickAction
-          href="/inspector"
+          href="/production/journals"
           icon={<Package size={20} />}
           label={lang === 'ru' ? 'Цеховой контроль' : lang === 'en' ? 'Shop QC' : 'Sex Sifat Nazorati'}
           description={lang === 'ru' ? 'FSSC 22000, CCP и журналы' : lang === 'en' ? 'FSSC 22000, CCP logs' : 'FSSC 22000, KKT va jurnallar'}
           color="purple"
         />
         <QuickAction
-          href="/inspector/daily-checklist"
+          href="/production/daily-checklist"
           icon={<Truck size={20} />}
           label={lang === 'ru' ? 'Чек-лист смены' : lang === 'en' ? 'Daily Checklist' : 'Smena Yakuni Chek-listi'}
           description={lang === 'ru' ? 'Сводный акт контроля смены' : lang === 'en' ? 'Shift end summary report' : 'Yagona smena tekshiruv dalolatnomasi'}
