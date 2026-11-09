@@ -158,6 +158,7 @@ export default function IncomingActsContent({
   const [submitting, setSubmitting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append')
+  const [importReason, setImportReason] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Form State
@@ -399,19 +400,32 @@ export default function IncomingActsContent({
     toast.success('Excel yuklab olinmoqda...')
   }
 
-  // Fast 1-Click Template Import
+  // Fast 1-Click Template Import (ADMIN ONLY)
   const handleDefaultTemplateImport = async () => {
+    if (userRole !== 'ADMIN') {
+      toast.error('Import qilish faqat Tizim Administratoriga (ADMIN) ruxsat etilgan!')
+      return
+    }
+    if (!importReason.trim() || importReason.trim().length < 10) {
+      toast.error("Import sababi va asosi (kamida 10 ta belgi) kiritilishi shart!")
+      return
+    }
     try {
       setImporting(true)
       const res = await fetch('/api/incoming-acts/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ useDefaultTemplate: true, mode: importMode })
+        body: JSON.stringify({
+          useDefaultTemplate: true,
+          mode: importMode,
+          reason: importReason.trim(),
+        })
       })
       const data = await res.json()
       if (data.success) {
         toast.success(data.message || 'Barcha aktlar muvaffaqiyatli yuklandi!')
         setIsImportOpen(false)
+        setImportReason('')
         fetchActs()
       } else {
         toast.error(data.error || 'Importda xatolik yuz berdi')
@@ -423,14 +437,23 @@ export default function IncomingActsContent({
     }
   }
 
-  // File Upload Import
+  // File Upload Import (ADMIN ONLY)
   const handleFileUploadImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (userRole !== 'ADMIN') {
+      toast.error('Import qilish faqat Tizim Administratoriga (ADMIN) ruxsat etilgan!')
+      return
+    }
+    if (!importReason.trim() || importReason.trim().length < 10) {
+      toast.error("Import sababi va asosi (kamida 10 ta belgi) kiritilishi shart!")
+      return
+    }
     const file = e.target.files?.[0]
     if (!file) return
 
     const form = new FormData()
     form.append('file', file)
     form.append('mode', importMode)
+    form.append('reason', importReason.trim())
 
     try {
       setImporting(true)
@@ -442,6 +465,7 @@ export default function IncomingActsContent({
       if (data.success) {
         toast.success(data.message || 'Fayl muvaffaqiyatli import qilindi!')
         setIsImportOpen(false)
+        setImportReason('')
         if (fileInputRef.current) fileInputRef.current.value = ''
         fetchActs()
       } else {
@@ -709,13 +733,15 @@ export default function IncomingActsContent({
             {t.refresh}
           </button>
 
-          <button
-            onClick={() => setIsImportOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-semibold"
-          >
-            <Upload className="w-3.5 h-3.5 text-emerald-400" />
-            {t.importExcel}
-          </button>
+          {userRole === 'ADMIN' && (
+            <button
+              onClick={() => setIsImportOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-semibold shadow-xs"
+            >
+              <Upload className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{t.importExcel} (Admin)</span>
+            </button>
+          )}
 
           <button
             onClick={handleExport}
@@ -1680,117 +1706,190 @@ export default function IncomingActsContent({
         >
           <div
             className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 dark:border-dark-750 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
-                  <Upload className="w-5 h-5" />
+            {userRole !== 'ADMIN' ? (
+              <div className="p-7 text-center space-y-4">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-500 flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold">Excel Import (Barcha Xomashyolar)</h2>
-                  <p className="text-xs text-slate-400">
-                    Tomat, Piyoz, Aysberg, Karam, Sabzi va barcha bo'limlarni bazaga yuklash.
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {formatDual('Ruxsat Cheklangan', 'Доступ Ограничен')}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
+                    {formatDual(
+                      'Tizim qoidalariga muvofiq, xomashyo aktlarini import qilish faqat Tizim Administratoriga (ADMIN) ruxsat etilgan. Hatto Direktor ham import qila olmaydi.',
+                      'Согласно правилам системы, импорт актов сырья разрешен только Системному Администратору (ADMIN).'
+                    )}
                   </p>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsImportOpen(false)}
-                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 text-xs bg-slate-50/50 dark:bg-dark-900">
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">Import rejimi:</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setImportMode('append')}
-                    className={`p-3 rounded-xl border text-left transition ${
-                      importMode === 'append'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-950 dark:text-emerald-200 ring-1 ring-emerald-500'
-                        : 'bg-white dark:bg-dark-850 border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    <div className="font-bold">Qo'shish (Append)</div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Mavjud aktlar saqlanadi</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImportMode('replace')}
-                    className={`p-3 rounded-xl border text-left transition ${
-                      importMode === 'replace'
-                        ? 'bg-red-50 dark:bg-red-950/40 border-red-500 text-red-950 dark:text-red-200 ring-1 ring-red-500'
-                        : 'bg-white dark:bg-dark-850 border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    <div className="font-bold">Almashtirish (Replace)</div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Qayta tozalab yuklash</div>
-                  </button>
-                </div>
-              </div>
-
-              {/* 1-Click Fast Import */}
-              <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl space-y-2">
-                <div className="font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-emerald-600" />
-                  1-KLIK BILAN BARCHA 1276 TA AKTLARNI YUKLASH:
-                </div>
-                <p className="text-emerald-800 dark:text-emerald-400 leading-relaxed">
-                  Loyiha shablonidagi barcha Tomat (504 ta), Piyoz (48 ta), Aysberg (559 ta), Karam, Sabzi aktlarini asl ranglari bilan bazaga yuklash.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDefaultTemplateImport}
-                  disabled={importing}
-                  className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 disabled:opacity-50 transition active:scale-95"
-                >
-                  {importing ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Baza yangilanmoqda...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Shablon faylidan import qilish
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="relative flex items-center justify-center">
-                <div className="border-t border-slate-200 dark:border-dark-700 w-full"></div>
-                <span className="bg-white dark:bg-dark-900 px-3 text-[11px] uppercase font-bold text-slate-400 absolute">
-                  yoki fayl tanlang
-                </span>
-              </div>
-
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx, .xls"
-                  onChange={handleFileUploadImport}
-                  disabled={importing}
-                  className="w-full p-2.5 bg-slate-50 dark:bg-dark-850 border border-dashed border-slate-300 dark:border-dark-700 rounded-xl text-slate-800 dark:text-slate-200 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 dark:file:bg-slate-700 file:text-white cursor-pointer"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 dark:border-dark-700 flex items-center justify-end">
                 <button
                   type="button"
                   onClick={() => setIsImportOpen(false)}
-                  className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-dark-800 transition"
+                  className="w-full py-2.5 px-4 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition"
                 >
                   {t.close}
                 </button>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-base font-bold">Excel Import (Barcha Xomashyolar)</h2>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          ADMIN ONLY
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Tomat, Piyoz, Aysberg, Karam, Sabzi va barcha bo'limlarni bazaga yuklash.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsImportOpen(false)}
+                    className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4 text-xs bg-slate-50/50 dark:bg-dark-900">
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">
+                      Import rejimi:
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setImportMode('append')}
+                        className={`p-3 rounded-xl border text-left transition ${
+                          importMode === 'append'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-950 dark:text-emerald-200 ring-1 ring-emerald-500'
+                            : 'bg-white dark:bg-dark-850 border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        <div className="font-bold">Qo'shish (Append)</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Mavjud aktlar saqlanadi
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImportMode('replace')}
+                        className={`p-3 rounded-xl border text-left transition ${
+                          importMode === 'replace'
+                            ? 'bg-red-50 dark:bg-red-950/40 border-red-500 text-red-950 dark:text-red-200 ring-1 ring-red-500'
+                            : 'bg-white dark:bg-dark-850 border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        <div className="font-bold">Almashtirish (Replace)</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Qayta tozalab yuklash
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Mandatory Reason Input */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="font-bold text-slate-700 dark:text-slate-300">
+                        Import Sababi va Asosi (Majburiy) *
+                      </label>
+                      <span
+                        className={`text-[11px] font-bold ${
+                          importReason.trim().length >= 10
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-red-500'
+                        }`}
+                      >
+                        {importReason.trim().length} / 10 ta belgi
+                      </span>
+                    </div>
+                    <textarea
+                      value={importReason}
+                      onChange={(e) => setImportReason(e.target.value)}
+                      placeholder="Nima maqsadda import qilinayotgani haqida rasmiy sababni kiriting (kamida 10 ta belgi)..."
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-850 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs transition"
+                    />
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                      Ushbu sabab Sozlamalardagi doimiy Audit Jurnaliga muhrlanadi.
+                    </p>
+                  </div>
+
+                  {/* 1-Click Fast Import */}
+                  <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl space-y-2">
+                    <div className="font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                      1-KLIK BILAN BARCHA 1276 TA AKTLARNI YUKLASH:
+                    </div>
+                    <p className="text-emerald-800 dark:text-emerald-400 leading-relaxed text-[11px]">
+                      Loyiha shablonidagi barcha Tomat (504 ta), Piyoz (48 ta), Aysberg (559 ta), Karam,
+                      Sabzi aktlarini asl ranglari bilan bazaga yuklash.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleDefaultTemplateImport}
+                      disabled={importing || importReason.trim().length < 10}
+                      className="w-full mt-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition active:scale-95"
+                    >
+                      {importing ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Baza yangilanmoqda...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Shablon faylidan import qilish
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="relative flex items-center justify-center">
+                    <div className="border-t border-slate-200 dark:border-dark-700 w-full"></div>
+                    <span className="bg-white dark:bg-dark-900 px-3 text-[11px] uppercase font-bold text-slate-400 absolute">
+                      yoki alohida fayl tanlang
+                    </span>
+                  </div>
+
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleFileUploadImport}
+                      disabled={importing || importReason.trim().length < 10}
+                      className="w-full p-2.5 bg-slate-50 dark:bg-dark-850 border border-dashed border-slate-300 dark:border-dark-700 rounded-xl text-slate-800 dark:text-slate-200 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 dark:file:bg-slate-700 file:text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    />
+                    {importReason.trim().length < 10 && (
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+                        * Fayl yuklashdan oldin yuqoridagi maydonga import sababini kiriting.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-dark-700 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsImportOpen(false)}
+                      className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-dark-800 transition"
+                    >
+                      {t.close}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

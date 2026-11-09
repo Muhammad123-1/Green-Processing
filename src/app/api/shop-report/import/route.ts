@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import ExcelJS from 'exceljs'
 import { toNum, parseExcelDate } from '@/lib/shopReport'
+import { recordImportAudit } from '@/lib/auditImport'
 
 function getCellValueNum(cell: ExcelJS.Cell | undefined): number {
   if (!cell) return 0
@@ -20,13 +21,36 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (session.role === 'SUPPLY') {
-      return NextResponse.json({ error: "Supply roli shop-report ma'lumotlarini faqat ko'rishi mumkin" }, { status: 403 })
+    
+    // STRICT ADMIN-ONLY IMPORT RESTRICTION
+    if (session.role !== 'ADMIN') {
+      return NextResponse.json(
+        {
+          error:
+            "Fayllarni import qilish faqat Tizim Administratoriga (ADMIN) ruxsat etilgan! Ma'lumotlar yaxlitligi va audit qoidalariga binoan hatto Direktor ham import qila olmaydi.",
+        },
+        { status: 403 }
+      )
     }
 
     const formData = await req.formData()
-    const file = formData.get('file') as Blob
-    if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    const file = formData.get('file') as Blob | null
+    if (!file) return NextResponse.json({ error: 'Excel fayl tanlanmadi' }, { status: 400 })
+
+    const reason = ((formData.get('reason') as string) || '').trim()
+    if (!reason || reason.length < 5) {
+      return NextResponse.json(
+        {
+          error:
+            'Import qilish sababi va asosi (kamida 5 ta belgi) kiritilishi shart! Ushbu izoh audit jurnali uchun saqlanadi.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const target = ((formData.get('target') as string) || "Sex hisoboti va Omborxona").trim()
+    const fileName = (file as any)?.name || 'imported_file.xlsx'
+    const fileSize = (file as any)?.size ? `${Math.round((file as any).size / 1024)} KB` : undefined
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const workbook = new ExcelJS.Workbook()
@@ -444,6 +468,21 @@ export async function POST(req: NextRequest) {
     const latestDate = sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : ''
     const latestMonth = latestDate ? latestDate.slice(0, 7) : ''
     const monthsFound = Array.from(new Set(sortedDates.map((d) => d.slice(0, 7)))).sort()
+
+    // Record Audit Trail
+    const totalRecordsAffected = newArrivalsCount + updatedArrivalsCount + importedDaysCount + updatedDaysCount
+    await recordImportAudit({
+      adminId: session.id,
+      adminName: session.name || 'Administrator',
+      adminRole: session.role,
+      target,
+      fileName,
+      fileSize,
+      reason,
+      recordsCount: totalRecordsAffected,
+      status: 'SUCCESS',
+      details: `Yangi kirimlar: +${newArrivalsCount}, yangilangan kirimlar: ${updatedArrivalsCount}, yangi sex kunlari: +${importedDaysCount}, yangilangan sex kunlari: ${updatedDaysCount}`,
+    })
 
     return NextResponse.json({
       success: true,

@@ -13,6 +13,16 @@ import {
   ShieldCheck,
   Truck,
   Package,
+  FileSpreadsheet,
+  History,
+  Calendar,
+  CheckCircle2,
+  FileText,
+  Search,
+  ShieldAlert,
+  Sparkles,
+  MessageSquare,
+  AlertCircle,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -23,7 +33,7 @@ interface SettingItem {
   category: string
 }
 
-export type SettingsTab = 'supply' | 'qc' | 'warehouse' | 'general'
+export type SettingsTab = 'supply' | 'qc' | 'warehouse' | 'general' | 'audit'
 
 interface SettingsContentProps {
   userRole?: string
@@ -50,7 +60,7 @@ export default function SettingsContent({
   // Determine which tabs this user is allowed to access
   const allowedTabs: SettingsTab[] = useMemo(() => {
     if (lockTab && initialTab) return [initialTab]
-    if (isAdminOrDirector) return ['supply', 'qc', 'warehouse', 'general']
+    if (isAdminOrDirector) return ['supply', 'qc', 'warehouse', 'general', 'audit']
     if (isWarehouse) return ['warehouse']
     if (isSupply) return ['supply']
     if (isQC) return ['qc']
@@ -73,6 +83,10 @@ export default function SettingsContent({
   const [settings, setSettings] = useState<SettingItem[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  // Audit tab filters
+  const [auditSearch, setAuditSearch] = useState('')
+  const [auditFilterTarget, setAuditFilterTarget] = useState('ALL')
 
   // Uploading states per department
   const [uploadingDept, setUploadingDept] = useState<string | null>(null)
@@ -113,6 +127,35 @@ export default function SettingsContent({
   function getSetting(key: string, defaultValue = '') {
     return settings.find((s) => s.key === key)?.value || defaultValue
   }
+
+  // Parse audit history from Settings table
+  const importHistory = useMemo(() => {
+    try {
+      const raw = getSetting('import_audit_history', '[]')
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }, [settings])
+
+  const filteredAuditHistory = useMemo(() => {
+    return importHistory.filter((item: any) => {
+      const q = auditSearch.toLowerCase().trim()
+      const matchesSearch =
+        !q ||
+        (item.fileName || '').toLowerCase().includes(q) ||
+        (item.reason || '').toLowerCase().includes(q) ||
+        (item.adminName || '').toLowerCase().includes(q) ||
+        (item.target || '').toLowerCase().includes(q)
+
+      const matchesTarget =
+        auditFilterTarget === 'ALL' ||
+        (item.target || '').toLowerCase().includes(auditFilterTarget.toLowerCase())
+
+      return matchesSearch && matchesTarget
+    })
+  }, [importHistory, auditSearch, auditFilterTarget])
 
   function setSetting(key: string, value: string, category = 'general') {
     setSettings((prev) => {
@@ -264,6 +307,17 @@ export default function SettingsContent({
         "Company profile, address, and document numbering configuration"
       ),
     },
+    audit: {
+      badge: "GREEN PROCESSING • AUDIT & QAT'IY NAZORAT",
+      badgeColor: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+      icon: <FileSpreadsheet size={24} className="text-amber-500" />,
+      title: formatDual("Excel Import Qat'iy Auditi va Tarixi", "Строгий аудит импорта Excel и история", "Excel Import Audit Trail & History"),
+      subtitle: formatDual(
+        "Faqat Administrator (ADMIN) tomonidan kiritilgan barcha importlar va ularning majburiy rasmiy sabablari",
+        "Все импорты и обязательные официальные причины, зафиксированные Администратором",
+        "All file imports and mandatory official justifications logged by Administrator"
+      ),
+    },
   }[activeTab] || {
     badge: "GREEN PROCESSING • ERP SOZLAMALAR",
     badgeColor: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
@@ -370,6 +424,20 @@ export default function SettingsContent({
             >
               <Building size={15} />
               <span>{formatDual("Korxona Rekvizitlari", "Реквизиты компании", "Company Profile")}</span>
+            </button>
+          )}
+
+          {allowedTabs.includes('audit') && (
+            <button
+              onClick={() => handleTabChange('audit')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                activeTab === 'audit'
+                  ? 'bg-amber-600 text-white dark:bg-amber-600 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+              }`}
+            >
+              <FileSpreadsheet size={15} />
+              <span>{formatDual("Import Auditi & Tarixi", "Аудит и история импорта", "Import Audit Log")}</span>
             </button>
           )}
         </div>
@@ -943,6 +1011,243 @@ export default function SettingsContent({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 5: IMPORT AUDITI VA QAT'IY NAZORAT TARIXI                             */}
+      {/* ========================================================================= */}
+      {activeTab === 'audit' && (
+        <div className="space-y-6 animate-scale-up">
+          {/* Header Card */}
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-750 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  <ShieldCheck size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      {formatDual(
+                        "Excel Import Qat'iy Auditi va Sabablar Jurnali",
+                        "Строгий аудит импорта Excel и журнал причин",
+                        "Excel Import Strict Audit & Justifications"
+                      )}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                      FSSC 22000
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {formatDual(
+                      "Tizimga faqat Administrator (ADMIN) tomonidan kiritilgan barcha Excel importlar, o'zgarishlar va ularning majburiy rasmiy sabablari",
+                      "Все импорты Excel, изменения и их обязательные официальные причины, введенные только Администратором (ADMIN)"
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={fetchSettings}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold border border-slate-200 dark:border-dark-700 transition"
+                >
+                  <History size={14} />
+                  <span>{formatDual("Yangilash", "Обновить")}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
+                <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
+                  {formatDual("Jami Importlar", "Всего импортов")}
+                </p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-2xl font-black text-slate-900 dark:text-white">
+                    {importHistory.length}
+                  </span>
+                  <span className="text-xs text-slate-500 font-semibold">{formatDual("ta operatsiya", "операций")}</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
+                <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
+                  {formatDual("Oxirgi Import Sanasi", "Дата последнего импорта")}
+                </p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white mt-2">
+                  {importHistory[0]?.timestamp
+                    ? new Date(importHistory[0].timestamp).toLocaleString('uz-UZ', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : formatDual("Hozircha yo'q", "Пока нет")}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
+                <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
+                  {formatDual("Oxirgi Administrator", "Последний Администратор")}
+                </p>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-2 truncate">
+                  {importHistory[0]?.adminName || formatDual("Hozircha yo'q", "Пока нет")}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
+                <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
+                  {formatDual("Xavfsizlik Standarti", "Стандарт безопасности")}
+                </p>
+                <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-amber-600 dark:text-amber-400">
+                  <ShieldCheck size={16} />
+                  <span>Qat'iy Admin Izohi Talabi</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Filter Toolbar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-3xl shadow-xs">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={auditSearch}
+                onChange={(e) => setAuditSearch(e.target.value)}
+                placeholder={formatDual(
+                  "Sabab, fayl nomi, administrator yoki bo'lim bo'yicha qidirish...",
+                  "Поиск по причине, имени файла, администратору или отделу..."
+                )}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {[
+                { id: 'ALL', label: 'Barchasi' },
+                { id: 'Kirim', label: 'Kirimlar' },
+                { id: 'Chiqim', label: 'Chiqimlar' },
+                { id: 'GP', label: 'GP' },
+                { id: 'Sex', label: 'Sex Hisoboti' },
+                { id: 'Akt', label: 'Aktlar' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setAuditFilterTarget(f.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                    auditFilterTarget === f.id
+                      ? 'bg-slate-900 text-white dark:bg-dark-700'
+                      : 'bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Audit Log Entries List */}
+          {filteredAuditHistory.length === 0 ? (
+            <div className="p-12 text-center bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl space-y-3">
+              <div className="w-16 h-16 mx-auto rounded-3xl bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-400">
+                <FileSpreadsheet size={32} />
+              </div>
+              <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                {formatDual("Import Auditi Yozuvlari Topilmadi", "Записи аудита импорта не найдены")}
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                {auditSearch
+                  ? formatDual("Qidiruv bo'yicha hech narsa chiqmadi.", "По вашему запросу ничего не найдено.")
+                  : formatDual(
+                      "Hozircha tizimga hech qanday Excel fayl import qilinmagan. Administrator tomonidan qilingan har bir import va uning rasmiy sababi shu yerda o'chmas qilib muhrlanadi.",
+                      "Пока ни один файл не был импортирован. Каждый импорт с официальной причиной будет отображен здесь."
+                    )}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {filteredAuditHistory.map((item: any, idx: number) => {
+                const dateStr = item.timestamp
+                  ? new Date(item.timestamp).toLocaleString('uz-UZ', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : "Noma'lum sana"
+
+                return (
+                  <div
+                    key={item.id || idx}
+                    className="p-5 bg-white dark:bg-dark-900 border border-slate-200/90 dark:border-dark-750 rounded-3xl shadow-xs hover:border-amber-500/40 transition space-y-3"
+                  >
+                    {/* Top Row: Meta info */}
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 dark:border-dark-800 pb-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <Calendar size={13} className="text-slate-400" />
+                          <span>{dateStr}</span>
+                        </span>
+
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/50">
+                          {item.target || "Bo'lim ko'rsatilmagan"}
+                        </span>
+
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                          <CheckCircle2 size={11} />
+                          <span>ADMIN TASDIG'I</span>
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1 font-mono font-semibold">
+                          <FileText size={13} className="text-slate-400" />
+                          <span>{item.fileName || 'file.xlsx'}</span>
+                          {item.fileSize && (
+                            <span className="text-[10px] text-slate-400">({item.fileSize})</span>
+                          )}
+                        </div>
+
+                        {item.recordsCount !== undefined && item.recordsCount !== null && (
+                          <span className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold text-[11px]">
+                            +{item.recordsCount} ta yozuv
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Middle Row: Reason Quote Block */}
+                    <div className="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border-l-4 border-amber-500 dark:border-amber-400 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                          <MessageSquare size={12} />
+                          <span>Administrator Kiritgan Rasmiy Sabab (Asos):</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          Admin: <strong className="text-slate-700 dark:text-slate-200">{item.adminName || 'Admin'}</strong>
+                        </span>
+                      </div>
+                      <blockquote className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 italic leading-relaxed">
+                        &ldquo;{item.reason}&rdquo;
+                      </blockquote>
+                      {item.details && (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-amber-500/10 font-mono">
+                          {item.details}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 

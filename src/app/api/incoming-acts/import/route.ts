@@ -6,6 +6,7 @@ import {
   loadDefaultTemplateActs,
   IncomingActRecord
 } from '@/lib/incoming-acts/excel'
+import { recordImportAudit } from '@/lib/auditImport'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,13 +15,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // STRICT ADMIN-ONLY RESTRICTION
+    if (session.role !== 'ADMIN') {
+      return NextResponse.json(
+        {
+          error:
+            "Fayllarni import qilish faqat Tizim Administratoriga (ADMIN) ruxsat etilgan! Ma'lumotlar yaxlitligi va audit qoidalariga binoan hatto Direktor ham import qila olmaydi.",
+        },
+        { status: 403 }
+      )
+    }
+
     const contentType = req.headers.get('content-type') || ''
     let records: IncomingActRecord[] = []
     let mode = 'append' // 'append' or 'replace'
+    let reason = ''
+    let fileName = 'incoming_acts.xlsx'
+    let fileSize: string | undefined = undefined
 
     if (contentType.includes('application/json')) {
       const body = await req.json()
       mode = body.mode || 'append'
+      reason = (body.reason || '').toString().trim()
+      fileName = body.fileName || (body.useDefaultTemplate ? 'Standart Shablon (1276 ta akt)' : 'json_records.json')
 
       if (body.useDefaultTemplate) {
         records = await loadDefaultTemplateActs()
@@ -33,16 +50,30 @@ export async function POST(req: NextRequest) {
       const formData = await req.formData()
       const file = formData.get('file') as File | null
       mode = (formData.get('mode') as string) || 'append'
+      reason = (formData.get('reason') as string || '').toString().trim()
 
       if (!file) {
         return NextResponse.json({ error: 'Excel fayl tanlanmadi' }, { status: 400 })
       }
+
+      fileName = file.name || 'incoming_acts.xlsx'
+      fileSize = file.size ? `${Math.round(file.size / 1024)} KB` : undefined
 
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       records = await parseIncomingActsFromBuffer(buffer)
     } else {
       return NextResponse.json({ error: 'Kutilmagan Content-Type' }, { status: 400 })
+    }
+
+    if (!reason || reason.length < 5) {
+      return NextResponse.json(
+        {
+          error:
+            'Import qilish sababi va asosi (kamida 5 ta belgi) kiritilishi shart! Ushbu izoh audit jurnali uchun saqlanadi.',
+        },
+        { status: 400 }
+      )
     }
 
     if (!records || records.length === 0) {
@@ -91,6 +122,21 @@ export async function POST(req: NextRequest) {
 
     const result = await prisma.incomingRawMaterialAct.createMany({
       data: batchData
+    })
+
+    // Record Audit Entry into Setting table
+    await recordImportAudit({
+      adminId: session.id,
+      adminName: session.name || 'Administrator',
+      adminRole: session.role,
+      target: 'Kiruvchi Sifat Nazorati Aktlari (Incoming Acts)',
+      fileName,
+      fileSize,
+      reason,
+      recordsCount: result.count,
+      mode,
+      status: 'SUCCESS',
+      details: `${result.count} ta xomashyo qabul qilish akti ${mode === 'replace' ? 'almashtirish (tozalab)' : "qo'shish"} rejimida yuklandi`,
     })
 
     return NextResponse.json({

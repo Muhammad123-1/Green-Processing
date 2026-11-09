@@ -2,11 +2,19 @@ import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/app/actions/auth';
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: "Fayllarni import qilish faqat Tizim Administratoriga (ADMIN) ruxsat etilgan!" },
+        { status: 403 }
+      );
+    }
     const filePath = path.join(process.cwd(), 'data', '123.xlsx');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);

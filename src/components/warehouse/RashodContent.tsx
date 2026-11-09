@@ -28,6 +28,7 @@ import {
   toNum
 } from '@/lib/shopReport'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
+import AdminImportModal from '@/components/common/AdminImportModal'
 
 interface RashodContentProps {
   userRole?: string
@@ -42,6 +43,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
   const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [savingExpenses, setSavingExpenses] = useState(false)
 
@@ -359,15 +361,15 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
             </button>
           )}
 
-          {/* Excel Import */}
-          {!isReadOnly && (
+          {/* Excel Import (Faqat ADMIN) */}
+          {isAdmin && (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors shadow-xs"
             >
               <Upload size={14} />
-              <span>Excel Import</span>
+              <span>Excel Import (Admin)</span>
             </button>
           )}
 
@@ -614,6 +616,23 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
           </div>
         </div>
       )}
+
+      {/* Admin Import Modal */}
+      <AdminImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        userRole={userRole}
+        userName={userName}
+        targetName="Chiqimlar Jurnali (Outbound / Rashod)"
+        endpoint="/api/shop-report/import"
+        hint="Chiqimlar jadvali uchun 123.xlsx yoki umumiy sex xarajatlari faylini yuklang. Fayldagi yangi kunlik sarflar bazaga qo'shiladi."
+        onSuccess={async (data) => {
+          if (data?.latestMonth) {
+            setSelectedMonth(data.latestMonth)
+          }
+          await loadData()
+        }}
+      />
     </div>
   )
 }

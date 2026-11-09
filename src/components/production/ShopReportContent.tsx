@@ -45,6 +45,7 @@ import {
   isWithinShiftEditWindow,
   isWithin24Hours,
 } from '@/lib/auditRules'
+import AdminImportModal from '@/components/common/AdminImportModal'
 
 const todayStr = () => {
   const d = new Date()
@@ -81,7 +82,9 @@ export default function ShopReportContent({
   const { lang } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
+  const isOnlyAdmin = userRole === 'ADMIN'
   const isAdmin = userRole === 'ADMIN' || userRole === 'DIRECTOR'
   const isReadOnly = userRole.toUpperCase() === 'SUPPLY'
   const shiftWindowActive = isWithinShiftEditWindow()
@@ -949,20 +952,22 @@ export default function ShopReportContent({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
-          {!isReadOnly && <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />}
-          {!isReadOnly && <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm disabled:opacity-50"
-          >
-            {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-            <span>{lang === 'ru' ? 'Импорт Excel' : 'Excel Import'}</span>
-          </button>}
+          {/* Excel Import (Faqat ADMIN) */}
+          {isOnlyAdmin && (
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              disabled={isLoading}
+              className="flex items-center gap-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm disabled:opacity-50"
+            >
+              {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              <span>{lang === 'ru' ? 'Импорт Excel (Админ)' : 'Excel Import (Admin)'}</span>
+            </button>
+          )}
           <button
             onClick={exportToExcelReal}
             className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-bold text-[11px] sm:text-xs transition-colors shadow-sm"
           >
-            <Upload size={14} />
+            <Download size={14} />
             <span>{lang === 'ru' ? 'Экспорт Excel' : 'Excel Export'}</span>
           </button>
           <button
@@ -2205,6 +2210,23 @@ export default function ShopReportContent({
           </div>
         </div>
       )}
+
+      {/* Admin Import Modal */}
+      <AdminImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        userRole={userRole}
+        userName={userName}
+        targetName="Sex Hisoboti (Shop Report - Kirim/Chiqim/GP)"
+        endpoint="/api/shop-report/import"
+        hint="Sex hisobotlari uchun 123.xlsx faylini yuklang. Tizim avtomatik ravishda barcha varaqlardagi oylik kirim, chiqim va GP ma'lumotlarini bazaga yangilaydi."
+        onSuccess={async (data) => {
+          if (data?.latestMonth) {
+            setSelectedMonth(data.latestMonth)
+          }
+          await loadData()
+        }}
+      />
     </div>
   )
 }

@@ -27,6 +27,7 @@ import {
   toNum
 } from '@/lib/shopReport'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
+import AdminImportModal from '@/components/common/AdminImportModal'
 
 interface GPContentProps {
   userRole?: string
@@ -41,6 +42,7 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
   const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [savingGP, setSavingGP] = useState(false)
 
@@ -358,15 +360,15 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
             </button>
           )}
 
-          {/* Excel Import */}
-          {!isReadOnly && (
+          {/* Excel Import (Faqat ADMIN) */}
+          {isAdmin && (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors shadow-xs"
             >
               <Upload size={14} />
-              <span>Excel Import</span>
+              <span>Excel Import (Admin)</span>
             </button>
           )}
 
@@ -611,6 +613,23 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
           </div>
         </div>
       )}
+
+      {/* Admin Import Modal */}
+      <AdminImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        userRole={userRole}
+        userName={userName}
+        targetName="Tayyor Mahsulot Jurnali (Finished Goods / GP)"
+        endpoint="/api/shop-report/import"
+        hint="Tayyor mahsulot (GP) jadvali uchun 123.xlsx yoki sex hisoboti faylini yuklang. Fayldagi tayyor mahsulot ma'lumotlari bazaga qo'shiladi."
+        onSuccess={async (data) => {
+          if (data?.latestMonth) {
+            setSelectedMonth(data.latestMonth)
+          }
+          await loadData()
+        }}
+      />
     </div>
   )
 }

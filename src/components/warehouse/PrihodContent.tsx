@@ -23,6 +23,7 @@ import { useLanguage } from '@/components/providers/LanguageProvider'
 import { checkEditPermission } from '@/lib/auditRules'
 import { formatDMY, formatLongDate, isDateStr, toNum } from '@/lib/shopReport'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
+import AdminImportModal from '@/components/common/AdminImportModal'
 
 interface PrihodContentProps {
   userRole?: string
@@ -37,6 +38,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
   const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [savingArrivals, setSavingArrivals] = useState(false)
 
@@ -610,15 +612,15 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
             </button>
           )}
 
-          {/* Excel Import (Image 2 style) */}
-          {!isReadOnly && (
+          {/* Excel Import (Faqat ADMIN) */}
+          {isAdmin && (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors"
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition-colors shadow-xs"
             >
               <Upload size={14} />
-              <span>Excel Import</span>
+              <span>Excel Import (Admin)</span>
             </button>
           )}
 
@@ -1133,6 +1135,23 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
           </div>
         </div>
       )}
+
+      {/* Admin Import Modal */}
+      <AdminImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        userRole={userRole}
+        userName={userName}
+        targetName="Kirimlar Jurnali (Inbound / Prihod)"
+        endpoint="/api/shop-report/import"
+        hint="Kirimlar jurnali uchun 123.xlsx yoki umumiy hisobot faylini yuklang. Fayldagi yangi partiyalar avtomatik ravishda bazaga qo'shiladi."
+        onSuccess={async (data) => {
+          if (data?.latestMonth) {
+            setSelectedMonth(data.latestMonth)
+          }
+          await loadData()
+        }}
+      />
     </div>
   )
 }
