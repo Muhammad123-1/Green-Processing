@@ -23,6 +23,8 @@ import {
   Sparkles,
   MessageSquare,
   AlertCircle,
+  AlertTriangle,
+  Clock,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -139,23 +141,91 @@ export default function SettingsContent({
     }
   }, [settings])
 
+  const shiftEditHistory = useMemo(() => {
+    try {
+      const raw = getSetting('shift_audit_history', '[]')
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }, [settings])
+
+  const allAuditEntries = useMemo(() => {
+    const imports = importHistory.map((item: any) => ({
+      type: 'IMPORT' as const,
+      id: item.id || `imp-${item.timestamp}`,
+      timestamp: item.timestamp,
+      target: item.target || "Bo'lim ko'rsatilmagan",
+      reason: item.reason || '',
+      adminName: item.adminName || 'Admin',
+      fileName: item.fileName,
+      fileSize: item.fileSize,
+      recordsCount: item.recordsCount,
+      mode: item.mode,
+      details: item.details,
+    }))
+
+    const shiftEdits = shiftEditHistory.map((item: any) => ({
+      type: 'SHIFT_EDIT' as const,
+      id: item.id || `shift-${item.timestamp}`,
+      timestamp: item.timestamp,
+      target: item.target || 'KIRIM',
+      targetTitle: item.targetTitle || item.target || 'Kirim',
+      reason: item.reason || '',
+      userName: item.userName || 'Omborchi',
+      userRole: item.userRole || 'WAREHOUSE',
+      date: item.date,
+      isAfter17: item.isAfter17 !== false,
+      details: item.details,
+    }))
+
+    return [...imports, ...shiftEdits].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  }, [importHistory, shiftEditHistory])
+
   const filteredAuditHistory = useMemo(() => {
-    return importHistory.filter((item: any) => {
+    return allAuditEntries.filter((item: any) => {
       const q = auditSearch.toLowerCase().trim()
       const matchesSearch =
         !q ||
-        (item.fileName || '').toLowerCase().includes(q) ||
         (item.reason || '').toLowerCase().includes(q) ||
-        (item.adminName || '').toLowerCase().includes(q) ||
-        (item.target || '').toLowerCase().includes(q)
+        (item.type === 'IMPORT' &&
+          ((item.fileName || '').toLowerCase().includes(q) ||
+            (item.adminName || '').toLowerCase().includes(q) ||
+            (item.target || '').toLowerCase().includes(q))) ||
+        (item.type === 'SHIFT_EDIT' &&
+          ((item.userName || '').toLowerCase().includes(q) ||
+            (item.targetTitle || '').toLowerCase().includes(q) ||
+            (item.date || '').toLowerCase().includes(q)))
 
-      const matchesTarget =
-        auditFilterTarget === 'ALL' ||
-        (item.target || '').toLowerCase().includes(auditFilterTarget.toLowerCase())
+      if (!matchesSearch) return false
 
-      return matchesSearch && matchesTarget
+      if (auditFilterTarget === 'ALL') return true
+      if (auditFilterTarget === 'IMPORT') return item.type === 'IMPORT'
+      if (auditFilterTarget === 'AFTER_17') return item.type === 'SHIFT_EDIT'
+      if (auditFilterTarget === 'Kirim') {
+        return (
+          (item.type === 'IMPORT' && (item.target || '').toLowerCase().includes('kirim')) ||
+          (item.type === 'SHIFT_EDIT' && item.target === 'KIRIM')
+        )
+      }
+      if (auditFilterTarget === 'Chiqim') {
+        return (
+          (item.type === 'IMPORT' && (item.target || '').toLowerCase().includes('chiqim')) ||
+          (item.type === 'SHIFT_EDIT' && item.target === 'CHIQIM')
+        )
+      }
+      if (auditFilterTarget === 'GP') {
+        return (
+          (item.type === 'IMPORT' && (item.target || '').toLowerCase().includes('gp')) ||
+          (item.type === 'SHIFT_EDIT' && item.target === 'GP')
+        )
+      }
+      return true
     })
-  }, [importHistory, auditSearch, auditFilterTarget])
+  }, [allAuditEntries, auditSearch, auditFilterTarget])
 
   function setSetting(key: string, value: string, category = 'general') {
     setSettings((prev) => {
@@ -311,11 +381,11 @@ export default function SettingsContent({
       badge: "GREEN PROCESSING • AUDIT & QAT'IY NAZORAT",
       badgeColor: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
       icon: <FileSpreadsheet size={24} className="text-amber-500" />,
-      title: formatDual("Excel Import Qat'iy Auditi va Tarixi", "Строгий аудит импорта Excel и история", "Excel Import Audit Trail & History"),
+      title: formatDual("Audit Jurnali, Excel Importlari & Smena Nazorati", "Журнал аудита, импортов Excel и контроля смен", "Audit Trail, Excel Imports & Shift Control"),
       subtitle: formatDual(
-        "Faqat Administrator (ADMIN) tomonidan kiritilgan barcha importlar va ularning majburiy rasmiy sabablari",
-        "Все импорты и обязательные официальные причины, зафиксированные Администратором",
-        "All file imports and mandatory official justifications logged by Administrator"
+        "Admin tomonidan qilingan Excel importlar hamda soat 17:00 dan keyin kiritilgan barcha o'zgarishlar va ularning majburiy rasmiy sabablari",
+        "Импорты Excel администратора и все изменения после 17:00 с обязательными официальными обоснованиями",
+        "Admin Excel imports and after-17:00 modifications with mandatory justifications"
       ),
     },
   }[activeTab] || {
@@ -1015,7 +1085,7 @@ export default function SettingsContent({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 5: IMPORT AUDITI VA QAT'IY NAZORAT TARIXI                             */}
+      {/* TAB 5: AUDIT JURNALI, EXCEL IMPORTLARI & SMENA NAZORATI TARIXI             */}
       {/* ========================================================================= */}
       {activeTab === 'audit' && (
         <div className="space-y-6 animate-scale-up">
@@ -1030,9 +1100,9 @@ export default function SettingsContent({
                   <div className="flex items-center gap-2">
                     <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
                       {formatDual(
-                        "Excel Import Qat'iy Auditi va Sabablar Jurnali",
-                        "Строгий аудит импорта Excel и журнал причин",
-                        "Excel Import Strict Audit & Justifications"
+                        "Audit Jurnali, Excel Importlari va Smena Nazorati",
+                        "Журнал аудита, импортов Excel и контроля смен",
+                        "Audit Trail, Excel Imports & Shift Control"
                       )}
                     </h3>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
@@ -1041,8 +1111,8 @@ export default function SettingsContent({
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {formatDual(
-                      "Tizimga faqat Administrator (ADMIN) tomonidan kiritilgan barcha Excel importlar, o'zgarishlar va ularning majburiy rasmiy sabablari",
-                      "Все импорты Excel, изменения и их обязательные официальные причины, введенные только Администратором (ADMIN)"
+                      "Admin tomonidan qilingan barcha Excel importlar hamda soat 17:00 dan keyin kiritilgan barcha o'zgarishlar va ularning majburiy rasmiy sabablari",
+                      "Все импорты Excel администратора и все изменения после 17:00 с обязательными официальными обоснованиями"
                     )}
                   </p>
                 </div>
@@ -1064,40 +1134,40 @@ export default function SettingsContent({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
                 <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
-                  {formatDual("Jami Importlar", "Всего импортов")}
+                  {formatDual("Jami Audit Yozuvlari", "Всего записей аудита")}
                 </p>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-2xl font-black text-slate-900 dark:text-white">
-                    {importHistory.length}
+                    {allAuditEntries.length}
                   </span>
                   <span className="text-xs text-slate-500 font-semibold">{formatDual("ta operatsiya", "операций")}</span>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
-                <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
-                  {formatDual("Oxirgi Import Sanasi", "Дата последнего импорта")}
+              <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40">
+                <p className="text-[11px] font-bold uppercase text-rose-600 dark:text-rose-400 tracking-wider flex items-center gap-1">
+                  <AlertTriangle size={12} />
+                  <span>{formatDual("17:00 dan Keyin Tahrirlar", "Правки после 17:00")}</span>
                 </p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white mt-2">
-                  {importHistory[0]?.timestamp
-                    ? new Date(importHistory[0].timestamp).toLocaleString('uz-UZ', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : formatDual("Hozircha yo'q", "Пока нет")}
-                </p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-2xl font-black text-rose-600 dark:text-rose-400">
+                    {shiftEditHistory.length}
+                  </span>
+                  <span className="text-xs text-rose-500 font-semibold">{formatDual("ta izohli tahrir", "правок")}</span>
+                </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
-                <p className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
-                  {formatDual("Oxirgi Administrator", "Последний Администратор")}
+              <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40">
+                <p className="text-[11px] font-bold uppercase text-indigo-600 dark:text-indigo-400 tracking-wider flex items-center gap-1">
+                  <FileSpreadsheet size={12} />
+                  <span>{formatDual("Admin Excel Importlari", "Импорты Excel Admin")}</span>
                 </p>
-                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-2 truncate">
-                  {importHistory[0]?.adminName || formatDual("Hozircha yo'q", "Пока нет")}
-                </p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                    {importHistory.length}
+                  </span>
+                  <span className="text-xs text-indigo-500 font-semibold">{formatDual("ta fayl", "файлов")}</span>
+                </div>
               </div>
 
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-dark-800/80 border border-slate-200/80 dark:border-dark-700/80">
@@ -1106,7 +1176,7 @@ export default function SettingsContent({
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-amber-600 dark:text-amber-400">
                   <ShieldCheck size={16} />
-                  <span>Qat'iy Admin Izohi Talabi</span>
+                  <span>Majburiy Rasmiy Izoh Sharti</span>
                 </div>
               </div>
             </div>
@@ -1121,8 +1191,8 @@ export default function SettingsContent({
                 value={auditSearch}
                 onChange={(e) => setAuditSearch(e.target.value)}
                 placeholder={formatDual(
-                  "Sabab, fayl nomi, administrator yoki bo'lim bo'yicha qidirish...",
-                  "Поиск по причине, имени файла, администратору или отделу..."
+                  "Sabab, mas'ul xodim, sana yoki bo'lim bo'yicha qidirish...",
+                  "Поиск по причине, сотруднику, дате или разделу..."
                 )}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -1130,12 +1200,12 @@ export default function SettingsContent({
 
             <div className="flex items-center gap-1.5 overflow-x-auto">
               {[
-                { id: 'ALL', label: 'Barchasi' },
+                { id: 'ALL', label: `Barchasi (${allAuditEntries.length})` },
+                { id: 'AFTER_17', label: `⚠️ 17:00 dan keyin (${shiftEditHistory.length})` },
+                { id: 'IMPORT', label: `Excel Importlari (${importHistory.length})` },
                 { id: 'Kirim', label: 'Kirimlar' },
                 { id: 'Chiqim', label: 'Chiqimlar' },
                 { id: 'GP', label: 'GP' },
-                { id: 'Sex', label: 'Sex Hisoboti' },
-                { id: 'Akt', label: 'Aktlar' },
               ].map((f) => (
                 <button
                   key={f.id}
@@ -1159,14 +1229,14 @@ export default function SettingsContent({
                 <FileSpreadsheet size={32} />
               </div>
               <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">
-                {formatDual("Import Auditi Yozuvlari Topilmadi", "Записи аудита импорта не найдены")}
+                {formatDual("Audit Yozuvlari Topilmadi", "Записи аудита не найдены")}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
                 {auditSearch
                   ? formatDual("Qidiruv bo'yicha hech narsa chiqmadi.", "По вашему запросу ничего не найдено.")
                   : formatDual(
-                      "Hozircha tizimga hech qanday Excel fayl import qilinmagan. Administrator tomonidan qilingan har bir import va uning rasmiy sababi shu yerda o'chmas qilib muhrlanadi.",
-                      "Пока ни один файл не был импортирован. Каждый импорт с официальной причиной будет отображен здесь."
+                      "Hozircha audit yozuvlari mavjud emas. Admin importlari va soat 17:00 dan keyin omborchilar kiritgan har bir o'zgarish shu yerda o'chmas qilib muhrlanadi.",
+                      "Пока записи аудита отсутствуют. Все импорты и изменения после 17:00 будут отображаться здесь."
                     )}
               </p>
             </div>
@@ -1183,6 +1253,70 @@ export default function SettingsContent({
                     })
                   : "Noma'lum sana"
 
+                // Render Shift Edit Card (After 17:00 edit)
+                if (item.type === 'SHIFT_EDIT') {
+                  return (
+                    <div
+                      key={item.id || idx}
+                      className="p-5 bg-white dark:bg-dark-900 border border-rose-200/90 dark:border-rose-900/40 rounded-3xl shadow-xs hover:border-rose-500/50 transition space-y-3"
+                    >
+                      {/* Top Row: Meta info */}
+                      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-rose-100 dark:border-dark-800 pb-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <Clock size={13} className="text-slate-400" />
+                            <span>{dateStr}</span>
+                          </span>
+
+                          <span className="px-2.5 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
+                            {item.targetTitle || item.target}
+                          </span>
+
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1">
+                            <AlertTriangle size={11} />
+                            <span>17:00 DAN KEYIN TAHRIRLANGAN</span>
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
+                          {item.date && (
+                            <div className="flex items-center gap-1 font-mono font-semibold">
+                              <Calendar size={13} className="text-slate-400" />
+                              <span>Sana: {item.date}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 font-medium">
+                            <User size={13} className="text-slate-400" />
+                            <span>{item.userName} ({item.userRole})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Middle Row: Reason Quote Block */}
+                      <div className="p-4 rounded-2xl bg-rose-500/5 dark:bg-rose-500/10 border-l-4 border-rose-500 dark:border-rose-400 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center gap-1">
+                            <MessageSquare size={12} />
+                            <span>Omborchi Kiritgan Rasmiy Sabab (Asos):</span>
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            Mas'ul: <strong className="text-slate-700 dark:text-slate-200">{item.userName}</strong>
+                          </span>
+                        </div>
+                        <blockquote className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 italic leading-relaxed">
+                          &ldquo;{item.reason}&rdquo;
+                        </blockquote>
+                        {item.details && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-rose-500/10 font-mono">
+                            {item.details}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+
+                // Render Excel Import Card (Admin only)
                 return (
                   <div
                     key={item.id || idx}

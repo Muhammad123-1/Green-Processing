@@ -13,12 +13,14 @@ import {
   X,
   Lock,
   AlertCircle,
+  AlertTriangle,
+  Sparkles,
   ArrowUpRight,
   Filter
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
-import { checkEditPermission } from '@/lib/auditRules'
+import { checkEditPermission, getTodayTashkent, isAfterShiftHours } from '@/lib/auditRules'
 import {
   EXPENSE_FIELDS,
   readExpenseRow,
@@ -35,7 +37,7 @@ interface RashodContentProps {
   userName?: string
 }
 
-const todayStr = () => new Date().toISOString().split('T')[0]
+const todayStr = () => getTodayTashkent()
 
 export default function RashodContent({ userRole, userName }: RashodContentProps) {
   const { lang, formatDual } = useLanguage()
@@ -90,7 +92,15 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Ma'lumotlarni yuklashda xatolik")
 
-      setExpenses((data.expenses || []).map((e: any) => readExpenseRow(e)))
+      const mapped = (data.expenses || []).map((e: any) => readExpenseRow(e))
+      const today = getTodayTashkent()
+
+      // Auto-ensure today's daily checklist row is available at top
+      if (!mapped.some((e: any) => e.date === today)) {
+        mapped.unshift(blankExpense(today))
+      }
+
+      setExpenses(mapped)
     } catch (e: any) {
       toast.error(e?.message || "Ma'lumotlarni yuklashda xatolik")
     } finally {
@@ -189,11 +199,13 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
     }
 
     const modifiedExisting = rows.filter((r) => !r._new)
-    if (modifiedExisting.length > 0) {
-      const summary = modifiedExisting.map((r) => `Chiqim sanasi: ${r.date}`)
+    const after17 = isAfterShiftHours() && !isAdmin
+
+    if (modifiedExisting.length > 0 || after17) {
+      const summary = rows.map((r) => `Chiqim sanasi: ${r.date}`)
       setEditReasonModal({
         open: true,
-        dirtyItemsCount: modifiedExisting.length,
+        dirtyItemsCount: rows.length,
         itemsSummary: summary,
         reason: '',
         onConfirm: (reason) => executeSaveExpenses(rows, reason),
@@ -474,13 +486,29 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                         </div>
                       )}
                       {row.isEdited && (
-                        <div className="flex items-center gap-1 px-1 pb-0.5">
+                        <div className="flex flex-col gap-0.5 px-1 pb-0.5">
                           <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-600 text-white"
-                            title={`Tahrirlangan:\nSabab: ${row.editReason || '—'}\nKim: ${row.editedBy || '—'}`}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase bg-rose-600 text-white shadow-xs"
+                            title={`17:00 dan keyin tahrirlangan:\nSabab: ${row.editReason || '—'}\nKim: ${row.editedBy || '—'}\nVaqt: ${row.editedAt ? new Date(row.editedAt).toLocaleString('uz-UZ') : ''}`}
                           >
-                            <span className="w-1 h-1 rounded-full bg-white animate-ping" />
-                            {lang === 'ru' ? 'Изменено' : "O'zgartirilgan"}
+                            <AlertTriangle size={10} className="shrink-0" />
+                            <span>17:00 dan keyin</span>
+                          </span>
+                          {row.editReason && (
+                            <span
+                              className="text-[9px] text-rose-700 dark:text-rose-400 font-medium italic truncate max-w-[110px]"
+                              title={row.editReason}
+                            >
+                              &ldquo;{row.editReason}&rdquo;
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {row.date === todayStr() && !row.isEdited && (
+                        <div className="flex items-center gap-1 px-1 pb-0.5">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                            <Sparkles size={9} />
+                            <span>Bugun (Avto)</span>
                           </span>
                         </div>
                       )}
@@ -574,27 +602,56 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-white dark:bg-dark-900 border border-rose-300 dark:border-rose-900/50 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400">
-              <AlertCircle size={22} className="shrink-0" />
+              <AlertTriangle size={24} className="shrink-0 text-rose-500" />
               <div>
                 <h3 className="font-black text-sm uppercase tracking-wide">
-                  {lang === 'ru' ? 'Причина изменения расхода' : "Chiqimni o'zgartirish sababi"}
+                  {isAfterShiftHours() && !isAdmin
+                    ? (lang === 'ru' ? '⚠️ Изменение после 17:00 (Вечерняя смена)' : "⚠️ Soat 17:00 dan Keyingi O'zgartirish")
+                    : (lang === 'ru' ? 'Причина изменения расхода' : "Chiqimni o'zgartirish sababi")}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {lang === 'ru'
-                    ? 'FSSC 22000: Укажите причину изменения ранее сохраненных данных'
-                    : "FSSC 22000: Saqlangan chiqimni o'zgartirish sababini ko'rsating"}
+                  {isAfterShiftHours() && !isAdmin
+                    ? (lang === 'ru'
+                        ? 'Смена (17:00) завершена. Укажите официальную причину изменения (мин. 10 символов).'
+                        : "Ish smenasi (17:00) yakunlangan. Rasmiy sababni kiriting (kamida 10 ta belgi).")
+                    : (lang === 'ru'
+                        ? 'FSSC 22000: Укажите причину изменения ранее сохраненных данных'
+                        : "FSSC 22000: Saqlangan chiqimni o'zgartirish sababini ko'rsating")}
                 </p>
               </div>
             </div>
 
-            <textarea
-              required
-              rows={3}
-              placeholder="O'zgartirish sababi (masalan: sex hisobotiga asosan qayta tuzatish)..."
-              value={editReasonModal.reason}
-              onChange={(e) => setEditReasonModal((prev) => ({ ...prev, reason: e.target.value }))}
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 outline-none focus:border-rose-500 text-slate-900 dark:text-white"
-            />
+            <div>
+              <div className="flex justify-between items-center mb-1 text-[11px]">
+                <span className="font-semibold text-slate-600 dark:text-slate-400">
+                  {lang === 'ru' ? 'Официальное обоснование *' : 'Rasmiy asos va sabab *'}
+                </span>
+                <span
+                  className={`font-bold ${
+                    editReasonModal.reason.trim().length >= 10
+                      ? 'text-emerald-500'
+                      : 'text-rose-500'
+                  }`}
+                >
+                  {editReasonModal.reason.trim().length} / 10 ta belgi
+                </span>
+              </div>
+              <textarea
+                required
+                rows={3}
+                placeholder={
+                  lang === 'ru'
+                    ? 'Например: Запрос цеха на дополнительные 400 кг лука для вечерней смены...'
+                    : "Masalan: Kechki smena uchun sexdan qo'shimcha 400 kg piyoz talab qilindi..."
+                }
+                value={editReasonModal.reason}
+                onChange={(e) => setEditReasonModal((prev) => ({ ...prev, reason: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 outline-none focus:border-rose-500 text-slate-900 dark:text-white"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Ushbu izoh Sozlamalar bo'limidagi doimiy Audit Jurnaliga muhrlanadi.
+              </p>
+            </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-dark-800">
               <button
@@ -606,9 +663,9 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
               </button>
               <button
                 type="button"
-                disabled={!editReasonModal.reason.trim()}
+                disabled={editReasonModal.reason.trim().length < 10}
                 onClick={() => editReasonModal.onConfirm?.(editReasonModal.reason.trim())}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-sm disabled:opacity-50"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {lang === 'ru' ? 'Подтвердить и сохранить' : 'Tasdiqlash va saqlash'}
               </button>

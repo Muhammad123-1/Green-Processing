@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { parseDateToYearMonth, normalizeProductKey } from '@/lib/batchNumbering'
+import { getTodayTashkent, isAfterShiftHours } from '@/lib/auditRules'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,28 @@ export async function GET(req: NextRequest) {
     let arrivals = await prisma.shopArrival.findMany({
       orderBy: [{ date: 'desc' }, { id: 'desc' }]
     })
-    const expenses = await prisma.shopExpense.findMany({ orderBy: { date: 'desc' } })
+    let expenses = await prisma.shopExpense.findMany({ orderBy: { date: 'desc' } })
+
+    // Auto-seed today's empty template in ShopExpense so today's list is immediately available
+    // and automatically preserved as 0 when transitioning to a new day.
+    const todayStr = getTodayTashkent()
+    const todayExists = expenses.some((e) => e.date === todayStr)
+    if (!todayExists) {
+      try {
+        const created = await prisma.shopExpense.create({
+          data: {
+            date: todayStr,
+            materials: {},
+            outputs: {},
+            matrix: {},
+            balances: {},
+          },
+        })
+        expenses.unshift(created)
+      } catch {
+        // already created concurrently
+      }
+    }
 
     // Check if any arrivals are missing batch numbers
     const needsBatch = arrivals.some(a => !a.batch || a.batch.trim() === '')
@@ -70,7 +92,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ arrivals, expenses })
+    return NextResponse.json({
+      arrivals,
+      expenses,
+      today: todayStr,
+      isAfter17: isAfterShiftHours(),
+    })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

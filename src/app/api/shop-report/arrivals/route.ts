@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { isDateStr, toNum } from '@/lib/shopReport'
 import { getNextShopArrivalBatch, normalizeProductKey, parseDateToYearMonth } from '@/lib/batchNumbering'
-import { checkEditPermission } from '@/lib/auditRules'
+import { checkEditPermission, isAfterShiftHours } from '@/lib/auditRules'
+import { recordShiftEditAudit } from '@/lib/auditImport'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,8 +98,14 @@ export async function PUT(req: NextRequest) {
               (existing.supplier || '') !== newSupp ||
               (existing.batch || '') !== batchStr
 
+            const isAfter17 = isAfterShiftHours(new Date())
             if (isChanged) {
               const reason = String(r.editReason ?? '').trim()
+              if (isAfter17 && (!reason || reason.length < 10) && session.role !== 'ADMIN') {
+                throw new Error(
+                  `«${nom || existing.nomenclature}» yozuvi soat 17:00 dan keyin o'zgartirilmoqda. Kamida 10 ta belgidan iborat rasmiy sabab (izoh) kiritish majburiy!`
+                )
+              }
               if (!reason) {
                 throw new Error(
                   `«${nom || existing.nomenclature}» yozuvi o'zgartirilmoqda. O'zgartirish sababini ko'rsatish majburiy!`
@@ -119,6 +126,19 @@ export async function PUT(req: NextRequest) {
                   editedBy: session.name || session.role || 'Foydalanuvchi',
                 },
               })
+
+              await recordShiftEditAudit({
+                userId: session.id,
+                userName: session.name || session.role || 'Omborchi',
+                userRole: session.role || 'WAREHOUSE',
+                date: dateStr,
+                target: 'KIRIM',
+                targetTitle: 'Kirimlar Jurnali (Inbound / Prihod)',
+                reason,
+                details: `«${nom}» xomashyosi (${newQty} kg, partiya #${batchStr}) tahrirlandi`,
+                isAfter17,
+              })
+
               updated++
             } else {
               // Nothing changed

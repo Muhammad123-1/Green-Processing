@@ -14,13 +14,14 @@ import {
   Lock,
   Sparkles,
   AlertCircle,
+  AlertTriangle,
   Package,
   Layers,
   Filter
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
-import { checkEditPermission } from '@/lib/auditRules'
+import { checkEditPermission, getTodayTashkent, isAfterShiftHours } from '@/lib/auditRules'
 import { formatDMY, formatLongDate, isDateStr, toNum } from '@/lib/shopReport'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import AdminImportModal from '@/components/common/AdminImportModal'
@@ -30,7 +31,7 @@ interface PrihodContentProps {
   userName?: string
 }
 
-const todayStr = () => new Date().toISOString().split('T')[0]
+const todayStr = () => getTodayTashkent()
 
 export default function PrihodContent({ userRole, userName }: PrihodContentProps) {
   const { lang, formatDual } = useLanguage()
@@ -98,12 +99,29 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Ma'lumotlarni yuklashda xatolik")
 
-      setArrivals(
-        (data.arrivals || []).map((a: any) => ({
-          ...a,
-          batch: a.batch || (a.id ? `#${a.id}` : ''),
+      const mapped = (data.arrivals || []).map((a: any) => ({
+        ...a,
+        batch: a.batch || (a.id ? `#${a.id}` : ''),
+      }))
+
+      const today = getTodayTashkent()
+      if (!mapped.some((a: any) => a.date === today)) {
+        const defaultCommodities = ['ТОМАТЫ', 'Лук', 'Айсберг', 'Капуста', 'Морковь']
+        const templates = defaultCommodities.map((nom) => ({
+          date: today,
+          nomenclature: nom,
+          quantity: 0,
+          supplier: '',
+          batch: computeNextBatch(mapped, nom, today),
+          _dirty: false,
+          _new: true,
+          _autoBatch: true,
+          _isAutoToday: true,
         }))
-      )
+        setArrivals([...templates, ...mapped])
+      } else {
+        setArrivals(mapped)
+      }
 
       // Fetch products catalog
       fetch('/api/products')
@@ -399,17 +417,19 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
     }
 
     const modifiedExisting = rows.filter((r) => !r._new && r.id)
-    if (modifiedExisting.length > 0) {
-      const summary = modifiedExisting
+    const after17 = isAfterShiftHours() && !isAdmin
+
+    if (modifiedExisting.length > 0 || after17) {
+      const summary = rows
         .slice(0, 5)
         .map((r) => `${r.nomenclature || 'Mahsulot'} (${r.quantity} kg, ${r.date})`)
-      if (modifiedExisting.length > 5) {
-        summary.push(`... va yana ${modifiedExisting.length - 5} ta qator`)
+      if (rows.length > 5) {
+        summary.push(`... va yana ${rows.length - 5} ta qator`)
       }
 
       setEditReasonModal({
         open: true,
-        dirtyItemsCount: modifiedExisting.length,
+        dirtyItemsCount: rows.length,
         itemsSummary: summary,
         reason: '',
         onConfirm: (reason) => executeSaveArrivals(rows, reason),
@@ -733,6 +753,14 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
                           )}
                         </div>
                       )}
+                      {row._isAutoToday && !row.isEdited && (
+                        <div className="px-1.5 pb-0.5">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                            <Sparkles size={9} />
+                            <span>Bugun (Avto)</span>
+                          </span>
+                        </div>
+                      )}
                     </td>
 
                     {/* NOMENKLATURA */}
@@ -835,13 +863,13 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
 
                       {/* Edited badge */}
                       {row.isEdited && (
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1 px-1">
+                        <div className="flex flex-col gap-0.5 mt-1 px-1">
                           <span
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-xs cursor-help"
-                            title={`O'zgartirilgan:\nSabab: ${row.editReason || '—'}\nKim: ${row.editedBy || '—'}`}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-rose-600 text-white shadow-xs cursor-help w-fit"
+                            title={`17:00 dan keyin tahrirlangan:\nSabab: ${row.editReason || '—'}\nKim: ${row.editedBy || '—'}\nVaqt: ${row.editedAt ? new Date(row.editedAt).toLocaleString('uz-UZ') : ''}`}
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                            {lang === 'ru' ? 'Изменено' : "O'zgartirilgan"}
+                            <AlertTriangle size={10} className="shrink-0" />
+                            <span>17:00 dan keyin</span>
                           </span>
                           {row.editReason && (
                             <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold italic truncate max-w-[180px]">
@@ -1078,15 +1106,21 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-white dark:bg-dark-900 border border-rose-300 dark:border-rose-900/50 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400">
-              <AlertCircle size={22} className="shrink-0" />
+              <AlertTriangle size={24} className="shrink-0 text-rose-500" />
               <div>
                 <h3 className="font-black text-sm uppercase tracking-wide">
-                  {lang === 'ru' ? 'Причина изменения записи' : "Yozuvni o'zgartirish sababi"}
+                  {isAfterShiftHours() && !isAdmin
+                    ? (lang === 'ru' ? '⚠️ Изменение после 17:00 (Вечерняя смена)' : "⚠️ Soat 17:00 dan Keyingi O'zgartirish")
+                    : (lang === 'ru' ? 'Причина изменения записи' : "Yozuvni o'zgartirish sababi")}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {lang === 'ru'
-                    ? 'FSSC 22000: Укажите причину изменения ранее сохраненных данных'
-                    : "FSSC 22000: Saqlangan yozuvni o'zgartirish sababini ko'rsating"}
+                  {isAfterShiftHours() && !isAdmin
+                    ? (lang === 'ru'
+                        ? 'Смена (17:00) завершена. Укажите официальную причину изменения (мин. 10 символов).'
+                        : "Ish smenasi (17:00) yakunlangan. Rasmiy sababni kiriting (kamida 10 ta belgi).")
+                    : (lang === 'ru'
+                        ? 'FSSC 22000: Укажите причину изменения ранее сохраненных данных'
+                        : "FSSC 22000: Saqlangan yozuvni o'zgartirish sababini ko'rsating")}
                 </p>
               </div>
             </div>
@@ -1102,18 +1136,37 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
               </ul>
             </div>
 
-            <textarea
-              required
-              rows={3}
-              placeholder={
-                lang === 'ru'
-                  ? 'Укажите точную причину изменения (например: опечатка в весе, корректировка по накладной №...)'
-                  : "O'zgartirish sababi (masalan: nakladnoydagi og'irlik bo'yicha tuzatish, xatolikni tuzatish)..."
-              }
-              value={editReasonModal.reason}
-              onChange={(e) => setEditReasonModal((prev) => ({ ...prev, reason: e.target.value }))}
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 outline-none focus:border-rose-500 text-slate-900 dark:text-white"
-            />
+            <div>
+              <div className="flex justify-between items-center mb-1 text-[11px]">
+                <span className="font-semibold text-slate-600 dark:text-slate-400">
+                  {lang === 'ru' ? 'Официальное обоснование *' : 'Rasmiy asos va sabab *'}
+                </span>
+                <span
+                  className={`font-bold ${
+                    editReasonModal.reason.trim().length >= 10
+                      ? 'text-emerald-500'
+                      : 'text-rose-500'
+                  }`}
+                >
+                  {editReasonModal.reason.trim().length} / 10 ta belgi
+                </span>
+              </div>
+              <textarea
+                required
+                rows={3}
+                placeholder={
+                  lang === 'ru'
+                    ? 'Укажите точную причину изменения (например: опечатка в весе, корректировка по накладной №...)'
+                    : "O'zgartirish sababi (masalan: nakladnoydagi og'irlik bo'yicha tuzatish, kechki smenada qabul qilingan)..."
+                }
+                value={editReasonModal.reason}
+                onChange={(e) => setEditReasonModal((prev) => ({ ...prev, reason: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 outline-none focus:border-rose-500 text-slate-900 dark:text-white"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Ushbu izoh Sozlamalar bo'limidagi doimiy Audit Jurnaliga muhrlanadi.
+              </p>
+            </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-dark-800">
               <button
@@ -1125,9 +1178,9 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
               </button>
               <button
                 type="button"
-                disabled={!editReasonModal.reason.trim()}
+                disabled={editReasonModal.reason.trim().length < 10}
                 onClick={() => editReasonModal.onConfirm?.(editReasonModal.reason.trim())}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-sm disabled:opacity-50"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {lang === 'ru' ? 'Подтвердить и сохранить' : 'Tasdiqlash va saqlash'}
               </button>

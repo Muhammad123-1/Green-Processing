@@ -47,11 +47,36 @@ export function getTashkentDate(date: Date = new Date()): { hour: number; fullDa
 }
 
 /**
+ * Returns today's date formatted as YYYY-MM-DD in Tashkent timezone (Asia/Tashkent).
+ */
+export function getTodayTashkent(date: Date = new Date()): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Tashkent',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+    return formatter.format(date) // "YYYY-MM-DD"
+  } catch {
+    return date.toISOString().split('T')[0]
+  }
+}
+
+/**
+ * Returns true if current time is after 17:00 (evening shift) or before 08:00 (morning).
+ * Standard daytime working shift is 08:00 to 17:00.
+ */
+export function isAfterShiftHours(date: Date = new Date()): boolean {
+  const { hour } = getTashkentDate(date)
+  return hour >= 17 || hour < 8
+}
+
+/**
  * Returns true if current time is within the allowed overnight edit window: 17:00 - 09:00.
  */
 export function isWithinShiftEditWindow(date: Date = new Date()): boolean {
   const { hour } = getTashkentDate(date)
-  // Allowed from 17:00 in the evening to 09:00 in the morning
   return hour >= 17 || hour < 9
 }
 
@@ -128,22 +153,19 @@ export function checkEditPermission(params: {
     }
   }
 
-  const inShift = isWithinShiftEditWindow(now)
-  if (!inShift) {
-    return {
-      allowed: false,
-      isAdmin: false,
-      isAfter24h: false,
-      isOutsideHours: true,
-      reason: "Tahrirlash faqat kechki soat 17:00 dan ertalabki 09:00 gacha ruxsat etiladi (Navbatchilik paytida).",
-    }
-  }
+  // 17:00 dan keyingi holat tekshiruvi:
+  // 08:00 - 17:00: Ish vaqti, erkin kiritish/tahrirlash ruxsat etiladi.
+  // 17:00 dan keyin: Tahrirlashga ruxsat beriladi, ammo majburiy sabab (reason) talab qilinadi!
+  const after17 = isAfterShiftHours(now)
 
   return {
     allowed: true,
     isAdmin: false,
     isAfter24h: false,
-    isOutsideHours: false,
+    isOutsideHours: after17,
+    reason: after17
+      ? "Soat 17:00 dan keyingi o'zgartirish: Rasmiy sabab kiritish majburiydir!"
+      : undefined,
   }
 }
 

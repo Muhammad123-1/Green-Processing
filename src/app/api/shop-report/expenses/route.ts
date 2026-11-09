@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { applyExpenseRow, isDateStr } from '@/lib/shopReport'
-import { checkEditPermission } from '@/lib/auditRules'
+import { checkEditPermission, isAfterShiftHours } from '@/lib/auditRules'
+import { recordShiftEditAudit } from '@/lib/auditImport'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,8 +71,14 @@ export async function PUT(req: NextRequest) {
             let editedAt = existing.editedAt
             let editedBy = existing.editedBy
 
+            const isAfter17 = isAfterShiftHours(now)
             if (isChanged) {
               const reason = String(row.editReason ?? '').trim()
+              if (isAfter17 && (!reason || reason.length < 10) && session.role !== 'ADMIN') {
+                throw new Error(
+                  `${date} sanadagi Chiqim soat 17:00 dan keyin o'zgartirilmoqda. Kamida 10 ta belgidan iborat rasmiy sabab (izoh) kiritish majburiy!`
+                )
+              }
               if (!reason && !existing.editReason) {
                 throw new Error(
                   `${date} sanadagi Chiqim (Расход) ma'lumotlari o'zgartirilmoqda. O'zgartirish sababini ko'rsatish majburiy!`
@@ -82,6 +89,18 @@ export async function PUT(req: NextRequest) {
                 editReason = reason
                 editedAt = now
                 editedBy = session.name || session.role || 'Foydalanuvchi'
+
+                await recordShiftEditAudit({
+                  userId: session.id,
+                  userName: session.name || session.role || 'Omborchi',
+                  userRole: session.role || 'WAREHOUSE',
+                  date,
+                  target: 'CHIQIM',
+                  targetTitle: 'Chiqimlar Jurnali (Outbound / Rashod)',
+                  reason,
+                  details: `${date} sanasidagi chiqim ma'lumotlari yangilandi`,
+                  isAfter17,
+                })
               }
             }
 

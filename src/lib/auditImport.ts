@@ -110,3 +110,92 @@ export async function recordImportAudit(
     return null
   }
 }
+
+export interface ShiftEditAuditEntry {
+  id: string
+  timestamp: string // ISO date string
+  userId?: number | null
+  userName: string
+  userRole: string
+  date: string // e.g. "2026-11-09"
+  target: 'KIRIM' | 'CHIQIM' | 'GP'
+  targetTitle: string
+  reason: string
+  details?: string | null
+  isAfter17: boolean
+}
+
+/**
+ * Persists an after-17:00 / shift edit audit record into the Setting table under 'shift_audit_history'
+ * and also writes it to the permanent Log table.
+ */
+export async function recordShiftEditAudit(
+  entry: Omit<ShiftEditAuditEntry, 'id' | 'timestamp'>
+): Promise<ShiftEditAuditEntry | null> {
+  const newRecord: ShiftEditAuditEntry = {
+    id: `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    timestamp: new Date().toISOString(),
+    ...entry,
+  }
+
+  try {
+    const existing = await prisma.setting.findUnique({
+      where: { key: 'shift_audit_history' },
+    })
+
+    let history: ShiftEditAuditEntry[] = []
+    if (existing?.value) {
+      try {
+        const parsed = JSON.parse(existing.value)
+        if (Array.isArray(parsed)) {
+          history = parsed
+        }
+      } catch {}
+    }
+
+    history.unshift(newRecord)
+    if (history.length > 300) {
+      history = history.slice(0, 300)
+    }
+
+    await prisma.setting.upsert({
+      where: { key: 'shift_audit_history' },
+      update: {
+        value: JSON.stringify(history),
+        category: 'audit',
+      },
+      create: {
+        key: 'shift_audit_history',
+        value: JSON.stringify(history),
+        category: 'audit',
+      },
+    })
+
+    try {
+      await prisma.log.create({
+        data: {
+          userId: entry.userId ?? null,
+          action: entry.isAfter17 ? 'EDIT_AFTER_17' : 'EDIT_SHIFT',
+          entity: entry.target,
+          details: JSON.stringify({
+            userName: entry.userName,
+            userRole: entry.userRole,
+            date: entry.date,
+            targetTitle: entry.targetTitle,
+            reason: entry.reason,
+            details: entry.details,
+            isAfter17: entry.isAfter17,
+          }),
+        },
+      })
+    } catch (logErr) {
+      console.warn('Non-fatal error creating Log for shift edit:', logErr)
+    }
+
+    return newRecord
+  } catch (err) {
+    console.error('Fatal error recording shift edit audit:', err)
+    return null
+  }
+}
+
