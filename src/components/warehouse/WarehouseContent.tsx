@@ -52,7 +52,7 @@ import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/Infin
 const tBase = {
   uz: {
     title: "Omborxona (WMS)",
-    subtitle: "Xomashyolar qoldig'i, FEFO nazorati, Ombor chiqimi (Two-Way Handshake) va Harorat jurnali",
+    subtitle: "Xomashyolar qoldig'i, FEFO nazorati va Ombor chiqimi (Two-Way Handshake)",
     tabStock: "Xomashyolar Qoldig'i (FEFO)",
     tabTransfers: "Ombor Chiqimi & Transfer (Handshake)",
     tabTemp: "Harorat Nazorati Jurnali (Ombor)",
@@ -94,7 +94,7 @@ const tBase = {
   },
   ru: {
     title: "Склад (WMS)",
-    subtitle: "Остатки сырья, контроль FEFO, отпуск в кухню/заготовку (Handshake) и Журнал температурного режима",
+    subtitle: "Остатки сырья, контроль FEFO и отпуск в цех (Two-Way Handshake)",
     tabStock: "Остатки сырья (FEFO)",
     tabTransfers: "Отпуск сырья & Перемещения (Handshake)",
     tabTemp: "Журнал температурного режима (Склад)",
@@ -136,7 +136,7 @@ const tBase = {
   },
   en: {
     title: "Warehouse (WMS)",
-    subtitle: "Raw material stock, FEFO tracking, Warehouse Dispatches, and Temperature Log",
+    subtitle: "Raw material stock, FEFO tracking, and Warehouse Dispatches (Two-Way Handshake)",
     tabStock: "Stock Inventory (FEFO)",
     tabTransfers: "Stock Dispatches (Two-Way Handshake)",
     tabTemp: "Temperature Log (Warehouse)",
