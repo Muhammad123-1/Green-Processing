@@ -37,6 +37,17 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     return null
   }
 
+  // Oshxona (Brakeraj va Xodimlar oshxonasi) hamda SanPiN jurnallari sahifalarida
+  // telefondan kirilganda pastgi mobil menyuni yashirish (to'liq ekran va jadvallar qulayligi uchun)
+  if (
+    pathname.startsWith('/degustatsiya') ||
+    pathname.startsWith('/kitchen') ||
+    pathname.startsWith('/first-aid') ||
+    pathname.startsWith('/drivers-medical')
+  ) {
+    return null
+  }
+
   // STRICT PRIVACY FOR SUPPLIER: Only My Orders and Logout
   if (userRole === 'SUPPLIER') {
     return (
