@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Truck,
@@ -16,18 +16,12 @@ import {
   Clock,
   User,
   Activity,
-  Edit2,
   Trash2,
   RefreshCw,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
-  X,
-  FileSpreadsheet,
-  Check,
   ShieldCheck,
-  Gauge,
-  Thermometer,
+  Save,
   Zap,
   MessageSquare
 } from 'lucide-react'
@@ -45,6 +39,8 @@ export interface DriverMedicalExamItem {
   breathAlcohol: string // 7. Чиқарилаётган нафас таркибида алкогол миқдори (аниқланмади)
   result: string // 8. Ҳайдовчиларни тиббий кўрикдан ўтказиш натижалари (соғлом, рейска рухсат)
   signature: string // 9. Имзо
+  _dirty?: boolean
+  _isNew?: boolean
 }
 
 // Корхонанинг доимий ҳайдовчилари рўйхати (3 ва 4-расмлардан олинган)
@@ -69,80 +65,81 @@ export const OFFICIAL_FLEET_DRIVERS = [
   'Шерматов Р.'
 ]
 
-// 3 ва 4-расмлардаги ҳақиқий ёзувлар
-const INITIAL_DRIVER_LOGS: DriverMedicalExamItem[] = [
-  // 2025-10-20
-  { id: 'dm-1', orderNumber: 1, date: '2025-10-20', driverName: 'Садибеков И.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.2', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-2', orderNumber: 2, date: '2025-10-20', driverName: 'Солиев В.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.2', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-3', orderNumber: 3, date: '2025-10-20', driverName: 'Расилов И.', complaints: 'йўқ', pulse: '78-80', bodyTemp: '36.3', bloodPressure: '120/70', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-4', orderNumber: 4, date: '2025-10-20', driverName: 'Шерматов Р.', complaints: 'йўқ', pulse: '74-76', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-5', orderNumber: 5, date: '2025-10-20', driverName: 'Салихов Х.', complaints: 'йўқ', pulse: '82-84', bodyTemp: '36.2', bloodPressure: '115/70', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-6', orderNumber: 6, date: '2025-10-20', driverName: 'Матқобилов М.', complaints: 'йўқ', pulse: '74-76', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-7', orderNumber: 7, date: '2025-10-20', driverName: 'Мирзаев И.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-8', orderNumber: 8, date: '2025-10-20', driverName: 'Пўлатов М.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.6', bloodPressure: '120/70', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-9', orderNumber: 9, date: '2025-10-20', driverName: 'Нажмиддинов Ф.', complaints: 'йўқ', pulse: '82-84', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-10', orderNumber: 10, date: '2025-10-20', driverName: 'Шокирбеков Д.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.2', bloodPressure: '130/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-11', orderNumber: 11, date: '2025-10-20', driverName: 'Худойберганов Х.', complaints: 'йўқ', pulse: '82-84', bodyTemp: '36.1', bloodPressure: '110/60', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-12', orderNumber: 12, date: '2025-10-20', driverName: 'Тўхтаев А.', complaints: 'йўқ', pulse: '78-80', bodyTemp: '36.3', bloodPressure: '130/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-13', orderNumber: 13, date: '2025-10-20', driverName: 'Жўраев Б.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.5', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
+const getTodayTashkent = () => {
+  const d = new Date()
+  const tzOffset = 5 * 60 * 60 * 1000
+  return new Date(d.getTime() + tzOffset).toISOString().slice(0, 10)
+}
 
-  // 2025-10-17
-  { id: 'dm-14', orderNumber: 1, date: '2025-10-17', driverName: 'Салихов Х.', complaints: 'йўқ', pulse: '82-84', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-15', orderNumber: 2, date: '2025-10-17', driverName: 'Солиев В.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.2', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-16', orderNumber: 3, date: '2025-10-17', driverName: 'Азизов Д.', complaints: 'йўқ', pulse: '74-76', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-17', orderNumber: 4, date: '2025-10-17', driverName: 'Асқаров Т.', complaints: 'йўқ', pulse: '74-76', bodyTemp: '36.3', bloodPressure: '110/70', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-18', orderNumber: 5, date: '2025-10-17', driverName: 'Матқобилов М.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.2', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-19', orderNumber: 6, date: '2025-10-17', driverName: 'Пўлатов М.', complaints: 'йўқ', pulse: '74-76', bodyTemp: '36.2', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-20', orderNumber: 7, date: '2025-10-17', driverName: 'Собиров Д.', complaints: 'йўқ', pulse: '76-78', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-21', orderNumber: 8, date: '2025-10-17', driverName: 'Мавланов А.', complaints: 'йўқ', pulse: '78-80', bodyTemp: '36.4', bloodPressure: '130/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-22', orderNumber: 9, date: '2025-10-17', driverName: 'Пирманов А.', complaints: 'йўқ', pulse: '74-76', bodyTemp: '36.2', bloodPressure: '110/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' },
-  { id: 'dm-23', orderNumber: 10, date: '2025-10-17', driverName: 'Жўраев Б.', complaints: 'йўқ', pulse: '74-76', bodyTemp: '36.3', bloodPressure: '120/80', breathAlcohol: 'аниқланмади', result: 'соғлом, рейска рухсат', signature: 'Жуманова Ч.Э.' }
-]
+const createEmptyDriverRow = (date: string, orderNumber: number): DriverMedicalExamItem => ({
+  id: `new-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  orderNumber,
+  date: date || getTodayTashkent(),
+  driverName: '',
+  complaints: 'йўқ',
+  pulse: '76-78',
+  bodyTemp: '36.2',
+  bloodPressure: '120/80',
+  breathAlcohol: 'аниқланмади',
+  result: 'соғлом, рейска рухсат',
+  signature: 'Жуманова Ч.Э.',
+  _isNew: true,
+  _dirty: false
+})
 
 export default function DriversMedicalContent() {
-  const [logs, setLogs] = useState<DriverMedicalExamItem[]>(INITIAL_DRIVER_LOGS)
-  const [filterDate, setFilterDate] = useState<string>(() => new Date().toISOString().slice(0, 10))
+  const [logs, setLogs] = useState<DriverMedicalExamItem[]>([])
+  const [filterDate, setFilterDate] = useState<string>(getTodayTashkent)
   const [searchQuery, setSearchQuery] = useState('')
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingLog, setEditingLog] = useState<DriverMedicalExamItem | null>(null)
+  const [savingAll, setSavingAll] = useState(false)
 
-  // Form State - 9 Columns matching Photos 3 & 4
-  const [formData, setFormData] = useState({
-    orderNumber: 1,
-    date: new Date().toISOString().slice(0, 10),
-    driverName: OFFICIAL_FLEET_DRIVERS[0],
-    complaints: 'йўқ',
-    pulse: '76-78',
-    bodyTemp: '36.3',
-    bloodPressure: '120/80',
-    breathAlcohol: 'аниқланмади',
-    result: 'соғлом, рейска рухсат',
-    signature: 'Жуманова Ч.Э.'
-  })
-
-  // Load from localStorage
+  // Load from localStorage (filtrlash: eski mock/demo ma'lumotlar o'chiriladi)
   useEffect(() => {
     try {
       const saved = localStorage.getItem('gp_drivers_medical_logs_2026')
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setLogs(parsed)
+        if (Array.isArray(parsed)) {
+          // Namuna (demo) ma'lumotlarni filtrlab olib tashlash
+          const cleaned = parsed.filter(item => {
+            if (!item || !item.id) return false
+            // Eski 'dm-1' .. 'dm-23' namunalarini tozalash
+            const isMock = typeof item.id === 'string' && /^dm-\d+$/.test(item.id) && (item.date === '2025-10-20' || item.date === '2025-10-17')
+            return !isMock
+          })
+          setLogs(cleaned)
         }
       }
-    } catch (e) {
-      // fallback
+    } catch {
+      // ignore
     }
   }, [])
 
-  const saveLogs = (updated: DriverMedicalExamItem[]) => {
-    setLogs(updated)
+  // Save to localStorage
+  const persistLogs = useCallback((updated: DriverMedicalExamItem[]) => {
+    // Faqat haqiqiy (nomi bor) yozuvlarni saqlaymiz
+    const cleanToStore = updated
+      .filter(l => l.driverName.trim())
+      .map(l => ({
+        id: l.id.startsWith('new-') ? `dm-real-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` : l.id,
+        orderNumber: l.orderNumber,
+        date: l.date,
+        driverName: l.driverName.trim(),
+        complaints: l.complaints || 'йўқ',
+        pulse: l.pulse || '76-78',
+        bodyTemp: l.bodyTemp || '36.2',
+        bloodPressure: l.bloodPressure || '120/80',
+        breathAlcohol: l.breathAlcohol || 'аниқланмади',
+        result: l.result || 'соғлом, рейска рухсат',
+        signature: l.signature || 'Жуманова Ч.Э.'
+      }))
+
     try {
-      localStorage.setItem('gp_drivers_medical_logs_2026', JSON.stringify(updated))
-    } catch (e) {
+      localStorage.setItem('gp_drivers_medical_logs_2026', JSON.stringify(cleanToStore))
+    } catch {
       // ignore
     }
-  }
+  }, [])
 
   // Quick Date Navigation
   const handleDateStep = (days: number) => {
@@ -152,96 +149,106 @@ export default function DriversMedicalContent() {
     setFilterDate(base.toISOString().slice(0, 10))
   }
 
-  // Open Create Modal
-  const handleOpenCreate = () => {
-    setEditingLog(null)
-    const currentDate = filterDate === 'ALL' ? new Date().toISOString().slice(0, 10) : filterDate
-    const existingForDate = logs.filter(l => l.date === currentDate)
-    const nextOrder = existingForDate.length + 1
+  // Update single field in a row
+  const updateRowField = (id: string, patch: Partial<DriverMedicalExamItem>) => {
+    setLogs(prev => {
+      const idx = prev.findIndex(item => item.id === id)
+      if (idx === -1) return prev
 
-    setFormData({
-      orderNumber: nextOrder,
-      date: currentDate,
-      driverName: OFFICIAL_FLEET_DRIVERS[0],
-      complaints: 'йўқ',
-      pulse: '76-78',
-      bodyTemp: '36.3',
-      bloodPressure: '120/80',
-      breathAlcohol: 'аниқланмади',
-      result: 'соғлом, рейска рухсат',
-      signature: 'Жуманова Ч.Э.'
+      const next = [...prev]
+      const cur = next[idx]
+      const updated = { ...cur, ...patch, _dirty: true }
+      next[idx] = updated
+
+      // Kirim-chiqim kabi: Agar yangi qatorda haydovchi tanlansa, darhol keyingi bo'sh qatorni tayyorlab qo'yadi
+      if (updated._isNew && updated.driverName.trim() && idx === next.length - 1 && filterDate !== 'ALL') {
+        const nextOrder = next.filter(l => l.date === filterDate).length + 1
+        next.push(createEmptyDriverRow(filterDate, nextOrder))
+      }
+
+      return next
     })
-    setIsFormOpen(true)
   }
 
-  // Open Edit Modal
-  const handleOpenEdit = (item: DriverMedicalExamItem) => {
-    setEditingLog(item)
-    setFormData({
-      orderNumber: item.orderNumber,
-      date: item.date,
-      driverName: item.driverName,
-      complaints: item.complaints,
-      pulse: item.pulse,
-      bodyTemp: item.bodyTemp,
-      bloodPressure: item.bloodPressure,
-      breathAlcohol: item.breathAlcohol,
-      result: item.result,
-      signature: item.signature || 'Жуманова Ч.Э.'
-    })
-    setIsFormOpen(true)
+  // Add explicit new row
+  const handleAddNewRow = () => {
+    const targetDate = filterDate === 'ALL' ? getTodayTashkent() : filterDate
+    const existing = logs.filter(l => l.date === targetDate)
+    const nextOrder = existing.length + 1
+    const newRow = createEmptyDriverRow(targetDate, nextOrder)
+    newRow._dirty = true
+
+    setLogs(prev => [...prev, newRow])
+    toast.info("Янги қатор қўшилди. Ҳайдовчи маълумотларини киритинг.")
   }
 
-  // Save (Create or Update)
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.driverName.trim()) {
-      toast.error('Ҳайдовчи исмини киритинг!')
+  // Save single row
+  const handleSaveRow = (id: string) => {
+    const row = logs.find(l => l.id === id)
+    if (!row) return
+    if (!row.driverName.trim()) {
+      toast.error("Илтимос, ҳайдовчи исмини киритинг ёки танланг!")
       return
     }
 
-    if (editingLog) {
-      const updated = logs.map(l => (l.id === editingLog.id ? { ...l, ...formData } : l))
-      saveLogs(updated)
-      toast.success("Ҳайдовчи кўрик ёзуви янгиланди")
-    } else {
-      const newItem: DriverMedicalExamItem = {
-        id: 'dm-' + Date.now(),
-        ...formData
-      }
-      saveLogs([...logs, newItem])
-      toast.success("Ҳайдовчи тиббий кўриги қайд этилди")
-    }
-    setIsFormOpen(false)
+    const updated = logs.map(l => (l.id === id ? { ...l, _dirty: false, _isNew: false } : l))
+    setLogs(updated)
+    persistLogs(updated)
+    toast.success(`№${row.orderNumber} ${row.driverName} маълумоти сақланди`)
   }
 
-  // Delete
-  const handleDelete = (id: string) => {
-    if (!confirm("Ушбу ҳайдовчи кўрик ёзувини ўчирмоқчимисиз?")) return
+  // Save all dirty rows
+  const handleSaveAll = () => {
+    const dirtyRows = logs.filter(l => l._dirty && l.driverName.trim())
+    if (dirtyRows.length === 0) {
+      toast.info("Ўзгаришлар йўқ, барчаси сақланган")
+      return
+    }
+
+    setSavingAll(true)
+    const updated = logs.map(l => (l._dirty && l.driverName.trim() ? { ...l, _dirty: false, _isNew: false } : l))
+    setLogs(updated)
+    persistLogs(updated)
+    setSavingAll(false)
+    toast.success(`${dirtyRows.length} та ҳайдовчи кўрик маълумотлари сақланди`)
+  }
+
+  // Delete row
+  const handleDeleteRow = (id: string) => {
+    const row = logs.find(l => l.id === id)
+    if (!row) return
+
+    if (row._isNew && !row.driverName.trim()) {
+      return
+    }
+
+    if (!confirm(`"${row.driverName || 'Ҳайдовчи'}" кўрик ёзувини ўчирмоқчимисиз?`)) return
     const updated = logs.filter(l => l.id !== id)
-    saveLogs(updated)
+    setLogs(updated)
+    persistLogs(updated)
     toast.success("Ёзув ўчирилди")
   }
 
-  // Quick Pre-Trip Bulk Generator: Auto-check all standard fleet drivers for selected date
+  // Quick Pre-Trip Bulk Generator: Auto-check 10 standard fleet drivers for selected date
   const handleBulkCheckAllDrivers = () => {
-    const targetDate = filterDate === 'ALL' ? new Date().toISOString().slice(0, 10) : filterDate
-    const existing = logs.filter(l => l.date === targetDate)
+    const targetDate = filterDate === 'ALL' ? getTodayTashkent() : filterDate
+    const existing = logs.filter(l => l.date === targetDate && l.driverName.trim())
 
     if (existing.length > 0) {
-      if (!confirm(`Ушбу сана (${targetDate}) учун аллақачон ${existing.length} та ёзув мавжуд. Барча ҳайдовчилар рўйхатини қайта тўлдирмоқчимисиз?`)) {
+      if (!confirm(`Ушбу сана (${targetDate}) учун аллақачон ${existing.length} та ёзув мавжуд. Қайта тўлдирмоқчимисиз?`)) {
         return
       }
     }
 
     const withoutDate = logs.filter(l => l.date !== targetDate)
 
-    // Pulse and temperature realistic variations
-    const pulses = ['74-76', '76-78', '78-80', '80-82', '82-84']
-    const temps = ['36.2', '36.3', '36.4', '36.5', '36.6']
+    const pulses = ['74-76', '76-78', '78-80', '80-82', '76-78']
+    const temps = ['36.2', '36.3', '36.4', '36.2', '36.5']
     const pressures = ['120/80', '120/70', '115/70', '130/80', '125/80']
 
-    const newRows: DriverMedicalExamItem[] = OFFICIAL_FLEET_DRIVERS.map((driver, idx) => ({
+    // 10 ta asosiy haydovchini bir tugma bilan qo'shish
+    const bulkDrivers = OFFICIAL_FLEET_DRIVERS.slice(0, 10)
+    const newRows: DriverMedicalExamItem[] = bulkDrivers.map((driver, idx) => ({
       id: `dm-bulk-${Date.now()}-${idx}`,
       orderNumber: idx + 1,
       date: targetDate,
@@ -252,130 +259,174 @@ export default function DriversMedicalContent() {
       bloodPressure: pressures[idx % pressures.length],
       breathAlcohol: 'аниқланмади',
       result: 'соғлом, рейска рухсат',
-      signature: 'Жуманова Ч.Э.'
+      signature: 'Жуманова Ч.Э.',
+      _dirty: true,
+      _isNew: false
     }))
 
-    const updated = [...withoutDate, ...newRows]
-    saveLogs(updated)
-    toast.success(`Сана (${targetDate}) учун ${newRows.length} та ҳайдовчининг кунлик кўриги тўлиқ қайд этилди!`)
+    // Oxirida yana 1 ta bo'sh qator
+    newRows.push(createEmptyDriverRow(targetDate, newRows.length + 1))
+
+    const merged = [...withoutDate, ...newRows]
+    setLogs(merged)
+    persistLogs(merged)
+    toast.success(`Бугунги ${bulkDrivers.length} та ҳайдовчи кўрик жадвалига киритилди!`)
   }
 
-  // Filtered Logs
-  const filteredLogs = logs.filter(item => {
-    const matchDate = filterDate === 'ALL' || item.date === filterDate
-    const matchSearch =
-      !searchQuery ||
-      item.driverName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.result.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchDate && matchSearch
-  })
+  // Table items displayed (including 1 automatic empty row at bottom when on a single date)
+  const displayedRows = useMemo(() => {
+    let filtered = logs.filter(item => {
+      const matchDate = filterDate === 'ALL' || item.date === filterDate
+      const matchSearch =
+        !searchQuery.trim() ||
+        item.driverName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.complaints.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.result.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchDate && matchSearch
+    })
 
-  // Counters
-  const totalCount = filteredLogs.length
-  const healthyCount = filteredLogs.filter(
-    l => l.result.toLowerCase().includes('соғлом') || l.result.toLowerCase().includes('рухсат')
-  ).length
-  const rejectedCount = filteredLogs.filter(
-    l => l.result.toLowerCase().includes('рад') || l.result.toLowerCase().includes('четлатилди')
-  ).length
+    // Kirim-chiqim kabi: Bo'sh yangi qator turishi kerak
+    if (filterDate !== 'ALL' && !searchQuery.trim()) {
+      const hasEmpty = filtered.some(r => r._isNew && !r.driverName.trim())
+      if (!hasEmpty) {
+        const nextOrder = filtered.length + 1
+        filtered = [...filtered, createEmptyDriverRow(filterDate, nextOrder)]
+      }
+    }
 
-  // Export CSV / Excel
+    return filtered
+  }, [logs, filterDate, searchQuery])
+
+  // Unsaved changes flag
+  const hasUnsavedChanges = useMemo(() => {
+    return logs.some(l => l._dirty && l.driverName.trim())
+  }, [logs])
+
+  // Export to CSV
   const handleExportCSV = () => {
-    if (filteredLogs.length === 0) {
-      toast.error("Экспорт қилиш учун маълумот йўқ")
+    const targetRows = displayedRows.filter(r => r.driverName.trim())
+    if (targetRows.length === 0) {
+      toast.error("Экспорт қилиш учун ёзувлар йўқ!")
       return
     }
 
     const headers = [
-      'Тартиб рақами',
+      '№',
+      'Ҳайдовчининг Ф.И.Ш.',
       'Сана',
-      'Ҳайдовчининг фамилияси, исми, отасининг исми',
       'Шикоятлари',
       'Томир уриши',
       'Тана ҳарорати',
       'Артериал босим',
-      'Чиқарилаётган нафас таркибида алкогол миқдори',
-      'Ҳайдовчиларни тиббий кўрикдан ўтказиш натижалари',
+      'Алкогол миқдори',
+      'Тиббий кўрик натижаси',
       'Имзо'
     ]
 
-    const rows = filteredLogs.map((l, i) => [
-      l.orderNumber || i + 1,
-      `"${l.date}"`,
-      `"${l.driverName}"`,
-      `"${l.complaints}"`,
-      `"${l.pulse}"`,
-      `"${l.bodyTemp}"`,
-      `"${l.bloodPressure}"`,
-      `"${l.breathAlcohol}"`,
-      `"${l.result}"`,
-      `"${l.signature}"`
+    const csvRows = targetRows.map(r => [
+      r.orderNumber,
+      `"${r.driverName}"`,
+      r.date,
+      `"${r.complaints}"`,
+      `"${r.pulse}"`,
+      `"${r.bodyTemp}"`,
+      `"${r.bloodPressure}"`,
+      `"${r.breathAlcohol}"`,
+      `"${r.result}"`,
+      `"${r.signature}"`
     ])
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const csvContent = '\uFEFF' + [headers.join(','), ...csvRows.map(e => e.join(','))].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.download = `Haydovchilar_kunlik_tibbi_korik_${filterDate}.csv`
+    document.body.appendChild(link)
     link.click()
-    URL.revokeObjectURL(url)
-    toast.success("CSV файли муваффақиятли юклаб олинди")
+    document.body.removeChild(link)
+    toast.success("Excel CSV файли юклаб олинди")
   }
 
-  // Print
   const handlePrint = () => {
     window.print()
   }
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Top Banner & Header - Adaptive Light & Dark mode, calm colors for older eyes */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 text-slate-900 dark:text-white shadow-sm relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white flex items-center justify-center shadow-xs shrink-0 border border-slate-300 dark:border-slate-700">
-              <Truck size={26} className="text-blue-600 dark:text-blue-400" />
+    <div className="space-y-4 pb-12">
+      {/* HTML Datalist for fast driver name auto-complete */}
+      <datalist id="fleet-drivers-list">
+        {OFFICIAL_FLEET_DRIVERS.map(driver => (
+          <option key={driver} value={driver} />
+        ))}
+      </datalist>
+
+      {/* Main Container - Simple, solid slate borders like Kirim-Chiqim */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-300 dark:border-slate-800 flex flex-col text-slate-900 dark:text-white overflow-hidden">
+        
+        {/* Top Header & Actions Bar */}
+        <div className="p-4 sm:p-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-slate-700 shadow-xs">
+              <Truck size={22} className="text-slate-800 dark:text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1.5">
-                  <ShieldCheck size={14} />
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                  Рейс олди кўриги
+                </span>
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-medium hidden sm:inline">
                   3 ва 4-расм бўйича расмий журнал
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Рейс олди кунлик кўрик</span>
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                Линияга Йўналтирилган Ҳайдовчиларни Кунлик Тиббий Кўрикдан Ўтказиш Журнали
-              </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Ҳайдовчилар шикоятлари, томир уриши (пульс), тана ҳарорати, артериал босим, алкогол текшируви ва рейсга рухсат хулосаларини кунлик қайд этиш дафтари.
-              </p>
+              <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                ЛИНИЯГА ЙЎНАЛТИРИЛГАН ҲАЙДОВЧИЛАРНИ КУНЛИК ТИББИЙ КЎРИКДАН ЎТКАЗИШ ЖУРНАЛИ
+              </h2>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 no-print">
+          <div className="flex flex-wrap items-center gap-2 no-print">
+            {/* Quick add empty row */}
             <button
-              onClick={handleBulkCheckAllDrivers}
-              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
-              title="Шу кун учун корхонанинг барча ҳайдовчиларини автоматик нормал кўрик билан тўлдириш"
-            >
-              <Zap size={16} />
-              <span>Барча ҳайдовчиларни тезкор кўрикдан ўтказиш</span>
-            </button>
-
-            <button
-              onClick={handleOpenCreate}
-              className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
+              type="button"
+              onClick={handleAddNewRow}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
             >
               <Plus size={16} />
               <span>+ Ҳайдовчи қўшиш</span>
             </button>
 
+            {/* Master Save All */}
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={savingAll || !hasUnsavedChanges}
+              className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 shadow-xs cursor-pointer ${
+                hasUnsavedChanges
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+              title="Барча ўзгаришларни сақлаш"
+            >
+              <Save size={15} />
+              <span>{savingAll ? "Сақланмоқда..." : "Барчасини Сақлаш"}</span>
+            </button>
+
+            {/* Bulk check 10 drivers */}
+            <button
+              type="button"
+              onClick={handleBulkCheckAllDrivers}
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
+              title="Бугунги барча 10 та ҳайдовчини автоматик тўлдириш"
+            >
+              <Zap size={15} className="text-amber-500" />
+              <span className="hidden sm:inline">10 та ҳайдовчи</span>
+            </button>
+
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
-              title="Excel / CSV файлида юклаб олиш"
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
+              title="Excel CSV шаклида юклаб олиш"
             >
               <Download size={15} />
               <span>Excel</span>
@@ -383,90 +434,57 @@ export default function DriversMedicalContent() {
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
-              title="A4 форматда чоп этиш"
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
+              title="Чоп этиш"
             >
               <Printer size={15} />
               <span>Чоп этиш</span>
             </button>
-
-            {/* Quick links to other SanPiN journals */}
-            <Link
-              href="/degustatsiya"
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition"
-              title="Ошхона бракераж журналига ўтиш"
-            >
-              <UtensilsCrossed size={15} className="text-emerald-500" />
-              <span>Ошхона</span>
-            </Link>
-
-            <Link
-              href="/first-aid"
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition"
-              title="Биринчи ёрдам кўрсатиш журналига ўтиш"
-            >
-              <HeartPulse size={15} className="text-rose-500" />
-              <span>Биринчи ёрдам</span>
-            </Link>
-
-            <Link
-              href="/chat"
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition"
-              title="Чатни очиш"
-            >
-              <MessageSquare size={15} className="text-amber-500" />
-              <span>Чат</span>
-            </Link>
           </div>
         </div>
-      </div>
 
-      {/* Main Card with Filters and Official Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-md overflow-hidden border border-slate-300 dark:border-slate-800 flex flex-col text-slate-800 dark:text-slate-200">
-        {/* Filter and Stats Bar */}
-        <div className="p-3.5 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm no-print">
+        {/* Date Filter & Search Bar */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-850 border-b border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm no-print">
           <div className="flex flex-wrap items-center gap-2">
             {/* Date Stepper */}
-            <div className="flex items-center gap-1 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-1 shadow-2xs">
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
               <button
                 type="button"
                 onClick={() => handleDateStep(-1)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-lg text-slate-600 dark:text-slate-300 transition"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 transition"
                 title="Олдинги кун"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={15} />
               </button>
-
               <div className="flex items-center gap-1.5 px-2">
-                <Calendar size={14} className="text-sky-500" />
+                <Calendar size={14} className="text-slate-600 dark:text-slate-400" />
                 <span className="text-slate-500 font-bold">Сана:</span>
                 <input
                   type="date"
                   value={filterDate === 'ALL' ? '' : filterDate}
                   onChange={e => setFilterDate(e.target.value)}
-                  className="bg-transparent outline-none font-mono font-bold text-slate-800 dark:text-slate-200"
+                  className="bg-transparent outline-none font-mono font-bold text-slate-900 dark:text-white"
                 />
               </div>
-
               <button
                 type="button"
                 onClick={() => handleDateStep(1)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-lg text-slate-600 dark:text-slate-300 transition"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 transition"
                 title="Кейинги кун"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={15} />
               </button>
             </div>
 
-            {/* Quick Date Pills */}
+            {/* Quick Date Pills: Real dates only */}
             <div className="flex flex-wrap items-center gap-1">
               <button
                 type="button"
-                onClick={() => setFilterDate(new Date().toISOString().slice(0, 10))}
-                className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
-                  filterDate === new Date().toISOString().slice(0, 10)
+                onClick={() => setFilterDate(getTodayTashkent())}
+                className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                  filterDate === getTodayTashkent()
                     ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                    : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
+                    : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
                 Бугун
@@ -474,10 +492,10 @@ export default function DriversMedicalContent() {
               <button
                 type="button"
                 onClick={() => setFilterDate('ALL')}
-                className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
+                className={`px-3 py-1.5 rounded-xl font-bold transition ${
                   filterDate === 'ALL'
                     ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                    : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
+                    : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
                 Барча саналар
@@ -485,500 +503,248 @@ export default function DriversMedicalContent() {
             </div>
 
             {/* Search */}
-            <div className="flex items-center gap-1.5 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 px-3 py-1.5 rounded-xl text-xs">
+            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded-xl text-xs shadow-2xs">
               <Search size={14} className="text-slate-400" />
               <input
                 type="text"
-                placeholder="Ҳайдовчи исми..."
+                placeholder="Ҳайдовчи исми бўйича қидириш..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="bg-transparent outline-none text-slate-800 dark:text-slate-200 w-44"
+                className="bg-transparent outline-none text-slate-900 dark:text-white w-48 sm:w-60 placeholder:text-slate-400"
               />
             </div>
           </div>
 
-          {/* Counter Badges */}
+          {/* Counters */}
           <div className="flex flex-wrap items-center gap-2 font-medium">
-            <span className="px-2.5 py-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-lg text-slate-600 dark:text-slate-400">
-              Кўрикдан ўтган: <strong className="text-slate-900 dark:text-white font-mono">{totalCount} нафар</strong>
+            <span className="px-3 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-400">
+              Жами кўрик: <strong className="text-slate-900 dark:text-white font-mono">{displayedRows.filter(r => r.driverName.trim()).length} нафар</strong>
             </span>
-            <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-lg text-emerald-800 dark:text-emerald-300 font-bold">
-              ✓ Соғлом, рейсга рухсат: {healthyCount}
+            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-lg text-emerald-800 dark:text-emerald-300 font-bold">
+              ✓ Рейска рухсат: {displayedRows.filter(r => r.driverName.trim() && !r.result.toLowerCase().includes('рад') && !r.result.toLowerCase().includes('четлатилди')).length}
             </span>
-            {rejectedCount > 0 && (
-              <span className="px-2.5 py-1 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-lg text-red-800 dark:text-red-300 font-bold">
-                ⚠ Четлатилди: {rejectedCount}
-              </span>
-            )}
           </div>
         </div>
 
-        {/* Official 9-Column Table Content (Matching Images 3 & 4) */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6 bg-slate-100/50 dark:bg-dark-950">
-          {filteredLogs.length === 0 ? (
-            <div className="p-16 text-center bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">
-              <Truck size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
-                Ушбу сана ({filterDate === 'ALL' ? 'барча саналар' : filterDate}) учун ҳайдовчилар кўриги қайд этилмаган
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                Бугунги кун учун барча ҳайдовчиларни бир тугма билан кўрикдан ўтказиш мумкин.
-              </p>
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={handleBulkCheckAllDrivers}
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/25 transition active:scale-95"
-                >
-                  <Zap size={16} />
-                  <span>Бугунги барча ҳайдовчиларни киритиш (10 нафар)</span>
-                </button>
-                <button
-                  onClick={() => setFilterDate('ALL')}
-                  className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-semibold transition"
-                >
-                  <span>Барча ёзувларни кўриш</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-300 dark:border-dark-700 shadow-sm overflow-x-auto">
-              <table className="w-full text-xs border-collapse">
-                <thead>
-                  {/* Big Title Row */}
-                  <tr className="bg-slate-100 dark:bg-dark-800 border-b-2 border-slate-300 dark:border-dark-700">
-                    <th colSpan={10} className="p-3 text-center text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                      ЛИНИЯГА ЙЎНАЛТИРИЛГАН ҲАЙДОВЧИЛАРНИ КУНЛИК ТИББИЙ КЎРИКДАН ЎТКАЗИШ ЖУРНАЛИ
-                    </th>
-                  </tr>
-                  {/* 9 Official Column Headers from Photos 3 & 4 */}
-                  <tr className="bg-slate-50 dark:bg-dark-850 border-b border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 font-bold">
-                    <th className="p-3 text-center w-14 border-r border-slate-300 dark:border-dark-700">
-                      <div>Тартиб рақами</div>
-                      <div className="text-[10px] text-slate-400 font-normal">1</div>
-                    </th>
-                    <th className="p-3 text-left min-w-[200px] border-r border-slate-300 dark:border-dark-700">
-                      <div>Ҳайдовчининг фамилияси, исми, отасининг исми</div>
-                      <div className="text-[10px] text-slate-400 font-normal">2</div>
-                    </th>
-                    <th className="p-3 text-center w-28 border-r border-slate-300 dark:border-dark-700">
-                      <div>Шикоятлари</div>
-                      <div className="text-[10px] text-slate-400 font-normal">3</div>
-                    </th>
-                    <th className="p-3 text-center w-28 border-r border-slate-300 dark:border-dark-700">
-                      <div>Томир уриши</div>
-                      <div className="text-[10px] text-slate-400 font-normal">4</div>
-                    </th>
-                    <th className="p-3 text-center w-28 border-r border-slate-300 dark:border-dark-700">
-                      <div>Тана ҳарорати</div>
-                      <div className="text-[10px] text-slate-400 font-normal">5</div>
-                    </th>
-                    <th className="p-3 text-center w-32 border-r border-slate-300 dark:border-dark-700">
-                      <div>Артериал босим</div>
-                      <div className="text-[10px] text-slate-400 font-normal">6</div>
-                    </th>
-                    <th className="p-3 text-center min-w-[190px] border-r border-slate-300 dark:border-dark-700">
-                      <div>Чиқарилаётган нафас таркибида алкогол миқдори</div>
-                      <div className="text-[10px] text-slate-400 font-normal">7</div>
-                    </th>
-                    <th className="p-3 text-center min-w-[180px] border-r border-slate-300 dark:border-dark-700">
-                      <div>Ҳайдовчиларни тиббий кўрикдан ўтказиш натижалари</div>
-                      <div className="text-[10px] text-slate-400 font-normal">8</div>
-                    </th>
-                    <th className="p-3 text-center w-28 border-r border-slate-300 dark:border-dark-700">
-                      <div>Имзо</div>
-                      <div className="text-[10px] text-slate-400 font-normal">9</div>
-                    </th>
-                    <th className="p-3 text-center w-20 no-print">Амаллар</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLogs.map((item, idx) => {
-                    const isRejected = item.result.toLowerCase().includes('рад') || item.result.toLowerCase().includes('четлатилди')
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`border-b border-slate-200 dark:border-dark-750 hover:bg-slate-50/50 dark:hover:bg-dark-850/50 transition ${
-                          idx % 2 === 1 ? 'bg-slate-50/30 dark:bg-dark-900/40' : ''
-                        }`}
-                      >
-                        {/* 1. Тартиб рақами */}
-                        <td className="p-2.5 text-center font-bold font-mono text-slate-600 dark:text-slate-400 border-r border-slate-300 dark:border-dark-700">
-                          {item.orderNumber || idx + 1}
-                        </td>
+        {/* Main Spreadsheet Table - Direct Inline Inputs (Huddi Kirim-Chiqim kabi) */}
+        <div className="flex-1 overflow-auto p-3 sm:p-5 bg-slate-100/60 dark:bg-slate-950">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-sm overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-850 border-b-2 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                  <th className="p-2.5 text-center font-bold w-12 border-r border-slate-300 dark:border-slate-700">
+                    <div>Т/р</div>
+                    <div className="text-[10px] text-slate-400 font-normal">1</div>
+                  </th>
+                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">
+                    <div>Ҳайдовчининг фамилияси, исми, отасининг исми *</div>
+                    <div className="text-[10px] text-slate-400 font-normal">2</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold min-w-[100px] border-r border-slate-300 dark:border-slate-700">
+                    <div>Шикоятлари</div>
+                    <div className="text-[10px] text-slate-400 font-normal">3</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold w-28 border-r border-slate-300 dark:border-slate-700">
+                    <div>Томир уриши</div>
+                    <div className="text-[10px] text-slate-400 font-normal">4</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold w-28 border-r border-slate-300 dark:border-slate-700">
+                    <div>Тана ҳарорати</div>
+                    <div className="text-[10px] text-slate-400 font-normal">5</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold w-32 border-r border-slate-300 dark:border-slate-700">
+                    <div>Артериал босим</div>
+                    <div className="text-[10px] text-slate-400 font-normal">6</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold min-w-[180px] border-r border-slate-300 dark:border-slate-700">
+                    <div>Алкогол миқдори</div>
+                    <div className="text-[10px] text-slate-400 font-normal">7</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">
+                    <div>Тиббий кўрик натижалари</div>
+                    <div className="text-[10px] text-slate-400 font-normal">8</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold w-32 border-r border-slate-300 dark:border-slate-700">
+                    <div>Ҳамшира имзоси</div>
+                    <div className="text-[10px] text-slate-400 font-normal">9</div>
+                  </th>
+                  <th className="p-2.5 text-center font-bold w-24 no-print">Амаллар</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayedRows.map((row, idx) => {
+                  const isRowEmptyNew = row._isNew && !row.driverName.trim()
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`border-b border-slate-200 dark:border-slate-800 transition ${
+                        row._dirty
+                          ? 'bg-amber-50/70 dark:bg-amber-950/20'
+                          : isRowEmptyNew
+                          ? 'bg-slate-50/40 dark:bg-slate-900/40'
+                          : 'hover:bg-slate-50/60 dark:hover:bg-slate-850/60'
+                      }`}
+                    >
+                      {/* 1. Tartib raqami */}
+                      <td className="p-2 text-center font-mono font-bold text-slate-600 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700">
+                        {row.orderNumber || idx + 1}
+                      </td>
 
-                        {/* 2. Ҳайдовчининг Ф.И.О. */}
-                        <td className="p-2.5 font-bold text-slate-900 dark:text-white border-r border-slate-300 dark:border-dark-700">
-                          <div className="flex items-center gap-1.5">
-                            <User size={14} className="text-sky-500 shrink-0" />
-                            <span>{item.driverName}</span>
-                          </div>
-                          {filterDate === 'ALL' && (
-                            <div className="text-[10px] text-slate-400 font-normal font-mono ml-5">
-                              {item.date}
-                            </div>
-                          )}
-                        </td>
+                      {/* 2. Haydovchi F.I.Sh. (Direct Input with fast suggestions) */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            list="fleet-drivers-list"
+                            value={row.driverName}
+                            onChange={e => updateRowField(row.id, { driverName: e.target.value })}
+                            placeholder={isRowEmptyNew ? "+ Янги ҳайдовчини ёзинг ёки танланг..." : "Ҳайдовчи Ф.И.Ш."}
+                            className={`w-full px-2.5 py-1.5 rounded-lg border font-bold text-xs text-slate-900 dark:text-white outline-none transition ${
+                              isRowEmptyNew
+                                ? 'bg-white dark:bg-slate-800 border-dashed border-slate-400 dark:border-slate-600 placeholder:text-slate-400 placeholder:font-normal'
+                                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 focus:border-slate-900 dark:focus:border-white shadow-2xs'
+                            }`}
+                          />
+                        </div>
+                      </td>
 
-                        {/* 3. Шикоятлари */}
-                        <td className="p-2.5 text-center font-medium text-slate-700 dark:text-slate-300 border-r border-slate-300 dark:border-dark-700">
-                          {item.complaints === 'йўқ' ? (
-                            <span className="text-slate-500 italic">йўқ</span>
-                          ) : (
-                            <span className="text-amber-700 dark:text-amber-300 font-bold">{item.complaints}</span>
-                          )}
-                        </td>
+                      {/* 3. Shikoyatlari */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <input
+                          type="text"
+                          value={row.complaints}
+                          onChange={e => updateRowField(row.id, { complaints: e.target.value })}
+                          placeholder="йўқ"
+                          className="w-full text-center px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700"
+                        />
+                      </td>
 
-                        {/* 4. Томир уриши */}
-                        <td className="p-2.5 text-center font-mono font-bold text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-dark-700">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-dark-800">
-                            <Activity size={11} className="text-rose-500" />
-                            {item.pulse}
-                          </span>
-                        </td>
+                      {/* 4. Tomir urishi */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <input
+                          type="text"
+                          value={row.pulse}
+                          onChange={e => updateRowField(row.id, { pulse: e.target.value })}
+                          placeholder="76-78"
+                          className="w-full text-center font-mono font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700"
+                        />
+                      </td>
 
-                        {/* 5. Тана ҳарорати */}
-                        <td className="p-2.5 text-center font-mono font-bold text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-dark-700">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200">
-                            <Thermometer size={11} className="text-amber-600" />
-                            {item.bodyTemp}°C
-                          </span>
-                        </td>
+                      {/* 5. Tana harorati */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <input
+                          type="text"
+                          value={row.bodyTemp}
+                          onChange={e => updateRowField(row.id, { bodyTemp: e.target.value })}
+                          placeholder="36.2"
+                          className="w-full text-center font-mono font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700"
+                        />
+                      </td>
 
-                        {/* 6. Артериал босим */}
-                        <td className="p-2.5 text-center font-mono font-bold text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-dark-700">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-200">
-                            <Gauge size={11} className="text-sky-600" />
-                            {item.bloodPressure}
-                          </span>
-                        </td>
+                      {/* 6. Arterial bosim */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <input
+                          type="text"
+                          value={row.bloodPressure}
+                          onChange={e => updateRowField(row.id, { bloodPressure: e.target.value })}
+                          placeholder="120/80"
+                          className="w-full text-center font-mono font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700"
+                        />
+                      </td>
 
-                        {/* 7. Алкогол миқдори */}
-                        <td className="p-2.5 text-center font-semibold text-slate-700 dark:text-slate-300 border-r border-slate-300 dark:border-dark-700">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800/40">
-                            <CheckCircle2 size={11} />
-                            {item.breathAlcohol}
-                          </span>
-                        </td>
+                      {/* 7. Alkogol miqdori */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <select
+                          value={row.breathAlcohol}
+                          onChange={e => updateRowField(row.id, { breathAlcohol: e.target.value })}
+                          className={`w-full px-2 py-1.5 rounded-lg border font-bold text-xs text-center outline-none cursor-pointer ${
+                            row.breathAlcohol.includes('аниқланди') && !row.breathAlcohol.includes('аниқланмади')
+                              ? 'bg-rose-50 border-rose-300 text-rose-900 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300'
+                              : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white'
+                          }`}
+                        >
+                          <option value="аниқланмади">аниқланмади (тоза)</option>
+                          <option value="аниқланди">аниқланди (ичган)</option>
+                        </select>
+                      </td>
 
-                        {/* 8. Тиббий кўрик натижалари */}
-                        <td className="p-2.5 text-center border-r border-slate-300 dark:border-dark-700">
-                          <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg text-xs ${
-                            isRejected
-                              ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300'
-                              : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                          }`}>
-                            {isRejected ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}
-                            {item.result}
-                          </span>
-                        </td>
+                      {/* 8. Tibbiy ko'rik natijalari */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <select
+                          value={row.result}
+                          onChange={e => updateRowField(row.id, { result: e.target.value })}
+                          className={`w-full px-2 py-1.5 rounded-lg border font-bold text-xs outline-none cursor-pointer ${
+                            row.result.toLowerCase().includes('рад') || row.result.toLowerCase().includes('четлатилди')
+                              ? 'bg-rose-50 border-rose-300 text-rose-900 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300'
+                              : 'bg-emerald-50 border-emerald-300 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
+                          }`}
+                        >
+                          <option value="соғлом, рейска рухсат">✓ соғлом, рейска рухсат</option>
+                          <option value="соғлом эмас, четлатилди">✕ соғлом эмас, четлатилди</option>
+                        </select>
+                      </td>
 
-                        {/* 9. Имзо */}
-                        <td className="p-2.5 text-center font-serif italic font-bold text-slate-700 dark:text-slate-300 border-r border-slate-300 dark:border-dark-700 whitespace-nowrap">
-                          {item.signature}
-                        </td>
+                      {/* 9. Hamshira imzosi */}
+                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                        <input
+                          type="text"
+                          value={row.signature}
+                          onChange={e => updateRowField(row.id, { signature: e.target.value })}
+                          placeholder="Жуманова Ч.Э."
+                          className="w-full text-center font-serif italic font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700"
+                        />
+                      </td>
 
-                        {/* Амаллар */}
-                        <td className="p-2.5 text-center no-print">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => handleOpenEdit(item)}
-                              className="p-1 hover:bg-slate-200 dark:hover:bg-dark-700 rounded text-slate-600 dark:text-slate-300 transition"
-                              title="Таҳрирлаш"
-                            >
-                              <Edit2 size={13} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="p-1 hover:bg-red-100 dark:hover:bg-red-950/40 rounded text-red-600 transition"
-                              title="Ўчириш"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                      {/* 10. Amallar (Saqlash / O'chirish) */}
+                      <td className="p-1.5 text-center no-print">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveRow(row.id)}
+                            disabled={!row.driverName.trim()}
+                            className={`p-1.5 rounded-lg transition cursor-pointer ${
+                              row._dirty && row.driverName.trim()
+                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs animate-pulse'
+                                : row.driverName.trim()
+                                ? 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                            }`}
+                            title="Сақлаш"
+                          >
+                            <Save size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRow(row.id)}
+                            className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-lg text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                            title="Ўчириш"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Footer Info */}
-        <div className="p-3 bg-white dark:bg-dark-900 border-t border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-1.5">
-            <ShieldCheck size={15} className="text-sky-600 shrink-0" />
+            <ShieldCheck size={15} className="text-slate-700 dark:text-slate-300 shrink-0" />
             <span>
-              Масъул тиббий ходим: <strong>Жуманова Ч.Э.</strong> (Фельдшер / Ҳамшира) • 3 ва 4-расм бўйича расмий 9 та устунли рейс олди журнали
+              Масъул тиббий ходим: <strong>Жуманова Ч.Э.</strong> (Фельдшер / Ҳамшира) • Расмий 9 та устунли рейс олди тиббий кўрик журнали
             </span>
           </div>
           <div className="text-[11px] text-slate-400">
-            Green Processing ERP • Автопарк ва логистика тиббий хавфсизлиги
+            Ўзгаришлар киритилгандан сўнг <strong>Барчасини Сақлаш</strong> тугмасини босинг.
           </div>
         </div>
       </div>
-
-      {/* ========================================================================= */}
-      {/* MODAL: ADD / EDIT DRIVER MEDICAL CHECK - Calm, solid & high-contrast       */}
-      {/* ========================================================================= */}
-      {isFormOpen && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto"
-          onClick={() => setIsFormOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full border-2 border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden my-auto text-slate-900 dark:text-slate-100 relative z-[101]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="p-4 sm:p-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white flex items-center justify-between border-b border-slate-300 dark:border-slate-800">
-              <div>
-                <h3 className="text-base sm:text-lg font-black flex items-center gap-2 text-slate-900 dark:text-white">
-                  <Truck size={20} className="text-blue-600 dark:text-blue-400" />
-                  {editingLog ? "Ҳайдовчи Кўригини Таҳрирлаш" : "Янги Ҳайдовчи Кўригини Қайд Этиш (3 ва 4-расм)"}
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                  Рейс олди тиббий кўрик: шикоят, пульс, ҳарорат, босим, алкогол ва рейсга рухсат
-                </p>
-              </div>
-              <button
-                onClick={() => setIsFormOpen(false)}
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition cursor-pointer"
-                title="Ёпиш"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="p-5 sm:p-6 overflow-y-auto space-y-4 max-h-[82vh]">
-              {/* Row 1: Order, Date, Driver Name */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
-                    1. Тартиб рақами
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.orderNumber}
-                    onChange={e => setFormData({ ...formData, orderNumber: Number(e.target.value) || 1 })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
-                    Кўрик санаси *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.date}
-                    onChange={e => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Driver Selection */}
-              <div>
-                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
-                  2. Ҳайдовчининг Ф.И.Ш. *
-                </label>
-                <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                  <span className="text-xs text-slate-600 dark:text-slate-400 font-bold mr-1">Корхона ҳайдовчилари:</span>
-                  {OFFICIAL_FLEET_DRIVERS.slice(0, 8).map((d, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, driverName: d })}
-                      className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition cursor-pointer"
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="Расилов И. / Салихов Х..."
-                  value={formData.driverName}
-                  onChange={e => setFormData({ ...formData, driverName: e.target.value })}
-                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                />
-              </div>
-
-              {/* 3. Shikoyatlar */}
-              <div>
-                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
-                  3. Шикоятлари
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, complaints: 'йўқ' })}
-                    className={`px-4 py-2 rounded-xl border-2 font-bold text-sm cursor-pointer ${
-                      formData.complaints === 'йўқ'
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    йўқ (стандарт)
-                  </button>
-                  <input
-                    type="text"
-                    value={formData.complaints}
-                    onChange={e => setFormData({ ...formData, complaints: e.target.value })}
-                    className="flex-1 p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* 4, 5, 6: Pulse, Temp, BP */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-50 dark:bg-slate-850 rounded-2xl border-2 border-slate-200 dark:border-slate-700">
-                <div>
-                  <label className="block font-bold text-sm text-slate-900 dark:text-slate-100 mb-1.5">
-                    4. Томир уриши *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="76-78"
-                    value={formData.pulse}
-                    onChange={e => setFormData({ ...formData, pulse: e.target.value })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-sm text-slate-900 dark:text-slate-100 mb-1.5">
-                    5. Ҳарорат (°C) *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="36.3"
-                    value={formData.bodyTemp}
-                    onChange={e => setFormData({ ...formData, bodyTemp: e.target.value })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-sm text-slate-900 dark:text-slate-100 mb-1.5">
-                    6. Қон босими *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="120/80"
-                    value={formData.bloodPressure}
-                    onChange={e => setFormData({ ...formData, bloodPressure: e.target.value })}
-                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* 7. Alkogol miqdori */}
-              <div>
-                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
-                  7. Чиқарилаётган нафас таркибида алкогол миқдори *
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, breathAlcohol: 'аниқланмади' })}
-                    className={`px-4 py-2 rounded-xl border-2 font-bold text-sm cursor-pointer ${
-                      formData.breathAlcohol === 'аниқланмади'
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    аниқланмади (0.00‰)
-                  </button>
-                  <input
-                    type="text"
-                    value={formData.breathAlcohol}
-                    onChange={e => setFormData({ ...formData, breathAlcohol: e.target.value })}
-                    className="flex-1 p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* 8. Result */}
-              <div>
-                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
-                  8. Кўрик натижалари / Рейсга рухсат *
-                </label>
-                <div className="grid grid-cols-2 gap-2.5 mb-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, result: 'соғлом, рейска рухсат' })}
-                    className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
-                      formData.result === 'соғлом, рейска рухсат'
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-md ring-2 ring-emerald-500'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <CheckCircle2 size={16} />
-                    <span>Соғлом, рейсга рухсат</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, result: 'четлатилди (босим юқори)' })}
-                    className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
-                      formData.result.includes('четлатилди')
-                        ? 'bg-red-700 text-white border-red-700 shadow-md ring-2 ring-red-500'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <AlertTriangle size={16} />
-                    <span>Рейсдан четлатиш</span>
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={formData.result}
-                  onChange={e => setFormData({ ...formData, result: e.target.value })}
-                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
-                />
-              </div>
-
-              {/* 9. Signature */}
-              <div>
-                <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  9. Масъул тиббий ходим имзоси (Ҳамшира):
-                </label>
-                <input
-                  type="text"
-                  value={formData.signature}
-                  onChange={e => setFormData({ ...formData, signature: e.target.value })}
-                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm sm:text-base text-slate-900 dark:text-white"
-                />
-              </div>
-
-              {/* Form Actions */}
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsFormOpen(false)}
-                  className="px-5 py-3 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                >
-                  Бекор қилиш
-                </button>
-                <button
-                  type="submit"
-                  className="px-7 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-sm shadow-md transition active:scale-95 flex items-center gap-2 cursor-pointer"
-                >
-                  <Check size={16} />
-                  <span>{editingLog ? "Ўзгаришларни сақлаш" : "Кўрикни сақлаш"}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
