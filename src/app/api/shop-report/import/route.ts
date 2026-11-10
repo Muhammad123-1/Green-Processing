@@ -103,12 +103,28 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Detect "Расход" Flat Table
-        // Col 1 is "Число" or "Дата" (and not Приход header), other columns are material names
-        if (col1Val === 'число' || (col1Val === 'дата' && !col2Val.includes('номенклатура') && !col2Val.includes('наименование'))) {
+        // Format A: Col 1 is "Число" or "Дата" (monthly sheets)
+        // Format B: Col 1 is "№" and Col 2 is "Sana (Дата)" (master sheet "2. Расход (Chiqim)")
+        const isMasterExpenseSheet =
+          (col1Val === '№' || col1Val === 'no') && (col2Val.includes('дата') || col2Val.includes('sana'))
+        const isMonthlyExpenseSheet =
+          col1Val === 'число' ||
+          (col1Val === 'дата' && !col2Val.includes('номенклатура') && !col2Val.includes('наименование'))
+
+        if (isMasterExpenseSheet || isMonthlyExpenseSheet) {
+          const dateCol = isMasterExpenseSheet ? 2 : 1
+          const startMatCol = isMasterExpenseSheet ? 3 : 2
+
           const expHeaders: { col: number; name: string }[] = []
-          for (let c = 2; c <= 35; c++) {
+          for (let c = startMatCol; c <= 35; c++) {
             const h = getCellValueStr(row.getCell(c))
-            if (h && !h.toLowerCase().includes('дата') && !h.toLowerCase().includes('число')) {
+            if (
+              h &&
+              !h.toLowerCase().includes('дата') &&
+              !h.toLowerCase().includes('число') &&
+              !h.toLowerCase().includes('sana') &&
+              !h.toLowerCase().includes('jami')
+            ) {
               expHeaders.push({ col: c, name: h })
             }
           }
@@ -117,15 +133,15 @@ export async function POST(req: NextRequest) {
             let blankCount = 0
             for (let r = i + 1; r <= rowCount; r++) {
               const expRow = sheet.getRow(r)
-              const c1 = expRow.getCell(1).value
-              if (!c1) {
+              const dateVal = expRow.getCell(dateCol).value
+              if (!dateVal) {
                 blankCount++
                 if (blankCount > 35) break
                 continue
               }
               blankCount = 0
 
-              const dateStr = parseExcelDate(c1)
+              const dateStr = parseExcelDate(dateVal)
               if (!dateStr) continue
 
               datesFound.add(dateStr)

@@ -63,7 +63,6 @@ const navSections = [
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
       { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
       { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
@@ -206,6 +205,96 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 <p className="text-xs font-medium text-slate-300 truncate">{userName}</p>
                 <p className="text-[10px] text-emerald-400 font-semibold truncate">
                   {lang === 'ru' ? 'Поставщик' : lang === 'en' ? 'Supplier' : "Ta'minotchi"}
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => logout()} 
+              className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors flex-shrink-0"
+              title={translate('logout')}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        </aside>
+      </>
+    )
+  }
+
+  // STRICT PRIVACY & ISOLATION FOR KITCHEN (Oshpaz - faqat xodimlar oshxonasi va chat)
+  if (userRole === 'KITCHEN') {
+    return (
+      <>
+        {isOpen && (
+          <div 
+            className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm transition-opacity" 
+            onClick={close}
+          />
+        )}
+
+        <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-900 border-r border-dark-700 flex flex-col h-full transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="px-5 py-6 border-b border-dark-700">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <Utensils size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-sm font-bold text-white leading-tight">Green Processing</h1>
+                <p className="text-xs text-amber-400 font-semibold leading-tight">
+                  {formatText('Oshxona Xodimi', 'Кухня персонала', 'Kitchen Staff')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
+            <h3 className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+              {formatText('Oshxona Menyu', 'Меню кухни', 'Kitchen Menu')}
+            </h3>
+
+            <Link
+              href="/kitchen"
+              onClick={close}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                pathname.startsWith('/kitchen')
+                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <Utensils size={17} />
+              <span>{formatText('Xodimlar oshxonasi', 'Кухня персонала', 'Staff Kitchen')}</span>
+            </Link>
+
+            <Link
+              href="/chat?group=kitchen_supply"
+              onClick={close}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                pathname.startsWith('/chat')
+                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <MessageSquare size={17} />
+                <span>{formatText('Oshxona Chati', 'Чат кухни', 'Kitchen Chat')}</span>
+              </div>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+          </nav>
+
+          <div className="px-5 py-4 border-t border-dark-700 flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-amber-400">O</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-300 truncate">{userName}</p>
+                <p className="text-[10px] text-amber-400 font-semibold truncate">
+                  {lang === 'ru' ? 'Повар' : lang === 'en' ? 'Chef' : 'Oshpaz'}
                 </p>
               </div>
             </div>

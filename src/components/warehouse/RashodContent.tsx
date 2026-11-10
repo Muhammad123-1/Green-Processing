@@ -268,6 +268,20 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
 
   const expensesPagination = useInfiniteTable(filteredExpenses, 15, [dateFilter, selectedMonth])
 
+  // Calculate column totals for displayed/filtered records
+  const columnTotals = useMemo(() => {
+    const totals: Record<string, number> = {}
+    EXPENSE_FIELDS.forEach((f) => (totals[f.field] = 0))
+    for (const { row } of filteredExpenses) {
+      if (row._new) continue
+      for (const f of EXPENSE_FIELDS) {
+        const val = Number(row[f.field]) || 0
+        totals[f.field] += val
+      }
+    }
+    return totals
+  }, [filteredExpenses])
+
   const inputVal = (v: any) => (v === undefined || v === null ? '' : String(v))
 
   return (
@@ -580,6 +594,34 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                 )
               })}
             </tbody>
+            <tfoot className="bg-amber-100 dark:bg-dark-850 border-t-2 border-amber-300 font-bold text-xs sticky bottom-0 z-20 shadow-sm">
+              <tr>
+                <td className="sticky left-0 z-20 p-2.5 bg-amber-200 dark:bg-dark-800 text-slate-900 dark:text-white font-black border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d]">
+                  {lang === 'ru' ? 'ИТОГО:' : 'JAMI:'}
+                </td>
+                {EXPENSE_FIELDS.map((f) => {
+                  const val = columnTotals[f.field] || 0
+                  const isInt = f.unit === 'шт'
+                  const formatted = isInt
+                    ? Math.round(val).toLocaleString()
+                    : val > 0
+                    ? (Math.round(val * 10) / 10).toLocaleString()
+                    : '0'
+                  return (
+                    <td
+                      key={f.field}
+                      className="p-1.5 border-r border-amber-300/80 text-right font-mono text-[11px] text-slate-900 dark:text-white whitespace-nowrap"
+                    >
+                      <span className="font-bold">{formatted}</span>
+                      <span className="text-[9px] text-slate-600 dark:text-slate-400 font-semibold ml-0.5">
+                        {f.unit}
+                      </span>
+                    </td>
+                  )
+                })}
+                <td className="p-1"></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 

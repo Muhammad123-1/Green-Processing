@@ -38,7 +38,8 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
   }
 
   // Oshpaz (KITCHEN) va Degustatsiya (DEGUSTATION) uchun pastgi menyu umuman ko'rsatilmaydi (xodimni chalg'itmaydi)
-  if (userRole === 'KITCHEN' || userRole === 'DEGUSTATION') {
+  const normalizedRole = (userRole || '').toUpperCase().trim()
+  if (normalizedRole === 'KITCHEN' || normalizedRole === 'DEGUSTATION') {
     return null
   }
 
