@@ -161,10 +161,109 @@ function normalizeKey(text: string): string {
  * Looks up text in dictionary based on target language mode.
  * Supports: 'uz', 'ru', 'en', 'uz_ru', 'uz_en', 'ru_en'
  */
+export function getDictionaryItem(text: string): TranslationItem | null {
+  const key = normalizeKey(text)
+  if (SURVEY_DICTIONARY[key]) return SURVEY_DICTIONARY[key]
+  for (const item of Object.values(SURVEY_DICTIONARY)) {
+    if (normalizeKey(item.ru) === key || normalizeKey(item.uz) === key) {
+      return item
+    }
+  }
+  return null
+}
+
+export function splitBilingual(text: string): { uz: string; ru: string } | null {
+  if (!text) return null
+  const clean = text.trim()
+
+  // 1. Explicit tags: [UZ] ... [RU] ...
+  if (clean.includes('[UZ]') && clean.includes('[RU]')) {
+    const uzMatch = clean.match(/\[UZ\]([\s\S]*?)(\[RU\]|$)/i)
+    const ruMatch = clean.match(/\[RU\]([\s\S]*?)(\[UZ\]|$)/i)
+    if (uzMatch && ruMatch) {
+      return { uz: uzMatch[1].trim(), ru: ruMatch[1].trim() }
+    }
+  }
+
+  // 2. Triple slash: ' /// '
+  if (clean.includes(' /// ')) {
+    const parts = clean.split(' /// ')
+    return { uz: parts[0].trim(), ru: parts[1]?.trim() || parts[0].trim() }
+  }
+
+  // 3. Single slash: ' / '
+  if (clean.includes(' / ')) {
+    const parts = clean.split(' / ')
+    if (parts.length === 2) {
+      const p0 = parts[0].trim()
+      const p1 = parts[1].trim()
+      const p0HasCyrillic = /[а-яА-ЯёЁ]/.test(p0)
+      const p1HasCyrillic = /[а-яА-ЯёЁ]/.test(p1)
+      const p0HasLatin = /[a-zA-Z]/.test(p0)
+      const p1HasLatin = /[a-zA-Z]/.test(p1)
+
+      if (p0HasLatin && !p0HasCyrillic && p1HasCyrillic) {
+        return { uz: p0, ru: p1 }
+      }
+      if (p0HasCyrillic && !p1HasCyrillic && p1HasLatin) {
+        return { uz: p1, ru: p0 }
+      }
+      return { uz: p0, ru: p1 }
+    }
+  }
+
+  // 4. Multiline: line 1 Latin, line 2 Cyrillic
+  if (clean.includes('\n')) {
+    const lines = clean.split('\n').map(l => l.trim()).filter(Boolean)
+    if (lines.length === 2) {
+      const l0 = lines[0]
+      const l1 = lines[1]
+      const l0HasCyrillic = /[а-яА-ЯёЁ]/.test(l0)
+      const l1HasCyrillic = /[а-яА-ЯёЁ]/.test(l1)
+      if (!l0HasCyrillic && l1HasCyrillic) return { uz: l0, ru: l1 }
+      if (l0HasCyrillic && !l1HasCyrillic) return { uz: l1, ru: l0 }
+    }
+  }
+
+  return null
+}
+
+export interface BilingualResult {
+  text: string
+  subText?: string
+}
+
+export function resolveBilingualText(
+  text: string | null | undefined,
+  lang: string
+): BilingualResult {
+  if (!text) return { text: '' }
+  const clean = text.trim()
+
+  // 1. Direct split if text contains both languages
+  const split = splitBilingual(clean)
+  if (split) {
+    if (lang === 'uz') return { text: split.uz }
+    if (lang === 'ru') return { text: split.ru }
+    return { text: split.uz, subText: split.ru }
+  }
+
+  // 2. Dictionary lookup
+  const dict = getDictionaryItem(clean)
+  if (dict) {
+    if (lang === 'uz') return { text: dict.uz }
+    if (lang === 'ru') return { text: dict.ru }
+    return { text: dict.uz, subText: dict.ru !== dict.uz ? dict.ru : undefined }
+  }
+
+  // 3. Fallback: single text
+  return { text: clean }
+}
+
 export function getDictionaryTranslation(text: string | null | undefined, lang: string): string | null {
   if (!text) return text ?? ''
   const key = normalizeKey(text)
-  const item = SURVEY_DICTIONARY[key]
+  const item = getDictionaryItem(key)
   if (!item) return null
 
   switch (lang) {

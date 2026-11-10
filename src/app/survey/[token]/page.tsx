@@ -3,7 +3,7 @@ import { useLanguage, type Language } from '@/components/providers/LanguageProvi
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { CheckCircle, AlertCircle, Loader2, Globe, Sparkles } from 'lucide-react'
-import { getDictionaryTranslation } from '@/lib/survey-translations'
+import { getDictionaryTranslation, resolveBilingualText } from '@/lib/survey-translations'
 
 interface Question {
   id: number
@@ -67,10 +67,29 @@ export default function SurveyPublicPage() {
   // Instant or background translation helper
   const tr = (text: string | null | undefined): string => {
     if (!text) return ''
+    const res = resolveBilingualText(text, currentLang)
+    if (res.text) return res.text
     const dict = getDictionaryTranslation(text, currentLang)
     if (dict) return dict
     if (currentLang === 'uz') return text
     return dynamicTranslations[text] || text
+  }
+
+  // Bilingual rendering component (supports dual UZ/RU subtitle when in uz_ru mode)
+  const renderBilingual = (rawText: string | null | undefined, isTitle = false) => {
+    if (!rawText) return null
+    const res = resolveBilingualText(rawText, currentLang)
+    if (currentLang === 'uz_ru' && res.subText && res.subText !== res.text) {
+      return (
+        <span className="block">
+          <span className="block">{res.text}</span>
+          <span className={`block font-normal italic mt-0.5 ${isTitle ? 'text-green-100 text-xs' : 'text-slate-500 text-xs'}`}>
+            {res.subText}
+          </span>
+        </span>
+      )
+    }
+    return <span>{res.text || rawText}</span>
   }
 
   // Handle switching language smoothly without reloading
@@ -403,7 +422,7 @@ export default function SurveyPublicPage() {
                   }`}>
                     {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                   </div>
-                  <span className="flex-1 leading-relaxed">{tr(opt)}</span>
+                  <div className="flex-1 leading-relaxed">{renderBilingual(opt)}</div>
                 </button>
               )
             })}
@@ -453,8 +472,7 @@ export default function SurveyPublicPage() {
               {[
                 { id: 'uz', label: "UZ", title: "O'zbekcha" },
                 { id: 'ru', label: "RU", title: "Русский" },
-                { id: 'en', label: "EN", title: "English" },
-                { id: 'uz_ru', label: "UZ/RU", title: "O'zbek / Русский" },
+                { id: 'uz_ru', label: "UZ / RU", title: "O'zbek / Русский (Ikkala tilda)" },
               ].map(item => (
                 <button
                   key={item.id}
@@ -491,10 +509,10 @@ export default function SurveyPublicPage() {
             </div>
 
             <h1 className="text-2xl font-extrabold mb-2 leading-tight">
-              {tr(survey.title)}
+              {renderBilingual(survey.title, true)}
             </h1>
             {survey.description && (
-              <p className="text-green-100 text-sm leading-relaxed">{tr(survey.description)}</p>
+              <div className="text-green-100 text-sm leading-relaxed">{renderBilingual(survey.description, true)}</div>
             )}
           </div>
 
@@ -550,10 +568,10 @@ export default function SurveyPublicPage() {
           {/* Ungrouped questions */}
           {ungrouped.map(q => (
             <div key={q.id} className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
-              <p className="font-semibold text-slate-800 text-sm leading-snug">
+              <div className="font-semibold text-slate-800 text-sm leading-snug">
                 {q.isRequired && <span className="text-red-500 mr-1">*</span>}
-                {tr(q.questionText)}
-              </p>
+                {renderBilingual(q.questionText)}
+              </div>
               {renderQuestion(q)}
             </div>
           ))}
@@ -562,16 +580,16 @@ export default function SurveyPublicPage() {
           {Object.entries(groups).map(([groupName, qs]) => (
             <div key={groupName} className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
               <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3.5">
-                <h2 className="font-bold text-white text-sm sm:text-base leading-snug">{tr(groupName)}</h2>
+                <h2 className="font-bold text-white text-sm sm:text-base leading-snug">{renderBilingual(groupName, true)}</h2>
               </div>
               <div className="divide-y divide-slate-100">
                 {qs.map(q => (
                   <div key={q.id} className="p-5">
-                    <p className="font-medium text-slate-800 text-sm leading-snug">
+                    <div className="font-medium text-slate-800 text-sm leading-snug">
                       {q.subLabel && <span className="font-bold text-green-700 mr-2">{q.subLabel}</span>}
                       {q.isRequired && <span className="text-red-500 mr-1">*</span>}
-                      {tr(q.questionText)}
-                    </p>
+                      {renderBilingual(q.questionText)}
+                    </div>
                     {renderQuestion(q)}
                   </div>
                 ))}
