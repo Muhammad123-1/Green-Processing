@@ -88,35 +88,45 @@ export async function GET(req: NextRequest) {
     const todayStr = localTime.toISOString().split('T')[0]
 
     // ---------------------------------------------------------------------------
+    // OSHXONA & DEGUSTATSIYA CHEKLOVI:
+    // Oshxona (KITCHEN) va Degustatsiya (DEGUSTATION) xodimlariga kunlik zavod
+    // kirim-chiqim hisoboti (CRITICAL_REPORT) hamda sexdagi brak/nuqson (DEFECT_ALERT)
+    // ogohlantirishlari KERAK EMAS. Ular faqatgina chatda xabar kelgandagina
+    // ogohlantirish oladi va tizimga kiradi.
+    // ---------------------------------------------------------------------------
+    const isKitchenOrDegustation = userRole === 'KITCHEN' || userRole === 'DEGUSTATION'
+
+    // ---------------------------------------------------------------------------
     // 1. DIREKTOR NAZORATI: Bugungi Sex Ishlab Chiqarish Hisoboti kiritildimi?
     // ---------------------------------------------------------------------------
-    const [todayExpense, todayArrival] = await Promise.all([
-      prisma.shopExpense.findFirst({
-        where: { date: todayStr }
-      }),
-      prisma.shopArrival.findFirst({
-        where: { date: todayStr }
-      })
-    ])
+    let todayExpense: any = null
+    if (!isKitchenOrDegustation) {
+      const [expRes] = await Promise.all([
+        prisma.shopExpense.findFirst({
+          where: { date: todayStr }
+        })
+      ])
+      todayExpense = expRes
 
-    // Agar bugungi hisobot hali kiritilmagan bo'lsa:
-    if (!todayExpense) {
-      notifications.push({
-        id: `missing-shop-report-${todayStr}`,
-        type: 'CRITICAL_REPORT',
-        priority: 'high',
-        title: "Bugungi kunlik ish hisoboti kiritilmadi!",
-        titleRu: "Отчет по приходу и расходу за сегодня еще не введен!",
-        message: `Kirim va Chiqim (Отчет по приходу и расходу) bo'yicha bugungi kun (${todayStr}) hisoboti hali kiritilmagan. Mas'ul xodimlarga eslatma yuboring yoki hisobotni to'ldiring.`,
-        messageRu: `Отчет по приходу и расходу за сегодня (${todayStr}) еще не заполнен. Проверьте статус или отправьте напоминание мастеру смены.`,
-        source: isDirectorOrAdmin ? "Direktor Nazorati" : "Kunlik Majburiy Hisobot",
-        sourceCategory: 'director',
-        link: '/shop-report',
-        actionLabel: "Hisobotga o'tish",
-        actionLabelRu: "Перейти к отчету",
-        createdAt: now.toISOString(),
-        icon: 'AlertTriangle'
-      })
+      // Agar bugungi hisobot hali kiritilmagan bo'lsa:
+      if (!todayExpense) {
+        notifications.push({
+          id: `missing-shop-report-${todayStr}`,
+          type: 'CRITICAL_REPORT',
+          priority: 'high',
+          title: "Bugungi kunlik ish hisoboti kiritilmadi!",
+          titleRu: "Отчет по приходу и расходу за сегодня еще не введен!",
+          message: `Kirim va Chiqim (Отчет по приходу и расходу) bo'yicha bugungi kun (${todayStr}) hisoboti hali kiritilmagan. Mas'ul xodimlarga eslatma yuboring yoki hisobotni to'ldiring.`,
+          messageRu: `Отчет по приходу и расходу за сегодня (${todayStr}) еще не заполнен. Проверьте статус или отправьте напоминание мастеру смены.`,
+          source: isDirectorOrAdmin ? "Direktor Nazorati" : "Kunlik Majburiy Hisobot",
+          sourceCategory: 'director',
+          link: '/shop-report',
+          actionLabel: "Hisobotga o'tish",
+          actionLabelRu: "Перейти к отчету",
+          createdAt: now.toISOString(),
+          icon: 'AlertTriangle'
+        })
+      }
     }
 
     // ---------------------------------------------------------------------------
@@ -169,6 +179,13 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      // Oshxona va Degustatsiya xodimlariga faqat tegishli chatlar (Oshxona guruhi, Shaxsiy DM, Umumiy e'lonlar)
+      if (isKitchenOrDegustation) {
+        if (msg.groupId !== 'kitchen_supply' && msg.groupId !== 'general' && !msg.groupId.startsWith('dm_')) {
+          continue
+        }
+      }
+
       const ch = channelNames[msg.groupId] || { uz: 'Zavod Chati', ru: 'Чат завода', category: 'Chat' }
       const isDirectorMsg = msg.groupId === 'management' || msg.sender.toLowerCase().includes('direktor')
 
@@ -197,31 +214,33 @@ export async function GET(req: NextRequest) {
     }
 
     // ---------------------------------------------------------------------------
-    // 3. DEFECT & BRAK OGOHLANTIRISHLARI
+    // 3. DEFECT & BRAK OGOHLANTIRISHLARI (Oshxona va Degustatsiya uchun kerak emas)
     // ---------------------------------------------------------------------------
-    const recentDefect = await prisma.defectLog.findFirst({
-      where: { status: 'RECORDED' },
-      orderBy: { createdAt: 'desc' },
-      include: { product: true }
-    })
-
-    if (recentDefect) {
-      notifications.push({
-        id: `defect-log-${recentDefect.id}`,
-        type: 'DEFECT_ALERT',
-        priority: 'medium',
-        title: `Brak / Nuqson qayd etildi: ${recentDefect.product?.name || 'Mahsulot'}`,
-        titleRu: `Зафиксирован брак: ${recentDefect.product?.name || 'Продукция'}`,
-        message: `${recentDefect.defectType}: ${recentDefect.quantity} ${recentDefect.unit} mahsulotda nuqson aniqlandi. Qaror: ${recentDefect.actionTaken}`,
-        messageRu: `${recentDefect.defectType}: ${recentDefect.quantity} ${recentDefect.unit} с дефектом. Решение: ${recentDefect.actionTaken}`,
-        source: "Sifat Nazorati (QC)",
-        sourceCategory: 'qc',
-        link: '/inspections',
-        actionLabel: "Aktni ko'rish",
-        actionLabelRu: "Посмотреть акт",
-        createdAt: recentDefect.createdAt.toISOString(),
-        icon: 'ShieldAlert'
+    if (!isKitchenOrDegustation) {
+      const recentDefect = await prisma.defectLog.findFirst({
+        where: { status: 'RECORDED' },
+        orderBy: { createdAt: 'desc' },
+        include: { product: true }
       })
+
+      if (recentDefect) {
+        notifications.push({
+          id: `defect-log-${recentDefect.id}`,
+          type: 'DEFECT_ALERT',
+          priority: 'medium',
+          title: `Brak / Nuqson qayd etildi: ${recentDefect.product?.name || 'Mahsulot'}`,
+          titleRu: `Зафиксирован брак: ${recentDefect.product?.name || 'Продукция'}`,
+          message: `${recentDefect.defectType}: ${recentDefect.quantity} ${recentDefect.unit} mahsulotda nuqson aniqlandi. Qaror: ${recentDefect.actionTaken}`,
+          messageRu: `${recentDefect.defectType}: ${recentDefect.quantity} ${recentDefect.unit} с дефектом. Решение: ${recentDefect.actionTaken}`,
+          source: "Sifat Nazorati (QC)",
+          sourceCategory: 'qc',
+          link: '/inspections',
+          actionLabel: "Aktni ko'rish",
+          actionLabelRu: "Посмотреть акт",
+          createdAt: recentDefect.createdAt.toISOString(),
+          icon: 'ShieldAlert'
+        })
+      }
     }
 
     // Sort: High priority first, then by date descending

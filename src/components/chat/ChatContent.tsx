@@ -112,6 +112,7 @@ const ROLE_INFO: Record<string, { labelUz: string; labelRu: string; labelEn: str
   TECHNOLOGY: { labelUz: 'Bosh Texnolog', labelRu: 'Главный технолог', labelEn: 'Chief Technologist', color: 'text-indigo-500', bg: 'bg-indigo-500/10 border-indigo-500/30' },
   PRODUCTION: { labelUz: 'Ishlab Chiqarish Mudiri', labelRu: 'Нач. производства', labelEn: 'Production Head', color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/30' },
   KITCHEN: { labelUz: 'Bosh Oshpaz (Kuxnya)', labelRu: 'Шеф-повар кухни', labelEn: 'Head Chef', color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/30' },
+  DEGUSTATION: { labelUz: 'Oshxona & SanPiN Nazoratchisi', labelRu: 'Контролер кухни и СанПиН', labelEn: 'Kitchen & SanPiN Inspector', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
   WAREHOUSE: { labelUz: 'Omborxona Mudiri', labelRu: 'Заведующий складом', labelEn: 'Warehouse Head', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
   SUPPLY: { labelUz: 'Ta\'minotchi (Snabjenets)', labelRu: 'Снабженец', labelEn: 'Procurement Officer', color: 'text-cyan-500', bg: 'bg-cyan-500/10 border-cyan-500/30' },
   LOGISTICS: { labelUz: 'Logistika & Transport', labelRu: 'Логистика', labelEn: 'Logistics', color: 'text-sky-500', bg: 'bg-sky-500/10 border-sky-500/30' },

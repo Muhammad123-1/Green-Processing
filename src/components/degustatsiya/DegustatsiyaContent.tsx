@@ -8,9 +8,11 @@ import {
   ShieldCheck,
   CalendarCheck2,
   Truck,
+  MessageSquare,
   ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
+import { useChatBadge } from '@/store/chatBadge'
 import { BrakerageJournalModal } from '@/components/kitchen/BrakerageJournalModal'
 
 interface Props {
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export default function DegustatsiyaContent({ userRole, userName }: Props) {
+  const unreadCount = useChatBadge(s => s.unreadCount)
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner & Header - Dedicated Oshxona Brakeraj Jurnali */}
@@ -73,6 +76,29 @@ export default function DegustatsiyaContent({ userRole, userName }: Props) {
             >
               <Truck size={16} className="text-blue-500" />
               <span>Ҳайдовчилар</span>
+            </Link>
+
+            {/* Direct Chat Link */}
+            <Link
+              href="/chat?group=kitchen_supply"
+              className="relative flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-orange-500/20 transition active:scale-95"
+              title="Ошхона ва таъминот чатини очиш"
+            >
+              <div className="relative">
+                <MessageSquare size={16} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-90"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white"></span>
+                  </span>
+                )}
+              </div>
+              <span>Ошхона Чати</span>
+              {unreadCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-white text-orange-600 text-[10px] font-black">
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

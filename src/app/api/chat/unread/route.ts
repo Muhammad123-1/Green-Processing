@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       } else if (msg.groupId === 'qa_warehouse') {
         if (!isAdminOrDirector && !['QUALITY_CONTROL', 'INSPECTOR', 'WAREHOUSE'].includes(userRole)) return false
       } else if (msg.groupId === 'kitchen_supply') {
-        if (!isAdminOrDirector && !['KITCHEN', 'SUPPLY'].includes(userRole)) return false
+        if (!isAdminOrDirector && !['KITCHEN', 'SUPPLY', 'DEGUSTATION'].includes(userRole)) return false
       } else if (msg.groupId === 'tech_prod') {
         if (!isAdminOrDirector && !['TECHNOLOGY', 'PRODUCTION'].includes(userRole)) return false
       }

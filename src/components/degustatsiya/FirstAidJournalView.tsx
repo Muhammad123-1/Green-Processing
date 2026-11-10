@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import {
   HeartPulse,
   Plus,
@@ -25,7 +26,8 @@ import {
   Table,
   Check,
   Building2,
-  Briefcase
+  Briefcase,
+  MessageSquare
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -456,6 +458,15 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
             <Printer size={15} />
             <span>Чоп этиш</span>
           </button>
+
+          <Link
+            href="/chat"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
+            title="Чатни очиш"
+          >
+            <MessageSquare size={15} className="text-amber-500" />
+            <span>Чат</span>
+          </Link>
         </div>
       </div>
 

@@ -129,7 +129,7 @@ const navSections = [
       { key: 'customTables', href: '/custom-tables', icon: Table2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'users', href: '/users', icon: Users, roles: ['ADMIN', 'DIRECTOR', 'HR'] },
       { key: 'supervisors', href: '/supervisors', icon: UserCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
-      { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT', 'DEGUSTATION'] },
+      { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT', 'KITCHEN', 'DEGUSTATION'] },
       { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
       { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
       { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR'] },

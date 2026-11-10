@@ -28,7 +28,8 @@ import {
   ShieldCheck,
   Gauge,
   Thermometer,
-  Zap
+  Zap,
+  MessageSquare
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -406,6 +407,15 @@ export default function DriversMedicalContent() {
             >
               <HeartPulse size={15} className="text-rose-500" />
               <span>Биринчи ёрдам</span>
+            </Link>
+
+            <Link
+              href="/chat"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition"
+              title="Чатни очиш"
+            >
+              <MessageSquare size={15} className="text-amber-500" />
+              <span>Чат</span>
             </Link>
           </div>
         </div>

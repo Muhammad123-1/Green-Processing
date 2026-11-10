@@ -29,10 +29,13 @@ import {
   CheckCircle,
   FileSpreadsheet,
   Layers,
-  Sparkle
+  Sparkle,
+  MessageSquare
 } from 'lucide-react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useChatBadge } from '@/store/chatBadge'
 import { BrakerageJournalModal } from './BrakerageJournalModal'
 
 // Types
@@ -169,6 +172,7 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
 
   const isDirector = userRole === 'DIRECTOR'
   const isInspectorOrDirector = isDirector || userRole === 'ADMIN' || userRole === 'QUALITY_CONTROL'
+  const unreadCount = useChatBadge(s => s.unreadCount)
 
   // Tab State: 'tasks' (Photo proof log), 'meals' (Meal recipes), 'cleaning' (Sanitation), 'feedback' (Ratings)
   const [activeTab, setActiveTab] = useState<'tasks' | 'meals' | 'cleaning' | 'feedback'>('tasks')
@@ -616,6 +620,28 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
             <FileSpreadsheet size={14} />
             {formatDual("Excel hisobot", "Экспорт в Excel", "Excel Report")}
           </button>
+
+          <Link
+            href="/chat?group=kitchen_supply"
+            className="relative flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs md:text-sm font-bold transition backdrop-blur border border-white/25 active:scale-95 shadow-sm"
+            title="Oshxona va ta'minot chatini ochish"
+          >
+            <div className="relative">
+              <MessageSquare size={16} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-90"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white"></span>
+                </span>
+              )}
+            </div>
+            <span>{formatDual("Oshxona Chati", "Чат Кухни", "Kitchen Chat")}</span>
+            {unreadCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-black">
+                {unreadCount}
+              </span>
+            )}
+          </Link>
 
           <button
             onClick={() => setIsBrakerageModalOpen(true)}
