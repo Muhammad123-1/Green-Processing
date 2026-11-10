@@ -333,8 +333,8 @@ export default function DriversMedicalContent() {
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 text-slate-900 dark:text-white shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-800 text-white flex items-center justify-center shadow-md shrink-0 border border-slate-700">
-              <Truck size={26} className="text-white" />
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white flex items-center justify-center shadow-xs shrink-0 border border-slate-300 dark:border-slate-700">
+              <Truck size={26} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1.5">
@@ -365,7 +365,7 @@ export default function DriversMedicalContent() {
 
             <button
               onClick={handleOpenCreate}
-              className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
             >
               <Plus size={16} />
               <span>+ Ҳайдовчи қўшиш</span>
@@ -373,7 +373,7 @@ export default function DriversMedicalContent() {
 
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
               title="Excel / CSV файлида юклаб олиш"
             >
               <Download size={15} />
@@ -382,7 +382,7 @@ export default function DriversMedicalContent() {
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
               title="A4 форматда чоп этиш"
             >
               <Printer size={15} />
@@ -455,7 +455,7 @@ export default function DriversMedicalContent() {
                 onClick={() => setFilterDate(new Date().toISOString().slice(0, 10))}
                 className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
                   filterDate === new Date().toISOString().slice(0, 10)
-                    ? 'bg-sky-600 text-white shadow-xs'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                     : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
               >
@@ -466,7 +466,7 @@ export default function DriversMedicalContent() {
                 onClick={() => setFilterDate('2025-10-20')}
                 className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
                   filterDate === '2025-10-20'
-                    ? 'bg-sky-600 text-white shadow-xs'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                     : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
                 title="3-расмдаги намунавий сана (20.10.2025)"
@@ -478,7 +478,7 @@ export default function DriversMedicalContent() {
                 onClick={() => setFilterDate('2025-10-17')}
                 className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
                   filterDate === '2025-10-17'
-                    ? 'bg-sky-600 text-white shadow-xs'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                     : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
                 title="4-расмдаги намунавий сана (17.10.2025)"
@@ -490,7 +490,7 @@ export default function DriversMedicalContent() {
                 onClick={() => setFilterDate('ALL')}
                 className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
                   filterDate === 'ALL'
-                    ? 'bg-sky-600 text-white shadow-xs'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                     : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
                 }`}
               >
@@ -745,19 +745,19 @@ export default function DriversMedicalContent() {
             className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full border-2 border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden my-auto text-slate-900 dark:text-slate-100 relative z-[101]"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+            <div className="p-4 sm:p-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white flex items-center justify-between border-b border-slate-300 dark:border-slate-800">
               <div>
-                <h3 className="text-base sm:text-lg font-black flex items-center gap-2">
-                  <Truck size={20} className="text-blue-400" />
+                <h3 className="text-base sm:text-lg font-black flex items-center gap-2 text-slate-900 dark:text-white">
+                  <Truck size={20} className="text-blue-600 dark:text-blue-400" />
                   {editingLog ? "Ҳайдовчи Кўригини Таҳрирлаш" : "Янги Ҳайдовчи Кўригини Қайд Этиш (3 ва 4-расм)"}
                 </h3>
-                <p className="text-xs text-slate-300 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   Рейс олди тиббий кўрик: шикоят, пульс, ҳарорат, босим, алкогол ва рейсга рухсат
                 </p>
               </div>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-full text-slate-300 hover:text-white transition cursor-pointer"
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition cursor-pointer"
                 title="Ёпиш"
               >
                 <X size={20} />
