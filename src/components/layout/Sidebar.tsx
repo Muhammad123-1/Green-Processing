@@ -33,7 +33,8 @@ import { Archive,
   ArrowUpRight,
   ArrowDownLeft,
   Boxes,
-  AlertTriangle
+  AlertTriangle,
+  HelpCircle
  } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -47,6 +48,7 @@ const navSections = [
     items: [
       { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'director', href: '/director', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR'] },
+      { key: 'surveys', href: '/surveys', icon: HelpCircle, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SALES'] },
       { key: 'archive', href: '/archive', icon: Archive, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   },
@@ -254,6 +256,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
             if (userRole === 'DIRECTOR') {
               const directorAllowedKeys = [
                 'director',
+                'surveys',
                 'archive',
                 'warehouse',
                 'prihod',
