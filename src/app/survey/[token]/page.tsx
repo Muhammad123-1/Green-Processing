@@ -300,6 +300,8 @@ export default function SurveyPublicPage() {
     survey.title?.toLowerCase().includes('гигиен') ||
     survey.title?.toLowerCase().includes('технолог') ||
     survey.title?.toLowerCase().includes('аттестац') ||
+    survey.title?.toLowerCase().includes('хавфсиз') ||
+    survey.title?.toLowerCase().includes('безопасн') ||
     survey.questions?.some(q => q.groupName?.toLowerCase().includes('информац'))
   )
 
