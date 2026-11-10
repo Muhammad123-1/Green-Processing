@@ -324,6 +324,12 @@ export default function SurveysPage() {
                           "Добавить стандартные вопросы GREEN PROCESSING (АНКЕТА ОПРОСА № 2: 34 вопроса)",
                           "Add standard GREEN PROCESSING test questions (Questionnaire #2: 34 questions)",
                         )
+                      : form.templateType === 'head_operator_test'
+                      ? formatDual(
+                          "Standart GREEN PROCESSING savollarini qo'shish (Bosh operator — 37 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (Главный оператор: 37 вопросов)",
+                          "Add standard GREEN PROCESSING test questions (Head operator: 37 questions)",
+                        )
                       : formatDual(
                           "Standart GREEN PROCESSING savollarini qo'shish (Mijozlar anketasi — 11 ta savol)",
                           "Добавить стандартные вопросы GREEN PROCESSING (Анкета клиентов: 11 вопросов)",
