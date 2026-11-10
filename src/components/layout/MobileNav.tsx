@@ -12,7 +12,9 @@ import {
   ChefHat,
   ArrowDownRight,
   Truck,
-  LogOut
+  LogOut,
+  UtensilsCrossed,
+  MessageSquare
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useSidebar } from '@/store/sidebar'
@@ -67,6 +69,59 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
               {formatDual('Chiqish', 'Выйти', 'Logout')}
             </span>
           </button>
+        </div>
+      </nav>
+    )
+  }
+
+  // STRICT PRIVACY FOR DEGUSTATION ROLE: Only Degustatsiya, Drivers Medical and Chat
+  if (userRole === 'DEGUSTATION') {
+    const degustationItems = [
+      {
+        label: formatDual('Degustatsiya', 'Дегустация', 'Degustation'),
+        href: '/degustatsiya',
+        icon: UtensilsCrossed,
+        active: pathname === '/degustatsiya' || pathname.startsWith('/degustatsiya')
+      },
+      {
+        label: formatDual('Haydovchilar', 'Водители', 'Drivers'),
+        href: '/drivers-medical',
+        icon: Truck,
+        active: pathname.startsWith('/drivers-medical')
+      },
+      {
+        label: formatDual('Chat', 'Чат', 'Chat'),
+        href: '/chat',
+        icon: MessageSquare,
+        active: pathname.startsWith('/chat')
+      }
+    ]
+
+    return (
+      <nav 
+        aria-label="Degustatsiya mobil navigatsiyasi"
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-dark-900/95 backdrop-blur-xl border-t border-dark-700/80 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] px-2 py-1.5 transition-all"
+      >
+        <div className="flex items-center justify-around max-w-lg mx-auto">
+          {degustationItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all relative ${
+                  item.active
+                    ? 'text-orange-400 font-bold scale-105'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="relative">
+                  <Icon size={20} className={item.active ? 'text-orange-400' : ''} />
+                </div>
+                <span className="text-[10px] mt-0.5">{item.label}</span>
+              </Link>
+            )
+          })}
         </div>
       </nav>
     )

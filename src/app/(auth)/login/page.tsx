@@ -13,7 +13,8 @@ import {
   Leaf,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Utensils
 } from 'lucide-react'
 
 function SubmitButton({ lang }: { lang: 'uz' | 'ru' }) {
@@ -183,6 +184,28 @@ export default function LoginPage() {
               <SubmitButton lang={lang} />
             </div>
           </form>
+
+          {/* Quick Degustatsiya Login Pill */}
+          <div className="mt-4 pt-3 border-t border-white/10 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setUsername('degustatsiya')
+                setPassword('123')
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-[11px] text-orange-300 transition-all cursor-pointer"
+              title="Bir bosishda to'ldirish"
+            >
+              <Utensils size={13} className="text-orange-400" />
+              <span>
+                {lang === 'uz' ? 'Degustatsiya bo‘limi: ' : 'Отдел дегустации: '}
+                <strong className="text-white font-mono">degustatsiya</strong>
+                {' • '}
+                {lang === 'uz' ? 'parol: ' : 'пароль: '}
+                <strong className="text-white font-mono">123</strong>
+              </span>
+            </button>
+          </div>
 
           <div className="mt-6 pt-4 border-t border-white/10 text-center">
             <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1.5">

@@ -36,6 +36,8 @@ export async function login(prevState: any, formData: FormData) {
     hr: { name: 'Kadrlar (HR)', role: 'HR' },
     kitchen: { name: 'Oshxona (Bosh Oshpaz)', role: 'KITCHEN' },
     security: { name: 'Xavfsizlik Xizmati', role: 'SECURITY' },
+    degustatsiya: { name: 'Degustatsiya va SanPiN Nazoratchisi', role: 'DEGUSTATION' },
+    sanpin: { name: "SanPiN va Degustatsiya Bo'limi", role: 'DEGUSTATION' },
   }
 
   const lowerUsername = username.toLowerCase()
@@ -89,6 +91,7 @@ export async function login(prevState: any, formData: FormData) {
     case 'TECHNOLOGY': redirectUrl = '/technology'; break;
     case 'PRODUCTION': redirectUrl = '/production'; break;
     case 'KITCHEN': redirectUrl = '/kitchen'; break;
+    case 'DEGUSTATION': redirectUrl = '/degustatsiya'; break;
     case 'LOGISTICS': redirectUrl = '/logistics'; break;
     case 'WAREHOUSE': redirectUrl = '/warehouse'; break;
     case 'ACCOUNTING': redirectUrl = '/accounting'; break;

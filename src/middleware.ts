@@ -13,6 +13,7 @@ function getRedirectPathForRole(role?: string) {
     case 'TECHNOLOGY': return '/technology';
     case 'PRODUCTION': return '/production';
     case 'KITCHEN': return '/kitchen';
+    case 'DEGUSTATION': return '/degustatsiya';
     case 'LOGISTICS': return '/logistics';
     case 'WAREHOUSE': return '/warehouse';
     case 'ACCOUNTING': return '/accounting';
@@ -65,6 +66,16 @@ export function middleware(request: NextRequest) {
     if (userRole === 'SUPPLIER') {
       if (!pathname.startsWith('/supplier-portal')) {
         return NextResponse.redirect(new URL('/supplier-portal', request.url))
+      }
+    }
+
+    // STRICT PRIVACY & ISOLATION FOR DEGUSTATION ROLE:
+    // Degustation/SanPiN department accesses their journals, drivers medical check, chat, and settings
+    if (userRole === 'DEGUSTATION') {
+      const allowedDegustationPrefixes = ['/degustatsiya', '/drivers-medical', '/chat', '/settings']
+      const isAllowed = allowedDegustationPrefixes.some(prefix => pathname.startsWith(prefix))
+      if (!isAllowed) {
+        return NextResponse.redirect(new URL('/degustatsiya', request.url))
       }
     }
   }

@@ -62,8 +62,8 @@ const navSections = [
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'KITCHEN', 'HR'] },
-      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR'] },
+      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'KITCHEN', 'HR', 'DEGUSTATION'] },
+      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
@@ -127,7 +127,7 @@ const navSections = [
       { key: 'customTables', href: '/custom-tables', icon: Table2, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'users', href: '/users', icon: Users, roles: ['ADMIN', 'DIRECTOR', 'HR'] },
       { key: 'supervisors', href: '/supervisors', icon: UserCheck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
-      { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT'] },
+      { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT', 'DEGUSTATION'] },
       { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
       { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
       { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR'] },
@@ -392,6 +392,8 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
             <p className="text-[10px] text-slate-500">
               {userRole === 'DIRECTOR'
                 ? (lang === 'ru' ? 'Директор' : lang === 'en' ? 'Director' : 'Direktor') 
+                : userRole === 'DEGUSTATION'
+                ? (lang === 'ru' ? 'Дегустация и СанПиН' : lang === 'en' ? 'Degustation & SanPiN' : 'Degustatsiya va SanPiN')
                 : userRole}
             </p>
           </div>
