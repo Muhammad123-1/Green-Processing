@@ -209,6 +209,28 @@ export function splitBilingual(text: string): { uz: string; ru: string } | null 
         return { uz: p1, ru: p0 }
       }
       return { uz: p0, ru: p1 }
+    } else if (parts.length > 2) {
+      // Find split point between Latin (Uzbek) and Cyrillic (Russian)
+      for (let i = 1; i < parts.length; i++) {
+        const left = parts.slice(0, i).join(' / ').trim()
+        const right = parts.slice(i).join(' / ').trim()
+        const leftHasLatin = /[a-zA-Z]/.test(left)
+        const leftHasCyr = /[а-яА-ЯёЁ]/.test(left)
+        const rightHasCyr = /[а-яА-ЯёЁ]/.test(right)
+        if (leftHasLatin && !leftHasCyr && rightHasCyr) {
+          return { uz: left, ru: right }
+        }
+      }
+      // If both use Cyrillic, look for Uzbek-specific letters (ў, қ, ғ, ҳ) on the left
+      for (let i = 1; i < parts.length; i++) {
+        const left = parts.slice(0, i).join(' / ').trim()
+        const right = parts.slice(i).join(' / ').trim()
+        const leftHasUzCyr = /[ўқғҳЎҚҒҲ]/.test(left)
+        const rightHasRu = /[ыэёъщЫЭЁЪЩ]/.test(right)
+        if (leftHasUzCyr && rightHasRu) {
+          return { uz: left, ru: right }
+        }
+      }
     }
   }
 

@@ -28,9 +28,10 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import SurveyReportModal from "@/components/surveys/SurveyReportModal";
 import QuestionDrillDownModal from "@/components/surveys/QuestionDrillDownModal";
 import { SURVEY_TEMPLATES } from "@/lib/defaultSurveys";
+import { resolveBilingualText } from "@/lib/survey-translations";
 
 export default function SurveysPage() {
-  const { formatDual } = useLanguage();
+  const { formatDual, lang } = useLanguage();
   const [surveys, setSurveys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -39,8 +40,8 @@ export default function SurveysPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   const [form, setForm] = useState({
-    title: SURVEY_TEMPLATES[0].title,
-    description: SURVEY_TEMPLATES[0].description,
+    title: SURVEY_TEMPLATES[0].labelUz,
+    description: SURVEY_TEMPLATES[0].labelUz,
     expiresAt: "",
     addDefault: true,
     templateType: "hygiene_test",
@@ -162,7 +163,17 @@ export default function SurveysPage() {
               {formatDual("Arxiv", "Архив", "Archive")}
             </a>
             <button
-              onClick={() => setShowCreate(true)}
+              onClick={() => {
+                const tmpl = SURVEY_TEMPLATES[0];
+                setForm({
+                  title: lang === 'uz' ? tmpl.labelUz : lang === 'ru' ? tmpl.labelRu : `${tmpl.labelUz} / ${tmpl.labelRu}`,
+                  description: resolveBilingualText(tmpl.description, lang).text,
+                  expiresAt: "",
+                  addDefault: true,
+                  templateType: tmpl.id,
+                });
+                setShowCreate(true);
+              }}
               className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium text-sm transition-all shadow-sm shadow-green-600/20"
             >
               <Plus size={16} />
@@ -205,8 +216,8 @@ export default function SurveysPage() {
                             setForm((p) => ({
                               ...p,
                               templateType: tmpl.id,
-                              title: tmpl.title,
-                              description: tmpl.description,
+                              title: lang === 'uz' ? tmpl.labelUz : lang === 'ru' ? tmpl.labelRu : `${tmpl.labelUz} / ${tmpl.labelRu}`,
+                              description: resolveBilingualText(tmpl.description, lang).text,
                             }))
                           }}
                           className={`p-3.5 rounded-2xl border text-left transition-all ${
@@ -230,7 +241,7 @@ export default function SurveysPage() {
                             </span>
                           </div>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
-                            {tmpl.description}
+                            {resolveBilingualText(tmpl.description, lang).text}
                           </p>
                         </button>
                       )
@@ -314,37 +325,37 @@ export default function SurveysPage() {
                   >
                     {form.templateType === 'hygiene_test'
                       ? formatDual(
-                          "Standart GREEN PROCESSING savollarini qo'shish (КОНТРОЛЬНЫЙ ВОПРОСНИК №1 — 10 ta test savoli)",
-                          "Добавить стандартные вопросы GREEN PROCESSING (КОНТРОЛЬНЫЙ ВОПРОСНИК №1: 10 вопросов)",
+                          "GREEN PROCESSING standart savollarini qo'shish (1-Nazorat testi: Shaxsiy gigiyena — 10 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (КОНТРОЛЬНЫЙ ВОПРОСНИК №1 — 10 вопросов)",
                           "Add standard GREEN PROCESSING test questions (Questionnaire #1: 10 questions)",
                         )
                       : form.templateType === 'tech_process_test'
                       ? formatDual(
-                          "Standart GREEN PROCESSING savollarini qo'shish (АНКЕТА ОПРОСА № 2 — 34 ta test savoli)",
-                          "Добавить стандартные вопросы GREEN PROCESSING (АНКЕТА ОПРОСА № 2: 34 вопроса)",
+                          "GREEN PROCESSING standart savollarini qo'shish (2-Nazorat testi: Texnologik jarayon — 34 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (АНКЕТА ОПРОСА № 2 — 34 вопроса)",
                           "Add standard GREEN PROCESSING test questions (Questionnaire #2: 34 questions)",
                         )
                       : form.templateType === 'head_operator_test'
                       ? formatDual(
-                          "Standart GREEN PROCESSING savollarini qo'shish (Bosh operator — 37 ta savol)",
-                          "Добавить стандартные вопросы GREEN PROCESSING (Главный оператор: 37 вопросов)",
+                          "GREEN PROCESSING standart savollarini qo'shish (3-Nazorat testi: Bosh operator — 37 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (Главный оператор — 37 вопросов)",
                           "Add standard GREEN PROCESSING test questions (Head operator: 37 questions)",
                         )
                       : form.templateType === 'safety_test'
                       ? formatDual(
-                          "Standart GREEN PROCESSING savollarini qo'shish (Texnik xavfsizlik — 10 ta savol)",
-                          "Добавить стандартные вопросы GREEN PROCESSING (Техника безопасности: 10 вопросов)",
+                          "GREEN PROCESSING standart savollarini qo'shish (4-Nazorat testi: Texnik xavfsizlik — 10 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (Техника безопасности — 10 вопросов)",
                           "Add standard GREEN PROCESSING test questions (Safety: 10 questions)",
                         )
                       : form.templateType === 'mechanic_test'
                       ? formatDual(
-                          "Standart GREEN PROCESSING savollarini qo'shish (Sozlovchi / Nalandchik — 10 ta savol)",
-                          "Добавить стандартные вопросы GREEN PROCESSING (Наладчик: 10 вопросов)",
+                          "GREEN PROCESSING standart savollarini qo'shish (5-Nazorat testi: Sozlovchi / Naladchik — 10 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (Наладчик — 10 вопросов)",
                           "Add standard GREEN PROCESSING test questions (Mechanic / Technician: 10 questions)",
                         )
                       : formatDual(
-                          "Standart GREEN PROCESSING savollarini qo'shish (Mijozlar anketasi — 11 ta savol)",
-                          "Добавить стандартные вопросы GREEN PROCESSING (Анкета клиентов: 11 вопросов)",
+                          "GREEN PROCESSING standart savollarini qo'shish (Mijozlar anketasi — 11 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (Анкета клиентов — 11 вопросов)",
                           "Add standard GREEN PROCESSING questions (Customer survey: 11 questions)",
                         )}
                   </label>

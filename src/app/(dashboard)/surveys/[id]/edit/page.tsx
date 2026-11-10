@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Plus, Trash2, ArrowLeft, Save, GripVertical } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, Save, GripVertical, FileText, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -76,6 +76,46 @@ export default function SurveyBuilderPage() {
     const newQs = [...questions]
     newQs.splice(index, 1)
     setQuestions(newQs)
+  }
+
+  const [importingDocx, setImportingDocx] = useState(false)
+
+  const handleImportDocx = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportingDocx(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    try {
+      const res = await fetch('/api/surveys/import-docx', {
+        method: 'POST',
+        body: fd
+      })
+      const data = await res.json()
+      if (data.questions && data.questions.length > 0) {
+        if (!title && data.title) setTitle(data.title)
+        if (!description && data.description) setDescription(data.description)
+        const importedQuestions: Question[] = data.questions.map((q: any, idx: number) => ({
+          orderIndex: questions.length + idx,
+          questionText: q.questionText || '',
+          questionType: q.questionType || 'select',
+          options: Array.isArray(q.options) ? q.options : [],
+          isRequired: q.isRequired ?? true,
+          groupName: q.groupName || '',
+          subLabel: q.subLabel || '',
+          helpText: q.helpText || ''
+        }))
+        setQuestions(prev => [...prev, ...importedQuestions])
+        toast.success(`${importedQuestions.length} ta savol Word faylidan muvaffaqiyatli import qilindi!`)
+      } else {
+        toast.error(data.error || 'Fayldan savollar topilmadi')
+      }
+    } catch {
+      toast.error('Faylni yuklashda xatolik yuz berdi')
+    } finally {
+      setImportingDocx(false)
+      e.target.value = ''
+    }
   }
 
   const handleSave = async () => {
@@ -157,13 +197,26 @@ export default function SurveyBuilderPage() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-bold text-lg text-slate-900 dark:text-white">Savollar ({questions.length})</h2>
-            <button 
-              onClick={addQuestion}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-xl font-medium text-sm transition-colors"
-            >
-              <Plus size={16} />
-              Savol qo'shish
-            </button>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-300 dark:hover:bg-purple-900/40 rounded-xl font-medium text-sm transition-colors cursor-pointer border border-purple-200 dark:border-purple-800">
+                <FileText size={16} />
+                {importingDocx ? "Yuklanmoqda..." : "Word (.docx) dan import"}
+                <input
+                  type="file"
+                  accept=".docx"
+                  disabled={importingDocx}
+                  className="hidden"
+                  onChange={handleImportDocx}
+                />
+              </label>
+              <button 
+                onClick={addQuestion}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-xl font-medium text-sm transition-colors"
+              >
+                <Plus size={16} />
+                Savol qo'shish
+              </button>
+            </div>
           </div>
 
           {questions.map((q, i) => (
