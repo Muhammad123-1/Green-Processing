@@ -14,6 +14,7 @@ import {
   Truck,
   LogOut,
   UtensilsCrossed,
+  HeartPulse,
   MessageSquare
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
@@ -74,17 +75,23 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     )
   }
 
-  // STRICT PRIVACY FOR DEGUSTATION ROLE: Only Degustatsiya, Drivers Medical and Chat
+  // STRICT PRIVACY FOR DEGUSTATION ROLE: Oshxona, 1-Yordam, Haydovchilar and Chat
   if (userRole === 'DEGUSTATION') {
     const degustationItems = [
       {
-        label: formatDual('Degustatsiya', 'Дегустация', 'Degustation'),
+        label: formatDual('Oshxona', 'Ошхона', 'Kitchen'),
         href: '/degustatsiya',
         icon: UtensilsCrossed,
         active: pathname === '/degustatsiya' || pathname.startsWith('/degustatsiya')
       },
       {
-        label: formatDual('Haydovchilar', 'Водители', 'Drivers'),
+        label: formatDual('1-Yordam', '1-Ёрдам', 'First Aid'),
+        href: '/first-aid',
+        icon: HeartPulse,
+        active: pathname.startsWith('/first-aid')
+      },
+      {
+        label: formatDual('Haydovchilar', 'Ҳайдовчилар', 'Drivers'),
         href: '/drivers-medical',
         icon: Truck,
         active: pathname.startsWith('/drivers-medical')
@@ -93,7 +100,8 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
         label: formatDual('Chat', 'Чат', 'Chat'),
         href: '/chat',
         icon: MessageSquare,
-        active: pathname.startsWith('/chat')
+        active: pathname.startsWith('/chat'),
+        badge: unreadCount > 0 ? unreadCount : undefined
       }
     ]
 

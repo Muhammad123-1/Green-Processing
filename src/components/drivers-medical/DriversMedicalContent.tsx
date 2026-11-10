@@ -1,9 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import {
   Truck,
   HeartPulse,
+  UtensilsCrossed,
   Plus,
   Printer,
   Download,
@@ -386,6 +388,25 @@ export default function DriversMedicalContent() {
               <Printer size={15} />
               <span>Чоп этиш</span>
             </button>
+
+            {/* Quick links to other SanPiN journals */}
+            <Link
+              href="/degustatsiya"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition"
+              title="Ошхона бракераж журналига ўтиш"
+            >
+              <UtensilsCrossed size={15} className="text-emerald-500" />
+              <span>Ошхона</span>
+            </Link>
+
+            <Link
+              href="/first-aid"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition"
+              title="Биринчи ёрдам кўрсатиш журналига ўтиш"
+            >
+              <HeartPulse size={15} className="text-rose-500" />
+              <span>Биринчи ёрдам</span>
+            </Link>
           </div>
         </div>
       </div>

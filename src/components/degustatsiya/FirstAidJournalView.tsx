@@ -151,7 +151,7 @@ const QUICK_REFERRALS = [
   'Биринчи ёрдам кўрсатилди, аҳволи яхшиланмаганлиги сабабли поликлиникага йўналтирилди.'
 ]
 
-export function FirstAidJournalView() {
+export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolean } = {}) {
   const [logs, setLogs] = useState<FirstAidOfficialLogItem[]>(INITIAL_OFFICIAL_LOGS)
   const [filterDate, setFilterDate] = useState<string>('2026-01-09')
   const [searchQuery, setSearchQuery] = useState('')
