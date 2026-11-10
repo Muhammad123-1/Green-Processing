@@ -274,6 +274,16 @@ export default function SurveyPublicPage() {
 
   if (!survey) return null
 
+  const isEmployeeTest = Boolean(
+    survey.title?.toLowerCase().includes('вопросник') ||
+    survey.title?.toLowerCase().includes('опрос') ||
+    survey.title?.toLowerCase().includes('тест') ||
+    survey.title?.toLowerCase().includes('гигиен') ||
+    survey.title?.toLowerCase().includes('технолог') ||
+    survey.title?.toLowerCase().includes('аттестац') ||
+    survey.questions?.some(q => q.groupName?.toLowerCase().includes('информац'))
+  )
+
   // Group questions by groupName
   const groups: Record<string, Question[]> = {}
   const ungrouped: Question[] = []
@@ -492,7 +502,7 @@ export default function SurveyPublicPage() {
           <div className="p-6 border-b border-slate-100 grid gap-4 sm:grid-cols-3 bg-slate-50/50">
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                {survey.title?.includes('ВОПРОСНИК') || survey.title?.includes('тест') || survey.title?.includes('гигиен')
+                {isEmployeeTest
                   ? formatDual('Bo\'lim / Sex nomi', 'Отдел / Цех', 'Department / Workshop')
                   : formatDual('Restoran / Tashkilot nomi', 'Название ресторана / Организации', 'Restaurant / Organization')}
               </label>
@@ -502,7 +512,7 @@ export default function SurveyPublicPage() {
                 onChange={e => setRestaurantName(e.target.value)}
                 className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-400"
                 placeholder={
-                  survey.title?.includes('ВОПРОСНИК') || survey.title?.includes('тест') || survey.title?.includes('гигиен')
+                  isEmployeeTest
                     ? formatDual('Masalan: Ishlab chiqarish sexi', 'Например: Производственный цех', 'e.g. Production workshop')
                     : formatDual('Restoran nomi', 'Название ресторана', 'Restaurant Name')
                 }
@@ -510,7 +520,7 @@ export default function SurveyPublicPage() {
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                {survey.title?.includes('ВОПРОСНИК') || survey.title?.includes('тест') || survey.title?.includes('гигиен')
+                {isEmployeeTest
                   ? formatDual('Xodim F.I.Sh.', 'Ф.И.О. сотрудника', 'Employee Full Name')
                   : formatDual('F.I.Sh.', 'Ф.И.О.', 'Full Name')}
               </label>

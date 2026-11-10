@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { getSession } from '@/app/actions/auth'
 import { randomBytes } from 'crypto'
-import { DEFAULT_HYGIENE_TEST_QUESTIONS, DEFAULT_CUSTOMER_SURVEY_QUESTIONS } from '@/lib/defaultSurveys'
+import { getDefaultQuestionsForTemplate } from '@/lib/defaultSurveys'
 
 const prisma = new PrismaClient()
 
@@ -93,11 +93,7 @@ export async function POST(req: NextRequest) {
     let { questions } = body
 
     if (addDefault) {
-      if (templateType === 'customer' || templateType === 'customer_feedback') {
-        questions = DEFAULT_CUSTOMER_SURVEY_QUESTIONS
-      } else {
-        questions = DEFAULT_HYGIENE_TEST_QUESTIONS
-      }
+      questions = getDefaultQuestionsForTemplate(templateType)
     }
 
     const token = randomBytes(16).toString('hex');

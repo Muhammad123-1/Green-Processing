@@ -316,12 +316,18 @@ export default function SurveysPage() {
                       ? formatDual(
                           "Standart GREEN PROCESSING savollarini qo'shish (КОНТРОЛЬНЫЙ ВОПРОСНИК №1 — 10 ta test savoli)",
                           "Добавить стандартные вопросы GREEN PROCESSING (КОНТРОЛЬНЫЙ ВОПРОСНИК №1: 10 вопросов)",
-                          "Add standard GREEN PROCESSING test questions (10 questions)",
+                          "Add standard GREEN PROCESSING test questions (Questionnaire #1: 10 questions)",
+                        )
+                      : form.templateType === 'tech_process_test'
+                      ? formatDual(
+                          "Standart GREEN PROCESSING savollarini qo'shish (АНКЕТА ОПРОСА № 2 — 34 ta test savoli)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (АНКЕТА ОПРОСА № 2: 34 вопроса)",
+                          "Add standard GREEN PROCESSING test questions (Questionnaire #2: 34 questions)",
                         )
                       : formatDual(
-                          "Standart GREEN PROCESSING savollarini qo'shish (11 ta savol)",
-                          "Добавить стандартные вопросы GREEN PROCESSING (11 вопросов)",
-                          "Add standard GREEN PROCESSING questions (11 questions)",
+                          "Standart GREEN PROCESSING savollarini qo'shish (Mijozlar anketasi — 11 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (Анкета клиентов: 11 вопросов)",
+                          "Add standard GREEN PROCESSING questions (Customer survey: 11 questions)",
                         )}
                   </label>
                 </div>
