@@ -371,37 +371,48 @@ export default function SurveyPublicPage() {
     }
 
     if (q.questionType === 'select') {
+      const isLongOptions = opts.some((o: string) => String(o).length > 25)
       return (
         <div className="mt-3 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {opts.map((opt: string) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setAnswer(q.id, opt)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border-2 text-left ${
-                  selected === opt
-                    ? 'bg-green-600 border-green-600 text-white shadow-md'
-                    : 'bg-white border-slate-200 text-slate-700 hover:border-green-400'
-                }`}
-              >
-                {tr(opt)}
-              </button>
-            ))}
+          <div className={isLongOptions ? "flex flex-col gap-2.5 w-full" : "flex flex-wrap gap-2"}>
+            {opts.map((opt: string) => {
+              const isSelected = selected === opt
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setAnswer(q.id, opt)}
+                  className={`w-full p-3.5 rounded-xl text-sm font-medium transition-all border-2 text-left flex items-start gap-3 ${
+                    isSelected
+                      ? 'bg-emerald-50 border-emerald-600 text-emerald-950 font-semibold shadow-sm ring-1 ring-emerald-500/20'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center transition-all ${
+                    isSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                  </div>
+                  <span className="flex-1 leading-relaxed">{tr(opt)}</span>
+                </button>
+              )
+            })}
           </div>
-          <div className="w-full">
-            <textarea
-              value={textExtras[q.id] || ''}
-              onChange={e => setTextExtras(prev => ({ ...prev, [q.id]: e.target.value }))}
-              className="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-900 resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
-              rows={2}
-              placeholder={formatDual(
-                "Qo'shimcha fikringizni yozing...",
-                'Напишите дополнительное мнение...',
-                'Write additional comments...'
-              )}
-            />
-          </div>
+          {!isLongOptions && (
+            <div className="w-full">
+              <textarea
+                value={textExtras[q.id] || ''}
+                onChange={e => setTextExtras(prev => ({ ...prev, [q.id]: e.target.value }))}
+                className="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-900 resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
+                rows={2}
+                placeholder={formatDual(
+                  "Qo'shimcha fikringizni yozing...",
+                  'Напишите дополнительное мнение...',
+                  'Write additional comments...'
+                )}
+              />
+            </div>
+          )}
         </div>
       )
     }
@@ -481,19 +492,27 @@ export default function SurveyPublicPage() {
           <div className="p-6 border-b border-slate-100 grid gap-4 sm:grid-cols-3 bg-slate-50/50">
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                {formatDual('Restoran nomi', 'Название ресторана', 'Restaurant Name')}
+                {survey.title?.includes('ВОПРОСНИК') || survey.title?.includes('тест') || survey.title?.includes('гигиен')
+                  ? formatDual('Bo\'lim / Sex nomi', 'Отдел / Цех', 'Department / Workshop')
+                  : formatDual('Restoran / Tashkilot nomi', 'Название ресторана / Организации', 'Restaurant / Organization')}
               </label>
               <input
                 type="text"
                 value={restaurantName}
                 onChange={e => setRestaurantName(e.target.value)}
                 className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-400"
-                placeholder={formatDual('Restoran nomi', 'Название ресторана', 'Restaurant Name')}
+                placeholder={
+                  survey.title?.includes('ВОПРОСНИК') || survey.title?.includes('тест') || survey.title?.includes('гигиен')
+                    ? formatDual('Masalan: Ishlab chiqarish sexi', 'Например: Производственный цех', 'e.g. Production workshop')
+                    : formatDual('Restoran nomi', 'Название ресторана', 'Restaurant Name')
+                }
               />
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                {formatDual('F.I.Sh.', 'Ф.И.О.', 'Full Name')}
+                {survey.title?.includes('ВОПРОСНИК') || survey.title?.includes('тест') || survey.title?.includes('гигиен')
+                  ? formatDual('Xodim F.I.Sh.', 'Ф.И.О. сотрудника', 'Employee Full Name')
+                  : formatDual('F.I.Sh.', 'Ф.И.О.', 'Full Name')}
               </label>
               <input
                 type="text"

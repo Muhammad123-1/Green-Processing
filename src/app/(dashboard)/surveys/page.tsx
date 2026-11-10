@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import SurveyReportModal from "@/components/surveys/SurveyReportModal";
 import QuestionDrillDownModal from "@/components/surveys/QuestionDrillDownModal";
+import { SURVEY_TEMPLATES } from "@/lib/defaultSurveys";
 
 export default function SurveysPage() {
   const { formatDual } = useLanguage();
@@ -38,10 +39,11 @@ export default function SurveysPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   const [form, setForm] = useState({
-    title: "OOO \"GREEN PROCESSING\" mijozlar qoniqish anketasi",
-    description: "Iltimos, anketani to'ldiring, sizning fikringiz biz uchun juda muhim. Ushbu anketa ishlab chiqarilayotgan mahsulotlar sifatini va siz bilan hamkorlikni yaxshilash uchun ishlatiladi.",
+    title: SURVEY_TEMPLATES[0].title,
+    description: SURVEY_TEMPLATES[0].description,
     expiresAt: "",
     addDefault: true,
+    templateType: "hygiene_test",
   });
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -187,6 +189,55 @@ export default function SurveysPage() {
                 </h2>
               </div>
               <form onSubmit={createSurvey} className="p-6 space-y-5">
+                {/* Template Selection */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                    {formatDual("Shablon turi", "Тип шаблона", "Template Type")}
+                  </label>
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {SURVEY_TEMPLATES.map((tmpl) => {
+                      const isSelected = form.templateType === tmpl.id
+                      return (
+                        <button
+                          key={tmpl.id}
+                          type="button"
+                          onClick={() => {
+                            setForm((p) => ({
+                              ...p,
+                              templateType: tmpl.id,
+                              title: tmpl.title,
+                              description: tmpl.description,
+                            }))
+                          }}
+                          className={`p-3.5 rounded-2xl border text-left transition-all ${
+                            isSelected
+                              ? 'border-green-600 bg-green-50/60 dark:bg-green-950/30 text-slate-900 dark:text-white shadow-xs ring-2 ring-green-500/20'
+                              : 'border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                              {formatDual(tmpl.labelUz, tmpl.labelRu)}
+                            </span>
+                            <span
+                              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                                isSelected
+                                  ? 'bg-green-600 text-white'
+                                  : 'bg-slate-100 dark:bg-dark-700 text-slate-500'
+                              }`}
+                            >
+                              {tmpl.badge}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                            {tmpl.description}
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
                     {formatDual(
@@ -259,13 +310,19 @@ export default function SurveysPage() {
                   />
                   <label
                     htmlFor="addDef"
-                    className="text-sm text-slate-700 dark:text-slate-300"
+                    className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
                   >
-                    {formatDual(
-                      "Standart GREEN PROCESSING savollarini qo'shish (11 ta savol)",
-                      "Добавить стандартные вопросы GREEN PROCESSING (11 вопросов)",
-                      "Add standard GREEN PROCESSING questions (11 questions)",
-                    )}
+                    {form.templateType === 'hygiene_test'
+                      ? formatDual(
+                          "Standart GREEN PROCESSING savollarini qo'shish (КОНТРОЛЬНЫЙ ВОПРОСНИК №1 — 10 ta test savoli)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (КОНТРОЛЬНЫЙ ВОПРОСНИК №1: 10 вопросов)",
+                          "Add standard GREEN PROCESSING test questions (10 questions)",
+                        )
+                      : formatDual(
+                          "Standart GREEN PROCESSING savollarini qo'shish (11 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (11 вопросов)",
+                          "Add standard GREEN PROCESSING questions (11 questions)",
+                        )}
                   </label>
                 </div>
 
