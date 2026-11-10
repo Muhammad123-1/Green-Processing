@@ -253,10 +253,10 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
       render: (item: BrakerageLogItem) => {
         const isCold = item.temperature.includes('+2') || item.temperature.includes('+4') || item.temperature.includes('+5') || item.temperature.includes('+6')
         return (
-          <span className={`inline-flex items-center gap-1 font-mono font-bold px-2 py-0.5 rounded-md ${
-            isCold ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
+          <span className={`inline-flex items-center gap-1 font-mono font-bold px-2.5 py-1 rounded-md text-xs sm:text-sm ${
+            isCold ? 'bg-blue-50 text-blue-900 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' : 'bg-amber-50 text-amber-900 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
           }`}>
-            <Thermometer size={12} />
+            <Thermometer size={14} />
             {item.temperature}
           </span>
         )
@@ -266,12 +266,12 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
       no: 12,
       label: 'Изоҳлар (Хулоса)',
       render: (item: BrakerageLogItem) => (
-        <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg text-xs ${
+        <span className={`inline-flex items-center gap-1.5 font-bold px-3 py-1.5 rounded-lg text-xs sm:text-sm ${
           item.status === 'REJECTED'
-            ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300'
-            : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+            ? 'bg-red-50 text-red-900 border border-red-300 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800'
+            : 'bg-emerald-50 text-emerald-900 border border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
         }`}>
-          {item.status === 'REJECTED' ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}
+          {item.status === 'REJECTED' ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
           {item.notes || 'Яхши, истеъмолга рухсат этилади.'}
         </span>
       )
@@ -280,63 +280,63 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
 
   const mainTableCard = (
     <div
-      className={`bg-white dark:bg-dark-900 ${
+      className={`bg-white dark:bg-slate-900 ${
         isFullPage
-          ? 'w-full rounded-3xl shadow-xl border border-slate-200 dark:border-dark-750 flex flex-col text-slate-800 dark:text-slate-200'
-          : 'rounded-3xl w-full max-w-7xl shadow-2xl overflow-hidden border border-slate-200 dark:border-dark-750 flex flex-col max-h-[94vh] animate-in fade-in zoom-in-95 duration-150 my-auto text-slate-800 dark:text-slate-200'
+          ? 'w-full rounded-3xl shadow-md border border-slate-300 dark:border-slate-800 flex flex-col text-slate-800 dark:text-slate-200'
+          : 'rounded-3xl w-full max-w-7xl shadow-2xl overflow-hidden border border-slate-300 dark:border-slate-800 flex flex-col max-h-[94vh] my-auto text-slate-800 dark:text-slate-200'
       } overflow-hidden`}
       onClick={e => e.stopPropagation()}
     >
-      {/* Top Header */}
-      <div className="p-4 sm:p-5 bg-gradient-to-r from-orange-600 via-amber-600 to-emerald-600 text-white flex flex-wrap items-center justify-between gap-3 shadow-md">
+      {/* Top Header - Calm, professional slate design for older eyes */}
+      <div className="p-4 sm:p-5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
-            <Utensils size={22} className="text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+            <Utensils size={24} className="text-white" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur">
-                SanPiN Jurnali
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                СанПиН Журнали
               </span>
-              <span className="text-xs text-orange-100 font-medium">Brakeraj & Degustatsiya</span>
+              <span className="text-xs text-slate-300 font-medium">Бракераж ва Дегустация</span>
             </div>
-            <h2 className="text-base sm:text-lg font-black tracking-tight text-white mt-0.5">
-              ТАЙЁР МАХСУЛОТЛАРНИ НАЗОРАТ КИЛИШ ДЖУРНАЛИ
+            <h2 className="text-base sm:text-lg md:text-xl font-black tracking-tight text-white">
+              ТАЙЁР МАҲСУЛОТЛАРНИ НАЗОРАТ ҚИЛИШ ЖУРНАЛИ
             </h2>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 no-print">
+        <div className="flex flex-wrap items-center gap-2.5 no-print">
           <button
             onClick={handleOpenCreate}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white text-orange-900 hover:bg-orange-50 rounded-xl text-xs font-black shadow-lg transition active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
           >
-            <Plus size={15} />
-            <span>Yangi Taomni Baholash</span>
+            <Plus size={16} />
+            <span>+ Янги Таомни Баҳолаш</span>
           </button>
 
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition active:scale-95 border border-white/20"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
             title="Aynan rasmda ko'rsatilgan formatda Excel yuklab olish"
           >
-            <Download size={14} />
-            <span className="hidden sm:inline">Excel</span>
+            <Download size={15} />
+            <span>Excel</span>
           </button>
 
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition active:scale-95 border border-white/20"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
             title="A4 formatda chop etish yoki PDF qilish"
           >
-            <Printer size={14} />
-            <span className="hidden sm:inline">Chop etish</span>
+            <Printer size={15} />
+            <span>Чоп этиш</span>
           </button>
 
           {!isFullPage && onClose && (
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full text-white transition ml-1"
+              className="p-2 hover:bg-white/20 rounded-full text-white transition ml-1 cursor-pointer"
               title="Yopish"
             >
               <X size={20} />
@@ -346,7 +346,7 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
       </div>
 
       {/* Filter and Stats Bar */}
-      <div className="p-3.5 bg-slate-50 dark:bg-dark-850 border-b border-slate-200 dark:border-dark-700 flex flex-wrap items-center justify-between gap-3 text-xs no-print">
+      <div className="p-3.5 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm no-print">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-1 shadow-2xs">
             <button
@@ -506,26 +506,26 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                   {logs.map((log, idx) => (
                     <th
                       key={log.id}
-                      className="p-3 text-center font-black min-w-[260px] max-w-[340px] border-r border-slate-300 dark:border-dark-700 bg-amber-50/50 dark:bg-dark-800/80"
+                      className="p-3 text-center font-black min-w-[260px] max-w-[340px] border-r border-slate-300 dark:border-dark-700 bg-slate-100/70 dark:bg-dark-800/80"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center font-mono text-xs">
+                        <span className="w-7 h-7 rounded-full bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center font-mono text-xs font-bold shadow-xs">
                           {idx + 1}
                         </span>
                         <div className="flex items-center gap-1 no-print">
                           <button
                             onClick={() => handleOpenEdit(log)}
-                            className="p-1 hover:bg-slate-200 dark:hover:bg-dark-700 rounded text-slate-600 dark:text-slate-300 transition"
+                            className="p-1.5 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-lg text-slate-700 dark:text-slate-300 transition cursor-pointer"
                             title="Tahrirlash"
                           >
-                            <Edit2 size={13} />
+                            <Edit2 size={14} />
                           </button>
                           <button
                             onClick={() => handleDelete(log.id)}
-                            className="p-1 hover:bg-red-100 dark:hover:bg-red-950/40 rounded text-red-600 transition"
+                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-950/40 rounded-lg text-red-600 transition cursor-pointer"
                             title="O'chirish"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
@@ -588,36 +588,38 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
 
   const formModal = isFormOpen ? (
     <div
-      className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 md:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto"
       onClick={() => setIsFormOpen(false)}
     >
       <div
-        className="bg-white dark:bg-dark-900 rounded-3xl max-w-2xl w-full border border-slate-200 dark:border-dark-750 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto text-slate-800 dark:text-slate-200"
+        className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full border-2 border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden my-auto text-slate-900 dark:text-slate-100 relative z-[101]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white flex items-center justify-between">
+        {/* Modal Header - Calm slate, high-contrast */}
+        <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
           <div>
-            <h3 className="text-base font-black flex items-center gap-2">
-              <Utensils size={18} />
-              {editingLog ? "Taom Nazorati Yozuvini Tahrirlash" : "Yangi Tayyor Taomni Baholash (SanPiN)"}
+            <h3 className="text-base sm:text-lg font-black flex items-center gap-2">
+              <Utensils size={20} className="text-emerald-400" />
+              {editingLog ? "Таом Назорати Ёзувини Таҳрирлаш" : "Янги Тайёр Таомни Баҳолаш (СанПиН)"}
             </h3>
-            <p className="text-[11px] text-orange-100 mt-0.5">
-              Taom nomi, harorati, organoleptik ko'rinishi va komissiya a'zolari imzolarini kiriting
+            <p className="text-xs text-slate-300 mt-1">
+              Таом номи, ҳарорати, органолептик кўриниши ва комиссия аъзолари имзоларини киритинг
             </p>
           </div>
           <button
             onClick={() => setIsFormOpen(false)}
-            className="p-1.5 hover:bg-white/20 rounded-full text-white"
+            className="p-2 hover:bg-white/10 rounded-full text-slate-300 hover:text-white transition cursor-pointer"
+            title="Ёпиш"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="p-5 overflow-y-auto space-y-4 text-xs max-h-[82vh]">
+        <form onSubmit={handleSave} className="p-5 sm:p-6 overflow-y-auto space-y-4 max-h-[82vh]">
           {/* Basic Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                 Баҳоланган таом, маҳсулот номи *
               </label>
               <input
@@ -626,38 +628,38 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                 placeholder="Скалетти макаронные вар. / Педивее с мясом..."
                 value={formData.mealName}
                 onChange={e => setFormData({ ...formData, mealName: e.target.value })}
-                className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
+                className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                 Тайёрлаш вақти
               </label>
               <input
                 type="time"
                 value={formData.prepTime}
                 onChange={e => setFormData({ ...formData, prepTime: e.target.value })}
-                className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
+                className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                 Сана (Sana)
               </label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={e => setFormData({ ...formData, date: e.target.value })}
-                className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
+                className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                 Ҳарорат (°C) *
               </label>
               <input
@@ -666,28 +668,28 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                 placeholder="+80°C / +92°C / +2°C"
                 value={formData.temperature}
                 onChange={e => setFormData({ ...formData, temperature: e.target.value })}
-                className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono font-bold text-slate-900 dark:text-white"
+                className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Organoleptic Rating */}
-          <div className="p-3.5 bg-amber-50/50 dark:bg-dark-850 rounded-2xl border border-amber-200 dark:border-dark-700 space-y-2">
-            <label className="block font-bold text-slate-800 dark:text-slate-200">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border-2 border-slate-200 dark:border-slate-700 space-y-2.5">
+            <label className="block font-bold text-sm text-slate-900 dark:text-slate-100">
               Таомнинг кўриниши (Ранг, ҳид, таъм, тузум) *
             </label>
 
             {/* Quick Presets */}
-            <div className="flex flex-wrap gap-1 mb-1.5">
-              <span className="text-[10px] text-slate-500 font-bold mr-1">Tezkor shablonlar:</span>
+            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-bold mr-1">Тезкор шаблонлар:</span>
               {QUICK_ORGANOLEPTIC.map((txt, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => setFormData({ ...formData, organoleptic: txt })}
-                  className="text-[10px] font-medium px-2 py-0.5 bg-white dark:bg-dark-900 border border-amber-300 dark:border-dark-700 rounded hover:bg-amber-100 dark:hover:bg-dark-800 text-slate-700 dark:text-slate-300 transition"
+                  className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition cursor-pointer"
                 >
-                  Shablon {i + 1}
+                  Шаблон {i + 1}
                 </button>
               ))}
             </div>
@@ -697,75 +699,75 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
               required
               value={formData.organoleptic}
               onChange={e => setFormData({ ...formData, organoleptic: e.target.value })}
-              className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white"
+              className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
             />
           </div>
 
           {/* Commission Signatures */}
-          <div className="p-3.5 bg-slate-50 dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-2.5">
-            <div className="font-bold text-slate-800 dark:text-slate-200 text-[11px] flex items-center gap-1.5 uppercase tracking-wider">
-              <Users size={14} className="text-orange-600" />
-              Комиссия аъзолари ва имзолар (F.I.O.)
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border-2 border-slate-200 dark:border-slate-700 space-y-3">
+            <div className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm flex items-center gap-2 uppercase tracking-wider">
+              <Users size={16} className="text-slate-700 dark:text-slate-300" />
+              Комиссия аъзолари ва имзолар (Ф.И.О.)
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Комиссия раиси имзоси:
                 </label>
                 <input
                   type="text"
                   value={formData.chairmanSign}
                   onChange={e => setFormData({ ...formData, chairmanSign: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
+                  className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Комиссия аъзоси 1 имзоси:
                 </label>
                 <input
                   type="text"
                   value={formData.member1Sign}
                   onChange={e => setFormData({ ...formData, member1Sign: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
+                  className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Комиссия аъзоси 2 имзоси:
                 </label>
                 <input
                   type="text"
                   value={formData.member2Sign}
                   onChange={e => setFormData({ ...formData, member2Sign: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white"
+                  className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Сифат назоратчиси имзоси (QC):
                 </label>
                 <input
                   type="text"
                   value={formData.qcInspectorSign}
                   onChange={e => setFormData({ ...formData, qcInspectorSign: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white font-bold"
+                  className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">
-                  Тиббий ходим имзоси (Feldsher):
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Тиббий ходим имзоси (Фельдшер):
                 </label>
                 <input
                   type="text"
                   value={formData.medicalStaffSign}
                   onChange={e => setFormData({ ...formData, medicalStaffSign: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg text-slate-900 dark:text-white font-bold"
+                  className="w-full p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white"
                 />
               </div>
             </div>
@@ -773,10 +775,10 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
 
           {/* Decision & Notes */}
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
               Изоҳлар (Хулоса / Рухсат)
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2.5">
               <button
                 type="button"
                 onClick={() =>
@@ -786,13 +788,13 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                     notes: 'Яхши, истеъмолга рухсат этилади.'
                   })
                 }
-                className={`p-2 rounded-xl border text-center font-bold flex items-center justify-center gap-1.5 transition ${
+                className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                   formData.status === 'APPROVED'
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow'
-                    : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
+                    ? 'bg-emerald-700 text-white border-emerald-700 shadow-md ring-2 ring-emerald-500'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
                 }`}
               >
-                <CheckCircle2 size={14} />
+                <CheckCircle2 size={16} />
                 <span>Яхши, истеъмолга рухсат</span>
               </button>
 
@@ -805,13 +807,13 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                     notes: 'Яроқсиз деб топилди, истеъмолга рухсат этилмайди!'
                   })
                 }
-                className={`p-2 rounded-xl border text-center font-bold flex items-center justify-center gap-1.5 transition ${
+                className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                   formData.status === 'REJECTED'
-                    ? 'bg-red-600 text-white border-red-600 shadow'
-                    : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
+                    ? 'bg-red-700 text-white border-red-700 shadow-md ring-2 ring-red-500'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
                 }`}
               >
-                <AlertTriangle size={14} />
+                <AlertTriangle size={16} />
                 <span>Рад этилди / Бракланди</span>
               </button>
             </div>
@@ -820,26 +822,26 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
               type="text"
               value={formData.notes || ''}
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white"
+              className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
             />
           </div>
 
           {/* Form Actions */}
-          <div className="pt-3 border-t border-slate-200 dark:border-dark-750 flex items-center justify-end gap-2">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setIsFormOpen(false)}
-              className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-dark-800 transition"
+              className="px-5 py-3 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
-              Bekor qilish
+              Бекор қилиш
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-black shadow transition active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+              className="px-7 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-sm shadow-md transition active:scale-95 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
             >
-              {saving && <Loader2 size={15} className="animate-spin" />}
-              <span>{editingLog ? "O'zgarishlarni Saqlash" : "Xulosani Saqlash"}</span>
+              {saving && <Loader2 size={16} className="animate-spin" />}
+              <span>{editingLog ? "Ўзгаришларни Сақлаш" : "Хулосани Сақлаш"}</span>
             </button>
           </div>
         </form>
@@ -858,7 +860,7 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
       onClick={onClose}
     >
       {mainTableCard}

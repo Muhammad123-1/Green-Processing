@@ -327,77 +327,73 @@ export default function DriversMedicalContent() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Banner & Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 text-white shadow-xl relative overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Banner & Header - Adaptive Light & Dark mode, calm colors for older eyes */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 text-slate-900 dark:text-white shadow-sm relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
-              <Truck size={28} className="text-white" />
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-800 text-white flex items-center justify-center shadow-md shrink-0 border border-slate-700">
+              <Truck size={26} className="text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center gap-1">
-                  <ShieldCheck size={12} />
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1.5">
+                  <ShieldCheck size={14} />
                   3 ва 4-расм бўйича расмий журнал
                 </span>
-                <span className="text-xs text-slate-400">Рейс олди кунлик кўрик</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Рейс олди кунлик кўрик</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                 Линияга Йўналтирилган Ҳайдовчиларни Кунлик Тиббий Кўрикдан Ўтказиш Журнали
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
                 Ҳайдовчилар шикоятлари, томир уриши (пульс), тана ҳарорати, артериал босим, алкогол текшируви ва рейсга рухсат хулосаларини кунлик қайд этиш дафтари.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 no-print">
+          <div className="flex flex-wrap items-center gap-2.5 no-print">
             <button
               onClick={handleBulkCheckAllDrivers}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-600/25 transition active:scale-95"
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
               title="Шу кун учун корхонанинг барча ҳайдовчиларини автоматик нормал кўрик билан тўлдириш"
             >
-              <Zap size={15} />
+              <Zap size={16} />
               <span>Барча ҳайдовчиларни тезкор кўрикдан ўтказиш</span>
             </button>
 
             <button
               onClick={handleOpenCreate}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white text-sky-950 hover:bg-sky-50 rounded-xl text-xs font-black shadow-lg transition active:scale-95"
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
             >
-              <Plus size={15} />
+              <Plus size={16} />
               <span>+ Ҳайдовчи қўшиш</span>
             </button>
 
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition active:scale-95 border border-white/20"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
               title="Excel / CSV файлида юклаб олиш"
             >
-              <Download size={14} />
-              <span className="hidden sm:inline">Excel</span>
+              <Download size={15} />
+              <span>Excel</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition active:scale-95 border border-white/20"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
               title="A4 форматда чоп этиш"
             >
-              <Printer size={14} />
-              <span className="hidden sm:inline">Чоп этиш</span>
+              <Printer size={15} />
+              <span>Чоп этиш</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Main Card with Filters and Official Table */}
-      <div className="bg-white dark:bg-dark-900 rounded-3xl shadow-xl overflow-hidden border border-slate-200 dark:border-dark-750 flex flex-col text-slate-800 dark:text-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-md overflow-hidden border border-slate-300 dark:border-slate-800 flex flex-col text-slate-800 dark:text-slate-200">
         {/* Filter and Stats Bar */}
-        <div className="p-3.5 bg-slate-50 dark:bg-dark-850 border-b border-slate-200 dark:border-dark-700 flex flex-wrap items-center justify-between gap-3 text-xs no-print">
+        <div className="p-3.5 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm no-print">
           <div className="flex flex-wrap items-center gap-2">
             {/* Date Stepper */}
             <div className="flex items-center gap-1 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl p-1 shadow-2xs">
@@ -717,52 +713,53 @@ export default function DriversMedicalContent() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MODAL: ADD / EDIT DRIVER MEDICAL CHECK                                    */}
+      {/* MODAL: ADD / EDIT DRIVER MEDICAL CHECK - Calm, solid & high-contrast       */}
       {/* ========================================================================= */}
       {isFormOpen && (
         <div
-          className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 md:p-6 overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto"
           onClick={() => setIsFormOpen(false)}
         >
           <div
-            className="bg-white dark:bg-dark-900 rounded-3xl max-w-xl w-full border border-slate-200 dark:border-dark-750 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto text-slate-800 dark:text-slate-200"
+            className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full border-2 border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden my-auto text-slate-900 dark:text-slate-100 relative z-[101]"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-4 bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-between">
+            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
               <div>
-                <h3 className="text-base font-black flex items-center gap-2">
-                  <Truck size={18} />
+                <h3 className="text-base sm:text-lg font-black flex items-center gap-2">
+                  <Truck size={20} className="text-blue-400" />
                   {editingLog ? "Ҳайдовчи Кўригини Таҳрирлаш" : "Янги Ҳайдовчи Кўригини Қайд Этиш (3 ва 4-расм)"}
                 </h3>
-                <p className="text-[11px] text-sky-100 mt-0.5">
+                <p className="text-xs text-slate-300 mt-1">
                   Рейс олди тиббий кўрик: шикоят, пульс, ҳарорат, босим, алкогол ва рейсга рухсат
                 </p>
               </div>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="p-1.5 hover:bg-white/20 rounded-full text-white"
+                className="p-2 hover:bg-white/10 rounded-full text-slate-300 hover:text-white transition cursor-pointer"
+                title="Ёпиш"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-5 overflow-y-auto space-y-4 text-xs max-h-[82vh]">
+            <form onSubmit={handleSave} className="p-5 sm:p-6 overflow-y-auto space-y-4 max-h-[82vh]">
               {/* Row 1: Order, Date, Driver Name */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     1. Тартиб рақами
                   </label>
                   <input
                     type="number"
                     value={formData.orderNumber}
                     onChange={e => setFormData({ ...formData, orderNumber: Number(e.target.value) || 1 })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     Кўрик санаси *
                   </label>
                   <input
@@ -770,24 +767,24 @@ export default function DriversMedicalContent() {
                     required
                     value={formData.date}
                     onChange={e => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Driver Selection */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                   2. Ҳайдовчининг Ф.И.Ш. *
                 </label>
-                <div className="flex flex-wrap gap-1 mb-1.5">
-                  <span className="text-[10px] text-slate-500 font-bold mr-1">Корхона ҳайдовчилари:</span>
+                <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                  <span className="text-xs text-slate-600 dark:text-slate-400 font-bold mr-1">Корхона ҳайдовчилари:</span>
                   {OFFICIAL_FLEET_DRIVERS.slice(0, 8).map((d, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setFormData({ ...formData, driverName: d })}
-                      className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded hover:bg-sky-100 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 transition"
+                      className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition cursor-pointer"
                     >
                       {d}
                     </button>
@@ -799,23 +796,23 @@ export default function DriversMedicalContent() {
                   placeholder="Расилов И. / Салихов Х..."
                   value={formData.driverName}
                   onChange={e => setFormData({ ...formData, driverName: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
+                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                 />
               </div>
 
               {/* 3. Shikoyatlar */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                   3. Шикоятлари
                 </label>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, complaints: 'йўқ' })}
-                    className={`px-3 py-1.5 rounded-lg border font-bold text-xs ${
+                    className={`px-4 py-2 rounded-xl border-2 font-bold text-sm cursor-pointer ${
                       formData.complaints === 'йўқ'
-                        ? 'bg-emerald-600 text-white border-emerald-600'
-                        : 'bg-white dark:bg-dark-900 border-slate-300 dark:border-dark-700'
+                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     йўқ (стандарт)
@@ -824,15 +821,15 @@ export default function DriversMedicalContent() {
                     type="text"
                     value={formData.complaints}
                     onChange={e => setFormData({ ...formData, complaints: e.target.value })}
-                    className="flex-1 p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white"
+                    className="flex-1 p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* 4, 5, 6: Pulse, Temp, BP */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-sky-50/50 dark:bg-dark-850 rounded-2xl border border-sky-200 dark:border-dark-700">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-50 dark:bg-slate-850 rounded-2xl border-2 border-slate-200 dark:border-slate-700">
                 <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1">
+                  <label className="block font-bold text-sm text-slate-900 dark:text-slate-100 mb-1.5">
                     4. Томир уриши *
                   </label>
                   <input
@@ -841,12 +838,12 @@ export default function DriversMedicalContent() {
                     placeholder="76-78"
                     value={formData.pulse}
                     onChange={e => setFormData({ ...formData, pulse: e.target.value })}
-                    className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1">
+                  <label className="block font-bold text-sm text-slate-900 dark:text-slate-100 mb-1.5">
                     5. Ҳарорат (°C) *
                   </label>
                   <input
@@ -855,12 +852,12 @@ export default function DriversMedicalContent() {
                     placeholder="36.3"
                     value={formData.bodyTemp}
                     onChange={e => setFormData({ ...formData, bodyTemp: e.target.value })}
-                    className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1">
+                  <label className="block font-bold text-sm text-slate-900 dark:text-slate-100 mb-1.5">
                     6. Қон босими *
                   </label>
                   <input
@@ -869,24 +866,24 @@ export default function DriversMedicalContent() {
                     placeholder="120/80"
                     value={formData.bloodPressure}
                     onChange={e => setFormData({ ...formData, bloodPressure: e.target.value })}
-                    className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* 7. Alkogol miqdori */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                   7. Чиқарилаётган нафас таркибида алкогол миқдори *
                 </label>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, breathAlcohol: 'аниқланмади' })}
-                    className={`px-3 py-1.5 rounded-lg border font-bold text-xs ${
+                    className={`px-4 py-2 rounded-xl border-2 font-bold text-sm cursor-pointer ${
                       formData.breathAlcohol === 'аниқланмади'
-                        ? 'bg-emerald-600 text-white border-emerald-600'
-                        : 'bg-white dark:bg-dark-900 border-slate-300 dark:border-dark-700'
+                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     аниқланмади (0.00‰)
@@ -895,40 +892,40 @@ export default function DriversMedicalContent() {
                     type="text"
                     value={formData.breathAlcohol}
                     onChange={e => setFormData({ ...formData, breathAlcohol: e.target.value })}
-                    className="flex-1 p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white"
+                    className="flex-1 p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* 8. Result */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                   8. Кўрик натижалари / Рейсга рухсат *
                 </label>
-                <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="grid grid-cols-2 gap-2.5 mb-2.5">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, result: 'соғлом, рейска рухсат' })}
-                    className={`p-2 rounded-xl border text-center font-bold flex items-center justify-center gap-1.5 transition ${
+                    className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                       formData.result === 'соғлом, рейска рухсат'
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow'
-                        : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
+                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-md ring-2 ring-emerald-500'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <CheckCircle2 size={13} />
+                    <CheckCircle2 size={16} />
                     <span>Соғлом, рейсга рухсат</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, result: 'четлатилди (босим юқори)' })}
-                    className={`p-2 rounded-xl border text-center font-bold flex items-center justify-center gap-1.5 transition ${
+                    className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                       formData.result.includes('четлатилди')
-                        ? 'bg-red-600 text-white border-red-600 shadow'
-                        : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
+                        ? 'bg-red-700 text-white border-red-700 shadow-md ring-2 ring-red-500'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <AlertTriangle size={13} />
+                    <AlertTriangle size={16} />
                     <span>Рейсдан четлатиш</span>
                   </button>
                 </div>
@@ -937,37 +934,37 @@ export default function DriversMedicalContent() {
                   required
                   value={formData.result}
                   onChange={e => setFormData({ ...formData, result: e.target.value })}
-                  className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white"
+                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                 />
               </div>
 
               {/* 9. Signature */}
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5">
                   9. Масъул тиббий ходим имзоси (Ҳамшира):
                 </label>
                 <input
                   type="text"
                   value={formData.signature}
                   onChange={e => setFormData({ ...formData, signature: e.target.value })}
-                  className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
+                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm sm:text-base text-slate-900 dark:text-white"
                 />
               </div>
 
               {/* Form Actions */}
-              <div className="pt-3 border-t border-slate-200 dark:border-dark-750 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-dark-800 transition"
+                  className="px-5 py-3 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 >
                   Бекор қилиш
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl font-black shadow transition active:scale-95 flex items-center gap-1.5"
+                  className="px-7 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-sm shadow-md transition active:scale-95 flex items-center gap-2 cursor-pointer"
                 >
-                  <Check size={15} />
+                  <Check size={16} />
                   <span>{editingLog ? "Ўзгаришларни сақлаш" : "Кўрикни сақлаш"}</span>
                 </button>
               </div>

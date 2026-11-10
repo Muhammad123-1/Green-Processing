@@ -386,75 +386,75 @@ export function FirstAidJournalView() {
   ]
 
   return (
-    <div className="w-full bg-white dark:bg-dark-900 rounded-3xl shadow-xl overflow-hidden border border-slate-200 dark:border-dark-750 flex flex-col text-slate-800 dark:text-slate-200">
-      {/* Header Banner */}
-      <div className="p-4 sm:p-5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 text-white flex flex-wrap items-center justify-between gap-3 shadow-md">
+    <div className="w-full bg-white dark:bg-slate-900 rounded-3xl shadow-md overflow-hidden border border-slate-300 dark:border-slate-800 flex flex-col text-slate-800 dark:text-slate-200">
+      {/* Header Banner - Calm slate, professional & high-contrast */}
+      <div className="p-4 sm:p-5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
-            <HeartPulse size={24} className="text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+            <HeartPulse size={24} className="text-rose-400" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
                 1 ва 2-расм бўйича расмий шакл
               </span>
-              <span className="text-xs text-rose-100 font-medium">12 та расмий кўрсаткич</span>
+              <span className="text-xs text-slate-300 font-medium">12 та расмий кўрсаткич</span>
             </div>
-            <h2 className="text-base sm:text-lg font-black tracking-tight text-white mt-0.5">
+            <h2 className="text-base sm:text-lg md:text-xl font-black tracking-tight text-white">
               ХОДИМЛАРГА БИРИНЧИ ЁРДАМ КЎРСАТИШ ВА ТИББИЙ ҚАБУЛ ЖУРНАЛИ
             </h2>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 no-print">
+        <div className="flex flex-wrap items-center gap-2.5 no-print">
           {/* View Mode Toggle: Transposed (as in photo) or Horizontal */}
-          <div className="flex items-center bg-white/20 p-1 rounded-xl text-xs font-bold">
+          <div className="flex items-center bg-slate-800 p-1 rounded-xl text-xs sm:text-sm font-bold border border-slate-700">
             <button
               onClick={() => setViewMode('transposed')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition ${
-                viewMode === 'transposed' ? 'bg-white text-rose-900 shadow-xs' : 'text-white hover:bg-white/10'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                viewMode === 'transposed' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-300 hover:text-white'
               }`}
               title="1 va 2-rasmdagi kabi tik varaq jadval"
             >
-              <LayoutGrid size={13} />
-              <span>Tik jadval (Varaq)</span>
+              <LayoutGrid size={15} />
+              <span>Тик дафтар (1 ва 2-расм)</span>
             </button>
             <button
               onClick={() => setViewMode('horizontal')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition ${
-                viewMode === 'horizontal' ? 'bg-white text-rose-900 shadow-xs' : 'text-white hover:bg-white/10'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                viewMode === 'horizontal' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-300 hover:text-white'
               }`}
               title="Keng jadval ko'rinishi"
             >
-              <Table size={13} />
-              <span>Keng jadval</span>
+              <Table size={15} />
+              <span>Кенг жадвал</span>
             </button>
           </div>
 
           <button
             onClick={handleOpenCreate}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white text-rose-900 hover:bg-rose-50 rounded-xl text-xs font-black shadow-lg transition active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
           >
-            <Plus size={15} />
-            <span>Yangi Qabulni Qayd Etish</span>
+            <Plus size={16} />
+            <span>+ Янги Қабулни Қайд Этиш</span>
           </button>
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition active:scale-95 border border-white/20"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
             title="Excel / CSV formatida yuklab olish"
           >
-            <Download size={14} />
-            <span className="hidden sm:inline">Excel</span>
+            <Download size={15} />
+            <span>Excel</span>
           </button>
 
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition active:scale-95 border border-white/20"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-700 cursor-pointer"
             title="A4 formatda chop etish"
           >
-            <Printer size={14} />
-            <span className="hidden sm:inline">Chop etish</span>
+            <Printer size={15} />
+            <span>Чоп этиш</span>
           </button>
         </div>
       </div>
@@ -774,52 +774,53 @@ export function FirstAidJournalView() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MODAL: CREATE / EDIT RECORD                                               */}
+      {/* MODAL: CREATE / EDIT RECORD - Calm, solid & high-contrast                  */}
       {/* ========================================================================= */}
       {isFormOpen && (
         <div
-          className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 md:p-6 overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto"
           onClick={() => setIsFormOpen(false)}
         >
           <div
-            className="bg-white dark:bg-dark-900 rounded-3xl max-w-2xl w-full border border-slate-200 dark:border-dark-750 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto text-slate-800 dark:text-slate-200"
+            className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full border-2 border-slate-300 dark:border-slate-700 shadow-2xl overflow-hidden my-auto text-slate-900 dark:text-slate-100 relative z-[101]"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-4 bg-gradient-to-r from-rose-600 to-pink-600 text-white flex items-center justify-between">
+            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
               <div>
-                <h3 className="text-base font-black flex items-center gap-2">
-                  <HeartPulse size={18} />
+                <h3 className="text-base sm:text-lg font-black flex items-center gap-2">
+                  <HeartPulse size={20} className="text-rose-400" />
                   {editingLog ? "Тиббий Қабул Ёзувини Таҳрирлаш" : "Янги Биринчи Ёрдам Мурожаатини Қайд Этиш (1 ва 2-расм)"}
                 </h3>
-                <p className="text-[11px] text-rose-100 mt-0.5">
+                <p className="text-xs text-slate-300 mt-1">
                   12 та расмий кўрсаткич: ходим маълумоти, шикоят, кўрик натижаси, кўрсатилган ёрдам ва хулоса
                 </p>
               </div>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="p-1.5 hover:bg-white/20 rounded-full text-white"
+                className="p-2 hover:bg-white/10 rounded-full text-slate-300 hover:text-white transition cursor-pointer"
+                title="Ёпиш"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-5 overflow-y-auto space-y-4 text-xs max-h-[82vh]">
+            <form onSubmit={handleSave} className="p-5 sm:p-6 overflow-y-auto space-y-4 max-h-[82vh]">
               {/* Row 1: Tartib raqami, Sana, Vaqt */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     1. № (Тартиб рақами)
                   </label>
                   <input
                     type="number"
                     value={formData.orderNumber}
                     onChange={e => setFormData({ ...formData, orderNumber: Number(e.target.value) || 1 })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     2. Сана *
                   </label>
                   <input
@@ -827,12 +828,12 @@ export function FirstAidJournalView() {
                     required
                     value={formData.date}
                     onChange={e => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     3. Вақт *
                   </label>
                   <input
@@ -840,7 +841,7 @@ export function FirstAidJournalView() {
                     required
                     value={formData.time}
                     onChange={e => setFormData({ ...formData, time: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-mono text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -848,7 +849,7 @@ export function FirstAidJournalView() {
               {/* Row 2: Xodim F.I.Sh., Lavozimi, Bo'linma */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     4. Ходимнинг Ф.И.Ш. *
                   </label>
                   <input
@@ -857,12 +858,12 @@ export function FirstAidJournalView() {
                     placeholder="Сардоров Азизбек"
                     value={formData.employeeName}
                     onChange={e => setFormData({ ...formData, employeeName: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     5. Лавозими
                   </label>
                   <input
@@ -870,12 +871,12 @@ export function FirstAidJournalView() {
                     placeholder="Ҳайдовчи / Оператор / Ошпаз"
                     value={formData.position}
                     onChange={e => setFormData({ ...formData, position: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-medium text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                     6. Бўлинма
                   </label>
                   <input
@@ -883,26 +884,26 @@ export function FirstAidJournalView() {
                     placeholder="Логистика / Цех / Ошхона"
                     value={formData.department}
                     onChange={e => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-medium text-sm sm:text-base text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Row 3: Shikoyat */}
-              <div className="p-3 bg-rose-50/50 dark:bg-dark-850 rounded-2xl border border-rose-200 dark:border-dark-700 space-y-1.5">
-                <label className="block font-bold text-slate-800 dark:text-slate-200">
+              <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-2xl border-2 border-slate-200 dark:border-slate-700 space-y-2">
+                <label className="block font-bold text-sm text-slate-900 dark:text-slate-100">
                   7. Мурожаат сабаби / шикоят *
                 </label>
-                <div className="flex flex-wrap gap-1 mb-1">
-                  <span className="text-[10px] text-slate-500 font-bold mr-1">Тезкор шаблонлар:</span>
+                <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                  <span className="text-xs text-slate-600 dark:text-slate-400 font-bold mr-1">Тезкор шаблонлар:</span>
                   {QUICK_COMPLAINTS.map((txt, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setFormData({ ...formData, complaint: txt })}
-                      className="text-[10px] font-medium px-2 py-0.5 bg-white dark:bg-dark-900 border border-rose-300 dark:border-dark-700 rounded hover:bg-rose-100 dark:hover:bg-dark-800 text-slate-700 dark:text-slate-300 transition"
+                      className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition cursor-pointer"
                     >
-                      {txt.slice(0, 28)}...
+                      {txt.slice(0, 30)}...
                     </button>
                   ))}
                 </div>
@@ -911,22 +912,22 @@ export function FirstAidJournalView() {
                   required
                   value={formData.complaint}
                   onChange={e => setFormData({ ...formData, complaint: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white"
+                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                 />
               </div>
 
               {/* Row 4: Hamshira ko'rigi natijasi */}
-              <div className="p-3 bg-amber-50/50 dark:bg-dark-850 rounded-2xl border border-amber-200 dark:border-dark-700 space-y-1.5">
-                <label className="block font-bold text-slate-800 dark:text-slate-200">
+              <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-2xl border-2 border-slate-200 dark:border-slate-700 space-y-2">
+                <label className="block font-bold text-sm text-slate-900 dark:text-slate-100">
                   8. Ҳамшира кўриги натижаси (А/Б, Пульс, Ҳарорат) *
                 </label>
-                <div className="flex flex-wrap gap-1 mb-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                   {QUICK_NURSE_INSPECTIONS.map((txt, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setFormData({ ...formData, nurseInspection: txt })}
-                      className="text-[10px] font-medium px-2 py-0.5 bg-white dark:bg-dark-900 border border-amber-300 dark:border-dark-700 rounded hover:bg-amber-100 dark:hover:bg-dark-800 text-slate-700 dark:text-slate-300 transition"
+                      className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition cursor-pointer"
                     >
                       {txt.slice(0, 32)}...
                     </button>
@@ -937,22 +938,22 @@ export function FirstAidJournalView() {
                   required
                   value={formData.nurseInspection}
                   onChange={e => setFormData({ ...formData, nurseInspection: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white"
+                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                 />
               </div>
 
               {/* Row 5: Ko'rsatilgan yordam */}
-              <div className="p-3 bg-indigo-50/50 dark:bg-dark-850 rounded-2xl border border-indigo-200 dark:border-dark-700 space-y-1.5">
-                <label className="block font-bold text-slate-800 dark:text-slate-200">
+              <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-2xl border-2 border-slate-200 dark:border-slate-700 space-y-2">
+                <label className="block font-bold text-sm text-slate-900 dark:text-slate-100">
                   9. Кўрсатилган ёрдам *
                 </label>
-                <div className="flex flex-wrap gap-1 mb-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                   {QUICK_AIDS.map((txt, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setFormData({ ...formData, aidProvided: txt })}
-                      className="text-[10px] font-medium px-2 py-0.5 bg-white dark:bg-dark-900 border border-indigo-300 dark:border-dark-700 rounded hover:bg-indigo-100 dark:hover:bg-dark-800 text-slate-700 dark:text-slate-300 transition"
+                      className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition cursor-pointer"
                     >
                       {txt.slice(0, 32)}...
                     </button>
@@ -963,52 +964,52 @@ export function FirstAidJournalView() {
                   required
                   value={formData.aidProvided}
                   onChange={e => setFormData({ ...formData, aidProvided: e.target.value })}
-                  className="w-full p-2 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white"
+                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                 />
               </div>
 
               {/* Row 6: Tibbiy muassasaga yuborish / ishdan ozod qilish */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-sm text-slate-800 dark:text-slate-200 mb-1.5">
                   10. Тиббий муассасага юбориш / ишдан озод қилиш *
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-2.5">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, referralOrRelease: QUICK_REFERRALS[0] })}
-                    className={`p-2 rounded-xl border text-center font-bold flex items-center justify-center gap-1.5 transition ${
+                    className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                       formData.referralOrRelease === QUICK_REFERRALS[0]
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow'
-                        : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
+                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-md ring-2 ring-emerald-500'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <CheckCircle2 size={13} />
+                    <CheckCircle2 size={16} />
                     <span>Ишга қайтди</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, referralOrRelease: QUICK_REFERRALS[1] })}
-                    className={`p-2 rounded-xl border text-center font-bold flex items-center justify-center gap-1.5 transition ${
+                    className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                       formData.referralOrRelease === QUICK_REFERRALS[1]
-                        ? 'bg-amber-600 text-white border-amber-600 shadow'
-                        : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-500'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <Activity size={13} />
+                    <Activity size={16} />
                     <span>Уйга рухсат</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, referralOrRelease: QUICK_REFERRALS[2] })}
-                    className={`p-2 rounded-xl border text-center font-bold flex items-center justify-center gap-1.5 transition ${
+                    className={`p-3 rounded-xl border-2 text-center font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                       formData.referralOrRelease === QUICK_REFERRALS[2]
-                        ? 'bg-red-600 text-white border-red-600 shadow'
-                        : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700'
+                        ? 'bg-red-700 text-white border-red-700 shadow-md ring-2 ring-red-500'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <AlertTriangle size={13} />
+                    <AlertTriangle size={16} />
                     <span>Шифохонага</span>
                   </button>
                 </div>
@@ -1017,26 +1018,26 @@ export function FirstAidJournalView() {
                   required
                   value={formData.referralOrRelease}
                   onChange={e => setFormData({ ...formData, referralOrRelease: e.target.value })}
-                  className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl text-slate-900 dark:text-white"
+                  className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:border-blue-600 focus:outline-none"
                 />
               </div>
 
               {/* Row 7: Imzolar */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200 dark:border-dark-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
                     11. Ҳамширанинг имзоси
                   </label>
                   <input
                     type="text"
                     value={formData.nurseSignature}
                     onChange={e => setFormData({ ...formData, nurseSignature: e.target.value })}
-                    className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-bold text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-bold text-sm sm:text-base text-slate-900 dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
                     12. Ходим имзоси
                   </label>
                   <input
@@ -1044,25 +1045,25 @@ export function FirstAidJournalView() {
                     placeholder="Ходим исми / имзо"
                     value={formData.employeeSignature || formData.employeeName}
                     onChange={e => setFormData({ ...formData, employeeSignature: e.target.value })}
-                    className="w-full p-2.5 bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-xl font-medium text-slate-900 dark:text-white"
+                    className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl font-medium text-sm sm:text-base text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {/* Form Actions */}
-              <div className="pt-3 border-t border-slate-200 dark:border-dark-750 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-dark-800 transition"
+                  className="px-5 py-3 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 >
                   Бекор қилиш
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black shadow transition active:scale-95 flex items-center gap-1.5"
+                  className="px-7 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-sm shadow-md transition active:scale-95 flex items-center gap-2 cursor-pointer"
                 >
-                  <Check size={15} />
+                  <Check size={16} />
                   <span>{editingLog ? "Ўзгаришларни сақлаш" : "Қабулни сақлаш"}</span>
                 </button>
               </div>
