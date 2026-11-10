@@ -45,6 +45,36 @@ export const SURVEY_TEMPLATES: SurveyTemplateDefinition[] = [
     questionsCount: 40,
   },
   {
+    id: 'head_operator_test',
+    title: 'САВОЛ-ЖАВОБ АНКЕТАСИ №2-блок: Технологик жараён — БОШ оператор',
+    description:
+      'ХОДИМНИ МАЛАКАСИНИ ОШИРИШДАГИ ОЛГАН БИЛИМЛАРИНИ БАХОЛАШ. Буйруқ №5-П 2026й. Аттестация тури: Планга асосан. «GREEN PROCESSING» МЧЖ Директори Иминов С.М.',
+    badge: '37 ta savol + Xodim anketasi',
+    labelUz: '3-Nazorat testi: Texnologik jarayon — Bosh operator (37 ta savol)',
+    labelRu: 'АНКЕТА ОПРОСА № 2: Технологический процесс — Главный оператор (37 вопросов)',
+    questionsCount: 43,
+  },
+  {
+    id: 'safety_test',
+    title: 'САВОЛ-ЖАВОБ АНКЕТАСИ №3-блок: Техник хавфсизлик ва қўшимча саволлар',
+    description:
+      'ХОДИМНИ МАЛАКАСИНИ ОШИРИШДАГИ ОЛГАН БИЛИМЛАРИНИ БАХОЛАШ. Буйруқ 2026й. Аттестация тури: Планга асосан. «GREEN PROCESSING» МЧЖ Директори Иминов С.М. (Техника безопасности и корпоративные вопросы)',
+    badge: '10 ta savol + Xodim anketasi',
+    labelUz: '4-Nazorat testi: Texnik xavfsizlik va qo\'shimcha savollar (10 ta savol)',
+    labelRu: 'АНКЕТА ОПРОСА № 3: Техника безопасности и корпоративные вопросы (10 вопросов)',
+    questionsCount: 16,
+  },
+  {
+    id: 'mechanic_test',
+    title: 'САВОЛ-ЖАВОБ АНКЕТАСИ №2-блок: Технологик жараён (Созловчи / Наладчик)',
+    description:
+      'ХОДИМНИ МАЛАКАСИНИ ОШИРИШДАГИ ОЛГАН БИЛИМЛАРИНИ БАХОЛАШ. Буйруқ №5П 2026й. Аттестация тури: Планга асосан. «GREEN PROCESSING» МЧЖ Директори Иминов С.М. (Технологик жараён, ускуналар созлови ва техник хизмат)',
+    badge: '10 ta savol + Xodim anketasi',
+    labelUz: '5-Nazorat testi: Texnologik jarayon — Sozlovchi / Nalandchik (10 ta savol)',
+    labelRu: 'АНКЕТА ОПРОСА № 2: Технологический процесс — Наладчик (10 вопросов)',
+    questionsCount: 16,
+  },
+  {
     id: 'customer_feedback',
     title: 'OOO "GREEN PROCESSING" mijozlar qoniqish anketasi',
     description:
@@ -1934,6 +1964,16 @@ export function getDefaultQuestionsForTemplate(templateType?: string): SurveyTem
     case 'tech_process_test':
     case 'tech_process':
       return DEFAULT_TECH_PROCESS_TEST_QUESTIONS
+    case 'head_operator_test':
+    case 'head_operator':
+      return DEFAULT_HEAD_OPERATOR_TEST_QUESTIONS
+    case 'safety_test':
+    case 'safety':
+      return DEFAULT_SAFETY_TEST_QUESTIONS
+    case 'mechanic_test':
+    case 'mechanic':
+    case 'naladchik':
+      return DEFAULT_MECHANIC_TEST_QUESTIONS
     case 'customer':
     case 'customer_feedback':
       return DEFAULT_CUSTOMER_SURVEY_QUESTIONS
