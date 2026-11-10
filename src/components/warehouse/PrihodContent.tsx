@@ -105,20 +105,30 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
       }))
 
       const today = getTodayTashkent()
-      if (!mapped.some((a: any) => a.date === today)) {
-        const defaultCommodities = ['ТОМАТЫ', 'Лук', 'Айсберг', 'Капуста', 'Морковь']
-        const templates = defaultCommodities.map((nom) => ({
+      const todayArrivals = mapped.filter((a: any) => a.date === today)
+      const pastArrivals = mapped.filter((a: any) => a.date !== today)
+
+      const hasEmptyToday = todayArrivals.some(
+        (a: any) =>
+          !String(a.nomenclature || '').trim() &&
+          (!a.quantity || toNum(a.quantity) === 0)
+      )
+
+      if (!hasEmptyToday) {
+        // User request: exactly 1 auto row per day!
+        const singleAutoRow = {
           date: today,
-          nomenclature: nom,
-          quantity: 0,
+          nomenclature: '',
+          quantity: '',
           supplier: '',
-          batch: computeNextBatch(mapped, nom, today),
+          batch: '1',
           _dirty: false,
           _new: true,
           _autoBatch: true,
           _isAutoToday: true,
-        }))
-        setArrivals([...templates, ...mapped])
+          _clientKey: `auto-today-${Date.now()}`,
+        }
+        setArrivals([...todayArrivals, singleAutoRow, ...pastArrivals])
       } else {
         setArrivals(mapped)
       }
@@ -173,8 +183,8 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
         return
       }
     }
-    setArrivals((prev) =>
-      prev.map((r, i) => {
+    setArrivals((prev) => {
+      const updatedList = prev.map((r, i) => {
         if (i !== idx) return r
         const updated = { ...r, ...patch, _dirty: true }
 
@@ -196,7 +206,60 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
 
         return updated
       })
-    )
+
+      const targetRow = updatedList[idx]
+      const isFilled =
+        Boolean(String(targetRow?.nomenclature || '').trim()) ||
+        toNum(targetRow?.quantity) > 0
+
+      const today = getTodayTashkent()
+
+      // User requirement: When an auto row is filled, automatically open the NEXT one below it
+      if (isFilled && targetRow?._new && targetRow?.date === today) {
+        const hasOtherEmptyToday = updatedList.some(
+          (r, i) =>
+            i !== idx &&
+            r.date === today &&
+            r._new &&
+            !String(r.nomenclature || '').trim() &&
+            (!r.quantity || toNum(r.quantity) === 0)
+        )
+
+        if (!hasOtherEmptyToday) {
+          const nextAutoRow = {
+            date: today,
+            nomenclature: '',
+            quantity: '',
+            supplier: '',
+            batch: '1',
+            _dirty: false,
+            _new: true,
+            _autoBatch: true,
+            _isAutoToday: true,
+            _clientKey: `auto-today-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          }
+          const copy = [...updatedList]
+          copy.splice(idx + 1, 0, nextAutoRow)
+          return copy
+        }
+      }
+
+      // If user completely cleared the row and an extra empty auto row was created below it, collapse it
+      if (!isFilled && targetRow?._new && targetRow?.date === today) {
+        const nextIdx = idx + 1
+        if (
+          nextIdx < updatedList.length &&
+          updatedList[nextIdx]._new &&
+          updatedList[nextIdx].date === today &&
+          !String(updatedList[nextIdx].nomenclature || '').trim() &&
+          (!updatedList[nextIdx].quantity || toNum(updatedList[nextIdx].quantity) === 0)
+        ) {
+          return updatedList.filter((_, i) => i !== nextIdx)
+        }
+      }
+
+      return updatedList
+    })
   }
 
   // Add new arrival row
@@ -213,13 +276,42 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
         _dirty: true,
         _new: true,
         _autoBatch: true,
+        _clientKey: `manual-${Date.now()}`,
       },
       ...prev,
     ])
   }
 
   const removeNewArrival = (idx: number) => {
-    setArrivals((prev) => prev.filter((_, i) => i !== idx))
+    setArrivals((prev) => {
+      const filtered = prev.filter((_, i) => i !== idx)
+      const today = getTodayTashkent()
+      const hasEmptyToday = filtered.some(
+        (r) =>
+          r.date === today &&
+          r._new &&
+          !String(r.nomenclature || '').trim() &&
+          (!r.quantity || toNum(r.quantity) === 0)
+      )
+      if (!hasEmptyToday) {
+        return [
+          {
+            date: today,
+            nomenclature: '',
+            quantity: '',
+            supplier: '',
+            batch: '1',
+            _dirty: false,
+            _new: true,
+            _autoBatch: true,
+            _isAutoToday: true,
+            _clientKey: `auto-today-${Date.now()}`,
+          },
+          ...filtered,
+        ]
+      }
+      return filtered
+    })
   }
 
   const handleDeleteExistingArrival = async (id: number) => {
@@ -708,7 +800,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
 
                 return (
                   <tr
-                    key={row.id ?? `new-${idx}`}
+                    key={row.id ?? row._clientKey ?? `new-${idx}`}
                     className={`transition-colors ${
                       row.isEdited
                         ? 'bg-rose-50/60 dark:bg-rose-950/20 border-l-4 border-l-rose-500'
