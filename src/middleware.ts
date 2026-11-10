@@ -78,6 +78,16 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/degustatsiya', request.url))
       }
     }
+
+    // STRICT PRIVACY & ISOLATION FOR KITCHEN (OSHPAZ) ROLE:
+    // Oshpaz faqat /kitchen, /chat va /settings sahifalariga kiradi, ombor yoki kirim-chiqimga kira olmaydi!
+    if (userRole === 'KITCHEN') {
+      const allowedKitchenPrefixes = ['/kitchen', '/chat', '/settings']
+      const isAllowed = allowedKitchenPrefixes.some(prefix => pathname.startsWith(prefix))
+      if (!isAllowed) {
+        return NextResponse.redirect(new URL('/kitchen', request.url))
+      }
+    }
   }
 
   return NextResponse.next()

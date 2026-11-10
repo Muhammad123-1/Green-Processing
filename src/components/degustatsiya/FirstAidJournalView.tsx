@@ -155,7 +155,7 @@ const QUICK_REFERRALS = [
 
 export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolean } = {}) {
   const [logs, setLogs] = useState<FirstAidOfficialLogItem[]>(INITIAL_OFFICIAL_LOGS)
-  const [filterDate, setFilterDate] = useState<string>('2026-01-09')
+  const [filterDate, setFilterDate] = useState<string>(() => new Date().toISOString().slice(0, 10))
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'transposed' | 'horizontal'>('transposed')
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -164,7 +164,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
   // Form State - EXACT 12 fields from Photos 1 & 2
   const [formData, setFormData] = useState({
     orderNumber: 1,
-    date: '2026-01-09',
+    date: new Date().toISOString().slice(0, 10),
     time: '08:00',
     employeeName: '',
     position: 'Оператор',
@@ -520,18 +520,6 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
             </button>
             <button
               type="button"
-              onClick={() => setFilterDate('2026-01-09')}
-              className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
-                filterDate === '2026-01-09'
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                  : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
-              }`}
-              title="1-rasmdagi namunaviy sana (09.01.2026)"
-            >
-              Namuna (09.01)
-            </button>
-            <button
-              type="button"
               onClick={() => setFilterDate('ALL')}
               className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
                 filterDate === 'ALL'
@@ -579,7 +567,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
               Ушбу сана ({filterDate === 'ALL' ? 'барча саналар' : filterDate}) учун тиббий қайдлар топилмади
             </h3>
             <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-              Ходимларга биринчи ёрдам кўрсатиш ҳолатини киритиш учун қуйидаги тугмани босинг ёки намунавий санага ўтинг.
+              Ходимларга биринчи ёрдам кўрсатиш ҳолатини киритиш учун қуйидаги тугмани босинг.
             </p>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
               <button
@@ -588,12 +576,6 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
               >
                 <Plus size={16} />
                 <span>Биринчи мурожаатни киритиш</span>
-              </button>
-              <button
-                onClick={() => setFilterDate('2026-01-09')}
-                className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-semibold transition"
-              >
-                <span>1-расмдаги намунани кўриш (09.01.2026)</span>
               </button>
               <button
                 onClick={() => setFilterDate('ALL')}

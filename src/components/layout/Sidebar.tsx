@@ -63,7 +63,7 @@ const navSections = [
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'KITCHEN', 'HR', 'DEGUSTATION'] },
+      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
       { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
       { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },

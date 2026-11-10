@@ -1,68 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// 3 initial sample records from the official sheet if database is empty
-const INITIAL_DEMO_RECORDS = [
-  {
-    date: '2026-04-27',
-    orderNumber: 1,
-    mealName: 'Скалетти макаронные вар.',
-    prepTime: '9:10',
-    chairmanSign: 'Иминов С.М.',
-    member1Sign: 'Зимина Л.Г.',
-    member2Sign: 'Расулов А.А.',
-    qcInspectorSign: 'Камбарова А.М.',
-    medicalStaffSign: 'Жуманова Ч.Э.',
-    organoleptic: 'Ташқи кўриниши сариқ, ўз тинимли ранг, ёғ томчилари пушти рангли, всего, татиб кўрилганда нормальные тузими юмшок. пишган.',
-    temperature: '+80°C',
-    notes: 'Яхши, истеъмолга рухсат этилади.',
-    status: 'APPROVED'
-  },
-  {
-    date: '2026-04-27',
-    orderNumber: 2,
-    mealName: 'Педивее с мясом',
-    prepTime: '9:13',
-    chairmanSign: 'Иминов С.М.',
-    member1Sign: 'Зимина Л.Г.',
-    member2Sign: 'Расулов А.А.',
-    qcInspectorSign: 'Камбарова А.М.',
-    medicalStaffSign: 'Жуманова Ч.Э.',
-    organoleptic: 'Ташқи кўриниши сариқ, гўшта в макароны яши аралашган, мазали, мазаси нормал, тузими юмшоқ, стандартда.',
-    temperature: '+92°C',
-    notes: 'Яхши, истеъмолга рухсат этилади.',
-    status: 'APPROVED'
-  },
-  {
-    date: '2026-04-27',
-    orderNumber: 3,
-    mealName: 'Св. помидоры и огурцы',
-    prepTime: '9:15',
-    chairmanSign: 'Иминов С.М.',
-    member1Sign: 'Зимина Л.Г.',
-    member2Sign: 'Расулов А.А.',
-    qcInspectorSign: 'Камбарова А.М.',
-    medicalStaffSign: 'Жуманова Ч.Э.',
-    organoleptic: 'Ташқи кўриниши янги, помидор в бодрящем состоянии, ширали, табиий таъмда, нормальные тузими.',
-    temperature: '+2°C',
-    notes: 'Яхши, истеъмолга рухсат этилади.',
-    status: 'APPROVED'
-  }
-]
-
 // GET: fetch brakerage logs by date or all
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const date = searchParams.get('date')?.trim()
-
-    // Auto-seed demo data if table is completely empty
-    const totalCount = await (prisma as any).kitchenBrakerageLog.count()
-    if (totalCount === 0) {
-      await (prisma as any).kitchenBrakerageLog.createMany({
-        data: INITIAL_DEMO_RECORDS
-      })
-    }
 
     const where: any = {}
     if (date && date !== 'ALL') {

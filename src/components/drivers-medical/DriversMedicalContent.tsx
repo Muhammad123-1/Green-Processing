@@ -101,7 +101,7 @@ const INITIAL_DRIVER_LOGS: DriverMedicalExamItem[] = [
 
 export default function DriversMedicalContent() {
   const [logs, setLogs] = useState<DriverMedicalExamItem[]>(INITIAL_DRIVER_LOGS)
-  const [filterDate, setFilterDate] = useState<string>('2025-10-20') // 3-rasmdagi namunaviy sana
+  const [filterDate, setFilterDate] = useState<string>(() => new Date().toISOString().slice(0, 10))
   const [searchQuery, setSearchQuery] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingLog, setEditingLog] = useState<DriverMedicalExamItem | null>(null)
@@ -109,7 +109,7 @@ export default function DriversMedicalContent() {
   // Form State - 9 Columns matching Photos 3 & 4
   const [formData, setFormData] = useState({
     orderNumber: 1,
-    date: '2025-10-20',
+    date: new Date().toISOString().slice(0, 10),
     driverName: OFFICIAL_FLEET_DRIVERS[0],
     complaints: 'йўқ',
     pulse: '76-78',
@@ -473,30 +473,6 @@ export default function DriversMedicalContent() {
               </button>
               <button
                 type="button"
-                onClick={() => setFilterDate('2025-10-20')}
-                className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
-                  filterDate === '2025-10-20'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                    : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
-                }`}
-                title="3-расмдаги намунавий сана (20.10.2025)"
-              >
-                Намуна (20.10)
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterDate('2025-10-17')}
-                className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
-                  filterDate === '2025-10-17'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                    : 'bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-800'
-                }`}
-                title="4-расмдаги намунавий сана (17.10.2025)"
-              >
-                Намуна (17.10)
-              </button>
-              <button
-                type="button"
                 onClick={() => setFilterDate('ALL')}
                 className={`px-2.5 py-1.5 rounded-xl font-bold transition ${
                   filterDate === 'ALL'
@@ -546,7 +522,7 @@ export default function DriversMedicalContent() {
                 Ушбу сана ({filterDate === 'ALL' ? 'барча саналар' : filterDate}) учун ҳайдовчилар кўриги қайд этилмаган
               </h3>
               <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                Бугунги кун учун барча ҳайдовчиларни бир тугма билан кўрикдан ўтказиш ёки намунавий санага ўтиш мумкин.
+                Бугунги кун учун барча ҳайдовчиларни бир тугма билан кўрикдан ўтказиш мумкин.
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                 <button
@@ -557,10 +533,10 @@ export default function DriversMedicalContent() {
                   <span>Бугунги барча ҳайдовчиларни киритиш (10 нафар)</span>
                 </button>
                 <button
-                  onClick={() => setFilterDate('2025-10-20')}
+                  onClick={() => setFilterDate('ALL')}
                   className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-semibold transition"
                 >
-                  <span>3-расмдаги намунани кўриш (20.10.2025)</span>
+                  <span>Барча ёзувларни кўриш</span>
                 </button>
               </div>
             </div>

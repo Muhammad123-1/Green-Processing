@@ -37,6 +37,11 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     return null
   }
 
+  // Oshpaz (KITCHEN) va Degustatsiya (DEGUSTATION) uchun pastgi menyu umuman ko'rsatilmaydi (xodimni chalg'itmaydi)
+  if (userRole === 'KITCHEN' || userRole === 'DEGUSTATION') {
+    return null
+  }
+
   // Oshxona (Brakeraj va Xodimlar oshxonasi) hamda SanPiN jurnallari sahifalarida
   // telefondan kirilganda pastgi mobil menyuni yashirish (to'liq ekran va jadvallar qulayligi uchun)
   if (
