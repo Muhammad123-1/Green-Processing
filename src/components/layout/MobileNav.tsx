@@ -9,7 +9,7 @@ import {
   FileSpreadsheet, 
   ClipboardList, 
   Menu,
-  ChefHat,
+  ArrowLeftRight,
   ArrowDownRight,
   Truck,
   LogOut,
@@ -187,7 +187,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
           {
             label: formatDual('Kirim/Chiqim', 'Приход/Расход', 'In/Out'),
             href: '/shop-report',
-            icon: ChefHat,
+            icon: ArrowLeftRight,
             active: pathname.startsWith('/shop-report') || pathname.startsWith('/production'),
           },
         ]),

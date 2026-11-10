@@ -542,10 +542,11 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                         >
                           <input
                             type="number"
-                            step="any"
+                            step={f.unit === 'шт' ? '1' : 'any'}
                             readOnly={!isRowEditable}
                             disabled={!isRowEditable}
                             value={inputVal(row[f.field])}
+                            placeholder={f.unit === 'шт' ? '0' : '0.0'}
                             onClick={() => {
                               if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
                             }}

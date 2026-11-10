@@ -353,24 +353,6 @@ export async function GET(req: NextRequest) {
         unit: 'kg',
         minStock: 200,
         matchPatterns: ['листовой']
-      },
-      ses: {
-        key: 'ses',
-        name: 'СЕС (Санитарный контроль)',
-        nameUz: 'SES namuna chiqimi',
-        category: 'Xomashyo & Oziq-ovqat',
-        unit: 'kg',
-        minStock: 0,
-        matchPatterns: ['сес', 'ses']
-      },
-      kitchen: {
-        key: 'kitchen',
-        name: 'КУХНЯ (Ошхонага берилган брак)',
-        nameUz: 'Oshxonaga berilgan chiqim/brak',
-        category: 'Xomashyo & Oziq-ovqat',
-        unit: 'kg',
-        minStock: 0,
-        matchPatterns: ['кухня', 'ошхона']
       }
     }
 
@@ -460,12 +442,37 @@ export async function GET(req: NextRequest) {
       if (seenClones.has(cloneKey)) continue
       seenClones.add(cloneKey)
 
-      // Check if matches core definitions
+      // Safe matching: packaging (bags, boxes, labels) MUST be matched to packaging first
+      // and NEVER to vegetable/food raw materials (e.g. "Полиэтиленовые пакеты для томатов" is 'bag', NOT 'tomato'!)
+      const isPackaging =
+        nomLower.includes('пакет') ||
+        nomLower.includes('каробк') ||
+        nomLower.includes('короб') ||
+        nomLower.includes('karobka') ||
+        nomLower.includes('этикетк') ||
+        nomLower.includes('стрич') ||
+        nomLower.includes('яшик') ||
+        nomLower.includes('падон')
+
       let matchedKey: string | null = null
-      for (const [mKey, def] of Object.entries(coreDefinitions)) {
-        if (def.matchPatterns.some((pattern) => nomLower.includes(pattern))) {
-          matchedKey = mKey
-          break
+      if (isPackaging) {
+        if (nomLower.includes('брак')) {
+          if (nomLower.includes('короб') || nomLower.includes('кароб')) matchedKey = 'boxDefect'
+          else matchedKey = 'bagDefect'
+        } else if (nomLower.includes('этикет')) {
+          matchedKey = 'label'
+        } else if (nomLower.includes('короб') || nomLower.includes('кароб') || nomLower.includes('karobka') || nomLower.includes('яшик')) {
+          matchedKey = 'box'
+        } else {
+          matchedKey = 'bag'
+        }
+      } else {
+        for (const [mKey, def] of Object.entries(coreDefinitions)) {
+          if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
+          if (def.matchPatterns.some((pattern) => nomLower.includes(pattern))) {
+            matchedKey = mKey
+            break
+          }
         }
       }
 
@@ -578,18 +585,47 @@ export async function GET(req: NextRequest) {
             editReason: exp.editReason || undefined
           })
 
-          // Match core
+          // Internal shop defect/transfers to kitchen and SES are part of the workshop's raw material usage, not separate warehouse stock items
+          if (k.includes('кухня') || k.includes('ошхона') || k.includes('сес') || k.includes('ses')) {
+            continue
+          }
+
+          const isExpPackaging =
+            k.includes('пакет') ||
+            k.includes('каробк') ||
+            k.includes('короб') ||
+            k.includes('karobka') ||
+            k.includes('этикетк') ||
+            k.includes('стрич') ||
+            k.includes('яшик') ||
+            k.includes('падон')
+
           let matchedKey: string | null = null
-          for (const [mKey, def] of Object.entries(coreDefinitions)) {
-            if (def.matchPatterns.some((pattern) => k.includes(pattern))) {
-              matchedKey = mKey
-              break
+          if (isExpPackaging) {
+            if (k.includes('брак')) {
+              if (k.includes('короб') || k.includes('кароб')) matchedKey = 'boxDefect'
+              else matchedKey = 'bagDefect'
+            } else if (k.includes('этикет')) {
+              matchedKey = 'label'
+            } else if (k.includes('короб') || k.includes('кароб') || k.includes('karobka') || k.includes('яшик')) {
+              matchedKey = 'box'
+            } else {
+              matchedKey = 'bag'
+            }
+          } else {
+            for (const [mKey, def] of Object.entries(coreDefinitions)) {
+              if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
+              if (def.matchPatterns.some((pattern) => k.includes(pattern))) {
+                matchedKey = mKey
+                break
+              }
             }
           }
 
           // Match dynamic
           if (!matchedKey) {
             for (const [mKey, mData] of Object.entries(materialsData)) {
+              if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
               if (mData.name.toLowerCase().includes(k) || k.includes(mData.name.toLowerCase())) {
                 matchedKey = mKey
                 break
@@ -677,15 +713,8 @@ export async function GET(req: NextRequest) {
     const formattedMaterials = Object.values(materialsData).map((m) => {
       let balance = m.totalArrivalKg - m.totalExpenseKg
 
-      // For perishable fresh vegetables (Tomatoes, Greens, Iceberg, Cucumbers):
-      // Fresh produce cannot realistically accumulate 44 tons over 14 months in an operational warehouse.
-      // If historical discrepancy from old closed 2025 periods exceeds realistic buffer:
-      if (m.key === 'tomato' && balance > 5000) {
-        balance = 3500 // realistic active buffer based on recent daily turnover
-      } else if (m.key === 'iceberg' && balance > 6000) {
-        balance = 4200
-      } else if (balance < 0) {
-        balance = m.totalArrivalKg > 0 ? Math.max(m.totalArrivalKg * 0.05, 10) : 0
+      if (balance < 0) {
+        balance = m.totalArrivalKg > 0 ? Math.max(Math.round(m.totalArrivalKg * 0.05), 0) : 0
       }
 
       // Svetofor status calculation

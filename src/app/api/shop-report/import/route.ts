@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import ExcelJS from 'exceljs'
-import { toNum, parseExcelDate } from '@/lib/shopReport'
+import { toNum, parseExcelDate, EXPENSE_FIELDS, normKey } from '@/lib/shopReport'
 import { recordImportAudit } from '@/lib/auditImport'
 
 function getCellValueNum(cell: ExcelJS.Cell | undefined): number {
@@ -115,17 +115,34 @@ export async function POST(req: NextRequest) {
           const dateCol = isMasterExpenseSheet ? 2 : 1
           const startMatCol = isMasterExpenseSheet ? 3 : 2
 
+          const cleanExpenseHeader = (raw: string): string => {
+            const s = raw.replace(/\((?:кг|kg|шт|dona|л|литр|бут)\)/gi, '').trim()
+            for (const f of EXPENSE_FIELDS) {
+              if (
+                f.aliases.some(
+                  (a) =>
+                    normKey(a) === normKey(s) ||
+                    normKey(a) === normKey(raw)
+                )
+              ) {
+                return f.aliases[0]
+              }
+            }
+            return s
+          }
+
           const expHeaders: { col: number; name: string }[] = []
-          for (let c = startMatCol; c <= 35; c++) {
+          for (let c = startMatCol; c <= 40; c++) {
             const h = getCellValueStr(row.getCell(c))
             if (
               h &&
               !h.toLowerCase().includes('дата') &&
               !h.toLowerCase().includes('число') &&
               !h.toLowerCase().includes('sana') &&
-              !h.toLowerCase().includes('jami')
+              !h.toLowerCase().includes('jami') &&
+              !h.toLowerCase().includes('итого')
             ) {
-              expHeaders.push({ col: c, name: h })
+              expHeaders.push({ col: c, name: cleanExpenseHeader(h) })
             }
           }
 
@@ -400,10 +417,7 @@ export async function POST(req: NextRequest) {
         for (const [k, v] of Object.entries(flat)) {
           const num = toNum(v)
           if (num > 0) {
-            const cur = toNum(mergedMaterials[k])
-            if (cur === 0) {
-              mergedMaterials[k] = num
-            }
+            mergedMaterials[k] = num
           }
         }
 

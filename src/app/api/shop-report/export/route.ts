@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import ExcelJS from 'exceljs'
-import { formatDMY } from '@/lib/shopReport'
+import { formatDMY, EXPENSE_FIELDS, normKey } from '@/lib/shopReport'
 
 function inferProductUnit(name: string, dbUnit?: string): 'kg' | 'dona' | 'litr' {
   if (dbUnit) {
@@ -203,15 +203,45 @@ export async function GET(req: NextRequest) {
       views: [{ state: 'frozen', ySplit: 1, showGridLines: true }]
     })
 
-    // Collect unique material keys across all expenses
-    const materialKeys = new Set<string>()
+    // Canonical standard fields from EXPENSE_FIELDS in exact order (matching warehouse sheets)
+    const standardCols = EXPENSE_FIELDS.map((f) => ({
+      field: f.field,
+      header: `${f.label} (${f.unit})`,
+      unit: f.unit,
+      aliases: f.aliases,
+    }))
+
+    // Check for any extra dynamic materials not covered by standard columns
+    const standardAliasSet = new Set(EXPENSE_FIELDS.flatMap((f) => f.aliases.map(normKey)))
+    const extraKeys = new Set<string>()
     expenses.forEach((e) => {
       const mats = (e.materials || {}) as Record<string, any>
-      Object.keys(mats).forEach((k) => materialKeys.add(k))
+      Object.keys(mats).forEach((k) => {
+        if (!standardAliasSet.has(normKey(k))) {
+          extraKeys.add(k)
+        }
+      })
     })
-    const keysArray = Array.from(materialKeys).sort()
 
-    const rashodHeaders = ['№', 'Sana (Дата)', ...keysArray, 'Jami Sarf (kg)']
+    const extraCols = Array.from(extraKeys).map((k) => {
+      const unit = inferProductUnit(k)
+      return {
+        field: k,
+        header: `${k} (${unit})`,
+        unit,
+        aliases: [k],
+      }
+    })
+
+    const allExportCols = [...standardCols, ...extraCols]
+
+    const rashodHeaders = [
+      '№',
+      'Sana (Дата)',
+      ...allExportCols.map((c) => c.header),
+      'Jami Xomashyo (kg)',
+      'Jami Qadoq/Tara (dona)',
+    ]
     rashodSheet.addRow(rashodHeaders)
 
     const rashodHeader = rashodSheet.getRow(1)
@@ -226,15 +256,34 @@ export async function GET(req: NextRequest) {
 
     expenses.forEach((e, idx) => {
       const mats = (e.materials || {}) as Record<string, any>
-      let daySum = 0
+      const normalizedMats: Record<string, number> = {}
+      for (const [k, v] of Object.entries(mats)) {
+        normalizedMats[normKey(k)] = Number(v) || 0
+      }
+
+      let dayKgSum = 0
+      let dayDonaSum = 0
       const rowData: any[] = [idx + 1, formatDMY(e.date)]
 
-      keysArray.forEach((k) => {
-        const val = Number(mats[k]) || 0
-        daySum += val
+      allExportCols.forEach((col) => {
+        let val = 0
+        for (const a of col.aliases) {
+          const hit = normalizedMats[normKey(a)]
+          if (hit !== undefined && hit > 0) {
+            val = hit
+            break
+          }
+        }
+        if (col.unit === 'шт' || col.unit === 'dona') {
+          dayDonaSum += val
+        } else {
+          dayKgSum += val
+        }
         rowData.push(val > 0 ? val : '')
       })
-      rowData.push(daySum > 0 ? daySum : 0)
+
+      rowData.push(dayKgSum > 0 ? Math.round(dayKgSum * 10) / 10 : '')
+      rowData.push(dayDonaSum > 0 ? Math.round(dayDonaSum) : '')
 
       const row = rashodSheet.addRow(rowData)
       row.height = 20
@@ -242,13 +291,27 @@ export async function GET(req: NextRequest) {
       row.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' }
       row.getCell(2).alignment = { vertical: 'middle', horizontal: 'center' }
 
-      // Number formatting for all material cells + day sum
-      for (let c = 3; c <= rowData.length; c++) {
-        const cell = row.getCell(c)
+      // Number formatting for each column based on its unit
+      allExportCols.forEach((col, cIdx) => {
+        const cell = row.getCell(cIdx + 3)
         cell.alignment = { vertical: 'middle', horizontal: 'right' }
-        cell.numFmt = '#,##0.00'
-      }
-      row.getCell(rowData.length).font = { bold: true }
+        if (col.unit === 'шт' || col.unit === 'dona') {
+          cell.numFmt = '#,##0'
+        } else {
+          cell.numFmt = '#,##0.00'
+        }
+      })
+
+      // Total columns formatting
+      const kgTotalCell = row.getCell(allExportCols.length + 3)
+      kgTotalCell.alignment = { vertical: 'middle', horizontal: 'right' }
+      kgTotalCell.numFmt = '#,##0.00'
+      kgTotalCell.font = { bold: true }
+
+      const donaTotalCell = row.getCell(allExportCols.length + 4)
+      donaTotalCell.alignment = { vertical: 'middle', horizontal: 'right' }
+      donaTotalCell.numFmt = '#,##0'
+      donaTotalCell.font = { bold: true }
 
       for (let c = 1; c <= rowData.length; c++) {
         row.getCell(c).border = thinBorder

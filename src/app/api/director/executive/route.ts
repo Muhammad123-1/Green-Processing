@@ -170,14 +170,51 @@ export async function GET(req: NextRequest) {
       }
     > = {}
 
+    const getCanonicalName = (name: string): { key: string; name: string; unit: string } => {
+      const s = String(name || '').trim().toLowerCase()
+      if (
+        s.includes('пакет') ||
+        s.includes('каробк') ||
+        s.includes('короб') ||
+        s.includes('karobka') ||
+        s.includes('этикетк') ||
+        s.includes('стрич') ||
+        s.includes('яшик') ||
+        s.includes('падон')
+      ) {
+        if (s.includes('пакет')) return { key: 'bag', name: 'Пакеты', unit: 'dona' }
+        if (s.includes('этикет')) return { key: 'label', name: 'Этикетки', unit: 'dona' }
+        return { key: 'box', name: 'Коробки', unit: 'dona' }
+      }
+      if (s.includes('томат') || s.includes('помидор')) return { key: 'tomato', name: 'Томаты (Помидор)', unit: 'kg' }
+      if (s.includes('айсберг') && !s.includes('листов')) return { key: 'iceberg', name: 'Салат Айсберг', unit: 'kg' }
+      if (s.includes('листов')) return { key: 'icebergLeaf', name: 'Айсберг (листовой)', unit: 'kg' }
+      if (s.includes('капуст') && !s.includes('коул')) return { key: 'cabbage', name: 'Капуста белокочанная', unit: 'kg' }
+      if (s.includes('морков')) return { key: 'carrot', name: 'Морковь', unit: 'kg' }
+      if (s.includes('лук')) return { key: 'onion', name: 'Лук белый салатный', unit: 'kg' }
+      if (s.includes('огурц') || s.includes('бодринг')) return { key: 'cucumber', name: 'Огурцы свежие', unit: 'kg' }
+      if (s.includes('лимон')) return { key: 'lemon', name: 'Лимон', unit: 'kg' }
+      if (s.includes('лолло') || s.includes('lollo')) return { key: 'lolloRosso', name: 'Lollo Rosso', unit: 'kg' }
+      if (s.includes('рукол') || s.includes('руккол')) return { key: 'rukkola', name: 'Руккола', unit: 'kg' }
+      if (s.includes('шпинат')) return { key: 'spinach', name: 'Шпинат', unit: 'kg' }
+      if (s.includes('мята')) return { key: 'mint', name: 'Мята', unit: 'kg' }
+      if (s.includes('сельдерей')) return { key: 'celery', name: 'Сельдерей', unit: 'kg' }
+      if (s.includes('хлор') || s.includes('гипохлорит')) return { key: 'chlorine', name: 'Хлор', unit: 'kg' }
+      if (s.includes('сорбат')) return { key: 'sorbat', name: 'Сорбат', unit: 'kg' }
+      if (s.includes('бензоат')) return { key: 'benzoat', name: 'Бензоат', unit: 'kg' }
+      if (s.includes('уксус')) return { key: 'vinegar', name: 'Уксус', unit: 'kg' }
+      if (s.includes('тайгета')) return { key: 'taygeta', name: 'Тайгета 218', unit: 'dona' }
+      return { key: s, name: name.trim(), unit: 'kg' }
+    }
+
     const getOrInitProd = (name: string) => {
-      const clean = name.trim()
-      const k = norm(clean)
+      const info = getCanonicalName(name)
+      const k = info.key
       if (!productStats[k]) {
         const cfg = productConfigMap.get(k)
         productStats[k] = {
-          productName: clean,
-          unit: cfg?.unit || 'kg',
+          productName: info.name,
+          unit: cfg?.unit || info.unit,
           openingStockKg: 0,
           hasOpeningRecorded: false,
           inflowKg: 0,
@@ -216,7 +253,14 @@ export async function GET(req: NextRequest) {
       const materials = (e.materials || {}) as Record<string, any>
       for (const [matName, val] of Object.entries(materials)) {
         const num = toNum(val)
-        if (num > 0 && !matName.toLowerCase().includes('коробк') && !matName.toLowerCase().includes('пакет')) {
+        if (
+          num > 0 &&
+          !matName.toLowerCase().includes('коробк') &&
+          !matName.toLowerCase().includes('пакет') &&
+          !matName.toLowerCase().includes('кухня') &&
+          !matName.toLowerCase().includes('ошхона') &&
+          !matName.toLowerCase().includes('сес')
+        ) {
           consumedForDay[matName] = (consumedForDay[matName] || 0) + num
         }
       }
@@ -226,7 +270,16 @@ export async function GET(req: NextRequest) {
           if (typeof rowVal === 'object' && rowVal !== null) {
             Object.entries(rowVal).forEach(([k, v]) => {
               const num = toNum(v)
-              if (num > 0 && num < 100000 && !k.toLowerCase().includes('col_') && !k.toLowerCase().includes('коробк') && !k.toLowerCase().includes('пакет')) {
+              if (
+                num > 0 &&
+                num < 100000 &&
+                !k.toLowerCase().includes('col_') &&
+                !k.toLowerCase().includes('коробк') &&
+                !k.toLowerCase().includes('пакет') &&
+                !k.toLowerCase().includes('кухня') &&
+                !k.toLowerCase().includes('ошхона') &&
+                !k.toLowerCase().includes('сес')
+              ) {
                 consumedForDay[k] = (consumedForDay[k] || 0) + num
               }
             })

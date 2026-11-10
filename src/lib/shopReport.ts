@@ -46,7 +46,13 @@ export function parseExcelDate(val: any): string {
   s = s.replace(/(г\.|года|год|йили|й\.|yili|г)/g, '').trim()
 
   // 3. Agar allaqachon ISO YYYY-MM-DD bo'lsa
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split('-').map(Number)
+    if (m > 12 && d <= 12) {
+      return `${y}-${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}`
+    }
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31) return s
+  }
 
   // 4. "Dlinniy sana" (Long Date): Masalan "12 сентября 2025", "12-sentabr 2025", "12 September 2025"
   const monthMap: Record<string, string> = {
