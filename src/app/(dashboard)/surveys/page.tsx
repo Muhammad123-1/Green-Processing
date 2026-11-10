@@ -336,6 +336,12 @@ export default function SurveysPage() {
                           "Добавить стандартные вопросы GREEN PROCESSING (Техника безопасности: 10 вопросов)",
                           "Add standard GREEN PROCESSING test questions (Safety: 10 questions)",
                         )
+                      : form.templateType === 'mechanic_test'
+                      ? formatDual(
+                          "Standart GREEN PROCESSING savollarini qo'shish (Sozlovchi / Nalandchik — 10 ta savol)",
+                          "Добавить стандартные вопросы GREEN PROCESSING (Наладчик: 10 вопросов)",
+                          "Add standard GREEN PROCESSING test questions (Mechanic / Technician: 10 questions)",
+                        )
                       : formatDual(
                           "Standart GREEN PROCESSING savollarini qo'shish (Mijozlar anketasi — 11 ta savol)",
                           "Добавить стандартные вопросы GREEN PROCESSING (Анкета клиентов: 11 вопросов)",
