@@ -63,6 +63,7 @@ const navSections = [
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'KITCHEN', 'HR'] },
+      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
@@ -261,6 +262,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 'surveys',
                 'archive',
                 'degustatsiya',
+                'driversMedical',
                 'warehouse',
                 'prihod',
                 'rashod',

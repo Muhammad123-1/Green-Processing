@@ -8,11 +8,13 @@ import {
   ChefHat,
   ShieldCheck,
   CalendarCheck2,
-  FileCheck2,
-  Sparkles
+  Truck,
+  ExternalLink
 } from 'lucide-react'
+import Link from 'next/link'
 import { BrakerageJournalModal } from '@/components/kitchen/BrakerageJournalModal'
 import { FirstAidJournalView } from './FirstAidJournalView'
+import DriversMedicalContent from '@/components/drivers-medical/DriversMedicalContent'
 
 interface Props {
   userRole?: string
@@ -23,11 +25,11 @@ export default function DegustatsiyaContent({ userRole, userName }: Props) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const tabParam = searchParams ? searchParams.get('tab') : null
-  const [activeTab, setActiveTab] = useState<'kitchen' | 'first_aid'>(
-    tabParam === 'first_aid' ? 'first_aid' : 'kitchen'
+  const [activeTab, setActiveTab] = useState<'kitchen' | 'first_aid' | 'drivers'>(
+    tabParam === 'first_aid' ? 'first_aid' : tabParam === 'drivers' ? 'drivers' : 'kitchen'
   )
 
-  const handleTabChange = (tab: 'kitchen' | 'first_aid') => {
+  const handleTabChange = (tab: 'kitchen' | 'first_aid' | 'drivers') => {
     setActiveTab(tab)
     router.replace(`/degustatsiya?tab=${tab}`, { scroll: false })
   }
@@ -57,7 +59,7 @@ export default function DegustatsiyaContent({ userRole, userName }: Props) {
                 Degustatsiya va SanPiN Jurnallari
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Oshxona taomnomasi bo'yicha organoleptik tekshirish brakeraj jurnali hamda xodimlarga birinchi tibbiy yordam ko'rsatish va murojaatlarni qabul qilish jurnali.
+                Oshxona brakeraj jurnali, xodimlarga birinchi tibbiy yordam ko'rsatish jurnali (1 va 2-rasm) hamda liniyaga yo'naltirilgan haydovchilarni kunlik tibbiy ko'rikdan o'tkazish jurnali (3 va 4-rasm).
               </p>
             </div>
           </div>
@@ -92,7 +94,7 @@ export default function DegustatsiyaContent({ userRole, userName }: Props) {
             </div>
           </button>
 
-          {/* Tab 2: First Aid */}
+          {/* Tab 2: First Aid (1 & 2-rasm) */}
           <button
             type="button"
             onClick={() => handleTabChange('first_aid')}
@@ -105,9 +107,36 @@ export default function DegustatsiyaContent({ userRole, userName }: Props) {
             <HeartPulse size={18} className={activeTab === 'first_aid' ? 'text-white' : 'text-rose-400'} />
             <div className="text-left">
               <div>Birinchi yordam ko'rsatish jurnali</div>
-              <div className="text-[10px] opacity-80 font-normal">Tibbiy qabul va murojaatlar</div>
+              <div className="text-[10px] opacity-80 font-normal">1 ва 2-расм бўйича (12 та устун)</div>
             </div>
           </button>
+
+          {/* Tab 3: Drivers Medical Check (3 & 4-rasm) */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('drivers')}
+            className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-150 ${
+              activeTab === 'drivers'
+                ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-lg shadow-sky-600/30 scale-102'
+                : 'bg-dark-800/90 text-slate-400 hover:text-white hover:bg-dark-750 border border-slate-800'
+            }`}
+          >
+            <Truck size={18} className={activeTab === 'drivers' ? 'text-white' : 'text-sky-400'} />
+            <div className="text-left">
+              <div>Ҳайдовчилар тиббий кўриги</div>
+              <div className="text-[10px] opacity-80 font-normal">3 ва 4-расм бўйича (Рейс олди)</div>
+            </div>
+          </button>
+
+          {/* Direct Link to Standalone Page */}
+          <Link
+            href="/drivers-medical"
+            className="flex items-center gap-1.5 px-4 py-3 rounded-2xl font-semibold text-xs text-slate-400 hover:text-white hover:bg-dark-750 border border-slate-800 transition ml-auto"
+            title="Ҳайдовчилар кўриги алоҳида саҳифасини очиш"
+          >
+            <ExternalLink size={14} />
+            <span className="hidden sm:inline">Алоҳида саҳифада очиш (/drivers-medical)</span>
+          </Link>
         </div>
       </div>
 
@@ -118,10 +147,17 @@ export default function DegustatsiyaContent({ userRole, userName }: Props) {
         </div>
       )}
 
-      {/* Tab 2: Birinchi yordam ko'rsatish jurnali */}
+      {/* Tab 2: Birinchi yordam ko'rsatish jurnali (1 & 2-rasm) */}
       {activeTab === 'first_aid' && (
         <div className="animate-in fade-in duration-200">
           <FirstAidJournalView />
+        </div>
+      )}
+
+      {/* Tab 3: Haydovchilar kunlik tibbiy ko'rigi (3 & 4-rasm) */}
+      {activeTab === 'drivers' && (
+        <div className="animate-in fade-in duration-200">
+          <DriversMedicalContent />
         </div>
       )}
     </div>
