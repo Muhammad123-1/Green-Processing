@@ -30,6 +30,7 @@ model SurveyQuestion {
   groupName    String?
   subLabel     String?
   helpText     String?
+  correctAnswer String?
 
   survey       Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   answers      SurveyAnswer[]

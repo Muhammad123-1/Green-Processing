@@ -1,10 +1,29 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Link2, Users, Calendar, ChevronDown, ChevronUp, RefreshCw, ArrowLeft, Archive, BarChart2, UserCheck, Printer, FileSpreadsheet, Download } from 'lucide-react'
+import {
+  Link2,
+  Users,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+  ArrowLeft,
+  Archive,
+  BarChart2,
+  UserCheck,
+  Printer,
+  FileSpreadsheet,
+  Download,
+  Check,
+  X,
+  Award,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react'
 import Link from 'next/link'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts'
 import SurveyReportModal from '@/components/surveys/SurveyReportModal'
-import QuestionDrillDownModal from '@/components/surveys/QuestionDrillDownModal'
+import QuestionDrillDownModal, { isAnswerMatch } from '@/components/surveys/QuestionDrillDownModal'
 
 interface Survey {
   id: number
@@ -49,8 +68,8 @@ export default function SurveysArchivePage() {
               <Archive size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Arxiv: So'rovnomalar</h1>
-              <p className="text-slate-500 text-sm mt-1">Barcha so'rovnomalar va ularning javoblari tarixi</p>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Arxiv: So'rovnomalar & Testlar</h1>
+              <p className="text-slate-500 text-sm mt-1">Barcha so'rovnomalar va test natijalari tarixi</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -78,6 +97,10 @@ export default function SurveysArchivePage() {
           <div className="space-y-4">
             {surveys.map(s => {
               const isExpanded = expandedId === s.id
+              const hasTestQuestions = (s.questions || []).some(
+                (q: any) => q.correctAnswer && q.correctAnswer.trim()
+              )
+
               return (
                 <div key={s.id} className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm overflow-hidden">
                   <div 
@@ -86,12 +109,23 @@ export default function SurveysArchivePage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">{s.title}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-slate-900 dark:text-white text-lg">{s.title}</h3>
+                          {hasTestQuestions && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                              <Award size={12} /> Test / Imtihon
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-slate-500 mt-1">{new Date(s.createdAt).toLocaleDateString('uz-UZ')} da yaratilgan</p>
                         
                         <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-slate-600 dark:text-slate-400">
-                          <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-dark-800 rounded-lg font-medium"><Users size={14} className="text-blue-500"/> {s.responses.length} ta javob</span>
-                          <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-dark-800 rounded-lg"><BarChart2 size={14} /> Statistika</span>
+                          <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-dark-800 rounded-lg font-medium">
+                            <Users size={14} className="text-blue-500"/> {s.responses.length} ta javob
+                          </span>
+                          <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-dark-800 rounded-lg">
+                            <BarChart2 size={14} /> Statistika
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -176,6 +210,10 @@ function ResponseViewer({
   const questions = data.questions || []
   const responses = data.responses || []
 
+  // Test savollari (to'g'ri javob belgilanganlari)
+  const testQuestions = questions.filter((q: any) => q.correctAnswer && q.correctAnswer.trim())
+  const isTestSurvey = testQuestions.length > 0
+
   // Aggregate statistics
   const statsByQuestion: Record<number, Record<string, number>> = {}
   
@@ -188,9 +226,9 @@ function ResponseViewer({
       const qId = ans.questionId
       const val = ans.answerValue
       if (statsByQuestion[qId]) {
-        // Simple extraction for text if it has "Izoh:"
         let cleanVal = val
-        if (val.includes('. Izoh:')) cleanVal = val.split('. Izoh:')[0]
+        if (val.includes('. Izoh:')) cleanVal = val.split('. Izoh:')[0].trim()
+        else if (val.includes('Izoh:')) cleanVal = val.split('Izoh:')[0].trim()
         
         statsByQuestion[qId][cleanVal] = (statsByQuestion[qId][cleanVal] || 0) + 1
       }
@@ -205,10 +243,17 @@ function ResponseViewer({
         ) : (
           <div>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200 dark:border-dark-700">
-              <h4 className="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2">
-                <BarChart2 size={18} className="text-blue-500" /> 
-                Umumiy statistika
-              </h4>
+              <div>
+                <h4 className="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2">
+                  <BarChart2 size={18} className="text-blue-500" /> 
+                  Umumiy statistika
+                </h4>
+                {isTestSurvey && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-0.5">
+                    {testQuestions.length} ta savolda to'g'ri javoblar baholanadi
+                  </p>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <a
                   href={`/api/surveys/${surveyId}/export`}
@@ -234,7 +279,7 @@ function ResponseViewer({
                   className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-700 rounded-xl text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 transition-colors"
                 >
                   <UserCheck size={16} />
-                  {showUsers ? "Faqat statistika" : "Mijozlar javoblari"}
+                  {showUsers ? "Faqat statistika" : "Respondentlar natijalari"}
                 </button>
               </div>
             </div>
@@ -244,20 +289,37 @@ function ResponseViewer({
               {questions.map((q: any) => {
                 const qStats = statsByQuestion[q.id] || {}
                 const totalAnswers = Object.values(qStats).reduce((a, b) => a + b, 0)
+                const isTestQ = Boolean(q.correctAnswer && q.correctAnswer.trim())
+
+                // Count correct answers for this question
+                let correctCount = 0
+                if (isTestQ) {
+                  Object.entries(qStats).forEach(([ansText, count]) => {
+                    if (isAnswerMatch(ansText, q.correctAnswer)) {
+                      correctCount += count
+                    }
+                  })
+                }
+                const correctPct = totalAnswers > 0 ? Math.round((correctCount / totalAnswers) * 100) : 0
                 
                 // Prepare data for recharts
                 const chartData = Object.entries(qStats).map(([name, value]) => {
-                  let color = '#3b82f6' // blue-500
-                  if (name === '5' || name === "A'lo" || name === "Yo'q" || name === 'Нет' || name === 'No') color = '#22c55e' // green-500
-                  else if (name === '4' || name === 'Yaxshi') color = '#34d399' // emerald-400
-                  else if (name === '3' || name === 'Qoniqarli') color = '#facc15' // yellow-400
-                  else if (name === '2' || name === 'Yomon') color = '#f97316' // orange-500
-                  else if (name === '1' || name === 'Juda yomon' || name === "Ha" || name === 'Да' || name === 'Yes') color = '#ef4444' // red-500
+                  let color = '#3b82f6' // default blue
+                  const isMatch = isTestQ && isAnswerMatch(name, q.correctAnswer)
+
+                  if (isTestQ) {
+                    color = isMatch ? '#10b981' : '#ef4444' // Emerald if correct, Red if incorrect
+                  } else {
+                    if (name === '5' || name === "A'lo" || name === "Yo'q" || name === 'Нет' || name === 'No') color = '#22c55e'
+                    else if (name === '4' || name === 'Yaxshi') color = '#34d399'
+                    else if (name === '3' || name === 'Qoniqarli') color = '#facc15'
+                    else if (name === '2' || name === 'Yomon') color = '#f97316'
+                    else if (name === '1' || name === 'Juda yomon' || name === "Ha" || name === 'Да' || name === 'Yes') color = '#ef4444'
+                  }
                   
                   // Truncate long text
-                  const shortName = name.length > 20 ? name.substring(0, 20) + '...' : name;
-
-                  return { name: shortName, fullName: name, value, color }
+                  const shortName = name.length > 20 ? name.substring(0, 20) + '...' : name
+                  return { name: shortName, fullName: name, value, color, isMatch }
                 }).sort((a,b) => b.value - a.value)
 
                 return (
@@ -270,13 +332,25 @@ function ResponseViewer({
                     title="Savol bo'yicha batafsil tahlilni ko'rish uchun bosing"
                     className="bg-white dark:bg-dark-900 hover:border-emerald-400 dark:hover:border-emerald-600 rounded-xl p-5 border border-slate-200 dark:border-dark-700 shadow-sm flex flex-col h-full cursor-pointer transition-all group"
                   >
-                    <div className="flex items-start justify-between gap-2 mb-4">
-                      <p className="font-semibold text-slate-800 dark:text-white text-sm line-clamp-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
-                        {q.subLabel && <span className="text-slate-400 mr-2">{q.subLabel}</span>}
-                        {q.questionText}
-                      </p>
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div>
+                        <p className="font-semibold text-slate-800 dark:text-white text-sm line-clamp-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                          {q.subLabel && <span className="text-slate-400 mr-2">{q.subLabel}</span>}
+                          {q.questionText}
+                        </p>
+                        {isTestQ && (
+                          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">
+                              ✓ To'g'ri javob: {q.correctAnswer}
+                            </span>
+                            <span className="text-[11px] font-semibold text-slate-500">
+                              O'zlashtirish: {correctCount}/{totalAnswers} ({correctPct}%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 opacity-80 group-hover:opacity-100 flex-shrink-0">
-                        Tahlil
+                        Batafsil
                       </span>
                     </div>
                     
@@ -339,63 +413,131 @@ function ResponseViewer({
               <div className="mt-10 border-t border-slate-200 dark:border-dark-750 pt-8">
                 <h4 className="font-bold text-slate-800 dark:text-white text-base mb-6 flex items-center gap-2">
                   <Users size={18} className="text-green-500" />
-                  Mijozlar bo'yicha javoblar
+                  Respondentlar bo'yicha batafsil natijalar
                 </h4>
                 
                 <div className="space-y-6">
-                  {responses.map((resp: any, idx: number) => (
-                    <div key={resp.id} className="bg-white dark:bg-dark-900 rounded-xl p-5 border border-slate-200 dark:border-dark-700 shadow-sm relative">
-                      
-                      <div className="absolute -left-3 -top-3 w-8 h-8 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm border-2 border-white dark:border-dark-900 shadow-sm">
-                        #{idx + 1}
-                      </div>
+                  {responses.map((resp: any, idx: number) => {
+                    // Compute score for this respondent if survey has test questions
+                    let correctCount = 0
+                    if (isTestSurvey) {
+                      testQuestions.forEach((tq: any) => {
+                        const ans = (resp.answers || []).find((a: any) => a.questionId === tq.id)
+                        if (ans && isAnswerMatch(ans.answerValue, tq.correctAnswer)) {
+                          correctCount++
+                        }
+                      })
+                    }
+                    const scorePct = isTestSurvey ? Math.round((correctCount / testQuestions.length) * 100) : null
 
-                      <div className="flex flex-wrap items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-dark-800 gap-4">
-                        <div>
-                          <h4 className="font-bold text-slate-800 dark:text-white text-base">
-                            {resp.restaurantName || "Noma'lum restoran"}
-                          </h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm text-slate-500 font-medium">{resp.respondentName || 'Ism kiritilmagan'}</span>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-xs text-slate-400 bg-slate-100 dark:bg-dark-800 px-2 py-0.5 rounded">
-                              Sana: {resp.respondentDate || '-'}
-                            </span>
+                    return (
+                      <div key={resp.id} className="bg-white dark:bg-dark-900 rounded-2xl p-5 border border-slate-200 dark:border-dark-700 shadow-sm relative">
+                        
+                        <div className="absolute -left-3 -top-3 w-8 h-8 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm border-2 border-white dark:border-dark-900 shadow-sm">
+                          #{idx + 1}
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-dark-800 gap-4">
+                          <div>
+                            <h4 className="font-bold text-slate-800 dark:text-white text-base">
+                              {resp.restaurantName || "Noma'lum tashkilot / bo'lim"}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm text-slate-600 dark:text-slate-300 font-semibold">{resp.respondentName || 'Xodim / Respondent'}</span>
+                              <span className="text-slate-300">•</span>
+                              <span className="text-xs text-slate-400 bg-slate-100 dark:bg-dark-800 px-2 py-0.5 rounded">
+                                Sana: {resp.respondentDate || '-'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-start sm:items-end gap-1.5">
+                            {scorePct !== null && (
+                              <div className={`px-3 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 border shadow-xs ${
+                                scorePct >= 70
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                                  : scorePct >= 50
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-950/70 dark:text-red-300 border-red-300 dark:border-red-700'
+                              }`}>
+                                <Award size={13} />
+                                <span>Natija:</span>
+                                <span>{correctCount} / {testQuestions.length} to'g'ri ({scorePct}%)</span>
+                              </div>
+                            )}
+                            <div className="text-xs text-slate-400">
+                              <span>Topshirildi: </span>
+                              <span>{new Date(resp.submittedAt).toLocaleString('uz-UZ')}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-xs text-slate-400 flex flex-col items-start sm:items-end">
-                          <span className="font-medium text-slate-500 dark:text-slate-400">Topshirildi:</span>
-                          <span>{new Date(resp.submittedAt).toLocaleString('uz-UZ')}</span>
+
+                        <div className="space-y-3">
+                          {resp.answers?.map((ans: any) => {
+                            const q = questions.find((q: any) => q.id === ans.questionId)
+                            const isTestQ = Boolean(q?.correctAnswer && q.correctAnswer.trim())
+                            const isCorrect = isTestQ ? isAnswerMatch(ans.answerValue, q.correctAnswer) : null
+
+                            return (
+                              <div 
+                                key={ans.id} 
+                                className={`flex gap-3 text-sm p-3.5 rounded-xl border transition-all ${
+                                  isCorrect === true
+                                    ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40'
+                                    : isCorrect === false
+                                    ? 'bg-red-50/60 dark:bg-red-950/20 border-red-200 dark:border-red-900/40'
+                                    : 'bg-slate-50 dark:bg-dark-800/50 border-slate-100 dark:border-dark-750'
+                                }`}
+                              >
+                                <span className="font-bold text-slate-400 flex-shrink-0 mt-0.5 w-5">{q?.subLabel || '•'}</span>
+                                <div className="flex-1 space-y-1.5">
+                                  <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <p className="text-slate-800 dark:text-slate-200 font-medium">{q?.questionText}</p>
+                                    {isCorrect === true && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                        <Check size={12} className="stroke-[3]" /> To'g'ri javob
+                                      </span>
+                                    )}
+                                    {isCorrect === false && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-300 dark:border-red-800">
+                                        <X size={12} className="stroke-[3]" /> Noto'g'ri javob
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                                    <span className="text-xs text-slate-500">Berilgan javob:</span>
+                                    <span className={`inline-block font-bold text-xs px-2.5 py-1 rounded-lg ${
+                                      isCorrect === true
+                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                        : isCorrect === false
+                                        ? 'bg-red-600 text-white shadow-sm'
+                                        : ans.answerValue === '5' ? 'bg-green-100 text-green-700'
+                                        : ans.answerValue === '4' ? 'bg-emerald-100 text-emerald-700'
+                                        : ans.answerValue === '3' ? 'bg-yellow-100 text-yellow-700'
+                                        : ans.answerValue === '2' ? 'bg-orange-100 text-orange-700'
+                                        : ans.answerValue === '1' ? 'bg-red-100 text-red-700'
+                                        : (ans.answerValue === 'Ha' || ans.answerValue === 'Да') ? 'bg-red-100 text-red-700'
+                                        : (ans.answerValue === "Yo'q" || ans.answerValue === 'Нет') ? 'bg-green-100 text-green-700'
+                                        : 'bg-slate-200 text-slate-800 dark:bg-dark-700 dark:text-slate-200'
+                                    }`}>
+                                      {ans.answerValue}
+                                    </span>
+                                    {isCorrect === false && q?.correctAnswer && (
+                                      <div className="flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                                        <span>Kutilgan to'g'ri javob:</span>
+                                        <span className="underline font-bold">{q.correctAnswer}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
-
-                      <div className="space-y-3">
-                        {resp.answers?.map((ans: any) => {
-                          const q = questions.find((q: any) => q.id === ans.questionId)
-                          return (
-                            <div key={ans.id} className="flex gap-3 text-sm bg-slate-50 dark:bg-dark-800/50 p-3 rounded-lg">
-                              <span className="font-bold text-slate-400 flex-shrink-0 mt-0.5 w-4">{q?.subLabel || '•'}</span>
-                              <div className="flex-1">
-                                <p className="text-slate-700 dark:text-slate-300 mb-1">{q?.questionText}</p>
-                                <span className={`inline-block font-bold px-2 py-0.5 rounded ${
-                                  ans.answerValue === '5' ? 'bg-green-100 text-green-700' :
-                                  ans.answerValue === '4' ? 'bg-emerald-100 text-emerald-700' :
-                                  ans.answerValue === '3' ? 'bg-yellow-100 text-yellow-700' :
-                                  ans.answerValue === '2' ? 'bg-orange-100 text-orange-700' :
-                                  ans.answerValue === '1' ? 'bg-red-100 text-red-700' :
-                                  (ans.answerValue === 'Ha' || ans.answerValue === 'Да') ? 'bg-red-100 text-red-700' :
-                                  (ans.answerValue === "Yo'q" || ans.answerValue === 'Нет') ? 'bg-green-100 text-green-700' :
-                                  'bg-slate-200 text-slate-800 dark:bg-dark-700 dark:text-slate-200'
-                                }`}>
-                                  {ans.answerValue}
-                                </span>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}

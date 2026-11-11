@@ -34,8 +34,12 @@ export async function GET() {
         "isRequired" BOOLEAN DEFAULT true,
         "groupName" TEXT,
         "subLabel" TEXT,
-        "helpText" TEXT
+        "helpText" TEXT,
+        "correctAnswer" TEXT
       )
+    `)
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "SurveyQuestion" ADD COLUMN IF NOT EXISTS "correctAnswer" TEXT
     `)
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "SurveyResponse" (
@@ -111,12 +115,13 @@ export async function POST(req: NextRequest) {
         const q = questions[i]
         await prisma.$executeRawUnsafe(`
           INSERT INTO "SurveyQuestion" 
-            ("surveyId", "orderIndex", "questionText", "questionType", "options", "isRequired", "groupName", "subLabel", "helpText")
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ("surveyId", "orderIndex", "questionText", "questionType", "options", "isRequired", "groupName", "subLabel", "helpText", "correctAnswer")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `,
           survey.id, i, q.questionText, q.questionType || 'rating',
           q.options ? JSON.stringify(q.options) : null,
-          q.isRequired ?? true, q.groupName || null, q.subLabel || null, q.helpText || null
+          q.isRequired ?? true, q.groupName || null, q.subLabel || null, q.helpText || null,
+          q.correctAnswer || null
         )
       }
     }

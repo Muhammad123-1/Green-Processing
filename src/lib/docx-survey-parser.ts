@@ -9,6 +9,7 @@ export interface ParsedQuestion {
   options?: string[]
   isRequired: boolean
   groupName?: string
+  correctAnswer?: string
 }
 
 export interface ParsedDocxSurvey {
@@ -99,14 +100,31 @@ export async function parseSurveyDocxBuffer(buffer: Buffer): Promise<ParsedDocxS
         }
       }
 
+      let detectedCorrectAnswer: string | undefined = undefined
+      const cleanOptions = options.map(opt => {
+        if (opt.startsWith('*') || opt.endsWith('*') || /\(\s*[+*]\s*\)|\(to['`’]g['`’]ri\)|\(правильн[а-я]+\)/i.test(opt)) {
+          const cleaned = opt
+            .replace(/^\*\s*/, '')
+            .replace(/\s*\*$/, '')
+            .replace(/\s*\(\s*[+*]\s*\)/g, '')
+            .replace(/\s*\(to['`’]g['`’]ri\)/gi, '')
+            .replace(/\s*\(правильн[а-я]+\)/gi, '')
+            .trim()
+          detectedCorrectAnswer = cleaned
+          return cleaned
+        }
+        return opt
+      })
+
       if (questionText) {
         questions.push({
           orderIndex: qIndex,
           subLabel,
           questionText,
           helpText: helpText || undefined,
-          questionType: options.length > 0 ? 'select' : 'text',
-          options: options.length > 0 ? options : undefined,
+          questionType: cleanOptions.length > 0 ? 'select' : 'text',
+          options: cleanOptions.length > 0 ? cleanOptions : undefined,
+          correctAnswer: detectedCorrectAnswer,
           isRequired: true,
           groupName: titleCandidate || undefined
         })

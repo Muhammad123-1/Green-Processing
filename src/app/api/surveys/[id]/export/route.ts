@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import ExcelJS from 'exceljs'
+import { isAnswerMatch } from '@/lib/survey-translations'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -438,6 +439,30 @@ export async function GET(req: NextRequest, { params }: Params) {
           cell.alignment = { horizontal: 'left', vertical: 'middle' }
         } else {
           cell.alignment = { horizontal: 'center', vertical: 'middle' }
+        }
+
+        // Color code test question answers
+        if (col >= 6) {
+          const qIndex = col - 6
+          const q = questions[qIndex]
+          if (q && q.correctAnswer && cell.value && cell.value !== '-') {
+            const isMatch = isAnswerMatch(String(cell.value), q.correctAnswer)
+            if (isMatch) {
+              cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFDCFCE7' }, // emerald-100
+              }
+              cell.font = { bold: true, color: { argb: 'FF166534' }, size: 9, name: 'Arial' }
+            } else {
+              cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFFEE2E2' }, // red-100
+              }
+              cell.font = { bold: true, color: { argb: 'FF991B1B' }, size: 9, name: 'Arial' }
+            }
+          }
         }
       })
     })

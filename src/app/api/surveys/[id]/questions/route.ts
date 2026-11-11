@@ -34,12 +34,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
         await prisma.$executeRawUnsafe(`
           INSERT INTO "SurveyQuestion" 
-            ("surveyId", "orderIndex", "questionText", "questionType", "options", "isRequired", "groupName", "subLabel", "helpText")
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ("surveyId", "orderIndex", "questionText", "questionType", "options", "isRequired", "groupName", "subLabel", "helpText", "correctAnswer")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `,
           surveyId, i, q.questionText, q.questionType || 'rating',
           opts && opts.length > 0 ? JSON.stringify(opts) : null,
-          q.isRequired ?? true, q.groupName || null, q.subLabel || null, q.helpText || null
+          q.isRequired ?? true, q.groupName || null, q.subLabel || null, q.helpText || null,
+          q.correctAnswer || null
         )
       }
     }

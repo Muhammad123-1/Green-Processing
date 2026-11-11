@@ -740,9 +740,17 @@ export default function SurveyReportModal({ surveyId, isOpen, onClose }: SurveyR
                               <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-750 print:bg-slate-100 text-slate-700 dark:text-slate-300 print:text-black font-black text-xs flex-shrink-0">
                                 {q.subLabel || `№${idx + 1}`}
                               </span>
-                              <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 print:text-black leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                {getDictionaryTranslation(q.questionText, 'uz_ru') || q.questionText}
-                              </h4>
+                              <div>
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 print:text-black leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                  {getDictionaryTranslation(q.questionText, 'uz_ru') || q.questionText}
+                                </h4>
+                                {q.correctAnswer && (
+                                  <div className="mt-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                    <span className="font-bold">✓ To'g'ri javob:</span>
+                                    <span className="underline">{q.correctAnswer}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             {/* Percentage Badge */}

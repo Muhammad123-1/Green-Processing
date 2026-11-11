@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { CheckCircle, AlertCircle, Loader2, Globe, Sparkles } from 'lucide-react'
 import { getDictionaryTranslation, resolveBilingualText } from '@/lib/survey-translations'
+import { isAnswerMatch } from '@/components/surveys/QuestionDrillDownModal'
 
 interface Question {
   id: number
@@ -15,6 +16,7 @@ interface Question {
   subLabel: string | null
   helpText: string | null
   orderIndex: number
+  correctAnswer?: string | null
 }
 
 interface Survey {
@@ -265,6 +267,18 @@ export default function SurveyPublicPage() {
   }
 
   if (submitted) {
+    const testQs = (survey?.questions || []).filter(q => q.correctAnswer && q.correctAnswer.trim())
+    let correctCount = 0
+    if (testQs.length > 0) {
+      testQs.forEach(q => {
+        const userVal = answers[q.id]
+        if (isAnswerMatch(userVal, q.correctAnswer)) {
+          correctCount++
+        }
+      })
+    }
+    const testPercent = testQs.length > 0 ? Math.round((correctCount / testQs.length) * 100) : null
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
@@ -272,18 +286,32 @@ export default function SurveyPublicPage() {
           <h2 className="text-2xl font-bold text-slate-800 mb-2">
             {formatDual('Rahmat!', 'Спасибо!', 'Thank you!')}
           </h2>
-          <p className="text-slate-600 mb-4">
-            {formatDual(
-              "So'rovnomani to'ldirganingiz uchun minnatdorchilik bildiramiz.",
-              'Благодарим вас за заполнение анкеты.',
-              'Thank you for taking the time to complete our survey.'
-            )}
-          </p>
+          {testPercent !== null ? (
+            <div className="my-5 p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                {formatDual('Sizning test natijangiz', 'Ваш результат теста', 'Your test result')}
+              </div>
+              <div className="text-3xl font-black text-emerald-800">
+                {correctCount} / {testQs.length}
+              </div>
+              <div className="text-sm font-semibold text-emerald-600 mt-1">
+                {testPercent}% — {testPercent >= 70 ? formatDual("Muvaffaqiyatli topshirdingiz!", "Тест успешно пройден!", "Test passed successfully!") : formatDual("Qayta tayyorlanish tavsiya etiladi", "Рекомендуется повторить", "Review recommended")}
+              </div>
+            </div>
+          ) : (
+            <p className="text-slate-600 mb-4">
+              {formatDual(
+                "So'rovnomani to'ldirganingiz uchun minnatdorchilik bildiramiz.",
+                'Благодарим вас за заполнение анкеты.',
+                'Thank you for taking the time to complete our survey.'
+              )}
+            </p>
+          )}
           <p className="text-sm text-slate-500">
             {formatDual(
-              'Fikr-mulohazalaringiz mahsulot va xizmat sifatini oshirishga xizmat qiladi.',
-              'Ваши отзывы помогают нам улучшать качество продукции и сервиса.',
-              'Your feedback helps us continuously improve our product quality and service.'
+              'Javoblaringiz tizimda muvaffaqiyatli qayd etildi.',
+              'Ваши ответы успешно зафиксированы в системе.',
+              'Your answers have been recorded in the system.'
             )}
           </p>
         </div>

@@ -346,3 +346,32 @@ export async function translateTextOnline(text: string, targetLang: 'ru' | 'en' 
 
   return clean
 }
+
+
+export function isAnswerMatch(userVal?: string | null, correctVal?: string | null): boolean {
+  if (!userVal || !correctVal) return false
+  let cleanUser = userVal.trim().toLowerCase()
+  let cleanCorrect = correctVal.trim().toLowerCase()
+  
+  if (cleanUser.includes('. izoh:')) cleanUser = cleanUser.split('. izoh:')[0].trim()
+  if (cleanUser.includes('izoh:')) cleanUser = cleanUser.split('izoh:')[0].trim()
+
+  if (cleanUser === cleanCorrect) return true
+
+  // Strip prefix like A) or A.
+  const stripPrefix = (str: string) => str.replace(/^[a-zа-я0-9]+[).:\s\-]+\s*/i, '').trim()
+  const uNoPref = stripPrefix(cleanUser)
+  const cNoPref = stripPrefix(cleanCorrect)
+  if (uNoPref && cNoPref && uNoPref === cNoPref && uNoPref.length > 2) return true
+
+  // Check letter prefix matching
+  const getLetter = (str: string) => {
+    const m = str.match(/^([a-zа-я0-9])[).:\s\-]/i)
+    return m ? m[1].toLowerCase() : null
+  }
+  const uLetter = getLetter(cleanUser)
+  const cLetter = getLetter(cleanCorrect)
+  if (uLetter && cLetter && uLetter === cLetter) return true
+
+  return false
+}

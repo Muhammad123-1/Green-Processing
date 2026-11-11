@@ -5,6 +5,7 @@ import {
   X,
   Search,
   CheckCircle2,
+  XCircle,
   AlertTriangle,
   Building2,
   User,
@@ -17,6 +18,7 @@ import {
   Copy,
   Check,
   Users,
+  Award,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -33,6 +35,7 @@ export interface QuestionDrillDownModalProps {
     groupName?: string | null
     helpText?: string | null
     orderIndex?: number
+    correctAnswer?: string | null
   } | null
   responses: Array<{
     id: number
@@ -58,9 +61,38 @@ interface ClassifiedAnswer {
   rawAnswer: string
   isPositive: boolean
   isNegative: boolean
+  isCorrect?: boolean
   score: number
   badgeLabel: string
   badgeColor: string
+}
+
+export function isAnswerMatch(userVal?: string | null, correctVal?: string | null): boolean {
+  if (!userVal || !correctVal) return false
+  let cleanUser = userVal.trim().toLowerCase()
+  let cleanCorrect = correctVal.trim().toLowerCase()
+  
+  if (cleanUser.includes('. izoh:')) cleanUser = cleanUser.split('. izoh:')[0].trim()
+  if (cleanUser.includes('izoh:')) cleanUser = cleanUser.split('izoh:')[0].trim()
+
+  if (cleanUser === cleanCorrect) return true
+
+  // Strip prefix like "A) " or "A. "
+  const stripPrefix = (str: string) => str.replace(/^[a-zа-я0-9]+[).:\s\-]+\s*/i, '').trim()
+  const uNoPref = stripPrefix(cleanUser)
+  const cNoPref = stripPrefix(cleanCorrect)
+  if (uNoPref && cNoPref && uNoPref === cNoPref && uNoPref.length > 2) return true
+
+  // Check letter prefix matching: "A) ..." vs "A"
+  const getLetter = (str: string) => {
+    const m = str.match(/^([a-zа-я0-9])[).:\s\-]/i)
+    return m ? m[1].toLowerCase() : null
+  }
+  const uLetter = getLetter(cleanUser)
+  const cLetter = getLetter(cleanCorrect)
+  if (uLetter && cLetter && uLetter === cLetter) return true
+
+  return false
 }
 
 export default function QuestionDrillDownModal({
@@ -97,8 +129,9 @@ export default function QuestionDrillDownModal({
   }, [isOpen, question?.id])
 
   const qType = question?.questionType || 'rating'
-  // Text va Variantli fikr savollarida ijobiy/salbiyga ajratilmaydi — faqat to'ldiruvchi fikri ko'rinadi
-  const isOpinionQuestion = qType === 'text' || qType === 'select'
+  const isTestQuestion = Boolean(question?.correctAnswer && question.correctAnswer.trim())
+  // Text va Variantli fikr savollarida to'g'ri javob belgilanmagan bo'lsagina ijobiy/salbiyga ajratilmaydi
+  const isOpinionQuestion = (qType === 'text' || qType === 'select') && !isTestQuestion
 
   // Process answers
   const { positiveList, negativeList, allList, stats, optionsBreakdown, opinionsCount, uniqueRestaurantsCount } = useMemo(() => {
@@ -108,7 +141,7 @@ export default function QuestionDrillDownModal({
         negativeList: [],
         allList: [],
         stats: { total: 0, pos: 0, neg: 0, pct: 0, avg: 0 },
-        optionsBreakdown: [] as { name: string; count: number }[],
+        optionsBreakdown: [] as { name: string; count: number; isCorrect?: boolean }[],
         opinionsCount: 0,
         uniqueRestaurantsCount: 0,
       }
@@ -168,13 +201,35 @@ export default function QuestionDrillDownModal({
 
       let isPositive = false
       let isNegative = false
+      let isCorrect: boolean | undefined = undefined
       let score = 5
       let badgeLabel = cleanVal
       let badgeColor =
         'bg-slate-100 text-slate-800 dark:bg-dark-800 dark:text-slate-200 border-slate-200 dark:border-dark-700'
 
-      // AGAR SAVOL MATNLI YOKI VARIANTLI FIKR BO'LSA: Ijobiy/Salbiyga ajratilmaydi!
-      if (isOpinionQuestion) {
+      // TEST SAVOLI (TO'G'RI JAVOB BELGILANGAN BO'LSA)
+      if (isTestQuestion) {
+        const match = isAnswerMatch(cleanVal, question.correctAnswer)
+        isCorrect = match
+        if (match) {
+          isPositive = true
+          isNegative = false
+          score = 5
+          badgeLabel = formatDual("✓ To'g'ri javob", '✓ Правильный ответ', '✓ Correct answer')
+          badgeColor =
+            'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+        } else {
+          isPositive = false
+          isNegative = true
+          score = 0
+          badgeLabel = formatDual("✕ Noto'g'ri javob", '✕ Неправильный ответ', '✕ Incorrect answer')
+          badgeColor =
+            'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-300 dark:border-red-800'
+        }
+        sumScores += score
+        countScores += 1
+      } else if (isOpinionQuestion) {
+        // AGAR SAVOL MATNLI YOKI VARIANTLI FIKR BO'LSA: Ijobiy/Salbiyga ajratilmaydi!
         isPositive = false
         isNegative = false
         score = 0
@@ -182,8 +237,6 @@ export default function QuestionDrillDownModal({
         badgeColor =
           'bg-slate-100 text-slate-700 dark:bg-dark-800 dark:text-slate-200 border-slate-200 dark:border-dark-700'
       } else if (qType === 'yesno') {
-        // Yo'q / Нет / No = POSITIVE (Zero complaints, flawless product)
-        // Ha / Да / Yes = NEGATIVE (Defect / anomaly reported)
         if (
           norm === "yo'q" ||
           norm === 'yoq' ||
@@ -216,7 +269,6 @@ export default function QuestionDrillDownModal({
           badgeColor =
             'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-300 dark:border-red-800'
         } else {
-          // Fallback if other text
           isPositive = true
           score = 5
         }
@@ -280,6 +332,7 @@ export default function QuestionDrillDownModal({
         rawAnswer: raw,
         isPositive,
         isNegative,
+        isCorrect,
         score,
         badgeLabel,
         badgeColor,
@@ -297,7 +350,11 @@ export default function QuestionDrillDownModal({
     const avg = countScores > 0 ? sumScores / countScores : 0
 
     const optionsList = Object.entries(optCounts)
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({
+        name,
+        count,
+        isCorrect: isTestQuestion ? isAnswerMatch(name, question.correctAnswer) : false,
+      }))
       .sort((a, b) => b.count - a.count)
 
     return {
@@ -309,7 +366,7 @@ export default function QuestionDrillDownModal({
       opinionsCount: textOpinions,
       uniqueRestaurantsCount: restaurantsSet.size,
     }
-  }, [question, responses, formatDual, isOpinionQuestion, qType])
+  }, [question, responses, formatDual, isOpinionQuestion, isTestQuestion, qType])
 
   // Filter with live search and options
   const filterList = (list: ClassifiedAnswer[]) => {
@@ -365,6 +422,12 @@ export default function QuestionDrillDownModal({
                       {question.groupName}
                     </p>
                   )}
+                  {isTestQuestion && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                      <Award size={10} />
+                      {formatDual("Test Savoli", "Тестовый вопрос", "Exam / Test Question")}
+                    </span>
+                  )}
                   {isOpinionQuestion && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
                       <MessageSquare size={10} />
@@ -379,6 +442,13 @@ export default function QuestionDrillDownModal({
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
                     ℹ️ {question.helpText}
                   </p>
+                )}
+                {isTestQuestion && question.correctAnswer && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-100/90 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 text-xs font-bold shadow-xs">
+                    <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
+                    <span>To'g'ri javob:</span>
+                    <span className="font-extrabold underline">{question.correctAnswer}</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -404,7 +474,41 @@ export default function QuestionDrillDownModal({
               </div>
             </div>
 
-            {isOpinionQuestion ? (
+            {isTestQuestion ? (
+              <>
+                {/* Correct answers */}
+                <div className="bg-emerald-50/70 dark:bg-emerald-950/30 rounded-2xl p-3 border border-emerald-200 dark:border-emerald-800/60 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block flex items-center justify-center gap-1">
+                    <CheckCircle2 size={12} />
+                    {formatDual("To'g'ri javoblar", 'Правильные', 'Correct')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {stats.pos} <span className="text-xs font-semibold text-emerald-600/70">ta ({stats.pct.toFixed(0)}%)</span>
+                  </div>
+                </div>
+
+                {/* Incorrect answers */}
+                <div className="bg-red-50/70 dark:bg-red-950/30 rounded-2xl p-3 border border-red-200 dark:border-red-800/60 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block flex items-center justify-center gap-1">
+                    <XCircle size={12} />
+                    {formatDual("Noto'g'ri javoblar", 'Ошибочные', 'Incorrect')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">
+                    {stats.neg} <span className="text-xs font-semibold text-red-600/70">ta</span>
+                  </div>
+                </div>
+
+                {/* Accuracy percentage */}
+                <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 border border-slate-200/80 dark:border-dark-700 text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    {formatDual("O'zlashtirish", 'Успеваемость', 'Pass rate')}
+                  </span>
+                  <div className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 mt-0.5">
+                    {stats.pct.toFixed(0)}%
+                  </div>
+                </div>
+              </>
+            ) : isOpinionQuestion ? (
               <>
                 {/* Opinions count */}
                 <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl p-3 border border-blue-200 dark:border-blue-800/60 text-center shadow-xs">
@@ -451,48 +555,73 @@ export default function QuestionDrillDownModal({
                   </div>
                 </div>
 
-                {/* Negative / Complaints Count */}
+                {/* Negative Count */}
                 <div className="bg-red-50/70 dark:bg-red-950/30 rounded-2xl p-3 border border-red-200 dark:border-red-800/60 text-center shadow-xs">
                   <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block flex items-center justify-center gap-1">
                     <AlertTriangle size={12} />
-                    {formatDual('Salbiy / Shikoyatlar', 'Замечания', 'Defects / Issues')}
+                    {formatDual('Salbiy / E\'tiroz', 'Замечания', 'Negative')}
                   </span>
                   <div className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">
-                    {stats.neg} <span className="text-xs font-semibold text-red-600/70">ta ({((stats.total > 0 ? stats.neg / stats.total : 0) * 100).toFixed(0)}%)</span>
+                    {stats.neg} <span className="text-xs font-semibold text-red-600/70">ta</span>
                   </div>
                 </div>
 
-                {/* Satisfaction Index */}
+                {/* Average / Index */}
                 <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 border border-slate-200/80 dark:border-dark-700 text-center shadow-xs">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                    {formatDual('Qoniqish darajasi', 'Удовлетвор-ть', 'Satisfaction')}
+                    {qType === 'rating' ? formatDual('O\'rtacha ball', 'Средний балл', 'Avg score') : formatDual('Qoniqish indeksi', 'Индекс', 'Index')}
                   </span>
                   <div className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
-                    {stats.pct.toFixed(1)}%
+                    {qType === 'rating' ? `${stats.avg.toFixed(1)} / 5` : `${stats.pct.toFixed(0)}%`}
                   </div>
                 </div>
               </>
             )}
           </div>
+
+          {/* OPTIONS BREAKDOWN PILLS */}
+          {optionsBreakdown.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-200/70 dark:border-dark-800 flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
+                Variantlar bo'yicha:
+              </span>
+              {optionsBreakdown.map((opt) => (
+                <div
+                  key={opt.name}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                    opt.isCorrect
+                      ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-400/30'
+                      : 'bg-white dark:bg-dark-800 border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <span className="truncate max-w-[200px]">{opt.name}</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${
+                    opt.isCorrect ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-dark-700 text-slate-500'
+                  }`}>
+                    {opt.count}
+                  </span>
+                  {opt.isCorrect && (
+                    <span className="text-[10px] text-emerald-600 font-extrabold">✓ To'g'ri</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ===================================================================== */}
-        {/* CONTROLS BAR: SEARCH & TABS */}
+        {/* CONTROLS BAR: SEARCH, TABS, COLUMNS TOGGLE */}
         {/* ===================================================================== */}
-        <div className="px-4 sm:px-6 py-3 border-b border-slate-200 dark:border-dark-800 bg-white dark:bg-dark-900 flex flex-wrap items-center justify-between gap-3">
-          {/* Live Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-dark-800 bg-white dark:bg-dark-900 flex flex-wrap gap-2.5 items-center justify-between">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={formatDual(
-                'Restoran, ism yoki fikr bo\'yicha qidirish...',
-                'Поиск по ресторану, имени или отзыву...',
-                'Search by restaurant, name or opinion...'
-              )}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder={formatDual('Qidiruv (restoran, ism, javob)...', 'Поиск (ресторан, имя, ответ)...', 'Search...')}
+              className="w-full pl-9 pr-8 py-1.5 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             {searchQuery && (
               <button
@@ -533,7 +662,7 @@ export default function QuestionDrillDownModal({
               ))}
             </div>
           ) : (
-            /* RATING / YES-NO QUESTION: POSITIVE & NEGATIVE CONTROLS */
+            /* TEST / RATING / YES-NO QUESTION: POSITIVE & NEGATIVE CONTROLS */
             <div className="flex items-center gap-2 flex-wrap">
               {/* View Mode (Columns vs Tabs) */}
               <div className="hidden sm:flex items-center bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
@@ -584,7 +713,7 @@ export default function QuestionDrillDownModal({
                   }`}
                 >
                   <CheckCircle2 size={12} />
-                  <span>{formatDual('Ijobiy', 'Положит.', 'Positive')}</span>
+                  <span>{isTestQuestion ? formatDual("To'g'ri", 'Правильно', 'Correct') : formatDual('Ijobiy', 'Положит.', 'Positive')}</span>
                   <span>({filteredPositive.length})</span>
                 </button>
                 <button
@@ -595,8 +724,8 @@ export default function QuestionDrillDownModal({
                       : 'text-red-700 dark:text-red-400 hover:bg-red-100/50'
                   }`}
                 >
-                  <AlertTriangle size={12} />
-                  <span>{formatDual('Salbiy', 'Замечания', 'Negative')}</span>
+                  {isTestQuestion ? <XCircle size={12} /> : <AlertTriangle size={12} />}
+                  <span>{isTestQuestion ? formatDual("Noto'g'ri", 'Ошибочно', 'Incorrect') : formatDual('Salbiy', 'Замечания', 'Negative')}</span>
                   <span>({filteredNegative.length})</span>
                 </button>
               </div>
@@ -605,27 +734,20 @@ export default function QuestionDrillDownModal({
         </div>
 
         {/* ===================================================================== */}
-        {/* RESPONSES LIST AREA */}
+        {/* RESPONDENTS LIST BODY */}
         {/* ===================================================================== */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-dark-950/40">
-          {/* OPINION / TEXT QUESTION: SINGLE CLEAN VIEW SHOWING RESPONDENT'S OPINION */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100/50 dark:bg-dark-950/40">
           {isOpinionQuestion ? (
-            <div className="space-y-3 max-w-4xl mx-auto">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
-                <span>
-                  {formatDual("To'ldiruvchilar Fikrlari Ro'yxati", "Список отзывов респондентов", "Respondent Opinions List")}
-                </span>
-                <span>{filteredAll.length} ta javob</span>
-              </div>
-
+            /* OPINION LIST VIEW */
+            <div className="space-y-3 max-w-3xl mx-auto">
               {filteredAll.length === 0 ? (
-                <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-12 text-center text-slate-400 text-xs">
+                <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-8 text-center text-slate-400 text-xs">
                   {formatDual('Hech qanday fikr topilmadi', 'Отзывов не найдено', 'No feedback found')}
                 </div>
               ) : (
-                filteredAll.map((item, idx) => (
+                filteredAll.map((item) => (
                   <OpinionCard
-                    key={`${item.responseId}-${idx}`}
+                    key={`${item.responseId}`}
                     item={item}
                     qType={qType}
                     copiedId={copiedId}
@@ -636,16 +758,18 @@ export default function QuestionDrillDownModal({
               )}
             </div>
           ) : viewMode === 'columns' && activeTab === 'all' ? (
-            /* 2-COLUMN SIDE-BY-SIDE VIEW FOR YES/NO & RATING */
+            /* 2-COLUMN SIDE-BY-SIDE VIEW FOR TEST / YES/NO & RATING */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              {/* POSITIVE COLUMN */}
+              {/* POSITIVE / CORRECT COLUMN */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-emerald-200 dark:border-emerald-800">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                     <h4 className="text-xs sm:text-sm font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
                       <ThumbsUp size={15} />
-                      {formatDual('Ijobiy javoblar', 'Положительные ответы', 'Positive responses')}
+                      {isTestQuestion
+                        ? formatDual("To'g'ri javob berganlar", 'Ответили правильно', 'Answered correctly')
+                        : formatDual('Ijobiy javoblar', 'Положительные ответы', 'Positive responses')}
                     </h4>
                   </div>
                   <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full">
@@ -655,7 +779,7 @@ export default function QuestionDrillDownModal({
 
                 {filteredPositive.length === 0 ? (
                   <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-8 text-center text-slate-400 text-xs">
-                    {formatDual('Ijobiy javob topilmadi', 'Положительных ответов не найдено', 'No positive responses found')}
+                    {formatDual("To'g'ri javob topilmadi", 'Правильных ответов не найдено', 'No correct responses found')}
                   </div>
                 ) : (
                   <div className="space-y-2.5">
@@ -663,6 +787,8 @@ export default function QuestionDrillDownModal({
                       <RespondentCard
                         key={`${item.responseId}-${idx}`}
                         item={item}
+                        isTestQuestion={isTestQuestion}
+                        correctAnswer={question.correctAnswer}
                         copiedId={copiedId}
                         onCopy={copyComment}
                         formatDual={formatDual}
@@ -672,14 +798,16 @@ export default function QuestionDrillDownModal({
                 )}
               </div>
 
-              {/* NEGATIVE / COMPLAINTS COLUMN */}
+              {/* NEGATIVE / INCORRECT COLUMN */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-red-200 dark:border-red-800">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
                     <h4 className="text-xs sm:text-sm font-black text-red-800 dark:text-red-300 uppercase tracking-wider flex items-center gap-1.5">
                       <ThumbsDown size={15} />
-                      {formatDual('Salbiy va E\'tirozlar', 'Замечания и дефекты', 'Negative & Complaints')}
+                      {isTestQuestion
+                        ? formatDual("Noto'g'ri javob berganlar", 'Ответили с ошибкой', 'Answered incorrectly')
+                        : formatDual('Salbiy va E\'tirozlar', 'Замечания и дефекты', 'Negative & Complaints')}
                     </h4>
                   </div>
                   <span className="text-xs font-bold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950 px-2.5 py-0.5 rounded-full">
@@ -691,11 +819,13 @@ export default function QuestionDrillDownModal({
                   <div className="bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-8 text-center text-xs">
                     <CheckCircle2 size={32} className="text-emerald-600 mx-auto mb-2" />
                     <p className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">
-                      {formatDual(
-                        'Ajoyib! Hech qanday shikoyat yoki salbiy fikr bildirilmagan',
-                        'Отлично! Никаких замечаний или жалоб не поступило',
-                        'Great! No complaints or negative feedback submitted'
-                      )}
+                      {isTestQuestion
+                        ? formatDual("Ajoyib! Barcha respondentlar to'g'ri javob berishgan!", 'Отлично! Все ответили правильно!', 'Great! Everyone answered correctly!')
+                        : formatDual(
+                            'Ajoyib! Hech qanday shikoyat yoki salbiy fikr bildirilmagan',
+                            'Отлично! Никаких замечаний или жалоб не поступило',
+                            'Great! No complaints or negative feedback submitted'
+                          )}
                     </p>
                   </div>
                 ) : (
@@ -704,6 +834,8 @@ export default function QuestionDrillDownModal({
                       <RespondentCard
                         key={`${item.responseId}-${idx}`}
                         item={item}
+                        isTestQuestion={isTestQuestion}
+                        correctAnswer={question.correctAnswer}
                         copiedId={copiedId}
                         onCopy={copyComment}
                         formatDual={formatDual}
@@ -714,22 +846,26 @@ export default function QuestionDrillDownModal({
               </div>
             </div>
           ) : (
-            /* TABBED / FILTERED VIEW FOR YES/NO & RATING */
+            /* TABBED / FILTERED VIEW FOR YES/NO, RATING & TEST */
             <div className="space-y-3 max-w-3xl mx-auto">
               {activeTab === 'pos' && (
                 <>
                   <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                    {formatDual('Ijobiy javoblar ro\'yxati', 'Список положительных ответов', 'Positive responses list')} ({filteredPositive.length})
+                    {isTestQuestion
+                      ? formatDual("To'g'ri javob berganlar ro'yxati", 'Список правильно ответивших', 'Correct responses list')
+                      : formatDual('Ijobiy javoblar ro\'yxati', 'Список положительных ответов', 'Positive responses list')} ({filteredPositive.length})
                   </div>
                   {filteredPositive.length === 0 ? (
                     <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-8 text-center text-slate-400 text-xs">
-                      {formatDual('Ijobiy javob topilmadi', 'Положительных ответов не найдено', 'No positive responses found')}
+                      {formatDual('Javob topilmadi', 'Ответов не найдено', 'No responses found')}
                     </div>
                   ) : (
                     filteredPositive.map((item, idx) => (
                       <RespondentCard
                         key={`${item.responseId}-${idx}`}
                         item={item}
+                        isTestQuestion={isTestQuestion}
+                        correctAnswer={question.correctAnswer}
                         copiedId={copiedId}
                         onCopy={copyComment}
                         formatDual={formatDual}
@@ -742,17 +878,17 @@ export default function QuestionDrillDownModal({
               {activeTab === 'neg' && (
                 <>
                   <div className="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wider mb-2">
-                    {formatDual('Salbiy javoblar va E\'tirozlar', 'Список замечаний и претензий', 'Complaints & negative responses')} ({filteredNegative.length})
+                    {isTestQuestion
+                      ? formatDual("Noto'g'ri javob berganlar ro'yxati", 'Список ответивших с ошибкой', 'Incorrect responses list')
+                      : formatDual('Salbiy javoblar va e\'tirozlar ro\'yxati', 'Список замечаний и претензий', 'Negative complaints list')} ({filteredNegative.length})
                   </div>
                   {filteredNegative.length === 0 ? (
                     <div className="bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-8 text-center text-xs">
                       <CheckCircle2 size={32} className="text-emerald-600 mx-auto mb-2" />
                       <p className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">
-                        {formatDual(
-                          'Ajoyib! Hech qanday shikoyat bildirilmagan',
-                          'Отлично! Никаких замечаний не поступило',
-                          'Great! No complaints submitted'
-                        )}
+                        {isTestQuestion
+                          ? formatDual("Xato javoblar yo'q! Barcha to'g'ri topshirgan.", 'Ошибок нет!', 'No errors!')
+                          : formatDual('Hech qanday salbiy javob yoki shikoyat yo\'q', 'Замечаний не обнаружено', 'No negative feedback')}
                       </p>
                     </div>
                   ) : (
@@ -760,6 +896,8 @@ export default function QuestionDrillDownModal({
                       <RespondentCard
                         key={`${item.responseId}-${idx}`}
                         item={item}
+                        isTestQuestion={isTestQuestion}
+                        correctAnswer={question.correctAnswer}
                         copiedId={copiedId}
                         onCopy={copyComment}
                         formatDual={formatDual}
@@ -772,17 +910,19 @@ export default function QuestionDrillDownModal({
               {activeTab === 'all' && (
                 <>
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    {formatDual('Barcha respondentlar javoblari', 'Все ответы респондентов', 'All respondent answers')} ({filteredAll.length})
+                    {formatDual('Barcha respondentlar javoblari', 'Все ответы респондентов', 'All responses')} ({filteredAll.length})
                   </div>
                   {filteredAll.length === 0 ? (
                     <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl p-8 text-center text-slate-400 text-xs">
-                      {formatDual('Hech narsa topilmadi', 'Ничего не найдено', 'Nothing found')}
+                      {formatDual('Javoblar topilmadi', 'Ответов не найдено', 'No answers found')}
                     </div>
                   ) : (
                     filteredAll.map((item, idx) => (
                       <RespondentCard
                         key={`${item.responseId}-${idx}`}
                         item={item}
+                        isTestQuestion={isTestQuestion}
+                        correctAnswer={question.correctAnswer}
                         copiedId={copiedId}
                         onCopy={copyComment}
                         formatDual={formatDual}
@@ -800,7 +940,12 @@ export default function QuestionDrillDownModal({
         {/* ===================================================================== */}
         <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-dark-800 bg-slate-50 dark:bg-dark-850 flex flex-wrap gap-2 items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            {isOpinionQuestion ? (
+            {isTestQuestion ? (
+              <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-medium">
+                <Award size={14} className="text-purple-600" />
+                <span>Ushbu test savolida to'g'ri javob berganlar va xato javob berganlar avtomatik ajratib ko'rsatiladi.</span>
+              </span>
+            ) : isOpinionQuestion ? (
               <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 font-medium">
                 <MessageSquare size={13} className="text-blue-500" />
                 {formatDual(
@@ -845,8 +990,7 @@ export default function QuestionDrillDownModal({
 }
 
 /**
- * OPINION CARD: USED FOR TEXT AND SELECT QUESTIONS
- * Shows ONLY the respondent's opinion/text without positive/negative classification
+ * OPINION CARD: USED FOR TEXT AND SELECT QUESTIONS (WITHOUT CORRECT ANSWER)
  */
 function OpinionCard({
   item,
@@ -897,7 +1041,7 @@ function OpinionCard({
         )}
       </div>
 
-      {/* TO'LDIRUVCHINING FIKRI (THE RESPONDENT'S OPINION) */}
+      {/* Respondent's opinion */}
       {opinionText ? (
         <div className="mt-3 p-3.5 rounded-xl bg-slate-50 dark:bg-dark-800/90 border border-slate-200 dark:border-dark-700">
           <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -927,15 +1071,19 @@ function OpinionCard({
 }
 
 /**
- * RESPONDENT CARD: USED FOR YES/NO AND RATING QUESTIONS
+ * RESPONDENT CARD: USED FOR TEST, YES/NO AND RATING QUESTIONS
  */
 function RespondentCard({
   item,
+  isTestQuestion,
+  correctAnswer,
   copiedId,
   onCopy,
   formatDual,
 }: {
   item: ClassifiedAnswer
+  isTestQuestion?: boolean
+  correctAnswer?: string | null
   copiedId: string | null
   onCopy: (text: string, id: string) => void
   formatDual: (uz: string, ru: string, en?: string) => string
@@ -983,6 +1131,30 @@ function RespondentCard({
           {item.badgeLabel}
         </span>
       </div>
+
+      {/* Given answer details in test mode */}
+      {isTestQuestion && (
+        <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200/80 dark:border-dark-700 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 font-medium">Berilgan javob:</span>
+            <span className={`font-bold px-2 py-0.5 rounded-lg ${
+              item.isPositive 
+                ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' 
+                : 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300'
+            }`}>
+              {item.cleanVal}
+            </span>
+          </div>
+
+          {item.isNegative && correctAnswer && (
+            <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 size={12} className="stroke-[2.5]" />
+              <span>To'g'ri javob:</span>
+              <span className="font-bold underline">{correctAnswer}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Respondent's Opinion / Comment if any */}
       {item.comment && (
