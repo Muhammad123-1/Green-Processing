@@ -63,6 +63,7 @@ const navSections = [
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
       { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
       { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
@@ -295,6 +296,135 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 <p className="text-xs font-medium text-slate-300 truncate">{userName}</p>
                 <p className="text-[10px] text-amber-400 font-semibold truncate">
                   {lang === 'ru' ? 'Повар' : lang === 'en' ? 'Chef' : 'Oshpaz'}
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => logout()} 
+              className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors flex-shrink-0"
+              title={translate('logout')}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        </aside>
+      </>
+    )
+  }
+
+  // STRICT PRIVACY & ISOLATION FOR DEGUSTATION (Degustatsiya va SanPiN bo'limi)
+  if (userRole === 'DEGUSTATION') {
+    return (
+      <>
+        {/* Mobile Overlay */}
+        {isOpen && (
+          <div 
+            className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm transition-opacity" 
+            onClick={close}
+          />
+        )}
+
+        {/* Sidebar */}
+        <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-900 border-r border-dark-700 flex flex-col h-full transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          {/* Logo */}
+          <div className="px-5 py-6 border-b border-dark-700">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <UtensilsCrossed size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-sm font-bold text-white leading-tight">Green Processing</h1>
+                <p className="text-xs text-orange-400 font-semibold leading-tight">
+                  {formatText('Degustatsiya & SanPiN', 'Дегустация и СанПиН', 'Degustation & SanPiN')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
+            <h3 className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+              {formatText('SanPiN Jurnallari', 'Журналы СанПиН', 'SanPiN Journals')}
+            </h3>
+
+            {/* 1. Oshxona jurnali (Brakeraj) */}
+            <Link
+              href="/degustatsiya"
+              onClick={close}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                pathname === '/degustatsiya' || pathname.startsWith('/degustatsiya')
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <UtensilsCrossed size={17} />
+              <span>{formatText('Oshxona jurnali (Brakeraj)', 'Журнал кухни (Бракераж)', 'Kitchen Journal (Brakerage)')}</span>
+            </Link>
+
+            {/* 2. Birinchi tibbiy yordam */}
+            <Link
+              href="/first-aid"
+              onClick={close}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                pathname.startsWith('/first-aid')
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <HeartPulse size={17} />
+              <span>{formatText('Birinchi yordam jurnali', 'Журнал первой помощи', 'First Aid Journal')}</span>
+            </Link>
+
+            {/* 3. Haydovchilar tibbiy ko'rigi */}
+            <Link
+              href="/drivers-medical"
+              onClick={close}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                pathname.startsWith('/drivers-medical')
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <Truck size={17} />
+              <span>{formatText("Haydovchilar ko'rigi", 'Медосмотр водителей', 'Drivers Medical Check')}</span>
+            </Link>
+
+            <h3 className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-4 mb-2">
+              {formatText('Aloqa', 'Связь', 'Communication')}
+            </h3>
+
+            {/* 4. Oshxona va Ta'minot Chati */}
+            <Link
+              href="/chat?group=kitchen_supply"
+              onClick={close}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                pathname.startsWith('/chat')
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <MessageSquare size={17} />
+                <span>{formatText('Oshxona Chati', 'Чат кухни', 'Kitchen Chat')}</span>
+              </div>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+          </nav>
+
+          {/* User profile & logout */}
+          <div className="px-5 py-4 border-t border-dark-700 flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/20 border border-orange-500/30 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-orange-400">D</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-300 truncate">{userName}</p>
+                <p className="text-[10px] text-orange-400 font-semibold truncate">
+                  {lang === 'ru' ? 'Дегустация и СанПиН' : lang === 'en' ? 'Degustation & SanPiN' : 'Degustatsiya va SanPiN'}
                 </p>
               </div>
             </div>
