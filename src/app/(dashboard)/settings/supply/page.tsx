@@ -16,7 +16,7 @@ export default async function SupplySettingsPage() {
         userRole={session?.role || 'SUPPLY'}
         userName={session?.name || "Ta'minotchi"}
         initialTab="supply"
-        lockTab={!isAdminOrDirector}
+        lockTab={true}
       />
     </Suspense>
   )

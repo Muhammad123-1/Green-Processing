@@ -50,7 +50,7 @@ const navSections = [
     items: [
       { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'director', href: '/director', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR'] },
-      { key: 'surveys', href: '/surveys', icon: HelpCircle, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SALES'] },
+      { key: 'surveys', href: '/surveys', icon: HelpCircle, roles: ['ADMIN', 'QUALITY_CONTROL', 'SALES'] },
       { key: 'archive', href: '/archive', icon: Archive, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   },
@@ -58,22 +58,23 @@ const navSections = [
     key: 'navQC',
     title: 'Sifat Nazorati (QC)',
     items: [
-      { key: 'newInspection', href: '/inspections/new', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
-      { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
-      { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
-      { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
-      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
-      { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'newInspection', href: '/inspections/new', icon: ClipboardList, roles: ['ADMIN', 'QUALITY_CONTROL'] },
+      { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'QUALITY_CONTROL'] },
+      { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'temperatureLogs', href: '/temperature-logs', icon: Thermometer, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
+      { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
+      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
+      { key: 'chairmenSettings', href: '/settings?tab=chairmen', icon: UserCheck, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
+      { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
   {
     key: 'navInspector',
     title: 'Nazoratchi (Inspector)',
     items: [
-      { key: 'inspector', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'INSPECTOR'] },
+      { key: 'inspector', href: '/inspector', icon: ClipboardCheck, roles: ['ADMIN', 'INSPECTOR'] },
     ]
   },
   {
@@ -85,8 +86,8 @@ const navSections = [
       { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
-      { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'DIRECTOR', 'KITCHEN', 'QUALITY_CONTROL', 'HR', 'INSPECTOR'] },
-      { key: 'warehouseSettings', href: '/settings?tab=warehouse', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'KITCHEN', 'QUALITY_CONTROL', 'HR', 'INSPECTOR'] },
+      { key: 'warehouseSettings', href: '/settings?tab=warehouse', icon: Settings, roles: ['ADMIN', 'WAREHOUSE'] },
     ]
   },
   {
@@ -94,8 +95,8 @@ const navSections = [
     title: 'Ishlab chiqarish',
     items: [
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
-      { key: 'productionJournals', href: '/production/journals', icon: ClipboardCheck, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'dailyChecklist', href: '/production/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'productionJournals', href: '/production/journals', icon: ClipboardCheck, roles: ['ADMIN', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
+      { key: 'dailyChecklist', href: '/production/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
     ]
@@ -110,7 +111,7 @@ const navSections = [
       { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'SUPPLY', 'ACCOUNTING'] },
       { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
-      { key: 'supplySettings', href: '/settings?tab=supply', icon: Settings, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY'] },
+      { key: 'supplySettings', href: '/settings?tab=supply', icon: Settings, roles: ['ADMIN', 'SUPPLY'] },
     ]
   },
   {
@@ -335,7 +336,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               <div>
                 <h1 className="text-sm font-bold text-white leading-tight">Green Processing</h1>
                 <p className="text-xs text-orange-400 font-semibold leading-tight">
-                  {formatText('Degustatsiya & SanPiN', 'Дегустация и СанПиН', 'Degustation & SanPiN')}
+                  {formatText('Degustatsiya', 'Дегустация', 'Degustation')}
                 </p>
               </div>
             </div>
@@ -424,7 +425,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-300 truncate">{userName}</p>
                 <p className="text-[10px] text-orange-400 font-semibold truncate">
-                  {lang === 'ru' ? 'Дегустация и СанПиН' : lang === 'en' ? 'Degustation & SanPiN' : 'Degustatsiya va SanPiN'}
+                  {lang === 'ru' ? 'Дегустация' : lang === 'en' ? 'Degustation' : 'Degustatsiya'}
                 </p>
               </div>
             </div>
@@ -476,30 +477,19 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               return false
             }
             // Director panel items requested by user:
-            // director, archive, warehouse, prihod, rashod, gp, accounting, reports, chat, settings
+            // director, archive, warehouse, prihod, rashod, production, accounting, reports, chat, settings
             if (userRole === 'DIRECTOR') {
               const directorAllowedKeys = [
                 'director',
-                'surveys',
                 'archive',
-                'degustatsiya',
-                'firstAid',
-                'driversMedical',
                 'warehouse',
                 'prihod',
                 'rashod',
-                'gp',
+                'production',
                 'accounting',
                 'reports',
                 'chat',
                 'settings',
-                'qcSettings',
-                'warehouseSettings',
-                'supplySettings',
-                'production',
-                'productionJournals',
-                'dailyChecklist',
-                'inspector',
               ]
               return directorAllowedKeys.includes(item.key)
             }
@@ -615,7 +605,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               {userRole === 'DIRECTOR'
                 ? (lang === 'ru' ? 'Директор' : lang === 'en' ? 'Director' : 'Direktor') 
                 : userRole === 'DEGUSTATION'
-                ? (lang === 'ru' ? 'Дегустация и СанПиН' : lang === 'en' ? 'Degustation & SanPiN' : 'Degustatsiya va SanPiN')
+                ? (lang === 'ru' ? 'Дегустация' : lang === 'en' ? 'Degustation' : 'Degustatsiya')
                 : userRole}
             </p>
           </div>

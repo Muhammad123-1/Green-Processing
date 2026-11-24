@@ -166,6 +166,10 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       title: t('qcSettings') || 'Sifat Sozlamalari', 
       subtitle: t('qcSettingsSub') || "Sifat nazoratchisi ma'lumotlari va elektron imzo" 
     },
+    '/settings/chairmen': { 
+      title: formatDual('Komissiya Raislari Sozlamalari', 'Председатели комиссии', 'Commission Chairmen Settings'), 
+      subtitle: formatDual("Brakeraj komissiya raislari va elektron imzolari", "Председатели бракеражной комиссии и факсимиле подписей", "Brakerage commission chairmen and digital signatures") 
+    },
   }
   return map[pathname]
 }
@@ -217,6 +221,11 @@ export default function Header() {
       pageInfo = {
         title: t('qcSettings') || 'Sifat Sozlamalari',
         subtitle: t('qcSettingsSub') || "Sifat nazoratchisi ma'lumotlari va elektron imzo",
+      }
+    } else if (tab === 'chairmen') {
+      pageInfo = {
+        title: formatDual('Komissiya Raislari Sozlamalari', 'Председатели комиссии', 'Commission Chairmen Settings'),
+        subtitle: formatDual("Brakeraj komissiya raislari va elektron imzolari", "Председатели бракеражной комиссии и факсимиле подписей", "Brakerage commission chairmen and digital signatures"),
       }
     }
   }

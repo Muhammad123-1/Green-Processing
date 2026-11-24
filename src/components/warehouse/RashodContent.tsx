@@ -31,6 +31,7 @@ import {
 } from '@/lib/shopReport'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import AdminImportModal from '@/components/common/AdminImportModal'
+import { SignatureCell, useWarehouseSignature } from './SignatureCell'
 
 interface RashodContentProps {
   userRole?: string
@@ -41,6 +42,7 @@ const todayStr = () => getTodayTashkent()
 
 export default function RashodContent({ userRole, userName }: RashodContentProps) {
   const { lang, formatDual } = useLanguage()
+  const signature = useWarehouseSignature()
   const isAdmin = userRole === 'ADMIN'
   const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
 
@@ -110,6 +112,31 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
 
   useEffect(() => {
     loadData()
+  }, [loadData])
+
+  // Har kuni sanani avtomatik yangilab borish (kun almashganda avtomatik yangi kunga o'tish)
+  useEffect(() => {
+    let lastDate = getTodayTashkent()
+    const checkDay = () => {
+      const nowToday = getTodayTashkent()
+      if (nowToday !== lastDate) {
+        lastDate = nowToday
+        loadData()
+      }
+    }
+
+    const interval = setInterval(checkDay, 30000)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkDay()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [loadData])
 
   const blankExpense = (date: string) => {
@@ -436,13 +463,16 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                     </th>
                   )
                 })}
+                <th className="p-2 border-r border-amber-300 min-w-[130px] text-center text-slate-900 font-extrabold">
+                  {formatDual("Mas'ul Imzosi", "Подпись", "Signature")}
+                </th>
                 <th className="p-2 w-10 text-center"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-amber-200/70 bg-[#FFFBF0] dark:bg-dark-900 text-slate-900 dark:text-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={EXPENSE_FIELDS.length + 2} className="p-16 text-center text-slate-400">
+                  <td colSpan={EXPENSE_FIELDS.length + 3} className="p-16 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Loader2 className="animate-spin text-amber-500" size={32} />
                       <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
@@ -453,7 +483,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                 </tr>
               ) : expensesPagination.displayedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={EXPENSE_FIELDS.length + 2} className="p-12 text-center text-sm text-slate-400">
+                  <td colSpan={EXPENSE_FIELDS.length + 3} className="p-12 text-center text-sm text-slate-400">
                     {lang === 'ru'
                       ? 'Записи не найдены. Нажмите «+ Добавить день», чтобы создать строку.'
                       : "Hech qanday ma'lumot topilmadi. Chiqim kiritish uchun «+ Yangi Kun» tugmasini bosing."}
@@ -478,27 +508,43 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                   >
                     {/* SANA */}
                     <td className={`sticky left-0 z-10 p-1.5 border-r border-amber-300/80 shadow-[inset_-1px_0_0_#fcd34d] ${
-                      row.isEdited ? 'bg-rose-100/70 dark:bg-rose-950/40' : 'bg-[#FFF3CD] dark:bg-dark-850'
+                      row.isEdited
+                        ? 'bg-rose-100/70 dark:bg-rose-950/40'
+                        : row.date === todayStr()
+                        ? 'bg-amber-200/70 dark:bg-amber-950/50'
+                        : 'bg-[#FFF3CD] dark:bg-dark-850'
                     }`}>
-                      {row._new ? (
-                        <input
-                          type="date"
-                          value={row.date || ''}
-                          onChange={(e) => updateExpense(idx, { date: e.target.value })}
-                          className="w-full px-2 py-1 text-xs font-semibold rounded bg-white dark:bg-dark-800 border border-amber-300 dark:border-dark-700 outline-none"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-between gap-1 px-1.5 py-1">
+                      <div className="flex items-center justify-between gap-1 px-1.5 py-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap">
                             {dateFormatMode === 'long' ? formatLongDate(row.date, lang) : formatDMY(row.date)}
                           </span>
-                          {!isRowEditable && (
-                            <span className="p-0.5 text-slate-400" title={perm.reason}>
-                              <Lock size={11} className="text-amber-500 inline" />
+                          {row.date === todayStr() && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                              {lang === 'ru' ? 'Сегодня' : 'Bugun'}
                             </span>
                           )}
                         </div>
-                      )}
+                        {isRowEditable && (
+                          <label
+                            className="relative cursor-pointer p-1 rounded hover:bg-amber-200/60 text-slate-400 hover:text-amber-600 transition-colors ml-auto"
+                            title={lang === 'ru' ? 'Изменить дату' : "Sanani o'zgartirish"}
+                          >
+                            <Calendar size={13} />
+                            <input
+                              type="date"
+                              value={row.date || ''}
+                              onChange={(e) => updateExpense(idx, { date: e.target.value })}
+                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                            />
+                          </label>
+                        )}
+                        {!isRowEditable && (
+                          <span className="p-0.5 text-slate-400" title={perm.reason}>
+                            <Lock size={11} className="text-amber-500 inline" />
+                          </span>
+                        )}
+                      </div>
                       {row.isEdited && (
                         <div className="flex flex-col gap-0.5 px-1 pb-0.5">
                           <span
@@ -516,14 +562,6 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                               &ldquo;{row.editReason}&rdquo;
                             </span>
                           )}
-                        </div>
-                      )}
-                      {row.date === todayStr() && !row.isEdited && (
-                        <div className="flex items-center gap-1 px-1 pb-0.5">
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                            <Sparkles size={9} />
-                            <span>Bugun (Avto)</span>
-                          </span>
                         </div>
                       )}
                     </td>
@@ -562,6 +600,16 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                         </td>
                       )
                     })}
+
+                    {/* MAS'UL IMZOSI */}
+                    <td className="p-1 border-r border-amber-200/80 text-center">
+                      <SignatureCell
+                        url={signature.url}
+                        name={signature.name}
+                        title={signature.title}
+                        formatDual={formatDual}
+                      />
+                    </td>
 
                     {/* AMALLAR */}
                     <td className="p-1 text-center">
@@ -620,6 +668,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                     </td>
                   )
                 })}
+                <td className="p-1 border-r border-amber-300/80"></td>
                 <td className="p-1"></td>
               </tr>
             </tfoot>
@@ -649,7 +698,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
               <div>
                 <h3 className="font-black text-sm uppercase tracking-wide">
                   {isAfterShiftHours() && !isAdmin
-                    ? (lang === 'ru' ? '⚠️ Изменение после 17:00 (Вечерняя смена)' : "⚠️ Soat 17:00 dan Keyingi O'zgartirish")
+                    ? (lang === 'ru' ? 'Изменение после 17:00 (Вечерняя смена)' : "Soat 17:00 dan Keyingi O'zgartirish")
                     : (lang === 'ru' ? 'Причина изменения расхода' : "Chiqimni o'zgartirish sababi")}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">

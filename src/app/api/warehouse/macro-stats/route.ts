@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 
 function inferProductUnit(name: string): 'kg' | 'dona' | 'litr' {
   const s = name.toLowerCase().trim()
@@ -35,6 +36,19 @@ function inferProductUnit(name: string): 'kg' | 'dona' | 'litr' {
   return 'kg'
 }
 
+function extractRealBatch(batchNumber?: string | null, supplierBatch?: string | null): string | null {
+  const candidate = (supplierBatch || '').trim() || (batchNumber || '').trim()
+  if (!candidate || candidate === '-' || candidate === '0') return null
+  const clean = candidate.replace(/^#/, '').trim()
+  if (clean.toUpperCase().startsWith('BATCH-') || clean.toUpperCase().startsWith('PAR-') || clean.toUpperCase().startsWith('AUTO-')) {
+    return null
+  }
+  if (/^\d{4,}$/.test(clean)) {
+    return null
+  }
+  return clean
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
@@ -42,7 +56,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const [arrivals, expenses, acts, dbSuppliers] = await Promise.all([
+    let [arrivals, expenses, acts, dbSuppliers, stockLevelSettings, inventoryBatches] = await Promise.all([
       prisma.shopArrival.findMany({
         orderBy: { date: 'desc' }
       }),
@@ -67,8 +81,31 @@ export async function GET(req: NextRequest) {
           category: true,
           isActive: true
         }
+      }),
+      prisma.setting.findMany({
+        where: { key: { startsWith: 'stock_level_' } }
+      }),
+      prisma.inventoryBatch.findMany({
+        where: { qcStatus: 'APPROVED', quantity: { gt: 0 } },
+        include: { product: true, supplier: true },
+        orderBy: [{ expirationDate: 'asc' }, { receivedAt: 'asc' }, { id: 'asc' }]
       })
     ])
+
+    if (inventoryBatches.length === 0) {
+      await syncInventoryBatchesFromDailyBalances().catch(() => {})
+      inventoryBatches = await prisma.inventoryBatch.findMany({
+        where: { qcStatus: 'APPROVED', quantity: { gt: 0 } },
+        include: { product: true, supplier: true },
+        orderBy: [{ expirationDate: 'asc' }, { receivedAt: 'asc' }, { id: 'asc' }]
+      })
+    }
+
+    const customLevelsMap: Record<string, number> = {}
+    stockLevelSettings.forEach((s) => {
+      const k = s.key.replace('stock_level_', '')
+      customLevelsMap[k] = parseFloat(s.value) || 0
+    })
 
     // Categorization helper
     const categorizeNomenclature = (rawName: string): { category: string; unit: string; minStock: number } => {
@@ -163,7 +200,7 @@ export async function GET(req: NextRequest) {
         category: 'Xomashyo & Oziq-ovqat',
         unit: 'kg',
         minStock: 5000,
-        matchPatterns: ['айсберг', 'айзберг']
+        matchPatterns: ['айсберг', 'айзберг', 'aysberg', 'ayzberg']
       },
       cabbage: {
         key: 'cabbage',
@@ -435,10 +472,11 @@ export async function GET(req: NextRequest) {
 
       const sup = (arr.supplier || '').trim() || "Noma'lum"
       const date = (arr.date || '').trim()
-      const batchNum = (arr.batch || '').trim() || `#${arr.id}`
+      const rawBatch = (arr.batch || '').trim()
+      const batchNum = rawBatch || ''
 
       // Skip exact duplicate clone rows (same date, nom, qty, sup, batch)
-      const cloneKey = `${date}|${nom.toLowerCase()}|${qty}|${sup.toLowerCase()}|${batchNum.toLowerCase()}`
+      const cloneKey = `${date}|${nom.toLowerCase()}|${qty}|${sup.toLowerCase()}|${batchNum.toLowerCase()}|${arr.id}`
       if (seenClones.has(cloneKey)) continue
       seenClones.add(cloneKey)
 
@@ -469,6 +507,7 @@ export async function GET(req: NextRequest) {
       } else {
         for (const [mKey, def] of Object.entries(coreDefinitions)) {
           if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
+          if (mKey === 'iceberg' && (nomLower.includes('листов') || nomLower.includes('bargli'))) continue
           if (def.matchPatterns.some((pattern) => nomLower.includes(pattern))) {
             matchedKey = mKey
             break
@@ -615,6 +654,7 @@ export async function GET(req: NextRequest) {
           } else {
             for (const [mKey, def] of Object.entries(coreDefinitions)) {
               if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
+              if (mKey === 'iceberg' && (k.includes('листов') || k.includes('bargli'))) continue
               if (def.matchPatterns.some((pattern) => k.includes(pattern))) {
                 matchedKey = mKey
                 break
@@ -643,7 +683,7 @@ export async function GET(req: NextRequest) {
     // Helper to categorize finished goods (GP)
     const categorizeGP = (name: string): string => {
       const s = name.toLowerCase()
-      if (s.includes('салат') || s.includes('айсберг') || s.includes('коул') || s.includes('микс')) {
+      if (s.includes('салат') || s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg') || s.includes('коул') || s.includes('микс')) {
         return 'Salatlar'
       }
       if (s.includes('томат') || s.includes('лук') || s.includes('морков') || s.includes('капуст') || s.includes('огурц') || s.includes('лимон')) {
@@ -709,25 +749,173 @@ export async function GET(req: NextRequest) {
       })
       .sort((a, b) => b.totalKg - a.totalKg)
 
+    // Find latest confirmed daily shop balance report (Chain: start + income - expense = end)
+    let latestClosingBalances: Record<string, number> = {}
+    let latestReportDate = ''
+    for (const exp of expenses) {
+      const rep = (exp.balances as any)?.report
+      const end = rep?.balances?.end
+      if (end && Object.keys(end).length > 0) {
+        latestClosingBalances = end
+        latestReportDate = exp.date
+        break
+      }
+    }
+
     // 4. Format all materials (calculating net stock and traffic light status)
     const formattedMaterials = Object.values(materialsData).map((m) => {
-      let balance = m.totalArrivalKg - m.totalExpenseKg
+      // Base balance
+      let balance = Math.round((m.totalArrivalKg - m.totalExpenseKg) * 10) / 10
 
-      if (balance < 0) {
-        balance = m.totalArrivalKg > 0 ? Math.max(Math.round(m.totalArrivalKg * 0.05), 0) : 0
+      // If tracked in verified daily physical balances:
+      if (m.key in latestClosingBalances) {
+        const baseStock = Number(latestClosingBalances[m.key]) || 0
+        let postArrival = 0
+        let postExpense = 0
+        if (latestReportDate) {
+          for (const arr of arrivals) {
+            if (arr.date > latestReportDate) {
+              const nom = String(arr.nomenclature || '').toLowerCase()
+              const matches = coreDefinitions[m.key]?.matchPatterns || []
+              if (matches.some((p) => nom.includes(p.toLowerCase()))) {
+                postArrival += Number(arr.quantity) || 0
+              }
+            }
+          }
+          for (const exp of expenses) {
+            if (exp.date > latestReportDate && exp.materials) {
+              const mats = exp.materials as Record<string, any>
+              for (const [k, v] of Object.entries(mats)) {
+                const matches = coreDefinitions[m.key]?.matchPatterns || []
+                if (matches.some((p) => k.toLowerCase().includes(p.toLowerCase()))) {
+                  postExpense += Number(v) || 0
+                }
+              }
+            }
+          }
+        }
+        balance = Math.round((baseStock + postArrival - postExpense) * 10) / 10
       }
 
-      // Svetofor status calculation
+      // Check if custom minStock is set by warehouseman
+      const effectiveMinStock = customLevelsMap[m.key] !== undefined ? customLevelsMap[m.key] : m.minStock
+
+      // Svetofor status calculation:
+      // If balance is negative or below critical threshold, it is an immediate RED alert (deficit or missing arrival acts)
       let status: 'green' | 'yellow' | 'red' = 'green'
-      if (balance <= m.minStock * 0.5) {
+      if (balance <= 0 || (effectiveMinStock > 0 && balance <= effectiveMinStock * 0.5)) {
         status = 'red'
-      } else if (balance <= m.minStock * 1.3) {
+      } else if (effectiveMinStock > 0 && balance <= effectiveMinStock * 1.3) {
         status = 'yellow'
       }
 
       // Top supplier
       const sortedSuppliers = Object.entries(m.suppliersMap).sort((a, b) => b[1] - a[1])
       const topSupplierName = sortedSuppliers.length > 0 ? sortedSuppliers[0][0] : "Umumiy ta'minot"
+
+      // Match approved FIFO batches
+      const patterns = coreDefinitions[m.key]?.matchPatterns || [m.key.toLowerCase(), m.name.toLowerCase()]
+      const matchedBatches = inventoryBatches.filter((b) => {
+        const pName = (b.product?.name || '').toLowerCase()
+        return patterns.some((pat) => pName.includes(pat.toLowerCase()))
+      })
+
+      let fifoData: {
+        activeBatchNumber: string | null
+        activeBatchQuantity: number
+        activeBatchDate: string | null
+        activeBatchExpiry: string | null
+        daysUntilExpiry: number | null
+        batchesCount: number
+        isExpired: boolean
+        batches: Array<{
+          id: number
+          batchNumber: string
+          quantity: number
+          receivedAt?: string | null
+          expirationDate?: string | null
+          daysUntilExpiry?: number | null
+          isFirst: boolean
+        }>
+      }
+
+      if (balance <= 0) {
+        fifoData = {
+          activeBatchNumber: null,
+          activeBatchQuantity: 0,
+          activeBatchDate: null,
+          activeBatchExpiry: null,
+          daysUntilExpiry: null,
+          batchesCount: 0,
+          isExpired: false,
+          batches: []
+        }
+      } else if (matchedBatches.length > 0) {
+        const first = matchedBatches[0]
+        const realBatch = extractRealBatch(first.batchNumber, first.supplierBatchNumber)
+        const days = first.expirationDate
+          ? Math.ceil((new Date(first.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          : null
+        fifoData = {
+          activeBatchNumber: realBatch,
+          activeBatchQuantity: Math.min(first.quantity, balance),
+          activeBatchDate: first.receivedAt ? new Date(first.receivedAt).toISOString().slice(0, 10) : null,
+          activeBatchExpiry: first.expirationDate ? new Date(first.expirationDate).toISOString().slice(0, 10) : null,
+          daysUntilExpiry: days,
+          batchesCount: matchedBatches.length,
+          isExpired: typeof days === 'number' && days <= 0,
+          batches: matchedBatches.map((b, idx) => ({
+            id: b.id,
+            batchNumber: extractRealBatch(b.batchNumber, b.supplierBatchNumber) || '',
+            quantity: b.quantity,
+            receivedAt: b.receivedAt ? new Date(b.receivedAt).toISOString().slice(0, 10) : null,
+            expirationDate: b.expirationDate ? new Date(b.expirationDate).toISOString().slice(0, 10) : null,
+            daysUntilExpiry: b.expirationDate
+              ? Math.ceil((new Date(b.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              : null,
+            isFirst: idx === 0
+          }))
+        }
+      } else {
+        // Fallback: If not in InventoryBatch yet, look at arrivals for this material from batchesList
+        const matBatches = batchesList.filter((b) => {
+          const nom = b.nomenclature.toLowerCase()
+          return patterns.some((pat) => nom.includes(pat.toLowerCase()))
+        })
+        if (matBatches.length > 0 && balance > 0) {
+          const first = matBatches[0]
+          const realBatch = extractRealBatch(first.batchNumber)
+          fifoData = {
+            activeBatchNumber: realBatch,
+            activeBatchQuantity: Math.min(first.quantity, balance),
+            activeBatchDate: first.date,
+            activeBatchExpiry: null,
+            daysUntilExpiry: null,
+            batchesCount: matBatches.length,
+            isExpired: false,
+            batches: matBatches.slice(0, 3).map((b, idx) => ({
+              id: b.id,
+              batchNumber: extractRealBatch(b.batchNumber) || '',
+              quantity: b.quantity,
+              receivedAt: b.date,
+              expirationDate: null,
+              daysUntilExpiry: null,
+              isFirst: idx === 0
+            }))
+          }
+        } else {
+          fifoData = {
+            activeBatchNumber: null,
+            activeBatchQuantity: 0,
+            activeBatchDate: null,
+            activeBatchExpiry: null,
+            daysUntilExpiry: null,
+            batchesCount: 0,
+            isExpired: false,
+            batches: []
+          }
+        }
+      }
 
       return {
         key: m.key,
@@ -738,14 +926,21 @@ export async function GET(req: NextRequest) {
         totalArrivalKg: Math.round(m.totalArrivalKg * 10) / 10,
         totalExpenseKg: Math.round(m.totalExpenseKg * 10) / 10,
         currentStockKg: Math.round(balance * 10) / 10,
-        minStock: m.minStock,
+        minStock: effectiveMinStock,
         status,
         arrivalsCount: m.arrivalsCount,
         lastArrivalDate: m.lastArrivalDate || '2026-08-01',
         topSupplier: topSupplierName,
-        suppliersCount: Object.keys(m.suppliersMap).length
+        suppliersCount: Object.keys(m.suppliersMap).length,
+        fifo: fifoData
       }
-    }).sort((a, b) => b.totalArrivalKg - a.totalArrivalKg)
+    }).sort((a, b) => {
+      // Eng ko'p ishlatiladigoni birinchi: sexga berilgan chiqim hajmi bo'yicha (totalExpenseKg kamayish tartibida)
+      if (b.totalExpenseKg !== a.totalExpenseKg) {
+        return b.totalExpenseKg - a.totalExpenseKg
+      }
+      return b.currentStockKg - a.currentStockKg
+    })
 
     // Summary calculations separated by unit
     const foodMaterials = formattedMaterials.filter((m) => m.unit === 'kg')
@@ -807,6 +1002,7 @@ export async function GET(req: NextRequest) {
         totalNomenclaturesCount: formattedMaterials.length,
         totalFinishedGoodsKg: totalGpKg,
         totalFinishedGoodsTonnes: totalGpTonnes,
+        totalFifoBatchesCount: inventoryBatches.length,
         criticalCount,
         warningCount,
         sufficientCount

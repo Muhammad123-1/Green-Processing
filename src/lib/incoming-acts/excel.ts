@@ -129,7 +129,7 @@ export async function parseIncomingActsFromBuffer(buffer: Buffer): Promise<Incom
           else if (rawProd.includes('МОРКОВЬ')) currentProductCategory = 'МОРКОВЬ'
           else if (rawProd.includes('ЛИМОН')) currentProductCategory = 'ЛИМОН'
           else if (rawProd.includes('ОГУРЦ')) currentProductCategory = 'ОГУРЦЫ СВЕЖИЕ'
-          else if (rawProd.includes('АЙСБЕРГ') || rawProd.includes('САЛАТ')) currentProductCategory = 'САЛАТ АЙСБЕРГ'
+          else if (rawProd.includes('АЙСБЕРГ') || rawProd.includes('АЙЗБЕРГ') || rawProd.includes('AYSBERG') || rawProd.includes('AYZBERG') || rawProd.includes('САЛАТ')) currentProductCategory = 'САЛАТ АЙСБЕРГ'
           else currentProductCategory = rawProd
         }
       }
@@ -162,7 +162,7 @@ export async function parseIncomingActsFromBuffer(buffer: Buffer): Promise<Incom
       else if (c4Upper.includes('МОРКОВ')) productName = 'МОРКОВЬ'
       else if (c4Upper.includes('ЛИМОН')) productName = 'ЛИМОН'
       else if (c4Upper.includes('ОГУРЦ')) productName = 'ОГУРЦЫ СВЕЖИЕ'
-      else if (c4Upper.includes('АЙСБЕРГ') || c4Upper.includes('САЛАТ')) productName = 'САЛАТ АЙСБЕРГ'
+      else if (c4Upper.includes('АЙСБЕРГ') || c4Upper.includes('АЙЗБЕРГ') || c4Upper.includes('AYSBERG') || c4Upper.includes('AYZBERG') || c4Upper.includes('САЛАТ')) productName = 'САЛАТ АЙСБЕРГ'
       else productName = col4.trim()
     }
 

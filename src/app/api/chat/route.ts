@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { canUserAccessGroup, canUserPostToGroup } from '@/lib/chatPermissions'
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,6 +11,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const groupId = searchParams.get('groupId') || 'general'
     const userIdentifier = session.name || session.role
+
+    // Strict Group & DM Access Control
+    if (!canUserAccessGroup(groupId, { id: session.id, role: session.role, supplierId: session.supplierId })) {
+      return NextResponse.json({ error: "Ushbu guruh yoki suhbatni ko'rishga ruxsat berilmagan" }, { status: 403 })
+    }
 
     // Role-based protection for supplier chat groups
     if (groupId.startsWith('supplier_')) {
@@ -118,6 +124,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const userIdentifier = session.name || session.role
     const groupId = body.groupId || 'general'
+
+    // Strict Group & DM Posting Permission
+    const postCheck = canUserPostToGroup(groupId, { id: session.id, role: session.role, supplierId: session.supplierId })
+    if (!postCheck.allowed) {
+      return NextResponse.json({ error: postCheck.reason || 'Xabar yuborishga ruxsat etilmagan' }, { status: 403 })
+    }
 
     let sender = userIdentifier
 

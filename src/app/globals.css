@@ -244,12 +244,34 @@ body {
 }
 
 /* Universal Form Elements: inputs, selects, textareas and options */
-input:not([type="checkbox"]):not([type="radio"]), 
-select, 
-textarea {
+input:not([type="checkbox"]):not([type="radio"]):not(.bg-transparent):not([class*="bg-transparent"]), 
+select:not(.bg-transparent):not([class*="bg-transparent"]), 
+textarea:not(.bg-transparent):not([class*="bg-transparent"]) {
   color: #0f172a;
   background-color: #ffffff;
   border-color: #cbd5e1;
+}
+
+/* Explicit rule: Transparent inputs and controls must ALWAYS stay transparent */
+input.bg-transparent,
+select.bg-transparent,
+textarea.bg-transparent,
+input[class*="bg-transparent"],
+select[class*="bg-transparent"],
+textarea[class*="bg-transparent"],
+html.dark input.bg-transparent,
+html.dark select.bg-transparent,
+html.dark textarea.bg-transparent,
+html.dark input[class*="bg-transparent"],
+html.dark select[class*="bg-transparent"],
+html.dark textarea[class*="bg-transparent"],
+html.light input.bg-transparent,
+html.light select.bg-transparent,
+html.light textarea.bg-transparent,
+html.light input[class*="bg-transparent"],
+html.light select[class*="bg-transparent"],
+html.light textarea[class*="bg-transparent"] {
+  background-color: transparent !important;
 }
 
 input::placeholder, textarea::placeholder {
@@ -257,16 +279,27 @@ input::placeholder, textarea::placeholder {
 }
 
 /* DARK MODE: Universal high-contrast inputs (excluding transparent & Excel spreadsheet cells) */
-html.dark input:not([type="checkbox"]):not([type="radio"]):not(.bg-transparent):not(.excel-input):not(.excel-cell-input),
-html.dark select:not(.bg-transparent):not(.excel-input),
-html.dark textarea:not(.bg-transparent):not(.excel-input) {
+html.dark input:not([type="checkbox"]):not([type="radio"]):not(.bg-transparent):not([class*="bg-transparent"]):not(.excel-input):not(.excel-cell-input),
+html.dark select:not(.bg-transparent):not([class*="bg-transparent"]):not(.excel-input),
+html.dark textarea:not(.bg-transparent):not([class*="bg-transparent"]):not(.excel-input) {
   background-color: #1e293b !important;
   color: #f8fafc !important;
   border-color: #475569 !important;
 }
+html.dark input.bg-transparent,
+html.dark input[class*="bg-transparent"] {
+  background-color: transparent !important;
+  color: #f8fafc !important;
+}
 html.dark input::placeholder, 
 html.dark textarea::placeholder {
-  color: #64748b !important;
+  color: #94a3b8 !important;
+}
+
+/* Calendar icon inside date inputs in dark mode */
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.9);
+  cursor: pointer;
 }
 
 /* Excel spreadsheet cell inputs (always crisp light/transparent, never black in dark mode) */
@@ -348,6 +381,30 @@ html.dark option {
 }
 html.light option {
   background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Color Scheme standard for native elements (inputs, datepickers, scrollbars) */
+html.dark {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}
+
+/* Journal and navigation active tab styling - pristine contrast in both light & dark modes */
+.journal-active-tab {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+.journal-active-tab * {
+  color: #ffffff !important;
+}
+html.dark .journal-active-tab {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+html.dark .journal-active-tab * {
   color: #0f172a !important;
 }
 
@@ -449,28 +506,38 @@ html.light button.bg-dark-800 *,
 html.light a.bg-blue-600 *,
 html.light a.bg-emerald-600 *,
 html.light a.bg-orange-600 *,
-html.light .bg-slate-900.text-white *,
-html.light .bg-slate-950.text-white *,
-html.light .bg-dark-900.text-white *,
-html.light .bg-dark-950.text-white * {
-  color: inherit !important;
+html.light [class*="bg-slate-800"].text-white,
+html.light [class*="bg-slate-800"].text-white *,
+html.light [class*="bg-slate-900"].text-white,
+html.light [class*="bg-slate-900"].text-white *,
+html.light [class*="bg-slate-950"].text-white,
+html.light [class*="bg-slate-950"].text-white *,
+html.light [class*="bg-dark-800"].text-white,
+html.light [class*="bg-dark-800"].text-white *,
+html.light [class*="bg-dark-850"].text-white,
+html.light [class*="bg-dark-850"].text-white *,
+html.light [class*="bg-dark-900"].text-white,
+html.light [class*="bg-dark-900"].text-white *,
+html.light [class*="bg-dark-950"].text-white,
+html.light [class*="bg-dark-950"].text-white * {
+  color: #ffffff !important;
 }
 
 /* Light mode text mappings for readable high-contrast dark text (WCAG AAA compliant for elderly / directors) */
-html.light .text-slate-100:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #0f172a !important; }
-html.light .text-slate-200:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #1e293b !important; }
-html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #334155 !important; }
-html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #475569 !important; }
-html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *) { color: #475569 !important; }
+html.light .text-slate-100:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #0f172a !important; }
+html.light .text-slate-200:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #1e293b !important; }
+html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #334155 !important; }
+html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #475569 !important; }
+html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #475569 !important; }
 
 /* In light mode, turn general white text to deep dark slate text (unless on solid colored pill/badge or dark banner) */
-html.light h1.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
-html.light h2.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
-html.light h3.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
-html.light h4.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
-html.light span.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="bg-amber-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
-html.light p.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
-html.light div.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *) {
+html.light h1.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *):not([class*="bg-slate-"]):not([class*="bg-dark-"]),
+html.light h2.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *):not([class*="bg-slate-"]):not([class*="bg-dark-"]),
+html.light h3.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *):not([class*="bg-slate-"]):not([class*="bg-dark-"]),
+html.light h4.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *):not([class*="bg-slate-"]):not([class*="bg-dark-"]),
+html.light span.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="bg-amber-"]):not([class*="bg-slate-"]):not([class*="bg-dark-"]):not([class*="bg-black"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *),
+html.light p.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *):not([class*="bg-slate-"]):not([class*="bg-dark-"]),
+html.light div.text-white:not(button *):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-emerald-"]):not([class*="bg-blue-"]):not([class*="bg-orange-"]):not([class*="bg-indigo-"]):not([class*="from-slate-900"]):not([class*="from-indigo-950"]):not(.dark-banner *):not([class*="bg-slate-"]):not([class*="bg-dark-"]) {
   color: #0f172a !important;
 }
 

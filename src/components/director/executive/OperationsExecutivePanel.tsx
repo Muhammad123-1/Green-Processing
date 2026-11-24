@@ -123,7 +123,7 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
           id: `tr-${tr.id}`,
           department: 'warehouse',
           deptName: lang === 'ru' ? 'Складской отдел' : 'Omborxona bo‘limi',
-          actor: lang === 'ru' ? 'Заведующий складом' : 'Bosh ombor mudiri',
+          actor: lang === 'ru' ? 'Сотрудник склада' : 'Ombor xodimi',
           action: lang === 'ru' ? `Перемещение ${tr.transferNumber}` : `Sexga uzatish: ${tr.transferNumber}`,
           productName: prodName,
           quantityStr: `${n(tr.issuedQuantity)} ${unit}`,
@@ -493,7 +493,7 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
                   <span className="text-xs font-mono font-bold text-slate-500">{whActions.length} ta harakat</span>
                 </div>
                 <b className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors block">
-                  {lang === 'ru' ? 'Склад сырья и перемещения' : 'Ombor mudiri va sex transferlari'}
+                  {lang === 'ru' ? 'Склад сырья и перемещения' : 'Ombor xodimi va sex transferlari'}
                 </b>
                 <p className="text-xs text-slate-500 mt-1 font-medium">
                   {data?.warehouse?.transfers?.length || 0} ta {lang === 'ru' ? 'передач в цеха' : 'ichki transfer va uzatish'}

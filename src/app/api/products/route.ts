@@ -77,7 +77,7 @@ function inferProductDetails(name: string) {
     }
   }
 
-  if (s.includes('айсберг') || s.includes('айзберг') || s.includes('салат')) {
+  if (s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg') || s.includes('салат')) {
     return {
       category: 'Sabzavot (Aysberg)',
       unit: 'kg',
@@ -153,6 +153,46 @@ function inferProductDetails(name: string) {
   }
 }
 
+/**
+ * Normalizes raw material names to prevent discrepancies between aliases,
+ * typos (e.g. "Айзберг" vs "Айсберг", "aysberg", "ayzberg", "Салат Айсберг").
+ */
+function canonicalRawMaterialName(name: string): string {
+  const s = (name || '').trim().toLowerCase()
+  if (!s) return ''
+
+  // Packaging & consumables must remain packaging
+  if (
+    s.includes('пакет') ||
+    s.includes('каробк') ||
+    s.includes('короб') ||
+    s.includes('karobka') ||
+    s.includes('этикетк') ||
+    s.includes('стрич') ||
+    s.includes('яшик') ||
+    s.includes('падон')
+  ) {
+    return s
+  }
+
+  // Iceberg leaf
+  if (s.includes('листов') || s.includes('bargli')) {
+    return 'айсберг (листовой)'
+  }
+
+  // Iceberg lettuce variants: "Салат Айсберг", "Айсберг", "Салат Айзберг", "Айзберг", "aysberg", "ayzberg", etc.
+  if (
+    s.includes('айсберг') ||
+    s.includes('айзберг') ||
+    s.includes('aysberg') ||
+    s.includes('ayzberg')
+  ) {
+    return 'салат айсберг'
+  }
+
+  return s
+}
+
 export async function GET() {
   try {
     // 1. Fetch real arrivals from Prixod to analyze nomenclatures
@@ -179,10 +219,11 @@ export async function GET() {
       const raw = (a.nomenclature || '').trim()
       if (!raw || raw === '-' || raw.toLowerCase().includes('object') || raw.length < 2) continue
 
-      const norm = raw.toLowerCase()
+      const norm = canonicalRawMaterialName(raw)
       if (!prixodMap[norm]) {
+        const canonicalName = norm === 'салат айсберг' ? 'Салат Айсберг' : raw
         prixodMap[norm] = {
-          canonicalName: raw,
+          canonicalName,
           totalKg: 0,
           deliveriesCount: 0,
           lastArrivalDate: ''
@@ -206,6 +247,7 @@ export async function GET() {
 
     const existingMap: Record<string, typeof existingProducts[0]> = {}
     for (const p of existingProducts) {
+      existingMap[canonicalRawMaterialName(p.name)] = p
       existingMap[p.name.trim().toLowerCase()] = p
     }
 
@@ -236,6 +278,7 @@ export async function GET() {
           })
           allProducts.push(created)
           existingMap[norm] = created
+          existingMap[created.name.trim().toLowerCase()] = created
         } catch (err) {
           console.error('Failed to auto-seed product from prixod:', stat.canonicalName, err)
         }
@@ -246,8 +289,8 @@ export async function GET() {
     const enriched = allProducts
       .filter((p) => p.isActive)
       .map((p) => {
-        const norm = p.name.trim().toLowerCase()
-        const stat = prixodMap[norm]
+        const norm = canonicalRawMaterialName(p.name)
+        const stat = prixodMap[norm] || prixodMap[p.name.trim().toLowerCase()]
         const totalKg = stat ? Math.round(stat.totalKg * 10) / 10 : 0
         const totalTonnes = Math.round((totalKg / 1000) * 100) / 100
         const deliveriesCount = stat ? stat.deliveriesCount : 0
@@ -288,6 +331,24 @@ export async function POST(request: NextRequest) {
 
     if (!body.name || !body.name.trim()) {
       return NextResponse.json({ error: "Mahsulot nomi kiritilishi shart" }, { status: 400 })
+    }
+
+    // Deduplicate / alias check for Iceberg variants
+    const canon = canonicalRawMaterialName(body.name)
+    if (canon === 'салат айсберг') {
+      const existing = await prisma.product.findFirst({
+        where: {
+          OR: [
+            { name: { contains: 'йсберг', mode: 'insensitive' } },
+            { name: { contains: 'йзберг', mode: 'insensitive' } },
+            { name: { contains: 'ysberg', mode: 'insensitive' } }
+          ],
+          isActive: true
+        }
+      })
+      if (existing) {
+        return NextResponse.json(existing, { status: 200 })
+      }
     }
 
     const product = await prisma.product.create({

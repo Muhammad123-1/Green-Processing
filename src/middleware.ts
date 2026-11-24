@@ -55,8 +55,8 @@ export function middleware(request: NextRequest) {
       // invalid session cookie
     }
 
-    // Trying to access login page, redirect to their home
-    if (pathname === '/login') {
+    // Trying to access login or home page, redirect to their home
+    if (pathname === '/login' || pathname === '/') {
       const targetPath = getRedirectPathForRole(userRole)
       return NextResponse.redirect(new URL(targetPath, request.url))
     }

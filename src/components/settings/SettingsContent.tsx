@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import {
   Save,
@@ -25,6 +26,10 @@ import {
   AlertCircle,
   AlertTriangle,
   Clock,
+  Plus,
+  Utensils,
+  UserCheck,
+  ArrowLeft,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -35,7 +40,15 @@ interface SettingItem {
   category: string
 }
 
-export type SettingsTab = 'supply' | 'qc' | 'warehouse' | 'general' | 'audit'
+export interface ChairmanItem {
+  id: string
+  name: string
+  role: string
+  signatureUrl: string
+  isDefault?: boolean
+}
+
+export type SettingsTab = 'supply' | 'qc' | 'warehouse' | 'general' | 'audit' | 'chairmen'
 
 interface SettingsContentProps {
   userRole?: string
@@ -58,28 +71,46 @@ export default function SettingsContent({
   const isWarehouse = userRole === 'WAREHOUSE'
   const isSupply = userRole === 'SUPPLY'
   const isQC = userRole === 'QUALITY_CONTROL' || userRole === 'INSPECTOR'
+  const isKitchenOrDegustation = userRole === 'KITCHEN' || userRole === 'DEGUSTATION' || userRole === 'HR'
+
+  // Check target department from URL query or props
+  const fromParam = searchParams ? (searchParams.get('tab') as SettingsTab) : null
+  const targetDepartment: SettingsTab | null = initialTab || fromParam
 
   // Determine which tabs this user is allowed to access
   const allowedTabs: SettingsTab[] = useMemo(() => {
-    if (lockTab && initialTab) return [initialTab]
-    if (isAdminOrDirector) return ['supply', 'qc', 'warehouse', 'general', 'audit']
+    // 1. Role-based hard restrictions for non-admin/non-director users
     if (isWarehouse) return ['warehouse']
     if (isSupply) return ['supply']
-    if (isQC) return ['qc']
-    return ['general']
-  }, [lockTab, initialTab, isAdminOrDirector, isWarehouse, isSupply, isQC])
+    if (isQC) return targetDepartment === 'chairmen' ? ['chairmen'] : ['qc']
+    if (isKitchenOrDegustation) return ['chairmen']
+    if (!isAdminOrDirector) return ['general']
+
+    // 2. Explicit tab lock
+    if (lockTab && initialTab) return [initialTab]
+
+    // 3. For Admin / Director: Strict isolation by requested department
+    if (targetDepartment === 'warehouse') return ['warehouse']
+    if (targetDepartment === 'supply') return ['supply']
+    if (targetDepartment === 'qc') return ['qc']
+    if (targetDepartment === 'chairmen') return ['chairmen']
+    if (targetDepartment === 'audit') return ['general', 'audit']
+    if (targetDepartment === 'general') return ['general', 'audit']
+
+    // 4. Default on /settings: General company profile and audit
+    return ['general', 'audit']
+  }, [lockTab, initialTab, targetDepartment, isAdminOrDirector, isWarehouse, isSupply, isQC, isKitchenOrDegustation])
 
   // Determine default tab
   const defaultTab: SettingsTab = useMemo(() => {
-    const fromParam = searchParams ? (searchParams.get('tab') as SettingsTab) : null
-    if (fromParam && allowedTabs.includes(fromParam)) return fromParam
-    if (initialTab && allowedTabs.includes(initialTab)) return initialTab
+    if (targetDepartment && allowedTabs.includes(targetDepartment)) return targetDepartment
     if (isWarehouse) return 'warehouse'
     if (isSupply) return 'supply'
     if (isQC) return 'qc'
-    if (isAdminOrDirector) return fromParam || initialTab || 'general'
+    if (isKitchenOrDegustation) return 'chairmen'
+    if (allowedTabs.includes('general')) return 'general'
     return allowedTabs[0] || 'general'
-  }, [searchParams, initialTab, allowedTabs, isWarehouse, isSupply, isQC, isAdminOrDirector])
+  }, [targetDepartment, allowedTabs, isWarehouse, isSupply, isQC, isKitchenOrDegustation])
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(defaultTab)
   const [settings, setSettings] = useState<SettingItem[]>([])
@@ -100,6 +131,8 @@ export default function SettingsContent({
     const fromParam = searchParams ? (searchParams.get('tab') as SettingsTab) : null
     if (fromParam && allowedTabs.includes(fromParam)) {
       setActiveTab(fromParam)
+    } else if (!fromParam && allowedTabs.includes('general')) {
+      setActiveTab('general')
     }
   }, [searchParams, allowedTabs])
 
@@ -235,6 +268,67 @@ export default function SettingsContent({
     })
   }
 
+  // Brakerage Chairmen management
+  const rawChairmen = getSetting('brakerage_chairmen', '')
+  const chairmenList: ChairmanItem[] = useMemo(() => {
+    if (rawChairmen) {
+      try {
+        const parsed = JSON.parse(rawChairmen)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      } catch {}
+    }
+    return [
+      {
+        id: 'ch-iminov',
+        name: 'Иминов С.М.',
+        role: 'Директор',
+        signatureUrl: '/signatures/iminov.png',
+        isDefault: true
+      }
+    ]
+  }, [rawChairmen])
+
+  function updateChairman(id: string, patch: Partial<ChairmanItem>) {
+    const updated = chairmenList.map(ch => {
+      if (ch.id === id) {
+        return { ...ch, ...patch }
+      }
+      if (patch.isDefault) {
+        return { ...ch, isDefault: false }
+      }
+      return ch
+    })
+    setSetting('brakerage_chairmen', JSON.stringify(updated), 'kitchen')
+  }
+
+  function addChairman() {
+    const newId = `ch-${Date.now()}`
+    const newChairman: ChairmanItem = {
+      id: newId,
+      name: '',
+      role: 'Масъул раис',
+      signatureUrl: '',
+      isDefault: chairmenList.length === 0
+    }
+    const updated = [...chairmenList, newChairman]
+    setSetting('brakerage_chairmen', JSON.stringify(updated), 'kitchen')
+    toast.info("Янги раис қўшилди. Ф.И.Ш. ва имзосини киритинг.")
+  }
+
+  function deleteChairman(id: string) {
+    if (chairmenList.length <= 1) {
+      toast.error("Камида 1 та раис бўлиши шарт!")
+      return
+    }
+    if (!confirm("Ушбу раисни ўчирмоқчимисиз?")) return
+    const updated = chairmenList.filter(ch => ch.id !== id)
+    if (!updated.some(ch => ch.isDefault) && updated.length > 0) {
+      updated[0].isDefault = true
+    }
+    setSetting('brakerage_chairmen', JSON.stringify(updated), 'kitchen')
+    toast.success("Раис ўчирилди")
+  }
+
   function handleTabChange(tab: SettingsTab) {
     setActiveTab(tab)
     if (isAdminOrDirector && !lockTab) {
@@ -268,22 +362,44 @@ export default function SettingsContent({
       })
       const data = await res.json()
       if (res.ok && data?.url) {
-        setSetting(currentUploadKey, data.url, 'signature')
+        if (currentUploadKey.startsWith('chairman_sig_')) {
+          const chId = currentUploadKey.replace('chairman_sig_', '')
+          const updated = chairmenList.map(ch => (ch.id === chId ? { ...ch, signatureUrl: data.url } : ch))
+          const jsonVal = JSON.stringify(updated)
+          setSetting('brakerage_chairmen', jsonVal, 'kitchen')
 
-        // Auto-save this signature update immediately
-        await fetch('/api/settings', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify([{ key: currentUploadKey, value: data.url, category: 'signature' }]),
-        })
+          // Auto-save this signature update immediately
+          await fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([{ key: 'brakerage_chairmen', value: jsonVal, category: 'kitchen' }]),
+          })
 
-        toast.success(
-          formatDual(
-            "Elektron imzo rasmi muvaffaqiyatli yuklandi!",
-            "Электронная подпись успешно загружена!",
-            "Signature image uploaded successfully!"
+          toast.success(
+            formatDual(
+              "Раис электрон имзоси муваффақиятли юкланди!",
+              "Электронная подпись председателя успешно загружена!",
+              "Chairman digital signature uploaded successfully!"
+            )
           )
-        )
+        } else {
+          setSetting(currentUploadKey, data.url, 'signature')
+
+          // Auto-save this signature update immediately
+          await fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify([{ key: currentUploadKey, value: data.url, category: 'signature' }]),
+          })
+
+          toast.success(
+            formatDual(
+              "Elektron imzo rasmi muvaffaqiyatli yuklandi!",
+              "Электронная подпись успешно загружена!",
+              "Signature image uploaded successfully!"
+            )
+          )
+        }
       } else {
         toast.error(data?.error || "Rasm yuklashda xatolik yuz berdi")
       }
@@ -361,7 +477,7 @@ export default function SettingsContent({
       icon: <Package size={24} className="text-amber-500" />,
       title: formatDual("Omborxona Sozlamalari & Mas'ul Imzo", "Настройки склада & Электронная подпись", "Warehouse Settings & Signature"),
       subtitle: formatDual(
-        "Mas'ul omborchi (mudiri) rekvizitlari, ombor telefoni va kirim/chiqim jurnallaridagi rasmiy faksimile imzosi",
+        "Mas'ul ombor xodimi rekvizitlari, ombor telefoni va kirim/chiqim jurnallaridagi rasmiy faksimile imzosi",
         "ФИО зав. складом, телефон и факсимиле подписи для приходных и расходных журналов",
         "Warehouse manager details, contact phone, and digital signature for inbound/outbound logs"
       ),
@@ -375,6 +491,21 @@ export default function SettingsContent({
         "Rasmiy hujjatlar, dalolatnomalar va hisobotlarda chop etiladigan korxona ma'lumotlari va raqamlash formati",
         "Реквизиты компании для печати в актах, отчетах и юридических документах",
         "Company profile, address, and document numbering configuration"
+      ),
+    },
+    chairmen: {
+      badge: "GREEN PROCESSING • БРАКЕРАЖ КОМИССИЯСИ",
+      badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+      icon: <Utensils size={24} className="text-emerald-500" />,
+      title: formatDual(
+        "Бракераж Комиссия Раислари & Электрон Имзолар",
+        "Председатели бракеражной комиссии & Электронные подписи",
+        "Brakerage Commission Chairmen & Digital Signatures"
+      ),
+      subtitle: formatDual(
+        "Бракераж журналида таомларни тасдиқловчи комиссия раислари рўйхати ва уларнинг расмий факсимиле имзолари",
+        "Список председателей комиссии и их факсимиле подписей для утверждения блюд в бракеражном журнале",
+        "List of commission chairmen and their facsimile signatures for approving meals in brakerage journal"
       ),
     },
     audit: {
@@ -407,8 +538,24 @@ export default function SettingsContent({
         onChange={handleFileUpload}
       />
 
+      {/* Department Isolation Banner & Back to General Settings */}
+      {isAdminOrDirector && activeTab !== 'general' && activeTab !== 'audit' && (
+        <div className="flex items-center justify-between pb-1">
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white dark:bg-dark-850 hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200 dark:border-dark-700 shadow-xs"
+          >
+            <ArrowLeft size={14} />
+            <span>{formatDual("← Tizim va Korxona Rekvizitlari", "← Общие реквизиты компании", "← Company Requisites")}</span>
+          </Link>
+          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            {formatDual("Faqat ushbu bo'lim sozlamasi", "Изолированные настройки отдела", "Department settings")}
+          </span>
+        </div>
+      )}
+
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-6 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-6 rounded-3xl border border-slate-200 dark:border-dark-700 shadow-xs">
         <div className="flex items-start gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center shrink-0 mt-0.5">
             {headerInfo.icon}
@@ -438,7 +585,7 @@ export default function SettingsContent({
         </button>
       </div>
 
-      {/* Department Navigation Tabs - ONLY SHOWN FOR ADMIN / DIRECTOR WITH MULTIPLE TABS */}
+      {/* Department Navigation Tabs - ONLY SHOWN FOR PAGES WITH MULTIPLE TABS (E.G. GENERAL & AUDIT) */}
       {allowedTabs.length > 1 && (
         <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-dark-800/80 rounded-2xl border border-slate-200 dark:border-dark-700/80 shadow-xs">
           {allowedTabs.includes('supply') && (
@@ -447,7 +594,7 @@ export default function SettingsContent({
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'supply'
                   ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-700'
               }`}
             >
               <Truck size={15} />
@@ -461,7 +608,7 @@ export default function SettingsContent({
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'qc'
                   ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-700'
               }`}
             >
               <ShieldCheck size={15} />
@@ -475,11 +622,25 @@ export default function SettingsContent({
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'warehouse'
                   ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-700'
               }`}
             >
               <Package size={15} />
               <span>{formatDual("Omborxona", "Склад", "Warehouse")}</span>
+            </button>
+          )}
+
+          {allowedTabs.includes('chairmen') && (
+            <button
+              onClick={() => handleTabChange('chairmen')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                activeTab === 'chairmen'
+                  ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-700'
+              }`}
+            >
+              <Utensils size={15} />
+              <span>{formatDual("Комиссия Раислари (Бракераж)", "Председатели комиссии", "Commission Chairmen")}</span>
             </button>
           )}
 
@@ -489,7 +650,7 @@ export default function SettingsContent({
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'general'
                   ? 'bg-slate-900 text-white dark:bg-dark-700 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-700'
               }`}
             >
               <Building size={15} />
@@ -503,13 +664,106 @@ export default function SettingsContent({
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === 'audit'
                   ? 'bg-amber-600 text-white dark:bg-amber-600 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-750'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-700'
               }`}
             >
               <FileSpreadsheet size={15} />
               <span>{formatDual("Import Auditi & Tarixi", "Аудит и история импорта", "Import Audit Log")}</span>
             </button>
           )}
+        </div>
+      )}
+
+      {/* Quick Links to Department Settings for Admin/Director (Only on General/Audit Settings) */}
+      {isAdminOrDirector && (activeTab === 'general' || activeTab === 'audit') && (
+        <div className="bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-700 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-100 dark:border-dark-800 pb-2.5">
+            <div>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                {formatDual("Bo'limlar Bo'yicha Alohida Sozlamalar", "Отдельные настройки по отделам", "Department Settings")}
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {formatDual(
+                  "Har bir bo'limning o'z mas'ul xodimi, telefoni va elektron imzosi o'z bo'limida saqlanadi",
+                  "Сотрудник, телефон и факсимиле подписи каждого отдела настраиваются в своем разделе",
+                  "Staff details, phone, and digital signature configured separately per department"
+                )}
+              </p>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-dark-800 px-2.5 py-0.5 rounded-md self-start sm:self-auto border border-slate-200 dark:border-dark-700">
+              {formatDual("Bo'limlar", "Отделы", "Departments")}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+            <Link
+              href="/settings?tab=warehouse"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-dark-850 hover:bg-amber-500/10 border border-slate-200 dark:border-dark-700/80 hover:border-amber-500/30 transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 group-hover:scale-105 transition-transform">
+                <Package size={17} />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                  {formatDual("Omborxona Sozlamasi", "Настройки склада", "Warehouse Settings")}
+                </span>
+                <span className="block text-[10px] text-slate-400 truncate">
+                  {formatDual("Omborchi & Imzo", "Зав. складом & Подпись", "Staff & Signature")}
+                </span>
+              </div>
+            </Link>
+
+            <Link
+              href="/settings?tab=supply"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-dark-850 hover:bg-blue-500/10 border border-slate-200 dark:border-dark-700/80 hover:border-blue-500/30 transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20 group-hover:scale-105 transition-transform">
+                <Truck size={17} />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                  {formatDual("Ta'minot Sozlamasi", "Настройки снабжения", "Supply Settings")}
+                </span>
+                <span className="block text-[10px] text-slate-400 truncate">
+                  {formatDual("Ta'minotchi & Imzo", "Снабженец & Подпись", "Supply Staff & Signature")}
+                </span>
+              </div>
+            </Link>
+
+            <Link
+              href="/settings?tab=qc"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-dark-850 hover:bg-emerald-500/10 border border-slate-200 dark:border-dark-700/80 hover:border-emerald-500/30 transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:scale-105 transition-transform">
+                <ShieldCheck size={17} />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+                  {formatDual("Sifat Nazorati (QC)", "Служба качества (QC)", "QC Settings")}
+                </span>
+                <span className="block text-[10px] text-slate-400 truncate">
+                  {formatDual("QC Nazoratchi & Imzo", "Инспектор & Подпись", "QC Inspector & Signature")}
+                </span>
+              </div>
+            </Link>
+
+            <Link
+              href="/settings?tab=chairmen"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-dark-850 hover:bg-orange-500/10 border border-slate-200 dark:border-dark-700/80 hover:border-orange-500/30 transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 border border-orange-500/20 group-hover:scale-105 transition-transform">
+                <Utensils size={17} />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xs font-bold text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors truncate">
+                  {formatDual("Komissiya Raislari", "Председатели комиссии", "Commission Chairmen")}
+                </span>
+                <span className="block text-[10px] text-slate-400 truncate">
+                  {formatDual("Brakeraj & Imzolar", "Бракераж & Подписи", "Brakerage & Signatures")}
+                </span>
+              </div>
+            </Link>
+          </div>
         </div>
       )}
 
@@ -860,7 +1114,7 @@ export default function SettingsContent({
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-base">
-                    {formatDual("Mas'ul Omborchi (Ombor mudiri) Ma'lumotlari", "Данные заведующего складом", "Warehouse Manager Details")}
+                    {formatDual("Mas'ul Ombor Xodimi Ma'lumotlari", "Данные сотрудника склада", "Warehouse Staff Details")}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual(
@@ -912,9 +1166,9 @@ export default function SettingsContent({
                 </label>
                 <input
                   type="text"
-                  value={getSetting('warehouse_signature_title', "Ombor mudiri / Mas'ul xodim")}
+                  value={getSetting('warehouse_signature_title', "Ombor xodimi / Mas'ul xodim")}
                   onChange={(e) => setSetting('warehouse_signature_title', e.target.value, 'warehouse')}
-                  placeholder="Ombor mudiri / Mas'ul xodim"
+                  placeholder="Ombor xodimi / Mas'ul xodim"
                   className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-medium"
                 />
               </div>
@@ -947,7 +1201,7 @@ export default function SettingsContent({
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {getSetting('warehouse_signature_title', "Ombor mudiri")}
+                        {getSetting('warehouse_signature_title', "Ombor xodimi")}
                       </p>
                     </div>
                   </div>
@@ -989,6 +1243,192 @@ export default function SettingsContent({
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB: БРАКЕРАЖ КОМИССИЯ РАИСЛАРИ & ИМЗОЛАР                                */}
+      {/* ========================================================================= */}
+      {activeTab === 'chairmen' && (
+        <div className="space-y-5 animate-scale-up">
+          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-6 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-dark-750 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <Utensils size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                    {formatDual("Бракераж Комиссия Раислари Рўйхати", "Список председателей бракеражной комиссии", "Brakerage Commission Chairmen")}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {formatDual(
+                      "Ошхона бракераж журналида таомларни тасдиқловчи раис ва унинг факсимиле имзоси",
+                      "Председатели и их электронные подписи для утверждения блюд в бракераже",
+                      "Chairmen and their signatures for approving dishes in the brakerage journal"
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={addChairman}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition active:scale-95 cursor-pointer self-start sm:self-auto"
+              >
+                <Plus size={15} />
+                <span>{formatDual("Янги Раис Қўшиш", "Добавить председателя", "Add Chairman")}</span>
+              </button>
+            </div>
+
+            {/* Chairmen List Cards */}
+            <div className="space-y-4">
+              {chairmenList.map((ch, idx) => (
+                <div
+                  key={ch.id || idx}
+                  className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                    ch.isDefault
+                      ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800'
+                      : 'bg-slate-50 dark:bg-dark-800/80 border-slate-200 dark:border-dark-700'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200/80 dark:border-dark-700/80">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-mono text-xs font-bold flex items-center justify-center">
+                        {idx + 1}
+                      </span>
+                      <span className="font-bold text-sm text-slate-900 dark:text-white">
+                        {ch.name ? ch.name : `(Янги раис #${idx + 1})`}
+                      </span>
+                      {ch.isDefault ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                          ✓ Асосий раис
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => updateChairman(ch.id, { isDefault: true })}
+                          className="text-[11px] text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold underline cursor-pointer"
+                        >
+                          Асосий қилиш
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteChairman(ch.id)}
+                      disabled={chairmenList.length <= 1}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer disabled:opacity-40"
+                      title="Раисни ўчириш"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Chairman Name */}
+                    <div>
+                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                        {formatDual("Раис Ф.И.Ш. *", "ФИО председателя *", "Chairman Full Name *")}
+                      </label>
+                      <div className="relative">
+                        <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={ch.name}
+                          onChange={e => updateChairman(ch.id, { name: e.target.value })}
+                          placeholder="Масалан: Иминов С.М."
+                          className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Chairman Role / Position */}
+                    <div>
+                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
+                        {formatDual("Лавозими", "Должность", "Position")}
+                      </label>
+                      <input
+                        type="text"
+                        value={ch.role || ''}
+                        onChange={e => updateChairman(ch.id, { role: e.target.value })}
+                        placeholder="Директор / Бош технолог"
+                        className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-medium"
+                      />
+                    </div>
+
+                    {/* Signature Preview & Upload (Full Width) */}
+                    <div className="md:col-span-2 pt-1">
+                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 block flex items-center justify-between">
+                        <span>{formatDual("Факсимиле Имзоси (Расм)", "Факсимиле подписи (Изображение)", "Facsimile Signature Image")}</span>
+                        <span className="text-[11px] text-slate-400 font-normal">PNG / JPG (шаффоф фон тавсия этилади)</span>
+                      </label>
+
+                      {ch.signatureUrl ? (
+                        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-40 h-16 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl p-1.5 flex items-center justify-center relative overflow-hidden shadow-2xs">
+                              <img
+                                src={ch.signatureUrl}
+                                alt={ch.name || "Chairman Signature"}
+                                className="max-h-full max-w-full object-contain filter invert dark:invert-0 drop-shadow-xs"
+                              />
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                Фаол имзо ✓
+                              </span>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Бракераж журналида шу имзо кўринади
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={uploadingDept === `chairman_${ch.id}`}
+                              onClick={() => triggerUpload(`chairman_sig_${ch.id}`, `chairman_${ch.id}`)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-dark-700 hover:bg-slate-200 dark:hover:bg-dark-600 text-slate-800 dark:text-slate-200 transition cursor-pointer"
+                            >
+                              {uploadingDept === `chairman_${ch.id}` ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                              <span>{formatDual("Алмаштириш", "Заменить", "Replace")}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateChairman(ch.id, { signatureUrl: '' })}
+                              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                              title="Имзони ўчириш"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => triggerUpload(`chairman_sig_${ch.id}`, `chairman_${ch.id}`)}
+                          className="border-2 border-dashed border-slate-300 dark:border-dark-700 hover:border-emerald-500 dark:hover:border-emerald-500 bg-white dark:bg-dark-900 rounded-2xl p-4 text-center cursor-pointer transition group"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-1.5 py-1">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition">
+                              <Upload size={16} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                              {formatDual("Раис имзо расмини юклаш учун босинг", "Нажмите для загрузки подписи председателя", "Click to upload chairman signature")}
+                            </span>
+                            <span className="text-[11px] text-slate-400">
+                              Ошхона бракераж журналида тўғридан-тўғри акс этади
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

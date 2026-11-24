@@ -135,13 +135,21 @@ export default function ProductsPage() {
         if (p.type !== 'FINISHED_GOOD') return false
       }
 
-      // Search query
+      // Search query (with tolerance for айсберг / айзберг / aysberg / ayzberg)
       if (!q) return true
+      const normQuery = q.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
+      const normName = p.name.toLowerCase().replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
+      const normCat = (p.category || '').toLowerCase().replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
+      const normCode = (p.code || '').toLowerCase()
+      const normGost = (p.gost || '').toLowerCase()
+
       return (
+        normName.includes(normQuery) ||
         p.name.toLowerCase().includes(q) ||
+        normCat.includes(normQuery) ||
         (p.category && p.category.toLowerCase().includes(q)) ||
-        (p.code && p.code.toLowerCase().includes(q)) ||
-        (p.gost && p.gost.toLowerCase().includes(q))
+        normCode.includes(q) ||
+        normGost.includes(q)
       )
     })
   }, [products, activeTab, search])

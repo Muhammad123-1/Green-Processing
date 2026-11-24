@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { getDayReport, autoBuildDayReport } from '@/lib/shopReport'
+import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 
 export const dynamic = 'force-dynamic'
 
@@ -117,6 +118,10 @@ export async function POST(req: NextRequest) {
         totalExpenseKg: auto.totalExpenseKg,
         totalOutputKg: auto.totalOutputKg,
       })
+    }
+
+    if (processed.length > 0) {
+      syncInventoryBatchesFromDailyBalances().catch((e) => console.error('FIFO sync error:', e))
     }
 
     return NextResponse.json({

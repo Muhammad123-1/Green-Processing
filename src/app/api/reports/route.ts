@@ -68,6 +68,34 @@ function parseActDate(dateStr: string | null | undefined): Date | null {
   return null
 }
 
+function detectUnit(name: string): string {
+  const lower = name.toLowerCase()
+  if (
+    lower.includes('пакет') ||
+    lower.includes('каробка') ||
+    lower.includes('короб') ||
+    lower.includes('яшик') ||
+    lower.includes('этикетка') ||
+    lower.includes('dona') ||
+    lower.includes('штук')
+  ) {
+    return 'dona'
+  }
+  return 'kg'
+}
+
+function parseArrivalStatus(decision?: string | null): 'ACCEPTED' | 'REJECTED' | 'CONDITIONAL' {
+  if (!decision) return 'ACCEPTED'
+  const dec = decision.toLowerCase()
+  if (dec.includes('брак') || dec.includes('rad') || dec.includes('отклон') || dec.includes('yomon')) {
+    return 'REJECTED'
+  }
+  if (dec.includes('условн') || dec.includes('shartli') || dec.includes('qoniqarli')) {
+    return 'CONDITIONAL'
+  }
+  return 'ACCEPTED'
+}
+
 function parseActStatus(act: any): 'ACCEPTED' | 'REJECTED' | 'CONDITIONAL' {
   const dec = (act.decisionText || '').toLowerCase()
   if (
@@ -96,16 +124,81 @@ export async function GET(request: NextRequest) {
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()), 10)
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1), 10)
 
-    // Load all real incoming raw material acts
-    const rawActs = await prisma.incomingRawMaterialAct.findMany({
-      orderBy: { actDate: 'desc' },
-    })
+    // Load both live shop arrivals and historical incoming raw material acts
+    const [shopArrivals, rawActs] = await Promise.all([
+      prisma.shopArrival.findMany({
+        orderBy: { date: 'desc' },
+      }),
+      prisma.incomingRawMaterialAct.findMany({
+        orderBy: { actDate: 'desc' },
+      }),
+    ])
 
-    // Map each act to unified structure
-    const allParsedActs = rawActs
+    // Map live ShopArrival records (primary real-time supply dataset)
+    const arrivalActs = shopArrivals
+      .map((a) => {
+        const d = parseActDate(a.date)
+        if (!d || isNaN(d.getTime())) return null
+        const status = parseArrivalStatus(a.finalDecision)
+        const qty = Number(a.quantity) || 0
+        const temp =
+          typeof a.temperature === 'number'
+            ? a.temperature
+            : typeof a.temperature === 'string'
+            ? parseFloat(a.temperature) || null
+            : null
+        const unit = detectUnit(a.nomenclature || '')
+        const actNum = a.ttnNumber
+          ? `TTN-${a.ttnNumber}`
+          : a.batch
+          ? (a.batch.startsWith('#') ? a.batch : `#${a.batch}`)
+          : `KIRIM-${a.id}`
+        const inspector =
+          a.qcSign?.trim() ||
+          a.warehouseSign?.trim() ||
+          a.technologistSign?.trim() ||
+          'Sifat Nazorati (QC)'
+
+        return {
+          id: a.id,
+          source: 'shop_arrival' as const,
+          actNumber: actNum,
+          date: d,
+          year: d.getFullYear(),
+          month: d.getMonth() + 1,
+          dateStr: a.date,
+          productName: a.nomenclature || 'Noma\'lum xomashyo',
+          supplierName: a.supplier?.trim() || 'Noma\'lum ta\'minotchi',
+          quantity: qty,
+          quantityUnit: unit,
+          temperature: temp,
+          temperatureUnit: '°C',
+          status,
+          rating: status === 'REJECTED' ? 1 : status === 'CONDITIONAL' ? 3 : 5,
+          conclusion:
+            status === 'ACCEPTED'
+              ? 'MUVOFIQ: Sifat talablariga to\'liq javob beradi. Qabul qilindi.'
+              : status === 'CONDITIONAL'
+              ? 'SHARTLI QABUL: Qisman nomuvofiqlik, sexda qayta saralashga yuborildi.'
+              : 'RAD ETILDI: Sifat standartiga nomuvofiq. Qaytarildi.',
+          notes: a.organoleptic || '',
+          inspector,
+          category: detectRejectionCategory(a.finalDecision || '', a.organoleptic || ''),
+          images: [] as { id: number; url: string; type?: string | null }[],
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+
+    const earliestArrivalDateStr = arrivalActs.reduce((min, a) => (a.dateStr < min ? a.dateStr : min), '9999-99-99')
+
+    // Map historical acts that occurred before shopArrival started
+    const historicalActs = rawActs
       .map((a) => {
         const d = parseActDate(a.actDate)
         if (!d || isNaN(d.getTime())) return null
+        const dateStr = a.actDate ? a.actDate.slice(0, 10) : ''
+        if (dateStr >= earliestArrivalDateStr) return null
+
         const status = parseActStatus(a)
         const qty = a.warehouseKg || 0
         const temp =
@@ -114,11 +207,13 @@ export async function GET(request: NextRequest) {
             : null
 
         return {
-          id: a.id,
+          id: 100000 + a.id,
+          source: 'act' as const,
           actNumber: a.actNumber || `AKT-${a.id}`,
           date: d,
           year: d.getFullYear(),
           month: d.getMonth() + 1,
+          dateStr,
           productName: a.productName || 'Noma\'lum xomashyo',
           supplierName: a.supplierName || 'Noma\'lum ta\'minotchi',
           quantity: qty,
@@ -139,6 +234,8 @@ export async function GET(request: NextRequest) {
         }
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
+
+    const allParsedActs = [...arrivalActs, ...historicalActs]
 
     // MONTHLY STATS
     if (type === 'monthly') {

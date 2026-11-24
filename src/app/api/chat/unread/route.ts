@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { canUserAccessGroup } from '@/lib/chatPermissions'
 
 export async function GET(req: NextRequest) {
   try {
@@ -52,31 +53,9 @@ export async function GET(req: NextRequest) {
         return false
       }
 
-      // 3. Group / DM visibility
-      if (msg.groupId.startsWith('dm_')) {
-        const parts = msg.groupId.replace('dm_', '').split('_')
-        const participantIds = parts.map((p) => parseInt(p, 10)).filter((n) => !isNaN(n))
-        // Direct messages are private: ONLY notify the actual participants in this DM!
-        if (!participantIds.includes(userId)) {
-          return false
-        }
-      } else if (msg.groupId.startsWith('supplier_')) {
-        const sId = parseInt(msg.groupId.replace('supplier_', ''), 10)
-        // If current user is a SUPPLIER, only show for their own company
-        if (userRole === 'SUPPLIER') {
-          if (session.supplierId !== sId) return false
-        } else {
-          // Faqat korxona ta'minot bo'limi (SUPPLY) va ADMIN ta'minotchi xabarlarini ko'radi
-          if (userRole !== 'SUPPLY' && userRole !== 'ADMIN') return false
-        }
-      } else if (msg.groupId === 'management') {
-        if (!isAdminOrDirector && userRole !== 'ACCOUNTING') return false
-      } else if (msg.groupId === 'qa_warehouse') {
-        if (!isAdminOrDirector && !['QUALITY_CONTROL', 'INSPECTOR', 'WAREHOUSE'].includes(userRole)) return false
-      } else if (msg.groupId === 'kitchen_supply') {
-        if (!isAdminOrDirector && !['KITCHEN', 'SUPPLY', 'DEGUSTATION'].includes(userRole)) return false
-      } else if (msg.groupId === 'tech_prod') {
-        if (!isAdminOrDirector && !['TECHNOLOGY', 'PRODUCTION'].includes(userRole)) return false
+      // 3. Group / DM visibility and strict department isolation
+      if (!canUserAccessGroup(msg.groupId, { id: userId, role: userRole, supplierId: session.supplierId })) {
+        return false
       }
 
       return true

@@ -731,7 +731,7 @@ export default function TemperatureLogsContent({
                   {lang === 'ru' ? 'Решение' : 'Yakuniy Qaror'}
                 </th>
                 <th className="py-3.5 px-3 text-center border-r border-slate-800 w-28">
-                  {lang === 'ru' ? 'Зав. складом' : 'Ombor mudiri'}
+                  {lang === 'ru' ? 'Сотрудник склада' : 'Ombor xodimi'}
                 </th>
                 <th className="py-3.5 px-3 text-center border-r border-slate-800 w-28">
                   {lang === 'ru' ? 'Спец. QC' : 'QC Imzosi'}
@@ -785,7 +785,7 @@ export default function TemperatureLogsContent({
                   return (
                     <tr
                       key={item.id}
-                      className={`hover:bg-slate-850/80 transition-colors ${
+                      className={`hover:bg-slate-800/80 transition-colors ${
                         !hasTemp ? 'bg-rose-950/10' : isHigh ? 'bg-amber-950/10' : ''
                       }`}
                     >
@@ -953,7 +953,7 @@ export default function TemperatureLogsContent({
                       <td className="py-3 px-3 text-center text-[11px] text-slate-300 border-r border-slate-800/70">
                         <div className="flex items-center justify-center gap-1 text-slate-400">
                           <UserCheck size={12} className="text-slate-400" />
-                          <span className="truncate max-w-[90px]">{item.warehouseSign || (lang === 'ru' ? 'Зав. складом' : 'Ombor mudiri')}</span>
+                          <span className="truncate max-w-[90px]">{item.warehouseSign || (lang === 'ru' ? 'Сотрудник склада' : 'Ombor xodimi')}</span>
                         </div>
                       </td>
 
@@ -1073,7 +1073,7 @@ export default function TemperatureLogsContent({
                   <span className="font-mono text-slate-300">{selectedArrival.ttnNumber || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">{lang === 'ru' ? 'Зав. складом:' : 'Ombor mudiri qabuli:'}</span>
+                  <span className="text-slate-400 block mb-0.5">{lang === 'ru' ? 'Сотрудник склада:' : 'Ombor xodimi qabuli:'}</span>
                   <span className="text-slate-300">{selectedArrival.warehouseSign || (lang === 'ru' ? 'Принято' : 'Tasdiqlangan')}</span>
                 </div>
               </div>
@@ -1240,7 +1240,7 @@ export default function TemperatureLogsContent({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-up">
             {/* Header */}
-            <div className="p-5 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-slate-850 to-blue-950/60 sticky top-0 z-10 flex items-center justify-between backdrop-blur-md">
+            <div className="p-5 border-b border-slate-800 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950/60 sticky top-0 z-10 flex items-center justify-between backdrop-blur-md">
               <div>
                 <h3 className="font-bold text-white text-base sm:text-lg">
                   {isEditingFull
@@ -1502,7 +1502,7 @@ export default function TemperatureLogsContent({
                       disabled={isQC}
                       value={fullForm.warehouseSign}
                       onChange={(e) => setFullForm({ ...fullForm, warehouseSign: e.target.value })}
-                      placeholder="Ombor mudiri imzosi"
+                      placeholder="Ombor xodimi imzosi"
                       className={`w-full px-3 py-2 bg-slate-950 border rounded-xl text-xs text-white focus:outline-none ${
                         isQC ? 'border-slate-800 opacity-60' : 'border-slate-700'
                       }`}

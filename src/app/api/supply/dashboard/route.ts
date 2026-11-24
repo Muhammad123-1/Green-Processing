@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
     const getDefaultMinStock = (name: string, category?: string | null): number => {
       const s = name.toLowerCase()
       if (s.includes('томат') || s.includes('помидор')) return 5000
-      if (s.includes('айсберг') || s.includes('айзберг')) return 5000
+      if (s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg')) return 5000
       if (s.includes('капуста')) return 2000
       if (s.includes('лук')) return 1500
       if (s.includes('морков')) return 1000
@@ -204,7 +204,8 @@ export async function GET(request: NextRequest) {
     const inventoryStatus = products.map((product) => {
       const prodName = product.name.trim()
       const prodLower = prodName.toLowerCase()
-      const words = prodLower.split(/\s+/).filter((w: string) => w.length > 2)
+      const normProd = prodLower.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
+      const words = normProd.split(/\s+/).filter((w: string) => w.length > 2)
 
       // Match inflow stats
       let arrivalKg = 0
@@ -215,11 +216,15 @@ export async function GET(request: NextRequest) {
 
       for (let i = 0; i < arrivalEntries.length; i++) {
         const [arrNom, stat] = arrivalEntries[i]
+        const normArr = arrNom.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
         const isMatch =
           arrNom === prodLower ||
+          normArr === normProd ||
           arrNom.includes(prodLower) ||
           prodLower.includes(arrNom) ||
-          (words.length > 0 && words.every((w: string) => arrNom.includes(w)))
+          normArr.includes(normProd) ||
+          normProd.includes(normArr) ||
+          (words.length > 0 && words.every((w: string) => normArr.includes(w)))
 
         if (isMatch) {
           arrivalKg += stat.totalKg
@@ -236,11 +241,15 @@ export async function GET(request: NextRequest) {
       // Match expense
       for (let i = 0; i < expenseEntries.length; i++) {
         const [expNom, expQty] = expenseEntries[i]
+        const normExp = expNom.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
         const isMatch =
           expNom === prodLower ||
+          normExp === normProd ||
           expNom.includes(prodLower) ||
           prodLower.includes(expNom) ||
-          (words.length > 0 && words.every((w: string) => expNom.includes(w)))
+          normExp.includes(normProd) ||
+          normProd.includes(normExp) ||
+          (words.length > 0 && words.every((w: string) => normExp.includes(w)))
 
         if (isMatch) {
           expenseKg += expQty

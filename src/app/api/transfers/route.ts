@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       if (!exceptionReason || !String(exceptionReason).trim() || (!authorizedByQcName && !authorizedByQcId)) {
         return NextResponse.json(
           {
-            error: "Ombor mudiri mustaqil ravishda FIFO/FEFO tartibini o'zgartira olmaydi! Istisno sababi va ruxsat bergan Sifat nazoratchisi (QC) ko'rsatilishi shart."
+            error: "Ombor xodimi mustaqil ravishda FIFO/FEFO tartibini o'zgartira olmaydi! Istisno sababi va ruxsat bergan Sifat nazoratchisi (QC) ko'rsatilishi shart."
           },
           { status: 400 }
         )
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
           issuedQuantity: qty,
           issuedUnit: issuedUnit || 'kg',
           issuedById: session.id ? Number(session.id) : null,
-          issuedByName: session.name || 'Ombor mudiri',
+          issuedByName: session.name || 'Ombor xodimi',
           issuedAt: nowTimestamp,
           status: 'IN_TRANSIT',
           isFifoException: isExceptionRecorded,

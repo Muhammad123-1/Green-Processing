@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const approvedBatchesCount = await prisma.inventoryBatch.count({
+      where: { qcStatus: 'APPROVED', quantity: { gt: 0 } }
+    })
+    if (approvedBatchesCount === 0) {
+      await syncInventoryBatchesFromDailyBalances()
+    }
 
     // Fetch all products with their approved batches
     const products = await prisma.product.findMany({

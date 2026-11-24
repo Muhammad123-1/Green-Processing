@@ -119,7 +119,7 @@ const STAFF_ROLES = [
   { id: 'Qassob / Go\'shtchi', labelUz: '🥩 Qassob / Go\'sht tozalovchi', labelRu: '🥩 Мясник / Разделочник', labelEn: '🥩 Butcher / Prep' },
   { id: 'Nonvoy / Xamirchi', labelUz: '🍞 Nonvoy / Xamirchi', labelRu: '🍞 Пекарь / Тестомес', labelEn: '🍞 Baker' },
   { id: 'Idish yuvuvchi / Farrosh', labelUz: '🧹 Idish yuvuvchi / Farrosh', labelRu: '🧹 Посудомойка / Уборщица', labelEn: '🧹 Dishwasher / Cleaner' },
-  { id: 'Oshxona mudiri', labelUz: '📋 Oshxona mudiri', labelRu: '📋 Зав. производством кухни', labelEn: '📋 Kitchen Manager' }
+  { id: 'Oshxona mas\'uli', labelUz: '📋 Oshxona mas\'uli', labelRu: '📋 Ответственный кухни', labelEn: '📋 Kitchen Staff' }
 ]
 
 // Preset Categories

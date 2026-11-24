@@ -16,7 +16,7 @@ export default async function WarehouseSettingsPage() {
         userRole={session?.role || 'WAREHOUSE'}
         userName={session?.name || 'Omborchi'}
         initialTab="warehouse"
-        lockTab={!isAdminOrDirector}
+        lockTab={true}
       />
     </Suspense>
   )

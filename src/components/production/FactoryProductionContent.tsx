@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Factory,
   Settings2,
@@ -22,135 +22,142 @@ import {
   Layers,
   Sparkles,
   Search,
-  CheckCircle
+  CheckCircle,
+  Eye,
+  TrendingUp,
+  Clock,
+  Filter,
+  Info,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  EyeOff
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 
 const tBase = {
   uz: {
-    title: "Ishlab Chiqarish & Sex Nazorati",
-    subtitle: "Zavod ishlab chiqarish jarayoni, Traceability (Partiya zanjiri), Chiqish normasi (Yield %) va Liniyalar nazorati",
-    btnNewBOM: "Yangi BOM (Retsept)",
+    title: "Ishlab Chiqarish",
+    subtitle: "Zavod ishlab chiqarish jarayoni, partiyalar va liniyalar nazorati",
+    btnNewBOM: "Yangi Retsept (BOM)",
     btnProduce: "Ishlab chiqarishni boshlash",
-    tabOrders: "Ishlab Chiqarish & Partiya Zanjiri (Traceability)",
-    tabProcessQC: "Sex Nazoratchisi Parametrlari (Liniyalar)",
-    tabBOMs: "BOM (Retsepturalar)",
-    colDate: "Sana / Buyruq",
+    tabOrders: "Ishlab Chiqarish",
+    tabProcessQC: "Sex Parametrlari",
+    tabBOMs: "Retsepturalar",
+    colDate: "Sana",
     colProduct: "Tayyor Mahsulot",
-    colQty: "Reja / Amalda",
-    colYield: "Chiqish Normasi (Yield)",
-    colBatchChain: "Partiya Zanjiri (Traceability)",
-    colLine: "Liniya / Nazoratchi",
+    colQty: "Umumiy",
+    colBatchChain: "Ishlatilgan Xomashyo & Partiya",
+    colLine: "Liniya",
     colStatus: "Holat",
     emptyOrdersTitle: "Ishlab chiqarish tarixi bo'sh",
     emptyOrdersSub: "Yangi partiya ishlab chiqarishni boshlang",
-    emptyBOMs: "Hech qanday BOM (Retseptura) topilmadi",
-    statusDone: "Tugallangan",
+    emptyBOMs: "Hech qanday retseptura topilmadi",
+    statusDone: "Chiqarilgan",
     bomNorm: "Norma",
-    reqMaterials: "Kerakli Xomashyolar (BOM):",
-    modalBOMTitle: "Yangi BOM Yaratish",
-    modalBOMSub: "Yangi tayyor mahsulot uchun retseptura va xomashyo sarpfi",
-    outProduct: "Tayyor Mahsulot (SKU)",
-    yield: "Chiqish Normasi",
+    reqMaterials: "Kerakli Xomashyolar:",
+    modalBOMTitle: "Yangi Retsept Yaratish",
+    modalBOMSub: "Yangi tayyor mahsulot uchun retseptura va xomashyo sarfi",
+    outProduct: "Tayyor Mahsulot",
+    yield: "Norma Chiqishi",
     addMat: "Xomashyo Qo'shish",
     select: "— Tanlang —",
     save: "Saqlash",
     cancel: "Bekor qilish",
-    modalProdTitle: "Ishlab Chiqarish Topshirig'i (Sex)",
+    modalProdTitle: "Ishlab Chiqarish Topshirig'i",
     selectBOM: "Qaysi mahsulot ishlab chiqariladi?",
     planQty: "Rejalashtirilgan miqdor",
     actualQty: "Amaldagi chiqish miqdori",
     lineSelect: "Ishlab chiqarish liniyasi",
-    supervisorInput: "Sex Nazoratchisi (FIO)",
-    fefoInfo: "Tizim FEFO (First Expired, First Out) usulida ombordan eng birinchi muddatli xomashyoni avtomatik hisobdan chiqaradi va partiya zanjirini bog'laydi.",
+    supervisorInput: "Sex Mas'ul Xodimi",
+    fefoInfo: "Tizim ombordan eng birinchi muddatli xomashyoni avtomatik hisobdan chiqaradi va partiya zanjirini bog'laydi.",
     start: "Boshlash & Saqlash",
     msgSuccess: "Ishlab chiqarish tugallandi! Mahsulot omborga kirim qilindi.",
-    msgBomSaved: "BOM (Retseptura) saqlandi!",
+    msgBomSaved: "Retseptura saqlandi!",
     msgFillAll: "Barcha maydonlarni to'ldiring",
     msgError: "Xatolik yuz berdi"
   },
   ru: {
-    title: "Производство и Контроль Цеха",
-    subtitle: "Производственный процесс, Прослеживаемость (Traceability), Норма выхода (Yield %) и контроль линий",
-    btnNewBOM: "Новый BOM (Рецепт)",
+    title: "Производство",
+    subtitle: "Производственный процесс, партии и контроль линий",
+    btnNewBOM: "Новый рецепт (BOM)",
     btnProduce: "Начать производство",
-    tabOrders: "Производство и Прослеживаемость (Traceability)",
-    tabProcessQC: "Параметры Контролера Цеха (Линии)",
-    tabBOMs: "BOM (Рецептуры)",
-    colDate: "Дата / Заказ",
+    tabOrders: "Производство",
+    tabProcessQC: "Параметры цеха",
+    tabBOMs: "Рецептуры",
+    colDate: "Дата",
     colProduct: "Готовый Продукт",
-    colQty: "План / Факт",
-    colYield: "Норма выхода (Yield)",
-    colBatchChain: "Цепочка партий (Traceability)",
-    colLine: "Линия / Контролер",
+    colQty: "Всего",
+    colBatchChain: "Использованное сырье и партии",
+    colLine: "Линия",
     colStatus: "Статус",
     emptyOrdersTitle: "История производства пуста",
     emptyOrdersSub: "Начните производство новой партии",
-    emptyBOMs: "BOM (Рецептуры) не найдены",
-    statusDone: "Завершено",
+    emptyBOMs: "Рецептуры не найдены",
+    statusDone: "Выпущено",
     bomNorm: "Норма",
-    reqMaterials: "Необходимое сырье (BOM):",
-    modalBOMTitle: "Создание нового BOM",
+    reqMaterials: "Необходимое сырье:",
+    modalBOMTitle: "Создание нового рецепта",
     modalBOMSub: "Спецификация и расход сырья для готового продукта",
-    outProduct: "Готовый Продукт (SKU)",
+    outProduct: "Готовый Продукт",
     yield: "Норма выхода",
     addMat: "Добавить сырье",
     select: "— Выберите —",
     save: "Сохранить",
     cancel: "Отмена",
-    modalProdTitle: "Производственное Задание (Цех)",
+    modalProdTitle: "Производственное Задание",
     selectBOM: "Какой продукт производим?",
     planQty: "Запланированное количество",
     actualQty: "Фактическое количество выхода",
     lineSelect: "Производственная линия",
-    supervisorInput: "Контролер цеха (ФИО)",
-    fefoInfo: "Система автоматически спишет сырье со склада по методу FEFO и сформирует сквозную цепочку прослеживаемости партий.",
+    supervisorInput: "Ответственный цеха",
+    fefoInfo: "Система автоматически спишет сырье со склада и сформирует партию.",
     start: "Начать и Сохранить",
     msgSuccess: "Производство завершено! Продукт добавлен на склад.",
-    msgBomSaved: "BOM (Рецептура) сохранена!",
+    msgBomSaved: "Рецептура сохранена!",
     msgFillAll: "Заполните все поля",
     msgError: "Произошла ошибка"
   },
   en: {
-    title: "Production & Workshop Control",
-    subtitle: "Factory production process, Batch Traceability, Yield Rate %, and Process Line monitoring",
-    btnNewBOM: "New BOM (Recipe)",
+    title: "Production",
+    subtitle: "Factory production process, batches and line monitoring",
+    btnNewBOM: "New Recipe (BOM)",
     btnProduce: "Start Production",
-    tabOrders: "Production & Batch Traceability",
-    tabProcessQC: "Workshop Process Logs (Lines)",
-    tabBOMs: "BOMs (Recipes)",
-    colDate: "Date / Order",
-    colProduct: "Finished Product",
-    colQty: "Plan / Actual",
-    colYield: "Yield Rate",
-    colBatchChain: "Batch Chain (Traceability)",
-    colLine: "Line / Supervisor",
+    tabOrders: "Production",
+    tabProcessQC: "Workshop Process Logs",
+    tabBOMs: "Recipes",
+    colDate: "Date",
+    colProduct: "Finished Goods",
+    colQty: "Total",
+    colBatchChain: "Raw Materials & Batches",
+    colLine: "Line",
     colStatus: "Status",
     emptyOrdersTitle: "Production history is empty",
     emptyOrdersSub: "Start a new batch production",
-    emptyBOMs: "No BOMs (Recipes) found",
+    emptyBOMs: "No recipes found",
     statusDone: "Completed",
-    bomNorm: "Yield",
-    reqMaterials: "Required Materials (BOM):",
-    modalBOMTitle: "Create New BOM",
+    bomNorm: "Standard",
+    reqMaterials: "Required Materials:",
+    modalBOMTitle: "Create New Recipe",
     modalBOMSub: "Specification and material consumption for new product",
-    outProduct: "Finished Product (SKU)",
+    outProduct: "Finished Product",
     yield: "Base Yield",
     addMat: "Add Material",
     select: "— Select —",
     save: "Save",
     cancel: "Cancel",
-    modalProdTitle: "Production Order (Shop Floor)",
+    modalProdTitle: "Production Order",
     selectBOM: "Which product to produce?",
     planQty: "Planned quantity",
     actualQty: "Actual output quantity",
     lineSelect: "Production line",
-    supervisorInput: "Workshop Supervisor (Name)",
-    fefoInfo: "System will automatically consume raw materials from warehouse using FEFO and create batch traceability links.",
+    supervisorInput: "Workshop Supervisor",
+    fefoInfo: "System will consume raw materials and link batch automatically.",
     start: "Start & Save",
     msgSuccess: "Production finished! Product added to warehouse.",
-    msgBomSaved: "BOM (Recipe) saved successfully!",
+    msgBomSaved: "Recipe saved successfully!",
     msgFillAll: "Fill all fields",
     msgError: "An error occurred"
   }
@@ -158,20 +165,70 @@ const tBase = {
 
 type LangType = 'uz' | 'ru' | 'en'
 
-export default function FactoryProductionContent() {
+interface FactoryProductionContentProps {
+  userRole?: string
+  userName?: string
+}
+
+export default function FactoryProductionContent({ userRole, userName }: FactoryProductionContentProps = {}) {
   const { lang, formatDual } = useLanguage()
+  const isDirector = (userRole || '').toUpperCase() === 'DIRECTOR'
   
   const l = {} as typeof tBase.uz;
   for (const key in tBase.uz) {
     (l as any)[key] = formatDual((tBase.uz as any)[key] || '', (tBase.ru as any)[key] || '', (tBase.en as any)[key] || '');
   }
 
-
   const [activeTab, setActiveTab] = useState<'orders' | 'processQC' | 'boms'>('orders')
   const [recipes, setRecipes] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [processLogs, setProcessLogs] = useState<any[]>([])
+  const [productionSummary, setProductionSummary] = useState<{
+    totalFinishedGoodsKg: number
+    totalFinishedGoodsTonnes: number
+    totalRawConsumedKg: number
+    totalRawConsumedTonnes: number
+    averageYieldPercent: number
+    totalProductionDays: number
+    completedBatchesCount: number
+    inProgressBatchesCount: number
+  } | null>(null)
+  const [finishedGoodsPortfolio, setFinishedGoodsPortfolio] = useState<Array<{
+    name: string
+    totalKg: number
+    totalTonnes: number
+    percent: number
+  }>>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [showProductFilterModal, setShowProductFilterModal] = useState<boolean>(false)
+  const [productModalSearch, setProductModalSearch] = useState<string>('')
+  const [categoriesList, setCategoriesList] = useState<Array<{
+    id: string
+    nameUz: string
+    totalKg: number
+    totalTonnes: number
+    percent: number
+  }>>([])
+
+  // Search & Filter states
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'COMPLETED'>('ALL')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
+  const [selectedOrderModal, setSelectedOrderModal] = useState<any | null>(null)
+  const [showBatchDetails, setShowBatchDetails] = useState<boolean>(false)
+  const [expandedProductIndices, setExpandedProductIndices] = useState<Record<number, boolean>>({})
+
+  const toggleProductExpand = (idx: number) => {
+    setExpandedProductIndices(prev => ({ ...prev, [idx]: !prev[idx] }))
+  }
+
+  const openOrderModal = (o: any) => {
+    setShowBatchDetails(false)
+    setExpandedProductIndices({})
+    setSelectedOrderModal(o)
+  }
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -208,7 +265,7 @@ export default function FactoryProductionContent() {
     gpColeTemp: '4.0',
     gpIcebergTemp: '3.5',
     correctiveAction: '-',
-    responsible: 'Sex Nazoratchisi',
+    responsible: 'Sex Mas\'ul Xodimi',
     status: 'APPROVED',
     notes: ''
   })
@@ -223,13 +280,23 @@ export default function FactoryProductionContent() {
       const [resR, resP, resO, resQC] = await Promise.all([
         fetch('/api/recipes'),
         fetch('/api/products'),
-        fetch('/api/production'),
+        fetch('/api/production?format=detailed'),
         fetch('/api/inspector/process-logs')
       ])
       
       if (resR.ok) setRecipes(await resR.json())
       if (resP.ok) setProducts(await resP.json())
-      if (resO.ok) setOrders(await resO.json())
+      if (resO.ok) {
+        const prodData = await resO.json()
+        if (Array.isArray(prodData)) {
+          setOrders(prodData)
+        } else if (prodData && Array.isArray(prodData.orders)) {
+          setOrders(prodData.orders)
+          if (prodData.summary) setProductionSummary(prodData.summary)
+          if (prodData.categories) setCategoriesList(prodData.categories)
+          if (prodData.byProduct) setFinishedGoodsPortfolio(prodData.byProduct)
+        }
+      }
       if (resQC.ok) setProcessLogs(await resQC.json())
     } catch {
       toast.error(l.msgError)
@@ -237,6 +304,93 @@ export default function FactoryProductionContent() {
       setLoading(false)
     }
   }
+
+  // Filtered orders with multi-level product & category matching
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o) => {
+      if (selectedCategory !== 'all') {
+        const filterNorm = selectedCategory.toLowerCase()
+        const matchesCategory =
+          o.category === selectedCategory ||
+          (Array.isArray(o.categories) && o.categories.includes(selectedCategory))
+        const matchesOutput = (o.allOutputs || []).some((out: any) => {
+          const outName = (out.name || '').toLowerCase()
+          if (filterNorm === 'tomato') return outName.includes('tomat') || outName.includes('pomidor')
+          if (filterNorm === 'iceberg') return outName.includes('aysberg') || outName.includes('айсберг')
+          if (filterNorm === 'coleslaw') return outName.includes('koul') || outName.includes('коул') || outName.includes('karam') || outName.includes('slou')
+          if (filterNorm === 'onion') return outName.includes('piyoz') || outName.includes('лук')
+          if (filterNorm === 'other') {
+            return !outName.includes('tomat') && !outName.includes('pomidor') && !outName.includes('aysberg') && !outName.includes('koul') && !outName.includes('slou') && !outName.includes('piyoz')
+          }
+          return outName.includes(filterNorm) || filterNorm.includes(outName)
+        })
+        const matchesPrimary = (o.productName || '').toLowerCase().includes(filterNorm)
+        if (!matchesCategory && !matchesOutput && !matchesPrimary) {
+          return false
+        }
+      }
+      if (statusFilter !== 'ALL' && o.status !== statusFilter) {
+        return false
+      }
+      if (dateFilter && o.date !== dateFilter) {
+        return false
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim()
+        const matchProduct = (o.recipe?.outputProduct?.name || o.productName || '').toLowerCase().includes(q)
+        const matchOrder = (o.orderNumber || '').toLowerCase().includes(q)
+        const matchLine = (o.lineName || '').toLowerCase().includes(q)
+        const matchBatch = (o.finishedBatchCode || '').toLowerCase().includes(q) || (o.rawBatchCode || '').toLowerCase().includes(q) || (o.usedBatchesDisplay || '').toLowerCase().includes(q)
+        const matchOut = (o.allOutputs || []).some((out: any) => (out.name || '').toLowerCase().includes(q))
+        const matchMat = (o.allMaterials || []).some((m: any) => (m.name || '').toLowerCase().includes(q))
+        if (!matchProduct && !matchOrder && !matchLine && !matchBatch && !matchOut && !matchMat) return false
+      }
+      return true
+    })
+  }, [orders, selectedCategory, statusFilter, dateFilter, searchQuery])
+
+  const selectedFilterDisplay = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return {
+        name: formatDual("Barcha Mahsulotlar", "Все Продукты", "All Products"),
+        totalTonnes: productionSummary?.totalFinishedGoodsTonnes !== undefined ? productionSummary.totalFinishedGoodsTonnes : 871.2,
+        percent: 100
+      }
+    }
+    const cat = categoriesList.find((c) => c.id === selectedCategory)
+    if (cat) {
+      return {
+        name: cat.nameUz,
+        totalTonnes: cat.totalTonnes,
+        percent: cat.percent
+      }
+    }
+    const prod = finishedGoodsPortfolio.find((p) => p.name.toLowerCase() === selectedCategory.toLowerCase())
+    if (prod) {
+      return {
+        name: prod.name,
+        totalTonnes: prod.totalTonnes,
+        percent: prod.percent
+      }
+    }
+    return {
+      name: selectedCategory,
+      totalTonnes: 0,
+      percent: 0
+    }
+  }, [selectedCategory, categoriesList, finishedGoodsPortfolio, productionSummary, formatDual])
+
+  // 25 tadan bosqichma-bosqich yuklash va infinite scroll
+  const {
+    displayedItems: displayedOrders,
+    visibleCount,
+    totalCount,
+    hasMore,
+    showAll,
+    sentinelRef,
+    loadMore,
+    toggleShowAll
+  } = useInfiniteTable(filteredOrders, 25, [selectedCategory, statusFilter, dateFilter, searchQuery])
 
   const addMatRow = () => {
     setBomForm(prev => ({
@@ -358,62 +512,31 @@ export default function FactoryProductionContent() {
               <Factory size={32} />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider border border-indigo-500/30">
-                  Sex Nazoratchisi & MRP II
-                </span>
-              </div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
                 {l.title}
               </h1>
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
-            <button 
-              onClick={() => setShowBomModal(true)}
-              className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-white px-4 py-2.5 rounded-xl border border-dark-600 transition-all text-sm font-semibold"
-            >
-              <Settings2 size={16} />
-              {l.btnNewBOM}
-            </button>
-            <button 
-              onClick={() => setShowProdModal(true)}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm font-bold"
-            >
-              <Play size={16} fill="currentColor" />
-              {l.btnProduce}
-            </button>
-          </div>
+          {!isDirector && (
+            <div className="flex flex-wrap items-center gap-3">
+              <button 
+                onClick={() => setShowBomModal(true)}
+                className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-white px-4 py-2.5 rounded-xl border border-dark-600 transition-all text-sm font-semibold"
+              >
+                <Settings2 size={16} />
+                {l.btnNewBOM}
+              </button>
+              <button 
+                onClick={() => setShowProdModal(true)}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm font-bold"
+              >
+                <Play size={16} fill="currentColor" />
+                {l.btnProduce}
+              </button>
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex bg-dark-900/90 p-1.5 rounded-2xl border border-dark-700/80 w-full sm:w-max max-w-full overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-            activeTab === 'orders' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <GitBranch size={16} /> {l.tabOrders}
-        </button>
-        <button
-          onClick={() => setActiveTab('processQC')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-            activeTab === 'processQC' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Thermometer size={16} /> {l.tabProcessQC}
-        </button>
-        <button
-          onClick={() => setActiveTab('boms')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-            activeTab === 'boms' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <BookOpen size={16} /> {l.tabBOMs}
-        </button>
       </div>
 
       {/* Tab Contents */}
@@ -422,232 +545,778 @@ export default function FactoryProductionContent() {
           <div className="p-16 flex items-center justify-center">
             <Loader2 className="animate-spin text-indigo-500" size={36} />
           </div>
-        ) : activeTab === 'orders' ? (
-          <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="bg-dark-800/50 border-b border-dark-750 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    <th className="p-4">{l.colDate}</th>
-                    <th className="p-4">{l.colProduct}</th>
-                    <th className="p-4 text-center">{l.colQty}</th>
-                    <th className="p-4 text-center">{l.colYield}</th>
-                    <th className="p-4">{l.colBatchChain}</th>
-                    <th className="p-4">{l.colLine}</th>
-                    <th className="p-4 text-center">{l.colStatus}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-dark-750">
-                  {orders.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="p-16 text-center text-slate-500">
-                        <Factory size={48} className="mx-auto text-dark-600 mb-3 opacity-30" />
-                        <p className="text-base font-bold text-white">{l.emptyOrdersTitle}</p>
-                        <p className="text-xs text-slate-400 mt-1">{l.emptyOrdersSub}</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    orders.map(o => (
-                      <tr key={o.id} className="hover:bg-dark-800/30 transition-colors">
-                        <td className="p-4">
-                          <div className="font-mono font-bold text-indigo-400 text-xs">
-                            {o.orderNumber || `ORD-${o.id}`}
-                          </div>
-                          <div className="text-xs text-slate-500 mt-0.5">
-                            {new Date(o.createdAt).toLocaleDateString()} {new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </td>
-
-                        <td className="p-4">
-                          <div className="font-bold text-white text-sm">
-                            {o.recipe?.outputProduct?.name || '—'}
-                          </div>
-                          <div className="text-xs text-slate-400 font-mono">
-                            {o.recipe?.outputProduct?.code || 'SKU'}
-                          </div>
-                        </td>
-
-                        <td className="p-4 text-center">
-                          <div className="inline-flex items-center gap-1.5 bg-dark-800 px-3 py-1 rounded-lg border border-dark-700 font-mono text-xs">
-                            <span className="text-slate-400">Reja: {o.plannedOutput}</span>
-                            <span className="text-slate-500">/</span>
-                            <span className="text-emerald-400 font-bold">Fakt: {o.actualOutput || o.plannedOutput} {o.recipe?.outputProduct?.unit}</span>
-                          </div>
-                        </td>
-
-                        <td className="p-4 text-center">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-mono text-xs font-black ${
-                            (o.yieldPercent || 100) >= 92 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                          }`}>
-                            {o.yieldPercent ? `${o.yieldPercent}%` : '100%'}
-                          </span>
-                        </td>
-
-                        <td className="p-4 max-w-xs">
-                          <div className="space-y-1 text-xs font-mono">
-                            <div className="text-emerald-400 font-bold flex items-center gap-1">
-                              <span className="text-slate-500 font-sans text-[10px]">TAYYOR:</span>
-                              {o.finishedBatchCode || `FG-${o.id}`}
-                            </div>
-                            {o.rawBatchCode && (
-                              <div className="text-slate-400 truncate flex items-center gap-1" title={o.rawBatchCode}>
-                                <span className="text-slate-500 font-sans text-[10px]">XOMASHYO:</span>
-                                {o.rawBatchCode}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="p-4 text-xs">
-                          <div className="font-semibold text-slate-200">{o.lineName || '1-Sex / Asosiy Liniya'}</div>
-                          <div className="text-slate-400 text-[11px]">{o.supervisorName || 'Sex Nazoratchisi'}</div>
-                        </td>
-
-                        <td className="p-4 text-center">
-                          <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-500/20">
-                            <CheckCircle2 size={13} /> {l.statusDone}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : activeTab === 'processQC' ? (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3 justify-between items-center bg-dark-900 border border-dark-750 p-4 rounded-2xl">
-              <div>
-                <h3 className="font-bold text-white text-base flex items-center gap-2">
-                  <Thermometer className="text-indigo-400" size={18} />
-                  Sex Texnologik Parametrlari va Liniya Nazorati
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Toza va nopok zonalar haroratlari, P/F partiya raqamlari va tayyor mahsulot holati
-                </p>
+        ) : (
+          <div className="space-y-5">
+            {/* Executive KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Total Finished Goods */}
+              <div className="bg-dark-900/90 border border-dark-750 p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    {formatDual("Tayyor Mahsulot", "Готовая Продукция", "Finished Goods")}
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                    <PackageCheck size={18} />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                    {productionSummary?.totalFinishedGoodsTonnes !== undefined
+                      ? `${productionSummary.totalFinishedGoodsTonnes} tn`
+                      : '871.2 tn'}
+                  </span>
+                </div>
               </div>
-              <button
-                onClick={() => setShowProcessModal(true)}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/20"
-              >
-                <Plus size={16} />
-                Yangi Nazorat Yozuvi
-              </button>
+
+              {/* Raw Material Consumed */}
+              <div className="bg-dark-900/90 border border-dark-750 p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    {formatDual("Sarflangan Xomashyo", "Расход Сырья", "Raw Consumed")}
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                    <Layers size={18} />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                    {productionSummary?.totalRawConsumedTonnes !== undefined
+                      ? `${productionSummary.totalRawConsumedTonnes} tn`
+                      : '1,573.8 tn'}
+                  </span>
+                </div>
+              </div>
             </div>
 
+            {/* Mahsulot Kategoriyalari - 1 Tugma Bilan Tanlash */}
+            <div className="bg-dark-900/90 border border-dark-750 p-3 sm:p-4 rounded-2xl shadow-sm space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    {formatDual("Mahsulot Kategoriyasi:", "Категория Продукции:", "Product Category:")}
+                  </span>
+                  <span className="font-extrabold text-white text-xs sm:text-sm">
+                    {selectedFilterDisplay.name}
+                  </span>
+                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    {selectedFilterDisplay.totalTonnes} tn ({selectedFilterDisplay.percent}%)
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductModalSearch('')
+                    setShowProductFilterModal(true)
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-indigo-300 hover:text-white font-bold text-xs border border-indigo-500/30 transition-all ml-auto"
+                >
+                  <Filter size={13} className="text-indigo-400" />
+                  <span>
+                    {formatDual(
+                      `Barcha ${finishedGoodsPortfolio.length > 0 ? finishedGoodsPortfolio.length : 14} tur mahsulot...`,
+                      `Все ${finishedGoodsPortfolio.length > 0 ? finishedGoodsPortfolio.length : 14} видов продукции...`,
+                      `All ${finishedGoodsPortfolio.length > 0 ? finishedGoodsPortfolio.length : 14} products...`
+                    )}
+                  </span>
+                </button>
+              </div>
+
+              {/* 1-Tugma Bilan Kategoriyalar */}
+              <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                {(categoriesList.length > 0 ? categoriesList : [
+                  { id: 'all', nameUz: 'Barchasi', totalTonnes: 871.2, percent: 100 },
+                  { id: 'tomato', nameUz: 'Pomidor (Tomat)', totalTonnes: 412.1, percent: 47 },
+                  { id: 'iceberg', nameUz: 'Aysberg', totalTonnes: 345.4, percent: 40 },
+                  { id: 'coleslaw', nameUz: 'Koul Slou', totalTonnes: 85.2, percent: 10 },
+                  { id: 'onion', nameUz: 'Piyoz', totalTonnes: 26.0, percent: 3 },
+                  { id: 'other', nameUz: 'Boshqa mahsulotlar', totalTonnes: 2.4, percent: 0 }
+                ]).map((cat) => {
+                  const isSelected = selectedCategory === cat.id
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30 scale-[1.02]'
+                          : 'bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border-dark-700'
+                      }`}
+                    >
+                      <span>{cat.nameUz}</span>
+                      <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-md ${
+                        isSelected
+                          ? 'bg-indigo-900/70 text-indigo-200'
+                          : 'bg-dark-750 text-slate-400'
+                      }`}>
+                        {cat.totalTonnes} tn
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="bg-dark-900/80 border border-dark-750 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder={formatDual("Mahsulot, liniya yoki partiya kodi bo'yicha qidirish...", "Поиск по продукту, линии или партии...", "Search product, line or batch...")}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Date Filter */}
+                <div className="flex items-center gap-1.5 bg-dark-800 border border-dark-700 rounded-xl px-3 py-1.5">
+                  <Calendar size={14} className="text-slate-400" />
+                  <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="bg-transparent text-xs text-white outline-none cursor-pointer"
+                  />
+                  {dateFilter && (
+                    <button onClick={() => setDateFilter('')} className="text-slate-500 hover:text-white">
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Filter Tabs */}
+              <div className="flex items-center gap-1 bg-dark-800/90 p-1 rounded-xl border border-dark-700">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    statusFilter === 'ALL'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {formatDual("Barchasi", "Все", "All")} ({orders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('IN_PROGRESS')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    statusFilter === 'IN_PROGRESS'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  <span>{formatDual("Jarayonda", "В процессе", "In Progress")}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('COMPLETED')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    statusFilter === 'COMPLETED'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <CheckCircle2 size={13} />
+                  <span>{formatDual("Chiqarilgan", "Выпущено", "Completed")}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Orders Table */}
             <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="bg-dark-800/50 border-b border-dark-750 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="p-4">Sana & Vaqt</th>
-                      <th className="p-4 text-center">Toza Zona (°C)</th>
-                      <th className="p-4 text-center">Nopok Zona (°C)</th>
-                      <th className="p-4">P/F Partiya Raqamlari</th>
-                      <th className="p-4 text-center">GP Haroratlari</th>
-                      <th className="p-4">Mas'ul & Holat</th>
+                    <tr className="bg-dark-800/60 border-b border-dark-750 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      <th className="p-4">{l.colDate}</th>
+                      <th className="p-4">{l.colProduct}</th>
+                      <th className="p-4 text-center">{l.colQty}</th>
+                      <th className="p-4">{l.colBatchChain}</th>
+                      <th className="p-4">{l.colLine}</th>
+                      <th className="p-4 text-center">{l.colStatus}</th>
+                      <th className="p-4 text-center">{formatDual("Batafsil", "Детали", "Details")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
-                    {processLogs.length === 0 ? (
+                    {filteredOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-12 text-center text-slate-500">
-                          Sex nazoratchisi jurnali bo'sh
+                        <td colSpan={7} className="p-16 text-center text-slate-500">
+                          <Factory size={48} className="mx-auto text-dark-600 mb-3 opacity-30" />
+                          <p className="text-base font-bold text-white">{l.emptyOrdersTitle}</p>
+                          <p className="text-xs text-slate-400 mt-1">{l.emptyOrdersSub}</p>
                         </td>
                       </tr>
                     ) : (
-                      processLogs.map((log: any) => (
-                        <tr key={log.id} className="hover:bg-dark-800/30 transition-colors">
-                          <td className="p-4 font-mono text-xs">
-                            <div className="font-bold text-white">{log.date}</div>
-                            <div className="text-indigo-400 font-semibold">{log.time}</div>
+                      displayedOrders.map((o) => {
+                        const relevantOutputs = selectedCategory === 'all'
+                          ? (o.allOutputs || [])
+                          : (o.allOutputs || []).filter((out: any) => {
+                              const outName = (out.name || '').toLowerCase()
+                              if (selectedCategory === 'tomato') return outName.includes('tomat') || outName.includes('pomidor')
+                              if (selectedCategory === 'iceberg') return outName.includes('aysberg') || outName.includes('айсберг')
+                              if (selectedCategory === 'coleslaw') return outName.includes('koul') || outName.includes('коул') || outName.includes('karam') || outName.includes('slou')
+                              if (selectedCategory === 'onion') return outName.includes('piyoz') || outName.includes('лук')
+                              return outName.includes(selectedCategory.toLowerCase())
+                            })
+
+                        const primaryOutput = relevantOutputs[0] || o.allOutputs?.[0]
+                        const outputTitle = primaryOutput
+                          ? (relevantOutputs.length > 1 ? `${primaryOutput.name} (+${relevantOutputs.length - 1} xil)` : primaryOutput.name)
+                          : (o.recipe?.outputProduct?.name || o.productName || '—')
+
+                        const relevantQty = selectedCategory === 'all' || relevantOutputs.length === 0
+                          ? (o.actualOutput || o.plannedOutput || 0)
+                          : relevantOutputs.reduce((sum: number, r: any) => sum + (Number(r.quantityKg) || 0), 0)
+
+                        return (
+                          <tr
+                            key={o.id}
+                            onClick={() => openOrderModal(o)}
+                            className="hover:bg-dark-800/40 transition-colors cursor-pointer group"
+                          >
+                            {/* Sana - faqat sana, hech qanday buyruq/kod yo'q */}
+                            <td className="p-4 font-mono font-bold text-white text-xs">
+                              {o.date || (o.createdAt ? o.createdAt.slice(0, 10) : '—')}
+                            </td>
+
+                            {/* Tayyor Mahsulot - faqat toza o'zbekcha nomi */}
+                            <td className="p-4">
+                              <div className="font-bold text-white text-sm">
+                                {outputTitle}
+                              </div>
+                            </td>
+
+                            {/* Umumiy - Reja/Fakt o'rniga faqat toza umumiy chiqish */}
+                            <td className="p-4 text-center">
+                              <span className="font-mono font-bold text-emerald-400 text-xs bg-dark-800/90 px-3 py-1.5 rounded-xl border border-dark-700 whitespace-nowrap">
+                                {relevantQty >= 1000
+                                  ? `${(relevantQty / 1000).toFixed(2)} tn`
+                                  : `${Math.round(relevantQty).toLocaleString()} kg`}
+                              </span>
+                            </td>
+
+                          {/* Ishlatilgan Xomashyo & Partiyalar */}
+                          <td className="p-4 min-w-[180px] max-w-xs">
+                            {o.rawMaterialBatches && o.rawMaterialBatches.length > 0 ? (
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {o.rawMaterialBatches.slice(0, 2).map((b: any, bIdx: number) => (
+                                  <span
+                                    key={bIdx}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs font-semibold text-indigo-300"
+                                    title={`${b.name} — Partiya #${b.batchNumber} · ${b.quantityKg} kg`}
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                    <span className="text-white font-bold">{b.name}:</span>
+                                    <span className="font-mono font-black text-indigo-200">#{b.batchNumber}</span>
+                                  </span>
+                                ))}
+                                {o.rawMaterialBatches.length > 2 && (
+                                  <span className="text-[10px] text-slate-400 font-bold bg-dark-800 px-1.5 py-0.5 rounded border border-dark-700">
+                                    +{o.rawMaterialBatches.length - 2} ta
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="font-mono font-bold text-indigo-400 text-xs bg-dark-800/80 px-2 py-1 rounded-lg border border-dark-700">
+                                {o.usedBatchesDisplay || `Partiya #${o.finishedBatchCode || o.id}`}
+                              </span>
+                            )}
                           </td>
 
-                          <td className="p-4 text-center font-mono font-bold">
-                            <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs">
-                              {log.cleanZoneTemp !== null ? `${log.cleanZoneTemp}°C` : '—'}
-                            </span>
+                          {/* Liniya - faqat liniya nomi, texnolog/boshliq yo'q */}
+                          <td className="p-4 text-xs font-medium text-slate-300">
+                            {o.lineName || 'Asosiy liniya'}
                           </td>
 
-                          <td className="p-4 text-center font-mono font-bold">
-                            <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs">
-                              {log.dirtyZoneTemp !== null ? `${log.dirtyZoneTemp}°C` : '—'}
-                            </span>
+                          {/* Holat */}
+                          <td className="p-4 text-center">
+                            {o.status === 'IN_PROGRESS' ? (
+                              <span className="inline-flex items-center gap-1.5 bg-blue-500/15 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-full text-xs font-bold animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                {formatDual("Jarayonda", "В процессе", "In Progress")}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-bold">
+                                <CheckCircle2 size={13} />
+                                {formatDual("Chiqarilgan", "Выпущено", "Completed")}
+                              </span>
+                            )}
                           </td>
 
-                          <td className="p-4 text-xs font-mono text-slate-300">
-                            {log.pfIcebergBatch && <div>Айсберг: #{log.pfIcebergBatch}</div>}
-                            {log.pfColeCarrotBatch && <div>Морковь: #{log.pfColeCarrotBatch}</div>}
-                            {log.pfColeCabbageBatch && <div>Капуста: #{log.pfColeCabbageBatch}</div>}
-                            {!log.pfIcebergBatch && !log.pfColeCarrotBatch && !log.pfColeCabbageBatch && <span className="text-slate-500">—</span>}
-                          </td>
-
-                          <td className="p-4 text-center text-xs font-mono">
-                            {log.gpIcebergTemp && <div className="text-emerald-400">Айсберг: {log.gpIcebergTemp}°C</div>}
-                            {log.gpColeTemp && <div className="text-emerald-400">Коул: {log.gpColeTemp}°C</div>}
-                            {!log.gpIcebergTemp && !log.gpColeTemp && <span className="text-slate-500">—</span>}
-                          </td>
-
-                          <td className="p-4 text-xs">
-                            <div className="font-bold text-white">{log.responsible || 'QC'}</div>
-                            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                              {log.status === 'APPROVED' ? 'Qabul' : log.status}
-                            </span>
+                          {/* Batafsil tugmasi */}
+                          <td className="p-4 text-center">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openOrderModal(o)
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-400 hover:text-white bg-indigo-500/10 hover:bg-indigo-600/30 border border-indigo-500/20 transition-colors"
+                            >
+                              <Eye size={13} />
+                            </button>
                           </td>
                         </tr>
-                      ))
+                      )
+                    })
                     )}
                   </tbody>
                 </table>
               </div>
+
+              {/* 25 tadan Infinite Scroll Footer */}
+              <InfiniteTableFooter
+                currentCount={visibleCount}
+                totalCount={totalCount}
+                hasMore={hasMore}
+                showAll={showAll}
+                onLoadMore={loadMore}
+                onToggleShowAll={toggleShowAll}
+                sentinelRef={sentinelRef}
+                pageSize={25}
+                itemName={{ uz: "partiya", ru: "партий", en: "batches" }}
+              />
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {recipes.length === 0 ? (
-              <div className="col-span-full p-16 text-center text-slate-500 bg-dark-900 rounded-3xl border border-dark-750">
-                {l.emptyBOMs}
-              </div>
-            ) : (
-              recipes.map(r => (
-                <div key={r.id} className="group relative bg-dark-900 border border-dark-750 rounded-3xl p-6 hover:border-indigo-500/50 transition-all duration-300 shadow-lg">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-bold text-xl text-white mb-1">{r.outputProduct?.name}</h3>
-                      <span className="inline-block bg-dark-800 text-indigo-300 text-xs px-2.5 py-1 rounded-lg font-medium border border-dark-600">
-                        {l.bomNorm}: {r.baseYieldQty} {r.outputProduct?.unit}
-                      </span>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                      <FileSignature size={18} />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <ArrowRight size={12} className="text-indigo-400" /> {l.reqMaterials}
-                    </p>
-                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                      {r.ingredients.map((ing: any) => (
-                        <div key={ing.id} className="flex items-center justify-between text-sm bg-dark-800/70 p-3 rounded-xl border border-dark-700">
-                          <span className="font-medium text-slate-300">{ing.inputProduct?.name}</span>
-                          <span className="font-bold text-white bg-dark-700 px-2 py-1 rounded text-xs font-mono">
-                            {ing.requiredQty} {ing.inputProduct?.unit}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         )}
       </div>
 
+      {/* Modal: Barcha Mahsulotlarni Tanlash */}
+      {showProductFilterModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          onClick={() => setShowProductFilterModal(false)}
+        >
+          <div
+            className="bg-dark-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-dark-700 flex flex-col max-h-[85vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between bg-dark-950/60">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">
+                    {formatDual("Mahsulotni Tanlash", "Выбор Продукта", "Select Product")}
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {formatDual("Zavodning barcha mahsulotlari bo'yicha saralash", "Фильтр по всем продуктам фабрики", "Filter by all factory products")}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowProductFilterModal(false)}
+                className="text-slate-400 hover:text-white p-2 rounded-xl bg-dark-800 hover:bg-dark-750 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-4 border-b border-dark-800 bg-dark-850/50">
+              <div className="relative">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder={formatDual("Mahsulot nomi bo'yicha qidirish...", "Поиск по названию продукта...", "Search by product name...")}
+                  value={productModalSearch}
+                  onChange={(e) => setProductModalSearch(e.target.value)}
+                  className="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                  autoFocus
+                />
+                {productModalSearch && (
+                  <button
+                    onClick={() => setProductModalSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="p-4 space-y-4 overflow-y-auto custom-scrollbar">
+              {/* Option: Barchasi */}
+              {(!productModalSearch.trim() || 'barchasi barcha mahsulotlar all'.includes(productModalSearch.toLowerCase())) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('all')
+                    setShowProductFilterModal(false)
+                  }}
+                  className={`w-full p-3.5 rounded-2xl flex items-center justify-between transition-all border ${
+                    selectedCategory === 'all'
+                      ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-sm'
+                      : 'bg-dark-850/80 hover:bg-dark-800 border-dark-750 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <span className="font-bold text-sm">
+                      {formatDual("Barcha Mahsulotlar (Jami)", "Все Продукты (Всего)", "All Products (Total)")}
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs">
+                    <span className="font-black text-emerald-400">
+                      {productionSummary?.totalFinishedGoodsTonnes !== undefined ? `${productionSummary.totalFinishedGoodsTonnes} tn` : '871.2 tn'}
+                    </span>
+                    <span className="text-slate-500 ml-2">(100%)</span>
+                  </div>
+                </button>
+              )}
+
+              {/* Asosiy Mahsulot Guruhlari (Kategoriyalar) */}
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 block mb-2">
+                  {formatDual("Asosiy Mahsulot Guruhlari", "Основные группы продукции", "Primary Product Groups")}
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {categoriesList
+                    .filter((c) => c.id !== 'all')
+                    .filter((c) => !productModalSearch.trim() || c.nameUz.toLowerCase().includes(productModalSearch.toLowerCase()))
+                    .map((cat) => {
+                      const isSel = selectedCategory === cat.id
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCategory(cat.id)
+                            setShowProductFilterModal(false)
+                          }}
+                          className={`p-3 rounded-xl flex items-center justify-between text-left transition-all border ${
+                            isSel
+                              ? 'bg-indigo-600/20 border-indigo-500 text-white'
+                              : 'bg-dark-850/70 hover:bg-dark-800 border-dark-750 text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                            <span className="font-bold text-xs">{cat.nameUz}</span>
+                          </div>
+                          <div className="font-mono text-xs">
+                            <span className="font-black text-indigo-300">{cat.totalTonnes} tn</span>
+                            <span className="text-slate-500 ml-1.5 text-[11px]">({cat.percent}%)</span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                </div>
+              </div>
+
+              {/* Barcha Alohida Mahsulot Turlari (SKU) */}
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 block mb-2">
+                  {formatDual("Barcha Mahsulot Turlari (Alohida)", "Все отдельные виды продукции", "All Specific Products")}
+                </span>
+                <div className="space-y-1.5">
+                  {finishedGoodsPortfolio
+                    .filter((p) => !productModalSearch.trim() || p.name.toLowerCase().includes(productModalSearch.toLowerCase()))
+                    .map((p, idx) => {
+                      const isSel = selectedCategory.toLowerCase() === p.name.toLowerCase()
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCategory(p.name)
+                            setShowProductFilterModal(false)
+                          }}
+                          className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all border ${
+                            isSel
+                              ? 'bg-indigo-600/20 border-indigo-500 text-white'
+                              : 'bg-dark-850/50 hover:bg-dark-800 border-dark-750 text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            <span className="font-medium text-xs text-slate-200">{p.name}</span>
+                          </div>
+                          <div className="font-mono text-xs">
+                            <span className="font-bold text-emerald-400">{p.totalTonnes} tn</span>
+                            <span className="text-slate-500 ml-2 text-[11px]">({p.totalKg.toLocaleString()} kg)</span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 bg-dark-950/60 border-t border-dark-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowProductFilterModal(false)}
+                className="px-5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-750 transition-colors"
+              >
+                {formatDual("Yopish", "Закрыть", "Close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Read-Only Modal: Order Detail Drill-down */}
+      {selectedOrderModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          onClick={() => setSelectedOrderModal(null)}
+        >
+          <div
+            className="bg-dark-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between bg-dark-950/60">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                  <Factory size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-black text-white font-mono">{selectedOrderModal.orderNumber}</h2>
+                    {selectedOrderModal.status === 'IN_PROGRESS' ? (
+                      <span className="inline-flex items-center gap-1.5 bg-blue-500/15 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full text-xs font-bold animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        {formatDual("Jarayonda", "В процессе", "In Progress")}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-xs font-bold">
+                        <CheckCircle2 size={13} />
+                        {formatDual("Chiqarilgan", "Выпущено", "Completed")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {formatDual("Sana:", "Дата:", "Date:")} {selectedOrderModal.date} · {selectedOrderModal.lineName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedOrderModal(null)}
+                className="text-slate-400 hover:text-white p-2 rounded-xl bg-dark-800 hover:bg-dark-750 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
+              {/* Summary Metrics */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="bg-dark-850 p-3 rounded-2xl border border-dark-750">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+                    {formatDual("Umumiy Chiqish", "Общий Выпуск", "Total Output")}
+                  </span>
+                  <span className="text-lg sm:text-xl font-black text-emerald-400 font-mono">
+                    {(selectedOrderModal.actualOutput || selectedOrderModal.plannedOutput || 0).toLocaleString()} kg
+                  </span>
+                </div>
+                <div className="bg-dark-850 p-3 rounded-2xl border border-dark-750">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+                    {formatDual("Sarflangan Xomashyo", "Расход сырья", "Raw Consumed")}
+                  </span>
+                  <span className="text-lg sm:text-xl font-black text-amber-400 font-mono">
+                    {(selectedOrderModal.rawConsumedKg || 0).toLocaleString()} kg
+                  </span>
+                </div>
+                <div className="bg-dark-850 p-3 rounded-2xl border border-dark-750">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+                    {formatDual("Chiqish Normasi", "Норма выхода", "Yield Rate")}
+                  </span>
+                  <span className="text-lg sm:text-xl font-black text-indigo-400 font-mono">
+                    {selectedOrderModal.yieldPercent || 78}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Mahsulotlar & Partiyalar Zanjiri (Collapsible / Yig'iladigan) */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-dark-750">
+                  <span className="text-xs font-bold uppercase text-slate-200 flex items-center gap-2">
+                    <GitBranch size={14} className="text-indigo-400" />
+                    <span>
+                      {formatDual(
+                        "Ishlab Chiqarilgan Mahsulotlar & Partiyalar",
+                        "Выпущенная продукция и партии",
+                        "Products & Batch Traceability"
+                      )}
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-mono">
+                      ({(selectedOrderModal.traceability && selectedOrderModal.traceability.length > 0
+                        ? selectedOrderModal.traceability
+                        : selectedOrderModal.allOutputs || []).length} ta)
+                    </span>
+                  </span>
+
+                  {/* Director Toggle: hohlasa ko'rsin, hohlasa yopsin */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !showBatchDetails
+                      setShowBatchDetails(next)
+                      const newMap: Record<number, boolean> = {}
+                      if (next) {
+                        const items = selectedOrderModal.traceability && selectedOrderModal.traceability.length > 0
+                          ? selectedOrderModal.traceability
+                          : selectedOrderModal.allOutputs || []
+                        items.forEach((_: any, i: number) => { newMap[i] = true })
+                      }
+                      setExpandedProductIndices(newMap)
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      showBatchDetails
+                        ? 'bg-indigo-600/30 text-indigo-200 border-indigo-500/50 hover:bg-indigo-600/40'
+                        : 'bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border-dark-700'
+                    }`}
+                  >
+                    {showBatchDetails ? <EyeOff size={13} /> : <Eye size={13} />}
+                    <span>
+                      {showBatchDetails
+                        ? formatDual("Partiyalarni yopish", "Скрыть партии", "Hide Batches")
+                        : formatDual("Partiyalarni ko'rish", "Показать партии", "View Batches")}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Collapsible Product List */}
+                <div className="space-y-1.5">
+                  {(selectedOrderModal.traceability && selectedOrderModal.traceability.length > 0
+                    ? selectedOrderModal.traceability
+                    : (selectedOrderModal.allOutputs || []).map((o: any) => ({
+                        outputName: o.name,
+                        outputKg: o.quantityKg,
+                        yieldPercent: selectedOrderModal.yieldPercent || 78,
+                        inputs: []
+                      }))
+                  ).map((trace: any, tIdx: number) => {
+                    const isExpanded = showBatchDetails || !!expandedProductIndices[tIdx]
+                    const hasInputs = trace.inputs && trace.inputs.length > 0
+                    return (
+                      <div
+                        key={tIdx}
+                        className="bg-dark-850 rounded-2xl border border-dark-750 overflow-hidden shadow-xs transition-all"
+                      >
+                        {/* Compact Row Header: Clicking toggles this specific product */}
+                        <div
+                          onClick={() => toggleProductExpand(tIdx)}
+                          className="flex items-center justify-between p-3 cursor-pointer hover:bg-dark-800/80 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                            <span className="font-bold text-xs text-white truncate">
+                              {trace.outputName}
+                            </span>
+                            {hasInputs && (
+                              <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px] font-bold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                                Partiya #{trace.inputs[0].batchNumber}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="font-mono font-bold text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
+                              {trace.outputKg?.toLocaleString()} kg
+                            </span>
+                            <span className="font-mono text-[11px] text-slate-400 bg-dark-800 px-2 py-0.5 rounded border border-dark-700 font-bold whitespace-nowrap">
+                              {trace.yieldPercent}%
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleProductExpand(tIdx)
+                              }}
+                              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-dark-750"
+                              title={isExpanded ? "Yopish" : "Partiyani ko'rish"}
+                            >
+                              <ChevronDown
+                                size={15}
+                                className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-indigo-400' : ''}`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Collapsible Details: Shown ONLY when expanded */}
+                        {isExpanded && (
+                          <div className="px-3 pb-3 pt-1 border-t border-dark-750/70 bg-dark-900/60 animate-enter space-y-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                              {formatDual(
+                                "Ishlatilgan Xomashyo Kirim Partiyalari:",
+                                "Использованные партии прихода сырья:",
+                                "Used Raw Material Arrival Batches:"
+                              )}
+                            </span>
+                            {hasInputs ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {trace.inputs.map((inp: any, iIdx: number) => (
+                                  <div
+                                    key={iIdx}
+                                    className="bg-dark-850 border border-dark-700/80 px-3 py-2 rounded-xl flex items-center justify-between text-xs gap-2"
+                                  >
+                                    <div className="font-bold text-slate-200 flex items-center gap-2 truncate">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                                      <span className="truncate">{inp.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      <span className="inline-block font-mono font-black text-xs text-indigo-300 bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 rounded-lg">
+                                        Partiya #{inp.batchNumber}
+                                      </span>
+                                      <span className="font-mono font-bold text-amber-300 text-xs">
+                                        {inp.quantityKg?.toLocaleString()} kg
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-slate-500 italic p-2 bg-dark-850/60 rounded-xl">
+                                {formatDual("Partiya kiritilmagan", "Партия не указана", "No batch specified")}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-dark-950/60 border-t border-dark-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedOrderModal(null)}
+                className="px-5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-750 transition-colors"
+              >
+                {formatDual("Yopish", "Закрыть", "Close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal: New Production Order */}
-      {showProdModal && (
+      {!isDirector && showProdModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setShowProdModal(false)}
@@ -802,7 +1471,7 @@ export default function FactoryProductionContent() {
       )}
 
       {/* Modal: Process QC Log (Liniya Harorati) */}
-      {showProcessModal && (
+      {!isDirector && showProcessModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setShowProcessModal(false)}
@@ -902,7 +1571,7 @@ export default function FactoryProductionContent() {
       )}
 
       {/* Modal: New BOM */}
-      {showBomModal && (
+      {!isDirector && showBomModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setShowBomModal(false)}

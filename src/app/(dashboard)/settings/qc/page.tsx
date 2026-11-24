@@ -16,7 +16,7 @@ export default async function QCSettingsPage() {
         userRole={session?.role || 'QUALITY_CONTROL'}
         userName={session?.name || 'Sifat Nazoratchisi'}
         initialTab="qc"
-        lockTab={!isAdminOrDirector}
+        lockTab={true}
       />
     </Suspense>
   )

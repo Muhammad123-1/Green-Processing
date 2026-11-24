@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { canUserAccessGroup } from '@/lib/chatPermissions'
 
 export async function GET(req: NextRequest) {
   try {
@@ -162,28 +163,9 @@ export async function GET(req: NextRequest) {
         continue
       }
 
-      // Skip private DMs if current user is not a participant
-      if (msg.groupId.startsWith('dm_')) {
-        const parts = msg.groupId.replace('dm_', '').split('_')
-        const participantIds = parts.map((p) => parseInt(p, 10)).filter((n) => !isNaN(n))
-        if (!participantIds.includes(currentUserId)) continue
-      }
-
-      // Skip supplier chat messages for all factory staff except SUPPLY and ADMIN
-      if (msg.groupId.startsWith('supplier_')) {
-        const sId = parseInt(msg.groupId.replace('supplier_', ''), 10)
-        if (userRole === 'SUPPLIER') {
-          if (session?.supplierId !== sId) continue
-        } else if (userRole !== 'SUPPLY' && userRole !== 'ADMIN') {
-          continue
-        }
-      }
-
-      // Oshxona va Degustatsiya xodimlariga faqat tegishli chatlar (Oshxona guruhi, Shaxsiy DM, Umumiy e'lonlar)
-      if (isKitchenOrDegustation) {
-        if (msg.groupId !== 'kitchen_supply' && msg.groupId !== 'general' && !msg.groupId.startsWith('dm_')) {
-          continue
-        }
+      // Strict group & DM access control per role/department
+      if (!canUserAccessGroup(msg.groupId, { id: currentUserId, role: userRole, supplierId: session?.supplierId })) {
+        continue
       }
 
       const ch = channelNames[msg.groupId] || { uz: 'Zavod Chati', ru: 'Чат завода', category: 'Chat' }

@@ -187,6 +187,9 @@ export async function POST(req: NextRequest) {
               prevRowHeader.includes('гп') ||
               prevRowHeader2.includes('гп') ||
               nextVal.includes('айсберг') ||
+              nextVal.includes('айзберг') ||
+              nextVal.includes('aysberg') ||
+              nextVal.includes('ayzberg') ||
               nextVal.includes('томат') ||
               nextVal.includes('коул')
 
@@ -263,10 +266,18 @@ export async function POST(req: NextRequest) {
 
           let matrixStartRow = i + 3
           for (let r = i; r <= i + 10; r++) {
-            if (
-              sheet.getRow(r).getCell(1).value?.toString().includes('Салат Айсберг') ||
-              sheet.getRow(r).getCell(2).value?.toString().includes('Салат Айсберг')
-            ) {
+            const c1 = sheet.getRow(r).getCell(1).value?.toString() || ''
+            const c2 = sheet.getRow(r).getCell(2).value?.toString() || ''
+            const isIcebergRow =
+              c1.includes('Салат Айсберг') ||
+              c1.includes('Салат Айзберг') ||
+              c1.includes('Айсберг') ||
+              c1.includes('Айзберг') ||
+              c2.includes('Салат Айсберг') ||
+              c2.includes('Салат Айзберг') ||
+              c2.includes('Айсберг') ||
+              c2.includes('Айзберг')
+            if (isIcebergRow) {
               matrixStartRow = r
               break
             }

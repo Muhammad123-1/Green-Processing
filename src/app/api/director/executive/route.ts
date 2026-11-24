@@ -187,7 +187,7 @@ export async function GET(req: NextRequest) {
         return { key: 'box', name: 'Коробки', unit: 'dona' }
       }
       if (s.includes('томат') || s.includes('помидор')) return { key: 'tomato', name: 'Томаты (Помидор)', unit: 'kg' }
-      if (s.includes('айсберг') && !s.includes('листов')) return { key: 'iceberg', name: 'Салат Айсберг', unit: 'kg' }
+      if ((s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg')) && !s.includes('листов')) return { key: 'iceberg', name: 'Салат Айсберг', unit: 'kg' }
       if (s.includes('листов')) return { key: 'icebergLeaf', name: 'Айсберг (листовой)', unit: 'kg' }
       if (s.includes('капуст') && !s.includes('коул')) return { key: 'cabbage', name: 'Капуста белокочанная', unit: 'kg' }
       if (s.includes('морков')) return { key: 'carrot', name: 'Морковь', unit: 'kg' }
@@ -305,7 +305,7 @@ export async function GET(req: NextRequest) {
         if (kg > 0) {
           let targetRaw = outName
           const lOut = outName.toLowerCase()
-          if (lOut.includes('айсберг')) targetRaw = 'Салат Айсберг'
+          if (lOut.includes('айсберг') || lOut.includes('айзберг') || lOut.includes('aysberg') || lOut.includes('ayzberg')) targetRaw = 'Салат Айсберг'
           else if (lOut.includes('томат')) targetRaw = 'Томат'
           else if (lOut.includes('лук')) targetRaw = 'Лук'
           else if (lOut.includes('лимон')) targetRaw = 'Лимон'
@@ -856,7 +856,7 @@ export async function GET(req: NextRequest) {
         selectedBatchNumber: tr.batch?.batchNumber || "Noma'lum",
         exceptionReason: tr.exceptionReason || '',
         authorizedByQcName: tr.authorizedByQcName || 'QC Inspektori',
-        executedByWarehouseManager: tr.issuedByName || 'Ombor mudiri',
+        executedByWarehouseManager: tr.issuedByName || 'Ombor xodimi',
         timestamp: (tr.exceptionTimestamp || tr.issuedAt).toISOString(),
         evidenceUrl: tr.exceptionEvidenceUrl || null,
       }))

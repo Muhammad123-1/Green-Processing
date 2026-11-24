@@ -27,7 +27,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (product && product !== 'all') {
-      where.productName = { equals: product, mode: 'insensitive' }
+      const pLower = product.toLowerCase()
+      if (pLower.includes('айсберг') || pLower.includes('айзберг') || pLower.includes('aysberg') || pLower.includes('ayzberg')) {
+        where.OR = [
+          { productName: { contains: 'йсберг', mode: 'insensitive' } },
+          { productName: { contains: 'йзберг', mode: 'insensitive' } },
+          { productName: { contains: 'ysberg', mode: 'insensitive' } }
+        ]
+      } else {
+        where.productName = { equals: product, mode: 'insensitive' }
+      }
     }
 
     if (ratingStr && ratingStr !== 'all') {

@@ -230,6 +230,18 @@ function parseActDate(dateStr: string | null | undefined): Date | null {
   return null
 }
 
+function parseArrivalStatus(decision?: string | null): 'ACCEPTED' | 'REJECTED' | 'CONDITIONAL' {
+  if (!decision) return 'ACCEPTED'
+  const dec = decision.toLowerCase()
+  if (dec.includes('брак') || dec.includes('rad') || dec.includes('отклон') || dec.includes('yomon')) {
+    return 'REJECTED'
+  }
+  if (dec.includes('условн') || dec.includes('shartli') || dec.includes('qoniqarli')) {
+    return 'CONDITIONAL'
+  }
+  return 'ACCEPTED'
+}
+
 function parseActStatus(act: any): 'ACCEPTED' | 'REJECTED' | 'CONDITIONAL' {
   const dec = (act.decisionText || '').toLowerCase()
   if (
@@ -258,32 +270,98 @@ export async function GET(request: NextRequest) {
     const lang: SupportedLang = (rawLang === 'ru' || rawLang === 'en') ? rawLang : 'uz'
     const t = DICT[lang]
 
-    // Load real incoming raw material acts
-    const rawActs = await prisma.incomingRawMaterialAct.findMany({
-      orderBy: { actDate: 'desc' },
-    })
+    // Load both live shop arrivals and historical incoming raw material acts
+    const [shopArrivals, rawActs] = await Promise.all([
+      prisma.shopArrival.findMany({
+        orderBy: { date: 'desc' },
+      }),
+      prisma.incomingRawMaterialAct.findMany({
+        orderBy: { actDate: 'desc' },
+      }),
+    ])
 
-    const inspections = rawActs.map((a) => {
-      const d = parseActDate(a.actDate) || new Date()
-      const status = parseActStatus(a)
-      return {
-        id: a.id,
-        inspectionDate: d,
-        invoiceNumber: a.actNumber || `ACT-${a.id}`,
-        batchNumber: a.batchNumber || a.actNumber || '-',
-        product: { name: a.productName || 'Xomashyo' },
-        sheetName: a.productName,
-        supplier: { name: a.supplierName || 'Ta\'minotchi', certificate: 'Mavjud' },
-        quantity: a.warehouseKg || 0,
-        temperature: a.temperature || '-',
-        packaging: 'Standart tara',
-        status,
-        inspector: a.inspectorName?.trim() || 'Sifat Nazorati (QC)',
-        user: { name: a.inspectorName?.trim() || 'Sifat Nazorati (QC)' },
-        conclusion: a.decisionText || (status === 'ACCEPTED' ? 'MUVOFIQ' : 'RAD ETILDI'),
-        notes: a.notes || '',
-      }
-    })
+    const arrivalInspections = shopArrivals
+      .map((a) => {
+        const d = parseActDate(a.date)
+        if (!d || isNaN(d.getTime())) return null
+        const status = parseArrivalStatus(a.finalDecision)
+        const qty = Number(a.quantity) || 0
+        const temp =
+          typeof a.temperature === 'number'
+            ? `${a.temperature}°C`
+            : typeof a.temperature === 'string'
+            ? `${a.temperature}°C`
+            : '-'
+        const actNum = a.ttnNumber
+          ? `TTN-${a.ttnNumber}`
+          : a.batch
+          ? (a.batch.startsWith('#') ? a.batch : `#${a.batch}`)
+          : `KIRIM-${a.id}`
+        const inspector =
+          a.qcSign?.trim() ||
+          a.warehouseSign?.trim() ||
+          a.technologistSign?.trim() ||
+          'Sifat Nazorati (QC)'
+
+        return {
+          id: a.id,
+          dateStr: a.date,
+          inspectionDate: d,
+          invoiceNumber: actNum,
+          batchNumber: a.batch ? (a.batch.startsWith('#') ? a.batch : `#${a.batch}`) : (a.ttnNumber || '-'),
+          product: { name: a.nomenclature || 'Xomashyo' },
+          sheetName: a.nomenclature,
+          supplier: { name: a.supplier?.trim() || "Ta'minotchi", certificate: a.ttnNumber ? 'Mavjud' : '-' },
+          quantity: qty,
+          temperature: temp,
+          packaging: 'Standart tara',
+          status,
+          inspector,
+          user: { name: inspector },
+          conclusion:
+            status === 'ACCEPTED'
+              ? 'MUVOFIQ'
+              : status === 'CONDITIONAL'
+              ? 'SHARTLI QABUL'
+              : 'RAD ETILDI',
+          notes: a.organoleptic || '',
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+
+    const earliestArrivalDateStr = arrivalInspections.reduce((min, a) => (a.dateStr < min ? a.dateStr : min), '9999-99-99')
+
+    const historicalInspections = rawActs
+      .map((a) => {
+        const d = parseActDate(a.actDate)
+        if (!d || isNaN(d.getTime())) return null
+        const dateStr = a.actDate ? a.actDate.slice(0, 10) : ''
+        if (dateStr >= earliestArrivalDateStr) return null
+
+        const status = parseActStatus(a)
+        const inspector = a.inspectorName?.trim() || 'Sifat Nazorati (QC)'
+        return {
+          id: 100000 + a.id,
+          dateStr,
+          inspectionDate: d,
+          invoiceNumber: a.actNumber || `ACT-${a.id}`,
+          batchNumber: a.batchNumber || a.actNumber || '-',
+          product: { name: a.productName || 'Xomashyo' },
+          sheetName: a.productName,
+          supplier: { name: a.supplierName || "Ta'minotchi", certificate: 'Mavjud' },
+          quantity: a.warehouseKg || 0,
+          temperature: a.temperature ? `${a.temperature}°C` : '-',
+          packaging: 'Standart tara',
+          status,
+          inspector,
+          user: { name: inspector },
+          conclusion: a.decisionText || (status === 'ACCEPTED' ? 'MUVOFIQ' : 'RAD ETILDI'),
+          notes: a.notes || '',
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+
+    const inspections = [...arrivalInspections, ...historicalInspections]
 
     const wb = new ExcelJS.Workbook()
     wb.creator = 'Green Processing ERP'

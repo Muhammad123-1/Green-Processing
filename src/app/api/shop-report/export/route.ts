@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     ])
 
     const warehouseName = settings.find((s) => s.key === 'warehouse_signature_name')?.value || 'Isakov M.'
-    const warehouseTitle = settings.find((s) => s.key === 'warehouse_signature_title')?.value || "Ombor mudiri / Mas'ul xodim"
+    const warehouseTitle = settings.find((s) => s.key === 'warehouse_signature_title')?.value || "Ombor xodimi / Mas'ul xodim"
 
     const workbook = new ExcelJS.Workbook()
     workbook.creator = 'Green Processing ERP'

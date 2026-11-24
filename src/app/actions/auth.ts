@@ -36,8 +36,7 @@ export async function login(prevState: any, formData: FormData) {
     hr: { name: 'Kadrlar (HR)', role: 'HR' },
     kitchen: { name: 'Oshxona (Bosh Oshpaz)', role: 'KITCHEN' },
     security: { name: 'Xavfsizlik Xizmati', role: 'SECURITY' },
-    degustatsiya: { name: 'Degustatsiya va SanPiN Nazoratchisi', role: 'DEGUSTATION' },
-    sanpin: { name: "SanPiN va Degustatsiya Bo'limi", role: 'DEGUSTATION' },
+    degustatsiya: { name: 'Degustatsiya', role: 'DEGUSTATION' },
   }
 
   const lowerUsername = username.toLowerCase()

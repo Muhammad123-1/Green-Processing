@@ -200,7 +200,7 @@ export interface ExpenseField {
 }
 
 export const EXPENSE_FIELDS: ExpenseField[] = [
-  { field: 'iceberg', label: 'Айсберг', unit: 'кг', aliases: ['Айсберг', 'Салат Айсберг'] },
+  { field: 'iceberg', label: 'Айсберг', unit: 'кг', aliases: ['Айсберг', 'Салат Айсберг', 'Айзберг', 'Салат Айзберг', 'Aysberg', 'Ayzberg', 'Salat Aysberg'] },
   { field: 'tomatoes', label: 'ТОМАТЫ', unit: 'кг', aliases: ['ТОМАТЫ', 'Томаты', 'Помидоры'] },
   { field: 'onion', label: 'Лук', unit: 'кг', aliases: ['Лук', 'Лук салатный белый'] },
   { field: 'cabbage', label: 'Капуста', unit: 'кг', aliases: ['Капуста', 'Капуста белокочанная'] },
@@ -295,7 +295,7 @@ export interface GPField {
 }
 
 export const GP_FIELDS: GPField[] = [
-  { field: 'iceberg', label: 'Айсберг', unit: 'кг', aliases: ['Айсберг', 'Салат Айсберг', 'Салат Айсберг нарезанный'] },
+  { field: 'iceberg', label: 'Айсберг', unit: 'кг', aliases: ['Айсберг', 'Салат Айсберг', 'Салат Айсберг нарезанный', 'Айзберг', 'Салат Айзберг', 'Aysberg', 'Ayzberg', 'Salat Aysberg'] },
   { field: 'tomatoes', label: 'ТОМАТЫ', unit: 'кг', aliases: ['ТОМАТЫ', 'Томаты', 'Томаты целые'] },
   { field: 'onion', label: 'Лук', unit: 'кг', aliases: ['Лук', 'Лук салатный белый', 'Лук салатный белый нарезанный'] },
   { field: 'coleslaw', label: 'Коул Слоу', unit: 'кг', aliases: ['Коул Слоу', 'Салат Коул Слоу'] },
@@ -436,9 +436,15 @@ export const BALANCE_COLS = [
   { key: 'iceberg', label: 'Салат Айсберг' },
   { key: 'tomato', label: 'Томат' },
   { key: 'onion', label: 'Лук салатный белый' },
-  { key: 'cabbage', label: 'Капуста белокочанная' },
+  { key: 'cabbage', label: 'Капуста белокачанная' },
   { key: 'carrot', label: 'Морковь' },
   { key: 'lemon', label: 'Лимон' },
+  { key: 'cucumber', label: 'Огурцы свежие' },
+  { key: 'lolloRosso', label: 'Lollo Rosso' },
+  { key: 'rukkola', label: 'Руккола' },
+  { key: 'spinach', label: 'Шпинат' },
+  { key: 'mint', label: 'Мята' },
+  { key: 'celery', label: 'Сельдерей' },
 ]
 
 export const BALANCE_ROWS = [
@@ -574,6 +580,12 @@ export interface AutoDayReportResult {
     cabbage: { arrival: number; expense: number; output: number }
     carrot: { arrival: number; expense: number; output: number }
     lemon: { arrival: number; expense: number; output: number }
+    cucumber?: { arrival: number; expense: number; output: number }
+    lolloRosso?: { arrival: number; expense: number; output: number }
+    rukkola?: { arrival: number; expense: number; output: number }
+    spinach?: { arrival: number; expense: number; output: number }
+    mint?: { arrival: number; expense: number; output: number }
+    celery?: { arrival: number; expense: number; output: number }
   }
 }
 
@@ -608,24 +620,36 @@ export function autoBuildDayReport(
     return total
   }
 
-  const icebergArr = getArrivalSum(['айсберг', 'салат айсберг'])
+  const icebergArr = getArrivalSum(['айсберг', 'салат айсберг', 'айзберг', 'салат айзберг', 'aysberg', 'ayzberg', 'salat aysberg'])
   const tomatoArr = getArrivalSum(['томат', 'помидор'])
   const onionArr = getArrivalSum(['лук', 'пиёз'])
   const cabbageArr = getArrivalSum(['капуста', 'karam'])
   const carrotArr = getArrivalSum(['морковь', 'sabzi'])
   const lemonArr = getArrivalSum(['лимон', 'lemon'])
+  const cucumberArr = getArrivalSum(['огурц', 'бодринг', 'cucumber'])
+  const lolloRossoArr = getArrivalSum(['lollo', 'лолло'])
+  const rukkolaArr = getArrivalSum(['руккол', 'рукол'])
+  const spinachArr = getArrivalSum(['шпинат'])
+  const mintArr = getArrivalSum(['мята', 'yalpiz'])
+  const celeryArr = getArrivalSum(['сельдерей'])
   const bagArr = getArrivalSum(['пакет'])
   const boxArr = getArrivalSum(['коробк'])
   const labelArr = getArrivalSum(['этикетк'])
 
-  const icebergExp = getExpenseSum(['Айсберг', 'Салат Айсберг'])
+  const icebergExp = getExpenseSum(['Айсберг', 'Салат Айсберг', 'Айзберг', 'Салат Айзберг', 'Aysberg', 'Ayzberg', 'Salat Aysberg'])
   const tomatoExp = getExpenseSum(['ТОМАТЫ', 'Томаты'])
   const onionExp = getExpenseSum(['Лук', 'Лук салатный белый'])
-  const cabbageExp = getExpenseSum(['Капуста'])
+  const cabbageExp = getExpenseSum(['Капуста', 'Капуста белокочанная'])
   const carrotExp = getExpenseSum(['Морковь'])
-  const lemonExp = getExpenseSum(['Лимон'])
-  const sesExp = getExpenseSum(['СЕС', 'СЭС'])
-  const kitchenExp = getExpenseSum(['КУХНЯ'])
+  const lemonExp = getExpenseSum(['Лимон', 'Лимоны'])
+  const cucumberExp = getExpenseSum(['Огурцы свежие', 'Огурцы', 'Огурец'])
+  const lolloRossoExp = getExpenseSum(['Lollo Rosso', 'Лолло Россо'])
+  const rukkolaExp = getExpenseSum(['Руккола', 'Рукола'])
+  const spinachExp = getExpenseSum(['Шпинат'])
+  const mintExp = getExpenseSum(['Мята'])
+  const celeryExp = getExpenseSum(['Сельдерей'])
+  const sesExp = getExpenseSum(['СЕС', 'СЭС', 'SES'])
+  const kitchenExp = getExpenseSum(['КУХНЯ', 'Кухня', 'Ошхона'])
   const bagExp = getExpenseSum(['Пакет'])
   const boxExp = getExpenseSum(['Коробки'])
 
@@ -722,6 +746,12 @@ export function autoBuildDayReport(
     cabbage: { arr: cabbageArr, exp: cabbageExp },
     carrot: { arr: carrotArr, exp: carrotExp },
     lemon: { arr: lemonArr, exp: lemonExp + sesExp + kitchenExp },
+    cucumber: { arr: cucumberArr, exp: cucumberExp },
+    lolloRosso: { arr: lolloRossoArr, exp: lolloRossoExp },
+    rukkola: { arr: rukkolaArr, exp: rukkolaExp },
+    spinach: { arr: spinachArr, exp: spinachExp },
+    mint: { arr: mintArr, exp: mintExp },
+    celery: { arr: celeryArr, exp: celeryExp },
   }
 
   const round3 = (n: number) => Math.round(n * 1000) / 1000
@@ -738,8 +768,8 @@ export function autoBuildDayReport(
     }
   }
 
-  const totalArrivalKg = Math.round((icebergArr + tomatoArr + onionArr + cabbageArr + carrotArr + lemonArr) * 1000) / 1000
-  const totalExpenseKg = Math.round((icebergExp + tomatoExp + onionExp + cabbageExp + carrotExp + lemonExp + sesExp + kitchenExp) * 1000) / 1000
+  const totalArrivalKg = Math.round((icebergArr + tomatoArr + onionArr + cabbageArr + carrotArr + lemonArr + cucumberArr + lolloRossoArr + rukkolaArr + spinachArr + mintArr + celeryArr) * 1000) / 1000
+  const totalExpenseKg = Math.round((icebergExp + tomatoExp + onionExp + cabbageExp + carrotExp + lemonExp + cucumberExp + lolloRossoExp + rukkolaExp + spinachExp + mintExp + celeryExp + sesExp + kitchenExp) * 1000) / 1000
 
   const hasData = dayArrivals.length > 0 || totalArrivalKg > 0 || totalExpenseKg > 0 || totalOutputKg > 0
 
@@ -758,6 +788,12 @@ export function autoBuildDayReport(
       cabbage: { arrival: cabbageArr, expense: cabbageExp, output: toNum(report.outputs['Коул Слоу']?.kg) },
       carrot: { arrival: carrotArr, expense: carrotExp, output: toNum(report.outputs['Коул Слоу']?.kg) },
       lemon: { arrival: lemonArr, expense: lemonExp + sesExp + kitchenExp, output: toNum(report.outputs['Лимон']?.kg) },
+      cucumber: { arrival: cucumberArr, expense: cucumberExp, output: toNum(report.outputs['Огурцы свежие']?.kg) },
+      lolloRosso: { arrival: lolloRossoArr, expense: lolloRossoExp, output: toNum(report.outputs['Lollo Rosso']?.kg) },
+      rukkola: { arrival: rukkolaArr, expense: rukkolaExp, output: toNum(report.outputs['Руккола']?.kg) },
+      spinach: { arrival: spinachArr, expense: spinachExp, output: toNum(report.outputs['Шпинат']?.kg) },
+      mint: { arrival: mintArr, expense: mintExp, output: toNum(report.outputs['Мята']?.kg) },
+      celery: { arrival: celeryArr, expense: celeryExp, output: toNum(report.outputs['Сельдерей']?.kg) },
     }
   }
 }

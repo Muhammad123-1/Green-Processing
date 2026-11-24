@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { canUserAccessGroup } from '@/lib/chatPermissions'
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,11 +37,9 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // Check DM visibility
-      if (msg.groupId.startsWith('dm_')) {
-        const parts = msg.groupId.replace('dm_', '').split('_')
-        const participantIds = parts.map((p) => parseInt(p, 10)).filter((n) => !isNaN(n))
-        if (!participantIds.includes(userId)) continue
+      // Check group & DM visibility
+      if (!canUserAccessGroup(msg.groupId, { id: userId, role: userRole, supplierId: session.supplierId })) {
+        continue
       }
 
       toUpdate.push(msg.id)

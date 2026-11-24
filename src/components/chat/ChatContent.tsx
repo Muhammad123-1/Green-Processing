@@ -25,11 +25,13 @@ import {
   ShieldAlert,
   Sliders,
   DollarSign,
-  Trash2
+  Trash2,
+  Lock
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useChatBadge } from '@/store/chatBadge'
+import { canUserAccessGroup, getDefaultGroupForRole } from '@/lib/chatPermissions'
 
 export interface UserItem {
   id: number
@@ -56,27 +58,11 @@ export interface ChatMessageItem {
 const CHANNELS = [
   {
     id: 'general',
-    name: 'Umumiy Zavod (Hamma)',
-    desc: 'Barcha xodimlar va umumiy e\'lonlar',
+    name: 'Umumiy E\'lonlar',
+    desc: 'Rahbariyatning rasmiy e\'lon va buyruqlari',
     icon: Users,
     color: 'from-blue-600 to-indigo-600',
-    badge: 'Barcha',
-  },
-  {
-    id: 'qa_warehouse',
-    name: 'Sifat Nazorati & Ombor',
-    desc: 'Xomashyo qabuli, KKT va jurnallar muvofiqligi',
-    icon: Shield,
-    color: 'from-emerald-600 to-teal-600',
-    badge: 'QC / Sklad',
-  },
-  {
-    id: 'accounting_finance',
-    name: 'Buxgalteriya & Moliya',
-    desc: "To'lovlar, schyot-fakturalar va o'zaro hisob-kitoblar",
-    icon: DollarSign,
-    color: 'from-violet-600 to-indigo-600',
-    badge: 'Moliya',
+    badge: 'E\'lonlar',
   },
   {
     id: 'kitchen_supply',
@@ -87,12 +73,28 @@ const CHANNELS = [
     badge: 'Oshxona',
   },
   {
+    id: 'qa_warehouse',
+    name: 'Sifat Nazorati & Ombor',
+    desc: 'Xomashyo qabuli, KKT va jurnallar muvofiqligi',
+    icon: Shield,
+    color: 'from-emerald-600 to-teal-600',
+    badge: 'QC / Sklad',
+  },
+  {
     id: 'tech_prod',
     name: 'Texnolog & Ishlab Chiqarish',
     desc: 'Retseptlar, liniya rejimi va chiqish normasi',
     icon: ChefHat,
     color: 'from-purple-600 to-pink-600',
     badge: 'Sex / BOM',
+  },
+  {
+    id: 'accounting_finance',
+    name: 'Buxgalteriya & Moliya',
+    desc: "To'lovlar, schyot-fakturalar va o'zaro hisob-kitoblar",
+    icon: DollarSign,
+    color: 'from-violet-600 to-indigo-600',
+    badge: 'Moliya',
   },
   {
     id: 'management',
@@ -110,10 +112,10 @@ const ROLE_INFO: Record<string, { labelUz: string; labelRu: string; labelEn: str
   QUALITY_CONTROL: { labelUz: 'Bosh Sifat Nazoratchisi', labelRu: 'Гл. Контролер качества', labelEn: 'Lead Quality Inspector', color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/30' },
   INSPECTOR: { labelUz: 'Sex Nazoratchisi (QC)', labelRu: 'Контролер цеха (QC)', labelEn: 'Shop QC Inspector', color: 'text-teal-500', bg: 'bg-teal-500/10 border-teal-500/30' },
   TECHNOLOGY: { labelUz: 'Bosh Texnolog', labelRu: 'Главный технолог', labelEn: 'Chief Technologist', color: 'text-indigo-500', bg: 'bg-indigo-500/10 border-indigo-500/30' },
-  PRODUCTION: { labelUz: 'Ishlab Chiqarish Mudiri', labelRu: 'Нач. производства', labelEn: 'Production Head', color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/30' },
+  PRODUCTION: { labelUz: 'Ishlab Chiqarish', labelRu: 'Производство', labelEn: 'Production', color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/30' },
   KITCHEN: { labelUz: 'Bosh Oshpaz (Kuxnya)', labelRu: 'Шеф-повар кухни', labelEn: 'Head Chef', color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/30' },
-  DEGUSTATION: { labelUz: 'Oshxona & SanPiN Nazoratchisi', labelRu: 'Контролер кухни и СанПиН', labelEn: 'Kitchen & SanPiN Inspector', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
-  WAREHOUSE: { labelUz: 'Omborxona Mudiri', labelRu: 'Заведующий складом', labelEn: 'Warehouse Head', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
+  DEGUSTATION: { labelUz: 'Degustatsiya', labelRu: 'Дегустация', labelEn: 'Degustation', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
+  WAREHOUSE: { labelUz: 'Ombor Xodimi', labelRu: 'Сотрудник склада', labelEn: 'Warehouse Staff', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
   SUPPLY: { labelUz: 'Ta\'minotchi (Snabjenets)', labelRu: 'Снабженец', labelEn: 'Procurement Officer', color: 'text-cyan-500', bg: 'bg-cyan-500/10 border-cyan-500/30' },
   LOGISTICS: { labelUz: 'Logistika & Transport', labelRu: 'Логистика', labelEn: 'Logistics', color: 'text-sky-500', bg: 'bg-sky-500/10 border-sky-500/30' },
   ACCOUNTING: { labelUz: 'Bosh Buxgalter', labelRu: 'Главный бухгалтер', labelEn: 'Chief Accountant', color: 'text-violet-500', bg: 'bg-violet-500/10 border-violet-500/30' },
@@ -135,13 +137,25 @@ export default function ChatContent({
   const { lang } = useLanguage()
   const setUnreadCount = useChatBadge((s) => s.setUnreadCount)
 
-  // Navigation: 'users' (DMs) | 'channels' (Groups)
-  const [navTab, setNavTab] = useState<'users' | 'channels'>('users')
+  // Allowed channels strictly filtered by department and user role
+  const allowedChannels = useMemo(() => {
+    return CHANNELS.filter(ch =>
+      canUserAccessGroup(ch.id, { id: currentUserId, role: userRole })
+    )
+  }, [currentUserId, userRole])
+
+  // Navigation: 'channels' (Groups) default for department staff, 'users' (DMs)
+  const [navTab, setNavTab] = useState<'users' | 'channels'>('channels')
   
   // Selected conversation
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null)
-  const [selectedChannel, setSelectedChannel] = useState<typeof CHANNELS[0] | null>(null)
-  const [activeGroupId, setActiveGroupId] = useState<string>('general')
+  const [selectedChannel, setSelectedChannel] = useState<typeof CHANNELS[0] | null>(() => {
+    const defG = getDefaultGroupForRole(userRole)
+    return CHANNELS.find(ch => ch.id === defG) || CHANNELS[0] || null
+  })
+  const [activeGroupId, setActiveGroupId] = useState<string>(() => {
+    return getDefaultGroupForRole(userRole)
+  })
 
   // Users and Messages state
   const [usersList, setUsersList] = useState<UserItem[]>([])
@@ -168,8 +182,8 @@ export default function ChatContent({
   }, [unreadByUser])
 
   const totalChannelsUnread = useMemo(() => {
-    return CHANNELS.reduce((sum, ch) => sum + (unreadByGroup[ch.id] || 0), 0)
-  }, [unreadByGroup])
+    return allowedChannels.reduce((sum, ch) => sum + (unreadByGroup[ch.id] || 0), 0)
+  }, [allowedChannels, unreadByGroup])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -186,15 +200,17 @@ export default function ChatContent({
         const data: UserItem[] = await res.json()
         setUsersList(data)
 
-        // Check if query params specify a supplierId or userId
+        // Check if query params specify a group, supplierId or userId
         const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
         const paramSupplierId = params ? params.get('supplierId') : null
         const paramUserId = params ? params.get('userId') : null
+        const paramGroup = params ? params.get('group') : null
 
         if (paramSupplierId && (userRole === 'SUPPLY' || userRole === 'ADMIN')) {
           const sIdNum = parseInt(paramSupplierId, 10)
           const target = data.find(u => u.supplierId === sIdNum || u.supplier?.id === sIdNum)
           if (target) {
+            setNavTab('users')
             selectUserDirectChat(target, true)
             return
           }
@@ -203,24 +219,26 @@ export default function ChatContent({
           const uIdNum = parseInt(paramUserId, 10)
           const target = data.find(u => u.id === uIdNum)
           if (target) {
+            setNavTab('users')
             selectUserDirectChat(target, true)
             return
           }
         }
-
-        // Default to first colleague or first channel if none selected
-        if (!selectedUser && !selectedChannel && data.length > 0) {
-          let selectableUsers = data
-          if (userRole === 'SUPPLIER') {
-            selectableUsers = data.filter(u => u.role === 'SUPPLY' || u.role === 'ADMIN')
-          } else if (userRole !== 'SUPPLY' && userRole !== 'ADMIN') {
-            selectableUsers = data.filter(u => u.role !== 'SUPPLIER' && !u.supplierId)
+        if (paramGroup) {
+          const target = allowedChannels.find(c => c.id === paramGroup)
+          if (target) {
+            setNavTab('channels')
+            selectChannelChat(target, true)
+            return
           }
+        }
 
-          const colleague = selectableUsers.find(u => u.name !== userName && u.id !== currentUserId) || selectableUsers[0]
-          if (colleague) {
-            selectUserDirectChat(colleague, false)
-          }
+        // Default to their own department channel
+        const defGroupId = getDefaultGroupForRole(userRole)
+        const defChannel = allowedChannels.find(c => c.id === defGroupId) || allowedChannels[0]
+        if (defChannel && userRole !== 'SUPPLIER') {
+          setNavTab('channels')
+          selectChannelChat(defChannel, false)
         }
       }
     } catch {
@@ -575,7 +593,7 @@ export default function ChatContent({
                     </span>
                   ) : (
                     <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500 text-white font-black">
-                      {CHANNELS.length}
+                      {allowedChannels.length}
                     </span>
                   )}
                 </button>
@@ -688,8 +706,8 @@ export default function ChatContent({
                 })
               )
             ) : (
-              /* CHANNELS (GROUPS) LIST */
-              CHANNELS.map((ch) => {
+              /* CHANNELS (GROUPS) LIST - Strictly filtered per department */
+              allowedChannels.map((ch) => {
                 const Icon = ch.icon
                 const isSelected = selectedChannel?.id === ch.id
                 const unreadCount = unreadByGroup[ch.id] || 0
@@ -985,56 +1003,68 @@ export default function ChatContent({
               </div>
             )}
 
-            <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-              {/* Image Upload Button */}
-              <label
-                className="p-3 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl cursor-pointer transition-all shrink-0 flex items-center justify-center border border-slate-200 dark:border-dark-700 hover:border-emerald-500"
-                title={lang === 'ru' ? 'Прикрепить фото' : 'Rasm biriktirish'}
-              >
-                <Paperclip size={20} />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => e.target.files && setSelectedImage(e.target.files[0])}
-                />
-              </label>
+            {/* If general announcements channel and not admin/director, show read-only alert */}
+            {activeGroupId === 'general' && userRole !== 'ADMIN' && userRole !== 'DIRECTOR' ? (
+              <div className="flex items-center justify-center gap-2.5 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 text-center">
+                <Lock size={16} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                <span>
+                  {lang === 'ru'
+                    ? 'Общий канал предназначен только для официальных объявлений руководства (режим только для чтения). Пожалуйста, пишите в чат своего отдела.'
+                    : 'Umumiy e\'lonlar kanali faqat rahbariyat rasmiy e\'lonlari uchun (Faqat o\'qish rejimida). Iltimos, o\'z bo\'limingiz guruhida yozing.'}
+                </span>
+              </div>
+            ) : (
+              <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+                {/* Image Upload Button */}
+                <label
+                  className="p-3 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl cursor-pointer transition-all shrink-0 flex items-center justify-center border border-slate-200 dark:border-dark-700 hover:border-emerald-500"
+                  title={lang === 'ru' ? 'Прикрепить фото' : 'Rasm biriktirish'}
+                >
+                  <Paperclip size={20} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files && setSelectedImage(e.target.files[0])}
+                  />
+                </label>
 
-              {/* Text Input */}
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSendMessage(e)
+                {/* Text Input */}
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSendMessage(e)
+                    }
+                  }}
+                  placeholder={
+                    selectedUser
+                      ? `${selectedUser.name}ga xabar yozish... (Enter - yuborish)`
+                      : `${selectedChannel?.name || 'Guruh'}ga yozish...`
                   }
-                }}
-                placeholder={
-                  selectedUser
-                    ? `${selectedUser.name}ga xabar yozish... (Enter - yuborish)`
-                    : `${selectedChannel?.name || 'Guruh'}ga yozish...`
-                }
-                className="flex-1 bg-slate-50 dark:bg-dark-850 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 resize-none max-h-[120px] min-h-[44px] shadow-inner"
-                rows={1}
-              />
+                  className="flex-1 bg-slate-50 dark:bg-dark-850 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 resize-none max-h-[120px] min-h-[44px] shadow-inner"
+                  rows={1}
+                />
 
-              {/* Send Button */}
-              <button
-                type="submit"
-                disabled={(!text.trim() && !selectedImage) || uploadingImage}
-                className="p-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-md shadow-emerald-600/30 shrink-0 flex items-center justify-center gap-1.5"
-              >
-                {uploadingImage ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <>
-                    <Send size={18} />
-                    <span className="hidden sm:inline text-xs font-extrabold">{lang === 'ru' ? 'Отправить' : 'Yuborish'}</span>
-                  </>
-                )}
-              </button>
-            </form>
+                {/* Send Button */}
+                <button
+                  type="submit"
+                  disabled={(!text.trim() && !selectedImage) || uploadingImage}
+                  className="p-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-md shadow-emerald-600/30 shrink-0 flex items-center justify-center gap-1.5"
+                >
+                  {uploadingImage ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      <span className="hidden sm:inline text-xs font-extrabold">{lang === 'ru' ? 'Отправить' : 'Yuborish'}</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

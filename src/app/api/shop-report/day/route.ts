@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { isDateStr, sanitizeDayReport, hasReportData, getDayReport, autoBuildDayReport } from '@/lib/shopReport'
+import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 
 export const dynamic = 'force-dynamic'
 
@@ -151,6 +152,9 @@ export async function PUT(req: NextRequest) {
     } else {
       await prisma.shopExpense.create({ data: { date, materials: {}, balances } })
     }
+
+    // Keep warehouse FIFO batches synced with latest closing stock
+    syncInventoryBatchesFromDailyBalances().catch((e) => console.error('FIFO sync error:', e))
 
     return NextResponse.json({ success: true, date, updatedAt: now, updatedBy: session.name })
   } catch (error: any) {

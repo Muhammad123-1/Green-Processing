@@ -48,6 +48,7 @@ import {
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
+import { SignatureCell, useWarehouseSignature } from './SignatureCell'
 
 const tBase = {
   uz: {
@@ -232,15 +233,33 @@ type MacroMaterial = {
   nameUz: string
   category: string
   unit: string
-  totalArrivalKg: number
-  totalExpenseKg: number
+  totalArrivalKg?: number
+  totalExpenseKg?: number
   currentStockKg: number
   minStock: number
   status: 'green' | 'yellow' | 'red'
-  arrivalsCount: number
-  lastArrivalDate: string
+  arrivalsCount?: number
+  lastArrivalDate?: string
   topSupplier: string
   suppliersCount: number
+  fifo?: {
+    activeBatchNumber: string | null
+    activeBatchQuantity: number
+    activeBatchDate: string | null
+    activeBatchExpiry: string | null
+    daysUntilExpiry: number | null
+    batchesCount: number
+    isExpired?: boolean
+    batches?: Array<{
+      id?: number
+      batchNumber: string
+      quantity: number
+      receivedAt?: string | null
+      expirationDate?: string | null
+      daysUntilExpiry?: number | null
+      isFirst?: boolean
+    }>
+  }
 }
 
 type MacroSupplier = {
@@ -315,6 +334,7 @@ type MacroStatsData = {
     totalNomenclaturesCount: number
     totalFinishedGoodsKg: number
     totalFinishedGoodsTonnes: number
+    totalFifoBatchesCount?: number
     criticalCount: number
     warningCount: number
     sufficientCount: number
@@ -336,9 +356,24 @@ type MacroStatsData = {
   suppliers: MacroSupplier[]
 }
 
+function formatShortBatch(batchNum?: string | null): string | null {
+  if (!batchNum) return null
+  const trimmed = batchNum.trim().replace(/^#/, '').trim()
+  if (!trimmed || trimmed === '-' || trimmed === '0') return null
+  if (trimmed.toUpperCase().startsWith('BATCH-') || trimmed.toUpperCase().startsWith('PAR-') || trimmed.toUpperCase().startsWith('AUTO-')) {
+    return null
+  }
+  // Reject large numeric database IDs (e.g. 9341, 9351)
+  if (/^\d{4,}$/.test(trimmed)) {
+    return null
+  }
+  return trimmed
+}
+
 export default function WarehouseContent() {
   const router = useRouter()
   const { lang, formatDual } = useLanguage()
+  const warehouseSig = useWarehouseSignature()
   
   const l = {} as typeof tBase.uz;
   for (const key in tBase.uz) {
@@ -454,6 +489,19 @@ export default function WarehouseContent() {
   const [orderingItem, setOrderingItem] = useState<ProductInventory | null>(null)
   const [orderLoading, setOrderLoading] = useState(false)
 
+  // Stock Level Modal states
+  const [stockLevelModal, setStockLevelModal] = useState<{
+    isOpen: boolean
+    material: MacroMaterial | null
+    minStockInput: string
+    isSaving: boolean
+  }>({
+    isOpen: false,
+    material: null,
+    minStockInput: '',
+    isSaving: false
+  })
+
   const getTomorrowDateStr = () => {
     const d = new Date()
     d.setDate(d.getDate() + 1)
@@ -493,6 +541,41 @@ export default function WarehouseContent() {
       console.error('Fetch macro stats error:', err)
     } finally {
       setMacroLoading(false)
+    }
+  }
+
+  function handleOpenStockLevelModal(m: MacroMaterial) {
+    setStockLevelModal({
+      isOpen: true,
+      material: m,
+      minStockInput: String(m.minStock || 0),
+      isSaving: false
+    })
+  }
+
+  async function handleSaveStockLevel() {
+    if (!stockLevelModal.material) return
+    const num = Math.max(0, parseFloat(stockLevelModal.minStockInput) || 0)
+    setStockLevelModal(prev => ({ ...prev, isSaving: true }))
+    try {
+      const res = await fetch('/api/warehouse/stock-level', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: stockLevelModal.material.key,
+          minStock: num,
+          productName: stockLevelModal.material.nameUz || stockLevelModal.material.name
+        })
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to save')
+      }
+      await fetchMacroStats()
+      setStockLevelModal({ isOpen: false, material: null, minStockInput: '', isSaving: false })
+    } catch (err: any) {
+      alert(err.message || 'Xatolik yuz berdi')
+      setStockLevelModal(prev => ({ ...prev, isSaving: false }))
     }
   }
 
@@ -1248,93 +1331,17 @@ export default function WarehouseContent() {
         <div className="space-y-4 sm:space-y-6">
           {/* 1. Director-Style Executive KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-            {/* Card 1: Jami Kirim */}
+            {/* Card 1: Ombordagi Joriy Zaxira */}
             <div 
-              onClick={() => router.push('/inbound')}
-              className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-emerald-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
+              className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors" />
               <div className="relative z-10 flex items-start justify-between">
                 <div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
-                    {formatDual("Jami Kirim", "Всего приход", "Total Arrivals")}
+                    {formatDual("Ombordagi Joriy Qoldiq", "Остаток на складе", "Current Stock")}
                   </span>
                   <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
-                    {macroLoading ? (
-                      <span className="text-slate-400 text-sm">...</span>
-                    ) : (
-                      `${macroData?.summary.totalArrivalTonnes.toLocaleString() || '0'} tn`
-                    )}
-                  </div>
-                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {macroData?.summary.totalArrivalKg.toLocaleString() || 0} kg
-                    </span>
-                    <span className="hidden sm:inline">·</span>
-                    <span className="text-slate-500 text-[10px] sm:text-xs">
-                      {macroData?.summary.totalArrivalBatches || 0} ta kirim
-                    </span>
-                  </div>
-                </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
-                  <ArrowDownRight size={18} className="sm:hidden" />
-                  <ArrowDownRight size={24} className="hidden sm:block" />
-                </div>
-              </div>
-              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-between group-hover:text-emerald-500 dark:group-hover:text-emerald-300">
-                <span className="truncate">{formatDual("Kirim jurnali", "Журнал прихода", "Arrivals log")}</span>
-                <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform sm:w-3.5 sm:h-3.5" />
-              </div>
-            </div>
-
-            {/* Card 2: Jami Chiqim */}
-            <div 
-              onClick={() => router.push('/outbound')}
-              className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-amber-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/20 transition-colors" />
-              <div className="relative z-10 flex items-start justify-between">
-                <div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
-                    {formatDual("Jami Chiqim", "Расход в цех", "Total Expensed")}
-                  </span>
-                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
-                    {macroLoading ? (
-                      <span className="text-slate-400 text-sm">...</span>
-                    ) : (
-                      `${macroData?.summary.totalExpenseTonnes.toLocaleString() || '0'} tn`
-                    )}
-                  </div>
-                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {macroData?.summary.totalExpenseKg.toLocaleString() || 0} kg
-                    </span>
-                    <span className="hidden sm:inline">·</span>
-                    <span className="text-slate-500 text-[10px] sm:text-xs">
-                      {macroData?.summary.totalDispatchesCount || 0} ta chiqim
-                    </span>
-                  </div>
-                </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-500/15 border border-amber-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
-                  <ArrowUpRight size={18} className="sm:hidden" />
-                  <ArrowUpRight size={24} className="hidden sm:block" />
-                </div>
-              </div>
-              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-bold flex items-center justify-between group-hover:text-amber-500 dark:group-hover:text-amber-300">
-                <span className="truncate">{formatDual("Chiqim jurnali", "Журнал расхода", "Dispatches log")}</span>
-                <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform sm:w-3.5 sm:h-3.5" />
-              </div>
-            </div>
-
-            {/* Card 3: Joriy Ombor Qoldig'i */}
-            <div className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-cyan-500/50 transition-all relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
-              <div className="relative z-10 flex items-start justify-between">
-                <div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
-                    {formatDual("Ombor Qoldig'i", "Остаток склада", "Net Stock")}
-                  </span>
-                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-cyan-600 dark:text-cyan-400">
                     {macroLoading ? (
                       <span className="text-slate-400 text-sm">...</span>
                     ) : (
@@ -1346,8 +1353,83 @@ export default function WarehouseContent() {
                       {macroData?.summary.currentStockKg.toLocaleString() || 0} kg
                     </span>
                     <span className="hidden sm:inline">·</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] sm:text-xs">
+                    <span className="text-slate-500 text-[10px] sm:text-xs">
+                      {macroData?.summary.totalNomenclaturesCount || 0} turdagi tovar
+                    </span>
+                  </div>
+                </div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                  <Package size={18} className="sm:hidden" />
+                  <Package size={24} className="hidden sm:block" />
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-between">
+                <span className="truncate">{formatDual("Skladda mavjud zaxira", "Фактическое наличие", "Physical stock")}</span>
+                <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md">Ayni damda</span>
+              </div>
+            </div>
+
+            {/* Card 2: FIFO Faol Partiyalar */}
+            <div 
+              onClick={() => setBatchesView('fefo')}
+              className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-amber-500/50 hover:-translate-y-0.5 transition-all relative overflow-hidden group cursor-pointer"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/20 transition-colors" />
+              <div className="relative z-10 flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                    {formatDual("FIFO Faol Partiyalar", "Очередь партий FIFO", "Active FIFO Batches")}
+                  </span>
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400">
+                    {macroLoading ? (
+                      <span className="text-slate-400 text-sm">...</span>
+                    ) : (
+                      `${macroData?.summary.totalFifoBatchesCount || inventory.reduce((acc, i) => acc + i.batches.length, 0) || 0} ta`
+                    )}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      Chiqim navbatida
+                    </span>
+                    <span className="hidden sm:inline">·</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-bold text-[10px] sm:text-xs">
+                      FEFO nazorati
+                    </span>
+                  </div>
+                </div>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-500/15 border border-amber-500/30 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
+                  <Layers size={18} className="sm:hidden" />
+                  <Layers size={24} className="hidden sm:block" />
+                </div>
+              </div>
+              <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-bold flex items-center justify-between group-hover:text-amber-500 dark:group-hover:text-amber-300">
+                <span className="truncate">{formatDual("FEFO navbati & zonalar", "Очередь FEFO и зоны", "FEFO queue & zones")}</span>
+                <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform sm:w-3.5 sm:h-3.5" />
+              </div>
+            </div>
+
+            {/* Card 3: Zaxira Me'yori (Svetofor) */}
+            <div className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm hover:border-cyan-500/50 transition-all relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
+              <div className="relative z-10 flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider block mb-0.5 sm:mb-1">
+                    {formatDual("Zaxira Me'yori", "Уровень запаса", "Stock Level")}
+                  </span>
+                  <div className="text-lg sm:text-2xl md:text-3xl font-black text-cyan-600 dark:text-cyan-400">
+                    {macroLoading ? (
+                      <span className="text-slate-400 text-sm">...</span>
+                    ) : (
+                      `${macroData?.summary.sufficientCount || 0} / ${macroData?.materials.length || 0}`
+                    )}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                       {macroData?.summary.sufficientCount || 0} me'yorda
+                    </span>
+                    <span className="hidden sm:inline">·</span>
+                    <span className="text-slate-500 text-[10px] sm:text-xs">
+                      Svetofor holati
                     </span>
                   </div>
                 </div>
@@ -1357,7 +1439,7 @@ export default function WarehouseContent() {
                 </div>
               </div>
               <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100 dark:border-dark-800 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span className="truncate">{formatDual("Sof zaxira", "Резерв", "Reserve")}</span>
+                <span className="truncate">{formatDual("Ogohlantirishlar", "Предупреждения", "Alerts")}</span>
                 <div className="flex items-center gap-1 text-[9px] sm:text-[10px]">
                   {(macroData?.summary.criticalCount || 0) > 0 && (
                     <span className="px-1 sm:px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 font-bold whitespace-nowrap">
@@ -1414,8 +1496,11 @@ export default function WarehouseContent() {
                 </div>
                 <h3 className="text-lg md:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
                   <BarChart3 className="text-emerald-600 dark:text-emerald-400" size={22} />
-                  <span>{formatDual("Umumiy Xomashyolar Balansi & Qoldiq Statistikasi", "Сводный баланс и статистика остатков сырья", "Aggregated Raw Material Balance & Stock")}</span>
+                  <span>{formatDual("Ombordagi Joriy Qoldiqlar & FIFO Partiyalar Nazorati", "Остатки склада и партии FIFO", "Current Warehouse Stock & FIFO Batches")}</span>
                 </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {formatDual("Skladda ayni damda mavjud xomashyolar, qoldiq miqdorlar va FIFO navbatidagi partiyalar", "Фактические остатки на складе и очередность партий по FIFO", "Real-time stock balances and next-in-line FIFO batches")}
+                </p>
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -1460,7 +1545,7 @@ export default function WarehouseContent() {
                     : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
-                🥬 {formatDual("Xomashyo & Sabzavotlar", "Сырье и овощи", "Raw Vegetables")}
+                {formatDual("Xomashyo & Sabzavotlar", "Сырье и овощи", "Raw Vegetables")}
               </button>
               <button
                 onClick={() => setMacroCategoryFilter('packaging')}
@@ -1470,7 +1555,7 @@ export default function WarehouseContent() {
                     : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
-                📦 {formatDual("Qadoqlash & Paketlar", "Упаковка и тара", "Packaging & Bags")}
+                {formatDual("Qadoqlash & Paketlar", "Упаковка и тара", "Packaging & Bags")}
               </button>
               <button
                 onClick={() => setMacroCategoryFilter('hygiene')}
@@ -1480,7 +1565,7 @@ export default function WarehouseContent() {
                     : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
-                🧤 {formatDual("Xo'jalik & Gigiyena", "Хоз. товары и гигиена", "Hygiene & Supplies")}
+                {formatDual("Xo'jalik & Gigiyena", "Хоз. товары и гигиена", "Hygiene & Supplies")}
               </button>
               <button
                 onClick={() => setMacroCategoryFilter('chemicals')}
@@ -1490,7 +1575,7 @@ export default function WarehouseContent() {
                     : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-dark-700'
                 }`}
               >
-                🧪 {formatDual("Kimyoviy & Dezinfeksiya", "Химия и дезинфекция", "Chemicals")}
+                {formatDual("Kimyoviy & Dezinfeksiya", "Химия и дезинфекция", "Chemicals")}
               </button>
             </div>
 
@@ -1507,7 +1592,9 @@ export default function WarehouseContent() {
                 </div>
               ) : (
                 filteredMacroMaterials.map((m) => {
-                  const stockPercent = m.totalArrivalKg > 0 ? Math.min(100, Math.round((m.currentStockKg / m.totalArrivalKg) * 100)) : 0
+                  const stockPercent = m.minStock > 0
+                    ? Math.min(100, Math.round((Math.max(0, m.currentStockKg) / m.minStock) * 100))
+                    : (m.currentStockKg > 0 ? 100 : 0)
                   return (
                     <div key={m.key} className="p-3.5 hover:bg-slate-50 dark:hover:bg-dark-800/30 transition-colors space-y-2.5">
                       {/* Name & Status */}
@@ -1534,22 +1621,43 @@ export default function WarehouseContent() {
                         </span>
                       </div>
 
-                      {/* 3 Metrics Box */}
-                      <div className="grid grid-cols-3 gap-1.5 bg-slate-50 dark:bg-dark-850/80 p-2 rounded-xl border border-slate-200 dark:border-dark-750 text-center">
-                        <div>
-                          <span className="text-[9px] text-slate-500 dark:text-slate-400 block">{formatDual("Kirim", "Приход", "Arrival")}</span>
-                          <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{m.totalArrivalKg.toLocaleString()}</span>
-                          <span className="text-[8px] text-slate-400 dark:text-slate-500 block">{m.unit}</span>
+                      {/* Current Stock & FIFO Batch Box */}
+                      <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-dark-850/80 p-2.5 rounded-xl border border-slate-200 dark:border-dark-750">
+                        <div className="text-left">
+                          <span className="text-[9px] text-slate-500 dark:text-slate-400 block uppercase font-bold tracking-wider">
+                            {formatDual("Skladdagi Qoldiq", "Остаток на складе", "Current Stock")}
+                          </span>
+                          <div className="flex items-baseline gap-1 mt-0.5">
+                            <span className={`text-base font-black leading-tight ${
+                              m.currentStockKg <= 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'
+                            }`}>
+                              {m.currentStockKg <= 0 ? 0 : m.currentStockKg.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-bold">{m.unit}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-[9px] text-amber-600 dark:text-amber-400/90 block">{formatDual("Sexga", "В цех", "Shop")}</span>
-                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 leading-tight">{m.totalExpenseKg.toLocaleString()}</span>
-                          <span className="text-[8px] text-slate-400 dark:text-slate-500 block">{m.unit}</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400/90 block">{formatDual("Qoldiq", "Остаток", "Stock")}</span>
-                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 leading-tight">{m.currentStockKg.toLocaleString()}</span>
-                          <span className="text-[8px] text-slate-400 dark:text-slate-500 block">{m.unit}</span>
+                        <div className="text-right">
+                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 block uppercase font-bold tracking-wider">
+                            {formatDual("FIFO 1-Navbat", "Партия FIFO", "FIFO Batch")}
+                          </span>
+                          {m.currentStockKg > 0 && m.fifo && m.fifo.activeBatchQuantity > 0 ? (
+                            <div className="mt-0.5">
+                              {formatShortBatch(m.fifo.activeBatchNumber) ? (
+                                <span className="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400 truncate block">
+                                  Partiya #{formatShortBatch(m.fifo.activeBatchNumber)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 truncate block">
+                                  {formatDual("Partiya kiritilmagan", "Партия не указана", "Batch not specified")}
+                                </span>
+                              )}
+                              <span className="text-[9px] text-slate-500">
+                                {m.fifo.activeBatchQuantity.toLocaleString()} {m.unit}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 italic block mt-0.5">—</span>
+                          )}
                         </div>
                       </div>
 
@@ -1557,7 +1665,19 @@ export default function WarehouseContent() {
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
                           <span>{formatDual("Zaxira me'yori", "Запас", "Level")}</span>
-                          <span className="font-bold text-slate-700 dark:text-slate-300">{stockPercent}%</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-700 dark:text-slate-300">{stockPercent}%</span>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenStockLevelModal(m)}
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-300/80 dark:border-dark-700 transition-all font-mono text-[10px] cursor-pointer shadow-xs whitespace-nowrap flex-shrink-0 group"
+                              title={formatDual("Minimal me'yorni o'zgartirish", "Изменить мин. норму", "Change min level")}
+                            >
+                              <span className="text-slate-500 dark:text-slate-400 font-sans">min:</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">{m.minStock.toLocaleString()} {m.unit}</span>
+                              <Edit2 size={10} className="text-slate-400 dark:text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                            </button>
+                          </div>
                         </div>
                         <div className="w-full bg-slate-200 dark:bg-dark-800 h-1.5 rounded-full overflow-hidden border border-slate-200 dark:border-dark-750">
                           <div 
@@ -1593,40 +1713,41 @@ export default function WarehouseContent() {
 
             {/* Desktop Table (hidden sm:block) */}
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
+              <table className="w-full text-left border-collapse text-sm min-w-[1150px]">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/60 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    <th className="p-4">{formatDual("Xomashyo Nomi", "Сырье", "Raw Material")}</th>
-                    <th className="p-4 text-center">{formatDual("Jami Kirim", "Всего Приход", "Total Arrival")}</th>
-                    <th className="p-4 text-center">{formatDual("Jami Chiqim (Sexga)", "Всего Расход (Цех)", "Total Expensed")}</th>
-                    <th className="p-4 text-center">{formatDual("Ombordagi Qoldiq", "Остаток на складе", "Current Stock")}</th>
-                    <th className="p-4 text-center">{formatDual("Zaxira Holati", "Уровень запаса", "Stock Level")}</th>
-                    <th className="p-4 text-center">{formatDual("Status (Svetofor)", "Светофор", "Status")}</th>
-                    <th className="p-4">{formatDual("Asosiy Yetkazib Beruvchi", "Главный поставщик", "Primary Supplier")}</th>
-                    <th className="p-4 text-right">{formatDual("Tezkor Harakat", "Действие", "Action")}</th>
+                    <th className="p-4 min-w-[220px]">{formatDual("Xomashyo Nomi", "Сырье", "Raw Material")}</th>
+                    <th className="p-4 text-center min-w-[170px]">{formatDual("Skladdagi Qoldiq", "Остаток на складе", "Current Stock")}</th>
+                    <th className="p-4 text-center min-w-[180px]">{formatDual("FIFO Navbatdagi Partiya", "Партия FIFO (1-очередь)", "Next FIFO Batch")}</th>
+                    <th className="p-4 text-center min-w-[150px]">{formatDual("Zaxira Holati", "Уровень запаса", "Stock Level")}</th>
+                    <th className="p-4 text-center min-w-[130px]">{formatDual("Status (Svetofor)", "Светофор", "Status")}</th>
+                    <th className="p-4 min-w-[170px]">{formatDual("Asosiy Yetkazib Beruvchi", "Главный поставщик", "Primary Supplier")}</th>
+                    <th className="p-4 text-right min-w-[110px]">{formatDual("Tezkor Harakat", "Действие", "Action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
                   {macroLoading && !macroData ? (
                     <tr>
-                      <td colSpan={8} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                      <td colSpan={7} className="p-12 text-center text-slate-500 dark:text-slate-400">
                         <Loader2 className="animate-spin text-emerald-500 mx-auto mb-2" size={28} />
                         <span>{formatDual("Xomashyo balansi hisoblanmoqda...", "Расчет баланса сырья...", "Calculating material balances...")}</span>
                       </td>
                     </tr>
                   ) : filteredMacroMaterials.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-10 text-center text-slate-500">
+                      <td colSpan={7} className="p-10 text-center text-slate-500">
                         {formatDual("Qidiruv bo'yicha xomashyo topilmadi", "Ничего не найдено", "No materials found")}
                       </td>
                     </tr>
                   ) : (
                     filteredMacroMaterials.map((m) => {
-                      const stockPercent = m.totalArrivalKg > 0 ? Math.min(100, Math.round((m.currentStockKg / m.totalArrivalKg) * 100)) : 0
+                      const stockPercent = m.minStock > 0
+                        ? Math.min(100, Math.round((Math.max(0, m.currentStockKg) / m.minStock) * 100))
+                        : (m.currentStockKg > 0 ? 100 : 0)
                       return (
                         <tr key={m.key} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                           {/* Material Name */}
-                          <td className="p-4">
+                          <td className="p-4 min-w-[220px]">
                             <div className="flex items-center gap-3 w-full sm:w-auto">
                               <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0 shadow-xs">
                                 <Package size={18} />
@@ -1646,59 +1767,96 @@ export default function WarehouseContent() {
                             </div>
                           </td>
 
-                          {/* Total Arrival */}
-                          <td className="p-4 text-center">
-                            <div className="font-black text-slate-900 dark:text-white text-base">
-                              {m.unit === 'kg'
-                                ? (m.totalArrivalKg >= 1000
-                                    ? `${(m.totalArrivalKg / 1000).toFixed(1)} tn`
-                                    : `${m.totalArrivalKg.toLocaleString()} kg`)
-                                : `${m.totalArrivalKg.toLocaleString()} ${m.unit}`}
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              {m.totalArrivalKg.toLocaleString()} {m.unit} ({m.arrivalsCount} ta partiya)
-                            </div>
-                          </td>
-
-                          {/* Total Expense */}
-                          <td className="p-4 text-center">
-                            <div className="font-black text-amber-600 dark:text-amber-400 text-base">
-                              {m.unit === 'kg'
-                                ? (m.totalExpenseKg >= 1000
-                                    ? `${(m.totalExpenseKg / 1000).toFixed(1)} tn`
-                                    : `${m.totalExpenseKg.toLocaleString()} kg`)
-                                : `${m.totalExpenseKg.toLocaleString()} ${m.unit}`}
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              {m.totalExpenseKg.toLocaleString()} {m.unit} sexga berilgan
-                            </div>
-                          </td>
-
                           {/* Current Stock */}
-                          <td className="p-4 text-center">
-                            <div className={`inline-block px-3 py-1.5 rounded-xl border font-black text-base ${
-                              m.status === 'green'
+                          <td className="p-4 text-center min-w-[170px]">
+                            <div className={`inline-block px-3.5 py-1.5 rounded-xl border font-black text-base shadow-xs ${
+                              m.currentStockKg <= 0
+                                ? 'bg-rose-50 dark:bg-rose-500/15 border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300'
+                                : m.status === 'green'
                                 ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                                : m.status === 'yellow'
-                                ? 'bg-yellow-50 dark:bg-yellow-500/15 border-yellow-200 dark:border-yellow-500/30 text-yellow-700 dark:text-yellow-300'
-                                : 'bg-rose-50 dark:bg-rose-500/15 border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300'
+                                : 'bg-yellow-50 dark:bg-yellow-500/15 border-yellow-200 dark:border-yellow-500/30 text-yellow-700 dark:text-yellow-300'
                             }`}>
-                              {m.unit === 'kg'
-                                ? (m.currentStockKg >= 1000
-                                    ? `${(m.currentStockKg / 1000).toFixed(1)} tn`
-                                    : `${m.currentStockKg.toLocaleString()} kg`)
-                                : `${m.currentStockKg.toLocaleString()} ${m.unit}`}
+                              {m.currentStockKg <= 0 ? (
+                                <span>0 {m.unit}</span>
+                              ) : m.unit === 'kg' ? (
+                                m.currentStockKg >= 1000
+                                  ? `${(m.currentStockKg / 1000).toFixed(2)} tn`
+                                  : `${m.currentStockKg.toLocaleString()} kg`
+                              ) : (
+                                `${m.currentStockKg.toLocaleString()} ${m.unit}`
+                              )}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
-                              {m.currentStockKg.toLocaleString()} {m.unit}
+                            <div className="text-[11px] mt-1 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                              {m.currentStockKg <= 0 ? (
+                                <span className="text-rose-500 font-bold">Omborda tugagan</span>
+                              ) : (
+                                <span>{m.currentStockKg.toLocaleString()} {m.unit} mavjud</span>
+                              )}
                             </div>
+                          </td>
+
+                          {/* FIFO Next Batch */}
+                          <td className="p-4 text-center min-w-[180px]">
+                            {m.currentStockKg > 0 && m.fifo && m.fifo.activeBatchQuantity > 0 ? (
+                              <div className="flex flex-col items-center gap-1">
+                                {formatShortBatch(m.fifo.activeBatchNumber) ? (
+                                  <span
+                                    title={m.fifo.activeBatchNumber || undefined}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 font-black text-emerald-700 dark:text-emerald-300 text-xs shadow-xs"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span>Partiya #{formatShortBatch(m.fifo.activeBatchNumber)}</span>
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-amber-50 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 font-bold text-amber-700 dark:text-amber-300 text-[11px] shadow-xs"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    <span>{formatDual("Partiya kiritilmagan", "Партия не указана", "Batch not specified")}</span>
+                                  </span>
+                                )}
+                                <div className="flex items-center gap-1 text-[11px] font-mono whitespace-nowrap">
+                                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                                    {m.fifo.activeBatchQuantity.toLocaleString()} {m.unit}
+                                  </span>
+                                  <span className="text-slate-400 text-[10px]">(1-navbatda)</span>
+                                </div>
+                                {m.fifo.batchesCount > 1 && (
+                                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-dark-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-dark-700 whitespace-nowrap">
+                                    +{m.fifo.batchesCount - 1} ta navbatda
+                                  </span>
+                                )}
+                                {m.fifo.daysUntilExpiry !== null && typeof m.fifo.daysUntilExpiry === 'number' && (
+                                  <span className={`text-[10px] font-bold whitespace-nowrap ${
+                                    m.fifo.daysUntilExpiry <= 2 ? 'text-rose-500' : m.fifo.daysUntilExpiry <= 5 ? 'text-amber-500' : 'text-slate-400'
+                                  }`}>
+                                    {m.fifo.daysUntilExpiry > 0 ? `FEFO: ${m.fifo.daysUntilExpiry} kun qoldi` : "Muddati o'tgan"}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-center">
+                                <span className="text-xs text-slate-400 italic">
+                                  —
+                                </span>
+                              </div>
+                            )}
                           </td>
 
                           {/* Stock Level Progress */}
-                          <td className="p-4 text-center min-w-[130px]">
-                            <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1">
-                              <span>{stockPercent}% qoldi</span>
-                              <span className="font-mono text-[10px]">min: {m.minStock}</span>
+                          <td className="p-4 text-center min-w-[150px]">
+                            <div className="flex items-center justify-between gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mb-1.5">
+                              <span className="font-bold">{stockPercent}%</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenStockLevelModal(m)}
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-300/80 dark:border-dark-700 transition-all font-mono text-[10px] cursor-pointer shadow-xs whitespace-nowrap flex-shrink-0 group"
+                                title={formatDual("Minimal me'yorni o'zgartirish", "Изменить мин. норму", "Change min level")}
+                              >
+                                <span className="text-slate-500 dark:text-slate-400 font-sans">min:</span>
+                                <span className="font-bold text-slate-800 dark:text-slate-200">{m.minStock.toLocaleString()} {m.unit}</span>
+                                <Edit2 size={10} className="text-slate-400 dark:text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                              </button>
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-dark-800 rounded-full h-2 overflow-hidden border border-slate-200 dark:border-dark-700">
                               <div
@@ -1715,23 +1873,23 @@ export default function WarehouseContent() {
                           </td>
 
                           {/* Status (Svetofor) */}
-                          <td className="p-4 text-center">
+                          <td className="p-4 text-center min-w-[130px]">
                             {m.status === 'green' && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                                 <CheckCircle size={14} />
-                                <span>{formatDual("Yetarli (Yashil)", "В норме (Зеленый)", "Sufficient")}</span>
+                                <span>{formatDual("Yetarli", "В норме", "Sufficient")}</span>
                               </span>
                             )}
                             {m.status === 'yellow' && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-yellow-50 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/30">
                                 <Clock size={14} />
-                                <span>{formatDual("Kamaygan (Sariq)", "Мало (Желтый)", "Low")}</span>
+                                <span>{formatDual("Kamaygan", "Мало", "Low")}</span>
                               </span>
                             )}
                             {m.status === 'red' && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30">
                                 <AlertTriangle size={14} />
-                                <span>{formatDual("Kritik (Qizil)", "Критично (Красный)", "Critical")}</span>
+                                <span>{formatDual("Kritik", "Критично", "Critical")}</span>
                               </span>
                             )}
                           </td>
@@ -1742,8 +1900,8 @@ export default function WarehouseContent() {
                               {m.topSupplier}
                             </div>
                             <div className="text-[11px] text-slate-500 mt-0.5">
-                              {m.suppliersCount > 1
-                                ? `+ yana ${m.suppliersCount - 1} ta ta'minotchi`
+                              {(m.suppliersCount || 0) > 1
+                                ? `+ yana ${(m.suppliersCount || 1) - 1} ta ta'minotchi`
                                 : "Yagona yetkazib beruvchi"}
                             </div>
                           </td>
@@ -1859,7 +2017,7 @@ export default function WarehouseContent() {
                     <div key={b.id} className="p-3.5 hover:bg-slate-50 dark:hover:bg-dark-800/30 transition-colors space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
-                          📅 {b.date}
+                          {b.date}
                         </span>
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 font-black text-amber-700 dark:text-amber-300 text-[11px]">
                           <Tag size={10} />
@@ -1892,19 +2050,20 @@ export default function WarehouseContent() {
                       <th className="p-4">{formatDual("TA'MINOTCHI", "ПОСТАВЩИК", "Supplier")}</th>
                       <th className="p-4 text-center">{formatDual("PARTIYA", "ПАРТИИ", "Batch No")}</th>
                       <th className="p-4 text-center">{formatDual("TOIFA", "КАТЕГОРИЯ", "Category")}</th>
+                      <th className="p-4 text-center">{formatDual("MAS'UL IMZOSI", "ПОДПИСЬ", "SIGNATURE")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-dark-750">
                     {macroLoading && !macroData ? (
                       <tr>
-                        <td colSpan={6} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                        <td colSpan={7} className="p-12 text-center text-slate-500 dark:text-slate-400">
                           <Loader2 className="animate-spin text-amber-500 mx-auto mb-2" size={28} />
                           <span>{formatDual("Partiyalar yuklanmoqda...", "Загрузка партий...", "Loading batches...")}</span>
                         </td>
                       </tr>
                     ) : batchesPagination.displayedItems.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-12 text-center text-slate-500">
+                        <td colSpan={7} className="p-12 text-center text-slate-500">
                           <Tag size={36} className="mx-auto mb-2 opacity-30" />
                           <p>{formatDual("Partiya topilmadi", "Партии не найдены", "No batches found")}</p>
                         </td>
@@ -1934,6 +2093,14 @@ export default function WarehouseContent() {
                             <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                               {b.category}
                             </span>
+                          </td>
+                          <td className="p-4 text-center">
+                            <SignatureCell
+                              url={warehouseSig.url}
+                              name={warehouseSig.name}
+                              title={warehouseSig.title}
+                              formatDual={formatDual}
+                            />
                           </td>
                         </tr>
                       ))
@@ -2069,9 +2236,9 @@ export default function WarehouseContent() {
                             <span className="text-[10px] font-bold text-slate-500">{item.unit}</span>
                           </div>
                           <div className="text-[10px] mt-0.5 font-bold">
-                            {item.status === 'red' && <span className="text-red-500">🔴 Kritik</span>}
-                            {item.status === 'yellow' && <span className="text-amber-500">🟡 Kam</span>}
-                            {item.status === 'green' && <span className="text-emerald-500">🟢 Yetarli</span>}
+                            {item.status === 'red' && <span className="inline-flex items-center gap-1 text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>Kritik</span>}
+                            {item.status === 'yellow' && <span className="inline-flex items-center gap-1 text-amber-500"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Kam</span>}
+                            {item.status === 'green' && <span className="inline-flex items-center gap-1 text-emerald-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Yetarli</span>}
                           </div>
                         </div>
                       </div>
@@ -2144,14 +2311,14 @@ export default function WarehouseContent() {
                                     </span>
                                     {isActive ? (
                                       <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs">
-                                        <span>⚡ Aktiv</span>
+                                        <span>Aktiv</span>
                                       </span>
                                     ) : (
                                       <span
                                         className="text-[10px] bg-slate-200 dark:bg-dark-700 text-slate-500 px-1.5 py-0.5 rounded-md flex items-center gap-1"
                                         title="1-partiya tugagach ochiladi"
                                       >
-                                        <span>🔒 Navbatda</span>
+                                        <span>Navbatda</span>
                                       </span>
                                     )}
                                   </div>
@@ -2436,6 +2603,7 @@ export default function WarehouseContent() {
                       <th className="p-4 text-center">{formatDual("Qabul Qilingan", "Принято", "Received")}</th>
                       <th className="p-4 text-center">{formatDual("Farq / Yo'qotish", "Разница / Потери", "Difference / Loss")}</th>
                       <th className="p-4">{formatDual("Holat / Izoh", "Статус / Примечание", "Status / Notes")}</th>
+                      <th className="p-4 text-center">{formatDual("Mas'ul Imzosi", "Подпись", "Signature")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-750">
@@ -2449,7 +2617,7 @@ export default function WarehouseContent() {
                           {t.product?.name}
                         </td>
                         <td className="p-4 text-slate-300 font-semibold text-xs">
-                          {t.targetLocation === 'OSHXONA' ? formatDual("🍲 Oshxona", "🍲 Кухня", "🍲 Kitchen") : formatDual("🔪 Zagotovka", "🔪 Заготовка", "🔪 Preparation")}
+                          {t.targetLocation === 'OSHXONA' ? formatDual("Oshxona", "Кухня", "Kitchen") : formatDual("Zagotovka", "Заготовка", "Preparation")}
                         </td>
                         <td className="p-4 text-center font-mono font-bold text-white">
                           {t.issuedQuantity} {t.issuedUnit}
@@ -2493,6 +2661,14 @@ export default function WarehouseContent() {
                               )}
                             </div>
                           )}
+                        </td>
+                        <td className="p-4 text-center">
+                          <SignatureCell
+                            url={warehouseSig.url}
+                            name={warehouseSig.name}
+                            title={warehouseSig.title}
+                            formatDual={formatDual}
+                          />
                         </td>
                       </tr>
                     ))}
@@ -2591,7 +2767,7 @@ export default function WarehouseContent() {
                         : 'bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-200'
                     }`}
                   >
-                    <span className="text-base">🍲</span>
+                    <Building2 size={16} />
                     <span>{formatDual("Oshxona", "Кухня", "Kitchen")}</span>
                   </button>
                   <button
@@ -2603,7 +2779,7 @@ export default function WarehouseContent() {
                         : 'bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-200'
                     }`}
                   >
-                    <span className="text-base">🔪</span>
+                    <Layers size={16} />
                     <span>{formatDual("Zagotovka Sexi", "Цех заготовки", "Prep Shop")}</span>
                   </button>
                 </div>
@@ -2680,14 +2856,14 @@ export default function WarehouseContent() {
                               </span>
                               {isActive ? (
                                 <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs">
-                                  <span>⚡ Aktiv</span>
+                                  <span>Aktiv</span>
                                 </span>
                               ) : (
                                 <span
                                   className="text-[10px] bg-slate-200 dark:bg-dark-700 text-slate-500 px-1.5 py-0.5 rounded-md flex items-center gap-1"
                                   title="1-partiya tugagach ochiladi"
                                 >
-                                  <span>🔒 Navbatda</span>
+                                  <span>Navbatda</span>
                                 </span>
                               )}
                             </div>
@@ -3364,7 +3540,7 @@ export default function WarehouseContent() {
                 >
                   {inventory.map(inv => (
                     <option key={inv.id} value={inv.id}>
-                      {inv.name} (Qoldiq: {inv.totalQuantity} {inv.unit}) {inv.status === 'red' ? '🔴 Tugagan' : inv.status === 'yellow' ? '🟡 Kam' : ''}
+                      {inv.name} (Qoldiq: {inv.totalQuantity} {inv.unit}) {inv.status === 'red' ? ' [Tugagan]' : inv.status === 'yellow' ? ' [Kam]' : ''}
                     </option>
                   ))}
                 </select>
@@ -3474,6 +3650,185 @@ export default function WarehouseContent() {
           </div>
         </div>
       )}
+
+      {/* Stock Level Customization Modal */}
+      {stockLevelModal.isOpen && stockLevelModal.material && (() => {
+        const mat = stockLevelModal.material
+        const parsedMin = Math.max(0, parseFloat(stockLevelModal.minStockInput) || 0)
+        const balance = mat.currentStockKg
+
+        // Preview status calculation
+        let previewStatus: 'green' | 'yellow' | 'red' = 'green'
+        if (balance <= 0 || (parsedMin > 0 && balance <= parsedMin * 0.5)) {
+          previewStatus = 'red'
+        } else if (parsedMin > 0 && balance <= parsedMin * 1.3) {
+          previewStatus = 'yellow'
+        }
+
+        const previewPercent = parsedMin > 0 
+          ? Math.min(100, Math.round((Math.max(0, balance) / parsedMin) * 100))
+          : balance > 0 ? 100 : 0
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-in">
+              {/* Header */}
+              <div className="p-5 border-b border-slate-200 dark:border-dark-700 flex items-center justify-between bg-slate-50/50 dark:bg-dark-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                    <Edit2 size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                      {formatDual("Minimal Zaxira Me'yori", "Минимальная норма запаса", "Minimum Stock Level")}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {mat.nameUz} ({mat.name})
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStockLevelModal({ isOpen: false, material: null, minStockInput: '', isSaving: false })}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Form Content */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleSaveStockLevel()
+                }}
+                className="p-5 space-y-4"
+              >
+                {/* Current Stock Banner */}
+                <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-dark-800/70 border border-slate-200 dark:border-dark-700 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
+                      {formatDual("Ombordagi joriy qoldiq", "Текущий остаток на складе", "Current warehouse stock")}
+                    </span>
+                    <span className="text-lg font-black text-slate-900 dark:text-white">
+                      {mat.currentStockKg.toLocaleString()} {mat.unit}
+                    </span>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                    mat.status === 'green' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30' :
+                    mat.status === 'yellow' ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30' :
+                    'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30'
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${mat.status === 'green' ? 'bg-emerald-500' : mat.status === 'yellow' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                    {mat.status === 'green' ? formatDual("Hozir: Yetarli", "Сейчас: В норме", "Current: Sufficient") :
+                     mat.status === 'yellow' ? formatDual("Hozir: Kam", "Сейчас: Мало", "Current: Low") :
+                     formatDual("Hozir: Kritik", "Сейчас: Критично", "Current: Critical")}
+                  </span>
+                </div>
+
+                {/* Input: minStock */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    {formatDual(
+                      `Yangi minimal me'yor (${mat.unit}):`,
+                      `Новая минимальная норма (${mat.unit}):`,
+                      `New minimum stock (${mat.unit}):`
+                    )}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={stockLevelModal.minStockInput}
+                      onChange={(e) => setStockLevelModal(prev => ({ ...prev, minStockInput: e.target.value }))}
+                      placeholder={formatDual("Masalan: 1000", "Например: 1000", "E.g. 1000")}
+                      className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-base font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                      autoFocus
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 dark:text-slate-500">
+                      {mat.unit}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    {formatDual(
+                      "Skladchi o'z ehtiyojiga qarab me'yorni belgilaydi. Tizim avtomatik Svetofor holatini moslashtiradi.",
+                      "Кладовщик указывает норму по факту. Система автоматически рассчитает статус Светофора.",
+                      "Warehouse worker sets the threshold. System recalculates traffic light status automatically."
+                    )}
+                  </p>
+                </div>
+
+                {/* Live Svetofor Threshold Preview */}
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>{formatDual("Kutilayotgan Svetofor Holati:", "Ожидаемый статус Светофора:", "Preview Status:")}</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                      previewStatus === 'green' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30' :
+                      previewStatus === 'yellow' ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30' :
+                      'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${previewStatus === 'green' ? 'bg-emerald-500' : previewStatus === 'yellow' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                      {previewStatus === 'green' ? formatDual("Yashil (Yetarli)", "Зеленый (В норме)", "Green (Sufficient)") :
+                       previewStatus === 'yellow' ? formatDual("Sariq (Kamaygan)", "Желтый (Мало)", "Yellow (Low)") :
+                       formatDual("Qizil (Kritik / Zakaz zarur)", "Красный (Критично)", "Red (Critical)")}
+                    </span>
+                  </div>
+
+                  {/* Level rules explanation */}
+                  <div className="grid grid-cols-3 gap-1.5 text-[10px] text-center pt-1.5 border-t border-slate-200 dark:border-dark-750">
+                    <div className="p-1.5 rounded-lg bg-rose-50/80 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300">
+                      <span className="font-bold flex items-center justify-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                        {formatDual("Kritik", "Критично", "Critical")}
+                      </span>
+                      <span>≤ {Math.round(parsedMin * 0.5).toLocaleString()} {mat.unit}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-amber-50/80 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                      <span className="font-bold flex items-center justify-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        {formatDual("Kamaygan", "Мало", "Low")}
+                      </span>
+                      <span>≤ {Math.round(parsedMin * 1.3).toLocaleString()} {mat.unit}</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-emerald-50/80 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      <span className="font-bold flex items-center justify-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        {formatDual("Yetarli", "В норме", "Sufficient")}
+                      </span>
+                      <span>&gt; {Math.round(parsedMin * 1.3).toLocaleString()} {mat.unit}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                    <span>{formatDual("Zaxira to'lish darajasi:", "Заполнение запаса:", "Stock fill level:")}</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">{previewPercent}%</span>
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-dark-750">
+                  <button
+                    type="button"
+                    onClick={() => setStockLevelModal({ isOpen: false, material: null, minStockInput: '', isSaving: false })}
+                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 transition-colors"
+                  >
+                    {formatDual("Bekor qilish", "Отмена", "Cancel")}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={stockLevelModal.isSaving}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
+                  >
+                    {stockLevelModal.isSaving && <Loader2 size={16} className="animate-spin" />}
+                    <span>{formatDual("Saqlash", "Сохранить", "Save")}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

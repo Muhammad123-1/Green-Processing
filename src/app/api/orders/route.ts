@@ -87,7 +87,7 @@ Izoh: ${order.notes || 'Yo\'q'}`
         data: {
           sender: 'TIZIM',
           text: zayavkaText,
-          groupId: 'general'
+          groupId: 'qa_warehouse'
         }
       })
     } catch (chatErr) {

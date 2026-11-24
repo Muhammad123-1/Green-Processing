@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
+import { calculateSupplierDebts } from '@/lib/supplierDebts'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,8 +20,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Fetch accounts, recent transactions, and unpaid invoices
-    const [accounts, transactions, invoices] = await Promise.all([
+    // Fetch accounts, recent transactions, unpaid invoices, and real supplier debts from daily checklist/arrivals
+    const [accounts, transactions, invoices, debtsData] = await Promise.all([
       prisma.bankAccount.findMany({
         orderBy: { id: 'asc' }
       }),
@@ -33,10 +34,21 @@ export async function GET(request: NextRequest) {
         where: { status: { not: 'PAID' } },
         orderBy: { issuedDate: 'desc' },
         include: { customer: true }
+      }),
+      calculateSupplierDebts().catch((err) => {
+        console.error('Failed to calculate debts for finance route:', err)
+        return { summary: { totalOutstandingDebtUzs: 0, suppliersWithDebtCount: 0 } }
       })
     ])
 
-    return NextResponse.json({ accounts, transactions, invoices })
+    return NextResponse.json({
+      accounts,
+      transactions,
+      invoices,
+      totalSupplierDebt: debtsData.summary.totalOutstandingDebtUzs || 0,
+      suppliersWithDebtCount: debtsData.summary.suppliersWithDebtCount || 0,
+      debtsSummary: debtsData.summary
+    })
   } catch (error: any) {
     console.error('Error fetching finance data:', error)
     return NextResponse.json({ error: 'Moliya ma\'lumotlarini yuklashda xatolik' }, { status: 500 })

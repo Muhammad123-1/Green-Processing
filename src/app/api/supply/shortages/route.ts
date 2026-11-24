@@ -318,7 +318,7 @@ ${notes ? `Ta'minot izohi: ${notes}\n` : ''}Iltimos, shaxsiy kabinetingiz orqali
       console.warn('Failed to send supplier chat notification:', chatErr)
     }
 
-    // 2. Post notification into Factory General Chat
+    // 2. Post notification into QA & Warehouse Chat (Sifat Nazorati & Ombor)
     try {
       const generalChatText = `🚛 TA'MINOT BUYURTMASI BIRIKTIRILDI:
 Sklad talabnomasi №${updatedOrder.id} bo'yicha "${supplier.name}" ta'minotchisiga "${updatedOrder.product.name}" (${updatedOrder.quantity} ${updatedOrder.unit || 'kg'}) buyurtma jo'natildi.
@@ -328,7 +328,7 @@ Muddati: ${new Date(updatedOrder.expectedDate).toLocaleDateString()}`
         data: {
           sender: 'TIZIM (Snabjeniye)',
           text: generalChatText,
-          groupId: 'general'
+          groupId: 'qa_warehouse'
         }
       })
     } catch (genErr) {
@@ -440,7 +440,7 @@ Izoh: ${notes || "Skladda zaxira tugadi, zudlik bilan ta'minotchi biriktirilsin!
           data: {
             sender: 'SKLAD (OMBOR)',
             text,
-            groupId: 'general'
+            groupId: 'qa_warehouse'
           }
         })
       } catch {}

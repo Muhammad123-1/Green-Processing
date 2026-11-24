@@ -22,9 +22,13 @@ import {
   ShieldCheck,
   Save,
   Building2,
-  Briefcase
+  Briefcase,
+  Archive,
+  Eye,
+  ArrowLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export interface FirstAidOfficialLogItem {
   id: string
@@ -72,9 +76,12 @@ const createEmptyFirstAidRow = (date: string, orderNumber: number): FirstAidOffi
 })
 
 export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolean } = {}) {
+  const { formatDual, lang } = useLanguage()
   const [logs, setLogs] = useState<FirstAidOfficialLogItem[]>([])
   const [filterDate, setFilterDate] = useState<string>(getTodayTashkent)
   const [searchQuery, setSearchQuery] = useState('')
+  const [archiveSearchQuery, setArchiveSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'daily' | 'archive'>('daily')
   const [savingAll, setSavingAll] = useState(false)
 
   // Load from localStorage (filtrlash: eski mock/demo namunalar tozalanadi)
@@ -142,29 +149,21 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
 
       const next = [...prev]
       const cur = next[idx]
-      const updated = { ...cur, ...patch, _dirty: true }
-      next[idx] = updated
-
-      // Kirim-chiqim kabi: Agar yangi qatorda xodim ismi yozilsa, darhol keyingi bo'sh qatorni tayyorlab qo'yadi
-      if (updated._isNew && updated.employeeName.trim() && idx === next.length - 1 && filterDate !== 'ALL') {
-        const nextOrder = next.filter(l => l.date === filterDate).length + 1
-        next.push(createEmptyFirstAidRow(filterDate, nextOrder))
-      }
-
+      next[idx] = { ...cur, ...patch, _dirty: true }
       return next
     })
   }
 
-  // Add explicit new row
+  // Add explicit new row (faqat tugma bosilganda jadvalning eng tepasiga qo'shiladi)
   const handleAddNewRow = () => {
     const targetDate = filterDate === 'ALL' ? getTodayTashkent() : filterDate
-    const existing = logs.filter(l => l.date === targetDate)
-    const nextOrder = existing.length + 1
-    const newRow = createEmptyFirstAidRow(targetDate, nextOrder)
+    const newRow = createEmptyFirstAidRow(targetDate, 1)
     newRow._dirty = true
+    newRow._isNew = true
 
-    setLogs(prev => [...prev, newRow])
-    toast.info("Янги қатор қўшилди. Ходим маълумотларини киритинг.")
+    // Eng tepaga qo'shamiz (user talabi bo'yicha)
+    setLogs(prev => [newRow, ...prev])
+    toast.info(formatDual("Yangi qator qo'shildi. Xodim ma'lumotlarini kiriting.", "Добавлена новая строка. Введите данные сотрудника.", "New row added. Enter employee details."))
   }
 
   // Save single row
@@ -172,21 +171,21 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
     const row = logs.find(l => l.id === id)
     if (!row) return
     if (!row.employeeName.trim()) {
-      toast.error("Илтимос, ходим Ф.И.Ш.ни киритинг!")
+      toast.error(formatDual("Iltimos, xodim F.I.Sh.ni kiriting!", "Пожалуйста, введите Ф.И.О. сотрудника!", "Please enter employee full name!"))
       return
     }
 
     const updated = logs.map(l => (l.id === id ? { ...l, _dirty: false, _isNew: false } : l))
     setLogs(updated)
     persistLogs(updated)
-    toast.success(`№${row.orderNumber} ${row.employeeName} мурожаати сақланди`)
+    toast.success(formatDual(`№${row.orderNumber} ${row.employeeName} murojaati saqlandi`, `№${row.orderNumber} Обращение ${row.employeeName} сохранено`, `№${row.orderNumber} Record for ${row.employeeName} saved`))
   }
 
   // Save all dirty rows
   const handleSaveAll = () => {
     const dirtyRows = logs.filter(l => l._dirty && l.employeeName.trim())
     if (dirtyRows.length === 0) {
-      toast.info("Ўзгаришлар йўқ, барчаси сақланган")
+      toast.info(formatDual("O'zgarishlar yo'q, barchasi saqlangan", "Нет изменений, всё сохранено", "No changes, all saved"))
       return
     }
 
@@ -195,7 +194,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
     setLogs(updated)
     persistLogs(updated)
     setSavingAll(false)
-    toast.success(`${dirtyRows.length} та тиббий ёрдам маълумотлари сақланди`)
+    toast.success(formatDual(`${dirtyRows.length} ta tibbiy yordam ma'lumotlari saqlandi`, `Сохранено ${dirtyRows.length} записей медпомощи`, `Saved ${dirtyRows.length} first aid records`))
   }
 
   // Delete row
@@ -204,19 +203,25 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
     if (!row) return
 
     if (row._isNew && !row.employeeName.trim()) {
+      setLogs(prev => prev.filter(l => l.id !== id))
       return
     }
 
-    if (!confirm(`"${row.employeeName || 'Мурожаат'}" ёзувини ўчирмоқчимисиз?`)) return
+    const confirmMsg = formatDual(
+      `"${row.employeeName || 'Murojaat'}" yozuvini o'chirmoqchimisiz?`,
+      `Удалить запись "${row.employeeName || 'Обращение'}"?`,
+      `Delete record "${row.employeeName || 'Record'}"?`
+    )
+    if (!confirm(confirmMsg)) return
     const updated = logs.filter(l => l.id !== id)
     setLogs(updated)
     persistLogs(updated)
-    toast.success("Ёзув ўчирилди")
+    toast.success(formatDual("Yozuv o'chirildi", "Запись удалена", "Record deleted"))
   }
 
-  // Table items displayed (including 1 automatic empty row at bottom when on a single date)
+  // Table items displayed - faqat mavjud va yangi qo'shilgan qatorlar ko'rsatiladi
   const displayedRows = useMemo(() => {
-    let filtered = logs.filter(item => {
+    return logs.filter(item => {
       const matchDate = filterDate === 'ALL' || item.date === filterDate
       const matchSearch =
         !searchQuery.trim() ||
@@ -226,45 +231,95 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
         item.complaint.toLowerCase().includes(searchQuery.toLowerCase())
       return matchDate && matchSearch
     })
-
-    // Kirim-chiqim kabi: Bo'sh yangi qator turishi kerak
-    if (filterDate !== 'ALL' && !searchQuery.trim()) {
-      const hasEmpty = filtered.some(r => r._isNew && !r.employeeName.trim())
-      if (!hasEmpty) {
-        const nextOrder = filtered.length + 1
-        filtered = [...filtered, createEmptyFirstAidRow(filterDate, nextOrder)]
-      }
-    }
-
-    return filtered
   }, [logs, filterDate, searchQuery])
 
-  // Unsaved changes flag
-  const hasUnsavedChanges = useMemo(() => {
-    return logs.some(l => l._dirty && l.employeeName.trim())
+  // Group all logs by date for Archive view
+  const archivedDays = useMemo(() => {
+    const map = new Map<string, FirstAidOfficialLogItem[]>()
+    logs.forEach(item => {
+      if (!item.date || !item.employeeName.trim()) return
+      const list = map.get(item.date) || []
+      list.push(item)
+      map.set(item.date, list)
+    })
+
+    const sortedDates = Array.from(map.keys()).sort((a, b) => b.localeCompare(a))
+
+    return sortedDates.map(dateStr => {
+      const items = map.get(dateStr) || []
+      const returnedToWork = items.filter(
+        i => !i.referralOrRelease.toLowerCase().includes('озод') && !i.referralOrRelease.toLowerCase().includes('муассаса')
+      ).length
+      const releasedOrReferred = items.length - returnedToWork
+      return {
+        date: dateStr,
+        total: items.length,
+        returnedToWork,
+        releasedOrReferred,
+        nurseSignature: items[0]?.nurseSignature || 'Жуманова Ч.Э.',
+        items
+      }
+    })
   }, [logs])
 
-  // Export to CSV
-  const handleExportCSV = () => {
-    const targetRows = displayedRows.filter(r => r.employeeName.trim())
+  const filteredArchivedDays = useMemo(() => {
+    if (!archiveSearchQuery.trim()) return archivedDays
+    const q = archiveSearchQuery.toLowerCase()
+    return archivedDays.filter(day => {
+      const matchDate = day.date.includes(q)
+      const matchEmployee = day.items.some(
+        i => i.employeeName.toLowerCase().includes(q) || i.department.toLowerCase().includes(q)
+      )
+      return matchDate || matchEmployee
+    })
+  }, [archivedDays, archiveSearchQuery])
+
+  // Save daily journal for current day
+  const handleSaveDailyJournal = () => {
+    const targetDate = filterDate === 'ALL' ? getTodayTashkent() : filterDate
+    const currentDayItems = logs.filter(l => l.date === targetDate && l.employeeName.trim())
+
+    if (currentDayItems.length === 0) {
+      toast.error(formatDual(`${targetDate} sanasi uchun tibbiy murojaatlar kiritilmagan! Qator qo'shing.`, `На дату ${targetDate} нет обращений! Добавьте строку.`, `No records entered for ${targetDate}! Add a row.`))
+      return
+    }
+
+    setSavingAll(true)
+    const updated = logs.map(l => (l.date === targetDate && l.employeeName.trim() ? { ...l, _dirty: false, _isNew: false } : l))
+    setLogs(updated)
+    persistLogs(updated)
+    setSavingAll(false)
+    toast.success(
+      formatDual(
+        `${targetDate} kunlik tibbiy yordam jadvali saqlandi va arxivga kiritildi! (${currentDayItems.length} ta)`,
+        `${targetDate} дневной журнал первой помощи сохранен в архив! (${currentDayItems.length})`,
+        `${targetDate} daily first aid journal saved to archive! (${currentDayItems.length})`
+      ),
+      { icon: '💾' }
+    )
+  }
+
+  // Export specific day CSV
+  const handleExportDayCSV = (targetDate: string) => {
+    const targetRows = logs.filter(r => r.date === targetDate && r.employeeName.trim())
     if (targetRows.length === 0) {
-      toast.error("Экспорт қилиш учун ёзувлар йўқ!")
+      toast.error(formatDual(`${targetDate} sanasida yozuvlar yo'q!`, `На дату ${targetDate} нет записей!`, `No records for ${targetDate}!`))
       return
     }
 
     const headers = [
-      '№',
-      'Сана',
-      'Вақт',
-      'Ходимнинг Ф.И.Ш.',
-      'Лавозими',
-      'Бўлинма',
-      'Мурожаат сабаби / шикоят',
-      'Ҳамшира кўриги натижаси',
-      'Кўрсатилган ёрдам',
-      'Тиббий муассасага / ишдан озод қилиш',
-      'Ҳамшира имзоси',
-      'Ходим имзоси'
+      formatDual('№', '№', '#'),
+      formatDual('Sana', 'Дата', 'Date'),
+      formatDual('Vaqt', 'Время', 'Time'),
+      formatDual('Xodimning F.I.Sh.', 'Ф.И.О. сотрудника', 'Employee Full Name'),
+      formatDual('Lavozimi', 'Должность', 'Position'),
+      formatDual("Bo'linma", 'Подразделение', 'Department'),
+      formatDual('Murojaat sababi / shikoyat', 'Причина обращения / жалоба', 'Reason for visit / complaint'),
+      formatDual("Hamshira ko'rigi natijasi", 'Результат осмотра медсестры', 'Nurse inspection result'),
+      formatDual("Ko'rsatilgan yordam", 'Оказанная помощь', 'Aid provided'),
+      formatDual('Tibbiy muassasaga / ishdan ozod qilish', 'В мед. учреждение / освобождение от работы', 'Referral / release from work'),
+      formatDual('Hamshira imzosi', 'Подпись медсестры', 'Nurse signature'),
+      formatDual('Xodim imzosi', 'Подпись сотрудника', 'Employee signature')
     ]
 
     const csvRows = targetRows.map(r => [
@@ -287,11 +342,22 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `Birinchi_yordam_jurnali_${filterDate}.csv`
+    link.download = `Birinchi_yordam_jurnali_${targetDate}.csv`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    toast.success("Excel CSV файли юклаб олинди")
+    toast.success(formatDual(`${targetDate} sanasi Excel CSV fayli yuklab olindi`, `Файл Excel CSV за ${targetDate} скачан`, `Excel CSV file for ${targetDate} downloaded`))
+  }
+
+  // Unsaved changes flag
+  const hasUnsavedChanges = useMemo(() => {
+    return logs.some(l => l._dirty && l.employeeName.trim())
+  }, [logs])
+
+  // Export to CSV
+  const handleExportCSV = () => {
+    const targetDate = filterDate === 'ALL' ? getTodayTashkent() : filterDate
+    handleExportDayCSV(targetDate)
   }
 
   const handlePrint = () => {
@@ -324,67 +390,270 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
-                  Тиббий қабул
+                  {formatDual("Tibbiy qabul", "Медицинский прием", "Medical Reception")}
                 </span>
                 <span className="text-xs text-slate-600 dark:text-slate-400 font-medium hidden sm:inline">
-                  1 ва 2-расм бўйича расмий 12 та устунли журнал
+                  {formatDual("1 va 2-rasm bo'yicha rasmiy 12 ta ustunli jurnal", "1 ва 2-расм бўйича расмий 12 та устунли журнал", "Official 12-column journal per form 1 & 2")}
                 </span>
               </div>
               <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                ХОДИМЛАРГА БИРИНЧИ ЁРДАМ КЎРСАТИШ ВА ТИББИЙ ҚАБУЛ ЖУРНАЛИ
+                {formatDual(
+                  "XODIMLARGA BIRINCHI YORDAM KO'RSATISH VA TIBBIY QABUL JURNALI",
+                  "ЖУРНАЛ ОКАЗАНИЯ ПЕРВОЙ ПОМОЩИ И МЕДИЦИНСКОГО ПРИЕМА СОТРУДНИКОВ",
+                  "FIRST AID & MEDICAL RECEPTION JOURNAL FOR EMPLOYEES"
+                )}
               </h2>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 no-print">
-            {/* Quick add empty row */}
-            <button
-              type="button"
-              onClick={handleAddNewRow}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
-            >
-              <Plus size={16} />
-              <span>+ Янги мурожаат</span>
-            </button>
+            {/* View Mode Switcher: Kunlik jadval vs Arxiv */}
+            <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('daily')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  viewMode === 'daily'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Calendar size={13} />
+                <span>{formatDual("Kunlik jadval", "Дневной журнал", "Daily Journal")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('archive')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  viewMode === 'archive'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Archive size={13} />
+                <span>{formatDual("Arxiv", "Архив", "Archive")} ({archivedDays.length})</span>
+              </button>
+            </div>
 
-            {/* Master Save All */}
+            {viewMode === 'daily' && (
+              <button
+                type="button"
+                onClick={handleAddNewRow}
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-xl text-xs sm:text-sm font-bold shadow-xs transition active:scale-95 cursor-pointer"
+              >
+                <Plus size={15} />
+                <span>{formatDual("Yangi murojaat qo'shish", "Добавить обращение", "Add new record")}</span>
+              </button>
+            )}
+
+            {/* Master Save: КУНЛИК ЖАДВАЛНИ САҚЛАШ */}
             <button
               type="button"
-              onClick={handleSaveAll}
-              disabled={savingAll || !hasUnsavedChanges}
-              className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 shadow-xs cursor-pointer ${
+              onClick={handleSaveDailyJournal}
+              disabled={savingAll}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 shadow-xs cursor-pointer ${
                 hasUnsavedChanges
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse'
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-emerald-700 hover:bg-emerald-600 text-white'
               }`}
-              title="Барча ўзгаришларни сақлаш"
+              title={formatDual("Kunlik jadvalni saqlash va arxivga kiritish", "Сохранить дневной журнал и заархивировать", "Save daily journal and archive")}
             >
               <Save size={15} />
-              <span>{savingAll ? "Сақланмоқда..." : "Барчасини Сақлаш"}</span>
+              <span>{savingAll ? formatDual("Saqlanmoqda...", "Сохранение...", "Saving...") : formatDual("Kunlik jadvalni saqlash", "Сохранить дневной журнал", "Save daily journal")}</span>
             </button>
 
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
-              title="Excel CSV шаклида юклаб олиш"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
+              title={formatDual("Excel CSV shaklida yuklab olish", "Скачать в формате Excel CSV", "Download as Excel CSV")}
             >
-              <Download size={15} />
+              <Download size={14} />
               <span>Excel</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
-              title="Чоп этиш"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-bold transition active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
+              title={formatDual("Chop etish", "Печать", "Print")}
             >
-              <Printer size={15} />
-              <span>Чоп этиш</span>
+              <Printer size={14} />
+              <span>{formatDual("Chop etish", "Печать", "Print")}</span>
             </button>
           </div>
         </div>
 
-        {/* Date Filter & Search Bar */}
-        <div className="p-3 bg-slate-50 dark:bg-slate-850 border-b border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm no-print">
+        {/* View Switcher Content */}
+        {viewMode === 'archive' ? (
+          <div className="p-4 sm:p-6 space-y-4">
+            {/* Archive Toolbar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/80 p-3 sm:p-4 rounded-2xl border border-slate-300 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 flex items-center justify-center font-bold">
+                  <Archive size={20} />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm sm:text-base text-slate-900 dark:text-white">
+                    {formatDual("Xodimlar birinchi yordam qabullari arxivi", "Архив приемов первой помощи сотрудников", "Employees First Aid Archive")}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {formatDual(
+                      `Jami ${archivedDays.length} kunlik murojaatlar jadvali saqlangan`,
+                      `Всего сохранено ${archivedDays.length} дневных журналов`,
+                      `Total ${archivedDays.length} daily journals archived`
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded-xl text-xs shadow-2xs">
+                  <Search size={14} className="text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder={formatDual("Sana yoki xodim qidirish...", "Поиск по дате или сотруднику...", "Search by date or employee...")}
+                    value={archiveSearchQuery}
+                    onChange={e => setArchiveSearchQuery(e.target.value)}
+                    className="!bg-transparent bg-transparent outline-none text-slate-900 dark:text-white w-48 sm:w-60 placeholder:text-slate-400"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterDate(getTodayTashkent())
+                    setViewMode('daily')
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:opacity-90 transition cursor-pointer"
+                >
+                  <ArrowLeft size={14} />
+                  <span>{formatDual("Bugungi kunga qaytish", "Вернуться на сегодня", "Back to today")}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Summary Stat Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">{formatDual("Arxivlangan kunlar", "Архивных дней", "Archived days")}</span>
+                <strong className="text-lg font-black text-slate-900 dark:text-white font-mono">{archivedDays.length} {formatDual("kun", "дн.", "days")}</strong>
+              </div>
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">{formatDual("Jami murojaatlar", "Всего обращений", "Total records")}</span>
+                <strong className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                  {logs.filter(l => l.employeeName.trim()).length} {formatDual("ta", "зап.", "records")}
+                </strong>
+              </div>
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-900/40">
+                <span className="text-emerald-700 dark:text-emerald-400 block mb-1">{formatDual("Ishga qaytganlar", "Вернулись к работе", "Returned to work")}</span>
+                <strong className="text-lg font-black text-emerald-800 dark:text-emerald-300 font-mono">
+                  {logs.filter(l => l.employeeName.trim() && !l.referralOrRelease.toLowerCase().includes('озод') && !l.referralOrRelease.toLowerCase().includes('муассаса')).length} {formatDual("ta", "чел.", "")}
+                </strong>
+              </div>
+              <div className="p-3.5 bg-rose-50 dark:bg-rose-950/20 rounded-xl border border-rose-200 dark:border-rose-900/40">
+                <span className="text-rose-700 dark:text-rose-400 block mb-1">{formatDual("Ozod etilgan / Kasalxonaga", "Освобождены / В больницу", "Released / Hospitalized")}</span>
+                <strong className="text-lg font-black text-rose-800 dark:text-rose-300 font-mono">
+                  {logs.filter(l => l.employeeName.trim() && (l.referralOrRelease.toLowerCase().includes('озод') || l.referralOrRelease.toLowerCase().includes('муассаса'))).length} {formatDual("ta", "чел.", "")}
+                </strong>
+              </div>
+            </div>
+
+            {/* Archived Days Table */}
+            <div className="overflow-x-auto rounded-2xl border border-slate-300 dark:border-slate-700 shadow-2xs">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 uppercase font-bold text-[11px] border-b border-slate-300 dark:border-slate-700">
+                  <tr>
+                    <th className="p-3 text-center w-12">{formatDual("№", "№", "#")}</th>
+                    <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
+                    <th className="p-3 text-center">{formatDual("Murojaatlar soni", "Кол-во обращений", "Records count")}</th>
+                    <th className="p-3 text-center">{formatDual("Ishga qaytganlar", "Вернулись к работе", "Returned to work")}</th>
+                    <th className="p-3 text-center">{formatDual("Ozod etilgan / Yuborilgan", "Освобождены / Направлены", "Released / Referred")}</th>
+                    <th className="p-3 min-w-[150px]">{formatDual("Mas'ul hamshira", "Ответственная медсестра", "Nurse in charge")}</th>
+                    <th className="p-3 text-center">{formatDual("Holati", "Статус", "Status")}</th>
+                    <th className="p-3 text-center w-48">{formatDual("Amallar", "Действия", "Actions")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                  {filteredArchivedDays.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-slate-500">
+                        {formatDual("Arxivda yozuvlar mavjud emas", "В архиве нет записей", "No records in archive")}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredArchivedDays.map((day, idx) => {
+                      const isToday = day.date === getTodayTashkent()
+                      return (
+                        <tr key={day.date} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                          <td className="p-3 text-center font-mono font-bold text-slate-500">{idx + 1}</td>
+                          <td className="p-3 font-mono font-black text-slate-900 dark:text-white">
+                            <div className="flex items-center gap-1.5">
+                              <span>{day.date}</span>
+                              {isToday && (
+                                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] font-bold">
+                                  {formatDual("Bugun", "Сегодня", "Today")}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-3 text-center font-bold font-mono">{day.total} {formatDual("ta", "зап.", "")}</td>
+                          <td className="p-3 text-center font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                            ✓ {day.returnedToWork}
+                          </td>
+                          <td className="p-3 text-center font-bold text-rose-600 dark:text-rose-400 font-mono">
+                            {day.releasedOrReferred > 0 ? `✕ ${day.releasedOrReferred}` : '0'}
+                          </td>
+                          <td className="p-3 font-serif italic text-slate-700 dark:text-slate-300 whitespace-nowrap">{day.nurseSignature}</td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold">
+                              <CheckCircle2 size={12} className="text-emerald-500" /> {formatDual("Arxivlangan", "Архивировано", "Archived")}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFilterDate(day.date)
+                                  setViewMode('daily')
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition cursor-pointer flex items-center gap-1"
+                                title={formatDual("Ushbu kunlik jadvalni ko'rish va tahrirlash", "Просмотреть и редактировать дневной журнал", "View and edit daily journal")}
+                              >
+                                <Eye size={13} /> {formatDual("Ko'rish", "Просмотр", "View")}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExportDayCSV(day.date)}
+                                className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer text-slate-700 dark:text-slate-300"
+                                title={formatDual("Ushbu kunni Excel eksport qilish", "Экспортировать день в Excel", "Export day to Excel")}
+                              >
+                                <Download size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFilterDate(day.date)
+                                  setTimeout(() => window.print(), 100)
+                                }}
+                                className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer text-slate-700 dark:text-slate-300"
+                                title={formatDual("Ushbu kunni chop etish", "Распечатать день", "Print day")}
+                              >
+                                <Printer size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {/* Date Filter & Search Bar */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-300 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm no-print">
           <div className="flex flex-wrap items-center gap-2">
             {/* Date Stepper */}
             <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-1 shadow-2xs">
@@ -392,25 +661,25 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                 type="button"
                 onClick={() => handleDateStep(-1)}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 transition"
-                title="Олдинги кун"
+                title={formatDual("Oldingi kun", "Предыдущий день", "Previous day")}
               >
                 <ChevronLeft size={15} />
               </button>
               <div className="flex items-center gap-1.5 px-2">
                 <Calendar size={14} className="text-slate-600 dark:text-slate-400" />
-                <span className="text-slate-500 font-bold">Сана:</span>
+                <span className="text-slate-500 font-bold">{formatDual("Sana:", "Дата:", "Date:")}</span>
                 <input
                   type="date"
                   value={filterDate === 'ALL' ? '' : filterDate}
                   onChange={e => setFilterDate(e.target.value)}
-                  className="bg-transparent outline-none font-mono font-bold text-slate-900 dark:text-white"
+                  className="!bg-transparent bg-transparent outline-none font-mono font-bold text-slate-900 dark:text-white"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => handleDateStep(1)}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 transition"
-                title="Кейинги кун"
+                title={formatDual("Keyingi kun", "Следующий день", "Next day")}
               >
                 <ChevronRight size={15} />
               </button>
@@ -427,7 +696,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                     : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                Бугун
+                {formatDual("Bugun", "Сегодня", "Today")}
               </button>
               <button
                 type="button"
@@ -438,7 +707,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                     : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                Барча саналар
+                {formatDual("Barcha sanalar", "Все даты", "All dates")}
               </button>
             </div>
 
@@ -447,10 +716,10 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
               <Search size={14} className="text-slate-400" />
               <input
                 type="text"
-                placeholder="Ходим исми ёки бўлим бўйича қидириш..."
+                placeholder={formatDual("Xodim ismi yoki bo'lim bo'yicha qidirish...", "Поиск по имени сотрудника или отделу...", "Search by employee name or department...")}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="bg-transparent outline-none text-slate-900 dark:text-white w-48 sm:w-60 placeholder:text-slate-400"
+                className="!bg-transparent bg-transparent outline-none text-slate-900 dark:text-white w-48 sm:w-60 placeholder:text-slate-400"
               />
             </div>
           </div>
@@ -458,10 +727,10 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
           {/* Counters */}
           <div className="flex flex-wrap items-center gap-2 font-medium">
             <span className="px-3 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-400">
-              Жами: <strong className="text-slate-900 dark:text-white font-mono">{displayedRows.filter(r => r.employeeName.trim()).length} та</strong>
+              {formatDual("Jami:", "Всего:", "Total:")} <strong className="text-slate-900 dark:text-white font-mono">{displayedRows.filter(r => r.employeeName.trim()).length} {formatDual("ta", "зап.", "")}</strong>
             </span>
-            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-lg text-emerald-800 dark:text-emerald-300 font-bold">
-              ✓ Ишга қайтган: {displayedRows.filter(r => r.employeeName.trim() && !r.referralOrRelease.toLowerCase().includes('озод') && !r.referralOrRelease.toLowerCase().includes('муассаса')).length}
+            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 rounded-lg text-emerald-800 dark:text-emerald-300 font-bold">
+              {formatDual("✓ Ishga qaytgan:", "✓ Вернулись к работе:", "✓ Returned to work:")} {displayedRows.filter(r => r.employeeName.trim() && !r.referralOrRelease.toLowerCase().includes('озод') && !r.referralOrRelease.toLowerCase().includes('муассаса')).length}
             </span>
           </div>
         </div>
@@ -471,70 +740,82 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-sm overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-850 border-b-2 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
-                  <th className="p-2.5 text-center font-bold w-12 border-r border-slate-300 dark:border-slate-700">№</th>
-                  <th className="p-2.5 text-center font-bold w-36 border-r border-slate-300 dark:border-slate-700">Сана ва вақт</th>
-                  <th className="p-2.5 text-left font-bold min-w-[190px] border-r border-slate-300 dark:border-slate-700">Ходимнинг Ф.И.Ш. *</th>
-                  <th className="p-2.5 text-left font-bold min-w-[160px] border-r border-slate-300 dark:border-slate-700">Лавозими / Бўлинма</th>
-                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">Мурожаат сабаби / шикоят</th>
-                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">Ҳамшира кўриги натижаси</th>
-                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">Кўрсатилган ёрдам</th>
-                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">Тиббий муассасага / озод қилиш</th>
-                  <th className="p-2.5 text-center font-bold w-28 border-r border-slate-300 dark:border-slate-700">Ҳамшира имзоси</th>
-                  <th className="p-2.5 text-center font-bold w-24 no-print">Амаллар</th>
+                <tr className="bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                  <th className="p-2.5 text-center font-bold w-12 border-r border-slate-300 dark:border-slate-700">{formatDual("№", "№", "#")}</th>
+                  <th className="p-2.5 text-center font-bold w-36 border-r border-slate-300 dark:border-slate-700">{formatDual("Sana va vaqt", "Дата и время", "Date & Time")}</th>
+                  <th className="p-2.5 text-left font-bold min-w-[190px] border-r border-slate-300 dark:border-slate-700">{formatDual("Xodimning F.I.Sh. *", "Ф.И.О. сотрудника *", "Employee full name *")}</th>
+                  <th className="p-2.5 text-left font-bold min-w-[160px] border-r border-slate-300 dark:border-slate-700">{formatDual("Lavozimi / Bo'linma", "Должность / Отдел", "Position / Dept")}</th>
+                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">{formatDual("Murojaat sababi / shikoyat", "Причина обращения / жалоба", "Reason for visit / complaint")}</th>
+                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">{formatDual("Hamshira ko'rigi natijasi", "Результат осмотра медсестры", "Nurse inspection result")}</th>
+                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">{formatDual("Ko'rsatilgan yordam", "Оказанная помощь", "Aid provided")}</th>
+                  <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">{formatDual("Tibbiy muassasaga / ozod qilish", "В мед. учреждение / освобождение", "Referral / Release")}</th>
+                  <th className="p-2.5 text-center font-bold min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">{formatDual("Hamshira imzosi", "Подпись медсестры", "Nurse signature")}</th>
+                  <th className="p-2.5 text-center font-bold w-24 no-print">{formatDual("Amallar", "Действия", "Actions")}</th>
                 </tr>
               </thead>
               <tbody>
-                {displayedRows.map((row, idx) => {
-                  const isRowEmptyNew = row._isNew && !row.employeeName.trim()
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`border-b border-slate-200 dark:border-slate-800 transition ${
-                        row._dirty
-                          ? 'bg-amber-50/70 dark:bg-amber-950/20'
-                          : isRowEmptyNew
-                          ? 'bg-slate-50/40 dark:bg-slate-900/40'
-                          : 'hover:bg-slate-50/60 dark:hover:bg-slate-850/60'
-                      }`}
-                    >
-                      {/* № */}
-                      <td className="p-2 text-center font-mono font-bold text-slate-600 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700">
-                        {row.orderNumber || idx + 1}
-                      </td>
+                {displayedRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <p className="font-medium text-sm">{formatDual("Ushbu sanada tibbiy yordam yozuvlari mavjud emas", "На эту дату записей первой помощи нет", "No first aid records for this date")}</p>
+                        <button
+                          type="button"
+                          onClick={handleAddNewRow}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:opacity-90 transition cursor-pointer"
+                        >
+                          <Plus size={14} /> {formatDual("Murojaat qo'shish", "Добавить обращение", "Add record")}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  displayedRows.map((row, idx) => {
+                    const isRowEmptyNew = row._isNew && !row.employeeName.trim()
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`border-b border-slate-200 dark:border-slate-800 transition ${
+                          row._dirty
+                            ? 'bg-amber-50/70 dark:bg-amber-950/20'
+                            : isRowEmptyNew
+                            ? 'bg-slate-50/40 dark:bg-slate-900/40'
+                            : 'hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
+                        }`}
+                      >
+                        {/* № */}
+                        <td className="p-2 text-center font-mono font-bold text-slate-600 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700">
+                          {idx + 1}
+                        </td>
 
-                      {/* Сана ва вақт */}
-                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="date"
-                            value={row.date}
-                            onChange={e => updateRowField(row.id, { date: e.target.value })}
-                            className="w-24 px-1 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px] text-slate-900 dark:text-white outline-none"
-                          />
-                          <input
-                            type="time"
-                            value={row.time}
-                            onChange={e => updateRowField(row.id, { time: e.target.value })}
-                            className="w-16 px-1 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px] text-slate-900 dark:text-white outline-none"
-                          />
-                        </div>
-                      </td>
+                        {/* Сана ва вақт */}
+                        <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="date"
+                              value={row.date}
+                              onChange={e => updateRowField(row.id, { date: e.target.value })}
+                              className="w-24 px-1 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px] text-slate-900 dark:text-white outline-none"
+                            />
+                            <input
+                              type="time"
+                              value={row.time}
+                              onChange={e => updateRowField(row.id, { time: e.target.value })}
+                              className="w-16 px-1 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px] text-slate-900 dark:text-white outline-none"
+                            />
+                          </div>
+                        </td>
 
-                      {/* Ходимнинг Ф.И.Ш. */}
-                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
-                        <input
-                          type="text"
-                          value={row.employeeName}
-                          onChange={e => updateRowField(row.id, { employeeName: e.target.value })}
-                          placeholder={isRowEmptyNew ? "+ Янги мурожаатчи ходим Ф.И.Ш..." : "Ходим Ф.И.Ш."}
-                          className={`w-full px-2.5 py-1.5 rounded-lg border font-bold text-xs text-slate-900 dark:text-white outline-none transition ${
-                            isRowEmptyNew
-                              ? 'bg-white dark:bg-slate-800 border-dashed border-slate-400 dark:border-slate-600 placeholder:text-slate-400 placeholder:font-normal'
-                              : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 focus:border-slate-900 dark:focus:border-white shadow-2xs'
-                          }`}
-                        />
-                      </td>
+                        {/* Ходимнинг Ф.И.Ш. */}
+                        <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                          <input
+                            type="text"
+                            value={row.employeeName}
+                            onChange={e => updateRowField(row.id, { employeeName: e.target.value })}
+                            placeholder={formatDual("Xodim F.I.Sh.", "Ф.И.О. сотрудника", "Employee full name")}
+                            className="w-full px-2.5 py-1.5 rounded-lg border font-bold text-xs text-slate-900 dark:text-white outline-none transition bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 focus:border-slate-900 dark:focus:border-white shadow-2xs"
+                          />
+                        </td>
 
                       {/* Лавозими ва бўлими */}
                       <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
@@ -544,7 +825,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                             list="pos-list"
                             value={row.position}
                             onChange={e => updateRowField(row.id, { position: e.target.value })}
-                            placeholder="Лавозими"
+                            placeholder={formatDual("Lavozimi", "Должность", "Position")}
                             className="w-full px-2 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700"
                           />
                           <input
@@ -552,7 +833,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                             list="dept-list"
                             value={row.department}
                             onChange={e => updateRowField(row.id, { department: e.target.value })}
-                            placeholder="Бўлим"
+                            placeholder={formatDual("Bo'lim", "Отдел", "Department")}
                             className="w-full px-2 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 outline-none focus:border-slate-700"
                           />
                         </div>
@@ -564,7 +845,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                           rows={2}
                           value={row.complaint}
                           onChange={e => updateRowField(row.id, { complaint: e.target.value })}
-                          placeholder="Мурожаат сабаби, шикоят..."
+                          placeholder={formatDual("Murojaat sababi, shikoyat...", "Причина обращения, жалоба...", "Reason for visit, complaint...")}
                           className="w-full px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700 resize-y"
                         />
                       </td>
@@ -575,7 +856,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                           rows={2}
                           value={row.nurseInspection}
                           onChange={e => updateRowField(row.id, { nurseInspection: e.target.value })}
-                          placeholder="А/Б, пульс, t°..."
+                          placeholder={formatDual("A/B, puls, t°...", "А/Д, пульс, t°...", "BP, pulse, temp...")}
                           className="w-full px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700 resize-y"
                         />
                       </td>
@@ -586,7 +867,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                           rows={2}
                           value={row.aidProvided}
                           onChange={e => updateRowField(row.id, { aidProvided: e.target.value })}
-                          placeholder="Кўрсатилган ёрдам, препаратлар..."
+                          placeholder={formatDual("Ko'rsatilgan yordam, preparatlar...", "Оказанная помощь, препараты...", "Aid provided, medications...")}
                           className="w-full px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700 resize-y"
                         />
                       </td>
@@ -597,19 +878,19 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                           rows={2}
                           value={row.referralOrRelease}
                           onChange={e => updateRowField(row.id, { referralOrRelease: e.target.value })}
-                          placeholder="Ҳолати қониқарли / озод қилинди / поликлиникага..."
+                          placeholder={formatDual("Holati qoniqarli / ozod qilindi / poliklinikaga...", "Состояние удовлетворительное / освобожден / в поликлинику...", "Condition satisfactory / released / to clinic...")}
                           className="w-full px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700 resize-y"
                         />
                       </td>
 
                       {/* Ҳамшира имзоси */}
-                      <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                      <td className="p-1.5 min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">
                         <input
                           type="text"
                           value={row.nurseSignature}
                           onChange={e => updateRowField(row.id, { nurseSignature: e.target.value })}
                           placeholder="Жуманова Ч.Э."
-                          className="w-full text-center font-serif italic font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700"
+                          className="w-full text-center font-serif italic font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700 whitespace-nowrap"
                         />
                       </td>
 
@@ -627,7 +908,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                                 ? 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
                                 : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
                             }`}
-                            title="Сақлаш"
+                            title={formatDual("Saqlash", "Сохранить", "Save")}
                           >
                             <Save size={14} />
                           </button>
@@ -636,7 +917,7 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                             type="button"
                             onClick={() => handleDeleteRow(row.id)}
                             className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-950/40 rounded-lg text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                            title="Ўчириш"
+                            title={formatDual("O'chirish", "Удалить", "Delete")}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -644,22 +925,29 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
                       </td>
                     </tr>
                   )
-                })}
+                })
+              )}
               </tbody>
             </table>
           </div>
         </div>
+        </div>
+        )}
 
         {/* Footer Info */}
         <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-1.5">
             <ShieldCheck size={15} className="text-slate-700 dark:text-slate-300 shrink-0" />
             <span>
-              Масъул тиббий ходим: <strong>Жуманова Ч.Э.</strong> • 1 ва 2-расм бўйича расмий 12 та устунли тиббий қабул журнали
+              {formatDual("Mas'ul tibbiy xodim:", "Ответственный медработник:", "Responsible medical staff:")} <strong>{formatDual("Jumanova Ch.E.", "Жуманова Ч.Э.", "Jumanova Ch.E.")}</strong> • {formatDual("1 va 2-rasm bo'yicha rasmiy 12 ta ustunli tibbiy qabul jurnali", "Официальный 12-колоночный журнал медицинского приема", "Official 12-column medical reception journal")}
             </span>
           </div>
           <div className="text-[11px] text-slate-400">
-            Ўзгаришлар киритилгандан сўнг <strong>Барчасини Сақлаш</strong> тугмасини босинг.
+            {formatDual(
+              "O'zgarishlar kiritilgandan so'ng Kunlik jadvalni saqlash tugmasini bosing. Barcha ma'lumotlar avtomatik arxivda saqlanadi.",
+              "После внесения изменений нажмите кнопку Сохранить дневной журнал. Все данные автоматически сохраняются в архиве.",
+              "After making changes, click Save Daily Journal. All data is automatically saved in the archive."
+            )}
           </div>
         </div>
       </div>
