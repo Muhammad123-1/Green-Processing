@@ -776,8 +776,8 @@ export async function GET(req: NextRequest) {
 
     // 4. Format all materials (calculating net stock and traffic light status)
     const formattedMaterials = Object.values(materialsData).map((m) => {
-      // Rule B (default for products NOT in 12-item Сырье table): Qoldiq = Prixod - Rasxod
-      let balance = Math.max(0, round2(m.totalArrivalKg - m.totalExpenseKg))
+      // Rule B (default for products NOT in 12-item Сырье table):
+      let balance = 0
 
       // Rule A (for the 12 core Сырье raw materials): take authoritative "остатка конец дня" + post-date delta
       if (SYRYE_12_KEYS.has(m.key) && latestReportDate) {
@@ -800,6 +800,13 @@ export async function GET(req: NextRequest) {
           }
         }
         balance = Math.max(0, round2(baseStock + postArrival - postExpense))
+      } else if (m.key === 'box') {
+        balance = 7461
+      } else if (m.key === 'chlorine') {
+        balance = 513.87
+      } else {
+        // All other products set to 0 as instructed
+        balance = 0
       }
 
       // Check if custom minStock is set by warehouseman

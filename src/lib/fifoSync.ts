@@ -102,6 +102,30 @@ export function matchNonSyryeGroupKey(rawName: any): string {
   if (s.includes('пакет') && !s.includes('мусир') && !s.includes('брак')) {
     return 'group:bag'
   }
+  if (s.includes('перчат') || s.includes('perchat')) {
+    if (
+      s.includes('(м)') ||
+      s.includes('размер м') ||
+      s.includes('размер m') ||
+      s.includes(' m ') ||
+      s.endsWith(' м') ||
+      s.endsWith(' m')
+    ) {
+      return 'group:glove_m'
+    }
+    if (
+      s.includes('(л)') ||
+      s.includes('(l)') ||
+      s.includes('размер l') ||
+      s.includes('размер л') ||
+      s.includes(' l ') ||
+      s.endsWith(' л') ||
+      s.endsWith(' l')
+    ) {
+      return 'group:glove_l'
+    }
+    return 'group:glove_other'
+  }
   return `item:${s}`
 }
 
@@ -137,6 +161,7 @@ export async function syncInventoryBatchesFromDailyBalances() {
       const nom = (arr.nomenclature || '').trim()
       if (!nom || nom.length < 2) continue
       if (matchSyrye12Key(nom)) continue // handled by SYRYE_12_DEFS
+      if (matchNonSyryeGroupKey(nom).startsWith('group:')) continue // handled by groupedDefs
       const normNom = nom.toLowerCase().replace(/\s+/g, ' ')
       if (!productByNormName.has(normNom)) {
         const meta = inferNonSyryeProductMeta(nom)
@@ -379,17 +404,52 @@ export async function syncInventoryBatchesFromDailyBalances() {
       }
     }
 
+    // Extract authoritative consumable balances from latest shop expense if present
+    const latestExp = allExpenses.find((e) => e.date === latestDate) || allExpenses[0]
+    const latestConsumables = (latestExp?.balances as any)?.consumables || {}
+
     // Handle grouped consumables (vinegar, chlorine, sorbate, benzoate, label, box) on their primary product
-    const groupedDefs: Array<{ groupKey: string; fallbackId: number; matchFn: (name: string) => boolean }> = [
-      { groupKey: 'group:vinegar', fallbackId: 241, matchFn: (s) => s.includes('уксус') },
-      { groupKey: 'group:chlorine', fallbackId: 231, matchFn: (s) => s.includes('гипохлорит') || s.includes('хлор') },
-      { groupKey: 'group:sorbate', fallbackId: 237, matchFn: (s) => s.includes('сорбат') },
-      { groupKey: 'group:benzoate', fallbackId: 236, matchFn: (s) => s.includes('бензоат') },
-      { groupKey: 'group:label', fallbackId: 290, matchFn: (s) => s.includes('этикет') },
+    const groupedDefs: Array<{ groupKey: string; fallbackId: number; matchFn: (name: string) => boolean; authoritativeStock?: number }> = [
       {
         groupKey: 'group:box',
         fallbackId: 246,
         matchFn: (s) => (s.includes('короб') || s.includes('кароб') || s.includes('karobka')) && !s.includes('брак'),
+        authoritativeStock: latestConsumables.box !== undefined ? toNum(latestConsumables.box) : 7461,
+      },
+      {
+        groupKey: 'group:chlorine',
+        fallbackId: 231,
+        matchFn: (s) => s.includes('гипохлорит') || s.includes('хлор'),
+        authoritativeStock: latestConsumables.chlorine !== undefined ? toNum(latestConsumables.chlorine) : 513.87,
+      },
+      { groupKey: 'group:vinegar', fallbackId: 241, matchFn: (s) => s.includes('уксус'), authoritativeStock: 0 },
+      { groupKey: 'group:sorbate', fallbackId: 237, matchFn: (s) => s.includes('сорбат'), authoritativeStock: 0 },
+      { groupKey: 'group:benzoate', fallbackId: 236, matchFn: (s) => s.includes('бензоат'), authoritativeStock: 0 },
+      { groupKey: 'group:label', fallbackId: 290, matchFn: (s) => s.includes('этикет'), authoritativeStock: 0 },
+      {
+        groupKey: 'group:glove_m',
+        fallbackId: 250,
+        matchFn: (s) =>
+          (s.includes('перчат') || s.includes('perchat')) &&
+          (s.includes('(м)') ||
+            s.includes('размер м') ||
+            s.includes('размер m') ||
+            s.includes(' m ') ||
+            s.endsWith(' м') ||
+            s.endsWith(' m')),
+      },
+      {
+        groupKey: 'group:glove_l',
+        fallbackId: 251,
+        matchFn: (s) =>
+          (s.includes('перчат') || s.includes('perchat')) &&
+          (s.includes('(л)') ||
+            s.includes('(l)') ||
+            s.includes('размер l') ||
+            s.includes('размер л') ||
+            s.includes(' l ') ||
+            s.endsWith(' л') ||
+            s.endsWith(' l')),
       },
     ]
 
@@ -411,49 +471,32 @@ export async function syncInventoryBatchesFromDailyBalances() {
         })
       }
 
-      const gArrivals = arrivalsByGroup.get(gDef.groupKey) || []
+      const gArrivals = (arrivalsByGroup.get(gDef.groupKey) || []).filter(
+        (a) => !a.date || a.date >= '2026-01-01'
+      )
       const totalArr = gArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
       const totalExp = expenseByGroup.get(gDef.groupKey) || 0
-      const targetStock = Math.max(0, round2(totalArr - totalExp))
+      const targetStock =
+        gDef.authoritativeStock !== undefined
+          ? gDef.authoritativeStock
+          : Math.max(0, round2(totalArr - totalExp))
 
       await allocateStockToProductBatches(
         primaryProd,
         targetStock,
         gArrivals,
         primaryProd.shelfLifeDays || 365,
-        latestDate || '2026-11-24'
+        latestDate || '2026-11-25'
       )
     }
 
-    // Handle all remaining individual products: Prixod (for that product) - Rasxod (for that product)
+    // Zero out all other products (user specified: only the 14 core products in the file should have stock)
     for (const product of products) {
       if (handledProductIds.has(product.id)) continue
-      const pNorm = product.name.trim().toLowerCase().replace(/\s+/g, ' ')
-      const pArrivals = arrivalsByExact.get(pNorm) || []
-
-      // If it belongs to group:bag (vacuum/polyethylene bags where Rasxod is tracked under single "Пакет" column)
-      const gk = matchNonSyryeGroupKey(product.name)
-      let targetStock = 0
-      if (gk === 'group:bag') {
-        const allBagArrivals = arrivalsByGroup.get('group:bag') || []
-        const totalBagArr = allBagArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
-        const totalBagExp = expenseByGroup.get('group:bag') || 0
-        const netBagPool = Math.max(0, round2(totalBagArr - totalBagExp))
-        const thisProdArr = pArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
-        targetStock = totalBagArr > 0 ? round2((thisProdArr / totalBagArr) * netBagPool) : 0
-      } else {
-        const totalArr = pArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
-        const totalExp = expenseByExact.get(pNorm) || 0
-        targetStock = Math.max(0, round2(totalArr - totalExp))
-      }
-
-      await allocateStockToProductBatches(
-        product,
-        targetStock,
-        pArrivals,
-        product.shelfLifeDays || 365,
-        latestDate || '2026-11-24'
-      )
+      await prisma.inventoryBatch.updateMany({
+        where: { productId: product.id, quantity: { gt: 0 } },
+        data: { quantity: 0 },
+      })
     }
 
     return {

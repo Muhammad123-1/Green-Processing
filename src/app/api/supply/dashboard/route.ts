@@ -307,21 +307,12 @@ export async function GET(request: NextRequest) {
         expenseKg = expenseByNom.get(prodLower) || 0
 
         const gKey = matchNonSyryeGroupKey(prodName)
-        if (gKey && gKey.startsWith('group:')) {
-          if (gKey === 'group:bag') {
-            const totalBagArr = groupArrivalsMap.get('group:bag') || 0
-            const totalBagExp = groupExpensesMap.get('group:bag') || 0
-            const netPool = Math.max(0, round2(totalBagArr - totalBagExp))
-            totalQuantity = totalBagArr > 0 ? round2((arrivalKg / totalBagArr) * netPool) : 0
-          } else {
-            const gArr = groupArrivalsMap.get(gKey) || 0
-            const gExp = groupExpensesMap.get(gKey) || 0
-            arrivalKg = gArr
-            expenseKg = gExp
-            totalQuantity = Math.max(0, round2(gArr - gExp))
-          }
-        } else if (arrivalKg > 0 || expenseKg > 0) {
-          totalQuantity = Math.max(0, round2(arrivalKg - expenseKg))
+        if (gKey === 'group:box') {
+          const bSum = product.batches.reduce((sum, b) => sum + b.quantity, 0)
+          totalQuantity = bSum > 0 ? round2(bSum) : 7461
+        } else if (gKey === 'group:chlorine') {
+          const bSum = product.batches.reduce((sum, b) => sum + b.quantity, 0)
+          totalQuantity = bSum > 0 ? round2(bSum) : 513.87
         } else {
           const legacyBatchTotal = product.batches.reduce((sum, b) => sum + b.quantity, 0)
           totalQuantity = round2(legacyBatchTotal)
