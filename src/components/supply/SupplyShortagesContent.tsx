@@ -585,9 +585,9 @@ export default function SupplyShortagesContent() {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
           <button
             onClick={() => setStageFilter('ALL')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
               stageFilter === 'ALL'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-dark-900'
+                ? 'bg-slate-800 text-white dark:bg-dark-700 dark:text-white shadow-xs'
                 : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-dark-700 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -596,10 +596,10 @@ export default function SupplyShortagesContent() {
 
           <button
             onClick={() => setStageFilter('PENDING_SUPPLIER')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
               stageFilter === 'PENDING_SUPPLIER'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 dark:hover:bg-rose-500/20'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
@@ -608,10 +608,10 @@ export default function SupplyShortagesContent() {
 
           <button
             onClick={() => setStageFilter('DISPATCHED')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
               stageFilter === 'DISPATCHED'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20'
             }`}
           >
             <Clock size={13} />
@@ -620,10 +620,10 @@ export default function SupplyShortagesContent() {
 
           <button
             onClick={() => setStageFilter('DELIVERED')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
               stageFilter === 'DELIVERED'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20'
             }`}
           >
             <CheckCircle2 size={13} />
@@ -648,7 +648,7 @@ export default function SupplyShortagesContent() {
               <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                 {formatDual("Hozircha kutilayotgan talabnomalar yo'q", "Нет активных заявок со склада", "No pending requisitions")}
               </h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                 {formatDual(
                   "Ombor xodimlari mahsulot tugadi deb talabnoma yuborganda ular shu yerda paydo bo'ladi.",
                   "Когда склад запросит сырье, заявки сразу появятся на этой странице для назначения поставщика.",
@@ -665,25 +665,25 @@ export default function SupplyShortagesContent() {
                 return (
                   <div
                     key={item.id}
-                    className={`bg-white dark:bg-dark-900 border-2 rounded-3xl p-5 sm:p-6 transition-all shadow-xs ${
+                    className={`bg-white dark:bg-dark-900 border rounded-3xl p-5 sm:p-6 transition-all shadow-xs ${
                       needsSupplier
-                        ? 'border-rose-500/40 hover:border-rose-500 dark:border-rose-500/30'
+                        ? 'border-rose-300 dark:border-rose-500/30 hover:border-rose-500 ring-1 ring-rose-500/20'
                         : isDelivered
-                        ? 'border-emerald-500/20'
-                        : 'border-slate-200 dark:border-dark-750 hover:border-blue-500/40'
+                        ? 'border-emerald-200 dark:border-emerald-500/20'
+                        : 'border-slate-200 dark:border-dark-750 hover:border-blue-400 dark:hover:border-blue-500/40'
                     }`}
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                       {/* Left: Product & Requisition details */}
                       <div className="space-y-3 flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-slate-400">
+                          <span className="font-mono text-xs font-bold text-slate-400 dark:text-slate-500">
                             #{item.id}
                           </span>
                           <span className="text-slate-300 dark:text-dark-600">•</span>
                           {renderStageBadge(item.stage, item.supplier?.name || item.supplierName)}
                           <span className="text-slate-300 dark:text-dark-600">•</span>
-                          <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                             <Calendar size={12} className="text-slate-400" />
                             {new Date(item.createdAt).toLocaleDateString()} ({new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                           </span>
@@ -693,30 +693,30 @@ export default function SupplyShortagesContent() {
                           <h3 className="text-xl font-black text-slate-900 dark:text-white">
                             {item.product?.name || "Noma'lum mahsulot"}
                           </h3>
-                          <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
                             {item.product?.category || "Xomashyo"} {item.product?.code ? `(${item.product.code})` : ''}
                           </span>
                         </div>
 
                         {/* Inventory Context Pill */}
-                        <div className="flex flex-wrap items-center gap-3 text-xs">
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
-                            <span className="text-slate-500">Ombordagi real qoldiq:</span>
-                            <span className={`font-black ${item.currentStock <= 0 ? 'text-rose-500 animate-pulse' : 'text-amber-500'}`}>
+                        <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
+                            <span className="text-slate-500 dark:text-slate-400">Ombordagi real qoldiq:</span>
+                            <span className={`font-black ${item.currentStock <= 0 ? 'text-rose-600 dark:text-rose-400 animate-pulse' : 'text-amber-600 dark:text-amber-400'}`}>
                               {item.currentStock} {item.unit || 'kg'}
                             </span>
                           </div>
 
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
-                            <span className="text-slate-500">Ombor so'ragan miqdor:</span>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
+                            <span className="text-slate-500 dark:text-slate-400">Ombor so'ragan miqdor:</span>
                             <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
                               {item.quantity.toLocaleString()} {item.unit || 'kg'}
                             </span>
                           </div>
 
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
-                            <span className="text-slate-500">Muddati:</span>
-                            <span className="font-bold text-slate-900 dark:text-white">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
+                            <span className="text-slate-500 dark:text-slate-400">Muddati:</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">
                               {new Date(item.expectedDate).toLocaleDateString()} ({item.timeRange || '09:00 - 12:00'})
                             </span>
                           </div>
@@ -724,17 +724,17 @@ export default function SupplyShortagesContent() {
 
                         {/* Omborchi notes (Warehouse Izohi) */}
                         {(item.warehouseNotes || (!item.supplierId && item.notes)) && (
-                          <div className="p-3 bg-amber-500/10 dark:bg-amber-500/5 rounded-xl border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
-                            <span className="font-bold text-amber-600 dark:text-amber-400 block mb-0.5">📦 Omborchi izohi (Ombordan kelgan):</span>
-                            <p className="italic">"{item.warehouseNotes || item.notes}"</p>
+                          <div className="p-3.5 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-200 dark:border-amber-500/20 text-xs text-amber-900 dark:text-amber-300">
+                            <span className="font-bold text-amber-700 dark:text-amber-400 block mb-0.5">📦 Omborchi izohi (Ombordan kelgan):</span>
+                            <p className="italic text-slate-700 dark:text-slate-300">"{item.warehouseNotes || item.notes}"</p>
                           </div>
                         )}
 
                         {/* Ta'minotchi notes (Supply notes to supplier) */}
                         {item.supplierId && item.notes && (
-                          <div className="p-3 bg-blue-50 dark:bg-dark-800/70 rounded-xl border border-blue-200 dark:border-dark-700 text-xs text-slate-700 dark:text-slate-300">
+                          <div className="p-3.5 bg-blue-50 dark:bg-dark-800/70 rounded-xl border border-blue-200 dark:border-dark-700 text-xs text-slate-700 dark:text-slate-300">
                             <span className="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">🚚 Ta'minotchi uchun izoh (Zavoddan):</span>
-                            <p className="italic">"{item.notes}"</p>
+                            <p className="italic text-slate-700 dark:text-slate-300">"{item.notes}"</p>
                           </div>
                         )}
                       </div>
@@ -743,29 +743,29 @@ export default function SupplyShortagesContent() {
                       <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end justify-between gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-200 dark:border-dark-750">
                         {/* Supplier Info if assigned */}
                         {item.supplierId ? (
-                          <div className="text-left lg:text-right bg-blue-50/50 dark:bg-dark-850 p-3 rounded-2xl border border-blue-200 dark:border-dark-700 min-w-[200px]">
-                            <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 block">
+                          <div className="text-left lg:text-right bg-blue-50/70 dark:bg-dark-850 p-3.5 rounded-2xl border border-blue-200 dark:border-dark-700 min-w-[200px]">
+                            <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 block tracking-wider">
                               Biriktirilgan Ta'minotchi
                             </span>
                             <Link
                               href={`/suppliers/${item.supplierId}`}
-                              className="font-black text-sm text-slate-900 dark:text-white hover:text-blue-500 flex items-center lg:justify-end gap-1 mt-0.5"
+                              className="font-black text-sm text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 flex items-center lg:justify-end gap-1 mt-0.5 transition-colors"
                             >
                               <Building2 size={14} className="text-blue-500" />
                               <span>{item.supplier?.name || item.supplierName}</span>
                             </Link>
                             {item.supplier?.phone && (
-                              <span className="text-[11px] text-slate-500 flex items-center lg:justify-end gap-1 mt-0.5">
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center lg:justify-end gap-1 mt-0.5">
                                 <Phone size={11} /> {item.supplier.phone}
                               </span>
                             )}
                           </div>
                         ) : (
-                          <div className="text-left lg:text-right bg-rose-50/50 dark:bg-rose-500/10 p-3 rounded-2xl border border-rose-200 dark:border-rose-500/20">
+                          <div className="text-left lg:text-right bg-rose-50/80 dark:bg-rose-500/10 p-3.5 rounded-2xl border border-rose-200 dark:border-rose-500/20">
                             <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 block">
                               🔴 Ta'minotchi tanlanmagan
                             </span>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
                               Zudlik bilan ta'minotchiga jo'nating
                             </span>
                           </div>
@@ -803,7 +803,7 @@ export default function SupplyShortagesContent() {
       {/* 6. TAB 2: OUT OF STOCK PRODUCTS CATALOG */}
       {activeTab === 'outOfStock' && (
         <div className="space-y-4">
-          <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-700 dark:text-amber-300 flex items-center gap-3">
+          <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl text-xs text-amber-900 dark:text-amber-300 flex items-center gap-3 shadow-xs">
             <Info size={18} className="flex-shrink-0 text-amber-500" />
             <span>
               {formatDual(
@@ -818,7 +818,7 @@ export default function SupplyShortagesContent() {
             {filteredOutOfStock.map((prod) => (
               <div
                 key={prod.id}
-                className="bg-white dark:bg-dark-900 border-2 border-slate-200 dark:border-dark-750 hover:border-amber-500/50 rounded-3xl p-5 shadow-xs transition-all flex flex-col justify-between"
+                className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-amber-400 dark:hover:border-amber-500/50 rounded-3xl p-5 shadow-xs transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -873,7 +873,7 @@ export default function SupplyShortagesContent() {
       {/* 7. MODAL: ASSIGN SUPPLIER & DISPATCH ORDER TO SUPPLIER PORTAL */}
       {dispatchModalItem && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-enter overflow-y-auto"
           onClick={() => setDispatchModalItem(null)}
         >
           <div
@@ -890,7 +890,7 @@ export default function SupplyShortagesContent() {
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
                     {formatDual("Ta'minotchiga Buyurtma Jo'natish", "Отправка заказа поставщику", "Dispatch Order to Supplier")}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual("Buyurtma darhol ta'minotchining shaxsiy kabinetida aks etadi", "Заказ сразу поступит в личный кабинет поставщика", "Order flows instantly to supplier portal")}
                   </p>
                 </div>
@@ -907,22 +907,22 @@ export default function SupplyShortagesContent() {
               {/* Product Info Pill */}
               <div className="p-4 bg-slate-50 dark:bg-dark-800/80 rounded-2xl border border-slate-200 dark:border-dark-700">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-slate-500 uppercase">Mahsulot</span>
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Mahsulot</span>
                   <span className="text-xs font-mono text-slate-400">#{dispatchModalItem.id}</span>
                 </div>
                 <div className="text-lg font-black text-slate-900 dark:text-white">
                   {dispatchModalItem.product?.name}
                 </div>
-                <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                  <span>Ombordagi qoldiq: <b className="text-rose-500">{dispatchModalItem.currentStock} {dispatchModalItem.unit}</b></span>
+                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <span>Ombordagi qoldiq: <b className="text-rose-600 dark:text-rose-400">{dispatchModalItem.currentStock} {dispatchModalItem.unit}</b></span>
                   <span>•</span>
-                  <span>Talab qilingan: <b className="text-emerald-500">{dispatchModalItem.quantity} {dispatchModalItem.unit}</b></span>
+                  <span>Talab qilingan: <b className="text-emerald-600 dark:text-emerald-400">{dispatchModalItem.quantity} {dispatchModalItem.unit}</b></span>
                 </div>
 
                 {/* Omborchi Izohi (Warehouse Note to Supply) */}
                 {(dispatchModalItem.warehouseNotes || (!dispatchModalItem.supplierId && dispatchModalItem.notes)) && (
-                  <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs">
-                    <span className="text-amber-600 dark:text-amber-400 font-bold block mb-0.5">
+                  <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-xs">
+                    <span className="text-amber-700 dark:text-amber-400 font-bold block mb-0.5">
                       📦 Omborchi izohi (Ombordan kelgan):
                     </span>
                     <p className="text-slate-800 dark:text-slate-200 font-medium italic">
@@ -943,9 +943,9 @@ export default function SupplyShortagesContent() {
                   onChange={(e) => setSelectedSupplierId(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="">{formatDual("Ta'minotchini tanlang...", "Выберите поставщика...", "Select supplier...")}</option>
+                  <option value="" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">{formatDual("Ta'minotchini tanlang...", "Выберите поставщика...", "Select supplier...")}</option>
                   {uniqueSuppliers.map(sup => (
-                    <option key={sup.id} value={sup.id}>
+                    <option key={sup.id} value={sup.id} className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">
                       {sup.name} ({sup.category}) {sup.phone ? `· 📞 ${sup.phone}` : ''}
                     </option>
                   ))}
@@ -991,10 +991,10 @@ export default function SupplyShortagesContent() {
                     onChange={(e) => setDeliveryTimeRange(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-emerald-500"
                   >
-                    <option value="09:00 - 12:00">09:00 - 12:00 (Ertalab)</option>
-                    <option value="12:00 - 15:00">12:00 - 15:00 (Tushdan keyin)</option>
-                    <option value="15:00 - 18:00">15:00 - 18:00 (Kechga)</option>
-                    <option value="Kun davomida">Kun davomida</option>
+                    <option value="09:00 - 12:00" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">09:00 - 12:00 (Ertalab)</option>
+                    <option value="12:00 - 15:00" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">12:00 - 15:00 (Tushdan keyin)</option>
+                    <option value="15:00 - 18:00" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">15:00 - 18:00 (Kechga)</option>
+                    <option value="Kun davomida" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">Kun davomida</option>
                   </select>
                 </div>
               </div>
@@ -1030,8 +1030,8 @@ export default function SupplyShortagesContent() {
               </div>
 
               {/* Notification Notice */}
-              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-600 dark:text-blue-400 flex items-center gap-2.5">
-                <Truck size={18} className="flex-shrink-0" />
+              <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2.5">
+                <Truck size={18} className="flex-shrink-0 text-blue-500" />
                 <span>
                   {formatDual(
                     "Buyurtma tasdiqlangach, u tanlangan ta'minotchining shaxsiy kabinetida aks etadi va uning chatiga rasmiy xabarnoma jo'natiladi.",
@@ -1076,7 +1076,7 @@ export default function SupplyShortagesContent() {
       {/* 8. MODAL: DIRECT ORDER FROM OUT-OF-STOCK LIST */}
       {directOrderItem && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-enter overflow-y-auto"
           onClick={() => setDirectOrderItem(null)}
         >
           <div
@@ -1092,7 +1092,7 @@ export default function SupplyShortagesContent() {
                   <h3 className="text-lg font-black text-slate-900 dark:text-white">
                     {formatDual("Tugagan Mahsulotga Buyurtma Berish", "Заказ закончившегося сырья", "Order Depleted Stock")}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual("Ta'minotchi portaliga to'g'ridan-to'g'ri buyurtma jo'natish", "Прямая отправка в кабинет поставщика", "Direct dispatch to supplier portal")}
                   </p>
                 </div>
@@ -1107,12 +1107,12 @@ export default function SupplyShortagesContent() {
 
             <form onSubmit={handleConfirmDirectOrder} className="space-y-4 pt-4">
               <div className="p-4 bg-slate-50 dark:bg-dark-800/80 rounded-2xl border border-slate-200 dark:border-dark-700">
-                <span className="text-xs font-bold text-slate-500 uppercase">Mahsulot</span>
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Mahsulot</span>
                 <div className="text-lg font-black text-slate-900 dark:text-white">
                   {directOrderItem.name}
                 </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  Joriy ombor qoldig'i: <b className="text-rose-500">{directOrderItem.stock} {directOrderItem.unit}</b>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Joriy ombor qoldig'i: <b className="text-rose-600 dark:text-rose-400">{directOrderItem.stock} {directOrderItem.unit}</b>
                 </div>
               </div>
 
@@ -1126,9 +1126,9 @@ export default function SupplyShortagesContent() {
                   onChange={(e) => setSelectedSupplierId(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-amber-500"
                 >
-                  <option value="">{formatDual("Ta'minotchini tanlang...", "Выберите поставщика...", "Select supplier...")}</option>
+                  <option value="" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">{formatDual("Ta'minotchini tanlang...", "Выберите поставщика...", "Select supplier...")}</option>
                   {uniqueSuppliers.map(sup => (
-                    <option key={sup.id} value={sup.id}>
+                    <option key={sup.id} value={sup.id} className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">
                       {sup.name} ({sup.category}) {sup.phone ? `· 📞 ${sup.phone}` : ''}
                     </option>
                   ))}
@@ -1171,10 +1171,10 @@ export default function SupplyShortagesContent() {
                     onChange={(e) => setDeliveryTimeRange(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-amber-500"
                   >
-                    <option value="09:00 - 12:00">09:00 - 12:00 (Ertalab)</option>
-                    <option value="12:00 - 15:00">12:00 - 15:00 (Tushdan keyin)</option>
-                    <option value="15:00 - 18:00">15:00 - 18:00 (Kechga)</option>
-                    <option value="Kun davomida">Kun davomida</option>
+                    <option value="09:00 - 12:00" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">09:00 - 12:00 (Ertalab)</option>
+                    <option value="12:00 - 15:00" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">12:00 - 15:00 (Tushdan keyin)</option>
+                    <option value="15:00 - 18:00" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">15:00 - 18:00 (Kechga)</option>
+                    <option value="Kun davomida" className="bg-white dark:bg-dark-800 text-slate-900 dark:text-white">Kun davomida</option>
                   </select>
                 </div>
               </div>
