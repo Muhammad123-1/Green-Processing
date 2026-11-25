@@ -189,7 +189,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                 pathname.startsWith('/supplier-portal')
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-dark-800'
               }`}
             >
               <Truck size={17} />
@@ -260,7 +260,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                 pathname.startsWith('/kitchen')
                   ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-dark-800'
               }`}
             >
               <Utensils size={17} />
@@ -273,7 +273,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                 pathname.startsWith('/chat')
                   ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-dark-800'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -355,7 +355,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                 pathname === '/degustatsiya' || pathname.startsWith('/degustatsiya')
                   ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-dark-800'
               }`}
             >
               <UtensilsCrossed size={17} />
@@ -369,7 +369,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                 pathname.startsWith('/first-aid')
                   ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-dark-800'
               }`}
             >
               <HeartPulse size={17} />
@@ -383,7 +383,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                 pathname.startsWith('/drivers-medical')
                   ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-dark-800'
               }`}
             >
               <Truck size={17} />
@@ -401,7 +401,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                 pathname.startsWith('/chat')
                   ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-dark-800'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -566,10 +566,21 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                     key={item.href}
                     href={item.href}
                     onClick={close}
-                    className={`sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${isActive ? 'bg-dark-800 text-white' : 'text-slate-400 hover:bg-dark-800 hover:text-white'}`}
+                    className={`sidebar-link group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-150 ${
+                      isActive 
+                        ? 'active bg-blue-50/90 text-blue-600 font-bold border border-blue-200/80 dark:bg-dark-800 dark:text-white dark:border-transparent shadow-xs' 
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-dark-800/80 dark:hover:text-white font-medium'
+                    }`}
                   >
                     <div className="relative">
-                      <Icon size={18} className={isActive ? 'text-blue-400' : ''} />
+                      <Icon 
+                        size={18} 
+                        className={`transition-colors ${
+                          isActive 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
+                        }`} 
+                      />
                       {hasChatBadge && (
                         <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -584,7 +595,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                         <span>{unreadCount}</span>
                       </span>
                     )}
-                    {isActive && <ChevronRight size={14} className="text-blue-400" />}
+                    {isActive && <ChevronRight size={14} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />}
                   </Link>
                 )
               })}

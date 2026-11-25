@@ -138,9 +138,10 @@ export async function GET(request: NextRequest) {
       const arr = arrivalTotals[pLower]?.totalKg || 0
       const exp = expenseTotals[pLower] || 0
       if (arr > 0) {
-        return Math.max(0, arr - exp)
+        return Math.round(Math.max(0, arr - exp) * 10) / 10
       }
-      return batches.reduce((sum, b) => sum + b.quantity, 0)
+      const bSum = batches.reduce((sum, b) => sum + b.quantity, 0)
+      return Math.round(bSum * 10) / 10
     }
 
     // Identify out-of-stock or low-stock products

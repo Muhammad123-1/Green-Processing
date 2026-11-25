@@ -574,14 +574,24 @@ html.light .table-row:hover {
 html.light .sidebar-link {
   color: #475569 !important;
 }
+html.light .sidebar-link * {
+  color: inherit;
+}
 html.light .sidebar-link:hover {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
-html.light .sidebar-link.active {
+html.light .sidebar-link:hover * {
+  color: #0f172a !important;
+}
+html.light .sidebar-link.active,
+html.light .sidebar-link.active * {
   background-color: #eff6ff !important;
   color: #2563eb !important;
   border-color: #bfdbfe !important;
+}
+html.light .sidebar-link.active svg {
+  color: #2563eb !important;
 }
 
 html.light .section-title { color: #0f172a !important; }
