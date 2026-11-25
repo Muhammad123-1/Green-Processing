@@ -165,6 +165,22 @@ body {
   }
 }
 
+/* Mobile virtual keyboard active mode: hide bottom navigation bar immediately and add scroll cushion */
+body.keyboard-open .mobile-bottom-nav,
+body.keyboard-open nav[aria-label*="mobil" i],
+body.keyboard-open nav[aria-label*="navigatsiya" i],
+body.keyboard-open nav[aria-label*="Ta'minotchi" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(100%) !important;
+}
+
+body.keyboard-open main {
+  padding-bottom: 24rem !important;
+}
+
 /* Print styles */
 @media print {
   @page {

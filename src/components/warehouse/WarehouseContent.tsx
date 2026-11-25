@@ -43,7 +43,8 @@ import {
   Boxes,
   Tag,
   ClipboardList,
-  ChefHat
+  ChefHat,
+  UtensilsCrossed
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -412,10 +413,12 @@ export default function WarehouseContent() {
   const [transfers, setTransfers] = useState<any[]>([])
   const [transfersLoading, setTransfersLoading] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
+  const [transferFilterLocation, setTransferFilterLocation] = useState<'all' | 'SEX' | 'OSHXONA'>('all')
+  const [transferSearchQuery, setTransferSearchQuery] = useState('')
   const [transferForm, setTransferForm] = useState({
     productId: '',
     batchId: '',
-    targetLocation: 'OSHXONA',
+    targetLocation: 'SEX',
     issuedQuantity: '',
     issuedUnit: 'kg',
     notes: '',
@@ -428,6 +431,52 @@ export default function WarehouseContent() {
     () => inventory.find((p) => p.id === parseInt(transferForm.productId)),
     [inventory, transferForm.productId]
   )
+
+  // Live real-time FIFO allocation breakdown calculation
+  const fifoAllocation = useMemo(() => {
+    if (!selectedTransferProduct) return null
+    const reqQty = parseFloat(transferForm.issuedQuantity)
+    if (isNaN(reqQty) || reqQty <= 0) return null
+
+    let rem = reqQty
+    const batches = transferForm.isFifoException && transferForm.batchId
+      ? [
+          selectedTransferProduct.batches.find((b) => b.id.toString() === transferForm.batchId)!,
+          ...selectedTransferProduct.batches.filter((b) => b.id.toString() !== transferForm.batchId)
+        ].filter(Boolean)
+      : selectedTransferProduct.batches
+
+    const steps: Array<{
+      batchId: number
+      batchNumber: string
+      available: number
+      take: number
+      remaining: number
+      isClosed: boolean
+      orderIdx: number
+    }> = []
+
+    for (let i = 0; i < batches.length; i++) {
+      if (rem <= 0) break
+      const b = batches[i]
+      if (b.quantity <= 0) continue
+      const take = Math.min(b.quantity, rem)
+      const remaining = Number(Math.max(0, b.quantity - take).toFixed(2))
+      steps.push({
+        batchId: b.id,
+        batchNumber: b.batchNumber,
+        available: b.quantity,
+        take: Number(take.toFixed(2)),
+        remaining,
+        isClosed: remaining <= 0.001,
+        orderIdx: i + 1
+      })
+      rem = Number((rem - take).toFixed(2))
+    }
+
+    const isExceeded = rem > 0
+    return { steps, isExceeded, remExceeded: rem, totalRequested: reqQty }
+  }, [selectedTransferProduct, transferForm.issuedQuantity, transferForm.isFifoException, transferForm.batchId])
 
   // Temperature Log states
   const [tempLogs, setTempLogs] = useState<TemperatureLog[]>([])
@@ -906,12 +955,16 @@ export default function WarehouseContent() {
       })
 
       if (res.ok) {
-        toast.success("Xomashyo chiqimi rasmiylashtirildi! Oshxona/Zagotovkaga yuborildi.")
+        toast.success(
+          transferForm.targetLocation === 'OSHXONA'
+            ? "Xomashyo chiqimi rasmiylashtirildi! Oshxonaga yuborildi."
+            : "Xomashyo chiqimi rasmiylashtirildi! Ishlab chiqarish sexiga yuborildi."
+        )
         setShowTransferModal(false)
         setTransferForm({
           productId: '',
           batchId: '',
-          targetLocation: 'OSHXONA',
+          targetLocation: transferFilterLocation === 'OSHXONA' ? 'OSHXONA' : 'SEX',
           issuedQuantity: '',
           issuedUnit: 'kg',
           notes: '',
@@ -933,11 +986,12 @@ export default function WarehouseContent() {
   }
 
   // Open Quick Dispatch for an Inventory Item
-  function handleOpenQuickTransfer(item: ProductInventory) {
+  function handleOpenQuickTransfer(item: ProductInventory, defaultDest?: 'SEX' | 'OSHXONA') {
+    const dest = defaultDest || (transferFilterLocation === 'OSHXONA' ? 'OSHXONA' : 'SEX')
     setTransferForm({
       productId: item.id.toString(),
       batchId: item.batches.length > 0 ? item.batches[0].id.toString() : '',
-      targetLocation: 'OSHXONA',
+      targetLocation: dest,
       issuedQuantity: '',
       issuedUnit: item.unit || 'kg',
       notes: '',

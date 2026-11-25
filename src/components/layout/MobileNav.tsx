@@ -34,6 +34,7 @@ import { useChatBadge } from '@/store/chatBadge'
 
 export default function MobileNav({ userRole }: { userRole?: string }) {
   const [mounted, setMounted] = useState(false)
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const pathname = usePathname()
   const { toggle, isOpen } = useSidebar()
   const { formatDual } = useLanguage()
@@ -41,9 +42,99 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
 
   useEffect(() => {
     setMounted(true)
+
+    // Helper to check if an element is an editable input or textarea
+    const isInputElement = (el: Element | null): el is HTMLElement => {
+      if (!el || !(el instanceof HTMLElement)) return false
+      const tagName = el.tagName.toLowerCase()
+      if (tagName === 'textarea' || tagName === 'select') return true
+      if (tagName === 'input') {
+        const type = (el as HTMLInputElement).type?.toLowerCase() || 'text'
+        const nonTextTypes = ['button', 'checkbox', 'radio', 'submit', 'reset', 'file', 'image', 'color', 'hidden', 'range']
+        return !nonTextTypes.includes(type)
+      }
+      if (el.isContentEditable) return true
+      return false
+    }
+
+    // Scroll input smoothly to the center of the available screen area above keyboard
+    const scrollToTarget = (target: HTMLElement) => {
+      try {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+        }, 300)
+      } catch {
+        try {
+          target.scrollIntoView(false)
+        } catch {}
+      }
+    }
+
+    let blurTimer: NodeJS.Timeout | null = null
+
+    const handleFocusIn = (e: FocusEvent) => {
+      if (blurTimer) {
+        clearTimeout(blurTimer)
+        blurTimer = null
+      }
+      const target = e.target as Element
+      if (isInputElement(target)) {
+        setIsKeyboardOpen(true)
+        document.body.classList.add('keyboard-open')
+        scrollToTarget(target)
+      }
+    }
+
+    const handleFocusOut = () => {
+      if (blurTimer) clearTimeout(blurTimer)
+      blurTimer = setTimeout(() => {
+        if (!isInputElement(document.activeElement)) {
+          setIsKeyboardOpen(false)
+          document.body.classList.remove('keyboard-open')
+        }
+      }, 150)
+    }
+
+    window.addEventListener('focusin', handleFocusIn)
+    window.addEventListener('focusout', handleFocusOut)
+
+    // Detect virtual keyboard resize on mobile (Android Gboard / iOS)
+    let initialHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight
+    const handleViewportResize = () => {
+      if (!window.visualViewport) return
+      const currentHeight = window.visualViewport.height
+      const heightDiff = initialHeight - currentHeight
+
+      if (heightDiff > 120) {
+        setIsKeyboardOpen(true)
+        document.body.classList.add('keyboard-open')
+        if (isInputElement(document.activeElement)) {
+          scrollToTarget(document.activeElement)
+        }
+      } else if (heightDiff < 60 && !isInputElement(document.activeElement)) {
+        setIsKeyboardOpen(false)
+        document.body.classList.remove('keyboard-open')
+      }
+    }
+
+    window.visualViewport?.addEventListener('resize', handleViewportResize)
+
+    return () => {
+      if (blurTimer) clearTimeout(blurTimer)
+      window.removeEventListener('focusin', handleFocusIn)
+      window.removeEventListener('focusout', handleFocusOut)
+      window.visualViewport?.removeEventListener('resize', handleViewportResize)
+      document.body.classList.remove('keyboard-open')
+    }
   }, [])
 
   if (!mounted) {
+    return null
+  }
+
+  // Xodim klaviaturada yozayotganda yoki input faol bo'lganda mobil navbarni yashirish
+  if (isKeyboardOpen) {
     return null
   }
 
@@ -67,7 +158,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
   // STRICT PRIVACY FOR SUPPLIER: Only My Orders and Logout
   if (userRole === 'SUPPLIER') {
     return (
-      <nav aria-label="Ta'minotchi mobil navigatsiyasi" className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-dark-900/95 backdrop-blur-lg border-t border-dark-750 px-6 py-2 safe-bottom">
+      <nav aria-label="Ta'minotchi mobil navigatsiyasi" className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 md:hidden bg-dark-900/95 backdrop-blur-lg border-t border-dark-750 px-6 py-2 safe-bottom transition-all">
         <div className="flex items-center justify-around max-w-sm mx-auto">
           <Link
             href="/supplier-portal"
@@ -135,7 +226,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     return (
       <nav 
         aria-label="Degustatsiya mobil navigatsiyasi"
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-dark-900/95 backdrop-blur-xl border-t border-dark-700/80 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] px-2 py-1.5 transition-all"
+        className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 md:hidden bg-dark-900/95 backdrop-blur-xl border-t border-dark-700/80 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] px-2 py-1.5 transition-all"
       >
         <div className="flex items-center justify-around max-w-lg mx-auto">
           {degustationItems.map((item) => {
@@ -495,7 +586,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
   return (
     <nav 
       aria-label="Mobil navigatsiya"
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-dark-900/95 backdrop-blur-xl border-t border-dark-700/80 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] px-2 py-1.5 transition-all"
+      className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 md:hidden bg-dark-900/95 backdrop-blur-xl border-t border-dark-700/80 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] px-2 py-1.5 transition-all"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map((item) => {

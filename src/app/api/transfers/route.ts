@@ -12,7 +12,13 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
 
     const where: any = {}
-    if (targetLocation) where.targetLocation = targetLocation
+    if (targetLocation && targetLocation !== 'all') {
+      if (targetLocation === 'SEX' || targetLocation === 'ZAGOTOVKA') {
+        where.targetLocation = { in: ['SEX', 'ZAGOTOVKA'] }
+      } else {
+        where.targetLocation = targetLocation
+      }
+    }
     if (status) where.status = status
 
     // Safe query with fallback if table not yet migrated or schema updating
@@ -64,6 +70,13 @@ export async function POST(request: NextRequest) {
     const pId = parseInt(productId)
     const bId = batchId ? parseInt(batchId) : null
     const qcExceptionRequested = Boolean(isFifoException)
+
+    let normTargetLocation = String(targetLocation || 'SEX').toUpperCase().trim()
+    if (normTargetLocation === 'ZAGOTOVKA' || normTargetLocation === 'PRODUCTION') {
+      normTargetLocation = 'SEX'
+    } else if (normTargetLocation !== 'OSHXONA') {
+      normTargetLocation = 'SEX'
+    }
 
     // 1. Fetch available approved batches ordered strictly by FEFO / FIFO
     const availableBatches = await prisma.inventoryBatch.findMany({
@@ -144,7 +157,14 @@ export async function POST(request: NextRequest) {
     // 3. Transaction to deduct from Warehouse batches and create transfer + audit log
     const transfer = await prisma.$transaction(async (tx: any) => {
       let remainingToDeduct = qty
-      const deductions: { batchId: number; batchNumber: string; amount: number }[] = []
+      const deductions: { 
+        batchId: number; 
+        batchNumber: string; 
+        amount: number;
+        initialQty: number;
+        remainingInBatch: number;
+        isClosed: boolean;
+      }[] = []
 
       // If QC exception selected a specific alternative batch, deduct from that batch first
       const orderedBatches = isExceptionRecorded
@@ -154,6 +174,9 @@ export async function POST(request: NextRequest) {
       for (const b of orderedBatches) {
         if (remainingToDeduct <= 0) break
         const deduct = Math.min(b.quantity, remainingToDeduct)
+        const remInBatch = Number(Math.max(0, b.quantity - deduct).toFixed(2))
+        const isClosed = remInBatch <= 0.001
+
         await tx.inventoryBatch.update({
           where: { id: b.id },
           data: { quantity: { decrement: deduct } }
@@ -167,17 +190,30 @@ export async function POST(request: NextRequest) {
             referenceDocId: transferNum,
           }
         })
-        deductions.push({ batchId: b.id, batchNumber: b.batchNumber, amount: Number(deduct.toFixed(2)) })
+        deductions.push({ 
+          batchId: b.id, 
+          batchNumber: b.batchNumber, 
+          amount: Number(deduct.toFixed(2)),
+          initialQty: b.quantity,
+          remainingInBatch: remInBatch,
+          isClosed
+        })
         remainingToDeduct -= deduct
       }
 
+      // Format clean, human-readable FIFO breakdown
       const fefoBreakdown = isExceptionRecorded
         ? `QC ISTISNOSI: Asl partiya #${activeBatch.batchNumber} o'rniga #${targetBatch.batchNumber} berildi (Tasdiqladi: ${authorizedByQcName || 'QC'}, Sabab: ${exceptionReason})`
         : deductions.length > 1
-          ? `FIFO/FEFO taqsimoti: ${deductions.map(d => `#${d.batchNumber} dan ${d.amount} ${issuedUnit || 'kg'}`).join(', ')}`
-          : `Partiya #${deductions[0]?.batchNumber || targetBatch.batchNumber}`
+          ? `FIFO taqsimoti: ` + deductions.map(d => 
+              d.isClosed 
+                ? `Partiya #${d.batchNumber} dan ${d.amount} ${issuedUnit || 'kg'} [YOPILDI, qoldiq: 0]` 
+                : `Partiya #${d.batchNumber} dan ${d.amount} ${issuedUnit || 'kg'} [Qoldiq: ${d.remainingInBatch} ${issuedUnit || 'kg'}]`
+            ).join(' | ')
+          : `Partiya #${deductions[0]?.batchNumber || targetBatch.batchNumber} dan ${deductions[0]?.amount || qty} ${issuedUnit || 'kg'}` + (deductions[0]?.isClosed ? ' [YOPILDI]' : ` [Qoldiq: ${deductions[0]?.remainingInBatch} ${issuedUnit || 'kg'}]`)
 
-      const finalNotes = [notes, fefoBreakdown].filter(Boolean).join('. ')
+      const metaTag = `FIFO_META:${JSON.stringify(deductions)}`
+      const finalNotes = [notes, fefoBreakdown, metaTag].filter(Boolean).join('\n')
 
       const createdTransfer = await tx.stockTransfer.create({
         data: {
@@ -185,7 +221,7 @@ export async function POST(request: NextRequest) {
           productId: pId,
           batchId: targetBatch.id,
           sourceLocation: 'SKLAD',
-          targetLocation: targetLocation.toUpperCase(),
+          targetLocation: normTargetLocation,
           issuedQuantity: qty,
           issuedUnit: issuedUnit || 'kg',
           issuedById: session.id ? Number(session.id) : null,
@@ -214,7 +250,7 @@ export async function POST(request: NextRequest) {
           action: isExceptionRecorded ? 'FIFO_EXCEPTION_TRANSFER' : 'STOCK_TRANSFER_ISSUED',
           entity: 'StockTransfer',
           entityId: createdTransfer.id,
-          details: `${transferNum}: ${qty} ${issuedUnit || 'kg'} -> ${targetLocation.toUpperCase()} (${fefoBreakdown})`,
+          details: `${transferNum}: ${qty} ${issuedUnit || 'kg'} -> ${normTargetLocation} (${fefoBreakdown})`,
         }
       })
 
