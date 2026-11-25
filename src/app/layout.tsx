@@ -37,6 +37,33 @@ export default function RootLayout({
 }) {
   return (
     <html lang="uz" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var t = localStorage.getItem('theme');
+                  if (!t || t === 'light') {
+                    localStorage.setItem('theme', 'dark');
+                    t = 'dark';
+                  }
+                  if (t === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                  }
+                  var fs = localStorage.getItem('fontSize');
+                  if (fs === 'large') document.documentElement.style.fontSize = '17.5px';
+                  else if (fs === 'xlarge') document.documentElement.style.fontSize = '19px';
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <AppProviders>
           {children}

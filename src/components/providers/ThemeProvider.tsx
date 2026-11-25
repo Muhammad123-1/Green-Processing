@@ -19,21 +19,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [fontSize, setFontSizeState] = useState<FontSize>('normal')
 
   useEffect(() => {
-    // Check local storage or system preference
-    const storedTheme = (localStorage.getItem('theme') as Theme) || 'dark'
-    setThemeState(storedTheme)
-    if (storedTheme === 'light') {
-      document.documentElement.classList.add('light')
-      document.documentElement.classList.remove('dark')
-    } else {
-      document.documentElement.classList.add('dark')
-      document.documentElement.classList.remove('light')
-    }
+    try {
+      // Normalize any legacy/stray 'light' theme to 'dark' for Green Processing ERP
+      const storedTheme = localStorage.getItem('theme') as Theme
+      const currentTheme: Theme = (!storedTheme || storedTheme === 'light') ? 'dark' : storedTheme
+      setThemeState(currentTheme)
+      localStorage.setItem('theme', currentTheme)
 
-    const storedFontSize = localStorage.getItem('fontSize') as FontSize
-    if (storedFontSize) {
-      setFontSizeState(storedFontSize)
-      applyFontSize(storedFontSize)
+      if (currentTheme === 'dark') {
+        document.documentElement.classList.add('dark')
+        document.documentElement.classList.remove('light')
+      } else {
+        document.documentElement.classList.add('light')
+        document.documentElement.classList.remove('dark')
+      }
+
+      const storedFontSize = localStorage.getItem('fontSize') as FontSize
+      if (storedFontSize) {
+        setFontSizeState(storedFontSize)
+        applyFontSize(storedFontSize)
+      }
+    } catch (e) {
+      document.documentElement.classList.add('dark')
     }
   }, [])
 

@@ -375,9 +375,9 @@ export default function Header() {
           className="w-9 h-9 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600 
                     flex items-center justify-center text-slate-400 hover:text-amber-400 
                     transition-all duration-200"
-          title="Mavzuni o'zgartirish"
+          title={theme === 'dark' ? "Tungi rejim (Qora)" : "Kunduzgi rejim (Oq)"}
         >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          {theme === 'dark' ? <Moon size={16} className="text-blue-400" /> : <Sun size={16} className="text-amber-400" />}
         </button>
       </div>
     </header>

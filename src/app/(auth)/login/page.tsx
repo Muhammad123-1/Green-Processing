@@ -62,13 +62,13 @@ export default function LoginPage() {
             type="button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="p-1.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all shadow-xs cursor-pointer"
-            title={theme === 'dark' ? "Kunduzgi rejim (Oq)" : "Tungi rejim (Qora)"}
+            title={theme === 'dark' ? "Tungi rejim (Qora)" : "Kunduzgi rejim (Oq)"}
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
-              <Sun size={15} className="text-amber-400" />
+              <Moon size={15} className="text-blue-400" />
             ) : (
-              <Moon size={15} className="text-slate-700" />
+              <Sun size={15} className="text-amber-400" />
             )}
           </button>
 
