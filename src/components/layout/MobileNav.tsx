@@ -409,12 +409,6 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
             href: '/inspections',
             icon: ClipboardList,
             active: pathname.startsWith('/inspections')
-          },
-          {
-            label: formatDual('Harorat', 'Температура', 'Temp'),
-            href: '/temperature-logs',
-            icon: Thermometer,
-            active: pathname.startsWith('/temperature-logs')
           }
         ]
 
@@ -437,12 +431,6 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
             href: '/shop-report',
             icon: ClipboardList,
             active: pathname.startsWith('/shop-report')
-          },
-          {
-            label: formatDual('Harorat', 'Температура', 'Temp'),
-            href: '/temperature-logs',
-            icon: Thermometer,
-            active: pathname.startsWith('/temperature-logs')
           }
         ]
 

@@ -28,7 +28,8 @@ import {
   SlidersHorizontal,
   Table as TableIcon,
   Binary,
-  FlaskConical
+  FlaskConical,
+  Thermometer
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -1583,14 +1584,20 @@ export default function IncomingActsContent({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Температура сырья</label>
-                    <input
-                      type="text"
-                      value={formData.temperature}
-                      onChange={e => setFormData({ ...formData, temperature: e.target.value })}
-                      placeholder="18 с"
-                      className="w-full p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono text-slate-900 dark:text-white"
-                    />
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                      {activeLang === 'uz' ? 'Xomashyo harorati (°C)' : activeLang === 'en' ? 'Temperature (°C)' : 'Температура сырья (°C)'}
+                    </label>
+                    <div className="relative">
+                      <Thermometer className="w-4 h-4 text-amber-500 absolute left-2.5 top-2.5" />
+                      <input
+                        type="text"
+                        value={formData.temperature}
+                        onChange={e => setFormData({ ...formData, temperature: e.target.value })}
+                        placeholder="18"
+                        className="w-full pl-8 pr-8 p-2 bg-slate-50 dark:bg-dark-900 border border-slate-300 dark:border-dark-700 rounded-lg font-mono font-bold text-slate-900 dark:text-white"
+                      />
+                      <span className="absolute right-2.5 top-2 text-xs font-bold text-slate-400">°C</span>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">№ партии</label>
