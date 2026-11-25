@@ -586,7 +586,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
   return (
     <nav 
       aria-label="Mobil navigatsiya"
-      className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 md:hidden bg-dark-900/95 backdrop-blur-xl border-t border-dark-700/80 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] px-2 py-1.5 transition-all"
+      className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-dark-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-dark-700/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-8px_25px_rgba(0,0,0,0.6)] px-2 py-1.5 transition-all"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map((item) => {
@@ -597,16 +597,16 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
               href={item.href}
               className={`flex flex-col items-center justify-center py-1 px-1.5 sm:px-3 min-w-0 flex-1 rounded-2xl transition-all duration-200 relative ${
                 item.active 
-                  ? 'text-emerald-400 font-extrabold scale-105' 
-                  : 'text-slate-400 hover:text-slate-200 active:scale-95'
+                  ? 'text-emerald-600 dark:text-emerald-400 font-extrabold scale-105' 
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 active:scale-95'
               }`}
             >
               <div className={`relative w-9 h-8 flex items-center justify-center rounded-xl transition-all ${
                 item.active 
-                  ? 'bg-emerald-500/20 border border-emerald-500/40 shadow-sm shadow-emerald-500/30' 
+                  ? 'bg-emerald-500/15 border border-emerald-500/30 shadow-xs' 
                   : 'bg-transparent'
               }`}>
-                <Icon size={19} className={item.active ? 'text-emerald-400' : 'text-slate-400'} />
+                <Icon size={19} className={item.active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'} />
                 {item.badge !== undefined && item.badge > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -618,7 +618,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
                 {item.label}
               </span>
               {item.active && (
-                <span className="w-1 h-1 rounded-full bg-emerald-400 absolute -bottom-0.5" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 absolute -bottom-0.5" />
               )}
             </Link>
           )
@@ -631,14 +631,14 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
           aria-label="Barcha bo'limlar menyusi"
           className={`flex flex-col items-center justify-center py-1 px-1.5 sm:px-3 min-w-0 flex-1 rounded-2xl transition-all duration-200 active:scale-95 ${
             isOpen 
-              ? 'text-emerald-400 font-extrabold' 
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' 
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           <div className={`relative w-9 h-8 flex items-center justify-center rounded-xl transition-all ${
-            isOpen ? 'bg-emerald-500/20 border border-emerald-500/40' : 'bg-transparent'
+            isOpen ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-transparent'
           }`}>
-            <Menu size={19} className={isOpen ? 'text-emerald-400' : 'text-slate-400'} />
+            <Menu size={19} className={isOpen ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>

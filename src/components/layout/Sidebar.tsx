@@ -453,15 +453,15 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-900 border-r border-dark-700 flex flex-col h-full transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-900 border-r border-slate-200 dark:border-dark-700 flex flex-col h-full transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Logo */}
-      <div className="px-5 py-6 border-b border-dark-700">
+      <div className="px-5 py-6 border-b border-slate-200 dark:border-dark-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl gradient-blue flex items-center justify-center shadow-lg glow-blue">
+          <div className="w-10 h-10 rounded-xl gradient-blue flex items-center justify-center shadow-lg glow-blue shrink-0">
             <FileSpreadsheet size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-white leading-tight">Green Processing</h1>
+            <h1 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Green Processing</h1>
             <p className="text-xs text-slate-500 leading-tight">{formatText('ERP Tizimi', 'ERP Система', 'ERP System')}</p>
           </div>
         </div>
@@ -605,14 +605,14 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
       </nav>
 
       {/* Bottom info */}
-      <div className="px-5 py-4 border-t border-dark-700 flex items-center justify-between">
+      <div className="px-5 py-4 border-t border-slate-200 dark:border-dark-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-            <span className="text-xs font-bold text-blue-400">U</span>
+          <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-blue-500 dark:text-blue-400">U</span>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-300">{userName}</p>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-300 truncate">{userName}</p>
+            <p className="text-[10px] text-slate-500 truncate">
               {userRole === 'DIRECTOR'
                 ? (lang === 'ru' ? 'Директор' : lang === 'en' ? 'Director' : 'Direktor') 
                 : userRole === 'DEGUSTATION'

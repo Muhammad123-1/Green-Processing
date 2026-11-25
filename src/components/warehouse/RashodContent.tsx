@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import {
   Plus,
   Save,
@@ -18,7 +19,10 @@ import {
   AlertTriangle,
   Sparkles,
   ArrowUpRight,
-  Filter
+  ArrowRight,
+  Filter,
+  ChefHat,
+  UtensilsCrossed
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -323,6 +327,33 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
         className="hidden"
         onChange={handleImport}
       />
+
+      {/* SECTION SWITCHER: Sexga Chiqim vs Oshxonaga Chiqim */}
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-100 dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-750">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200 dark:border-dark-700 cursor-default"
+          >
+            <ChefHat size={16} />
+            <span>🏭 Ishlab Chiqarish Sexi Chiqimi</span>
+          </button>
+          <Link
+            href="/warehouse?tab=transfers"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white/60 dark:hover:bg-dark-800 transition-all cursor-pointer"
+          >
+            <UtensilsCrossed size={16} />
+            <span>🍽️ Xodimlar Oshxonasi Chiqimi</span>
+          </Link>
+        </div>
+        <Link
+          href="/warehouse?tab=transfers"
+          className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-3 py-1 flex items-center gap-1 cursor-pointer"
+        >
+          <span>Ombor Handshake Chiqimlariga o'tish</span>
+          <ArrowRight size={13} />
+        </Link>
+      </div>
 
       {/* HEADER ACTION BAR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3 sm:p-4 rounded-2xl shadow-sm">

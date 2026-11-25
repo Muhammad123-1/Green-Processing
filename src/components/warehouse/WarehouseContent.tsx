@@ -1238,9 +1238,71 @@ export default function WarehouseContent() {
     window.location.href = url
   }
 
+  // Transfers & Handshake filtering, stats and FIFO parsing
+  const filteredTransfers = useMemo(() => {
+    return transfers.filter((t) => {
+      if (transferFilterLocation === 'SEX' && t.targetLocation !== 'SEX' && t.targetLocation !== 'ZAGOTOVKA') return false
+      if (transferFilterLocation === 'OSHXONA' && t.targetLocation !== 'OSHXONA') return false
+      if (transferSearchQuery.trim()) {
+        const q = transferSearchQuery.toLowerCase()
+        const prodMatch = (t.product?.name || '').toLowerCase().includes(q)
+        const docMatch = (t.transferNumber || '').toLowerCase().includes(q)
+        const notesMatch = (t.notes || '').toLowerCase().includes(q)
+        const batchMatch = (t.batch?.batchNumber || '').toLowerCase().includes(q)
+        if (!prodMatch && !docMatch && !notesMatch && !batchMatch) return false
+      }
+      return true
+    })
+  }, [transfers, transferFilterLocation, transferSearchQuery])
+
+  const transferStats = useMemo(() => {
+    let sexTotalKg = 0, sexCount = 0, oshxonaTotalKg = 0, oshxonaCount = 0, acceptedCount = 0, transitCount = 0
+    transfers.forEach((t) => {
+      const isSex = t.targetLocation === 'SEX' || t.targetLocation === 'ZAGOTOVKA'
+      const isOshxona = t.targetLocation === 'OSHXONA'
+      const qty = Number(t.issuedQuantity) || 0
+      if (isSex) { sexTotalKg += qty; sexCount++ }
+      else if (isOshxona) { oshxonaTotalKg += qty; oshxonaCount++ }
+      if (t.status === 'ACCEPTED') acceptedCount++
+      if (t.status === 'IN_TRANSIT') transitCount++
+    })
+    return {
+      sexTotalKg: Number(sexTotalKg.toFixed(2)), sexCount,
+      oshxonaTotalKg: Number(oshxonaTotalKg.toFixed(2)), oshxonaCount,
+      totalCount: transfers.length, totalKg: Number((sexTotalKg + oshxonaTotalKg).toFixed(2)),
+      acceptedCount, transitCount
+    }
+  }, [transfers])
+
+  const parseFifoMeta = (notes?: string | null) => {
+    if (!notes) return null
+    const match = notes.match(/FIFO_META:(.+)$/m)
+    if (!match) return null
+    try {
+      return JSON.parse(match[1]) as Array<{
+        batchId: number
+        batchNumber: string
+        amount: number
+        initialQty: number
+        remainingInBatch: number
+        isClosed: boolean
+      }>
+    } catch {
+      return null
+    }
+  }
+
+  const cleanTransferNotes = (notes?: string | null) => {
+    if (!notes) return ''
+    return notes
+      .replace(/FIFO_META:.+$/m, '')
+      .replace(/FIFO taqsimoti:.+$/m, '')
+      .trim()
+  }
+
   // Infinite Scroll & Pagination
   const warehousePagination = useInfiniteTable(filteredInventory, 10, [search, statusFilter])
-  const transfersPagination = useInfiniteTable(transfers, 10)
+  const transfersPagination = useInfiniteTable(filteredTransfers, 10, [transferFilterLocation, transferSearchQuery])
   const tempLogsPagination = useInfiniteTable(filteredTempLogs, 10, [tempSearchQuery])
   const arrivalsPagination = useInfiniteTable(filteredArrivals, 15, [prihodSearch, prihodMonth, prihodCategory])
   const dispatchesPagination = useInfiniteTable(filteredDispatches, 15, [rashodSearch, rashodMonth, rashodCategory])
@@ -2600,37 +2662,192 @@ export default function WarehouseContent() {
       {/* TAB 2: TRANSFERS & DISPATCH (TWO-WAY HANDSHAKE) */}
       {activeTab === 'transfers' && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
+          {/* Header & Quick Action Buttons */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                <Scale className="text-emerald-400" size={22} />
-                <span>Ombor Chiqimlari & Two-Way Handshake Nazorati</span>
+                <Scale className="text-emerald-500" size={24} />
+                <span>Ombor Chiqimlari: Sex va Oshxona Nazorati (Handshake)</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Oshxona va Zagotovkaga berilgan mahsulotlar va ularning tortish orqali qabul qilinish holati
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
+                Ishlab chiqarish sexi va Xodimlar oshxonasi uchun alohida hisob-kitob, qat'iy FIFO partiyalari va elektron tarozi orqali Two-Way Handshake qabuli.
               </p>
             </div>
 
-            <button
-              onClick={() => {
-                setTransferForm({
-                  productId: inventory.length > 0 ? inventory[0].id.toString() : '',
-                  batchId: '',
-                  targetLocation: 'OSHXONA',
-                  issuedQuantity: '',
-                  issuedUnit: inventory.length > 0 ? inventory[0].unit : 'kg',
-                  notes: '',
-                  isFifoException: false,
-                  exceptionReason: '',
-                  authorizedByQcName: ''
-                })
-                setShowTransferModal(true)
-              }}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setTransferForm({
+                    productId: inventory.length > 0 ? inventory[0].id.toString() : '',
+                    batchId: '',
+                    targetLocation: 'SEX',
+                    issuedQuantity: '',
+                    issuedUnit: inventory.length > 0 ? inventory[0].unit : 'kg',
+                    notes: '',
+                    isFifoException: false,
+                    exceptionReason: '',
+                    authorizedByQcName: ''
+                  })
+                  setShowTransferModal(true)
+                }}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer"
+              >
+                <ChefHat size={17} />
+                <span>+ Sexga Chiqim</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTransferForm({
+                    productId: inventory.length > 0 ? inventory[0].id.toString() : '',
+                    batchId: '',
+                    targetLocation: 'OSHXONA',
+                    issuedQuantity: '',
+                    issuedUnit: inventory.length > 0 ? inventory[0].unit : 'kg',
+                    notes: '',
+                    isFifoException: false,
+                    exceptionReason: '',
+                    authorizedByQcName: ''
+                  })
+                  setShowTransferModal(true)
+                }}
+                className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/25 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer"
+              >
+                <UtensilsCrossed size={17} />
+                <span>+ Oshxonaga Chiqim</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 3 KPI Summary Cards: Sex vs Oshxona vs Handshake */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* 1. Ishlab chiqarish sexi */}
+            <div 
+              onClick={() => setTransferFilterLocation(transferFilterLocation === 'SEX' ? 'all' : 'SEX')}
+              className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                transferFilterLocation === 'SEX'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 ring-2 ring-blue-500/30 shadow-md'
+                  : 'bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-750 hover:border-blue-400/60 shadow-sm'
+              }`}
             >
-              <Plus size={18} />
-              <span>{formatDual("Yangi Chiqim Berish", "Новый отпуск сырья", "New Dispatch")}</span>
-            </button>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <ChefHat size={16} className="text-blue-500" />
+                  <span>Sex Chiqimi</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
+                  {transferStats.sexCount} ta hujjat
+                </span>
+              </div>
+              <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white font-mono">
+                {transferStats.sexTotalKg.toLocaleString()} <span className="text-sm font-semibold text-slate-500">kg</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                Ishlab chiqarish sexi va zagotovkaga berilgan
+              </p>
+            </div>
+
+            {/* 2. Xodimlar oshxonasi */}
+            <div 
+              onClick={() => setTransferFilterLocation(transferFilterLocation === 'OSHXONA' ? 'all' : 'OSHXONA')}
+              className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                transferFilterLocation === 'OSHXONA'
+                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500 ring-2 ring-amber-500/30 shadow-md'
+                  : 'bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-750 hover:border-amber-400/60 shadow-sm'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <UtensilsCrossed size={16} className="text-amber-500" />
+                  <span>Oshxona Chiqimi</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300">
+                  {transferStats.oshxonaCount} ta hujjat
+                </span>
+              </div>
+              <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white font-mono">
+                {transferStats.oshxonaTotalKg.toLocaleString()} <span className="text-sm font-semibold text-slate-500">kg</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                Xodimlar tushligi va oshxona ehtiyojlariga
+              </p>
+            </div>
+
+            {/* 3. Handshake Qabuli */}
+            <div className="p-4 rounded-2xl border bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-750 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Scale size={16} className="text-emerald-500" />
+                  <span>Handshake Qabuli</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300">
+                  Jami: {transferStats.totalKg.toLocaleString()} kg
+                </span>
+              </div>
+              <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white font-mono">
+                {transferStats.acceptedCount} <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">qabul</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>{transferStats.transitCount} ta hujjat tranzitda (qabul kutilmoqda)</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Sub-tabs & Search Input */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3 rounded-2xl shadow-sm">
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto p-1 bg-slate-100 dark:bg-dark-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setTransferFilterLocation('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  transferFilterLocation === 'all'
+                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Barchasi ({transferStats.totalCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTransferFilterLocation('SEX')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  transferFilterLocation === 'SEX'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <ChefHat size={14} />
+                <span>Sexga Chiqim ({transferStats.sexCount})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTransferFilterLocation('OSHXONA')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  transferFilterLocation === 'OSHXONA'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <UtensilsCrossed size={14} />
+                <span>Oshxonaga Chiqim ({transferStats.oshxonaCount})</span>
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Mahsulot, hujjat yoki partiya..."
+                value={transferSearchQuery}
+                onChange={(e) => setTransferSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
           </div>
 
           {/* Transfers Table */}
@@ -2640,7 +2857,7 @@ export default function WarehouseContent() {
                 <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
                 <p className="text-slate-400 text-sm font-medium">{formatDual("Chiqimlar yuklanmoqda...", "Загрузка перемещений...", "Loading dispatches...")}</p>
               </div>
-            ) : transfers.length === 0 ? (
+            ) : filteredTransfers.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
                 <Scale size={48} className="mx-auto mb-3 opacity-20" />
                 <p className="text-base font-semibold text-slate-400">{formatDual("Hozircha chiqim transferlari yo'q", "Пока нет перемещений", "No dispatches yet")}</p>
@@ -2651,7 +2868,7 @@ export default function WarehouseContent() {
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/40 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">{formatDual("Hujjat Raqami & Sana", "№ Документа & Дата", "Doc № & Date")}</th>
-                      <th className="p-4">{formatDual("Mahsulot", "Продукт", "Product")}</th>
+                      <th className="p-4">{formatDual("Mahsulot & FIFO Partiyalari", "Продукт & Партии FIFO", "Product & FIFO Batches")}</th>
                       <th className="p-4">{formatDual("Qayerga", "Куда", "Destination")}</th>
                       <th className="p-4 text-center">{formatDual("Ombor Bergan", "Отпущено со склада", "Warehouse Issued")}</th>
                       <th className="p-4 text-center">{formatDual("Qabul Qilingan", "Принято", "Received")}</th>
@@ -2660,79 +2877,149 @@ export default function WarehouseContent() {
                       <th className="p-4 text-center">{formatDual("Mas'ul Imzosi", "Подпись", "Signature")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-dark-750">
-                    {transfersPagination.displayedItems.map((t) => (
-                      <tr key={t.id} className="hover:bg-dark-800/30 transition-colors">
-                        <td className="p-4 font-mono text-xs text-slate-300">
-                          <div className="font-bold text-emerald-400">{t.transferNumber}</div>
-                          <div className="text-slate-500">{new Date(t.createdAt).toLocaleDateString()} {new Date(t.createdAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
-                        </td>
-                        <td className="p-4 font-bold text-white">
-                          {t.product?.name}
-                        </td>
-                        <td className="p-4 text-slate-300 font-semibold text-xs">
-                          {t.targetLocation === 'OSHXONA' ? formatDual("Oshxona", "Кухня", "Kitchen") : formatDual("Zagotovka", "Заготовка", "Preparation")}
-                        </td>
-                        <td className="p-4 text-center font-mono font-bold text-white">
-                          {t.issuedQuantity} {t.issuedUnit}
-                        </td>
-                        <td className="p-4 text-center font-mono font-bold">
-                          {t.receivedQuantity !== null && t.receivedQuantity !== undefined ? (
-                            <span className="text-emerald-400">{t.receivedQuantity} {t.issuedUnit}</span>
-                          ) : (
-                            <span className="text-amber-400 italic text-xs">{formatDual("Kutilmoqda...", "Ожидается...", "Pending...")}</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-center font-mono font-bold">
-                          {t.discrepancy && Math.abs(t.discrepancy) > 0 ? (
-                            <span className="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                              -{t.discrepancy.toFixed(2)} {t.issuedUnit}
-                            </span>
-                          ) : t.receivedQuantity !== null ? (
-                            <span className="text-emerald-400">{formatDual("0.00 (Mos)", "0.00 (Совпадает)", "0.00 (Match)")}</span>
-                          ) : (
-                            <span className="text-slate-500">-</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-xs">
-                          {t.status === 'IN_TRANSIT' && (
-                            <span className="px-2.5 py-1 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                              {formatDual("Tranzitda (Qabul kutilmoqda)", "В пути (Ожидает приемки)", "In Transit (Awaiting)")}
-                            </span>
-                          )}
-                          {t.status === 'ACCEPTED' && (
-                            <span className="px-2.5 py-1 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                              {formatDual("To'liq qabul qilindi", "Полностью принято", "Fully accepted")}
-                            </span>
-                          )}
-                          {t.status === 'DISCREPANCY' && (
-                            <div className="space-y-0.5">
-                              <span className="px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                                {formatDual("Farq aniqlandi", "Выявлена разница", "Discrepancy detected")}
-                              </span>
-                              {t.discrepancyReason && (
-                                <div className="text-slate-400 text-[11px]">{t.discrepancyReason}</div>
-                              )}
+                  <tbody className="divide-y divide-slate-200 dark:divide-dark-750">
+                    {transfersPagination.displayedItems.map((t) => {
+                      const fifoMeta = parseFifoMeta(t.notes)
+                      const isOshxona = t.targetLocation === 'OSHXONA'
+                      const cleanNotes = cleanTransferNotes(t.notes)
+
+                      return (
+                        <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/30 transition-colors">
+                          <td className="p-4 font-mono text-xs text-slate-700 dark:text-slate-300">
+                            <div className="font-bold text-emerald-600 dark:text-emerald-400">{t.transferNumber}</div>
+                            <div className="text-slate-500 dark:text-slate-400 text-[11px]">
+                              {new Date(t.createdAt).toLocaleDateString()} {new Date(t.createdAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
                             </div>
-                          )}
-                        </td>
-                        <td className="p-4 text-center">
-                          <SignatureCell
-                            url={warehouseSig.url}
-                            name={warehouseSig.name}
-                            title={warehouseSig.title}
-                            formatDual={formatDual}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+
+                          {/* Mahsulot & FIFO Partiyalar Taqsimoti */}
+                          <td className="p-4">
+                            <div className="font-bold text-slate-900 dark:text-white text-sm">
+                              {t.product?.name}
+                            </div>
+
+                            {/* FIFO Batches breakdown badges */}
+                            {fifoMeta && fifoMeta.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {fifoMeta.map((dm, dIdx) => (
+                                  <span
+                                    key={dIdx}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono border ${
+                                      dm.isClosed
+                                        ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/30'
+                                        : 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30'
+                                    }`}
+                                  >
+                                    <span className="font-bold">Partiya #{dm.batchNumber}:</span>
+                                    <span>{dm.amount} {t.issuedUnit}</span>
+                                    {dm.isClosed ? (
+                                      <span className="font-bold px-1 rounded bg-rose-600 text-white text-[9px]">
+                                        YOPILDI
+                                      </span>
+                                    ) : (
+                                      <span className="text-[9px] opacity-75">
+                                        ({dm.remainingInBatch} {t.issuedUnit} qoldi)
+                                      </span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : t.batch?.batchNumber ? (
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                                Partiya #{t.batch.batchNumber}
+                              </div>
+                            ) : null}
+                          </td>
+
+                          {/* Destination: Oshxona vs Sex */}
+                          <td className="p-4">
+                            {isOshxona ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
+                                <UtensilsCrossed size={13} className="text-amber-600 dark:text-amber-400" />
+                                <span>Xodimlar Oshxonasi</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30">
+                                <ChefHat size={13} className="text-blue-600 dark:text-blue-400" />
+                                <span>Ishlab Chiqarish Sexi</span>
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Warehouse Issued */}
+                          <td className="p-4 text-center font-mono font-bold text-slate-900 dark:text-white">
+                            {t.issuedQuantity} {t.issuedUnit}
+                          </td>
+
+                          {/* Received */}
+                          <td className="p-4 text-center font-mono font-bold">
+                            {t.receivedQuantity !== null && t.receivedQuantity !== undefined ? (
+                              <span className="text-emerald-600 dark:text-emerald-400">{t.receivedQuantity} {t.issuedUnit}</span>
+                            ) : (
+                              <span className="text-amber-600 dark:text-amber-400 italic text-xs">{formatDual("Kutilmoqda...", "Ожидается...", "Pending...")}</span>
+                            )}
+                          </td>
+
+                          {/* Difference */}
+                          <td className="p-4 text-center font-mono font-bold">
+                            {t.discrepancy && Math.abs(t.discrepancy) > 0 ? (
+                              <span className="text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-500/20">
+                                -{t.discrepancy.toFixed(2)} {t.issuedUnit}
+                              </span>
+                            ) : t.receivedQuantity !== null ? (
+                              <span className="text-emerald-600 dark:text-emerald-400">{formatDual("0.00 (Mos)", "0.00 (Совпадает)", "0.00 (Match)")}</span>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+
+                          {/* Status / Notes */}
+                          <td className="p-4 text-xs">
+                            {t.status === 'IN_TRANSIT' && (
+                              <span className="px-2.5 py-1 rounded-full font-bold bg-amber-50 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 inline-block">
+                                {formatDual("Tranzitda (Qabul kutilmoqda)", "В пути (Ожидает приемки)", "In Transit (Awaiting)")}
+                              </span>
+                            )}
+                            {t.status === 'ACCEPTED' && (
+                              <span className="px-2.5 py-1 rounded-full font-bold bg-emerald-50 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 inline-block">
+                                {formatDual("To'liq qabul qilindi", "Полностью принято", "Fully accepted")}
+                              </span>
+                            )}
+                            {t.status === 'DISCREPANCY' && (
+                              <div className="space-y-0.5">
+                                <span className="px-2.5 py-0.5 rounded-full font-bold bg-rose-50 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30 inline-block">
+                                  {formatDual("Farq aniqlandi", "Выявлена разница", "Discrepancy detected")}
+                                </span>
+                                {t.discrepancyReason && (
+                                  <div className="text-slate-500 dark:text-slate-400 text-[11px]">{t.discrepancyReason}</div>
+                                )}
+                              </div>
+                            )}
+                            {cleanNotes && (
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                {cleanNotes}
+                              </p>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-center">
+                            <SignatureCell
+                              url={warehouseSig.url}
+                              name={warehouseSig.name}
+                              title={warehouseSig.title}
+                              formatDual={formatDual}
+                            />
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
 
             {/* 10 tadan yuklash & Butun jadvalni ko'rish footeri */}
-            {!loading && transfers.length > 0 && (
+            {!loading && filteredTransfers.length > 0 && (
               <InfiniteTableFooter
                 currentCount={transfersPagination.visibleCount}
                 totalCount={transfersPagination.totalCount}
@@ -2814,27 +3101,34 @@ export default function WarehouseContent() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setTransferForm({ ...transferForm, targetLocation: 'OSHXONA' })}
-                    className={`py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                      transferForm.targetLocation === 'OSHXONA'
-                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                    onClick={() => setTransferForm({ ...transferForm, targetLocation: 'SEX' })}
+                    className={`py-3 px-3 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      transferForm.targetLocation === 'SEX' || transferForm.targetLocation === 'ZAGOTOVKA'
+                        ? 'bg-blue-600 text-white border-blue-500 shadow-md ring-2 ring-blue-500/20'
                         : 'bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-200'
                     }`}
                   >
-                    <Building2 size={16} />
-                    <span>{formatDual("Oshxona", "Кухня", "Kitchen")}</span>
+                    <ChefHat size={18} />
+                    <div className="text-left">
+                      <div className="leading-tight">Ishlab Chiqarish Sexi</div>
+                      <div className="text-[10px] font-normal opacity-80">Sex / Ishlab chiqarish</div>
+                    </div>
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => setTransferForm({ ...transferForm, targetLocation: 'ZAGOTOVKA' })}
-                    className={`py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                      transferForm.targetLocation === 'ZAGOTOVKA'
-                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                    onClick={() => setTransferForm({ ...transferForm, targetLocation: 'OSHXONA' })}
+                    className={`py-3 px-3 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      transferForm.targetLocation === 'OSHXONA'
+                        ? 'bg-amber-600 text-white border-amber-500 shadow-md ring-2 ring-amber-500/20'
                         : 'bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-slate-200'
                     }`}
                   >
-                    <Layers size={16} />
-                    <span>{formatDual("Zagotovka Sexi", "Цех заготовки", "Prep Shop")}</span>
+                    <UtensilsCrossed size={18} />
+                    <div className="text-left">
+                      <div className="leading-tight">Xodimlar Oshxonasi</div>
+                      <div className="text-[10px] font-normal opacity-80">Xodimlar ovqati / Oshpaz</div>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -3059,20 +3353,71 @@ export default function WarehouseContent() {
                   </button>
                 </div>
 
-                {/* Multi-batch allocation notice */}
-                {selectedTransferProduct?.batches?.[0] &&
-                  parseFloat(transferForm.issuedQuantity) > selectedTransferProduct.batches[0].quantity && (
-                    <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 text-xs space-y-0.5">
-                      <div className="font-bold flex items-center gap-1">
-                        <AlertTriangle size={13} className="text-amber-500" />
-                        <span>FEFO ketma-ket taqsimot:</span>
-                      </div>
-                      <p className="text-[11px] leading-tight">
-                        1-partiya (#{selectedTransferProduct.batches[0].batchNumber}) dan <strong>{selectedTransferProduct.batches[0].quantity} {selectedTransferProduct.unit}</strong> to'liq yopiladi,
-                        qolgan <strong>{(parseFloat(transferForm.issuedQuantity) - selectedTransferProduct.batches[0].quantity).toFixed(2)} {selectedTransferProduct.unit}</strong> esa keyingi 2-partiyadan olinadi.
-                      </p>
+                {/* Real-time FIFO Multi-Batch Allocation Breakdown */}
+                {fifoAllocation && (
+                  <div className="mt-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+                      <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                        <Layers size={14} />
+                        <span>FIFO Ketma-ket Partiyalar Taqsimoti:</span>
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-500">
+                        So'ralgan: {fifoAllocation.totalRequested} {selectedTransferProduct?.unit}
+                      </span>
                     </div>
-                  )}
+
+                    <div className="space-y-1.5">
+                      {fifoAllocation.steps.map((step) => (
+                        <div
+                          key={step.batchId}
+                          className={`p-2 rounded-xl border text-xs flex items-center justify-between transition-all ${
+                            step.isClosed
+                              ? 'bg-rose-50/70 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30 text-rose-900 dark:text-rose-200'
+                              : 'bg-emerald-50/70 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-black ${
+                                step.isClosed ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'
+                              }`}
+                            >
+                              #{step.orderIdx}
+                            </span>
+                            <span className="font-mono font-bold">
+                              Partiya #{step.batchNumber}
+                            </span>
+                            <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                              (Mavjud: {step.available} {selectedTransferProduct?.unit})
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-right">
+                            <span className="font-mono font-extrabold text-xs">
+                              -{step.take} {selectedTransferProduct?.unit}
+                            </span>
+                            {step.isClosed ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-600 text-white shadow-xs">
+                                YOPILDI (0 kg)
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-600 text-white shadow-xs">
+                                {step.remaining} {selectedTransferProduct?.unit} qoldi
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {fifoAllocation.isExceeded && (
+                      <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300 text-xs font-bold flex items-center gap-2">
+                        <AlertTriangle size={15} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                        <span>Omborda yetarli qoldiq yo'q! Yana {fifoAllocation.remExceeded} {selectedTransferProduct?.unit} yetishmaydi.</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Notes */}
