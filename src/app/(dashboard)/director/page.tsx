@@ -1857,8 +1857,8 @@ export default function DirectorPage() {
             </div>
           </Link>
 
-          {/* Card 8: Warehouse */}
-          <Link
+          {/* Card 8: Warehouse (hidden from director panel) */}
+          {false && <Link
             href="/warehouse"
             className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-orange-500/50 dark:hover:border-orange-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
           >
@@ -1880,7 +1880,7 @@ export default function DirectorPage() {
               <span>{formatDual("Ochish", "Открыть", "Open")}</span>
               <ChevronRight size={13} />
             </div>
-          </Link>
+          </Link>}
 
           {/* Card 9: General Archive */}
           <Link
@@ -3824,7 +3824,7 @@ export default function DirectorPage() {
                     <ArrowUpRight size={14} />
                   </Link>
                 )}
-                {(selectedAuditAction.category === 'transfer_issued' || selectedAuditAction.category === 'transfer_received') && (
+                {false && (selectedAuditAction.category === 'transfer_issued' || selectedAuditAction.category === 'transfer_received') && (
                   <Link
                     href="/warehouse"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition-colors shadow-sm"

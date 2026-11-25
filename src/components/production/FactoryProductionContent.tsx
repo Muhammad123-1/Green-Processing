@@ -503,7 +503,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
   return (
     <div className="flex flex-col min-h-full animate-enter space-y-6">
       {/* Industrial Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10">
+      <div className="dark-banner relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -550,7 +550,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             {/* Executive KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Total Finished Goods */}
-              <div className="bg-dark-900/90 border border-dark-750 p-5 rounded-2xl shadow-sm">
+              <div className="bg-white dark:bg-dark-900/90 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     {formatDual("Tayyor Mahsulot", "Готовая Продукция", "Finished Goods")}
@@ -569,7 +569,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               </div>
 
               {/* Raw Material Consumed */}
-              <div className="bg-dark-900/90 border border-dark-750 p-5 rounded-2xl shadow-sm">
+              <div className="bg-white dark:bg-dark-900/90 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     {formatDual("Sarflangan Xomashyo", "Расход Сырья", "Raw Consumed")}
@@ -589,7 +589,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             </div>
 
             {/* Mahsulot Kategoriyalari - 1 Tugma Bilan Tanlash */}
-            <div className="bg-dark-900/90 border border-dark-750 p-3 sm:p-4 rounded-2xl shadow-sm space-y-3">
+            <div className="bg-white dark:bg-dark-900/90 border border-slate-200 dark:border-dark-750 p-3 sm:p-4 rounded-2xl shadow-sm space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -659,7 +659,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             </div>
 
             {/* Filter and Search Bar */}
-            <div className="bg-dark-900/80 border border-dark-750 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+            <div className="bg-white dark:bg-dark-900/80 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                 {/* Search */}
                 <div className="relative flex-1 min-w-[180px]">
@@ -696,7 +696,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               </div>
 
               {/* Status Filter Tabs */}
-              <div className="flex items-center gap-1 bg-dark-800/90 p-1 rounded-xl border border-dark-700">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-800/90 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setStatusFilter('ALL')}
@@ -740,7 +740,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="bg-dark-800/60 border-b border-dark-750 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <tr className="bg-slate-100 dark:bg-dark-800/60 border-b border-slate-200 dark:border-dark-750 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">{l.colDate}</th>
                       <th className="p-4">{l.colProduct}</th>
                       <th className="p-4 text-center">{l.colQty}</th>

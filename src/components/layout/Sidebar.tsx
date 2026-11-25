@@ -81,8 +81,8 @@ const navSections = [
     key: 'navWarehouse',
     title: 'Omborxona',
     items: [
-      { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
-      { key: 'prihod', href: '/inbound', icon: ArrowDownLeft, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
+      { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'WAREHOUSE'] },
+      { key: 'prihod', href: '/inbound', icon: ArrowDownLeft, roles: ['ADMIN', 'WAREHOUSE'] },
       { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },

@@ -79,7 +79,7 @@ export default function AccountingContent() {
   const totalPayables = totalSupplierDebt || invoices.filter(i => i.type === 'PURCHASE_INVOICE').reduce((acc, i) => acc + (i.totalAmount - i.paidAmount), 0)
 
   return (
-    <div className="space-y-6 animate-enter">
+    <div className="accounting-page space-y-6 animate-enter">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-900/60 p-6 rounded-2xl border border-dark-700 backdrop-blur-md">
         <div>

@@ -88,6 +88,16 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/kitchen', request.url))
       }
     }
+
+    // Director works from the executive dashboard. Warehouse operation screens
+    // are reserved for warehouse/production staff and cannot be opened directly.
+    if (userRole === 'DIRECTOR') {
+      const restrictedDirectorPrefixes = ['/warehouse', '/inbound', '/outbound']
+      const isRestricted = restrictedDirectorPrefixes.some(prefix => pathname.startsWith(prefix))
+      if (isRestricted) {
+        return NextResponse.redirect(new URL('/director', request.url))
+      }
+    }
   }
 
   return NextResponse.next()
