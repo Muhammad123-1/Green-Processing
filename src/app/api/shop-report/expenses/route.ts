@@ -23,8 +23,12 @@ export async function PUT(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (session.role === 'SUPPLY') {
-      return NextResponse.json({ error: "Supply roli shop-report ma'lumotlarini faqat ko'rishi mumkin" }, { status: 403 })
+    const normRole = String(session.role || '').toUpperCase().trim()
+    if (normRole === 'SUPPLY' || normRole === 'QUALITY_CONTROL') {
+      return NextResponse.json(
+        { error: "Sifat nazoratchisi (QC) va Ta'minotchi uchun ushbu bo'lim faqat ko'rish rejimida. Tahrirlash huquqi yo'q." },
+        { status: 403 }
+      )
     }
 
     const body = await req.json()
