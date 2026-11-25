@@ -4016,17 +4016,6 @@ export default function WarehouseContent() {
                 />
               </div>
 
-              <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-xs text-amber-900 dark:text-amber-300 flex items-center gap-2">
-                <ShoppingCart size={16} className="flex-shrink-0 text-amber-600 dark:text-amber-400" />
-                <span>
-                  {formatDual(
-                    "Ombor talabnomasi Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasida aks etadi. Ta'minotchi va narxni Ta'minot bo'limi biriktiradi.",
-                    "Заявка со склада поступит в раздел «Заявки со склада» отдела снабжения. Поставщика и цену назначит отдел снабжения.",
-                    "Requisition will appear in the supply shortages section. Supply department will assign the supplier and price."
-                  )}
-                </span>
-              </div>
-
               {/* Modal Actions */}
               <div className="flex flex-wrap gap-2 items-center justify-end pt-3 border-t border-slate-200 dark:border-dark-700">
                 <button
