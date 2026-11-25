@@ -329,26 +329,26 @@ export async function GET(request: NextRequest) {
     // Helper to normalize material keys between ShopArrival (inbound), ShopExpense (outbound), and balances
     const normalizeMaterialKey = (raw: string): string => {
       const s = raw.trim().toLowerCase()
-      if (s.includes('томат') || s.includes('tomat') || s.includes('помидор')) {
+      if (s === 'tomato' || s === 'tomatoes' || s.includes('томат') || s.includes('tomat') || s.includes('помидор')) {
         if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Томат'
       }
-      if (s.includes('айсберг') || s.includes('айзберг') || s.includes('ayzberg') || s.includes('aysberg')) {
+      if (s === 'iceberg' || s === 'icebergleaf' || s.includes('айсберг') || s.includes('айзберг') || s.includes('ayzberg') || s.includes('aysberg')) {
         if (!s.includes('пакет') && !s.includes('каробк') && !s.includes('коробк')) return 'Салат Айсберг'
       }
-      if (s.includes('капуст')) return 'Капуста белокачанная'
-      if (s.includes('лук')) {
+      if (s === 'cabbage' || (s.includes('капуст') && !s.includes('красная') && !s.includes('коул'))) return 'Капуста белокачанная'
+      if (s === 'onion' || s.includes('лук')) {
         if (!s.includes('пакет')) return 'Лук салатный белый'
       }
-      if (s.includes('морков')) return 'Морковь'
-      if (s.includes('огур')) return 'Огурцы свежие'
-      if (s.includes('лимон')) {
+      if (s === 'carrot' || s.includes('морков')) return 'Морковь'
+      if (s === 'cucumber' || s === 'cucumbers' || s.includes('огур')) return 'Огурцы свежие'
+      if (s === 'lemon' || s.includes('лимон')) {
         if (!s.includes('пакет') && !s.includes('кислот')) return 'Лимон'
       }
-      if (s.includes('сельдер')) return 'Сельдерей'
-      if (s.includes('шпинат')) return 'Шпинат'
-      if (s.includes('руккол')) return 'Руккола'
-      if (s.includes('lollo') || s.includes('лолло')) return 'Lollo Rosso'
-      if (s.includes('мят')) return 'Мята'
+      if (s === 'celery' || s.includes('сельдер')) return 'Сельдерей'
+      if (s === 'spinach' || s.includes('шпинат')) return 'Шпинат'
+      if (s === 'rukkola' || s.includes('руккол')) return 'Руккола'
+      if (s === 'lollorosso' || s.includes('lollo') || s.includes('лолло')) return 'Lollo Rosso'
+      if (s === 'mint' || s.includes('мят')) return 'Мята'
       return raw.trim()
     }
 
@@ -427,22 +427,24 @@ export async function GET(request: NextRequest) {
     const chronologicalExpenses = [...shopExpenses].sort((a, b) => a.date.localeCompare(b.date))
     chronologicalExpenses.forEach((exp) => {
       const balances = (exp.balances || {}) as Record<string, any>
-      if (balances?.start && typeof balances.start === 'object') {
-        Object.entries(balances.start).forEach(([rawName, val]) => {
+      const startObj = balances?.report?.balances?.start || balances?.start
+      if (startObj && typeof startObj === 'object') {
+        Object.entries(startObj).forEach(([rawName, val]) => {
           const num = typeof val === 'number' ? val : parseFloat(String(val))
           const k = normalizeMaterialKey(rawName)
           if (!isNaN(num) && num >= 0 && !recordedOpeningByProduct.has(k)) {
-            recordedOpeningByProduct.set(k, num)
+            recordedOpeningByProduct.set(k, Math.round(num * 100) / 100)
             totalOpeningStockKg += num
           }
         })
       }
-      if (balances?.end && typeof balances.end === 'object') {
-        Object.entries(balances.end).forEach(([rawName, val]) => {
+      const endObj = balances?.report?.balances?.end || balances?.end
+      if (endObj && typeof endObj === 'object') {
+        Object.entries(endObj).forEach(([rawName, val]) => {
           const num = typeof val === 'number' ? val : parseFloat(String(val))
           const k = normalizeMaterialKey(rawName)
           if (!isNaN(num) && num >= 0) {
-            recordedClosingByProduct.set(k, num)
+            recordedClosingByProduct.set(k, Math.round(num * 100) / 100)
           }
         })
       }

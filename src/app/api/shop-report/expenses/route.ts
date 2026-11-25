@@ -4,6 +4,8 @@ import { getSession } from '@/app/actions/auth'
 import { applyExpenseRow, isDateStr } from '@/lib/shopReport'
 import { checkEditPermission, isAfterShiftHours } from '@/lib/auditRules'
 import { recordShiftEditAudit } from '@/lib/auditImport'
+import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
+import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
 
 export const dynamic = 'force-dynamic'
 
@@ -142,6 +144,13 @@ export async function PUT(req: NextRequest) {
       { timeout: 60000, maxWait: 10000 }
     )
 
+    if (saved > 0) {
+      await syncInventoryBatchesFromDailyBalances().catch((e) => console.error('FIFO sync after expenses save error:', e))
+      try {
+        invalidateSupplyDashboardCache()
+      } catch {}
+    }
+
     return NextResponse.json({ success: true, saved })
   } catch (error: any) {
     console.error('Shop expenses save error:', error)
@@ -171,6 +180,10 @@ export async function DELETE(req: NextRequest) {
     if (!date) return NextResponse.json({ error: "Sana ko'rsatilmagan" }, { status: 400 })
 
     await prisma.shopExpense.delete({ where: { date } })
+    await syncInventoryBatchesFromDailyBalances().catch((e) => console.error('FIFO sync after expense delete error:', e))
+    try {
+      invalidateSupplyDashboardCache()
+    } catch {}
     return NextResponse.json({ success: true, deletedDate: date })
   } catch (error: any) {
     console.error('Shop expense delete error:', error)

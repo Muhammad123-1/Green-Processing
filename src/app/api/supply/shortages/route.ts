@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
+import { matchSyrye12Key, getLatestSyryeClosingBalances, toNum } from '@/lib/shopReport'
+import { matchNonSyryeGroupKey } from '@/lib/fifoSync'
+
+function round2(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  const r = Math.round(n * 100) / 100
+  return Math.abs(r) < 0.01 ? 0 : r
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -90,7 +98,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    // 4. Fetch recent shop arrivals to compute real stock and identify supplier history
+    // 4. Fetch recent shop arrivals & expenses (including daily closing balances) to compute real stock
     const [arrivals, expenses] = await Promise.all([
       prisma.shopArrival.findMany({
         select: {
@@ -102,50 +110,128 @@ export async function GET(request: NextRequest) {
       }),
       prisma.shopExpense.findMany({
         select: {
-          materials: true
-        }
+          date: true,
+          materials: true,
+          balances: true
+        },
+        orderBy: { date: 'desc' }
       })
     ])
 
+    const { latestDate: latestReportDate, endBalances: latestClosingBalances } = getLatestSyryeClosingBalances(expenses)
+
     // Aggregate arrivals and expenses
     const arrivalTotals: Record<string, { totalKg: number; suppliers: Record<string, number> }> = {}
+    const syryeSuppliersMap: Record<string, Record<string, number>> = {}
+    const groupArrivalsMap: Record<string, number> = {}
+
     for (const arr of arrivals) {
       const nom = (arr.nomenclature || '').trim().toLowerCase()
       if (!nom) continue
+      const q = toNum(arr.quantity)
+      if (q <= 0) continue
       if (!arrivalTotals[nom]) {
         arrivalTotals[nom] = { totalKg: 0, suppliers: {} }
       }
-      const q = Number(arr.quantity) || 0
       arrivalTotals[nom].totalKg += q
-      const s = (arr.supplier || '').trim() || 'Noma\'lum'
+      const s = (arr.supplier || '').trim() || "Noma'lum"
       arrivalTotals[nom].suppliers[s] = (arrivalTotals[nom].suppliers[s] || 0) + q
+
+      const sKey = matchSyrye12Key(arr.nomenclature)
+      if (sKey) {
+        syryeSuppliersMap[sKey] = syryeSuppliersMap[sKey] || {}
+        syryeSuppliersMap[sKey][s] = (syryeSuppliersMap[sKey][s] || 0) + q
+      } else {
+        const gKey = matchNonSyryeGroupKey(arr.nomenclature)
+        if (gKey) {
+          groupArrivalsMap[gKey] = (groupArrivalsMap[gKey] || 0) + q
+        }
+      }
     }
 
     const expenseTotals: Record<string, number> = {}
+    const groupExpensesMap: Record<string, number> = {}
     for (const exp of expenses) {
       const mats = (exp.materials as Record<string, any>) || {}
       for (const [mName, mQty] of Object.entries(mats)) {
         if (!mName) continue
         const k = mName.trim().toLowerCase()
-        const q = typeof mQty === 'number' ? mQty : parseFloat(String(mQty)) || 0
+        const q = toNum(mQty)
+        if (q <= 0) continue
         expenseTotals[k] = (expenseTotals[k] || 0) + q
+        if (!matchSyrye12Key(mName)) {
+          const gKey = matchNonSyryeGroupKey(mName)
+          if (gKey) {
+            groupExpensesMap[gKey] = (groupExpensesMap[gKey] || 0) + q
+          }
+        }
       }
     }
 
-    // Helper: find total stock for a product
+    // Helper: find authoritative total stock for a product
+    // Rule A: If in 12-item "Сырье" table -> take "остатка конец дня" + post-date delta
+    // Rule B: If not in 12-item "Сырье" table -> take Prixod - Rasxod
     const getProductStock = (prodName: string, batches: { quantity: number }[]) => {
+      const syryeKey = matchSyrye12Key(prodName)
+      if (syryeKey && latestReportDate) {
+        const baseStock = round2(toNum(latestClosingBalances[syryeKey]))
+        let postArr = 0
+        let postExp = 0
+        for (const arr of arrivals) {
+          if (arr.date > latestReportDate && matchSyrye12Key(arr.nomenclature) === syryeKey) {
+            postArr += toNum(arr.quantity)
+          }
+        }
+        for (const exp of expenses) {
+          if (exp.date > latestReportDate && exp.materials) {
+            for (const [k, v] of Object.entries(exp.materials as Record<string, any>)) {
+              if (matchSyrye12Key(k) === syryeKey) {
+                postExp += toNum(v)
+              }
+            }
+          }
+        }
+        return Math.max(0, round2(baseStock + postArr - postExp))
+      }
+
       const pLower = prodName.trim().toLowerCase()
+      const gKey = matchNonSyryeGroupKey(prodName)
+      if (gKey && gKey.startsWith('group:')) {
+        if (gKey === 'group:bag') {
+          const totalBagArr = groupArrivalsMap['group:bag'] || 0
+          const totalBagExp = groupExpensesMap['group:bag'] || 0
+          const netPool = Math.max(0, round2(totalBagArr - totalBagExp))
+          const thisArr = arrivalTotals[pLower]?.totalKg || 0
+          return totalBagArr > 0 ? round2((thisArr / totalBagArr) * netPool) : 0
+        }
+        const gArr = groupArrivalsMap[gKey] || 0
+        const gExp = groupExpensesMap[gKey] || 0
+        return Math.max(0, round2(gArr - gExp))
+      }
+
       const arr = arrivalTotals[pLower]?.totalKg || 0
       const exp = expenseTotals[pLower] || 0
-      if (arr > 0) {
-        return Math.round(Math.max(0, arr - exp) * 10) / 10
+      if (arr > 0 || exp > 0) {
+        return Math.max(0, round2(arr - exp))
       }
       const bSum = batches.reduce((sum, b) => sum + b.quantity, 0)
-      return Math.round(bSum * 10) / 10
+      return round2(bSum)
     }
 
+    // Deduplicate secondary Syrye products (e.g. "Огурцы" vs "Огурцы свежие")
+    const seenSyryeKeys = new Set<string>()
+    const filteredProducts = products.filter((p) => {
+      if (p.id === 284) return false // secondary duplicate of ID=288 "Огурцы свежие"
+      const sk = matchSyrye12Key(p.name)
+      if (sk) {
+        if (seenSyryeKeys.has(sk)) return false
+        seenSyryeKeys.add(sk)
+      }
+      return true
+    })
+
     // Identify out-of-stock or low-stock products
-    const outOfStockProducts = products
+    const outOfStockProducts = filteredProducts
       .map(p => {
         const stock = getProductStock(p.name, p.batches)
         const min = p.minStockLevel || 1000
@@ -154,7 +240,8 @@ export async function GET(request: NextRequest) {
 
         // Recommend top historical supplier
         const pLower = p.name.trim().toLowerCase()
-        const historySup = arrivalTotals[pLower]?.suppliers || {}
+        const syryeKey = matchSyrye12Key(p.name)
+        const historySup = (syryeKey ? syryeSuppliersMap[syryeKey] : null) || arrivalTotals[pLower]?.suppliers || {}
         let topSupName = ''
         let maxSupQty = 0
         for (const [sName, sQty] of Object.entries(historySup)) {

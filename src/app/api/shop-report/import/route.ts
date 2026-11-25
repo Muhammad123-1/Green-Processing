@@ -2,18 +2,30 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import ExcelJS from 'exceljs'
-import { toNum, parseExcelDate, EXPENSE_FIELDS, normKey } from '@/lib/shopReport'
+import { toNum, parseExcelDate, EXPENSE_FIELDS, normKey, matchSyrye12Key, sanitizeDayReport } from '@/lib/shopReport'
 import { recordImportAudit } from '@/lib/auditImport'
+import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
+import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
+
+function round2(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  const r = Math.round(n * 100) / 100
+  return Math.abs(r) < 0.01 ? 0 : r
+}
 
 function getCellValueNum(cell: ExcelJS.Cell | undefined): number {
   if (!cell) return 0
   const v = cell.result !== undefined && cell.result !== null ? cell.result : cell.value
-  return toNum(v)
+  if (v === null || v === undefined || v === '') return 0
+  if (typeof v === 'object' && (v as any).error) return 0
+  return round2(toNum(v))
 }
 
 function getCellValueStr(cell: ExcelJS.Cell | undefined): string {
   if (!cell) return ''
   const v = cell.result !== undefined && cell.result !== null ? cell.result : cell.value
+  if (v === null || v === undefined) return ''
+  if (typeof v === 'object' && (v as any).error) return ''
   return String(v ?? '').trim()
 }
 
@@ -89,13 +101,14 @@ export async function POST(req: NextRequest) {
 
             const dateStr = parseExcelDate(c1)
             const nomenclature = getCellValueStr(arrRow.getCell(2))
-            if (!dateStr || !nomenclature) continue
+            const qty = getCellValueNum(arrRow.getCell(3))
+            if (!dateStr || !nomenclature || qty <= 0) continue
 
             datesFound.add(dateStr)
             arrivals.push({
               date: dateStr,
               nomenclature,
-              quantity: getCellValueNum(arrRow.getCell(3)),
+              quantity: qty,
               supplier: getCellValueStr(arrRow.getCell(4)),
               batch: getCellValueStr(arrRow.getCell(5)),
             })
@@ -244,21 +257,86 @@ export async function POST(req: NextRequest) {
           let dateStr = ''
           const matrix: any = {}
           const outputs: any = {}
-          const balances: any = {}
+          const balances: {
+            start: Record<string, number>
+            income: Record<string, number>
+            expense: Record<string, number>
+            end: Record<string, number>
+          } = {
+            start: {},
+            income: {},
+            expense: {},
+            end: {},
+          }
 
-          const endRow = Math.min(i + 80, rowCount)
+          const endRow = Math.min(i + 45, rowCount)
+
+          // Prefer sheet name date if the sheet is a daily tab (e.g. "24.11.2026", "25.07.2026 (2)")
+          const cleanSheetName = sheet.name.replace(/\(\d+\)/g, '').replace(/[()]/g, '').trim()
+          const sheetDate = parseExcelDate(cleanSheetName)
+          if (sheetDate) {
+            dateStr = sheetDate
+          }
+
+          // Parse "Сырье" daily balance table ("остатка начало дня", "приход", "расход", "остатка конец дня")
           for (let r = i; r <= endRow; r++) {
             const tempRow = sheet.getRow(r)
-            tempRow.eachCell((cell) => {
-              const parsed = parseExcelDate(cell.value)
-              if (parsed) dateStr = parsed
-            })
-            if (dateStr) break
+            let labelCol = -1
+            for (let c = 1; c <= 35; c++) {
+              const val = getCellValueStr(tempRow.getCell(c)).toLowerCase()
+              if (val.includes('остатка начало дня') || val.includes('остаток на начало')) {
+                labelCol = c
+                break
+              }
+            }
+            if (labelCol !== -1) {
+              const headerRow = sheet.getRow(r - 1)
+              const headerDate = parseExcelDate(headerRow.getCell(labelCol).value)
+              if (!dateStr && headerDate) {
+                dateStr = headerDate
+              }
+
+              const colKeyMap: Record<number, string> = {}
+              for (let c = labelCol + 1; c <= labelCol + 16; c++) {
+                const hStr = getCellValueStr(headerRow.getCell(c))
+                const matKey = matchSyrye12Key(hStr)
+                if (matKey) {
+                  colKeyMap[c] = matKey
+                }
+              }
+
+              const balanceRowDefs: Array<{ offset: number; key: 'start' | 'income' | 'expense' | 'end' }> = [
+                { offset: 0, key: 'start' },
+                { offset: 1, key: 'income' },
+                { offset: 2, key: 'expense' },
+                { offset: 3, key: 'end' },
+              ]
+
+              for (const rd of balanceRowDefs) {
+                const targetRow = sheet.getRow(r + rd.offset)
+                for (const [colIdxStr, matKey] of Object.entries(colKeyMap)) {
+                  let val = getCellValueNum(targetRow.getCell(Number(colIdxStr)))
+                  if (rd.key === 'end' && val < 0 && Math.abs(val) < 0.05) {
+                    val = 0
+                  }
+                  if (val > 0 || rd.key === 'end') {
+                    balances[rd.key][matKey] = Math.max(0, val)
+                  }
+                }
+              }
+              break
+            }
           }
 
           if (!dateStr) {
-            const sName = sheet.name.trim()
-            dateStr = parseExcelDate(sName)
+            for (let r = i; r <= Math.min(i + 15, rowCount); r++) {
+              const tempRow = sheet.getRow(r)
+              tempRow.eachCell((cell) => {
+                const parsed = parseExcelDate(cell.value)
+                if (parsed && !dateStr) dateStr = parsed
+              })
+              if (dateStr) break
+            }
           }
 
           if (!dateStr) continue
@@ -283,27 +361,33 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          let colOffset = sheet.getRow(matrixStartRow).getCell(1).value ? 1 : 2
+          const colOffset = sheet.getRow(matrixStartRow).getCell(1).value ? 1 : 2
 
-          for (let r = matrixStartRow; r < matrixStartRow + 20; r++) {
-            const rawName = sheet.getRow(r).getCell(colOffset).value?.toString()?.trim()
-            if (!rawName) continue
-            matrix[rawName] = {}
-            for (let c = 0; c < 15; c++) {
+          for (let r = matrixStartRow; r < matrixStartRow + 16; r++) {
+            const rawName = getCellValueStr(sheet.getRow(r).getCell(colOffset))
+            if (!rawName || rawName.includes('Выход ГП') || rawName.includes('Наименование ГП')) break
+            matrix[rawName] = matrix[rawName] || {}
+            const prihodVal = getCellValueNum(sheet.getRow(r).getCell(colOffset + 1))
+            if (prihodVal > 0) {
+              matrix[rawName]['Приход в цех'] = prihodVal
+            }
+            for (let c = 0; c < 16; c++) {
               const val = getCellValueNum(sheet.getRow(r).getCell(colOffset + 2 + c))
               if (val > 0) {
                 const headerName =
-                  sheet.getRow(matrixStartRow - 1).getCell(colOffset + 2 + c).value?.toString()?.trim() || `Col_${c}`
-                matrix[rawName][headerName] = val
+                  getCellValueStr(sheet.getRow(matrixStartRow - 1).getCell(colOffset + 2 + c)) || `Col_${c}`
+                if (headerName && !headerName.includes('Сырье')) {
+                  matrix[rawName][headerName] = val
+                }
               }
             }
           }
 
           let outputStartRow = i + 25
-          for (let r = i; r <= i + 40; r++) {
+          for (let r = i; r <= i + 35; r++) {
             if (
-              sheet.getRow(r).getCell(colOffset).value?.toString().includes('Выход ГП КФС') ||
-              sheet.getRow(r).getCell(colOffset + 1).value?.toString().includes('Выход ГП КФС')
+              getCellValueStr(sheet.getRow(r).getCell(colOffset)).includes('Выход ГП КФС') ||
+              getCellValueStr(sheet.getRow(r).getCell(colOffset + 1)).includes('Выход ГП КФС')
             ) {
               outputStartRow = r + 2
               break
@@ -311,23 +395,31 @@ export async function POST(req: NextRequest) {
           }
 
           for (let r = outputStartRow; r < outputStartRow + 15; r++) {
-            const fgName = sheet.getRow(r).getCell(colOffset).value?.toString()?.trim()
-            if (!fgName) continue
+            const fgName = getCellValueStr(sheet.getRow(r).getCell(colOffset))
+            if (!fgName || fgName.includes('% расхода') || fgName.includes('% Брака')) break
             const kg = getCellValueNum(sheet.getRow(r).getCell(colOffset + 1))
             const upakovki = getCellValueNum(sheet.getRow(r).getCell(colOffset + 2))
             const korobki = getCellValueNum(sheet.getRow(r).getCell(colOffset + 3))
-            if (kg > 0 || upakovki > 0 || korobki > 0) {
-              outputs[fgName] = { kg, upakovki, korobki }
+            const ses = getCellValueNum(sheet.getRow(r).getCell(colOffset + 4))
+            const kitchen = getCellValueNum(sheet.getRow(r).getCell(colOffset + 5))
+            if (kg > 0 || upakovki > 0 || korobki > 0 || ses > 0 || kitchen > 0) {
+              outputs[fgName] = {
+                ...(kg > 0 ? { kg } : {}),
+                ...(upakovki > 0 ? { upakovki } : {}),
+                ...(korobki > 0 ? { korobki } : {}),
+                ...(ses > 0 ? { ses } : {}),
+                ...(kitchen > 0 ? { kitchen } : {}),
+              }
             }
           }
 
           blocksMap[dateStr] = { date: dateStr, matrix, outputs, balances }
-          i = endRow - 10
+          i = endRow
         }
       }
     }
 
-    // 5. Save to DB with Non-Destructive MERGE
+    // 5. Save to DB with Smart Deduplication & Authoritative Balance Sync
     let importedDaysCount = 0
     let updatedDaysCount = 0
     let newArrivalsCount = 0
@@ -335,7 +427,7 @@ export async function POST(req: NextRequest) {
 
     // Save Arrivals:
     if (arrivals.length > 0) {
-      const rowKey = (a: any) =>
+      const exactBatchKey = (a: any) =>
         [
           a.date,
           (a.nomenclature || '').trim().toLowerCase(),
@@ -343,43 +435,69 @@ export async function POST(req: NextRequest) {
           (a.batch || '').trim().toLowerCase(),
         ].join('|')
 
-      const existingArrivals = await prisma.shopArrival.findMany()
-      const existingMap = new Map<string, (typeof existingArrivals)[0][]>()
+      const looseQtyKey = (a: any) =>
+        [
+          a.date,
+          (a.nomenclature || '').trim().toLowerCase(),
+          (a.supplier || '').trim().toLowerCase(),
+          round2(Number(a.quantity) || 0),
+        ].join('|')
+
+      const existingArrivals = await prisma.shopArrival.findMany({
+        orderBy: { id: 'asc' },
+      })
+
+      const exactMap = new Map<string, (typeof existingArrivals)[0][]>()
+      const looseMap = new Map<string, (typeof existingArrivals)[0][]>()
+
       existingArrivals.forEach((a) => {
-        const k = rowKey(a)
-        const list = existingMap.get(k) || []
-        list.push(a)
-        existingMap.set(k, list)
+        const ek = exactBatchKey(a)
+        const eList = exactMap.get(ek) || []
+        eList.push(a)
+        exactMap.set(ek, eList)
+
+        const lk = looseQtyKey(a)
+        const lList = looseMap.get(lk) || []
+        lList.push(a)
+        looseMap.set(lk, lList)
       })
 
       const toInsert: any[] = []
-      // Track consumed arrivals to avoid clashing duplicate rows on same day
       const consumedIds = new Set<number>()
 
       for (const a of arrivals) {
-        if (!a.nomenclature) continue
-        const k = rowKey(a)
-        const matches = (existingMap.get(k) || []).filter((m) => !consumedIds.has(m.id))
+        if (!a.nomenclature || a.quantity <= 0) continue
+        const ek = exactBatchKey(a)
+        let matches = (exactMap.get(ek) || []).filter((m) => !consumedIds.has(m.id))
+
+        // Fallback: if batch in Excel was empty (while DB previously auto-assigned a batch number),
+        // match by (date, nomenclature, supplier, quantity) so we never create duplicate clones!
+        if (matches.length === 0) {
+          const lk = looseQtyKey(a)
+          matches = (looseMap.get(lk) || []).filter((m) => !consumedIds.has(m.id))
+        }
 
         if (matches.length > 0) {
           const match = matches[0]
           consumedIds.add(match.id)
-          if (Math.abs(match.quantity - a.quantity) > 0.001) {
+          const needQtyUpdate = Math.abs(match.quantity - a.quantity) > 0.001
+          const needBatchUpdate = a.batch && String(a.batch).trim() !== '' && match.batch !== String(a.batch).trim()
+          if (needQtyUpdate || needBatchUpdate) {
             await prisma.shopArrival.update({
               where: { id: match.id },
-              data: { quantity: a.quantity },
+              data: {
+                quantity: a.quantity,
+                ...(needBatchUpdate ? { batch: String(a.batch).trim() } : {}),
+              },
             })
             updatedArrivalsCount++
           }
         } else {
-          if (a.quantity > 0) {
-            toInsert.push(a)
-          }
+          toInsert.push(a)
         }
       }
 
       if (toInsert.length > 0) {
-        // Auto-assign monthly batch numbers to new arrivals if empty
         const importBatchCounters = new Map<string, number>()
         for (const item of toInsert) {
           if (!item.batch || String(item.batch).trim() === '') {
@@ -392,7 +510,6 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Insert in batches of 200
         for (let idx = 0; idx < toInsert.length; idx += 200) {
           const batch = toInsert.slice(idx, idx + 200)
           await prisma.shopArrival.createMany({ data: batch })
@@ -408,6 +525,8 @@ export async function POST(req: NextRequest) {
       ...Object.keys(blocksMap),
     ])
 
+    const nowIso = new Date().toISOString()
+
     for (const dateStr of allDates) {
       const flat = flatExpensesMap[dateStr] || {}
       const gp = gpMap[dateStr] || {}
@@ -415,7 +534,17 @@ export async function POST(req: NextRequest) {
 
       const hasFlat = Object.keys(flat).length > 0
       const hasGP = Object.keys(gp).length > 0
-      const hasBlock = !!block && (Object.keys(block.matrix || {}).length > 0 || Object.keys(block.outputs || {}).length > 0)
+      const hasBlockBalances =
+        !!block?.balances &&
+        (Object.keys(block.balances.start || {}).length > 0 ||
+          Object.keys(block.balances.end || {}).length > 0 ||
+          Object.keys(block.balances.income || {}).length > 0 ||
+          Object.keys(block.balances.expense || {}).length > 0)
+      const hasBlock =
+        !!block &&
+        (Object.keys(block.matrix || {}).length > 0 ||
+          Object.keys(block.outputs || {}).length > 0 ||
+          hasBlockBalances)
 
       if (!hasFlat && !hasGP && !hasBlock) continue
 
@@ -426,7 +555,7 @@ export async function POST(req: NextRequest) {
         const mergedMaterials: Record<string, any> = { ...existingMaterials }
 
         for (const [k, v] of Object.entries(flat)) {
-          const num = toNum(v)
+          const num = round2(toNum(v))
           if (num > 0) {
             mergedMaterials[k] = num
           }
@@ -436,16 +565,13 @@ export async function POST(req: NextRequest) {
         const mergedOutputs: Record<string, any> = { ...existingOutputs }
 
         for (const [k, v] of Object.entries(gp)) {
-          const num = toNum(v)
+          const num = round2(toNum(v))
           if (num > 0) {
             const curItem = mergedOutputs[k]
-            const curKg = typeof curItem === 'object' && curItem !== null ? toNum(curItem.kg ?? curItem.val) : toNum(curItem)
-            if (curKg === 0) {
-              if (typeof curItem === 'object' && curItem !== null) {
-                mergedOutputs[k] = { ...curItem, kg: num }
-              } else {
-                mergedOutputs[k] = { kg: num }
-              }
+            if (typeof curItem === 'object' && curItem !== null) {
+              mergedOutputs[k] = { ...curItem, kg: num }
+            } else {
+              mergedOutputs[k] = { kg: num }
             }
           }
         }
@@ -453,10 +579,7 @@ export async function POST(req: NextRequest) {
         if (hasBlock && block.outputs) {
           for (const [k, v] of Object.entries(block.outputs as Record<string, any>)) {
             const curItem = mergedOutputs[k]
-            const curKg = typeof curItem === 'object' && curItem !== null ? toNum(curItem.kg) : toNum(curItem)
-            if (curKg === 0) {
-              mergedOutputs[k] = { ...(typeof curItem === 'object' ? curItem : {}), ...v }
-            }
+            mergedOutputs[k] = { ...(typeof curItem === 'object' ? curItem : {}), ...v }
           }
         }
 
@@ -466,12 +589,36 @@ export async function POST(req: NextRequest) {
           for (const [rawName, colMap] of Object.entries(block.matrix as Record<string, any>)) {
             mergedMatrix[rawName] = mergedMatrix[rawName] || {}
             for (const [colName, val] of Object.entries(colMap as Record<string, any>)) {
-              const curVal = toNum(mergedMatrix[rawName][colName])
-              if (curVal === 0 && toNum(val) > 0) {
-                mergedMatrix[rawName][colName] = toNum(val)
+              const vNum = round2(toNum(val))
+              if (vNum > 0) {
+                mergedMatrix[rawName][colName] = vNum
               }
             }
           }
+        }
+
+        const existingBalances = ((existing.balances as any) || {}) as Record<string, any>
+        const mergedBalances: Record<string, any> = { ...existingBalances }
+
+        if (hasBlockBalances) {
+          mergedBalances.start = block.balances.start
+          mergedBalances.income = block.balances.income
+          mergedBalances.expense = block.balances.expense
+          mergedBalances.end = block.balances.end
+
+          const cleanReport = sanitizeDayReport({
+            matrix: mergedMatrix,
+            outputs: mergedOutputs,
+            balances: block.balances,
+            updatedAt: nowIso,
+            updatedBy: session.name || 'Excel Import',
+            isAutoGenerated: false,
+            isUnfilled: false,
+            status: 'completed',
+          })
+          // Ensure zero closing balances (like lemon = 0, cucumber = 0) are kept in end balances
+          cleanReport.balances.end = { ...(cleanReport.balances.end || {}), ...block.balances.end }
+          mergedBalances.report = cleanReport
         }
 
         await prisma.shopExpense.update({
@@ -480,16 +627,42 @@ export async function POST(req: NextRequest) {
             materials: mergedMaterials,
             outputs: mergedOutputs,
             matrix: mergedMatrix,
+            balances: mergedBalances,
           },
         })
         updatedDaysCount++
       } else {
         const initialOutputs: Record<string, any> = {}
         for (const [k, v] of Object.entries(gp)) {
-          if (toNum(v) > 0) initialOutputs[k] = { kg: toNum(v) }
+          if (round2(toNum(v)) > 0) initialOutputs[k] = { kg: round2(toNum(v)) }
         }
         if (hasBlock && block.outputs) {
-          Object.assign(initialOutputs, block.outputs)
+          for (const [k, v] of Object.entries(block.outputs as Record<string, any>)) {
+            initialOutputs[k] = { ...(typeof initialOutputs[k] === 'object' ? initialOutputs[k] : {}), ...v }
+          }
+        }
+
+        const initialMatrix = hasBlock ? block.matrix : {}
+        const initialBalances: Record<string, any> = {}
+
+        if (hasBlockBalances) {
+          initialBalances.start = block.balances.start
+          initialBalances.income = block.balances.income
+          initialBalances.expense = block.balances.expense
+          initialBalances.end = block.balances.end
+
+          const cleanReport = sanitizeDayReport({
+            matrix: initialMatrix,
+            outputs: initialOutputs,
+            balances: block.balances,
+            updatedAt: nowIso,
+            updatedBy: session.name || 'Excel Import',
+            isAutoGenerated: false,
+            isUnfilled: false,
+            status: 'completed',
+          })
+          cleanReport.balances.end = { ...(cleanReport.balances.end || {}), ...block.balances.end }
+          initialBalances.report = cleanReport
         }
 
         await prisma.shopExpense.create({
@@ -497,13 +670,21 @@ export async function POST(req: NextRequest) {
             date: dateStr,
             materials: flat,
             outputs: initialOutputs,
-            matrix: hasBlock ? block.matrix : {},
-            balances: {},
+            matrix: initialMatrix,
+            balances: initialBalances,
           },
         })
         importedDaysCount++
       }
     }
+
+    // Sync Warehouse InventoryBatches & Supply caches immediately after import
+    await syncInventoryBatchesFromDailyBalances().catch((err) =>
+      console.error('FIFO sync after import error:', err)
+    )
+    try {
+      invalidateSupplyDashboardCache()
+    } catch {}
 
     const sortedDates = Array.from(datesFound).sort()
     const latestDate = sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : ''

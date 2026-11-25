@@ -41,8 +41,10 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate metrics and Svetofor status for each product
-    const inventory = products.map(product => {
-      const totalQuantity = product.batches.reduce((sum, batch) => sum + batch.quantity, 0)
+    const inventory = products
+      .filter(p => p.id !== 284) // skip secondary duplicate of ID=288 "Огурцы свежие"
+      .map(product => {
+      const totalQuantity = Math.round(product.batches.reduce((sum, batch) => sum + batch.quantity, 0) * 100) / 100
       
       let status = 'green'
       const minStock = product.minStockLevel || 0
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
         batches: product.batches.map((b, idx) => ({
           id: b.id,
           batchNumber: b.batchNumber,
-          quantity: b.quantity,
+          quantity: Math.round(b.quantity * 100) / 100,
           receivedAt: b.receivedAt,
           expirationDate: b.expirationDate,
           fefoOrder: idx + 1,

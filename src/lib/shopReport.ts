@@ -454,6 +454,127 @@ export const BALANCE_ROWS = [
   { key: 'end', label: 'остатка конец дня' },
 ] as const
 
+/**
+ * Matches any raw material nomenclature or alias to one of the 12 core "Сырье"
+ * daily balance keys (iceberg, tomato, onion, cabbage, carrot, lemon, cucumber,
+ * lolloRosso, rukkola, spinach, mint, celery).
+ * Strictly excludes packaging (пакет, коробка, этикетка), chemicals (кислота, хлор, etc.),
+ * red cabbage (Капуста Красная), and finished goods (Коул Слоу, Микс салат).
+ */
+export function matchSyrye12Key(rawName: any): string | null {
+  const s = String(rawName ?? '').trim().toLowerCase()
+  if (!s) return null
+
+  // Exclude packaging items that contain vegetable names (e.g. "Полиэтиленовые пакеты для томатов", "Пакет Лимон")
+  if (
+    s.includes('пакет') ||
+    s.includes('короб') ||
+    s.includes('кароб') ||
+    s.includes('karobka') ||
+    s.includes('этикет') ||
+    s.includes('стрич') ||
+    s.includes('яшик') ||
+    s.includes('падон') ||
+    s.includes('скотч')
+  ) {
+    return null
+  }
+
+  // Exclude chemicals & acids (e.g. "лимонная кислота", "КИСЛОТА УКСУСНАЯ")
+  if (
+    s.includes('кислот') ||
+    s.includes('уксус') ||
+    s.includes('хлор') ||
+    s.includes('гипохлорит') ||
+    s.includes('сорбат') ||
+    s.includes('бензоат') ||
+    s.includes('тайгета') ||
+    s.includes('divosan') ||
+    s.includes('suma') ||
+    s.includes('alco') ||
+    s.includes('solides')
+  ) {
+    return null
+  }
+
+  // Exclude red cabbage & finished salad mixes
+  if (
+    s.includes('красная') ||
+    s.includes('красн') ||
+    s.includes('qizil') ||
+    s.includes('коул') ||
+    s.includes('микс')
+  ) {
+    return null
+  }
+
+  if (s === 'iceberg' || s === 'icebergleaf' || s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg')) {
+    return 'iceberg'
+  }
+  if (s === 'tomato' || s === 'tomatoes' || s.includes('томат') || s.includes('помидор') || s.includes('pomidor')) {
+    return 'tomato'
+  }
+  if (s === 'onion' || s.includes('лук') || s.includes('пиёз') || s.includes('piyoz')) {
+    return 'onion'
+  }
+  if (s === 'cabbage' || s.includes('капуст') || s.includes('карам') || s.includes('karam')) {
+    return 'cabbage'
+  }
+  if (s === 'carrot' || s.includes('морков') || s.includes('сабзи') || s.includes('sabzi')) {
+    return 'carrot'
+  }
+  if (s === 'lemon' || s.includes('лимон') || s.includes('limon')) {
+    return 'lemon'
+  }
+  if (s === 'cucumber' || s === 'cucumbers' || s.includes('огурц') || s.includes('огурец') || s.includes('бодринг') || s.includes('bodring')) {
+    return 'cucumber'
+  }
+  if (s === 'lollorosso' || s.includes('lollo') || s.includes('лолло')) {
+    return 'lolloRosso'
+  }
+  if (s === 'rukkola' || s.includes('руккол') || s.includes('рукол') || s.includes('rukkola')) {
+    return 'rukkola'
+  }
+  if (s === 'spinach' || s.includes('шпинат') || s.includes('shpinat') || s.includes('ismaloq')) {
+    return 'spinach'
+  }
+  if (s === 'mint' || s.includes('мята') || s.includes('мят') || s.includes('yalpiz') || s.includes('myata')) {
+    return 'mint'
+  }
+  if (s === 'celery' || s.includes('сельдерей') || s.includes('сельдер') || s.includes('selderey') || s.includes('selderiy')) {
+    return 'celery'
+  }
+
+  return null
+}
+
+/**
+ * Extracts the latest confirmed closing balances ("остатка конец дня") and its date
+ * from a list of ShopExpense records. Supports both `balances.report.balances.end`
+ * and top-level `balances.end`.
+ */
+export function getLatestSyryeClosingBalances(
+  expenses: Array<{ date: string; balances?: any }>
+): { latestDate: string; endBalances: Record<string, number> } {
+  const sorted = [...(expenses || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  for (const exp of sorted) {
+    const b = (exp?.balances || {}) as Record<string, any>
+    const repEnd = b?.report?.balances?.end
+    const topEnd = b?.end
+    const candidate = repEnd && Object.keys(repEnd).length > 0 ? repEnd : topEnd && Object.keys(topEnd).length > 0 ? topEnd : null
+    if (candidate && Object.keys(candidate).length > 0) {
+      const normalizedEnd: Record<string, number> = {}
+      for (const [k, v] of Object.entries(candidate)) {
+        const syryeKey = matchSyrye12Key(k) || k
+        const num = Math.round(toNum(v) * 100) / 100
+        normalizedEnd[syryeKey] = num < 0 && Math.abs(num) < 0.05 ? 0 : Math.max(0, num)
+      }
+      return { latestDate: exp.date, endBalances: normalizedEnd }
+    }
+  }
+  return { latestDate: '', endBalances: {} }
+}
+
 // % of raw material losses: (raw - finished) / raw * 100
 export const PERCENT_COLS = [
   'Салат Айсберг нарезанный',
@@ -600,6 +721,12 @@ export function autoBuildDayReport(
   const outputs = (expenseRecord?.outputs || {}) as Record<string, any>
   const existingMatrix = (expenseRecord?.matrix || {}) as Record<string, any>
 
+  const getSyryeArrivalSum = (syryeKey: string) => {
+    return dayArrivals
+      .filter((a) => matchSyrye12Key(a.nomenclature) === syryeKey)
+      .reduce((sum, a) => sum + toNum(a.quantity), 0)
+  }
+
   const getArrivalSum = (keywords: string[]) => {
     return dayArrivals
       .filter((a) => {
@@ -620,23 +747,24 @@ export function autoBuildDayReport(
     return total
   }
 
-  const icebergArr = getArrivalSum(['айсберг', 'салат айсберг', 'айзберг', 'салат айзберг', 'aysberg', 'ayzberg', 'salat aysberg'])
-  const tomatoArr = getArrivalSum(['томат', 'помидор'])
-  const onionArr = getArrivalSum(['лук', 'пиёз'])
-  const cabbageArr = getArrivalSum(['капуста', 'karam'])
-  const carrotArr = getArrivalSum(['морковь', 'sabzi'])
-  const lemonArr = getArrivalSum(['лимон', 'lemon'])
-  const cucumberArr = getArrivalSum(['огурц', 'бодринг', 'cucumber'])
-  const lolloRossoArr = getArrivalSum(['lollo', 'лолло'])
-  const rukkolaArr = getArrivalSum(['руккол', 'рукол'])
-  const spinachArr = getArrivalSum(['шпинат'])
-  const mintArr = getArrivalSum(['мята', 'yalpiz'])
-  const celeryArr = getArrivalSum(['сельдерей'])
+  const icebergArr = getSyryeArrivalSum('iceberg')
+  const tomatoArr = getSyryeArrivalSum('tomato')
+  const onionArr = getSyryeArrivalSum('onion')
+  const cabbageArr = getSyryeArrivalSum('cabbage')
+  const carrotArr = getSyryeArrivalSum('carrot')
+  const lemonArr = getSyryeArrivalSum('lemon')
+  const cucumberArr = getSyryeArrivalSum('cucumber')
+  const lolloRossoArr = getSyryeArrivalSum('lolloRosso')
+  const rukkolaArr = getSyryeArrivalSum('rukkola')
+  const spinachArr = getSyryeArrivalSum('spinach')
+  const mintArr = getSyryeArrivalSum('mint')
+  const celeryArr = getSyryeArrivalSum('celery')
   const bagArr = getArrivalSum(['пакет'])
-  const boxArr = getArrivalSum(['коробк'])
+  const boxArr = getArrivalSum(['коробк', 'каробк', 'karobka'])
   const labelArr = getArrivalSum(['этикетк'])
 
   const icebergExp = getExpenseSum(['Айсберг', 'Салат Айсберг', 'Айзберг', 'Салат Айзберг', 'Aysberg', 'Ayzberg', 'Salat Aysberg'])
+  const icebergLeafExp = getExpenseSum(['Айсберг (листовой)', 'Листовой айсберг'])
   const tomatoExp = getExpenseSum(['ТОМАТЫ', 'Томаты'])
   const onionExp = getExpenseSum(['Лук', 'Лук салатный белый'])
   const cabbageExp = getExpenseSum(['Капуста', 'Капуста белокочанная'])
@@ -739,39 +867,46 @@ export function autoBuildDayReport(
   }
 
   // 3. Table 4: Balances (Остатки)
-  const balanceMap: Record<string, { arr: number; exp: number }> = {
-    iceberg: { arr: icebergArr, exp: icebergExp },
-    tomato: { arr: tomatoArr, exp: tomatoExp },
-    onion: { arr: onionArr, exp: onionExp },
-    cabbage: { arr: cabbageArr, exp: cabbageExp },
-    carrot: { arr: carrotArr, exp: carrotExp },
-    lemon: { arr: lemonArr, exp: lemonExp + sesExp + kitchenExp },
-    cucumber: { arr: cucumberArr, exp: cucumberExp },
-    lolloRosso: { arr: lolloRossoArr, exp: lolloRossoExp },
-    rukkola: { arr: rukkolaArr, exp: rukkolaExp },
-    spinach: { arr: spinachArr, exp: spinachExp },
-    mint: { arr: mintArr, exp: mintExp },
-    celery: { arr: celeryArr, exp: celeryExp },
+  const round2 = (n: number) => {
+    const r = Math.round(n * 100) / 100
+    return Math.abs(r) < 0.01 ? 0 : r
   }
 
-  const round3 = (n: number) => Math.round(n * 1000) / 1000
+  const totalIcebergExp = round2(icebergExp + icebergLeafExp)
+
+  const balanceMap: Record<string, { arr: number; exp: number }> = {
+    iceberg: { arr: round2(icebergArr), exp: totalIcebergExp },
+    tomato: { arr: round2(tomatoArr), exp: round2(tomatoExp) },
+    onion: { arr: round2(onionArr), exp: round2(onionExp) },
+    cabbage: { arr: round2(cabbageArr), exp: round2(cabbageExp) },
+    carrot: { arr: round2(carrotArr), exp: round2(carrotExp) },
+    lemon: { arr: round2(lemonArr), exp: round2(lemonExp + sesExp + kitchenExp) },
+    cucumber: { arr: round2(cucumberArr), exp: round2(cucumberExp) },
+    lolloRosso: { arr: round2(lolloRossoArr), exp: round2(lolloRossoExp) },
+    rukkola: { arr: round2(rukkolaArr), exp: round2(rukkolaExp) },
+    spinach: { arr: round2(spinachArr), exp: round2(spinachExp) },
+    mint: { arr: round2(mintArr), exp: round2(mintExp) },
+    celery: { arr: round2(celeryArr), exp: round2(celeryExp) },
+  }
+
+  const existingBalances = (expenseRecord?.balances as any)?.report?.balances || (expenseRecord?.balances as any) || {}
 
   for (const col of BALANCE_COLS) {
-    const s = toNum(prevEnd?.[col.key])
-    const i = balanceMap[col.key]?.arr || 0
-    const e = balanceMap[col.key]?.exp || 0
+    const s = round2(toNum(prevEnd?.[col.key] ?? existingBalances?.start?.[col.key]))
+    const i = round2(balanceMap[col.key]?.arr || toNum(existingBalances?.income?.[col.key]))
+    const e = round2(balanceMap[col.key]?.exp || toNum(existingBalances?.expense?.[col.key]))
     if (s > 0) report.balances.start[col.key] = s
     if (i > 0) report.balances.income[col.key] = i
     if (e > 0) report.balances.expense[col.key] = e
     if (s > 0 || i > 0 || e > 0) {
-      report.balances.end[col.key] = round3(s + i - e)
+      report.balances.end[col.key] = Math.max(0, round2(s + i - e))
     }
   }
 
-  const totalArrivalKg = Math.round((icebergArr + tomatoArr + onionArr + cabbageArr + carrotArr + lemonArr + cucumberArr + lolloRossoArr + rukkolaArr + spinachArr + mintArr + celeryArr) * 1000) / 1000
-  const totalExpenseKg = Math.round((icebergExp + tomatoExp + onionExp + cabbageExp + carrotExp + lemonExp + cucumberExp + lolloRossoExp + rukkolaExp + spinachExp + mintExp + celeryExp + sesExp + kitchenExp) * 1000) / 1000
+  const totalArrivalKg = round2(icebergArr + tomatoArr + onionArr + cabbageArr + carrotArr + lemonArr + cucumberArr + lolloRossoArr + rukkolaArr + spinachArr + mintArr + celeryArr)
+  const totalExpenseKg = round2(totalIcebergExp + tomatoExp + onionExp + cabbageExp + carrotExp + lemonExp + cucumberExp + lolloRossoExp + rukkolaExp + spinachExp + mintExp + celeryExp + sesExp + kitchenExp)
 
-  const hasData = dayArrivals.length > 0 || totalArrivalKg > 0 || totalExpenseKg > 0 || totalOutputKg > 0
+  const hasData = dayArrivals.length > 0 || totalArrivalKg > 0 || totalExpenseKg > 0 || totalOutputKg > 0 || Object.keys(report.balances.end).length > 0
 
   return {
     report: sanitizeDayReport(report),
@@ -780,20 +915,20 @@ export function autoBuildDayReport(
     arrivalsCount: dayArrivals.length,
     totalArrivalKg,
     totalExpenseKg,
-    totalOutputKg: Math.round(totalOutputKg * 1000) / 1000,
+    totalOutputKg: round2(totalOutputKg),
     summary: {
-      iceberg: { arrival: icebergArr, expense: icebergExp, output: toNum(report.outputs['Салат Айсберг нарезанный']?.kg) },
-      tomato: { arrival: tomatoArr, expense: tomatoExp, output: toNum(report.outputs['Томаты целые']?.kg) },
-      onion: { arrival: onionArr, expense: onionExp, output: toNum(report.outputs['Лук салатный белый нарезанный']?.kg) },
-      cabbage: { arrival: cabbageArr, expense: cabbageExp, output: toNum(report.outputs['Коул Слоу']?.kg) },
-      carrot: { arrival: carrotArr, expense: carrotExp, output: toNum(report.outputs['Коул Слоу']?.kg) },
-      lemon: { arrival: lemonArr, expense: lemonExp + sesExp + kitchenExp, output: toNum(report.outputs['Лимон']?.kg) },
-      cucumber: { arrival: cucumberArr, expense: cucumberExp, output: toNum(report.outputs['Огурцы свежие']?.kg) },
-      lolloRosso: { arrival: lolloRossoArr, expense: lolloRossoExp, output: toNum(report.outputs['Lollo Rosso']?.kg) },
-      rukkola: { arrival: rukkolaArr, expense: rukkolaExp, output: toNum(report.outputs['Руккола']?.kg) },
-      spinach: { arrival: spinachArr, expense: spinachExp, output: toNum(report.outputs['Шпинат']?.kg) },
-      mint: { arrival: mintArr, expense: mintExp, output: toNum(report.outputs['Мята']?.kg) },
-      celery: { arrival: celeryArr, expense: celeryExp, output: toNum(report.outputs['Сельдерей']?.kg) },
+      iceberg: { arrival: round2(icebergArr), expense: totalIcebergExp, output: toNum(report.outputs['Салат Айсберг нарезанный']?.kg) },
+      tomato: { arrival: round2(tomatoArr), expense: round2(tomatoExp), output: toNum(report.outputs['Томаты целые']?.kg) },
+      onion: { arrival: round2(onionArr), expense: round2(onionExp), output: toNum(report.outputs['Лук салатный белый нарезанный']?.kg) },
+      cabbage: { arrival: round2(cabbageArr), expense: round2(cabbageExp), output: toNum(report.outputs['Коул Слоу']?.kg) },
+      carrot: { arrival: round2(carrotArr), expense: round2(carrotExp), output: toNum(report.outputs['Коул Слоу']?.kg) },
+      lemon: { arrival: round2(lemonArr), expense: round2(lemonExp + sesExp + kitchenExp), output: toNum(report.outputs['Лимон']?.kg) },
+      cucumber: { arrival: round2(cucumberArr), expense: round2(cucumberExp), output: toNum(report.outputs['Огурцы свежие']?.kg) },
+      lolloRosso: { arrival: round2(lolloRossoArr), expense: round2(lolloRossoExp), output: toNum(report.outputs['Lollo Rosso']?.kg) },
+      rukkola: { arrival: round2(rukkolaArr), expense: round2(rukkolaExp), output: toNum(report.outputs['Руккола']?.kg) },
+      spinach: { arrival: round2(spinachArr), expense: round2(spinachExp), output: toNum(report.outputs['Шпинат']?.kg) },
+      mint: { arrival: round2(mintArr), expense: round2(mintExp), output: toNum(report.outputs['Мята']?.kg) },
+      celery: { arrival: round2(celeryArr), expense: round2(celeryExp), output: toNum(report.outputs['Сельдерей']?.kg) },
     }
   }
 }

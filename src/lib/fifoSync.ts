@@ -1,68 +1,124 @@
 import { prisma } from './prisma'
+import { matchSyrye12Key, getLatestSyryeClosingBalances, toNum } from './shopReport'
 
-interface RawMatDef {
+function round2(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  const r = Math.round(n * 100) / 100
+  return Math.abs(r) < 0.01 ? 0 : r
+}
+
+interface SyryeMatDef {
   key: string
   name: string
-  patterns: string[]
   fallbackProductId: number
   shelfLifeDays: number
 }
 
-const RAW_MATERIALS: RawMatDef[] = [
-  { key: 'iceberg', name: 'Салат Айсберг', patterns: ['айсберг', 'айзберг', 'aysberg'], fallbackProductId: 230, shelfLifeDays: 5 },
-  { key: 'tomato', name: 'Томат', patterns: ['томат', 'помидор'], fallbackProductId: 229, shelfLifeDays: 7 },
-  { key: 'onion', name: 'лук салатный белый', patterns: ['лук'], fallbackProductId: 234, shelfLifeDays: 30 },
-  { key: 'cabbage', name: 'Капуста белокачанная', patterns: ['капуста'], fallbackProductId: 233, shelfLifeDays: 20 },
-  { key: 'carrot', name: 'Морковь', patterns: ['морков'], fallbackProductId: 235, shelfLifeDays: 25 },
-  { key: 'lemon', name: 'Лимон', patterns: ['лимон'], fallbackProductId: 285, shelfLifeDays: 30 },
-  { key: 'cucumber', name: 'Огурцы свежие', patterns: ['огурц'], fallbackProductId: 288, shelfLifeDays: 7 },
-  { key: 'lolloRosso', name: 'Lollo Rosso', patterns: ['lollo', 'лолло'], fallbackProductId: 293, shelfLifeDays: 4 },
-  { key: 'rukkola', name: 'Руккола', patterns: ['руккол', 'рукол'], fallbackProductId: 292, shelfLifeDays: 4 },
-  { key: 'spinach', name: 'Шпинат', patterns: ['шпинат'], fallbackProductId: 294, shelfLifeDays: 4 },
-  { key: 'mint', name: 'Мята', patterns: ['мята'], fallbackProductId: 295, shelfLifeDays: 5 },
-  { key: 'celery', name: 'Сельдерей', patterns: ['сельдерей'], fallbackProductId: 291, shelfLifeDays: 10 },
-  { key: 'box', name: 'гофра каробка', patterns: ['гофра', 'короб', 'кароб'], fallbackProductId: 246, shelfLifeDays: 365 },
-  { key: 'bag', name: 'Полиэтиленовые пакеты для айзберг', patterns: ['пакет'], fallbackProductId: 242, shelfLifeDays: 365 },
-  { key: 'chlorine', name: 'Гипохлорит натрия', patterns: ['гипохлорит', 'хлор'], fallbackProductId: 231, shelfLifeDays: 90 },
-  { key: 'sorbate', name: 'Сорбат калия', patterns: ['сорбат'], fallbackProductId: 237, shelfLifeDays: 180 },
-  { key: 'benzoate', name: 'Бензоат натрия порошок', patterns: ['бензоат'], fallbackProductId: 236, shelfLifeDays: 180 },
-  { key: 'vinegar', name: 'КИСЛОТА УКСУСНАЯ', patterns: ['уксус'], fallbackProductId: 241, shelfLifeDays: 180 },
+export const SYRYE_12_DEFS: SyryeMatDef[] = [
+  { key: 'iceberg', name: 'Салат Айсберг', fallbackProductId: 230, shelfLifeDays: 5 },
+  { key: 'tomato', name: 'Томат', fallbackProductId: 229, shelfLifeDays: 7 },
+  { key: 'onion', name: 'лук салатный белый', fallbackProductId: 234, shelfLifeDays: 30 },
+  { key: 'cabbage', name: 'Капуста белокачанная', fallbackProductId: 233, shelfLifeDays: 20 },
+  { key: 'carrot', name: 'Морковь', fallbackProductId: 235, shelfLifeDays: 25 },
+  { key: 'lemon', name: 'Лимон', fallbackProductId: 285, shelfLifeDays: 30 },
+  { key: 'cucumber', name: 'Огурцы свежие', fallbackProductId: 288, shelfLifeDays: 7 },
+  { key: 'lolloRosso', name: 'Lollo Rosso', fallbackProductId: 293, shelfLifeDays: 4 },
+  { key: 'rukkola', name: 'Руккола', fallbackProductId: 292, shelfLifeDays: 4 },
+  { key: 'spinach', name: 'Шпинат', fallbackProductId: 294, shelfLifeDays: 4 },
+  { key: 'mint', name: 'Мята', fallbackProductId: 295, shelfLifeDays: 5 },
+  { key: 'celery', name: 'Сельдерей', fallbackProductId: 291, shelfLifeDays: 10 },
 ]
+
+function inferNonSyryeProductMeta(name: string): { category: string; unit: string; minStockLevel: number; shelfLifeDays: number } {
+  const s = name.toLowerCase().trim()
+  if (
+    s.includes('пакет') ||
+    s.includes('каробка') ||
+    s.includes('короб') ||
+    s.includes('karobka') ||
+    s.includes('этикетк') ||
+    s.includes('стрич') ||
+    s.includes('яшик') ||
+    s.includes('падон')
+  ) {
+    return { category: 'Qadoqlash & Idishlar', unit: 'dona', minStockLevel: 2000, shelfLifeDays: 365 }
+  }
+  if (
+    s.includes('перчатк') ||
+    s.includes('шапка') ||
+    s.includes('бахила') ||
+    s.includes('маска') ||
+    s.includes('халат') ||
+    s.includes('бумага') ||
+    s.includes('салфетк') ||
+    s.includes('полотенц') ||
+    s.includes('рукавадник')
+  ) {
+    return { category: "Xo'jalik & Gigiyena", unit: 'dona', minStockLevel: 500, shelfLifeDays: 365 }
+  }
+  if (
+    s.includes('хлор') ||
+    s.includes('гипохлорит') ||
+    s.includes('кислот') ||
+    s.includes('уксус') ||
+    s.includes('бензоат') ||
+    s.includes('сорбат') ||
+    s.includes('тайгета') ||
+    s.includes('divosan') ||
+    s.includes('suma') ||
+    s.includes('alco') ||
+    s.includes('solides')
+  ) {
+    return {
+      category: 'Kimyoviy & Dezinfeksiya',
+      unit: s.includes('вода') || s.includes('тайгета') ? 'litr' : 'kg',
+      minStockLevel: 100,
+      shelfLifeDays: 180,
+    }
+  }
+  if (s.includes('вода')) {
+    return { category: 'Suv & Ichimliklar', unit: 'litr', minStockLevel: 1000, shelfLifeDays: 180 }
+  }
+  return { category: 'Xomashyo & Oziq-ovqat', unit: 'kg', minStockLevel: 500, shelfLifeDays: 30 }
+}
+
+/**
+ * Maps a non-Сырье product/arrival/expense name to a canonical group key
+ * when multiple aliases or expense columns share the same stock pool,
+ * or returns the normalized lowercase product name for individual items.
+ */
+export function matchNonSyryeGroupKey(rawName: any): string {
+  const s = String(rawName ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+  if (!s) return ''
+  if (s.includes('уксус') || s.includes('кислота уксусная')) return 'group:vinegar'
+  if (s.includes('гипохлорит') || s === 'хлор' || s.includes('хлор')) return 'group:chlorine'
+  if (s.includes('сорбат')) return 'group:sorbate'
+  if (s.includes('бензоат')) return 'group:benzoate'
+  if (s.includes('тайгета')) return 'group:taygeta'
+  if (s.includes('этикет')) return 'group:label'
+  if ((s.includes('короб') || s.includes('кароб') || s.includes('karobka')) && !s.includes('брак')) {
+    return 'group:box'
+  }
+  if (s.includes('пакет') && !s.includes('мусир') && !s.includes('брак')) {
+    return 'group:bag'
+  }
+  return `item:${s}`
+}
 
 export async function syncInventoryBatchesFromDailyBalances() {
   try {
-    // 1. Find the latest confirmed day report with ending balances
-    const allExpenses = await prisma.shopExpense.findMany({
-      orderBy: { date: 'desc' }
-    })
-
-    let latestExpense: any = null
-    let endBalances: Record<string, number> = {}
-
-    for (const exp of allExpenses) {
-      const end = (exp?.balances as any)?.report?.balances?.end
-      if (end && Object.keys(end).length > 0) {
-        latestExpense = exp
-        endBalances = end
-        break
-      }
-    }
-
-    if (!latestExpense) {
-      console.log('No confirmed daily closing balances found for FIFO sync.')
-      return { synced: 0, batchesCount: 0 }
-    }
-
-    const latestDate = latestExpense.date
-
-    // 2. Load all products and suppliers
-    const [products, suppliers, allArrivals] = await Promise.all([
-      prisma.product.findMany({ where: { isActive: true } }),
-      prisma.supplier.findMany({ select: { id: true, name: true, shortName: true } }),
+    // 1. Load expenses, arrivals, products, and suppliers
+    const [allExpenses, allArrivals, existingProducts, suppliers] = await Promise.all([
+      prisma.shopExpense.findMany({ orderBy: { date: 'desc' } }),
       prisma.shopArrival.findMany({
-        orderBy: [{ date: 'desc' }, { id: 'desc' }]
-      })
+        where: { quantity: { gt: 0 } },
+        orderBy: [{ date: 'desc' }, { id: 'desc' }],
+      }),
+      prisma.product.findMany({ where: { isActive: true }, orderBy: { id: 'asc' } }),
+      prisma.supplier.findMany({ select: { id: true, name: true, shortName: true } }),
     ])
+
+    const { latestDate, endBalances } = getLatestSyryeClosingBalances(allExpenses)
 
     const supplierMap = new Map<string, number>()
     suppliers.forEach((s) => {
@@ -70,81 +126,86 @@ export async function syncInventoryBatchesFromDailyBalances() {
       if (s.shortName) supplierMap.set(s.shortName.toLowerCase().trim(), s.id)
     })
 
+    // Ensure every non-empty nomenclature from ShopArrival exists in Product table
+    const products = [...existingProducts]
+    const productByNormName = new Map<string, (typeof products)[0]>()
+    for (const p of products) {
+      productByNormName.set(p.name.trim().toLowerCase().replace(/\s+/g, ' '), p)
+    }
+
+    for (const arr of allArrivals) {
+      const nom = (arr.nomenclature || '').trim()
+      if (!nom || nom.length < 2) continue
+      if (matchSyrye12Key(nom)) continue // handled by SYRYE_12_DEFS
+      const normNom = nom.toLowerCase().replace(/\s+/g, ' ')
+      if (!productByNormName.has(normNom)) {
+        const meta = inferNonSyryeProductMeta(nom)
+        const slug = nom.replace(/[^a-zA-Z0-9а-яА-ЯёЁ]/g, '').slice(0, 4).toUpperCase() || 'MAT'
+        const code = `PRD-${slug}-${Math.floor(100 + Math.random() * 900)}`
+        try {
+          const created = await prisma.product.create({
+            data: {
+              name: nom,
+              code,
+              category: meta.category,
+              unit: meta.unit,
+              minStockLevel: meta.minStockLevel,
+              shelfLifeDays: meta.shelfLifeDays,
+              type: 'RAW_MATERIAL',
+              isActive: true,
+            },
+          })
+          products.push(created)
+          productByNormName.set(normNom, created)
+        } catch {
+          // ignore race/duplicate
+        }
+      }
+    }
+
     let totalBatchesCreatedOrUpdated = 0
     const activeBatchIds: number[] = []
+    const handledProductIds = new Set<number>()
 
-    for (const mat of RAW_MATERIALS) {
-      // Find matching primary Product
-      let product = products.find((p) => p.name.toLowerCase().trim() === mat.name.toLowerCase().trim())
-      if (!product) {
-        product = products.find((p) => mat.patterns.some((pat) => p.name.toLowerCase().includes(pat)))
-      }
-      if (!product) {
-        product = products.find((p) => p.id === mat.fallbackProductId)
-      }
-      if (!product) continue
-
-      const baseStock = Number(endBalances[mat.key]) || 0
-
-      // Calculate any newer arrivals/expenses past latestDate
-      let newerArrivals = 0
-      let newerExpenses = 0
-      for (const a of allArrivals) {
-        if (a.date > latestDate) {
-          const nom = String(a.nomenclature || '').toLowerCase()
-          if (mat.patterns.some((p) => nom.includes(p))) {
-            newerArrivals += Number(a.quantity) || 0
-          }
-        }
-      }
-      for (const exp of allExpenses) {
-        if (exp.date > latestDate && exp.materials) {
-          const mats = exp.materials as Record<string, any>
-          for (const [k, v] of Object.entries(mats)) {
-            if (mat.patterns.some((p) => k.toLowerCase().includes(p))) {
-              newerExpenses += Number(v) || 0
-            }
-          }
-        }
-      }
-
-      const targetStock = Math.max(0, Math.round((baseStock + newerArrivals - newerExpenses) * 10) / 10)
+    // Helper to allocate targetStock for a primary product from its matching arrivals
+    const allocateStockToProductBatches = async (
+      product: (typeof products)[0],
+      targetStock: number,
+      matArrivals: typeof allArrivals,
+      shelfLifeDays: number,
+      refDateStr: string
+    ) => {
+      handledProductIds.add(product.id)
 
       if (targetStock <= 0) {
-        // Zero out existing batches for this product
         await prisma.inventoryBatch.updateMany({
           where: { productId: product.id, quantity: { gt: 0 } },
-          data: { quantity: 0 }
+          data: { quantity: 0 },
         })
-        continue
+        return
       }
 
-      // Filter arrivals for this material
-      const matArrivals = allArrivals.filter((a) => {
-        const nom = String(a.nomenclature || '').toLowerCase()
-        return mat.patterns.some((pat) => nom.includes(pat)) && Number(a.quantity) > 0
-      })
-
-      let remainingNeeded = targetStock
+      let remainingNeeded = round2(targetStock)
       const productBatchIds: number[] = []
 
       for (const arr of matArrivals) {
         if (remainingNeeded <= 0) break
-        const arrQty = Number(arr.quantity) || 0
+        const arrQty = round2(Number(arr.quantity) || 0)
         if (arrQty <= 0) continue
 
-        const takeQty = Math.round(Math.min(arrQty, remainingNeeded) * 10) / 10
-        remainingNeeded = Math.round((remainingNeeded - takeQty) * 10) / 10
+        const takeQty = round2(Math.min(arrQty, remainingNeeded))
+        if (takeQty <= 0) continue
+        remainingNeeded = round2(remainingNeeded - takeQty)
 
-        const arrDateStr = arr.date || latestDate
+        const arrDateStr = arr.date || refDateStr || new Date().toISOString().slice(0, 10)
         const receivedAt = new Date(`${arrDateStr}T08:00:00.000Z`)
-        const expirationDate = new Date(receivedAt.getTime() + mat.shelfLifeDays * 24 * 60 * 60 * 1000)
+        const validReceivedAt = isNaN(receivedAt.getTime()) ? new Date() : receivedAt
+        const expirationDate = new Date(validReceivedAt.getTime() + shelfLifeDays * 24 * 60 * 60 * 1000)
 
-        const batchNumber = `BATCH-${product.code || product.id}-${arrDateStr.replace(/-/g, '')}-${arr.id}`
+        const batchNumber = `BATCH-${product.code || product.id}-${arrDateStr.replace(/[^0-9]/g, '')}-${arr.id}`
         const supName = String(arr.supplier || '').toLowerCase().trim()
         const supplierId = supplierMap.get(supName) || null
 
-        // Upsert into InventoryBatch
         const batch = await prisma.inventoryBatch.upsert({
           where: { batchNumber },
           create: {
@@ -152,7 +213,7 @@ export async function syncInventoryBatchesFromDailyBalances() {
             batchNumber,
             quantity: takeQty,
             cost: null,
-            receivedAt,
+            receivedAt: validReceivedAt,
             expirationDate,
             qcStatus: 'APPROVED',
             supplierBatchNumber: arr.batch || arr.ttnNumber || null,
@@ -162,7 +223,7 @@ export async function syncInventoryBatchesFromDailyBalances() {
             quantity: takeQty,
             qcStatus: 'APPROVED',
             expirationDate,
-          }
+          },
         })
 
         productBatchIds.push(batch.id)
@@ -170,22 +231,236 @@ export async function syncInventoryBatchesFromDailyBalances() {
         totalBatchesCreatedOrUpdated++
       }
 
-      // Deactivate any other older batches of this product that are now exhausted
+      // If remainingNeeded > 0 (e.g. from opening balance before recent arrivals),
+      // store the remainder in an authoritative closing-balance batch so totalQuantity === targetStock!
+      if (remainingNeeded > 0) {
+        const baseDateStr = refDateStr || new Date().toISOString().slice(0, 10)
+        const receivedAt = new Date(`${baseDateStr}T08:00:00.000Z`)
+        const validReceivedAt = isNaN(receivedAt.getTime()) ? new Date() : receivedAt
+        const expirationDate = new Date(validReceivedAt.getTime() + shelfLifeDays * 24 * 60 * 60 * 1000)
+        const ostBatchNumber = `BATCH-${product.code || product.id}-${baseDateStr.replace(/[^0-9]/g, '')}-OST`
+
+        const batch = await prisma.inventoryBatch.upsert({
+          where: { batchNumber: ostBatchNumber },
+          create: {
+            productId: product.id,
+            batchNumber: ostBatchNumber,
+            quantity: remainingNeeded,
+            cost: null,
+            receivedAt: validReceivedAt,
+            expirationDate,
+            qcStatus: 'APPROVED',
+            supplierBatchNumber: '1',
+            supplierId: null,
+          },
+          update: {
+            quantity: remainingNeeded,
+            qcStatus: 'APPROVED',
+            expirationDate,
+          },
+        })
+
+        productBatchIds.push(batch.id)
+        activeBatchIds.push(batch.id)
+        totalBatchesCreatedOrUpdated++
+      }
+
+      // Zero out any other batches of this product not in productBatchIds
       await prisma.inventoryBatch.updateMany({
         where: {
           productId: product.id,
           id: { notIn: productBatchIds },
-          quantity: { gt: 0 }
+          quantity: { gt: 0 },
         },
-        data: { quantity: 0 }
+        data: { quantity: 0 },
       })
+    }
+
+    // =========================================================================
+    // PART A: 12 Core "Сырье" Raw Materials -> from "остатка конец дня" + post-date delta
+    // =========================================================================
+    for (const mat of SYRYE_12_DEFS) {
+      let product = products.find((p) => p.id === mat.fallbackProductId)
+      if (!product) {
+        product = products.find((p) => p.name.toLowerCase().trim() === mat.name.toLowerCase().trim())
+      }
+      if (!product) {
+        product = products.find((p) => matchSyrye12Key(p.name) === mat.key)
+      }
+      if (!product) continue
+
+      // Zero out any secondary duplicate Product records that also match this Syrye key (e.g. "Огурцы" vs "Огурцы свежие")
+      const secondaryDuplicates = products.filter(
+        (p) => p.id !== product!.id && matchSyrye12Key(p.name) === mat.key
+      )
+      for (const dup of secondaryDuplicates) {
+        handledProductIds.add(dup.id)
+        await prisma.inventoryBatch.updateMany({
+          where: { productId: dup.id, quantity: { gt: 0 } },
+          data: { quantity: 0 },
+        })
+      }
+
+      const baseStock = latestDate ? round2(toNum(endBalances[mat.key])) : 0
+
+      let newerArrivals = 0
+      let newerExpenses = 0
+      if (latestDate) {
+        for (const a of allArrivals) {
+          if (a.date > latestDate && matchSyrye12Key(a.nomenclature) === mat.key) {
+            newerArrivals += toNum(a.quantity)
+          }
+        }
+        for (const exp of allExpenses) {
+          if (exp.date > latestDate && exp.materials) {
+            const mats = exp.materials as Record<string, any>
+            for (const [k, v] of Object.entries(mats)) {
+              if (matchSyrye12Key(k) === mat.key) {
+                newerExpenses += toNum(v)
+              }
+            }
+          }
+        }
+      }
+
+      const targetStock = Math.max(0, round2(baseStock + newerArrivals - newerExpenses))
+      const matArrivals = allArrivals.filter((a) => matchSyrye12Key(a.nomenclature) === mat.key)
+
+      await allocateStockToProductBatches(
+        product,
+        targetStock,
+        matArrivals,
+        mat.shelfLifeDays,
+        latestDate || '2026-11-24'
+      )
+    }
+
+    // =========================================================================
+    // PART B: All Other Products (Not in 12 "Сырье" table) -> Prixod - Rasxod
+    // =========================================================================
+    // Pre-aggregate total expenses by non-Syrye group key and by exact lowercase name
+    const expenseByGroup = new Map<string, number>()
+    const expenseByExact = new Map<string, number>()
+
+    for (const exp of allExpenses) {
+      const mats = (exp.materials || {}) as Record<string, any>
+      for (const [k, v] of Object.entries(mats)) {
+        const qty = toNum(v)
+        if (qty <= 0) continue
+        if (matchSyrye12Key(k)) continue
+        const kl = k.trim().toLowerCase().replace(/\s+/g, ' ')
+        if (kl.includes('кухня') || kl.includes('ошхона') || kl.includes('сес') || kl.includes('ses')) continue
+
+        expenseByExact.set(kl, round2((expenseByExact.get(kl) || 0) + qty))
+        const gk = matchNonSyryeGroupKey(k)
+        if (gk) {
+          expenseByGroup.set(gk, round2((expenseByGroup.get(gk) || 0) + qty))
+        }
+      }
+    }
+
+    // Group non-Syrye arrivals by exact normalized nomenclature
+    const arrivalsByExact = new Map<string, typeof allArrivals>()
+    const arrivalsByGroup = new Map<string, typeof allArrivals>()
+
+    for (const arr of allArrivals) {
+      const nom = (arr.nomenclature || '').trim()
+      if (!nom || matchSyrye12Key(nom)) continue
+      const nl = nom.toLowerCase().replace(/\s+/g, ' ')
+      const eList = arrivalsByExact.get(nl) || []
+      eList.push(arr)
+      arrivalsByExact.set(nl, eList)
+
+      const gk = matchNonSyryeGroupKey(nom)
+      if (gk) {
+        const gList = arrivalsByGroup.get(gk) || []
+        gList.push(arr)
+        arrivalsByGroup.set(gk, gList)
+      }
+    }
+
+    // Handle grouped consumables (vinegar, chlorine, sorbate, benzoate, label, box) on their primary product
+    const groupedDefs: Array<{ groupKey: string; fallbackId: number; matchFn: (name: string) => boolean }> = [
+      { groupKey: 'group:vinegar', fallbackId: 241, matchFn: (s) => s.includes('уксус') },
+      { groupKey: 'group:chlorine', fallbackId: 231, matchFn: (s) => s.includes('гипохлорит') || s.includes('хлор') },
+      { groupKey: 'group:sorbate', fallbackId: 237, matchFn: (s) => s.includes('сорбат') },
+      { groupKey: 'group:benzoate', fallbackId: 236, matchFn: (s) => s.includes('бензоат') },
+      { groupKey: 'group:label', fallbackId: 290, matchFn: (s) => s.includes('этикет') },
+      {
+        groupKey: 'group:box',
+        fallbackId: 246,
+        matchFn: (s) => (s.includes('короб') || s.includes('кароб') || s.includes('karobka')) && !s.includes('брак'),
+      },
+    ]
+
+    for (const gDef of groupedDefs) {
+      let primaryProd = products.find((p) => p.id === gDef.fallbackId)
+      if (!primaryProd) {
+        primaryProd = products.find((p) => !handledProductIds.has(p.id) && gDef.matchFn(p.name.toLowerCase()))
+      }
+      if (!primaryProd) continue
+
+      const otherGroupProds = products.filter(
+        (p) => p.id !== primaryProd!.id && !handledProductIds.has(p.id) && gDef.matchFn(p.name.toLowerCase())
+      )
+      for (const dup of otherGroupProds) {
+        handledProductIds.add(dup.id)
+        await prisma.inventoryBatch.updateMany({
+          where: { productId: dup.id, quantity: { gt: 0 } },
+          data: { quantity: 0 },
+        })
+      }
+
+      const gArrivals = arrivalsByGroup.get(gDef.groupKey) || []
+      const totalArr = gArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
+      const totalExp = expenseByGroup.get(gDef.groupKey) || 0
+      const targetStock = Math.max(0, round2(totalArr - totalExp))
+
+      await allocateStockToProductBatches(
+        primaryProd,
+        targetStock,
+        gArrivals,
+        primaryProd.shelfLifeDays || 365,
+        latestDate || '2026-11-24'
+      )
+    }
+
+    // Handle all remaining individual products: Prixod (for that product) - Rasxod (for that product)
+    for (const product of products) {
+      if (handledProductIds.has(product.id)) continue
+      const pNorm = product.name.trim().toLowerCase().replace(/\s+/g, ' ')
+      const pArrivals = arrivalsByExact.get(pNorm) || []
+
+      // If it belongs to group:bag (vacuum/polyethylene bags where Rasxod is tracked under single "Пакет" column)
+      const gk = matchNonSyryeGroupKey(product.name)
+      let targetStock = 0
+      if (gk === 'group:bag') {
+        const allBagArrivals = arrivalsByGroup.get('group:bag') || []
+        const totalBagArr = allBagArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
+        const totalBagExp = expenseByGroup.get('group:bag') || 0
+        const netBagPool = Math.max(0, round2(totalBagArr - totalBagExp))
+        const thisProdArr = pArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
+        targetStock = totalBagArr > 0 ? round2((thisProdArr / totalBagArr) * netBagPool) : 0
+      } else {
+        const totalArr = pArrivals.reduce((s, a) => s + toNum(a.quantity), 0)
+        const totalExp = expenseByExact.get(pNorm) || 0
+        targetStock = Math.max(0, round2(totalArr - totalExp))
+      }
+
+      await allocateStockToProductBatches(
+        product,
+        targetStock,
+        pArrivals,
+        product.shelfLifeDays || 365,
+        latestDate || '2026-11-24'
+      )
     }
 
     return {
       success: true,
       latestDate,
       totalBatches: totalBatchesCreatedOrUpdated,
-      activeBatchesCount: activeBatchIds.length
+      activeBatchesCount: activeBatchIds.length,
     }
   } catch (error: any) {
     console.error('Error in syncInventoryBatchesFromDailyBalances:', error)

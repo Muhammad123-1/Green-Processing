@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { getSupplyDashboardCache, setSupplyDashboardCache } from '@/lib/supplyDashboardCache'
+import { matchSyrye12Key, getLatestSyryeClosingBalances, toNum } from '@/lib/shopReport'
+import { matchNonSyryeGroupKey } from '@/lib/fifoSync'
+
+function round2(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  const r = Math.round(n * 100) / 100
+  return Math.abs(r) < 0.01 ? 0 : r
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -115,12 +123,17 @@ export async function GET(request: NextRequest) {
       }),
       prisma.shopExpense.findMany({
         select: {
+          date: true,
           materials: true,
+          balances: true,
         },
+        orderBy: { date: 'desc' },
       }),
     ])
 
-    // 2. Aggregate ShopArrival by nomenclature
+    const { latestDate: latestReportDate, endBalances: latestClosingBalances } = getLatestSyryeClosingBalances(expenses)
+
+    // 2. Aggregate ShopArrival by nomenclature and by Syrye / non-Syrye groups
     interface InflowStats {
       totalKg: number
       count: number
@@ -129,6 +142,9 @@ export async function GET(request: NextRequest) {
     }
 
     const arrivalStatsByNom = new Map<string, InflowStats>()
+    const syryeInflowStats = new Map<string, InflowStats>()
+    const groupArrivalsMap = new Map<string, number>()
+
     for (let i = 0; i < arrivals.length; i++) {
       const arr = arrivals[i]
       const nom = (arr.nomenclature || '').trim()
@@ -136,7 +152,7 @@ export async function GET(request: NextRequest) {
       const nomLower = nom.toLowerCase()
 
       let qty = Number(arr.quantity) || 0
-      if (qty < 0) qty = 0
+      if (qty <= 0) continue
 
       const sup = (arr.supplier || '').trim() || "Noma'lum"
       const date = (arr.date || '').trim()
@@ -158,23 +174,51 @@ export async function GET(request: NextRequest) {
         stat.lastDate = date
       }
       stat.suppliersMap[sup] = (stat.suppliersMap[sup] || 0) + qty
+
+      const sKey = matchSyrye12Key(nom)
+      if (sKey) {
+        let sStat = syryeInflowStats.get(sKey)
+        if (!sStat) {
+          sStat = { totalKg: 0, count: 0, lastDate: date, suppliersMap: {} }
+          syryeInflowStats.set(sKey, sStat)
+        }
+        sStat.totalKg += qty
+        sStat.count += 1
+        if (!sStat.lastDate || date > sStat.lastDate) sStat.lastDate = date
+        sStat.suppliersMap[sup] = (sStat.suppliersMap[sup] || 0) + qty
+      } else {
+        const gKey = matchNonSyryeGroupKey(nom)
+        if (gKey) {
+          groupArrivalsMap.set(gKey, (groupArrivalsMap.get(gKey) || 0) + qty)
+        }
+      }
     }
 
     // 3. Aggregate ShopExpense by material name
     const expenseByNom = new Map<string, number>()
+    const syryeExpenseStats = new Map<string, number>()
+    const groupExpensesMap = new Map<string, number>()
+
     for (let i = 0; i < expenses.length; i++) {
       const exp = expenses[i]
       const mats = (exp.materials as Record<string, any>) || {}
       for (const [mName, mQty] of Object.entries(mats)) {
         if (!mName) continue
         const mKey = mName.trim().toLowerCase()
-        const q = typeof mQty === 'number' ? mQty : parseFloat(String(mQty)) || 0
+        const q = toNum(mQty)
+        if (q <= 0) continue
         expenseByNom.set(mKey, (expenseByNom.get(mKey) || 0) + q)
+        const sKey = matchSyrye12Key(mName)
+        if (sKey) {
+          syryeExpenseStats.set(sKey, (syryeExpenseStats.get(sKey) || 0) + q)
+        } else {
+          const gKey = matchNonSyryeGroupKey(mName)
+          if (gKey) {
+            groupExpensesMap.set(gKey, (groupExpensesMap.get(gKey) || 0) + q)
+          }
+        }
       }
     }
-
-    const arrivalEntries = Array.from(arrivalStatsByNom.entries())
-    const expenseEntries = Array.from(expenseByNom.entries())
 
     // 4. Default min stock resolver helper
     const getDefaultMinStock = (name: string, category?: string | null): number => {
@@ -201,65 +245,88 @@ export async function GET(request: NextRequest) {
     let sufficientCount = 0
     let orderNeededCount = 0
 
-    const inventoryStatus = products.map((product) => {
+    const seenSyryeKeys = new Set<string>()
+    const dedupedProducts = products.filter((p) => {
+      if (p.id === 284) return false // secondary duplicate of ID=288 "Огурцы свежие"
+      const sk = matchSyrye12Key(p.name)
+      if (sk) {
+        if (seenSyryeKeys.has(sk)) return false
+        seenSyryeKeys.add(sk)
+      }
+      return true
+    })
+
+    const inventoryStatus = dedupedProducts.map((product) => {
       const prodName = product.name.trim()
       const prodLower = prodName.toLowerCase()
-      const normProd = prodLower.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
-      const words = normProd.split(/\s+/).filter((w: string) => w.length > 2)
+      const syryeKey = matchSyrye12Key(prodName)
 
-      // Match inflow stats
       let arrivalKg = 0
       let expenseKg = 0
       let arrivalsCount = 0
       let lastArrivalDate = ''
-      const matchedSuppliers: Record<string, number> = {}
+      let matchedSuppliers: Record<string, number> = {}
+      let totalQuantity = 0
 
-      for (let i = 0; i < arrivalEntries.length; i++) {
-        const [arrNom, stat] = arrivalEntries[i]
-        const normArr = arrNom.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
-        const isMatch =
-          arrNom === prodLower ||
-          normArr === normProd ||
-          arrNom.includes(prodLower) ||
-          prodLower.includes(arrNom) ||
-          normArr.includes(normProd) ||
-          normProd.includes(normArr) ||
-          (words.length > 0 && words.every((w: string) => normArr.includes(w)))
+      if (syryeKey) {
+        const sStat = syryeInflowStats.get(syryeKey)
+        arrivalKg = sStat?.totalKg || 0
+        arrivalsCount = sStat?.count || 0
+        lastArrivalDate = sStat?.lastDate || ''
+        matchedSuppliers = sStat?.suppliersMap || {}
+        expenseKg = syryeExpenseStats.get(syryeKey) || 0
 
-        if (isMatch) {
-          arrivalKg += stat.totalKg
-          arrivalsCount += stat.count
-          if (!lastArrivalDate || stat.lastDate > lastArrivalDate) {
-            lastArrivalDate = stat.lastDate
+        if (latestReportDate) {
+          const baseStock = round2(toNum(latestClosingBalances[syryeKey]))
+          let postArr = 0
+          let postExp = 0
+          for (const arr of arrivals) {
+            if (arr.date > latestReportDate && matchSyrye12Key(arr.nomenclature) === syryeKey) {
+              postArr += toNum(arr.quantity)
+            }
           }
-          for (const [sup, supKg] of Object.entries(stat.suppliersMap)) {
-            matchedSuppliers[sup] = (matchedSuppliers[sup] || 0) + supKg
+          for (const exp of expenses) {
+            if (exp.date > latestReportDate && exp.materials) {
+              for (const [k, v] of Object.entries(exp.materials as Record<string, any>)) {
+                if (matchSyrye12Key(k) === syryeKey) {
+                  postExp += toNum(v)
+                }
+              }
+            }
           }
+          totalQuantity = Math.max(0, round2(baseStock + postArr - postExp))
+        } else {
+          totalQuantity = Math.max(0, round2(arrivalKg - expenseKg))
+        }
+      } else {
+        const exactStat = arrivalStatsByNom.get(prodLower)
+        arrivalKg = exactStat?.totalKg || 0
+        arrivalsCount = exactStat?.count || 0
+        lastArrivalDate = exactStat?.lastDate || ''
+        matchedSuppliers = exactStat?.suppliersMap || {}
+        expenseKg = expenseByNom.get(prodLower) || 0
+
+        const gKey = matchNonSyryeGroupKey(prodName)
+        if (gKey && gKey.startsWith('group:')) {
+          if (gKey === 'group:bag') {
+            const totalBagArr = groupArrivalsMap.get('group:bag') || 0
+            const totalBagExp = groupExpensesMap.get('group:bag') || 0
+            const netPool = Math.max(0, round2(totalBagArr - totalBagExp))
+            totalQuantity = totalBagArr > 0 ? round2((arrivalKg / totalBagArr) * netPool) : 0
+          } else {
+            const gArr = groupArrivalsMap.get(gKey) || 0
+            const gExp = groupExpensesMap.get(gKey) || 0
+            arrivalKg = gArr
+            expenseKg = gExp
+            totalQuantity = Math.max(0, round2(gArr - gExp))
+          }
+        } else if (arrivalKg > 0 || expenseKg > 0) {
+          totalQuantity = Math.max(0, round2(arrivalKg - expenseKg))
+        } else {
+          const legacyBatchTotal = product.batches.reduce((sum, b) => sum + b.quantity, 0)
+          totalQuantity = round2(legacyBatchTotal)
         }
       }
-
-      // Match expense
-      for (let i = 0; i < expenseEntries.length; i++) {
-        const [expNom, expQty] = expenseEntries[i]
-        const normExp = expNom.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
-        const isMatch =
-          expNom === prodLower ||
-          normExp === normProd ||
-          expNom.includes(prodLower) ||
-          prodLower.includes(expNom) ||
-          normExp.includes(normProd) ||
-          normProd.includes(normExp) ||
-          (words.length > 0 && words.every((w: string) => normExp.includes(w)))
-
-        if (isMatch) {
-          expenseKg += expQty
-        }
-      }
-
-      // Real balance from arrivals - expense, plus approved legacy batches
-      const legacyBatchTotal = product.batches.reduce((sum, b) => sum + b.quantity, 0)
-      const realArrivalBalance = Math.max(0, arrivalKg - expenseKg)
-      const totalQuantity = arrivalKg > 0 ? realArrivalBalance : legacyBatchTotal
 
       // Min stock & needed
       const minStock =

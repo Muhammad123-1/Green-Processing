@@ -2,6 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
+import { matchSyrye12Key, getLatestSyryeClosingBalances } from '@/lib/shopReport'
+
+const SYRYE_12_KEYS = new Set([
+  'iceberg',
+  'tomato',
+  'onion',
+  'cabbage',
+  'carrot',
+  'lemon',
+  'cucumber',
+  'lolloRosso',
+  'rukkola',
+  'spinach',
+  'mint',
+  'celery',
+])
+
+function round2(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  const r = Math.round(n * 100) / 100
+  return Math.abs(r) < 0.01 ? 0 : r
+}
 
 function inferProductUnit(name: string): 'kg' | 'dona' | 'litr' {
   const s = name.toLowerCase().trim()
@@ -381,15 +403,6 @@ export async function GET(req: NextRequest) {
         unit: 'kg',
         minStock: 50,
         matchPatterns: ['сельдерей']
-      },
-      icebergLeaf: {
-        key: 'icebergLeaf',
-        name: 'Айсберг листовой',
-        nameUz: 'Bargli Aysberg',
-        category: 'Xomashyo & Oziq-ovqat',
-        unit: 'kg',
-        minStock: 200,
-        matchPatterns: ['листовой']
       }
     }
 
@@ -492,25 +505,29 @@ export async function GET(req: NextRequest) {
         nomLower.includes('яшик') ||
         nomLower.includes('падон')
 
-      let matchedKey: string | null = null
-      if (isPackaging) {
-        if (nomLower.includes('брак')) {
-          if (nomLower.includes('короб') || nomLower.includes('кароб')) matchedKey = 'boxDefect'
-          else matchedKey = 'bagDefect'
-        } else if (nomLower.includes('этикет')) {
-          matchedKey = 'label'
-        } else if (nomLower.includes('короб') || nomLower.includes('кароб') || nomLower.includes('karobka') || nomLower.includes('яшик')) {
-          matchedKey = 'box'
+      let matchedKey: string | null = matchSyrye12Key(nom)
+      if (!matchedKey) {
+        if (isPackaging) {
+          if (nomLower.includes('мусир')) {
+            matchedKey = null // keep separate entry for "Мусир пакет"
+          } else if (nomLower.includes('брак')) {
+            if (nomLower.includes('короб') || nomLower.includes('кароб')) matchedKey = 'boxDefect'
+            else matchedKey = 'bagDefect'
+          } else if (nomLower.includes('этикет')) {
+            matchedKey = 'label'
+          } else if (nomLower.includes('короб') || nomLower.includes('кароб') || nomLower.includes('karobka')) {
+            matchedKey = 'box'
+          } else if (nomLower.includes('пакет')) {
+            matchedKey = 'bag'
+          }
         } else {
-          matchedKey = 'bag'
-        }
-      } else {
-        for (const [mKey, def] of Object.entries(coreDefinitions)) {
-          if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
-          if (mKey === 'iceberg' && (nomLower.includes('листов') || nomLower.includes('bargli'))) continue
-          if (def.matchPatterns.some((pattern) => nomLower.includes(pattern))) {
-            matchedKey = mKey
-            break
+          for (const [mKey, def] of Object.entries(coreDefinitions)) {
+            if (SYRYE_12_KEYS.has(mKey)) continue
+            if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
+            if (def.matchPatterns.some((pattern) => nomLower.includes(pattern))) {
+              matchedKey = mKey
+              break
+            }
           }
         }
       }
@@ -639,25 +656,29 @@ export async function GET(req: NextRequest) {
             k.includes('яшик') ||
             k.includes('падон')
 
-          let matchedKey: string | null = null
-          if (isExpPackaging) {
-            if (k.includes('брак')) {
-              if (k.includes('короб') || k.includes('кароб')) matchedKey = 'boxDefect'
-              else matchedKey = 'bagDefect'
-            } else if (k.includes('этикет')) {
-              matchedKey = 'label'
-            } else if (k.includes('короб') || k.includes('кароб') || k.includes('karobka') || k.includes('яшик')) {
-              matchedKey = 'box'
+          let matchedKey: string | null = matchSyrye12Key(matKey)
+          if (!matchedKey) {
+            if (isExpPackaging) {
+              if (k.includes('мусир')) {
+                matchedKey = null
+              } else if (k.includes('брак')) {
+                if (k.includes('короб') || k.includes('кароб')) matchedKey = 'boxDefect'
+                else matchedKey = 'bagDefect'
+              } else if (k.includes('этикет')) {
+                matchedKey = 'label'
+              } else if (k.includes('короб') || k.includes('кароб') || k.includes('karobka')) {
+                matchedKey = 'box'
+              } else if (k.includes('пакет')) {
+                matchedKey = 'bag'
+              }
             } else {
-              matchedKey = 'bag'
-            }
-          } else {
-            for (const [mKey, def] of Object.entries(coreDefinitions)) {
-              if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
-              if (mKey === 'iceberg' && (k.includes('листов') || k.includes('bargli'))) continue
-              if (def.matchPatterns.some((pattern) => k.includes(pattern))) {
-                matchedKey = mKey
-                break
+              for (const [mKey, def] of Object.entries(coreDefinitions)) {
+                if (SYRYE_12_KEYS.has(mKey)) continue
+                if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
+                if (def.matchPatterns.some((pattern) => k.includes(pattern))) {
+                  matchedKey = mKey
+                  break
+                }
               }
             }
           }
@@ -665,8 +686,9 @@ export async function GET(req: NextRequest) {
           // Match dynamic
           if (!matchedKey) {
             for (const [mKey, mData] of Object.entries(materialsData)) {
+              if (SYRYE_12_KEYS.has(mKey)) continue
               if (['box', 'bag', 'label', 'boxDefect', 'bagDefect'].includes(mKey)) continue
-              if (mData.name.toLowerCase().includes(k) || k.includes(mData.name.toLowerCase())) {
+              if (mData.name.toLowerCase().trim() === k.trim()) {
                 matchedKey = mKey
                 break
               }
@@ -750,51 +772,34 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.totalKg - a.totalKg)
 
     // Find latest confirmed daily shop balance report (Chain: start + income - expense = end)
-    let latestClosingBalances: Record<string, number> = {}
-    let latestReportDate = ''
-    for (const exp of expenses) {
-      const rep = (exp.balances as any)?.report
-      const end = rep?.balances?.end
-      if (end && Object.keys(end).length > 0) {
-        latestClosingBalances = end
-        latestReportDate = exp.date
-        break
-      }
-    }
+    const { latestDate: latestReportDate, endBalances: latestClosingBalances } = getLatestSyryeClosingBalances(expenses)
 
     // 4. Format all materials (calculating net stock and traffic light status)
     const formattedMaterials = Object.values(materialsData).map((m) => {
-      // Base balance
-      let balance = Math.round((m.totalArrivalKg - m.totalExpenseKg) * 10) / 10
+      // Rule B (default for products NOT in 12-item Сырье table): Qoldiq = Prixod - Rasxod
+      let balance = Math.max(0, round2(m.totalArrivalKg - m.totalExpenseKg))
 
-      // If tracked in verified daily physical balances:
-      if (m.key in latestClosingBalances) {
-        const baseStock = Number(latestClosingBalances[m.key]) || 0
+      // Rule A (for the 12 core Сырье raw materials): take authoritative "остатка конец дня" + post-date delta
+      if (SYRYE_12_KEYS.has(m.key) && latestReportDate) {
+        const baseStock = round2(Number(latestClosingBalances[m.key]) || 0)
         let postArrival = 0
         let postExpense = 0
-        if (latestReportDate) {
-          for (const arr of arrivals) {
-            if (arr.date > latestReportDate) {
-              const nom = String(arr.nomenclature || '').toLowerCase()
-              const matches = coreDefinitions[m.key]?.matchPatterns || []
-              if (matches.some((p) => nom.includes(p.toLowerCase()))) {
-                postArrival += Number(arr.quantity) || 0
-              }
-            }
+        for (const arr of arrivals) {
+          if (arr.date > latestReportDate && matchSyrye12Key(arr.nomenclature) === m.key) {
+            postArrival += Number(arr.quantity) || 0
           }
-          for (const exp of expenses) {
-            if (exp.date > latestReportDate && exp.materials) {
-              const mats = exp.materials as Record<string, any>
-              for (const [k, v] of Object.entries(mats)) {
-                const matches = coreDefinitions[m.key]?.matchPatterns || []
-                if (matches.some((p) => k.toLowerCase().includes(p.toLowerCase()))) {
-                  postExpense += Number(v) || 0
-                }
+        }
+        for (const exp of expenses) {
+          if (exp.date > latestReportDate && exp.materials) {
+            const mats = exp.materials as Record<string, any>
+            for (const [k, v] of Object.entries(mats)) {
+              if (matchSyrye12Key(k) === m.key) {
+                postExpense += Number(v) || 0
               }
             }
           }
         }
-        balance = Math.round((baseStock + postArrival - postExpense) * 10) / 10
+        balance = Math.max(0, round2(baseStock + postArrival - postExpense))
       }
 
       // Check if custom minStock is set by warehouseman

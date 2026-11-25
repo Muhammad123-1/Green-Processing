@@ -186,19 +186,19 @@ export async function GET(req: NextRequest) {
         if (s.includes('этикет')) return { key: 'label', name: 'Этикетки', unit: 'dona' }
         return { key: 'box', name: 'Коробки', unit: 'dona' }
       }
-      if (s.includes('томат') || s.includes('помидор')) return { key: 'tomato', name: 'Томаты (Помидор)', unit: 'kg' }
-      if ((s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg')) && !s.includes('листов')) return { key: 'iceberg', name: 'Салат Айсберг', unit: 'kg' }
-      if (s.includes('листов')) return { key: 'icebergLeaf', name: 'Айсберг (листовой)', unit: 'kg' }
-      if (s.includes('капуст') && !s.includes('коул')) return { key: 'cabbage', name: 'Капуста белокочанная', unit: 'kg' }
-      if (s.includes('морков')) return { key: 'carrot', name: 'Морковь', unit: 'kg' }
-      if (s.includes('лук')) return { key: 'onion', name: 'Лук белый салатный', unit: 'kg' }
-      if (s.includes('огурц') || s.includes('бодринг')) return { key: 'cucumber', name: 'Огурцы свежие', unit: 'kg' }
-      if (s.includes('лимон')) return { key: 'lemon', name: 'Лимон', unit: 'kg' }
-      if (s.includes('лолло') || s.includes('lollo')) return { key: 'lolloRosso', name: 'Lollo Rosso', unit: 'kg' }
-      if (s.includes('рукол') || s.includes('руккол')) return { key: 'rukkola', name: 'Руккола', unit: 'kg' }
-      if (s.includes('шпинат')) return { key: 'spinach', name: 'Шпинат', unit: 'kg' }
-      if (s.includes('мята')) return { key: 'mint', name: 'Мята', unit: 'kg' }
-      if (s.includes('сельдерей')) return { key: 'celery', name: 'Сельдерей', unit: 'kg' }
+      if (s === 'tomato' || s === 'tomatoes' || s.includes('томат') || s.includes('помидор')) return { key: 'tomato', name: 'Томаты (Помидор)', unit: 'kg' }
+      if (s === 'iceberg' || ((s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg')) && !s.includes('листов'))) return { key: 'iceberg', name: 'Салат Айсберг', unit: 'kg' }
+      if (s === 'icebergleaf' || s.includes('листов')) return { key: 'icebergLeaf', name: 'Айсберг (листовой)', unit: 'kg' }
+      if (s === 'cabbage' || (s.includes('капуст') && !s.includes('красная') && !s.includes('коул'))) return { key: 'cabbage', name: 'Капуста белокочанная', unit: 'kg' }
+      if (s === 'carrot' || s.includes('морков')) return { key: 'carrot', name: 'Морковь', unit: 'kg' }
+      if (s === 'onion' || s.includes('лук')) return { key: 'onion', name: 'Лук белый салатный', unit: 'kg' }
+      if (s === 'cucumber' || s === 'cucumbers' || s.includes('огурц') || s.includes('бодринг')) return { key: 'cucumber', name: 'Огурцы свежие', unit: 'kg' }
+      if (s === 'lemon' || (s.includes('лимон') && !s.includes('кислот'))) return { key: 'lemon', name: 'Лимон', unit: 'kg' }
+      if (s === 'lollorosso' || s.includes('лолло') || s.includes('lollo')) return { key: 'lolloRosso', name: 'Lollo Rosso', unit: 'kg' }
+      if (s === 'rukkola' || s.includes('рукол') || s.includes('руккол')) return { key: 'rukkola', name: 'Руккола', unit: 'kg' }
+      if (s === 'spinach' || s.includes('шпинат')) return { key: 'spinach', name: 'Шпинат', unit: 'kg' }
+      if (s === 'mint' || s.includes('мята')) return { key: 'mint', name: 'Мята', unit: 'kg' }
+      if (s === 'celery' || s.includes('сельдерей')) return { key: 'celery', name: 'Сельдерей', unit: 'kg' }
       if (s.includes('хлор') || s.includes('гипохлорит')) return { key: 'chlorine', name: 'Хлор', unit: 'kg' }
       if (s.includes('сорбат')) return { key: 'sorbat', name: 'Сорбат', unit: 'kg' }
       if (s.includes('бензоат')) return { key: 'benzoat', name: 'Бензоат', unit: 'kg' }
@@ -318,9 +318,9 @@ export async function GET(req: NextRequest) {
 
       // 3. Kunlik hisobot qoldiqlari (Opening & Closing Balances)
       const balances = (e.balances || {}) as Record<string, any>
-      const startBalances = balances?.start || {}
+      const startBalances = balances?.report?.balances?.start || balances?.start || {}
       for (const [rawName, val] of Object.entries(startBalances)) {
-        const num = toNum(val)
+        const num = Math.round(toNum(val) * 100) / 100
         if (num >= 0) {
           const p = getOrInitProd(rawName)
           if (!p.hasOpeningRecorded) {
@@ -330,9 +330,9 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      const endBalances = balances?.end || {}
+      const endBalances = balances?.report?.balances?.end || balances?.end || {}
       for (const [rawName, val] of Object.entries(endBalances)) {
-        const num = toNum(val)
+        const num = Math.round(toNum(val) * 100) / 100
         if (num >= 0) {
           const p = getOrInitProd(rawName)
           p.currentStockKg = num

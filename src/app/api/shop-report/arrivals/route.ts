@@ -5,6 +5,8 @@ import { isDateStr, toNum } from '@/lib/shopReport'
 import { getNextShopArrivalBatch, normalizeProductKey, parseDateToYearMonth } from '@/lib/batchNumbering'
 import { checkEditPermission, isAfterShiftHours } from '@/lib/auditRules'
 import { recordShiftEditAudit } from '@/lib/auditImport'
+import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
+import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
 
 export const dynamic = 'force-dynamic'
 
@@ -162,6 +164,13 @@ export async function PUT(req: NextRequest) {
       { timeout: 60000, maxWait: 10000 }
     )
 
+    if (updated > 0 || created > 0) {
+      await syncInventoryBatchesFromDailyBalances().catch((e) => console.error('FIFO sync after arrivals save error:', e))
+      try {
+        invalidateSupplyDashboardCache()
+      } catch {}
+    }
+
     return NextResponse.json({ success: true, updated, created })
   } catch (error: any) {
     console.error('Shop arrivals save error:', error)
@@ -200,6 +209,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     await prisma.shopArrival.delete({ where: { id } })
+    await syncInventoryBatchesFromDailyBalances().catch((e) => console.error('FIFO sync after arrival delete error:', e))
+    try {
+      invalidateSupplyDashboardCache()
+    } catch {}
     return NextResponse.json({ success: true, deletedId: id })
   } catch (error: any) {
     console.error('Shop arrival delete error:', error)
