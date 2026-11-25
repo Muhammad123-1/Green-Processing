@@ -10,6 +10,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Calculator,
+  ChevronLeft,
   ChevronRight,
   Loader2,
   Package,
@@ -879,45 +880,97 @@ export default function ShopReportContent({
 
   const gpPagination = useInfiniteTable(filteredGP, 10, [gpFilter, selectedMonth])
 
-  const dateFilterInput = (value: string, onChange: (v: string) => void) => (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <select
-        value={selectedMonth}
-        onChange={(e) => {
-          setSelectedMonth(e.target.value)
-          onChange('')
-        }}
-        className="bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 outline-none hover:border-amber-400 dark:hover:border-amber-500 transition-colors shadow-sm cursor-pointer"
-        title={lang === 'ru' ? 'Выбрать месяц' : "Oyni tanlash"}
-      >
-        <option value="">{lang === 'ru' ? '📅 Все месяцы' : '📅 Barcha oylar'}</option>
-        {availableMonths.map((m) => (
-          <option key={m} value={m}>
-            {formatMonthLabel(m, lang)}
-          </option>
-        ))}
-      </select>
-      <input
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-white dark:bg-dark-800 border border-amber-200 dark:border-amber-900 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none shadow-sm"
-        title={lang === 'ru' ? 'Выбрать точный день' : "Aniq kunni tanlash"}
-      />
-      {(value || selectedMonth) && (
-        <button
-          onClick={() => {
+  const shiftDate = (currentDate: string, deltaDays: number) => {
+    let base = currentDate ? new Date(currentDate) : new Date()
+    if (isNaN(base.getTime())) base = new Date()
+    base.setDate(base.getDate() + deltaDays)
+    const y = base.getFullYear()
+    const m = String(base.getMonth() + 1).padStart(2, '0')
+    const d = String(base.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  const dateFilterInput = (value: string, onChange: (v: string) => void) => {
+    const isToday = value === todayStr()
+    return (
+      <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+        {/* Kunni surish (Oldingi / Bugun / Keyingi) */}
+        <div className="inline-flex items-center bg-slate-100 dark:bg-dark-800 rounded-xl p-0.5 border border-slate-300 dark:border-dark-700 shadow-xs">
+          <button
+            type="button"
+            onClick={() => onChange(shiftDate(value || todayStr(), -1))}
+            className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+            title={lang === 'ru' ? 'Предыдущий день' : 'Oldingi kun'}
+          >
+            <ChevronLeft size={14} />
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => onChange(todayStr())}
+            className={`px-2 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
+              isToday 
+                ? 'bg-amber-500 text-white shadow-xs' 
+                : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-dark-700'
+            }`}
+          >
+            {lang === 'ru' ? 'Сегодня' : 'Bugun'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChange(shiftDate(value || todayStr(), 1))}
+            className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+            title={lang === 'ru' ? 'Следующий день' : 'Keyingi kun'}
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        {/* Aniq sana tanlagich */}
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="bg-white dark:bg-dark-800 border border-amber-300 dark:border-amber-900 px-1.5 sm:px-2 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-900 dark:text-white outline-none shadow-xs"
+          title={lang === 'ru' ? 'Выбрать точный день' : "Aniq kunni tanlash"}
+        />
+
+        {/* Oylar bo'yicha filter */}
+        <select
+          value={selectedMonth}
+          onChange={(e) => {
+            setSelectedMonth(e.target.value)
             onChange('')
-            setSelectedMonth('')
           }}
-          className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
-          title={lang === 'ru' ? 'Сбросить фильтры' : "Filtrni tozalash"}
+          className="bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 px-1.5 sm:px-2 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 outline-none hover:border-amber-400 dark:hover:border-amber-500 transition-colors shadow-xs cursor-pointer max-w-[95px] sm:max-w-none truncate"
+          title={lang === 'ru' ? 'Выбрать месяц' : "Oyni tanlash"}
         >
-          <X size={14} />
-        </button>
-      )}
-    </div>
-  )
+          <option value="">{lang === 'ru' ? '📅 Все' : '📅 Oylar'}</option>
+          {availableMonths.map((m) => (
+            <option key={m} value={m}>
+              {formatMonthLabel(m, lang)}
+            </option>
+          ))}
+        </select>
+
+        {/* Tozalash */}
+        {(value || selectedMonth) && (
+          <button
+            type="button"
+            onClick={() => {
+              onChange('')
+              setSelectedMonth('')
+            }}
+            className="p-1 sm:p-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50 transition-colors shadow-xs"
+            title={lang === 'ru' ? 'Сбросить фильтры (все дни)' : "Barcha kunlarni ko'rish"}
+          >
+            <X size={13} />
+          </button>
+        )}
+      </div>
+    )
+  }
 
   const saveButton = (count: number, saving: boolean, onClick: () => void) => (
     isReadOnly ? null :
@@ -1007,36 +1060,36 @@ export default function ShopReportContent({
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-dark-900 p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm overflow-x-auto custom-scrollbar">
+      <div className="flex items-center gap-1 sm:gap-2 bg-white dark:bg-dark-900 p-1 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-dark-750 shadow-sm overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab('arrival')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'arrival' ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'arrival' ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 font-black shadow-xs' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <ArrowDownToLine size={14} /> 1. Приход (Kirim)
+          <ArrowDownToLine size={14} /> 1. Kirim
         </button>
         <button
           onClick={() => setActiveTab('expense')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'expense' ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'expense' ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 font-black shadow-xs' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <ArrowUpFromLine size={14} /> 2. Расход (Chiqim)
+          <ArrowUpFromLine size={14} /> 2. Chiqim
         </button>
         <button
           onClick={() => setActiveTab('gp')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'gp' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'gp' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 font-black shadow-xs' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <Package size={14} /> 3. ГП (Tayyor mahsulot)
+          <Package size={14} /> 3. GP (Tayyor)
         </button>
         <button
           onClick={() => setActiveTab('report')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'report' ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'report' ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 font-black shadow-xs' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <Calculator size={14} /> 4. Отчет ЦЕХ (Hisobot)
+          <Calculator size={14} /> 4. Sex Hisoboti
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'history' ? 'bg-slate-800 text-white dark:bg-dark-700' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
+          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'history' ? 'bg-slate-800 text-white dark:bg-dark-700 font-black shadow-xs' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-dark-800'}`}
         >
-          <FileSpreadsheet size={14} /> 5. Arxiv (Tarix)
+          <FileSpreadsheet size={14} /> 5. Arxiv
         </button>
       </div>
 
@@ -1044,8 +1097,8 @@ export default function ShopReportContent({
       {activeTab === 'arrival' && (
         <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
           <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-amber-500/10">
-            <h2 className="text-xs sm:text-base font-black text-amber-600 uppercase tracking-tight">
-              Приход (Kirim qilinayotgan mahsulotlar)
+            <h2 className="text-xs sm:text-sm font-black text-amber-600 uppercase tracking-tight">
+              Kirim (Приход)
             </h2>
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(arrFilter, setArrFilter)}
@@ -1075,7 +1128,7 @@ export default function ShopReportContent({
             <table className="w-full text-left border-collapse min-w-[660px] sm:min-w-[800px]">
               <thead className="bg-amber-500 text-white text-[10px] sm:text-xs font-bold uppercase sticky top-0 z-20">
                 <tr>
-                  <th className="sticky left-0 z-20 bg-amber-600 p-2 sm:p-3 border-r border-amber-700 w-[96px] min-w-[96px] sm:min-w-[130px]">
+                  <th className="relative md:sticky md:left-0 md:z-20 bg-amber-600 p-2 sm:p-3 border-r border-amber-700 w-[96px] min-w-[96px] sm:min-w-[130px]">
                     {dateFormatMode === 'long'
                       ? (lang === 'ru' ? 'Дата (мес.)' : 'Sana (oy)')
                       : (lang === 'ru' ? 'Дата' : 'Sana')}
@@ -1126,7 +1179,7 @@ export default function ShopReportContent({
                           : 'bg-white dark:bg-dark-900 hover:bg-amber-50/40 dark:hover:bg-dark-800/40'
                       }`}
                     >
-                      <td className={`sticky left-0 z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] ${row.isEdited ? 'bg-rose-100/60 dark:bg-rose-950/40' : 'bg-amber-50 dark:bg-dark-850'}`}>
+                      <td className={`relative md:sticky md:left-0 md:z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] ${row.isEdited ? 'bg-rose-100/60 dark:bg-rose-950/40' : 'bg-amber-50 dark:bg-dark-850'}`}>
                         {row._new ? (
                           <input
                             type="date"
@@ -1437,8 +1490,8 @@ export default function ShopReportContent({
       {activeTab === 'expense' && (
         <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
           <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-amber-500/10">
-            <h2 className="text-xs sm:text-base font-black text-amber-600 uppercase tracking-tight">
-              Расход (Ishlatilgan xomashyo va materiallar)
+            <h2 className="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400 uppercase tracking-tight">
+              Chiqim (Расход)
             </h2>
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(expFilter, setExpFilter)}
@@ -1455,7 +1508,7 @@ export default function ShopReportContent({
             <table className="w-full text-left border-collapse min-w-[1400px]">
               <thead className="bg-[#FFE699] text-slate-900 text-[10px] font-bold uppercase sticky top-0 z-20 border-b border-amber-300">
                 <tr>
-                  <th className="sticky left-0 z-20 p-2 border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d] w-[92px] min-w-[92px] sm:min-w-[125px] bg-amber-200 text-slate-900">
+                  <th className="relative md:sticky md:left-0 md:z-20 p-2 border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d] w-[92px] min-w-[92px] sm:min-w-[125px] bg-amber-200 text-slate-900">
                     {dateFormatMode === 'long'
                       ? (lang === 'ru' ? 'Число (мес.)' : 'Sana (oy)')
                       : (lang === 'ru' ? 'Число' : 'Sana')}
@@ -1510,7 +1563,7 @@ export default function ShopReportContent({
                           : 'bg-[#FFFBF0] hover:bg-amber-100/50'
                       }`}
                     >
-                      <td className={`sticky left-0 z-10 p-1 border-r border-amber-200 shadow-[inset_-1px_0_0_#fde68a] ${row.isEdited ? 'bg-rose-100/60' : 'bg-[#FFF3CD]'} text-slate-900`}>
+                      <td className={`relative md:sticky md:left-0 md:z-10 p-1 border-r border-amber-200 shadow-[inset_-1px_0_0_#fde68a] ${row.isEdited ? 'bg-rose-100/60' : 'bg-[#FFF3CD]'} text-slate-900`}>
                         {row._new ? (
                           <input
                             type="date"
@@ -1631,9 +1684,9 @@ export default function ShopReportContent({
       {activeTab === 'gp' && (
         <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-hidden flex flex-col">
           <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-emerald-500/10">
-            <h2 className="text-xs sm:text-base font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight flex items-center gap-1.5">
+            <h2 className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight flex items-center gap-1.5">
               <Package size={16} />
-              <span>ГП (Выпуск готовой продукции)</span>
+              <span>Tayyor Mahsulot (ГП)</span>
             </h2>
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {dateFilterInput(gpFilter, setGpFilter)}
@@ -1650,7 +1703,7 @@ export default function ShopReportContent({
             <table className="w-full text-left border-collapse min-w-[1100px]">
               <thead className="bg-[#70AD47] text-white text-[10px] font-bold uppercase sticky top-0 z-20 border-b border-emerald-600">
                 <tr>
-                  <th className="sticky left-0 z-20 p-2 border-r border-emerald-600 w-[92px] min-w-[92px] sm:min-w-[125px] bg-[#548235] text-white">
+                  <th className="relative md:sticky md:left-0 md:z-20 p-2 border-r border-emerald-600 w-[92px] min-w-[92px] sm:min-w-[125px] bg-[#548235] text-white">
                     {dateFormatMode === 'long'
                       ? (lang === 'ru' ? 'Дата (мес.)' : 'Sana (oy)')
                       : (lang === 'ru' ? 'Дата' : 'Sana')}
@@ -1704,7 +1757,7 @@ export default function ShopReportContent({
                           : 'bg-white hover:bg-emerald-50/50'
                       }`}
                     >
-                      <td className={`sticky left-0 z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] ${row.isEdited ? 'bg-rose-100/60' : 'bg-emerald-50'} text-slate-900`}>
+                      <td className={`relative md:sticky md:left-0 md:z-10 p-1 border-r border-slate-200 shadow-[inset_-1px_0_0_#e2e8f0] ${row.isEdited ? 'bg-rose-100/60' : 'bg-emerald-50'} text-slate-900`}>
                         {row._new ? (
                           <input
                             type="date"

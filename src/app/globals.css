@@ -704,6 +704,101 @@ html.light .section-subtitle { color: #64748b !important; }
   }
 }
 
+/* ========================================================================= */
+/* ULTRA-COMPACT SCALING FOR SMALL SCREENS (<= 480px / 360px-390px phones)   */
+/* ========================================================================= */
+@media (max-width: 480px) {
+  /* Prevent giant content from overwhelming small screens */
+  main {
+    padding: 0.375rem 0.375rem 5.5rem 0.375rem !important;
+  }
+
+  header {
+    height: 3.25rem !important; /* 52px */
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Compact typography so titles don't eat half the screen */
+  h1 {
+    font-size: 1.1rem !important;
+    line-height: 1.25 !important;
+  }
+  h2 {
+    font-size: 0.9rem !important;
+    line-height: 1.2 !important;
+  }
+  p {
+    font-size: 0.75rem !important;
+  }
+
+  /* Compact cards & borders */
+  .rounded-3xl {
+    border-radius: 0.875rem !important;
+  }
+  .rounded-2xl {
+    border-radius: 0.75rem !important;
+  }
+
+  /* Compact table cells & inputs */
+  table,
+  .data-table {
+    font-size: 10px !important;
+  }
+
+  table th,
+  .data-table th {
+    font-size: 9px !important;
+    padding: 3px 4px !important;
+  }
+
+  table td:not(.p-0),
+  .data-table td:not(.p-0) {
+    font-size: 10px !important;
+    padding: 2.5px 3px !important;
+  }
+
+  table td input:not([type="checkbox"]):not([type="radio"]):not(.opacity-0):not(.excel-cell-input):not(.bg-transparent):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14),
+  table td select:not(.bg-transparent),
+  table td textarea:not(.bg-transparent) {
+    min-width: 50px !important;
+    min-height: 26px !important;
+    font-size: 10.5px !important;
+    padding: 2px 4px !important;
+    border-radius: 4px !important;
+  }
+
+  table td input[type="text"]:not(.opacity-0):not(.excel-cell-input):not(.bg-transparent):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12):not(.w-14) {
+    min-width: 70px !important;
+  }
+
+  table td input[type="date"]:not(.opacity-0) {
+    min-width: 78px !important;
+    font-size: 9.5px !important;
+    padding: 2px 2px !important;
+  }
+
+  /* Compact button styling */
+  button:not(.sidebar-link):not(.nav-link) {
+    font-size: 11px !important;
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  /* Action buttons pop out with high visibility so workers immediately know what to tap */
+  button.bg-amber-600,
+  button.bg-amber-500,
+  button.bg-emerald-600,
+  button.bg-emerald-500,
+  button.bg-blue-600,
+  button.bg-blue-500,
+  button.bg-indigo-600 {
+    font-weight: 800 !important;
+    padding-left: 0.6rem !important;
+    padding-right: 0.6rem !important;
+  }
+}
+
 
 /* Monitoring focuses on finished-goods weight; packaging counts are excluded. */
 .monitoring-packaging-column,

@@ -7,6 +7,8 @@ import {
   Upload,
   Download,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Search,
   Loader2,
   Trash2,
@@ -361,13 +363,53 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
             ))}
           </select>
 
-          {/* Date Filter */}
+          {/* Quick Day Shifter & Date Filter */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-800 rounded-xl p-0.5 border border-slate-200 dark:border-dark-700 shadow-xs">
+            <button
+              type="button"
+              onClick={() => {
+                let base = dateFilter ? new Date(dateFilter) : new Date()
+                if (isNaN(base.getTime())) base = new Date()
+                base.setDate(base.getDate() - 1)
+                setDateFilter(`${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`)
+              }}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+              title="Oldingi kun"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter(todayStr())}
+              className={`px-2 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
+                dateFilter === todayStr()
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-dark-700'
+              }`}
+            >
+              {lang === 'ru' ? 'Сегодня' : 'Bugun'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                let base = dateFilter ? new Date(dateFilter) : new Date()
+                if (isNaN(base.getTime())) base = new Date()
+                base.setDate(base.getDate() + 1)
+                setDateFilter(`${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`)
+              }}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+              title="Keyingi kun"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
           <div className="relative flex items-center">
             <input
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 outline-none"
+              className="px-2 py-1 sm:py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 outline-none"
             />
             {dateFilter && (
               <button
@@ -444,7 +486,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
           <table className="w-full text-left border-collapse min-w-[1450px]">
             <thead className="bg-[#FFE699] text-slate-900 text-[10px] sm:text-[11px] font-black uppercase tracking-tight sticky top-0 z-20 border-b border-amber-300 shadow-sm">
               <tr>
-                <th className="sticky left-0 z-20 p-2.5 border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d] w-[100px] min-w-[100px] bg-amber-200 text-slate-900">
+                <th className="relative md:sticky md:left-0 md:z-20 p-2.5 border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d] w-[100px] min-w-[100px] bg-amber-200 text-slate-900">
                   {lang === 'ru' ? 'Число' : 'Sana'}
                 </th>
                 {EXPENSE_FIELDS.map((f) => {
@@ -507,7 +549,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                     }`}
                   >
                     {/* SANA */}
-                    <td className={`sticky left-0 z-10 p-1.5 border-r border-amber-300/80 shadow-[inset_-1px_0_0_#fcd34d] ${
+                    <td className={`relative md:sticky md:left-0 md:z-10 p-1.5 border-r border-amber-300/80 shadow-[inset_-1px_0_0_#fcd34d] ${
                       row.isEdited
                         ? 'bg-rose-100/70 dark:bg-rose-950/40'
                         : row.date === todayStr()
@@ -645,7 +687,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
             </tbody>
             <tfoot className="bg-amber-100 dark:bg-dark-850 border-t-2 border-amber-300 font-bold text-xs sticky bottom-0 z-20 shadow-sm">
               <tr>
-                <td className="sticky left-0 z-20 p-2.5 bg-amber-200 dark:bg-dark-800 text-slate-900 dark:text-white font-black border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d]">
+                <td className="relative md:sticky md:left-0 md:z-20 p-2.5 bg-amber-200 dark:bg-dark-800 text-slate-900 dark:text-white font-black border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d]">
                   {lang === 'ru' ? 'ИТОГО:' : 'JAMI:'}
                 </td>
                 {EXPENSE_FIELDS.map((f) => {

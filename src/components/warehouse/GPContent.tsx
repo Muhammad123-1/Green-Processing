@@ -7,6 +7,8 @@ import {
   Upload,
   Download,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
   Trash2,
   X,
@@ -346,13 +348,53 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
             ))}
           </select>
 
-          {/* Date Filter */}
+          {/* Quick Day Shifter & Date Filter */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-800 rounded-xl p-0.5 border border-slate-200 dark:border-dark-700 shadow-xs">
+            <button
+              type="button"
+              onClick={() => {
+                let base = dateFilter ? new Date(dateFilter) : new Date()
+                if (isNaN(base.getTime())) base = new Date()
+                base.setDate(base.getDate() - 1)
+                setDateFilter(`${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`)
+              }}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+              title="Oldingi kun"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter(todayStr())}
+              className={`px-2 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
+                dateFilter === todayStr()
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-dark-700'
+              }`}
+            >
+              {lang === 'ru' ? 'Сегодня' : 'Bugun'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                let base = dateFilter ? new Date(dateFilter) : new Date()
+                if (isNaN(base.getTime())) base = new Date()
+                base.setDate(base.getDate() + 1)
+                setDateFilter(`${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`)
+              }}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+              title="Keyingi kun"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
           <div className="relative flex items-center">
             <input
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 outline-none"
+              className="px-2 py-1 sm:py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 outline-none"
             />
             {dateFilter && (
               <button
@@ -429,7 +471,7 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
           <table className="w-full text-left border-collapse min-w-[1200px]">
             <thead className="bg-[#70AD47] text-white text-[10px] sm:text-[11px] font-black uppercase tracking-tight sticky top-0 z-20 border-b border-emerald-600 shadow-sm">
               <tr>
-                <th className="sticky left-0 z-20 p-2.5 border-r border-emerald-600 w-[100px] min-w-[100px] bg-[#548235] text-white">
+                <th className="relative md:sticky md:left-0 md:z-20 p-2.5 border-r border-emerald-600 w-[100px] min-w-[100px] bg-[#548235] text-white">
                   {lang === 'ru' ? 'Дата' : 'Sana'}
                 </th>
                 {GP_FIELDS.map((f) => (
@@ -495,7 +537,7 @@ export default function GPContent({ userRole, userName }: GPContentProps) {
                     }`}
                   >
                     {/* SANA */}
-                    <td className={`sticky left-0 z-10 p-1.5 border-r border-slate-200 dark:border-dark-750 shadow-[inset_-1px_0_0_#e2e8f0] ${
+                    <td className={`relative md:sticky md:left-0 md:z-10 p-1.5 border-r border-slate-200 dark:border-dark-750 shadow-[inset_-1px_0_0_#e2e8f0] ${
                       row.isEdited
                         ? 'bg-rose-100/70 dark:bg-rose-950/40'
                         : row.date === todayStr()
