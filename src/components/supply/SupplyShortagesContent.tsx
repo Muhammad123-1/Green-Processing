@@ -398,45 +398,43 @@ export default function SupplyShortagesContent() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* 1. Header Banner */}
-      <div className="bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 border border-dark-700/80 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
-              <AlertTriangle size={13} />
-              <span>{formatDual("Ta'minot Zanjiri / Ombordan Qolmaganlar", "Цепочка Снабжения / Дефицит", "Procurement Supply Chain")}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              {formatDual("Ombordan Qolmagan Mahsulotlar", "Заявки со склада и дефицит", "Warehouse Shortages & Orders")}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
-              {formatDual(
-                "Ombor xodimlaridan tushgan talabnomalar, qolmagan mahsulotlar va ta'minotchilarga buyurtma taqsimlash zanjiri. Bir marta bosish bilan buyurtma to'g'ri ta'minotchi portaliga tushadi.",
-                "Заявки сотрудников склада при нехватке сырья и распределение заказов по поставщикам. Заказ сразу поступает в личный кабинет поставщика.",
-                "Requisitions from warehouse staff and procurement assignment. Orders automatically flow directly into supplier portals."
-              )}
-            </p>
+      {/* 1. Header Banner - Dual theme adaptive */}
+      <div className="relative overflow-hidden bg-white dark:bg-dark-900 p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">
+            <AlertTriangle size={13} className="text-amber-500" />
+            <span>{formatDual("Ta'minot Zanjiri / Ombordan Qolmaganlar", "Цепочка Снабжения / Дефицит", "Procurement Supply Chain")}</span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+            <span>{formatDual("Ombordan Qolmagan Mahsulotlar", "Заявки со склада и дефицит", "Warehouse Shortages & Orders")}</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+            {formatDual(
+              "Ombor xodimlaridan tushgan talabnomalar, qolmagan mahsulotlar va ta'minotchilarga buyurtma taqsimlash zanjiri. Bir marta bosish bilan buyurtma to'g'ri ta'minotchi portaliga tushadi.",
+              "Заявки сотрудников склада при нехватке сырья и распределение заказов по поставщикам. Заказ сразу поступает в личный кабинет поставщика.",
+              "Requisitions from warehouse staff and procurement assignment. Orders automatically flow directly into supplier portals."
+            )}
+          </p>
+        </div>
 
-          <div className="flex items-center gap-3 self-start md:self-center">
-            <Link
-              href="/orders"
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-dark-800 hover:bg-dark-750 text-slate-300 border border-dark-700 transition-all flex items-center gap-2"
-            >
-              <ShoppingCart size={14} />
-              <span>{formatDual("Barcha Buyurtmalar", "Все заказы", "All Orders")}</span>
-            </Link>
+        <div className="relative z-10 flex items-center gap-3 self-start md:self-center">
+          <Link
+            href="/orders"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 transition-all flex items-center gap-2 shadow-xs"
+          >
+            <ShoppingCart size={14} className="text-slate-500 dark:text-slate-400" />
+            <span>{formatDual("Barcha Buyurtmalar", "Все заказы", "All Orders")}</span>
+          </Link>
 
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-dark-700 transition-all"
-              title={formatDual("Yangilash", "Обновить", "Refresh")}
-            >
-              <RefreshCw size={16} className={refreshing ? 'animate-spin text-amber-400' : ''} />
-            </button>
-          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 transition-all shadow-xs"
+            title={formatDual("Yangilash", "Обновить", "Refresh")}
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin text-amber-500' : 'text-slate-500 dark:text-slate-400'} />
+          </button>
         </div>
       </div>
 
@@ -445,20 +443,20 @@ export default function SupplyShortagesContent() {
         {/* Card 1: Pending Supplier Assignment */}
         <div
           onClick={() => { setActiveTab('requisitions'); setStageFilter('PENDING_SUPPLIER'); }}
-          className="bg-white dark:bg-dark-900 border-2 border-rose-500/30 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white dark:bg-dark-900 border border-rose-200 dark:border-rose-500/30 hover:border-rose-400 dark:hover:border-rose-500/60 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
               {formatDual("Ta'minotchi Kutilmoqda", "Ждут поставщика", "Need Supplier")}
             </span>
-            <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
               <AlertTriangle size={18} />
             </div>
           </div>
           <div className="text-3xl font-black text-rose-600 dark:text-rose-400">
             {metrics.pendingRequisitions}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Ombor so'ragan, buyurtma berish kerak", "Заявки со склада без поставщика", "Warehouse requests without supplier")}
           </p>
         </div>
@@ -466,20 +464,20 @@ export default function SupplyShortagesContent() {
         {/* Card 2: Depleted Warehouse Stock (0 kg) */}
         <div
           onClick={() => setActiveTab('outOfStock')}
-          className="bg-white dark:bg-dark-900 border-2 border-amber-500/30 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white dark:bg-dark-900 border border-amber-200 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-500/60 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
               {formatDual("Omborda Tugagan (0 kg)", "Закончилось (0 кг)", "Out of Stock (0 kg)")}
             </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
               <Package size={18} />
             </div>
           </div>
           <div className="text-3xl font-black text-amber-600 dark:text-amber-400">
             {metrics.outOfStockCount}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Qoldiq tugagan xomashyolar", "Товаров с нулевым остатком", "Zero stock products")}
           </p>
         </div>
@@ -487,20 +485,20 @@ export default function SupplyShortagesContent() {
         {/* Card 3: Dispatched to Supplier */}
         <div
           onClick={() => { setActiveTab('requisitions'); setStageFilter('DISPATCHED'); }}
-          className="bg-white dark:bg-dark-900 border-2 border-blue-500/30 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white dark:bg-dark-900 border border-blue-200 dark:border-blue-500/30 hover:border-blue-400 dark:hover:border-blue-500/60 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
               {formatDual("Ta'minotchiga Berilgan", "Передано поставщику", "Sent to Supplier")}
             </span>
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
               <Truck size={18} />
             </div>
           </div>
           <div className="text-3xl font-black text-blue-600 dark:text-blue-400">
             {metrics.dispatchedToSupplier}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Portal orqali kutilmoqda yoki yo'lda", "В личном кабинете или в пути", "In supplier portal or transit")}
           </p>
         </div>
@@ -508,39 +506,43 @@ export default function SupplyShortagesContent() {
         {/* Card 4: Delivered */}
         <div
           onClick={() => { setActiveTab('requisitions'); setStageFilter('DELIVERED'); }}
-          className="bg-white dark:bg-dark-900 border-2 border-emerald-500/30 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white dark:bg-dark-900 border border-emerald-200 dark:border-emerald-500/30 hover:border-emerald-400 dark:hover:border-emerald-500/60 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               {formatDual("Omborga Yetkazildi", "Доставлено на склад", "Delivered")}
             </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
               <CheckCircle2 size={18} />
             </div>
           </div>
           <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
             {metrics.deliveredOrders}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             {formatDual("Bajarilgan buyurtmalar", "Выполненные заявки", "Completed requisitions")}
           </p>
         </div>
       </div>
 
       {/* 3. Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-700 pb-3">
-        <div className="flex bg-slate-100 dark:bg-dark-800 p-1 rounded-2xl border border-slate-200 dark:border-dark-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-750 pb-3">
+        <div className="flex bg-slate-100 dark:bg-dark-800 p-1.5 rounded-2xl border border-slate-200 dark:border-dark-700">
           <button
             onClick={() => setActiveTab('requisitions')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'requisitions'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs font-black'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <AlertTriangle size={15} />
+            <AlertTriangle size={15} className={activeTab === 'requisitions' ? 'text-amber-500' : 'text-slate-400'} />
             <span>{formatDual("1. Ombor Talabnomalari & Buyurtmalar", "1. Заявки со склада", "1. Warehouse Requisitions")}</span>
-            <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-dark-900 text-[10px] font-extrabold">
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+              activeTab === 'requisitions'
+                ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                : 'bg-slate-200 dark:bg-dark-900 text-slate-600 dark:text-slate-400'
+            }`}>
               {requisitions.length}
             </span>
           </button>
@@ -549,13 +551,17 @@ export default function SupplyShortagesContent() {
             onClick={() => setActiveTab('outOfStock')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'outOfStock'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs font-black'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Package size={15} />
+            <Package size={15} className={activeTab === 'outOfStock' ? 'text-amber-500' : 'text-slate-400'} />
             <span>{formatDual("2. Omborda Tugagan Xomashyolar (0 kg)", "2. Закончилось на складе", "2. Out of Stock Catalog")}</span>
-            <span className="px-2 py-0.5 rounded-full bg-black/10 dark:bg-dark-900 text-[10px] font-extrabold">
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+              activeTab === 'outOfStock'
+                ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                : 'bg-slate-200 dark:bg-dark-900 text-slate-600 dark:text-slate-400'
+            }`}>
               {outOfStockProducts.length}
             </span>
           </button>
@@ -569,7 +575,7 @@ export default function SupplyShortagesContent() {
             placeholder={formatDual("Mahsulot, ta'minotchi, izoh bo'yicha qidirish...", "Поиск по товару, поставщику, примечанию...", "Search product, supplier, notes...")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 shadow-xs"
           />
         </div>
       </div>
