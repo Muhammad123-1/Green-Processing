@@ -477,14 +477,11 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               return false
             }
             // Director panel items requested by user:
-            // director, archive, warehouse, prihod, rashod, production, accounting, reports, chat, settings
+            // director, archive, production, accounting, reports, chat, settings
             if (userRole === 'DIRECTOR') {
               const directorAllowedKeys = [
                 'director',
                 'archive',
-                'warehouse',
-                'prihod',
-                'rashod',
                 'production',
                 'accounting',
                 'reports',
