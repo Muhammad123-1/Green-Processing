@@ -62,10 +62,10 @@ const navSections = [
       { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'QUALITY_CONTROL'] },
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
-      { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
-      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'INSPECTOR', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
-      { key: 'chairmenSettings', href: '/settings?tab=chairmen', icon: UserCheck, roles: ['ADMIN', 'INSPECTOR', 'HR', 'DEGUSTATION'] },
+      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'HR', 'DEGUSTATION'] },
+      { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'HR', 'DEGUSTATION'] },
+      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
+      { key: 'chairmenSettings', href: '/settings?tab=chairmen', icon: UserCheck, roles: ['ADMIN', 'HR', 'DEGUSTATION'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
@@ -85,7 +85,7 @@ const navSections = [
       { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
       { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
-      { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'KITCHEN', 'HR', 'INSPECTOR'] },
+      { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'KITCHEN', 'HR'] },
       { key: 'warehouseSettings', href: '/settings?tab=warehouse', icon: Settings, roles: ['ADMIN', 'WAREHOUSE'] },
     ]
   },
