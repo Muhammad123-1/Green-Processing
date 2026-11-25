@@ -856,16 +856,34 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-white dark:bg-dark-900 text-slate-900 dark:text-slate-100">
               {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="p-16 text-center text-slate-400">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-amber-500" size={32} />
-                      <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
-                        {lang === 'ru' ? 'Загрузка данных прихода...' : "Kirim ma'lumotlari yuklanmoqda..."}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 8 }).map((_, rIdx) => (
+                  <tr key={`prihod-skel-${rIdx}`} className="animate-pulse border-b border-slate-100 dark:border-dark-800">
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="h-5 w-24 bg-slate-200 dark:bg-dark-750 rounded-lg mx-auto" />
+                    </td>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="h-5 bg-slate-200 dark:bg-dark-750 rounded-lg" style={{ width: `${60 + (rIdx % 4) * 10}%` }} />
+                    </td>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="h-5 w-20 bg-slate-200 dark:bg-dark-750 rounded-lg ml-auto" />
+                    </td>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="h-5 w-14 bg-slate-200 dark:bg-dark-750 rounded-lg mx-auto" />
+                    </td>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="h-5 bg-slate-200 dark:bg-dark-750 rounded-lg" style={{ width: `${50 + (rIdx % 3) * 15}%` }} />
+                    </td>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="h-5 w-20 bg-slate-200 dark:bg-dark-750 rounded-lg mx-auto" />
+                    </td>
+                    <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                      <div className="h-5 w-24 bg-slate-200 dark:bg-dark-750 rounded-lg mx-auto" />
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="h-5 w-6 bg-slate-200 dark:bg-dark-750 rounded-lg mx-auto" />
+                    </td>
+                  </tr>
+                ))
               ) : arrivalsPagination.displayedItems.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="p-12 text-center text-sm text-slate-400">

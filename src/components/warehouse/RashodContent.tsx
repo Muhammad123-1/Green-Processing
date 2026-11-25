@@ -906,16 +906,24 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
             </thead>
             <tbody className="divide-y divide-amber-200/70 bg-[#FFFBF0] dark:bg-dark-900 text-slate-900 dark:text-slate-100">
               {isLoading ? (
-                <tr>
-                  <td colSpan={PRODUCTION_EXPENSE_FIELDS.length + 3} className="p-16 text-center text-slate-400">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="animate-spin text-amber-500" size={32} />
-                      <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
-                        {lang === 'ru' ? 'Загрузка данных расхода...' : "Chiqim ma'lumotlari yuklanmoqda..."}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 8 }).map((_, rIdx) => (
+                  <tr key={`prod-skel-${rIdx}`} className="animate-pulse border-b border-amber-100 dark:border-dark-800">
+                    <td className="p-3 border-r border-amber-200/60 dark:border-dark-750">
+                      <div className="h-5 w-24 bg-amber-200/50 dark:bg-dark-750 rounded-lg mx-auto" />
+                    </td>
+                    {PRODUCTION_EXPENSE_FIELDS.map((f, fIdx) => (
+                      <td key={f.field || fIdx} className="p-2 border-r border-amber-200/60 dark:border-dark-750 text-right">
+                        <div className="h-5 w-12 bg-amber-200/40 dark:bg-dark-750 rounded ml-auto" />
+                      </td>
+                    ))}
+                    <td className="p-3 border-r border-amber-200/60 dark:border-dark-750 text-right">
+                      <div className="h-5 w-16 bg-amber-300/60 dark:bg-dark-700 rounded ml-auto font-bold" />
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="h-5 w-6 bg-amber-200/50 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                  </tr>
+                ))
               ) : expensesPagination.displayedItems.length === 0 ? (
                 <tr>
                   <td colSpan={PRODUCTION_EXPENSE_FIELDS.length + 3} className="p-12 text-center text-sm text-slate-400">
@@ -1347,16 +1355,27 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-dark-800 text-slate-800 dark:text-slate-200">
                   {isLoading ? (
-                    <tr>
-                      <td colSpan={KITCHEN_EXPENSE_FIELDS.length + 4} className="p-16 text-center text-slate-400">
-                        <div className="flex flex-col items-center justify-center gap-3">
-                          <Loader2 className="animate-spin text-amber-500" size={32} />
-                          <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
-                            Oshxona chiqimlari yuklanmoqda...
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
+                    Array.from({ length: 8 }).map((_, rIdx) => (
+                      <tr key={`kitchen-skel-${rIdx}`} className="animate-pulse border-b border-slate-100 dark:border-dark-800">
+                        <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                          <div className="h-5 w-24 bg-slate-200 dark:bg-dark-750 rounded-lg mx-auto" />
+                        </td>
+                        <td className="p-3 border-r border-slate-200 dark:border-dark-750">
+                          <div className="h-5 w-20 bg-slate-200 dark:bg-dark-750 rounded-lg mx-auto" />
+                        </td>
+                        {KITCHEN_EXPENSE_FIELDS.map((f, fIdx) => (
+                          <td key={f.field || fIdx} className="p-2 border-r border-slate-200 dark:border-dark-750 text-right">
+                            <div className="h-5 w-10 bg-slate-200 dark:bg-dark-750 rounded ml-auto" />
+                          </td>
+                        ))}
+                        <td className="p-3 border-r border-slate-200 dark:border-dark-750 text-right">
+                          <div className="h-5 w-16 bg-amber-200/60 dark:bg-dark-700 rounded ml-auto" />
+                        </td>
+                        <td className="p-3 text-center">
+                          <div className="h-5 w-6 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                        </td>
+                      </tr>
+                    ))
                   ) : kitchenExpensesPagination.displayedItems.length === 0 ? (
                     <tr>
                       <td colSpan={KITCHEN_EXPENSE_FIELDS.length + 4} className="p-12 text-center text-sm text-slate-400">

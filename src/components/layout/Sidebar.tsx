@@ -62,10 +62,6 @@ const navSections = [
       { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'QUALITY_CONTROL'] },
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'HR', 'DEGUSTATION'] },
-      { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'HR', 'DEGUSTATION'] },
-      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'LOGISTICS', 'HR', 'DEGUSTATION'] },
-      { key: 'chairmenSettings', href: '/settings?tab=chairmen', icon: UserCheck, roles: ['ADMIN', 'HR', 'DEGUSTATION'] },
       { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
@@ -119,6 +115,10 @@ const navSections = [
     items: [
       { key: 'accounting', href: '/accounting', icon: DollarSign, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'] },
       { key: 'hr', href: '/hr', icon: Briefcase, roles: ['ADMIN', 'DIRECTOR', 'HR'] },
+      { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'HR'] },
+      { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'LOGISTICS', 'HR'] },
+      { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'HR'] },
+      { key: 'chairmenSettings', href: '/settings?tab=chairmen', icon: UserCheck, roles: ['ADMIN', 'HR'] },
       { key: 'reports', href: '/reports', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'] },
     ]
   },

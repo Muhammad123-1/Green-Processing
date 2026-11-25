@@ -989,7 +989,7 @@ export default function IncomingActsContent({
                 </th>
                 <th
                   rowSpan={2}
-                  className="border border-black/40 py-2.5 px-1.5 text-center min-w-[85px] align-middle"
+                  className="border border-black/40 py-2.5 px-1.5 text-center min-w-[90px] align-middle bg-[#ff3700] text-black font-extrabold"
                 >
                   {t.temp}
                 </th>
@@ -1141,14 +1141,57 @@ export default function IncomingActsContent({
             {/* Table Body with Authentic Excel Grid Cells & Highlights */}
             <tbody className="divide-y divide-slate-300 dark:divide-dark-750 text-slate-900 dark:text-slate-100 bg-white dark:bg-dark-900">
               {loading ? (
-                <tr>
-                  <td colSpan={27} className="py-16 text-center text-slate-500 dark:text-slate-400">
-                    <div className="inline-flex items-center gap-2 font-semibold">
-                      <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
-                      <span>{activeTheme.name} ma'lumotlari yuklanmoqda...</span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 10 }).map((_, rIdx) => (
+                  <tr key={`act-skel-${rIdx}`} className="animate-pulse border-b border-slate-200 dark:border-dark-750">
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-4 w-6 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-4 w-20 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2">
+                      <div className="h-4 w-28 bg-slate-200 dark:bg-dark-750 rounded" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2">
+                      <div className="h-4 w-32 bg-slate-200 dark:bg-dark-750 rounded" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center bg-orange-50/40 dark:bg-orange-950/20">
+                      <div className="h-4 w-10 bg-orange-200/60 dark:bg-orange-900/40 rounded mx-auto" />
+                    </td>
+                    {Array.from({ length: 14 }).map((_, cIdx) => (
+                      <td key={cIdx} className="border border-slate-300 dark:border-dark-750 py-2 px-1 text-center">
+                        <div className="h-4 w-6 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                      </td>
+                    ))}
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-4 w-12 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-5 w-16 bg-emerald-200/60 dark:bg-emerald-950/50 rounded-full mx-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-right">
+                      <div className="h-4 w-14 bg-slate-200 dark:bg-dark-750 rounded ml-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-right">
+                      <div className="h-4 w-14 bg-slate-200 dark:bg-dark-750 rounded ml-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-4 w-16 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-4 w-8 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-right">
+                      <div className="h-4 w-16 bg-slate-200 dark:bg-dark-750 rounded ml-auto" />
+                    </td>
+                    <td className="border border-slate-300 dark:border-dark-750 py-2 px-2 text-center">
+                      <div className="h-4 w-12 bg-slate-200 dark:bg-dark-750 rounded mx-auto" />
+                    </td>
+                  </tr>
+                ))
               ) : actsPagination.displayedItems.length === 0 ? (
                 <tr>
                   <td colSpan={27} className="py-16 text-center">

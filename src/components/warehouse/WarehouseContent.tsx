@@ -2304,9 +2304,44 @@ export default function WarehouseContent() {
           {/* Inventory Table */}
           <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
             {loading ? (
-              <div className="p-12 flex flex-col items-center justify-center">
-                <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Yuklanmoqda...</p>
+              <div className="p-4 space-y-3">
+                {/* Mobile skeleton */}
+                <div className="block md:hidden space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="p-4 rounded-2xl border border-slate-100 dark:border-dark-800 bg-slate-50/50 dark:bg-dark-850 animate-pulse space-y-3">
+                      <div className="flex justify-between items-center">
+                        <div className="h-5 w-32 bg-slate-200 dark:bg-dark-750 rounded-lg" />
+                        <div className="h-5 w-16 bg-slate-200 dark:bg-dark-750 rounded-full" />
+                      </div>
+                      <div className="h-3 w-full bg-slate-200 dark:bg-dark-750 rounded-full" />
+                      <div className="h-10 w-full bg-slate-200 dark:bg-dark-750 rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+                {/* Desktop skeleton */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/50">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <th key={i} className="p-4"><div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded animate-pulse" /></th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                      {Array.from({ length: 6 }).map((_, rIdx) => (
+                        <tr key={rIdx} className="animate-pulse">
+                          <td className="p-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-dark-750" /><div className="space-y-1.5"><div className="h-4 w-28 bg-slate-200 dark:bg-dark-750 rounded" /><div className="h-3 w-16 bg-slate-200 dark:bg-dark-750 rounded" /></div></div></td>
+                          <td className="p-4"><div className="h-4 w-20 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                          <td className="p-4"><div className="space-y-1.5"><div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded" /><div className="h-2 w-36 bg-slate-200 dark:bg-dark-750 rounded-full" /></div></td>
+                          <td className="p-4 text-center"><div className="h-6 w-20 bg-slate-200 dark:bg-dark-750 rounded-full mx-auto" /></td>
+                          <td className="p-4"><div className="h-8 w-44 bg-slate-200 dark:bg-dark-750 rounded-lg" /></td>
+                          <td className="p-4 text-right"><div className="h-8 w-24 bg-slate-200 dark:bg-dark-750 rounded-lg ml-auto" /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : filteredInventory.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
@@ -2853,9 +2888,29 @@ export default function WarehouseContent() {
           {/* Transfers Table */}
           <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm">
             {transfersLoading ? (
-              <div className="p-12 flex flex-col items-center justify-center">
-                <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
-                <p className="text-slate-400 text-sm font-medium">{formatDual("Chiqimlar yuklanmoqda...", "Загрузка перемещений...", "Loading dispatches...")}</p>
+              <div className="p-4 overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/40">
+                      {Array.from({ length: 7 }).map((_, i) => (
+                        <th key={i} className="p-4"><div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded animate-pulse" /></th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                    {Array.from({ length: 6 }).map((_, rIdx) => (
+                      <tr key={rIdx} className="animate-pulse">
+                        <td className="p-4"><div className="space-y-1"><div className="h-4 w-28 bg-slate-200 dark:bg-dark-750 rounded" /><div className="h-3 w-20 bg-slate-200 dark:bg-dark-750 rounded" /></div></td>
+                        <td className="p-4"><div className="space-y-1"><div className="h-4 w-32 bg-slate-200 dark:bg-dark-750 rounded" /><div className="h-3 w-24 bg-slate-200 dark:bg-dark-750 rounded" /></div></td>
+                        <td className="p-4"><div className="h-5 w-24 bg-slate-200 dark:bg-dark-750 rounded-md" /></td>
+                        <td className="p-4 text-center"><div className="h-5 w-16 bg-slate-200 dark:bg-dark-750 rounded mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-5 w-16 bg-slate-200 dark:bg-dark-750 rounded mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-5 w-16 bg-slate-200 dark:bg-dark-750 rounded mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-6 w-20 bg-slate-200 dark:bg-dark-750 rounded-full mx-auto" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : filteredTransfers.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
