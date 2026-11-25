@@ -92,6 +92,15 @@ interface SupplierOption {
 export default function SupplyShortagesContent() {
   const { lang, formatDual } = useLanguage()
 
+  // Helper to round floating point numbers (e.g. 11.700000000045 -> 11.7)
+  const formatQty = (val: number | string | null | undefined): string => {
+    if (val === null || val === undefined || val === '') return '0'
+    const num = typeof val === 'number' ? val : parseFloat(String(val))
+    if (isNaN(num)) return '0'
+    const rounded = Math.round(num * 10) / 10
+    return rounded.toLocaleString('en-US', { maximumFractionDigits: 1 })
+  }
+
   const [activeTab, setActiveTab] = useState<'requisitions' | 'outOfStock'>('requisitions')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -271,7 +280,7 @@ export default function SupplyShortagesContent() {
     setDeliveryDate(tomorrow.toISOString().split('T')[0])
     setDeliveryTimeRange('09:00 - 12:00')
     setAgreedPrice('')
-    setSupplyNotes(`Omborda ${prod.name} tugagan (Qoldiq: ${prod.stock} ${prod.unit}). Zudlik bilan yetkazib berish buyurtmasi.`)
+    setSupplyNotes(`Omborda ${prod.name} tugagan (Qoldiq: ${formatQty(prod.stock)} ${prod.unit}). Zudlik bilan yetkazib berish buyurtmasi.`)
   }
 
   // Submit direct purchase order
@@ -703,14 +712,14 @@ export default function SupplyShortagesContent() {
                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
                             <span className="text-slate-500 dark:text-slate-400">Ombordagi real qoldiq:</span>
                             <span className={`font-black ${item.currentStock <= 0 ? 'text-rose-600 dark:text-rose-400 animate-pulse' : 'text-amber-600 dark:text-amber-400'}`}>
-                              {item.currentStock} {item.unit || 'kg'}
+                              {formatQty(item.currentStock)} {item.unit || 'kg'}
                             </span>
                           </div>
 
                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700">
                             <span className="text-slate-500 dark:text-slate-400">Ombor so'ragan miqdor:</span>
                             <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
-                              {item.quantity.toLocaleString()} {item.unit || 'kg'}
+                              {formatQty(item.quantity)} {item.unit || 'kg'}
                             </span>
                           </div>
 
@@ -842,11 +851,11 @@ export default function SupplyShortagesContent() {
                   <div className="space-y-1.5 p-3 bg-slate-50 dark:bg-dark-800/60 rounded-2xl border border-slate-200 dark:border-dark-700 text-xs mb-4">
                     <div className="flex justify-between">
                       <span className="text-slate-500">Joriy qoldiq:</span>
-                      <span className="font-black text-rose-500">{prod.stock} {prod.unit}</span>
+                      <span className="font-black text-rose-500">{formatQty(prod.stock)} {prod.unit}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Minimal me'yor:</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-300">{prod.minStockLevel} {prod.unit}</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{formatQty(prod.minStockLevel)} {prod.unit}</span>
                     </div>
                     {prod.topSupplierName && (
                       <div className="flex justify-between pt-1 border-t border-slate-200 dark:border-dark-700">
@@ -914,9 +923,9 @@ export default function SupplyShortagesContent() {
                   {dispatchModalItem.product?.name}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  <span>Ombordagi qoldiq: <b className="text-rose-600 dark:text-rose-400">{dispatchModalItem.currentStock} {dispatchModalItem.unit}</b></span>
+                  <span>Ombordagi qoldiq: <b className="text-rose-600 dark:text-rose-400">{formatQty(dispatchModalItem.currentStock)} {dispatchModalItem.unit}</b></span>
                   <span>•</span>
-                  <span>Talab qilingan: <b className="text-emerald-600 dark:text-emerald-400">{dispatchModalItem.quantity} {dispatchModalItem.unit}</b></span>
+                  <span>Talab qilingan: <b className="text-emerald-600 dark:text-emerald-400">{formatQty(dispatchModalItem.quantity)} {dispatchModalItem.unit}</b></span>
                 </div>
 
                 {/* Omborchi Izohi (Warehouse Note to Supply) */}
@@ -1112,7 +1121,7 @@ export default function SupplyShortagesContent() {
                   {directOrderItem.name}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Joriy ombor qoldig'i: <b className="text-rose-600 dark:text-rose-400">{directOrderItem.stock} {directOrderItem.unit}</b>
+                  Joriy ombor qoldig'i: <b className="text-rose-600 dark:text-rose-400">{formatQty(directOrderItem.stock)} {directOrderItem.unit}</b>
                 </div>
               </div>
 
