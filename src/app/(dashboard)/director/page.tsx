@@ -1518,6 +1518,8 @@ export default function DirectorPage() {
                       fillOpacity={1}
                       fill="url(#dynConsumed)"
                       activeDot={{ r: 6 }}
+                      animationDuration={400}
+                      animationEasing="ease-out"
                     />
                     <Area
                       type="monotone"
@@ -1527,6 +1529,8 @@ export default function DirectorPage() {
                       fillOpacity={1}
                       fill="url(#dynOutput)"
                       activeDot={{ r: 6 }}
+                      animationDuration={400}
+                      animationEasing="ease-out"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -1622,9 +1626,9 @@ export default function DirectorPage() {
                             : formatDual("Ombor saqlashda", "При хранении", "Storage"),
                       ]}
                     />
-                    <Bar dataKey="incomingKg" stackId="def" fill="#f43f5e" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="processingKg" stackId="def" fill="#f59e0b" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="storageKg" stackId="def" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="incomingKg" stackId="def" fill="#f43f5e" radius={[0, 0, 0, 0]} animationDuration={400} animationEasing="ease-out" />
+                    <Bar dataKey="processingKg" stackId="def" fill="#f59e0b" radius={[0, 0, 0, 0]} animationDuration={400} animationEasing="ease-out" />
+                    <Bar dataKey="storageKg" stackId="def" fill="#8b5cf6" radius={[4, 4, 0, 0]} animationDuration={400} animationEasing="ease-out" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -1716,7 +1720,7 @@ export default function DirectorPage() {
                         formatDual("Qoplash muddati", "Срок покрытия", "Stock coverage"),
                       ]}
                     />
-                    <Bar dataKey="stockCoverageDays" radius={[0, 6, 6, 0]}>
+                    <Bar dataKey="stockCoverageDays" radius={[0, 6, 6, 0]} animationDuration={400} animationEasing="ease-out">
                       {inventoryStockCoverage.map((entry: any, index: number) => {
                         const color =
                           entry.status === 'EXCESS'

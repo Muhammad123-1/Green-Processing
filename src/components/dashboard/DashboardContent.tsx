@@ -16,6 +16,7 @@ import {
   Activity,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { AnimatedCard } from '@/components/common/MotionComponents'
 
 interface DashboardStats {
   todayCount: number
@@ -288,15 +289,15 @@ function StatCard({
   }
 
   return (
-    <div className="stat-card flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0 ${colorMap[color]}`}>
+    <AnimatedCard className="stat-card flex items-center gap-4">
+      <div className={`w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0 transition-transform duration-150 ${colorMap[color]}`}>
         {icon}
       </div>
       <div>
         <p className="text-xs text-slate-500">{label}</p>
         <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
       </div>
-    </div>
+    </AnimatedCard>
   )
 }
 
@@ -320,15 +321,17 @@ function QuickAction({
   }
 
   return (
-    <Link
-      href={href}
-      className="group card p-5 hover:border-blue-500/30 transition-all duration-300 cursor-pointer"
-    >
-      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center mb-3 transition-all duration-200 ${colorMap[color]}`}>
-        {icon}
-      </div>
-      <p className="font-semibold text-white text-sm">{label}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{description}</p>
-    </Link>
+    <AnimatedCard>
+      <Link
+        href={href}
+        className="group card block p-5 hover:border-blue-500/30 transition-all duration-200 cursor-pointer h-full"
+      >
+        <div className={`w-10 h-10 rounded-xl border flex items-center justify-center mb-3 transition-transform duration-150 group-hover:scale-105 ${colorMap[color]}`}>
+          {icon}
+        </div>
+        <p className="font-semibold text-white text-sm">{label}</p>
+        <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+      </Link>
+    </AnimatedCard>
   )
 }

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { AnimatedModal } from '@/components/common/MotionComponents'
 
 interface AdminImportModalProps {
   isOpen: boolean
@@ -61,8 +62,6 @@ export default function AdminImportModal({
       setLoading(false)
     }
   }, [isOpen, defaultMode])
-
-  if (!isOpen) return null
 
   const minReasonChars = 10
   const isReasonValid = reason.trim().length >= minReasonChars
@@ -167,14 +166,8 @@ export default function AdminImportModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white dark:bg-[#0c1425] text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
+      <div className="bg-white dark:bg-[#0c1425] text-slate-900 dark:text-slate-100 overflow-hidden">
         {/* NON-ADMIN ACCESS DENIED STATE */}
         {!isAdmin ? (
           <div className="p-7 text-center space-y-5">
@@ -443,6 +436,6 @@ export default function AdminImportModal({
           </form>
         )}
       </div>
-    </div>
+    </AnimatedModal>
   )
 }

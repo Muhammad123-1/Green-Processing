@@ -7,6 +7,7 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 import { useLanguage, LANGUAGE_OPTIONS, DIRECTOR_LANGUAGE_OPTIONS, Language, DirectorLanguage } from '@/components/providers/LanguageProvider'
 import { useSidebar } from '@/store/sidebar'
 import NotificationCenter from './NotificationCenter'
+import { AnimatedDropdown } from '@/components/common/MotionComponents'
 
 const getPageInfo = (pathname: string, t: any, formatDual: any) => {
   const map: Record<string, { title: string; subtitle: string }> = {
@@ -320,8 +321,8 @@ export default function Header() {
           </div>
 
           {/* Til dropdown menyusi */}
-          {langMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-dark-900 border border-dark-700 rounded-2xl p-1.5 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+          <AnimatedDropdown isOpen={langMenuOpen} className="absolute right-0 mt-2 z-50">
+            <div className="w-48 bg-dark-900 border border-dark-700 rounded-2xl p-1.5 shadow-2xl">
               <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-dark-750 mb-1">
                 {formatDual('Tilni tanlang', 'Выберите язык', 'Select language')}
               </div>
@@ -349,7 +350,7 @@ export default function Header() {
                 )
               })}
             </div>
-          )}
+          </AnimatedDropdown>
         </div>
 
         <NotificationCenter />

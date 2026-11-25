@@ -20,6 +20,7 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react'
+import { AnimatedDrawer } from '@/components/common/MotionComponents'
 
 type DeptKey = 'ALL' | 'production' | 'warehouse' | 'qc' | 'maintenance'
 
@@ -657,15 +658,14 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
       </div>
 
       {/* 5. LEVEL 3: Detail Modal Drawer */}
-      {selectedAction && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 p-4 flex justify-end backdrop-blur-sm"
-          onClick={() => setSelectedAction(null)}
-        >
-          <aside
-            className="w-full max-w-xl h-full overflow-y-auto bg-white dark:bg-dark-900 p-6 shadow-2xl rounded-l-3xl border-l border-slate-200 dark:border-dark-750"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <AnimatedDrawer
+        isOpen={Boolean(selectedAction)}
+        onClose={() => setSelectedAction(null)}
+        side="right"
+        className="p-6 overflow-y-auto"
+      >
+        {selectedAction && (
+          <div>
             <div className="flex justify-between items-center border-b pb-3 border-slate-200 dark:border-dark-750">
               <div>
                 <p className="text-[11px] font-black tracking-wider text-indigo-600 uppercase">
@@ -737,9 +737,9 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
                 ))}
               </dl>
             </div>
-          </aside>
-        </div>
-      )}
+          </div>
+        )}
+      </AnimatedDrawer>
     </div>
   )
 }
