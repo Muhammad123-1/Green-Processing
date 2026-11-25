@@ -221,8 +221,28 @@ export default function SupervisorsPage() {
         {/* Table */}
         <div className={`card overflow-hidden ${selectedSupervisor ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="spinner" />
+            <div className="overflow-x-auto p-2">
+              <table className="data-table w-full">
+                <thead>
+                  <tr>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <th key={i}><div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded animate-pulse" /></th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                  {Array.from({ length: 6 }).map((_, rIdx) => (
+                    <tr key={rIdx} className="animate-pulse">
+                      <td className="p-3"><div className="h-4 w-36 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                      <td className="p-3"><div className="h-4 w-28 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                      <td className="p-3"><div className="h-4 w-20 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                      <td className="p-3"><div className="h-4 w-28 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                      <td className="p-3 text-center"><div className="h-5 w-16 bg-emerald-200/50 dark:bg-emerald-950/40 rounded-full mx-auto" /></td>
+                      <td className="p-3 text-right"><div className="h-7 w-16 bg-slate-200 dark:bg-dark-750 rounded-lg ml-auto" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : supervisors.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500">

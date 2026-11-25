@@ -294,11 +294,19 @@ export default function ArchiveContent() {
       >
         <div>
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-400 space-y-3">
-              <Loader2 className="animate-spin text-indigo-600" size={36} />
-              <p className="font-bold text-sm text-slate-600 dark:text-slate-400">
-                {formatDual("20 ta amal yuklanmoqda...", "Загрузка 20 записей...", "Loading 20 operations...")}
-              </p>
+            <div className="space-y-4 animate-pulse p-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 dark:border-dark-800 bg-slate-50/50 dark:bg-dark-850">
+                  <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-dark-750 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 w-40 bg-slate-200 dark:bg-dark-750 rounded" />
+                      <div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded" />
+                    </div>
+                    <div className="h-3 w-64 bg-slate-200 dark:bg-dark-750 rounded" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : events.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-slate-400">

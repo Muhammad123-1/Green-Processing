@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Wallet, TrendingUp, TrendingDown, Plus, FileText, Landmark, Loader2, ArrowRight, Truck, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { TableSkeleton } from '@/components/common/Skeleton'
 import SupplierDebtsTable from './SupplierDebtsTable'
 
 export default function AccountingContent() {
@@ -200,7 +201,7 @@ export default function AccountingContent() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="animate-spin text-violet-500" size={32} /></div>
+        <TableSkeleton rows={8} columns={6} />
       ) : activeTab === 'supplierDebts' ? (
         <SupplierDebtsTable
           key={debtsRefreshKey}

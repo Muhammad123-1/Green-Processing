@@ -862,11 +862,26 @@ export default function KitchenContent({ userRole, userName }: KitchenContentPro
       {activeTab === 'tasks' && (
         <div className="space-y-4">
           {loading ? (
-            <div className="p-16 text-center bg-white dark:bg-dark-900 rounded-3xl border border-slate-200">
-              <Loader2 className="w-8 h-8 animate-spin text-orange-600 mx-auto" />
-              <p className="text-sm font-bold text-slate-600 mt-2">
-                {formatDual("Oshxona hisobotlari yuklanmoqda...", "Загрузка отчетов кухни...", "Loading kitchen reports...")}
-              </p>
+            <div className="space-y-4 animate-pulse">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-6 bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-950/40" />
+                      <div className="space-y-1.5">
+                        <div className="h-5 w-36 bg-slate-200 dark:bg-dark-750 rounded" />
+                        <div className="h-3.5 w-24 bg-slate-200 dark:bg-dark-750 rounded" />
+                      </div>
+                    </div>
+                    <div className="h-7 w-28 bg-slate-200 dark:bg-dark-750 rounded-full" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="h-16 bg-slate-100 dark:bg-dark-800 rounded-2xl" />
+                    <div className="h-16 bg-slate-100 dark:bg-dark-800 rounded-2xl" />
+                    <div className="h-16 bg-slate-100 dark:bg-dark-800 rounded-2xl" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : tasks.length === 0 ? (
             <div className="p-16 text-center bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-750 shadow-sm">

@@ -450,11 +450,47 @@ export default function SuppliersPage() {
       {/* Suppliers Content: Dual View (Mobile Cards + Desktop Table) */}
       <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-              {formatDual("Ta'minotchilar va kirim tahlili yuklanmoqda...", "Загрузка поставщиков и анализа прихода...", "Loading suppliers and arrivals analysis...")}
-            </p>
+          <div className="p-3">
+            {/* Mobile skeleton */}
+            <div className="block sm:hidden divide-y divide-slate-100 dark:divide-dark-800">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4 space-y-3 animate-pulse">
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <div className="h-4 w-36 bg-slate-200 dark:bg-dark-750 rounded" />
+                      <div className="h-3 w-24 bg-slate-200 dark:bg-dark-750 rounded" />
+                    </div>
+                    <div className="h-6 w-16 bg-slate-200 dark:bg-dark-750 rounded-full" />
+                  </div>
+                  <div className="h-8 w-full bg-slate-200 dark:bg-dark-750 rounded-xl" />
+                </div>
+              ))}
+            </div>
+            {/* Desktop skeleton */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800/50">
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <th key={i} className="p-3.5"><div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded animate-pulse" /></th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                  {Array.from({ length: 7 }).map((_, rIdx) => (
+                    <tr key={rIdx} className="animate-pulse">
+                      <td className="p-3.5"><div className="space-y-1"><div className="h-4 w-36 bg-slate-200 dark:bg-dark-750 rounded" /><div className="h-3 w-24 bg-slate-200 dark:bg-dark-750 rounded" /></div></td>
+                      <td className="p-3.5"><div className="h-4 w-28 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                      <td className="p-3.5 text-center"><div className="h-5 w-16 bg-emerald-200/50 dark:bg-emerald-950/40 rounded-full mx-auto" /></td>
+                      <td className="p-3.5 text-right"><div className="h-4 w-20 bg-slate-200 dark:bg-dark-750 rounded ml-auto" /></td>
+                      <td className="p-3.5 text-right"><div className="h-4 w-20 bg-slate-200 dark:bg-dark-750 rounded ml-auto" /></td>
+                      <td className="p-3.5 text-center"><div className="h-5 w-14 bg-slate-200 dark:bg-dark-750 rounded-full mx-auto" /></td>
+                      <td className="p-3.5 text-right"><div className="h-7 w-20 bg-slate-200 dark:bg-dark-750 rounded-lg ml-auto" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">

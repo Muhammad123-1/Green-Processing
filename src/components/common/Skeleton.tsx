@@ -176,15 +176,18 @@ export function DashboardSkeleton({
   cardsCount = 4,
   columns = 6,
   rows = 7,
+  showTabs = true,
 }: {
   title?: string
   cardsCount?: number
   columns?: number
   rows?: number
+  showTabs?: boolean
 }) {
   return (
     <div className="space-y-4 sm:space-y-5 animate-fade-in">
       <PageHeaderSkeleton actionButtons={3} />
+      {showTabs && <TabsSkeleton count={4} />}
       {cardsCount > 0 && <StatCardsSkeleton count={cardsCount} />}
       <FilterBarSkeleton />
       <TableSkeleton rows={rows} columns={columns} />
@@ -281,3 +284,132 @@ export function SpreadsheetSkeleton({
     </div>
   )
 }
+
+/**
+ * Skeleton for Tab Navigation bars (with icons and pill badges)
+ */
+export function TabsSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div className="flex items-center gap-2 border-b border-slate-200 dark:border-dark-750 pb-2 overflow-x-auto custom-scrollbar">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white dark:bg-dark-900 border border-slate-200/80 dark:border-dark-750/80 animate-pulse shrink-0 shadow-xs"
+        >
+          <Skeleton className="w-4 h-4 rounded-md" />
+          <Skeleton className="h-4 w-20 sm:w-24" />
+          <Skeleton className="h-4 w-6 rounded-full" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Skeleton for Analytics Chart Cards (Bar / Histogram / Trends)
+ */
+export function ChartContainerSkeleton({
+  title = "Statistika va Tahlillar",
+  subtitle = "Haftalik va oylik dinamika",
+}: {
+  title?: string
+  subtitle?: string
+}) {
+  return (
+    <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-5 rounded-3xl shadow-sm space-y-4 animate-pulse">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-1.5">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-3.5 w-64" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-24 rounded-xl" />
+          <Skeleton className="h-8 w-24 rounded-xl" />
+        </div>
+      </div>
+      <div className="h-64 flex items-end justify-between gap-2.5 pt-6 px-2 border-t border-slate-100 dark:border-dark-800">
+        {[40, 70, 35, 90, 55, 80, 45, 65, 95, 50, 75, 85].map((h, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-2">
+            <div
+              className="w-full bg-slate-200/85 dark:bg-dark-750/85 rounded-t-lg transition-all"
+              style={{ height: `${h}%` }}
+            />
+            <Skeleton className="h-3 w-5 sm:w-7" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Skeleton for Card Grids (Catalog, Finished Goods, Products)
+ */
+export function CardGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl shadow-xs space-y-3.5 animate-pulse"
+        >
+          <Skeleton className="w-full h-36 rounded-xl" />
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <Skeleton className="h-3 w-48" />
+          <div className="pt-3 border-t border-slate-100 dark:border-dark-800 flex justify-between items-center">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-8 w-24 rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Skeleton for Form / Config Panels (Settings, Inspection Creation)
+ */
+export function FormSkeleton({ fields = 6 }: { fields?: number }) {
+  return (
+    <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-6 rounded-3xl shadow-sm space-y-5 animate-pulse max-w-4xl mx-auto">
+      <div className="border-b border-slate-100 dark:border-dark-800 pb-4 space-y-2">
+        <Skeleton className="h-6 w-56" />
+        <Skeleton className="h-3.5 w-80" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+        {Array.from({ length: fields }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-10 w-full rounded-xl" />
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-dark-800">
+        <Skeleton className="h-10 w-24 rounded-xl" />
+        <Skeleton className="h-10 w-36 rounded-xl" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Executive Analytics Skeleton (Header + 4 Stats + 2 Charts + Table)
+ */
+export function AnalyticsDashboardSkeleton() {
+  return (
+    <div className="space-y-5 animate-fade-in">
+      <PageHeaderSkeleton actionButtons={3} />
+      <StatCardsSkeleton count={4} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <ChartContainerSkeleton title="Kirim va Ishlab chiqarish" subtitle="Oylik dinamika" />
+        <ChartContainerSkeleton title="Xarajatlar va Chiqimlar" subtitle="Bo'limlar kesimida" />
+      </div>
+      <FilterBarSkeleton />
+      <TableSkeleton rows={7} columns={7} />
+    </div>
+  )
+}
+

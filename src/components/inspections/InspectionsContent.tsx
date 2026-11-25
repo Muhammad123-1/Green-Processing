@@ -476,8 +476,29 @@ export default function InspectionsContent() {
           {/* Table */}
           <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
             {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="animate-spin text-emerald-500" size={32} />
+              <div className="overflow-x-auto p-2">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      {Array.from({ length: 7 }).map((_, i) => (
+                        <th key={i} className="p-4"><div className="h-4 w-24 bg-dark-750 rounded animate-pulse" /></th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dark-750">
+                    {Array.from({ length: 6 }).map((_, rIdx) => (
+                      <tr key={rIdx} className="animate-pulse">
+                        <td className="p-4"><div className="h-4 w-20 bg-dark-750 rounded" /></td>
+                        <td className="p-4"><div className="h-4 w-24 bg-dark-750 rounded" /></td>
+                        <td className="p-4"><div className="h-4 w-32 bg-dark-750 rounded" /></td>
+                        <td className="p-4"><div className="h-4 w-28 bg-dark-750 rounded" /></td>
+                        <td className="p-4 text-center"><div className="h-6 w-16 bg-dark-750 rounded-full mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-6 w-20 bg-dark-750 rounded-full mx-auto" /></td>
+                        <td className="p-4 text-right"><div className="h-7 w-20 bg-dark-750 rounded-lg ml-auto" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : inspections.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-500">
@@ -672,7 +693,29 @@ export default function InspectionsContent() {
           {/* Defects Table */}
           <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
             {defectsLoading ? (
-              <div className="p-12 flex justify-center"><Loader2 size={32} className="animate-spin text-rose-500" /></div>
+              <div className="overflow-x-auto p-2">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <th key={i} className="p-4"><div className="h-4 w-24 bg-dark-750 rounded animate-pulse" /></th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dark-750">
+                    {Array.from({ length: 5 }).map((_, rIdx) => (
+                      <tr key={rIdx} className="animate-pulse">
+                        <td className="p-4"><div className="h-4 w-24 bg-dark-750 rounded" /></td>
+                        <td className="p-4"><div className="h-4 w-28 bg-dark-750 rounded" /></td>
+                        <td className="p-4"><div className="h-4 w-20 bg-dark-750 rounded" /></td>
+                        <td className="p-4"><div className="h-4 w-36 bg-dark-750 rounded" /></td>
+                        <td className="p-4 text-center"><div className="h-4 w-16 bg-dark-750 rounded mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-6 w-20 bg-dark-750 rounded-full mx-auto" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : defects.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
                 <AlertOctagon size={48} className="mx-auto mb-3 opacity-20" />
@@ -802,7 +845,30 @@ export default function InspectionsContent() {
           {/* SQS Table */}
           <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
             {sqsLoading ? (
-              <div className="p-12 flex justify-center"><Loader2 size={32} className="animate-spin text-emerald-500" /></div>
+              <div className="overflow-x-auto p-2">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-dark-750 bg-dark-800/40 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      {Array.from({ length: 7 }).map((_, i) => (
+                        <th key={i} className="p-4"><div className="h-4 w-24 bg-dark-750 rounded animate-pulse" /></th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dark-750">
+                    {Array.from({ length: 5 }).map((_, rIdx) => (
+                      <tr key={rIdx} className="animate-pulse">
+                        <td className="p-4"><div className="h-4 w-32 bg-dark-750 rounded" /></td>
+                        <td className="p-4"><div className="h-4 w-24 bg-dark-750 rounded" /></td>
+                        <td className="p-4 text-center"><div className="h-4 w-16 bg-dark-750 rounded mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-4 w-16 bg-dark-750 rounded mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-6 w-12 bg-dark-750 rounded mx-auto" /></td>
+                        <td className="p-4 text-center"><div className="h-6 w-16 bg-dark-750 rounded-full mx-auto" /></td>
+                        <td className="p-4"><div className="h-4 w-28 bg-dark-750 rounded" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">

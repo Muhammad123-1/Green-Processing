@@ -171,7 +171,29 @@ export default function UsersPage() {
 
       <div className="card overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20"><div className="spinner" /></div>
+          <div className="overflow-x-auto p-2">
+            <table className="data-table w-full">
+              <thead>
+                <tr>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <th key={i}><div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded animate-pulse" /></th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                {Array.from({ length: 6 }).map((_, rIdx) => (
+                  <tr key={rIdx} className="animate-pulse">
+                    <td className="p-3"><div className="h-4 w-32 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                    <td className="p-3"><div className="h-4 w-24 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                    <td className="p-3"><div className="h-6 w-20 bg-slate-200 dark:bg-dark-750 rounded-full" /></td>
+                    <td className="p-3"><div className="h-6 w-16 bg-slate-200 dark:bg-dark-750 rounded-full" /></td>
+                    <td className="p-3"><div className="h-4 w-28 bg-slate-200 dark:bg-dark-750 rounded" /></td>
+                    <td className="p-3 text-right"><div className="h-7 w-16 bg-slate-200 dark:bg-dark-750 rounded-lg ml-auto" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <Users size={40} className="mb-3 opacity-30" />
