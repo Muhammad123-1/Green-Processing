@@ -93,7 +93,7 @@ const navSections = [
       { key: 'productionJournals', href: '/production/journals', icon: ClipboardCheck, roles: ['ADMIN', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'dailyChecklist', href: '/production/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
-      { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE', 'SALES'] },
+      { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'SALES'] },
     ]
   },
   {
