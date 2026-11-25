@@ -6,6 +6,7 @@ import { toNum, parseExcelDate, EXPENSE_FIELDS, normKey, matchSyrye12Key, saniti
 import { recordImportAudit } from '@/lib/auditImport'
 import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
+import { syncAllShopArrivalsToIncomingActs } from '@/lib/incoming-acts/autoAct'
 
 function round2(n: number): number {
   if (!Number.isFinite(n)) return 0
@@ -711,6 +712,12 @@ export async function POST(req: NextRequest) {
     try {
       invalidateSupplyDashboardCache()
     } catch {}
+
+    if (newArrivalsCount > 0 || updatedArrivalsCount > 0) {
+      syncAllShopArrivalsToIncomingActs().catch((e) =>
+        console.error('Auto sync acts from imported arrivals error:', e)
+      )
+    }
 
     const sortedDates = Array.from(datesFound).sort()
     const latestDate = sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : ''

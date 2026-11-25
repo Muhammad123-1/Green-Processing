@@ -300,19 +300,20 @@ export async function loadDefaultTemplateActs(): Promise<IncomingActRecord[]> {
 }
 
 /**
- * Generates official Excel workbook with authentic colors per product and numeric representation
+ * Builds an authentic worksheet for a single product category
  */
-export async function exportIncomingActsToExcel(
+function buildProductSheet(
+  wb: ExcelJS.Workbook,
+  productName: string,
   acts: IncomingActRecord[],
   lang: 'uz' | 'ru' | 'en' = 'uz'
-): Promise<Buffer> {
-  const wb = new ExcelJS.Workbook()
-  wb.creator = 'Green Processing ERP'
-  wb.created = new Date()
+): ExcelJS.Worksheet {
+  const theme = getProductTheme(productName, lang)
+  const sheetTitle = theme.name || productName
+  // Excel sheet name max 31 characters, no invalid chars
+  const sheetName = sheetTitle.replace(/[\\/?*\[\]:]/g, ' ').substring(0, 31).trim() || 'Xomashyo'
 
-  const ws = wb.addWorksheet(
-    lang === 'ru' ? 'Основное сырьё' : lang === 'en' ? 'Raw Material Acts' : 'Asosiy xomashyo'
-  )
+  const ws = wb.addWorksheet(sheetName)
 
   // Configure column widths
   ws.columns = [
@@ -365,11 +366,11 @@ export async function exportIncomingActsToExcel(
   const titleCell = ws.getCell('B5')
   titleCell.value =
     lang === 'ru'
-      ? 'ВХОДНОЕ СЫРЬЕ - ЖУРНАЛ АКТОВ ПРИЁМКИ И БРАКЕРАЖА'
+      ? `ВХОДНОЕ СЫРЬЕ (${theme.name}) - ЖУРНАЛ АКТОВ ПРИЁМКИ И БРАКЕРАЖА`
       : lang === 'en'
-      ? 'INCOMING RAW MATERIAL INSPECTION & ACCEPTANCE JOURNAL'
-      : 'KIRUVCHI XOMASHYO - QABUL QILISH VA SIFAT AKTLARI JURNALI'
-  titleCell.font = { bold: true, size: 14, color: { argb: 'FF1E3A8A' } }
+      ? `INCOMING RAW MATERIAL (${theme.name}) - INSPECTION & ACCEPTANCE JOURNAL`
+      : `KIRUVCHI XOMASHYO (${theme.name}) - QABUL QILISH VA SIFAT AKTLARI JURNALI`
+  titleCell.font = { bold: true, size: 13, color: { argb: 'FF1E3A8A' } }
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
 
   // Legend Box (Explaining 2-5 and 1/0)
@@ -393,60 +394,74 @@ export async function exportIncomingActsToExcel(
     right: { style: 'thin', color: { argb: 'FF0D9488' } }
   }
 
-  // Multi-tier header:
-  // Check if all acts belong to a single product theme
-  const firstProd = acts[0]?.productName || ''
-  const isSingleProduct = acts.length > 0 && acts.every(a => a.productName.toUpperCase() === firstProd.toUpperCase())
-  const theme = isSingleProduct && firstProd ? getProductTheme(firstProd) : null
-
-  const headerArgb = theme
-    ? theme.color.replace('#', 'FF').toUpperCase()
-    : 'FF1E293B'
-  const headerTextColor = theme ? 'FF000000' : 'FFFFFFFF'
+  const headerArgb = theme.color ? theme.color.replace('#', 'FF').toUpperCase() : 'FF1E293B'
+  const headerTextColor = 'FF000000'
 
   // Row 8: Grouped header for 'Отпущено в производство'
   ws.mergeCells('V8:X8')
   const groupCell = ws.getCell('V8')
-  groupCell.value = 'Отпущено в производство'
+  groupCell.value =
+    lang === 'ru'
+      ? 'Отпущено в производство'
+      : lang === 'en'
+      ? 'Issued to Production'
+      : 'Ishlab chiqarishga berildi'
   groupCell.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
   groupCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }
   groupCell.alignment = { vertical: 'middle', horizontal: 'center' }
 
   // Headers (Row 9)
   const headers = [
-    { col: 2, label: '№ п/п' },
-    { col: 3, label: lang === 'ru' ? 'Дата' : 'Sana' },
+    { col: 2, label: lang === 'ru' ? '№ п/п' : '№' },
+    { col: 3, label: lang === 'ru' ? 'Дата' : lang === 'en' ? 'Date' : 'Sana' },
     {
       col: 4,
-      label: theme
-        ? `Наименование основного СЫРЬЯ - ${theme.name}`
-        : lang === 'ru'
-        ? 'Наименование СЫРЬЯ'
-        : 'Xomashyo nomi'
+      label:
+        lang === 'ru'
+          ? `Наименование основного СЫРЬЯ - ${theme.name}`
+          : lang === 'en'
+          ? `Main RAW MATERIAL - ${theme.name}`
+          : `Asosiy XOMASHYO nomi - ${theme.name}`
     },
-    { col: 5, label: lang === 'ru' ? 'Поставщик' : "Ta'minotchi" },
-    { col: 6, label: lang === 'ru' ? 'Температура' : 'Harorat' },
-    { col: 7, label: 'Условия трансп. [1/0]' },
-    { col: 8, label: 'Документы [1/0]' },
-    { col: 9, label: theme?.col9 || 'Структура [1/0]' },
-    { col: 10, label: theme?.col10 || 'Цвет [1/0]' },
-    { col: 11, label: theme?.col11 || 'Вкус/Запах [1/0]' },
-    { col: 12, label: theme?.col12 || 'Окисление [0/1]' },
-    { col: 13, label: theme?.col13 || 'Насекомые [0/1]' },
-    { col: 14, label: theme?.col14 || 'Слизь/Гниль [0/1]' },
-    { col: 15, label: theme?.col15 || 'Кочерыжка/Срез [1/0]' },
-    { col: 16, label: theme?.col16 || 'Плотность [1/0]' },
-    { col: 17, label: theme?.col17 || 'Диаметр/Вес' },
-    { col: 18, label: theme?.col18 || 'Покр. листья [1/0]' },
-    { col: 19, label: theme?.col19 || 'Без дефектов [1/0]' },
-    { col: 20, label: '№ партии' },
-    { col: 21, label: 'Допуск [2-5]' },
-    { col: 22, label: 'кг склад' },
-    { col: 23, label: 'КГ ЦЕХ' },
-    { col: 24, label: 'Дата' },
-    { col: 25, label: '№ забраковки' },
-    { col: 26, label: 'ФИО контролёра' },
-    { col: 27, label: 'Цена' }
+    { col: 5, label: lang === 'ru' ? 'Поставщик' : lang === 'en' ? 'Supplier' : "Ta'minotchi" },
+    { col: 6, label: lang === 'ru' ? 'Температура' : lang === 'en' ? 'Temperature' : 'Harorat' },
+    {
+      col: 7,
+      label:
+        lang === 'ru'
+          ? 'Условия трансп. [1/0]'
+          : lang === 'en'
+          ? 'Transport cond. [1/0]'
+          : 'Tashish sharoiti [1/0]'
+    },
+    {
+      col: 8,
+      label:
+        lang === 'ru'
+          ? 'Документы [1/0]'
+          : lang === 'en'
+          ? 'Documents [1/0]'
+          : 'Hujjatlar [1/0]'
+    },
+    { col: 9, label: theme.col9 || (lang === 'ru' ? 'Структура [1/0]' : lang === 'en' ? 'Structure [1/0]' : 'Tuzilishi [1/0]') },
+    { col: 10, label: theme.col10 || (lang === 'ru' ? 'Цвет [1/0]' : lang === 'en' ? 'Color [1/0]' : 'Rangi [1/0]') },
+    { col: 11, label: theme.col11 || (lang === 'ru' ? 'Вкус/Запах [1/0]' : lang === 'en' ? 'Taste/Smell [1/0]' : "Ta'mi/Hidi [1/0]") },
+    { col: 12, label: theme.col12 || (lang === 'ru' ? 'Окисление [0/1]' : lang === 'en' ? 'Oxidation [0/1]' : 'Oksidlanish [0/1]') },
+    { col: 13, label: theme.col13 || (lang === 'ru' ? 'Насекомые [0/1]' : lang === 'en' ? 'Insects [0/1]' : 'Hasharotlar [0/1]') },
+    { col: 14, label: theme.col14 || (lang === 'ru' ? 'Слизь/Гниль [0/1]' : lang === 'en' ? 'Slime/Rot [0/1]' : 'Shilimshiq/Chirish [0/1]') },
+    { col: 15, label: theme.col15 || (lang === 'ru' ? 'Кочерыжка/Срез [1/0]' : lang === 'en' ? 'Core/Cut [1/0]' : "O'zak/Kesim [1/0]") },
+    { col: 16, label: theme.col16 || (lang === 'ru' ? 'Плотность [1/0]' : lang === 'en' ? 'Density [1/0]' : 'Zichlik [1/0]') },
+    { col: 17, label: theme.col17 || (lang === 'ru' ? 'Диаметр/Вес' : lang === 'en' ? 'Size/Weight' : "O'lchami/Vazni") },
+    { col: 18, label: theme.col18 || (lang === 'ru' ? 'Покр. листья [1/0]' : lang === 'en' ? 'Cover leaves [1/0]' : 'Ustki barglar [1/0]') },
+    { col: 19, label: theme.col19 || (lang === 'ru' ? 'Без дефектов [1/0]' : lang === 'en' ? 'No defects [1/0]' : "Nuqsonsiz [1/0]") },
+    { col: 20, label: lang === 'ru' ? '№ партии' : lang === 'en' ? 'Batch #' : 'Partiya №' },
+    { col: 21, label: lang === 'ru' ? 'Допуск [2-5]' : lang === 'en' ? 'Verdict [2-5]' : 'Ruxsat [2-5]' },
+    { col: 22, label: lang === 'ru' ? 'кг склад' : lang === 'en' ? 'Warehouse (kg)' : 'Ombor (kg)' },
+    { col: 23, label: lang === 'ru' ? 'КГ ЦЕХ' : lang === 'en' ? 'Shop (kg)' : 'Sexga (kg)' },
+    { col: 24, label: lang === 'ru' ? 'Дата' : lang === 'en' ? 'Date' : 'Sana' },
+    { col: 25, label: lang === 'ru' ? '№ забраковки' : lang === 'en' ? 'Rejection #' : 'Brak akt №' },
+    { col: 26, label: lang === 'ru' ? 'ФИО контролёра' : lang === 'en' ? 'Inspector' : "Mas'ul nazoratchi" },
+    { col: 27, label: lang === 'ru' ? 'Цена' : lang === 'en' ? 'Price' : 'Narxi' }
   ]
 
   const headerRow = ws.getRow(9)
@@ -568,13 +583,14 @@ export async function exportIncomingActsToExcel(
     if (act.pricePerKg) row.getCell(27).numFmt = '#,##0'
   })
 
-  const totalRowIdx = startRowIndex + acts.length
+  // Total summary row
+  const totalRowIdx = startRowIndex + Math.max(acts.length, 1)
   const totalRow = ws.getRow(totalRowIdx)
   totalRow.height = 24
 
   ws.mergeCells(`B${totalRowIdx}:U${totalRowIdx}`)
   const totalLabel = totalRow.getCell(2)
-  totalLabel.value = `JAMI AKT JURNALI (Aktlar: ${acts.length} ta)`
+  totalLabel.value = `JAMI (${theme.name}): ${acts.length} ta akt`
   totalLabel.font = { bold: true, size: 10 }
   totalLabel.alignment = { vertical: 'middle', horizontal: 'right' }
 
@@ -592,6 +608,82 @@ export async function exportIncomingActsToExcel(
       bottom: { style: 'medium', color: { argb: 'FF0F172A' } },
       left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
       right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+    }
+  }
+
+  return ws
+}
+
+/**
+ * Generates official Excel workbook with authentic colors per product and numeric representation
+ * Separates products into dedicated sheets, with САЛАТ АЙСБЕРГ as the FIRST sheet
+ */
+export async function exportIncomingActsToExcel(
+  acts: IncomingActRecord[],
+  lang: 'uz' | 'ru' | 'en' = 'uz'
+): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook()
+  wb.creator = 'Green Processing ERP'
+  wb.created = new Date()
+
+  // Canonical ordering of products requested by user:
+  // 1. САЛАТ АЙСБЕРГ (FIRST)
+  // 2. ТОМАТ
+  // 3. КАПУСТА БЕЛОКОЧАННАЯ
+  // 4. МОРКОВЬ
+  // 5. ЛУК БЕЛЫЙ
+  // 6. ЛИМОН
+  // 7. ОГУРЦЫ СВЕЖИЕ
+  const ORDERED_PRODUCTS = [
+    'САЛАТ АЙСБЕРГ',
+    'ТОМАТ',
+    'КАПУСТА БЕЛОКОЧАННАЯ',
+    'МОРКОВЬ',
+    'ЛУК БЕЛЫЙ',
+    'ЛИМОН',
+    'ОГУРЦЫ СВЕЖИЕ'
+  ]
+
+  // Group acts by product category
+  const actsByProduct = new Map<string, IncomingActRecord[]>()
+  acts.forEach(act => {
+    const theme = getProductTheme(act.productName)
+    const norm = theme.name || act.productName.trim().toUpperCase()
+    if (!actsByProduct.has(norm)) {
+      actsByProduct.set(norm, [])
+    }
+    actsByProduct.get(norm)!.push(act)
+  })
+
+  const distinctKeys = Array.from(actsByProduct.keys())
+
+  if (distinctKeys.length <= 1) {
+    // Single product export
+    const singleProd = distinctKeys[0] || 'САЛАТ АЙСБЕРГ'
+    const list = actsByProduct.get(singleProd) || acts
+    buildProductSheet(wb, singleProd, list, lang)
+  } else {
+    // Multi-product export: create sheets in the requested order (САЛАТ АЙСБЕРГ first)
+    const addedSheets = new Set<string>()
+
+    for (const prod of ORDERED_PRODUCTS) {
+      const list = actsByProduct.get(prod) || []
+      if (list.length > 0) {
+        buildProductSheet(wb, prod, list, lang)
+        addedSheets.add(prod)
+      }
+    }
+
+    // Any other products not in the canonical list
+    for (const [prod, list] of actsByProduct.entries()) {
+      if (!addedSheets.has(prod)) {
+        buildProductSheet(wb, prod, list, lang)
+        addedSheets.add(prod)
+      }
+    }
+
+    if (addedSheets.size === 0) {
+      buildProductSheet(wb, 'САЛАТ АЙСБЕРГ', [], lang)
     }
   }
 

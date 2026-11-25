@@ -33,7 +33,7 @@ import {
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
-import { PRODUCT_THEMES, getProductTheme } from '@/lib/incoming-acts/constants'
+import { PRODUCT_THEMES, getProductTheme, getRatingText } from '@/lib/incoming-acts/constants'
 import { checkQcActEditPermission, checkQcActDeletePermission } from '@/lib/auditRules'
 
 interface IncomingAct {
@@ -87,14 +87,14 @@ interface StatsData {
 }
 
 const PRODUCT_LIST = [
-  { id: 'all', label: 'Barchasi (All)', color: '#334155', bg: 'bg-slate-700 text-white' },
-  { id: 'ТОМАТ', label: 'ТОМАТ', color: '#FF3300', bg: 'bg-[#FF3300] text-black font-bold' },
-  { id: 'ЛУК БЕЛЫЙ', label: 'ЛУК БЕЛЫЙ', color: '#BFBFBF', bg: 'bg-[#BFBFBF] text-black font-bold' },
-  { id: 'САЛАТ АЙСБЕРГ', label: 'САЛАТ АЙСБЕРГ', color: '#92D050', bg: 'bg-[#92D050] text-black font-bold' },
-  { id: 'КАПУСТА БЕЛОКОЧАННАЯ', label: 'КАПУСТА', color: '#4BFF60', bg: 'bg-[#4BFF60] text-black font-bold' },
-  { id: 'МОРКОВЬ', label: 'МОРКОВЬ', color: '#FF5B11', bg: 'bg-[#FF5B11] text-black font-bold' },
-  { id: 'ЛИМОН', label: 'ЛИМОН', color: '#FFFF00', bg: 'bg-[#FFFF00] text-black font-bold' },
-  { id: 'ОГУРЦЫ СВЕЖИЕ', label: 'ОГУРЦЫ', color: '#00B050', bg: 'bg-[#00B050] text-black font-bold' }
+  { id: 'all', label: { uz: 'Barchasi', ru: 'Все', en: 'All' }, color: '#334155', bg: 'bg-slate-700 text-white' },
+  { id: 'САЛАТ АЙСБЕРГ', label: { uz: 'AYSBERG', ru: 'САЛАТ АЙСБЕРГ', en: 'ICEBERG' }, color: '#92D050', bg: 'bg-[#92D050] text-black font-bold' },
+  { id: 'ТОМАТ', label: { uz: 'POMIDOR', ru: 'ТОМАТ', en: 'TOMATO' }, color: '#FF3300', bg: 'bg-[#FF3300] text-black font-bold' },
+  { id: 'КАПУСТА БЕЛОКОЧАННАЯ', label: { uz: 'OQ KARAM', ru: 'КАПУСТА', en: 'CABBAGE' }, color: '#4BFF60', bg: 'bg-[#4BFF60] text-black font-bold' },
+  { id: 'МОРКОВЬ', label: { uz: 'SABZI', ru: 'МОРКОВЬ', en: 'CARROT' }, color: '#FF5B11', bg: 'bg-[#FF5B11] text-black font-bold' },
+  { id: 'ЛУК БЕЛЫЙ', label: { uz: 'OQ PIYOZ', ru: 'ЛУК БЕЛЫЙ', en: 'WHITE ONION' }, color: '#BFBFBF', bg: 'bg-[#BFBFBF] text-black font-bold' },
+  { id: 'ЛИМОН', label: { uz: 'LIMON', ru: 'ЛИМОН', en: 'LEMON' }, color: '#FFFF00', bg: 'bg-[#FFFF00] text-black font-bold' },
+  { id: 'ОГУРЦЫ СВЕЖИЕ', label: { uz: 'BODRING', ru: 'ОГУРЦЫ', en: 'CUCUMBERS' }, color: '#00B050', bg: 'bg-[#00B050] text-black font-bold' }
 ]
 
 export function formatTemperature(val: any): string {
@@ -140,7 +140,7 @@ export default function IncomingActsContent({
   const [refreshing, setRefreshing] = useState(false)
 
   // Filters & Tabs
-  const [selectedProduct, setSelectedProduct] = useState('ТОМАТ') // Default to ТОМАТ as in user's image
+  const [selectedProduct, setSelectedProduct] = useState('САЛАТ АЙСБЕРГ') // Default to САЛАТ АЙСБЕРГ as requested
   const [selectedRating, setSelectedRating] = useState('all')
   const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -157,6 +157,7 @@ export default function IncomingActsContent({
   const [editingAct, setEditingAct] = useState<IncomingAct | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [syncingArrivals, setSyncingArrivals] = useState(false)
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append')
   const [importReason, setImportReason] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -165,7 +166,7 @@ export default function IncomingActsContent({
   const [formData, setFormData] = useState({
     actNumber: '',
     actDate: new Date().toISOString().slice(0, 10),
-    productName: 'ТОМАТ',
+    productName: 'САЛАТ АЙСБЕРГ',
     supplierName: '',
     temperature: '18 с',
     transportCondition: 1,
@@ -203,7 +204,7 @@ export default function IncomingActsContent({
       importExcel: 'Excel Import',
       exportExcel: 'Excel yuklab olish',
       refresh: 'Yangilash',
-      authenticView: "Matnli rejim (да / нет)",
+      authenticView: "Matnli rejim (ha / yo'q)",
       numericView: 'Raqamli rejim (1 / 0 va 2-5 baho)',
       totalActs: 'Jami aktlar',
       totalWeight: 'Jami qabul qilingan',
@@ -325,8 +326,8 @@ export default function IncomingActsContent({
 
   // Active product theme colors and column names
   const activeTheme = useMemo(() => {
-    return getProductTheme(selectedProduct !== 'all' ? selectedProduct : 'ТОМАТ')
-  }, [selectedProduct])
+    return getProductTheme(selectedProduct !== 'all' ? selectedProduct : 'САЛАТ АЙСБЕРГ', activeLang)
+  }, [selectedProduct, activeLang])
 
   // Fetch acts from API
   const fetchActs = async () => {
@@ -386,18 +387,43 @@ export default function IncomingActsContent({
     sortOrder
   ])
 
-  // Export handler
-  const handleExport = () => {
+  // Export handler: downloads official Excel workbook with each product separated in its own sheet (Ayzberg first!)
+  const handleExport = (onlyCurrent = false) => {
     const params = new URLSearchParams()
     params.append('lang', activeLang)
     if (search) params.append('search', search)
-    if (selectedProduct && selectedProduct !== 'all') params.append('product', selectedProduct)
+    if (onlyCurrent && selectedProduct && selectedProduct !== 'all') {
+      params.append('product', selectedProduct)
+    }
     if (selectedRating && selectedRating !== 'all') params.append('rating', selectedRating)
     if (dateFrom) params.append('dateFrom', dateFrom)
     if (dateTo) params.append('dateTo', dateTo)
 
     window.open(`/api/incoming-acts/export?${params.toString()}`, '_blank')
-    toast.success('Excel yuklab olinmoqda...')
+    toast.success(
+      onlyCurrent && selectedProduct !== 'all'
+        ? `${selectedProduct} aktlari yuklab olinmoqda...`
+        : "Barcha xomashyo aktlari alohida varaqlarda (Ayzberg 1-o'rinda) yuklab olinmoqda..."
+    )
+  }
+
+  // Auto-sync from Warehouse Inbound Arrivals (Prixod)
+  const handleSyncFromArrivals = async () => {
+    try {
+      setSyncingArrivals(true)
+      const res = await fetch('/api/incoming-acts/sync-arrivals', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(data.message || 'Ombor kirimlari bilan sifat aktlari muvaffaqiyatli sinxronlandi!')
+        fetchActs()
+      } else {
+        toast.error(data.error || 'Sinxronlashda xatolik yuz berdi')
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Xatolik yuz berdi')
+    } finally {
+      setSyncingArrivals(false)
+    }
   }
 
   // Fast 1-Click Template Import (ADMIN ONLY)
@@ -494,7 +520,7 @@ export default function IncomingActsContent({
   // Open Form Create
   const handleOpenCreate = () => {
     setEditingAct(null)
-    const prod = selectedProduct !== 'all' ? selectedProduct : 'ТОМАТ'
+    const prod = selectedProduct !== 'all' ? selectedProduct : 'САЛАТ АЙСБЕРГ'
     const today = new Date().toISOString().slice(0, 10)
     const theme = getProductTheme(prod)
     setFormData({
@@ -541,7 +567,7 @@ export default function IncomingActsContent({
     setFormData({
       actNumber: act.actNumber || '',
       actDate: act.actDate || new Date().toISOString().slice(0, 10),
-      productName: act.productName || 'ТОМАТ',
+      productName: act.productName || 'САЛАТ АЙСБЕРГ',
       supplierName: act.supplierName || '',
       temperature: act.temperature || '',
       transportCondition: act.transportCondition ?? 1,
@@ -695,16 +721,24 @@ export default function IncomingActsContent({
 
     if (isDefect) {
       return isPass ? (
-        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">отсутствует</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+          {activeLang === 'uz' ? "yo'q" : activeLang === 'en' ? 'none' : 'отсутствует'}
+        </span>
       ) : (
-        <span className="text-rose-600 dark:text-rose-400 font-semibold">есть</span>
+        <span className="text-rose-600 dark:text-rose-400 font-semibold">
+          {activeLang === 'uz' ? 'bor' : activeLang === 'en' ? 'present' : 'есть'}
+        </span>
       )
     }
 
     return isPass ? (
-      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">да</span>
+      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+        {activeLang === 'uz' ? 'ha' : activeLang === 'en' ? 'yes' : 'да'}
+      </span>
     ) : (
-      <span className="text-rose-600 dark:text-rose-400 font-semibold">нет</span>
+      <span className="text-rose-600 dark:text-rose-400 font-semibold">
+        {activeLang === 'uz' ? "yo'q" : activeLang === 'en' ? 'no' : 'нет'}
+      </span>
     )
   }
 
@@ -799,11 +833,22 @@ export default function IncomingActsContent({
           )}
 
           <button
-            onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold"
+            onClick={() => handleExport(false)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold shadow-xs transition"
+            title="Barcha xomashyo aktlarini alohida varaqlarda (Ayzberg birinchi o'rinda) Excel yuklab olish"
           >
             <Download className="w-3.5 h-3.5 text-sky-400" />
             {t.exportExcel}
+          </button>
+
+          <button
+            onClick={handleSyncFromArrivals}
+            disabled={syncingArrivals}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-teal-700 hover:bg-teal-600 text-white rounded-xl text-xs font-bold border border-teal-500 shadow-sm active:scale-95 transition"
+            title="Ombor kirimlaridan (Prixod) barcha xomashyolarni sifat aktlariga avtomatik sinxronlash"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-teal-200 ${syncingArrivals ? 'animate-spin' : ''}`} />
+            <span>Ombor kirimidan avto-sinxron</span>
           </button>
 
           <button
@@ -825,6 +870,7 @@ export default function IncomingActsContent({
           </span>
           {PRODUCT_LIST.map(prod => {
             const isSelected = selectedProduct === prod.id
+            const label = typeof prod.label === 'object' ? (prod.label[activeLang] || prod.label.uz) : prod.label
             return (
               <button
                 key={prod.id}
@@ -839,7 +885,7 @@ export default function IncomingActsContent({
                   className="w-2.5 h-2.5 rounded-full border border-black/30"
                   style={{ backgroundColor: prod.color }}
                 ></span>
-                {prod.label}
+                {label}
               </button>
             )
           })}
@@ -893,11 +939,11 @@ export default function IncomingActsContent({
       {/* KPI Stats Mini-Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs">
         <div className="bg-white dark:bg-dark-900 p-2.5 rounded-lg border border-slate-200 dark:border-dark-750 flex items-center justify-between">
-          <span className="text-slate-500 dark:text-slate-400 font-medium">Jami aktlar:</span>
+          <span className="text-slate-500 dark:text-slate-400 font-medium">{t.totalActs}:</span>
           <span className="font-bold font-mono text-slate-900 dark:text-white text-sm">{acts.length}</span>
         </div>
         <div className="bg-white dark:bg-dark-900 p-2.5 rounded-lg border border-slate-200 dark:border-dark-750 flex items-center justify-between">
-          <span className="text-slate-500 dark:text-slate-400 font-medium">Ombor (kg):</span>
+          <span className="text-slate-500 dark:text-slate-400 font-medium">{t.kgWarehouse}:</span>
           <span className="font-bold font-mono text-emerald-700 dark:text-emerald-400 text-sm">
             {stats.totalKg ? stats.totalKg.toLocaleString('uz-UZ', { maximumFractionDigits: 1 }) : 0}
           </span>
@@ -910,7 +956,7 @@ export default function IncomingActsContent({
               : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40'
           }`}
         >
-          <span className="text-emerald-800 dark:text-emerald-300">5 - Ideal:</span>
+          <span className="text-emerald-800 dark:text-emerald-300">5 - {getRatingText(5, activeLang)}:</span>
           <span className="font-bold font-mono text-emerald-950 dark:text-emerald-200">{stats.rating5}</span>
         </div>
         <div
@@ -921,7 +967,7 @@ export default function IncomingActsContent({
               : 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40'
           }`}
         >
-          <span className="text-blue-800 dark:text-blue-300">4 - Yaxshi:</span>
+          <span className="text-blue-800 dark:text-blue-300">4 - {getRatingText(4, activeLang)}:</span>
           <span className="font-bold font-mono text-blue-950 dark:text-blue-200">{stats.rating4}</span>
         </div>
         <div
@@ -932,7 +978,7 @@ export default function IncomingActsContent({
               : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40'
           }`}
         >
-          <span className="text-amber-800 dark:text-amber-300">3 - Shartli:</span>
+          <span className="text-amber-800 dark:text-amber-300">3 - {activeLang === 'uz' ? 'Shartli' : activeLang === 'en' ? 'Conditional' : 'Условно'}:</span>
           <span className="font-bold font-mono text-amber-950 dark:text-amber-200">{stats.rating3}</span>
         </div>
         <div
@@ -943,11 +989,13 @@ export default function IncomingActsContent({
               : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/40'
           }`}
         >
-          <span className="text-red-800 dark:text-red-300">2 - Rad etilgan:</span>
+          <span className="text-red-800 dark:text-red-300">2 - {getRatingText(2, activeLang)}:</span>
           <span className="font-bold font-mono text-red-950 dark:text-red-200">{stats.rating2}</span>
         </div>
         <div className="bg-white dark:bg-dark-900 p-2.5 rounded-lg border border-slate-200 dark:border-dark-750 flex items-center justify-between font-mono">
-          <span className="text-slate-500 dark:text-slate-400 font-medium">Ko'rsatish:</span>
+          <span className="text-slate-500 dark:text-slate-400 font-medium">
+            {activeLang === 'uz' ? "Ko'rsatish:" : activeLang === 'en' ? 'Showing:' : 'Показано:'}
+          </span>
           <span className="font-bold text-slate-800 dark:text-slate-200">
             {actsPagination.visibleCount} / {acts.length}
           </span>
@@ -989,10 +1037,8 @@ export default function IncomingActsContent({
                   className="border border-black/40 py-2.5 px-2 text-center min-w-[120px] align-middle"
                 >
                   {selectedProduct === 'all'
-                    ? 'Наименование основного СЫРЬЯ'
-                    : selectedProduct === 'ЛИМОН'
-                    ? 'ЛИМОН'
-                    : `Наименование основного СЫРЬЯ - ${activeTheme.name}`}
+                    ? (activeLang === 'uz' ? 'Asosiy XOMASHYO nomi' : activeLang === 'en' ? 'Main RAW MATERIAL Name' : 'Наименование основного СЫРЬЯ')
+                    : (activeLang === 'uz' ? `Asosiy XOMASHYO nomi - ${activeTheme.name}` : activeLang === 'en' ? `Main RAW MATERIAL - ${activeTheme.name}` : `Наименование основного СЫРЬЯ - ${activeTheme.name}`)}
                 </th>
                 <th
                   rowSpan={2}
@@ -1507,7 +1553,9 @@ export default function IncomingActsContent({
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Наименование СЫРЬЯ</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                      {activeLang === 'uz' ? 'Asosiy XOMASHYO nomi' : activeLang === 'en' ? 'Main RAW MATERIAL Name' : 'Наименование СЫРЬЯ'}
+                    </label>
                     <select
                       value={formData.productName}
                       onChange={e => setFormData({ ...formData, productName: e.target.value })}
@@ -1515,13 +1563,13 @@ export default function IncomingActsContent({
                     >
                       {PRODUCT_LIST.filter(p => p.id !== 'all').map(p => (
                         <option key={p.id} value={p.id}>
-                          {p.label}
+                          {typeof p.label === 'object' ? (p.label[activeLang] || p.label.uz) : p.label}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Поставщик</label>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">{t.supplier}</label>
                     <input
                       type="text"
                       value={formData.supplierName}
@@ -1585,7 +1633,35 @@ export default function IncomingActsContent({
                     <button
                       key={item.val}
                       type="button"
-                      onClick={() => setFormData({ ...formData, decisionRating: item.val })}
+                      onClick={() => {
+                        if (item.val === 5 || item.val === 4) {
+                          setFormData({
+                            ...formData,
+                            decisionRating: item.val,
+                            transportCondition: 1,
+                            hasDocumentation: 1,
+                            structure: 1,
+                            leafColor: 1,
+                            tasteSmell: 1,
+                            internalOxidation: 0,
+                            insectTraces: 0,
+                            rotDiseases: 0,
+                            stemCut: 1,
+                            density: 1,
+                            outerLeavesRemoved: 1,
+                            noMechanicalDamage: 1,
+                          })
+                        } else if (item.val === 2) {
+                          setFormData({
+                            ...formData,
+                            decisionRating: item.val,
+                            rotDiseases: 1,
+                            noMechanicalDamage: 0,
+                          })
+                        } else {
+                          setFormData({ ...formData, decisionRating: item.val })
+                        }
+                      }}
                       className={`p-3 rounded-xl border text-left transition ${
                         formData.decisionRating === item.val
                           ? `${item.bg} text-white shadow ring-2 ring-slate-900/30`
@@ -1615,9 +1691,34 @@ export default function IncomingActsContent({
 
               {/* Quality Criteria */}
               <div className="p-4 bg-white dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex flex-wrap items-center justify-between gap-2">
                   <span>3. Sifat mezonlari (Muvofiqlik)</span>
-                  <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">Ha / Muvofiq yoki Yo'q / Nomaqbul</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        transportCondition: 1,
+                        hasDocumentation: 1,
+                        structure: 1,
+                        leafColor: 1,
+                        tasteSmell: 1,
+                        internalOxidation: 0,
+                        insectTraces: 0,
+                        rotDiseases: 0,
+                        stemCut: 1,
+                        density: 1,
+                        outerLeavesRemoved: 1,
+                        noMechanicalDamage: 1,
+                      })
+                      toast.success("Barcha mezonlar standart 1 (Muvofiq) va 0 (Toza) ga to'ldirildi")
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] border border-emerald-500/30 transition shadow-xs"
+                    title="Barcha mezonlarni 1 va 0 bo'yicha toza holatda avto-to'ldirish"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Standart avto-to'ldirish (1 / 0)</span>
+                  </button>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                   {[

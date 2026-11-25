@@ -7,6 +7,7 @@ import { checkEditPermission, isAfterShiftHours } from '@/lib/auditRules'
 import { recordShiftEditAudit } from '@/lib/auditImport'
 import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
+import { syncIncomingActFromArrival } from '@/lib/incoming-acts/autoAct'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +48,14 @@ export async function PUT(req: NextRequest) {
 
     let updated = 0
     let created = 0
+    const syncedArrivals: Array<{
+      id?: number
+      date: string
+      nomenclature: string
+      quantity: number
+      supplier?: string | null
+      batch?: string | null
+    }> = []
 
     await prisma.$transaction(
       async (tx) => {
@@ -145,13 +154,22 @@ export async function PUT(req: NextRequest) {
                 isAfter17,
               })
 
+              syncedArrivals.push({
+                id,
+                date: dateStr,
+                nomenclature: nom,
+                quantity: newQty,
+                supplier: newSupp,
+                batch: batchStr,
+              })
+
               updated++
             } else {
               // Nothing changed
             }
           } else {
             // New record creation
-            await tx.shopArrival.create({
+            const createdRecord = await tx.shopArrival.create({
               data: {
                 date: dateStr,
                 nomenclature: nom,
@@ -161,6 +179,16 @@ export async function PUT(req: NextRequest) {
                 isEdited: false,
               },
             })
+
+            syncedArrivals.push({
+              id: createdRecord.id,
+              date: dateStr,
+              nomenclature: nom,
+              quantity: toNum(r.quantity),
+              supplier: String(r.supplier ?? '').trim(),
+              batch: batchStr,
+            })
+
             created++
           }
         }
@@ -173,6 +201,13 @@ export async function PUT(req: NextRequest) {
       try {
         invalidateSupplyDashboardCache()
       } catch {}
+
+      // AUTO-SYNC into IncomingRawMaterialAct (Xomashyo Sifat Aktlari jurnali)
+      for (const arr of syncedArrivals) {
+        await syncIncomingActFromArrival(arr).catch((err) =>
+          console.error('Error auto-syncing arrival to incoming acts:', err)
+        )
+      }
     }
 
     return NextResponse.json({ success: true, updated, created })
