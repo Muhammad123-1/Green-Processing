@@ -55,7 +55,8 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
   const { lang, formatDual } = useLanguage()
   const signature = useWarehouseSignature()
   const isAdmin = userRole === 'ADMIN'
-  const isReadOnly = (userRole || '').toUpperCase() === 'SUPPLY'
+  const normRole = (userRole || '').toUpperCase().trim()
+  const isReadOnly = normRole === 'SUPPLY' || normRole === 'QUALITY_CONTROL'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
