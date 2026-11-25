@@ -50,6 +50,7 @@ import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import { SignatureCell, useWarehouseSignature } from './SignatureCell'
+import { AnimatedNumber } from '@/components/common/MotionComponents'
 
 const tBase = {
   uz: {
@@ -1461,16 +1462,16 @@ export default function WarehouseContent() {
                     {macroLoading ? (
                       <span className="text-slate-400 text-sm">...</span>
                     ) : (
-                      `${macroData?.summary.currentStockTonnes.toLocaleString() || '0'} tn`
+                      <AnimatedNumber value={macroData?.summary.currentStockTonnes || 0} decimals={1} suffix=" tn" />
                     )}
                   </div>
                   <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
                     <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {macroData?.summary.currentStockKg.toLocaleString() || 0} kg
+                      <AnimatedNumber value={macroData?.summary.currentStockKg || 0} suffix=" kg" />
                     </span>
                     <span className="hidden sm:inline">·</span>
                     <span className="text-slate-500 text-[10px] sm:text-xs">
-                      {macroData?.summary.totalNomenclaturesCount || 0} turdagi tovar
+                      <AnimatedNumber value={macroData?.summary.totalNomenclaturesCount || 0} /> turdagi tovar
                     </span>
                   </div>
                 </div>
@@ -1500,7 +1501,7 @@ export default function WarehouseContent() {
                     {macroLoading ? (
                       <span className="text-slate-400 text-sm">...</span>
                     ) : (
-                      `${macroData?.summary.totalFifoBatchesCount || inventory.reduce((acc, i) => acc + i.batches.length, 0) || 0} ta`
+                      <AnimatedNumber value={macroData?.summary.totalFifoBatchesCount || inventory.reduce((acc, i) => acc + i.batches.length, 0) || 0} suffix=" ta" />
                     )}
                   </div>
                   <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
@@ -1536,7 +1537,7 @@ export default function WarehouseContent() {
                     {macroLoading ? (
                       <span className="text-slate-400 text-sm">...</span>
                     ) : (
-                      `${macroData?.summary.sufficientCount || 0} / ${macroData?.materials.length || 0}`
+                      <><AnimatedNumber value={macroData?.summary.sufficientCount || 0} /> / {macroData?.materials.length || 0}</>
                     )}
                   </div>
                   <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
@@ -1583,7 +1584,7 @@ export default function WarehouseContent() {
                     {formatDual("Chiqim Tarixi", "История списаний", "Dispatches History")}
                   </span>
                   <div className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
-                    {transfersPagination.totalCount || 0} ta
+                    <AnimatedNumber value={transfersPagination.totalCount || 0} suffix=" ta" />
                   </div>
                   <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
                     {formatDual("Chiqim aktlari", "Акты перемещений", "Transfer acts")}

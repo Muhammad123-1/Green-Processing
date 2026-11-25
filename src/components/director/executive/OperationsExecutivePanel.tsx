@@ -20,7 +20,7 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react'
-import { AnimatedDrawer } from '@/components/common/MotionComponents'
+import { AnimatedDrawer, AnimatedNumber } from '@/components/common/MotionComponents'
 
 type DeptKey = 'ALL' | 'production' | 'warehouse' | 'qc' | 'maintenance'
 
@@ -275,7 +275,7 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
             </div>
           </div>
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
-            {unifiedActions.length} ta
+            <AnimatedNumber value={unifiedActions.length} suffix=" ta" />
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
             {lang === 'ru' ? 'По всем цехам и отделам' : 'Barcha bo‘limlar bo‘yicha'}
@@ -291,7 +291,7 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
             </div>
           </div>
           <div className="mt-2 text-xl font-black text-blue-600 dark:text-blue-400 font-mono">
-            {prodActions.length} ta amal
+            <AnimatedNumber value={prodActions.length} suffix=" ta amal" />
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
             {n(data?.production?.totals?.actualOutput)} kg {lang === 'ru' ? 'выпуска' : 'tayyor mahsulot'}
@@ -307,7 +307,7 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
             </div>
           </div>
           <div className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
-            {whActions.length} ta
+            <AnimatedNumber value={whActions.length} suffix=" ta" />
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
             {data?.warehouse?.totals?.products || 0} {lang === 'ru' ? 'позиций на остатке' : 'xil qoldiq nazoratda'}
@@ -323,7 +323,7 @@ export default function OperationsExecutivePanel({ dateFrom, dateTo, lang }: Pro
             </div>
           </div>
           <div className="mt-2 text-xl font-black text-purple-600 dark:text-purple-400 font-mono">
-            {qcActions.length + maintActions.length} ta
+            <AnimatedNumber value={qcActions.length + maintActions.length} suffix=" ta" />
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
             {lang === 'ru' ? 'Проверки и инциденты' : 'Nazorat va chiptalar'}

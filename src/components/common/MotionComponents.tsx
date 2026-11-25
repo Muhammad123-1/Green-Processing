@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence, HTMLMotionProps } from 'motion/react'
+import React, { useEffect, useState, useRef } from 'react'
+import { motion, AnimatePresence, HTMLMotionProps, animate } from 'motion/react'
 import {
   fadeIn,
   slideIn,
@@ -288,5 +288,65 @@ export function AnimatedAccordion({
         </motion.div>
       )}
     </AnimatePresence>
+  )
+}
+
+/**
+ * Animated Number Counter: Counts up smoothly from 0 to target value.
+ * Uses cubic-bezier deceleration curve [0.16, 1, 0.3, 1] for a clean, 60 FPS count-up effect.
+ */
+export function AnimatedNumber({
+  value,
+  duration = 0.9,
+  decimals = 0,
+  prefix = '',
+  suffix = '',
+  className = '',
+}: {
+  value: number | string
+  duration?: number
+  decimals?: number
+  prefix?: string
+  suffix?: string
+  className?: string
+}) {
+  const numericValue = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.-]/g, '')) || 0
+  const [displayValue, setDisplayValue] = useState(0)
+  const prevValueRef = useRef(0)
+  const shouldReduce = usePrefersReducedMotion()
+
+  useEffect(() => {
+    if (shouldReduce) {
+      setDisplayValue(numericValue)
+      return
+    }
+
+    const start = prevValueRef.current
+    const end = numericValue
+    const controls = animate(start, end, {
+      duration,
+      ease: [0.16, 1, 0.3, 1], // fluid enterprise deceleration
+      onUpdate: (latest) => {
+        setDisplayValue(latest)
+      },
+    })
+    prevValueRef.current = end
+
+    return () => controls.stop()
+  }, [numericValue, duration, shouldReduce])
+
+  const formatted = decimals > 0
+    ? displayValue.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      })
+    : Math.round(displayValue).toLocaleString()
+
+  return (
+    <span className={`inline-block tabular-nums ${className}`}>
+      {prefix}
+      {formatted}
+      {suffix}
+    </span>
   )
 }

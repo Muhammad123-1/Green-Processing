@@ -16,7 +16,7 @@ import {
   Activity,
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
-import { AnimatedCard } from '@/components/common/MotionComponents'
+import { AnimatedCard, AnimatedNumber } from '@/components/common/MotionComponents'
 
 interface DashboardStats {
   todayCount: number
@@ -103,7 +103,7 @@ export default function DashboardContent() {
             <p className="text-blue-200 mt-1 text-sm capitalize">{today}</p>
             <p className="text-blue-100 mt-2 font-medium">
               {t('todayIs')}{' '}
-              <span className="text-white font-bold text-lg">{stats?.todayCount ?? 0}</span>
+              <span className="text-white font-bold text-lg"><AnimatedNumber value={stats?.todayCount ?? 0} /></span>
               {' '}{t('inspectionsRecorded')}
             </p>
           </div>
@@ -154,7 +154,7 @@ export default function DashboardContent() {
           </div>
           <div>
             <p className="text-sm text-slate-400">{t('products')}</p>
-            <p className="text-2xl font-bold text-white">{stats?.productsCount ?? 0}</p>
+            <p className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.productsCount ?? 0} /></p>
           </div>
         </div>
         <div className="stat-card flex items-center gap-4">
@@ -163,7 +163,7 @@ export default function DashboardContent() {
           </div>
           <div>
             <p className="text-sm text-slate-400">{t('suppliers')}</p>
-            <p className="text-2xl font-bold text-white">{stats?.suppliersCount ?? 0}</p>
+            <p className="text-2xl font-bold text-white"><AnimatedNumber value={stats?.suppliersCount ?? 0} /></p>
           </div>
         </div>
       </div>
@@ -295,7 +295,7 @@ function StatCard({
       </div>
       <div>
         <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
+        <p className="text-2xl font-bold text-white"><AnimatedNumber value={value} /></p>
       </div>
     </AnimatedCard>
   )
