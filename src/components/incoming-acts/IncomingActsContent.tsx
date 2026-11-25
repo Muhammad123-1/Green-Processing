@@ -523,26 +523,30 @@ export default function IncomingActsContent({
     setEditingAct(null)
     const prod = selectedProduct !== 'all' ? selectedProduct : 'САЛАТ АЙСБЕРГ'
     const today = new Date().toISOString().slice(0, 10)
-    const theme = getProductTheme(prod)
+    const isTomat = prod.toUpperCase().includes('ТОМАТ') || prod.toUpperCase().includes('ПОМИДОР')
+    const isLuk = prod.toUpperCase().includes('ЛУК')
+    const isKaram = prod.toUpperCase().includes('КАПУСТА')
+    const isMorkov = prod.toUpperCase().includes('МОРКОВ')
+
     setFormData({
       actNumber: String(acts.length + 1),
       actDate: today,
       productName: prod,
       supplierName: '',
-      temperature: prod === 'ТОМАТ' ? '18 с' : '19 с',
+      temperature: isTomat ? '18' : isKaram ? '22.6' : isMorkov ? '20' : '16',
       transportCondition: 1,
-      hasDocumentation: 0,
+      hasDocumentation: isKaram ? 1 : 0,
       structure: 1,
-      leafColor: 1,
+      leafColor: isTomat ? 0 : 1,
       tasteSmell: 1,
-      internalOxidation: 0,
-      insectTraces: 0,
-      rotDiseases: 0,
-      stemCut: 1,
-      density: 1,
-      diameterWeight: prod === 'ТОМАТ' ? '6-7 см' : '5-6 см',
-      outerLeavesRemoved: 1,
-      noMechanicalDamage: 1,
+      internalOxidation: isLuk || isKaram ? 1 : 0,
+      insectTraces: isTomat ? 1 : 0,
+      rotDiseases: isTomat || isKaram ? 1 : 0,
+      stemCut: isTomat || isLuk || isMorkov || isKaram ? 0 : 1,
+      density: isTomat || isLuk ? 0 : 1,
+      diameterWeight: isTomat || isLuk ? 'нет' : isKaram ? 'соответствует' : isMorkov ? 'да' : '400г-700г 12см',
+      outerLeavesRemoved: isMorkov ? 0 : 1,
+      noMechanicalDamage: isTomat || isLuk || isMorkov || isKaram ? 0 : 1,
       batchNumber: getNextActBatch(prod, today),
       decisionRating: 4,
       warehouseKg: '',
@@ -550,7 +554,7 @@ export default function IncomingActsContent({
       shopIssuedDate: '',
       rejectionActNumber: '',
       inspectorName: 'Камбарова А.М.',
-      pricePerKg: prod === 'ТОМАТ' ? '26000' : '13500',
+      pricePerKg: isTomat ? '26000' : isLuk ? '13500' : isKaram ? '5000' : isMorkov ? '13000' : '17500',
       notes: '',
       editReason: ''
     })

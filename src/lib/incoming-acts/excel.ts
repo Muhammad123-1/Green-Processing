@@ -402,13 +402,15 @@ function buildProductSheet(
   titleCell.font = { bold: true, size: 13, color: { argb: 'FF1E3A8A' } }
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
 
-  // Legend Box (Explaining 2-5 and 1/0)
+  // Legend Box (Explaining 2-5)
   ws.mergeCells('B7:AA7')
   const legendCell = ws.getCell('B7')
   legendCell.value =
     lang === 'ru'
-      ? 'BAHOLASH / ОЦЕНКА: 5 = Идеал | 4 = Хорошо | 3 = Условно принято (сортировка/очистка) | 2 = Отклонено   ///   КРИТЕРИИ: 1 = Да/Соответствует/Удовлетворительно, 0 = Нет/Отсутствует'
-      : 'BAHOLASH TIZIMI: 5 = Ideal | 4 = Yaxshi | 3 = Shartli qabul (saralash va tozalash) | 2 = Rad etilgan   ///   MEZONLAR: 1 = Ha/Muvofiq/Qoniqarli, 0 = Yo\'q/Mavjud emas'
+      ? 'ОЦЕНКА / ДОПУСК: 5 = Идеал | 4 = Хорошо | 3 = Условно принято (сортировка/очистка) | 2 = Отклонено'
+      : lang === 'en'
+      ? 'RATING / VERDICT: 5 = Ideal | 4 = Good | 3 = Conditional acceptance | 2 = Rejected'
+      : "BAHOLASH TIZIMI / RUXSAT: 5 = Ideal | 4 = Yaxshi | 3 = Shartli qabul (saralash va tozalash) | 2 = Rad etilgan"
   legendCell.font = { bold: true, size: 9, color: { argb: 'FF0F766E' } }
   legendCell.fill = {
     type: 'pattern',

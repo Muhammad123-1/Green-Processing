@@ -252,6 +252,21 @@ export async function DELETE(req: NextRequest) {
     try {
       invalidateSupplyDashboardCache()
     } catch {}
+
+    // Auto-clean unedited quality act generated for this arrival
+    try {
+      const linkedActs = await prisma.incomingRawMaterialAct.findMany({
+        where: { isEdited: false },
+        select: { id: true, rawValues: true },
+      })
+      for (const act of linkedActs) {
+        const rv = act.rawValues as any
+        if (rv && rv.arrivalId === id) {
+          await prisma.incomingRawMaterialAct.delete({ where: { id: act.id } }).catch(() => {})
+        }
+      }
+    } catch {}
+
     return NextResponse.json({ success: true, deletedId: id })
   } catch (error: any) {
     console.error('Shop arrival delete error:', error)

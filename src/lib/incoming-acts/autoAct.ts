@@ -56,64 +56,361 @@ export function normalizeRawMaterialName(name: string): string {
   return n
 }
 
+export interface RawMaterialDefaults {
+  temperature: string
+  transportCondition: number
+  hasDocumentation: number
+  structure: number
+  leafColor: number
+  tasteSmell: number
+  internalOxidation: number
+  insectTraces: number
+  rotDiseases: number
+  stemCut: number
+  density: number
+  diameterWeight: string
+  outerLeavesRemoved: number
+  noMechanicalDamage: number
+  pricePerKg: number
+  rawValues: Record<string, any>
+}
+
 /**
  * Returns standard default parameters for a raw material category
+ * Exactly matching the company's established quality parameters and historical Excel sheets.
  */
-export function getRawMaterialDefaults(normName: string) {
+export function getRawMaterialDefaults(normName: string): RawMaterialDefaults {
   const p = normName.toUpperCase()
+
+  // 1. ТОМАТ (Pomidor)
+  // Standards: 18 °C, 1 0 1 0 1 0 1 1 0 0 нет 1 0, Baho: 4 - Yaxshi, Narxi: 26,000 so'm
   if (p === 'ТОМАТ') {
     return {
-      temperature: '18 °C',
-      diameterWeight: '6-7 см',
+      temperature: '18',
+      transportCondition: 1,
+      hasDocumentation: 0,
+      structure: 1,
+      leafColor: 0,
+      tasteSmell: 1,
+      internalOxidation: 0,
+      insectTraces: 1,
+      rotDiseases: 1,
+      stemCut: 0,
+      density: 0,
+      diameterWeight: 'нет',
+      outerLeavesRemoved: 1,
+      noMechanicalDamage: 0,
       pricePerKg: 26000,
+      rawValues: {
+        col6: '18',
+        col7: 'удовлетворительная',
+        col8: 'нет',
+        col9: 'да',
+        col10: 'красный',
+        col11: 'да',
+        col12: '6-7 см',
+        col13: 'отсутствует',
+        col14: 'нет',
+        col15: 'нет',
+        col16: 'не имеется',
+        col17: 'нет',
+        col18: 'да',
+        col19: 'отсутствует',
+        col21: 'допускается',
+        col26: 'Камбарова А.М.',
+        col27: '26000',
+        isYellow: false
+      }
     }
   }
+
+  // 2. САЛАТ АЙСБЕРГ
+  // Standards: 16 °C, 400g-700g 12cm, 17,500 so'm
   if (p === 'САЛАТ АЙСБЕРГ') {
     return {
-      temperature: '8 °C',
+      temperature: '16',
+      transportCondition: 1,
+      hasDocumentation: 0,
+      structure: 1,
+      leafColor: 1,
+      tasteSmell: 1,
+      internalOxidation: 0,
+      insectTraces: 0,
+      rotDiseases: 0,
+      stemCut: 1,
+      density: 1,
       diameterWeight: '400г-700г 12см',
+      outerLeavesRemoved: 1,
+      noMechanicalDamage: 1,
       pricePerKg: 17500,
+      rawValues: {
+        col6: '16',
+        col7: 'удовлетворительная',
+        col8: 'нет',
+        col9: 'да',
+        col10: 'да',
+        col11: 'да',
+        col12: 'нет',
+        col13: 'отсутствует',
+        col14: 'нет',
+        col15: 'да',
+        col16: 'средняя',
+        col17: '400г-700г 12см',
+        col18: 'да',
+        col19: 'да',
+        col21: 'допускается',
+        col26: 'Камбарова А.М.',
+        col27: '17500',
+        isYellow: false
+      }
     }
   }
+
+  // 3. КАПУСТА БЕЛОКОЧАННАЯ
+  // Standards: 22.6 °C, 5,000 so'm
   if (p === 'КАПУСТА БЕЛОКОЧАННАЯ') {
     return {
-      temperature: '10 °C',
-      diameterWeight: '1-2 кг',
+      temperature: '22.6',
+      transportCondition: 1,
+      hasDocumentation: 1,
+      structure: 1,
+      leafColor: 1,
+      tasteSmell: 1,
+      internalOxidation: 1,
+      insectTraces: 0,
+      rotDiseases: 1,
+      stemCut: 0,
+      density: 1,
+      diameterWeight: 'соответствует',
+      outerLeavesRemoved: 1,
+      noMechanicalDamage: 0,
       pricePerKg: 5000,
+      rawValues: {
+        col6: '22.6',
+        col7: 'удовлетворительная',
+        col8: 'да',
+        col9: 'да',
+        col10: 'да',
+        col11: 'да',
+        col12: 'да',
+        col13: 'отсутствует',
+        col14: 'да',
+        col15: 'нет',
+        col16: 'да',
+        col17: 'соответствует',
+        col18: 'да',
+        col19: 'нет',
+        col21: 'допускается',
+        col26: 'Камбарова А.М.',
+        col27: '5000',
+        isYellow: false
+      }
     }
   }
-  if (p === 'МОРКОВЬ') {
-    return {
-      temperature: '12 °C',
-      diameterWeight: '3-4 см',
-      pricePerKg: 6500,
-    }
-  }
+
+  // 4. ЛУК БЕЛЫЙ
+  // Standards: 18 °C, 13,500 so'm
   if (p === 'ЛУК БЕЛЫЙ') {
     return {
-      temperature: '14 °C',
-      diameterWeight: '5-6 см',
-      pricePerKg: 4500,
+      temperature: '18',
+      transportCondition: 1,
+      hasDocumentation: 0,
+      structure: 1,
+      leafColor: 1,
+      tasteSmell: 1,
+      internalOxidation: 1,
+      insectTraces: 0,
+      rotDiseases: 0,
+      stemCut: 0,
+      density: 0,
+      diameterWeight: 'нет',
+      outerLeavesRemoved: 1,
+      noMechanicalDamage: 0,
+      pricePerKg: 13500,
+      rawValues: {
+        col6: '18',
+        col7: 'удовлетворительная',
+        col8: 'нет',
+        col9: 'да',
+        col10: 'белый',
+        col11: 'соотвествует',
+        col12: 'да',
+        col13: 'отсутствует',
+        col14: 'нет',
+        col15: 'нет',
+        col16: 'нет',
+        col17: 'нет',
+        col18: 'не обнаружено',
+        col19: 'нет',
+        col21: 'допускается',
+        col26: 'Камбарова А.М.',
+        col27: '13500',
+        isYellow: false
+      }
     }
   }
+
+  // 5. МОРКОВЬ
+  // Standards: 20 °C, 13,000 so'm
+  if (p === 'МОРКОВЬ') {
+    return {
+      temperature: '20',
+      transportCondition: 1,
+      hasDocumentation: 0,
+      structure: 1,
+      leafColor: 1,
+      tasteSmell: 1,
+      internalOxidation: 0,
+      insectTraces: 0,
+      rotDiseases: 0,
+      stemCut: 0,
+      density: 1,
+      diameterWeight: 'да',
+      outerLeavesRemoved: 0,
+      noMechanicalDamage: 0,
+      pricePerKg: 13000,
+      rawValues: {
+        col6: '20',
+        col7: 'удовлетворительная',
+        col8: 'нет',
+        col9: 'да',
+        col10: 'да',
+        col11: 'да',
+        col12: 'отсутствует',
+        col13: 'отсутствует',
+        col14: 'нет',
+        col15: 'не имеется',
+        col16: 'да',
+        col17: 'да',
+        col18: 'не имеется',
+        col19: 'нет',
+        col21: 'допускается',
+        col26: 'Камбарова А.М.',
+        col27: '13000',
+        isYellow: false
+      }
+    }
+  }
+
+  // 6. ОГУРЦЫ СВЕЖИЕ
   if (p === 'ОГУРЦЫ СВЕЖИЕ') {
     return {
-      temperature: '12 °C',
-      diameterWeight: '10-15 см',
+      temperature: '20',
+      transportCondition: 1,
+      hasDocumentation: 0,
+      structure: 1,
+      leafColor: 1,
+      tasteSmell: 1,
+      internalOxidation: 0,
+      insectTraces: 0,
+      rotDiseases: 0,
+      stemCut: 0,
+      density: 1,
+      diameterWeight: 'да',
+      outerLeavesRemoved: 0,
+      noMechanicalDamage: 0,
       pricePerKg: 18000,
+      rawValues: {
+        col6: '20',
+        col7: 'удовлетворительная',
+        col8: 'нет',
+        col9: 'да',
+        col10: 'да',
+        col11: 'да',
+        col12: 'отсутствует',
+        col13: 'отсутствует',
+        col14: 'нет',
+        col15: 'не имеется',
+        col16: 'да',
+        col17: 'да',
+        col18: 'не имеется',
+        col19: 'нет',
+        col21: 'допускается',
+        col26: 'Камбарова А.М.',
+        col27: '18000',
+        isYellow: false
+      }
     }
   }
+
+  // 7. ЛИМОН
   if (p === 'ЛИМОН') {
     return {
-      temperature: '10 °C',
-      diameterWeight: '5.5 см',
-      pricePerKg: 28000,
+      temperature: '20',
+      transportCondition: 1,
+      hasDocumentation: 0,
+      structure: 1,
+      leafColor: 1,
+      tasteSmell: 1,
+      internalOxidation: 0,
+      insectTraces: 0,
+      rotDiseases: 0,
+      stemCut: 0,
+      density: 1,
+      diameterWeight: 'да',
+      outerLeavesRemoved: 0,
+      noMechanicalDamage: 0,
+      pricePerKg: 50000,
+      rawValues: {
+        col6: '20',
+        col7: 'удовлетворительная',
+        col8: 'нет',
+        col9: 'да',
+        col10: 'да',
+        col11: 'да',
+        col12: 'отсутствует',
+        col13: 'отсутствует',
+        col14: 'нет',
+        col15: 'не имеется',
+        col16: 'да',
+        col17: 'да',
+        col18: 'не имеется',
+        col19: 'нет',
+        col21: 'допускается',
+        col26: 'Камбарова А.М.',
+        col27: '50000',
+        isYellow: false
+      }
     }
   }
+
+  // Default: Raw greens / vegetables (Rukkola, Lollo Rosso, Shpinat, etc.)
   return {
-    temperature: '12 °C',
+    temperature: '16',
+    transportCondition: 1,
+    hasDocumentation: 0,
+    structure: 1,
+    leafColor: 1,
+    tasteSmell: 1,
+    internalOxidation: 0,
+    insectTraces: 0,
+    rotDiseases: 0,
+    stemCut: 1,
+    density: 1,
     diameterWeight: 'Standart',
-    pricePerKg: 15000,
+    outerLeavesRemoved: 1,
+    noMechanicalDamage: 1,
+    pricePerKg: 20000,
+    rawValues: {
+      col6: '16',
+      col7: 'удовлетворительная',
+      col8: 'нет',
+      col9: 'да',
+      col10: 'да',
+      col11: 'да',
+      col12: 'нет',
+      col13: 'отсутствует',
+      col14: 'нет',
+      col15: 'да',
+      col16: 'средняя',
+      col17: 'Standart',
+      col18: 'да',
+      col19: 'да',
+      col21: 'допускается',
+      col26: 'Камбарова А.М.',
+      col27: '20000',
+      isYellow: false
+    }
   }
 }
 
@@ -166,7 +463,7 @@ export async function syncIncomingActFromArrival(
   const qty = Number(arrival.quantity) || 0
 
   // 1. Try to find existing act by arrivalId in rawValues OR by matching (date, product, batch, supplier)
-  let existingAct = null
+  let existingAct: any = null
 
   if (arrival.id) {
     const candidates = await db.incomingRawMaterialAct.findMany({
@@ -198,20 +495,46 @@ export async function syncIncomingActFromArrival(
 
   if (existingAct) {
     // Update existing act: keep quantity, supplier, batch in sync
+    const updateData: any = {
+      warehouseKg: qty,
+      supplierName: supplierStr,
+      batchNumber: batchStr,
+      actDate: dateStr,
+      rawValues: {
+        ...(typeof existingAct.rawValues === 'object' && existingAct.rawValues !== null ? existingAct.rawValues : {}),
+        arrivalId: arrival.id || (existingAct.rawValues as any)?.arrivalId,
+        col20: batchStr,
+        col22: qty,
+        lastSyncedAt: new Date().toISOString(),
+      },
+    }
+
+    // If never edited by QC inspector, keep criteria standards fresh
+    if (!existingAct.isEdited) {
+      updateData.transportCondition = defaults.transportCondition
+      updateData.hasDocumentation = defaults.hasDocumentation
+      updateData.structure = defaults.structure
+      updateData.leafColor = defaults.leafColor
+      updateData.tasteSmell = defaults.tasteSmell
+      updateData.internalOxidation = defaults.internalOxidation
+      updateData.insectTraces = defaults.insectTraces
+      updateData.rotDiseases = defaults.rotDiseases
+      updateData.stemCut = defaults.stemCut
+      updateData.density = defaults.density
+      updateData.diameterWeight = defaults.diameterWeight
+      updateData.outerLeavesRemoved = defaults.outerLeavesRemoved
+      updateData.noMechanicalDamage = defaults.noMechanicalDamage
+      updateData.temperature = defaults.temperature
+      updateData.pricePerKg = defaults.pricePerKg
+      updateData.rawValues = {
+        ...defaults.rawValues,
+        ...updateData.rawValues,
+      }
+    }
+
     await db.incomingRawMaterialAct.update({
       where: { id: existingAct.id },
-      data: {
-        warehouseKg: qty,
-        supplierName: supplierStr,
-        batchNumber: batchStr,
-        actDate: dateStr,
-        // Only update rawValues if arrivalId wasn't previously linked
-        rawValues: {
-          ...(typeof existingAct.rawValues === 'object' && existingAct.rawValues !== null ? existingAct.rawValues : {}),
-          arrivalId: arrival.id || (existingAct.rawValues as any)?.arrivalId,
-          lastSyncedAt: new Date().toISOString(),
-        },
-      },
+      data: updateData,
     })
     return { action: 'updated', actId: existingAct.id }
   }
@@ -226,21 +549,21 @@ export async function syncIncomingActFromArrival(
       productName: normName,
       supplierName: supplierStr,
       temperature: defaults.temperature,
-      transportCondition: 1, // 1 = Muvofiq / Qoniqarli
-      hasDocumentation: 1,   // 1 = Mavjud / Ha
-      structure: 1,          // 1 = Muvofiq (Zich, qarsildoq)
-      leafColor: 1,          // 1 = Muvofiq (Yorqin, o'ziga xos)
-      tasteSmell: 1,         // 1 = Muvofiq (Toza)
-      internalOxidation: 0,  // 0 = Otsutstvuyet (Norma)
-      insectTraces: 0,       // 0 = Otsutstvuyet (Norma)
-      rotDiseases: 0,        // 0 = Otsutstvuyet (Norma)
-      stemCut: 1,            // 1 = Muvofiq (To'g'ri kesilgan)
-      density: 1,            // 1 = Standart zichlik
+      transportCondition: defaults.transportCondition,
+      hasDocumentation: defaults.hasDocumentation,
+      structure: defaults.structure,
+      leafColor: defaults.leafColor,
+      tasteSmell: defaults.tasteSmell,
+      internalOxidation: defaults.internalOxidation,
+      insectTraces: defaults.insectTraces,
+      rotDiseases: defaults.rotDiseases,
+      stemCut: defaults.stemCut,
+      density: defaults.density,
       diameterWeight: defaults.diameterWeight,
-      outerLeavesRemoved: 1, // 1 = Ha
-      noMechanicalDamage: 1, // 1 = Ha / Shikastlanmagan
+      outerLeavesRemoved: defaults.outerLeavesRemoved,
+      noMechanicalDamage: defaults.noMechanicalDamage,
       batchNumber: batchStr,
-      decisionRating: 4,     // 4 - Yaxshi / Ruxsat berilgan
+      decisionRating: 4,
       decisionText: '4 - Yaxshi',
       warehouseKg: qty,
       inspectorName: 'Камбарова А.М.',
@@ -250,6 +573,12 @@ export async function syncIncomingActFromArrival(
         arrivalId: arrival.id,
         autoGenerated: true,
         generatedAt: new Date().toISOString(),
+        ...defaults.rawValues,
+        col6: defaults.temperature,
+        col20: batchStr,
+        col22: qty,
+        col26: 'Камбарова А.М.',
+        col27: String(defaults.pricePerKg),
       },
       isEdited: false,
     },
@@ -279,6 +608,7 @@ export async function syncAllShopArrivalsToIncomingActs(): Promise<{
       batchNumber: true,
       warehouseKg: true,
       rawValues: true,
+      isEdited: true,
     },
   })
 
@@ -313,6 +643,8 @@ export async function syncAllShopArrivalsToIncomingActs(): Promise<{
   let updated = 0
   let skipped = 0
 
+  const ops: Array<() => Promise<any>> = []
+
   for (const arr of arrivals) {
     if (!isRawMaterialNomenclature(arr.nomenclature)) {
       skipped++
@@ -334,28 +666,58 @@ export async function syncAllShopArrivalsToIncomingActs(): Promise<{
     }
 
     if (match) {
-      // Check if update needed
-      if (
+      const needsUpdate =
         Math.abs((match.warehouseKg || 0) - qty) > 0.01 ||
         match.supplierName !== supplierStr ||
         match.batchNumber !== batchStr ||
-        match.actDate !== dateStr
-      ) {
-        await prisma.incomingRawMaterialAct.update({
-          where: { id: match.id },
-          data: {
-            warehouseKg: qty,
-            supplierName: supplierStr,
-            batchNumber: batchStr,
-            actDate: dateStr,
-            rawValues: {
-              ...(typeof match.rawValues === 'object' && match.rawValues !== null ? match.rawValues : {}),
-              arrivalId: arr.id,
-              lastSyncedAt: new Date().toISOString(),
-            },
+        match.actDate !== dateStr ||
+        !match.isEdited
+
+      if (needsUpdate) {
+        const targetId = match.id
+        const updatePayload: any = {
+          warehouseKg: qty,
+          supplierName: supplierStr,
+          batchNumber: batchStr,
+          actDate: dateStr,
+          rawValues: {
+            ...(typeof match.rawValues === 'object' && match.rawValues !== null ? match.rawValues : {}),
+            arrivalId: arr.id,
+            col20: batchStr,
+            col22: qty,
+            lastSyncedAt: new Date().toISOString(),
           },
+        }
+
+        if (!match.isEdited) {
+          updatePayload.transportCondition = defaults.transportCondition
+          updatePayload.hasDocumentation = defaults.hasDocumentation
+          updatePayload.structure = defaults.structure
+          updatePayload.leafColor = defaults.leafColor
+          updatePayload.tasteSmell = defaults.tasteSmell
+          updatePayload.internalOxidation = defaults.internalOxidation
+          updatePayload.insectTraces = defaults.insectTraces
+          updatePayload.rotDiseases = defaults.rotDiseases
+          updatePayload.stemCut = defaults.stemCut
+          updatePayload.density = defaults.density
+          updatePayload.diameterWeight = defaults.diameterWeight
+          updatePayload.outerLeavesRemoved = defaults.outerLeavesRemoved
+          updatePayload.noMechanicalDamage = defaults.noMechanicalDamage
+          updatePayload.temperature = defaults.temperature
+          updatePayload.pricePerKg = defaults.pricePerKg
+          updatePayload.rawValues = {
+            ...defaults.rawValues,
+            ...updatePayload.rawValues,
+          }
+        }
+
+        ops.push(async () => {
+          await prisma.incomingRawMaterialAct.update({
+            where: { id: targetId },
+            data: updatePayload,
+          })
+          updated++
         })
-        updated++
       } else {
         skipped++
       }
@@ -365,47 +727,79 @@ export async function syncAllShopArrivalsToIncomingActs(): Promise<{
       const nextNum = currentMax + 1
       maxActNumberPerProduct.set(normName, nextNum)
 
-      const newAct = await prisma.incomingRawMaterialAct.create({
-        data: {
-          actNumber: String(nextNum),
-          actDate: dateStr,
-          productName: normName,
-          supplierName: supplierStr,
-          temperature: defaults.temperature,
-          transportCondition: 1,
-          hasDocumentation: 1,
-          structure: 1,
-          leafColor: 1,
-          tasteSmell: 1,
-          internalOxidation: 0,
-          insectTraces: 0,
-          rotDiseases: 0,
-          stemCut: 1,
-          density: 1,
-          diameterWeight: defaults.diameterWeight,
-          outerLeavesRemoved: 1,
-          noMechanicalDamage: 1,
-          batchNumber: batchStr,
-          decisionRating: 4,
-          decisionText: '4 - Yaxshi',
-          warehouseKg: qty,
-          inspectorName: 'Камбарова А.М.',
-          pricePerKg: defaults.pricePerKg,
-          notes: `Ombor kirimidan (Prixod #${arr.id || 'yangi'}) avtomatik shakllantirilgan sifat akti`,
-          rawValues: {
-            arrivalId: arr.id,
-            autoGenerated: true,
-            generatedAt: new Date().toISOString(),
-          },
-          isEdited: false,
+      const actData = {
+        actNumber: String(nextNum),
+        actDate: dateStr,
+        productName: normName,
+        supplierName: supplierStr,
+        temperature: defaults.temperature,
+        transportCondition: defaults.transportCondition,
+        hasDocumentation: defaults.hasDocumentation,
+        structure: defaults.structure,
+        leafColor: defaults.leafColor,
+        tasteSmell: defaults.tasteSmell,
+        internalOxidation: defaults.internalOxidation,
+        insectTraces: defaults.insectTraces,
+        rotDiseases: defaults.rotDiseases,
+        stemCut: defaults.stemCut,
+        density: defaults.density,
+        diameterWeight: defaults.diameterWeight,
+        outerLeavesRemoved: defaults.outerLeavesRemoved,
+        noMechanicalDamage: defaults.noMechanicalDamage,
+        batchNumber: batchStr,
+        decisionRating: 4,
+        decisionText: '4 - Yaxshi',
+        warehouseKg: qty,
+        inspectorName: 'Камбарова А.М.',
+        pricePerKg: defaults.pricePerKg,
+        notes: `Ombor kirimidan (Prixod #${arr.id || 'yangi'}) avtomatik shakllantirilgan sifat akti`,
+        rawValues: {
+          arrivalId: arr.id,
+          autoGenerated: true,
+          generatedAt: new Date().toISOString(),
+          ...defaults.rawValues,
+          col6: defaults.temperature,
+          col20: batchStr,
+          col22: qty,
+          col26: 'Камбарова А.М.',
+          col27: String(defaults.pricePerKg),
         },
-      })
+        isEdited: false,
+      }
 
-      if (arr.id) byArrivalId.set(arr.id, newAct as any)
-      const compKey = `${dateStr}:::${normName}:::${batchStr}:::${supplierStr}`.toLowerCase()
-      byComposite.set(compKey, newAct as any)
-      created++
+      ops.push(async () => {
+        const newAct = await prisma.incomingRawMaterialAct.create({ data: actData })
+        if (arr.id) byArrivalId.set(arr.id, newAct as any)
+        const compKey = `${dateStr}:::${normName}:::${batchStr}:::${supplierStr}`.toLowerCase()
+        byComposite.set(compKey, newAct as any)
+        created++
+      })
     }
+  }
+
+  // Execute operations in parallel worker pool
+  const CONCURRENCY = 20
+  let opIndex = 0
+  const workers = Array.from({ length: Math.min(CONCURRENCY, ops.length) }, async () => {
+    while (opIndex < ops.length) {
+      const idx = opIndex++
+      const op = ops[idx]
+      if (op) {
+        try {
+          await op()
+        } catch (e) {
+          console.error('Error during bulk sync item:', e)
+        }
+      }
+    }
+  })
+  await Promise.all(workers)
+
+  return {
+    totalArrivals: arrivals.length,
+    created,
+    updated,
+    skipped,
   }
 
   return {
