@@ -131,14 +131,45 @@ export function checkEditPermission(params: {
     }
   }
 
-  // Supply role is strictly read-only for shop reports (arrivals, expenses, GP)
-  if (normalizedRole === 'SUPPLY') {
+  // Supply va Quality Control (Sifat nazoratchisi) ombor hisobotlari (kirim, chiqim, GP) uchun qat'iyan FAQAT KO'RISH rejimida
+  if (normalizedRole === 'SUPPLY' || normalizedRole === 'QUALITY_CONTROL') {
     return {
       allowed: false,
       isAdmin: false,
       isAfter24h: false,
       isOutsideHours: false,
-      reason: "Ta'minotchi (Supply) xodimi uchun ushbu bo'lim faqat ko'rish rejimida ishlaydi. Ma'lumot kiritish yoki tahrirlash huquqi yo'q.",
+      reason:
+        normalizedRole === 'QUALITY_CONTROL'
+          ? "Sifat nazoratchisi (QC) uchun ombor kirim/chiqim jadvallari faqat ko'rish rejimida. Tahrirlash omborchiga (Warehouse) tegishli."
+          : "Ta'minotchi (Supply) xodimi uchun ushbu bo'lim faqat ko'rish rejimida ishlaydi. Ma'lumot kiritish yoki tahrirlash huquqi yo'q.",
+    }
+  }
+
+  // WAREHOUSE roli: Omborchi ombor kirim va chiqimini tahrirlash huquqiga ega!
+  if (normalizedRole === 'WAREHOUSE') {
+    const after17 = isAfterShiftHours(now)
+    return {
+      allowed: true,
+      isAdmin: false,
+      isAfter24h: false,
+      isOutsideHours: after17,
+      reason: after17
+        ? "Soat 17:00 dan keyingi o'zgartirish: Rasmiy sabab kiritish majburiydir!"
+        : undefined,
+    }
+  }
+
+  // PRODUCTION roli: Sex chiqimlarini tahrirlash huquqiga ega
+  if (normalizedRole === 'PRODUCTION') {
+    const after17 = isAfterShiftHours(now)
+    return {
+      allowed: true,
+      isAdmin: false,
+      isAfter24h: false,
+      isOutsideHours: after17,
+      reason: after17
+        ? "Soat 17:00 dan keyingi o'zgartirish: Rasmiy sabab kiritish majburiydir!"
+        : undefined,
     }
   }
 
