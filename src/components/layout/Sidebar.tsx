@@ -62,7 +62,6 @@ const navSections = [
       { key: 'inspections', href: '/inspections', icon: History, roles: ['ADMIN', 'QUALITY_CONTROL'] },
       { key: 'incomingActs', href: '/incoming-acts', icon: FileSpreadsheet, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'disinfectionIncoming', href: '/incoming-acts/disinfection', icon: FlaskConical, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'qcSettings', href: '/settings?tab=qc', icon: Settings, roles: ['ADMIN', 'QUALITY_CONTROL', 'INSPECTOR'] },
     ]
   },
   {
@@ -82,7 +81,6 @@ const navSections = [
       { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'KITCHEN', 'HR'] },
-      { key: 'warehouseSettings', href: '/settings?tab=warehouse', icon: Settings, roles: ['ADMIN', 'WAREHOUSE'] },
     ]
   },
   {
@@ -106,7 +104,6 @@ const navSections = [
       { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'SUPPLY', 'ACCOUNTING'] },
       { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
-      { key: 'supplySettings', href: '/settings?tab=supply', icon: Settings, roles: ['ADMIN', 'SUPPLY'] },
     ]
   },
   {
@@ -118,7 +115,6 @@ const navSections = [
       { key: 'firstAid', href: '/first-aid', icon: HeartPulse, roles: ['ADMIN', 'HR'] },
       { key: 'driversMedical', href: '/drivers-medical', icon: Truck, roles: ['ADMIN', 'LOGISTICS', 'HR'] },
       { key: 'degustatsiya', href: '/degustatsiya', icon: UtensilsCrossed, roles: ['ADMIN', 'HR'] },
-      { key: 'chairmenSettings', href: '/settings?tab=chairmen', icon: UserCheck, roles: ['ADMIN', 'HR'] },
       { key: 'reports', href: '/reports', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTING'] },
     ]
   },
@@ -132,7 +128,6 @@ const navSections = [
       { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT', 'KITCHEN', 'DEGUSTATION'] },
       { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
       { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
-      { key: 'settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   }
 ]
@@ -147,6 +142,54 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
 
   const translate = t
   const formatText = formatDual
+
+  // Pinned Bottom Settings configuration based on user role (Fixed above User Profile)
+  const settingsConfig = useMemo(() => {
+    if (userRole === 'WAREHOUSE') {
+      return {
+        href: '/settings?tab=warehouse',
+        label: translate('warehouseSettings'),
+      }
+    }
+    if (userRole === 'QUALITY_CONTROL' || userRole === 'INSPECTOR') {
+      return {
+        href: '/settings?tab=qc',
+        label: translate('qcSettings'),
+      }
+    }
+    if (userRole === 'SUPPLY') {
+      return {
+        href: '/settings?tab=supply',
+        label: translate('supplySettings'),
+      }
+    }
+    if (userRole === 'HR' || userRole === 'DEGUSTATION') {
+      return {
+        href: '/settings?tab=chairmen',
+        label: translate('chairmenSettings'),
+      }
+    }
+    if (userRole === 'ADMIN' || userRole === 'DIRECTOR') {
+      return {
+        href: '/settings',
+        label: translate('settings'),
+      }
+    }
+    return {
+      href: '/settings',
+      label: translate('settings'),
+    }
+  }, [userRole, translate])
+
+  const isSettingsActive = useMemo(() => {
+    if (!settingsConfig) return false
+    if (pathname !== '/settings' && !pathname.startsWith('/settings/')) return false
+    if (settingsConfig.href.includes('?tab=')) {
+      const targetTab = settingsConfig.href.split('?tab=')[1]
+      return !currentTab || currentTab === targetTab
+    }
+    return true
+  }, [pathname, currentTab, settingsConfig])
 
   // STRICT PRIVACY & ISOLATION: SUPPLIER role only sees their own orders portal
   if (userRole === 'SUPPLIER') {
@@ -415,6 +458,22 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
             </Link>
           </nav>
 
+          {/* Pinned Bottom Settings (Fixed above user profile) */}
+          <div className="px-3 py-2 border-t border-dark-700 bg-dark-900/60">
+            <Link
+              href="/settings?tab=chairmen"
+              onClick={close}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                pathname === '/settings'
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <Settings size={17} />
+              <span>{formatText('Raislar & Imzolar sozlamalari', 'Настройки председателей', 'Chairmen Settings')}</span>
+            </Link>
+          </div>
+
           {/* User profile & logout */}
           <div className="px-5 py-4 border-t border-dark-700 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
@@ -599,6 +658,32 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
           )
         })}
       </nav>
+
+      {/* Pinned Bottom Settings Link (Fixed above user profile, stays visible during scroll) */}
+      {settingsConfig && (
+        <div className="px-3 py-2 border-t border-slate-200 dark:border-dark-700 bg-slate-50/70 dark:bg-dark-900/70 backdrop-blur-xs">
+          <Link
+            href={settingsConfig.href}
+            onClick={close}
+            className={`group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-150 ${
+              isSettingsActive 
+                ? 'active bg-blue-50/90 text-blue-600 font-bold border border-blue-200/80 dark:bg-dark-800 dark:text-white dark:border-transparent shadow-xs' 
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-dark-800/80 dark:hover:text-white font-medium'
+            }`}
+          >
+            <Settings 
+              size={18} 
+              className={`transition-colors ${
+                isSettingsActive 
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
+              }`} 
+            />
+            <span className="flex-1 font-semibold">{settingsConfig.label}</span>
+            {isSettingsActive && <ChevronRight size={14} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />}
+          </Link>
+        </div>
+      )}
 
       {/* Bottom info */}
       <div className="px-5 py-4 border-t border-slate-200 dark:border-dark-700 flex items-center justify-between">
