@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   Package,
   Layers,
-  Filter
+  Filter,
+  Thermometer
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -125,6 +126,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
           date: today,
           nomenclature: '',
           quantity: '',
+          temperature: '',
           supplier: '',
           batch: '1',
           _dirty: false,
@@ -260,6 +262,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
             date: today,
             nomenclature: '',
             quantity: '',
+            temperature: '',
             supplier: '',
             batch: '1',
             _dirty: false,
@@ -301,6 +304,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
         date: targetDate,
         nomenclature: '',
         quantity: '',
+        temperature: '',
         supplier: '',
         batch: '',
         _dirty: true,
@@ -501,6 +505,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
             date: r.date,
             nomenclature: r.nomenclature,
             quantity: toNum(r.quantity),
+            temperature: r.temperature !== '' && r.temperature !== null && r.temperature !== undefined ? Number(r.temperature) : null,
             supplier: r.supplier,
             batch: r.batch,
             editReason: reason || r.editReason,
@@ -831,6 +836,12 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
                 <th className="p-3 border-r border-amber-600 text-right min-w-[120px]">
                   {lang === 'ru' ? 'КОЛИЧЕСТВО (КГ)' : 'MIQDOR (KG)'}
                 </th>
+                <th className="p-3 border-r border-amber-600 text-center min-w-[100px] max-w-[115px]">
+                  <div className="flex items-center justify-center gap-1">
+                    <Thermometer size={14} className="text-white shrink-0" />
+                    <span>{lang === 'ru' ? 'ТЕМП. (°C)' : 'HARORAT (°C)'}</span>
+                  </div>
+                </th>
                 <th className="p-3 border-r border-amber-600 min-w-[180px]">
                   {lang === 'ru' ? 'ПОСТАВЩИК' : 'YETKAZIB BERUVCHI'}
                 </th>
@@ -846,7 +857,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
             <tbody className="divide-y divide-slate-200 dark:divide-dark-750 bg-white dark:bg-dark-900 text-slate-900 dark:text-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="p-16 text-center text-slate-400">
+                  <td colSpan={8} className="p-16 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Loader2 className="animate-spin text-amber-500" size={32} />
                       <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
@@ -857,7 +868,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
                 </tr>
               ) : arrivalsPagination.displayedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="p-12 text-center text-sm text-slate-400">
                     {lang === 'ru'
                       ? 'Записи не найдены. Нажмите «+ Добавить», чтобы создать запись.'
                       : "Hech qanday ma'lumot topilmadi. Yangi kirim kiritish uchun «+ Qo'shish» tugmasini bosing."}
@@ -1058,6 +1069,40 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
                             : 'bg-white dark:bg-dark-800 border-slate-200 dark:border-dark-700 focus:border-amber-500'
                         }`}
                       />
+                    </td>
+
+                    {/* HARORAT (°C) - Skladchi kiritishi bilan /incoming-acts sifat aktiga to'g'ridan-to'g'ri o'tadi */}
+                    <td className="p-1.5 border-r border-slate-200 dark:border-dark-750 text-center">
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="number"
+                          step="0.1"
+                          readOnly={!isRowEditable}
+                          disabled={!isRowEditable}
+                          value={inputVal(row.temperature)}
+                          onClick={() => {
+                            if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
+                          }}
+                          onChange={(e) => {
+                            if (isRowEditable) updateArrival(idx, { temperature: e.target.value })
+                          }}
+                          placeholder={
+                            row.nomenclature?.toUpperCase().includes('ТОМАТ') || row.nomenclature?.toUpperCase().includes('POMIDOR')
+                              ? '18'
+                              : row.nomenclature?.toUpperCase().includes('АЙСБЕРГ') || row.nomenclature?.toUpperCase().includes('AYSBERG')
+                              ? '16'
+                              : row.nomenclature?.toUpperCase().includes('КАПУСТА') || row.nomenclature?.toUpperCase().includes('KARAM')
+                              ? '22.6'
+                              : '18'
+                          }
+                          className={`w-full min-w-[70px] max-w-[85px] px-2 py-1.5 text-xs font-mono font-bold text-center rounded-lg border outline-none text-sky-700 dark:text-sky-400 transition-all ${
+                            !isRowEditable
+                              ? 'bg-slate-100 dark:bg-dark-800 border-transparent cursor-not-allowed opacity-80'
+                              : 'bg-white dark:bg-dark-800 border-slate-200 dark:border-dark-700 focus:border-sky-500'
+                          }`}
+                        />
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1 font-bold">°C</span>
+                      </div>
                     </td>
 
                     {/* YETKAZIB BERUVCHI */}

@@ -55,6 +55,7 @@ export async function PUT(req: NextRequest) {
       quantity: number
       supplier?: string | null
       batch?: string | null
+      temperature?: number | null
     }> = []
 
     await prisma.$transaction(
@@ -106,12 +107,14 @@ export async function PUT(req: NextRequest) {
             // Check if values actually changed
             const newQty = toNum(r.quantity)
             const newSupp = String(r.supplier ?? '').trim()
+            const tempVal = r.temperature !== undefined && r.temperature !== null && r.temperature !== '' ? Number(r.temperature) : null
             const isChanged =
               existing.date !== dateStr ||
               existing.nomenclature !== nom ||
               Math.abs(existing.quantity - newQty) > 0.0001 ||
               (existing.supplier || '') !== newSupp ||
-              (existing.batch || '') !== batchStr
+              (existing.batch || '') !== batchStr ||
+              existing.temperature !== tempVal
 
             const isAfter17 = isAfterShiftHours(new Date())
             if (isChanged) {
@@ -135,6 +138,7 @@ export async function PUT(req: NextRequest) {
                   quantity: newQty,
                   supplier: newSupp,
                   batch: batchStr,
+                  temperature: tempVal,
                   isEdited: true,
                   editReason: reason,
                   editedAt: new Date(),
@@ -161,6 +165,7 @@ export async function PUT(req: NextRequest) {
                 quantity: newQty,
                 supplier: newSupp,
                 batch: batchStr,
+                temperature: tempVal,
               })
 
               updated++
@@ -169,6 +174,7 @@ export async function PUT(req: NextRequest) {
             }
           } else {
             // New record creation
+            const tempVal = r.temperature !== undefined && r.temperature !== null && r.temperature !== '' ? Number(r.temperature) : null
             const createdRecord = await tx.shopArrival.create({
               data: {
                 date: dateStr,
@@ -176,6 +182,7 @@ export async function PUT(req: NextRequest) {
                 quantity: toNum(r.quantity),
                 supplier: String(r.supplier ?? '').trim(),
                 batch: batchStr,
+                temperature: tempVal,
                 isEdited: false,
               },
             })
@@ -187,6 +194,7 @@ export async function PUT(req: NextRequest) {
               quantity: toNum(r.quantity),
               supplier: String(r.supplier ?? '').trim(),
               batch: batchStr,
+              temperature: tempVal,
             })
 
             created++
