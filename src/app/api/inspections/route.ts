@@ -15,130 +15,174 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('dateFrom') || ''
     const dateTo = searchParams.get('dateTo') || ''
 
-    const where: Record<string, unknown> = {}
+    const skip = (page - 1) * limit
 
+    const actWhere: any = {}
+
+    // Multi-criteria and bilingual search
     if (search) {
-      where.OR = [
-        { actNumber: { contains: search, mode: 'insensitive' } },
-        { batchNumber: { contains: search, mode: 'insensitive' } },
-        { supplier: { name: { contains: search, mode: 'insensitive' } } },
-        { product: { name: { contains: search, mode: 'insensitive' } } },
+      const cleanSearch = search.replace(/^№\s*/, '').trim()
+      const searchVariants = [search, cleanSearch].filter(Boolean)
+
+      // Multi-language product keyword mappings (Uzbek <-> Russian)
+      const sLower = search.toLowerCase()
+      const extraProductKeywords: string[] = []
+      if (sLower.includes('aysberg') || sLower.includes('ayzberg') || sLower.includes('салат')) {
+        extraProductKeywords.push('айсберг', 'айзберг', 'салат')
+      }
+      if (sLower.includes('pomidor') || sLower.includes('tomat') || sLower.includes('томат')) {
+        extraProductKeywords.push('томат', 'помидор')
+      }
+      if (sLower.includes('sabzi') || sLower.includes('morkov') || sLower.includes('морковь')) {
+        extraProductKeywords.push('морковь')
+      }
+      if (sLower.includes('piyoz') || sLower.includes('luk') || sLower.includes('лук')) {
+        extraProductKeywords.push('лук')
+      }
+      if (sLower.includes('karom') || sLower.includes('kapusta') || sLower.includes('капуста')) {
+        extraProductKeywords.push('капуста')
+      }
+      if (sLower.includes('bodring') || sLower.includes('ogur') || sLower.includes('огурцы') || sLower.includes('огурец')) {
+        extraProductKeywords.push('огурцы', 'огурец')
+      }
+      if (sLower.includes('limon') || sLower.includes('лимон')) {
+        extraProductKeywords.push('лимон')
+      }
+
+      actWhere.OR = [
+        ...searchVariants.map(v => ({ actNumber: { contains: v, mode: 'insensitive' } })),
+        ...searchVariants.map(v => ({ batchNumber: { contains: v, mode: 'insensitive' } })),
+        { supplierName: { contains: search, mode: 'insensitive' } },
+        { productName: { contains: search, mode: 'insensitive' } },
+        { inspectorName: { contains: search, mode: 'insensitive' } },
+        ...extraProductKeywords.map(k => ({ productName: { contains: k, mode: 'insensitive' } })),
       ]
     }
 
-    if (status) where.status = status
-    if (supplierId) where.supplierId = parseInt(supplierId)
-    if (productId) where.productId = parseInt(productId)
+    if (status === 'ACCEPTED') actWhere.decisionRating = { in: [4, 5] }
+    else if (status === 'REJECTED') actWhere.decisionRating = 2
+    else if (status === 'CONDITIONAL') actWhere.decisionRating = 3
 
-    if (dateFrom || dateTo) {
-      where.inspectionDate = {}
-      if (dateFrom) (where.inspectionDate as Record<string, Date>).gte = new Date(dateFrom)
-      if (dateTo) {
-        const to = new Date(dateTo)
-        to.setHours(23, 59, 59, 999)
-        ;(where.inspectionDate as Record<string, Date>).lte = to
+    if (productId && productId !== 'all') {
+      const prodNum = parseInt(productId)
+      const foundProduct = await prisma.product.findUnique({ where: { id: prodNum }, select: { name: true } })
+      if (foundProduct) {
+        const pLower = foundProduct.name.toLowerCase()
+        if (pLower.includes('айсберг') || pLower.includes('aysberg')) {
+          actWhere.productName = { contains: 'йсберг', mode: 'insensitive' }
+        } else if (pLower.includes('томат') || pLower.includes('pomidor') || pLower.includes('tomat')) {
+          actWhere.productName = { contains: 'томат', mode: 'insensitive' }
+        } else if (pLower.includes('лук') || pLower.includes('piyoz')) {
+          actWhere.productName = { contains: 'лук', mode: 'insensitive' }
+        } else if (pLower.includes('капуста') || pLower.includes('karom')) {
+          actWhere.productName = { contains: 'капуста', mode: 'insensitive' }
+        } else if (pLower.includes('морковь') || pLower.includes('sabzi')) {
+          actWhere.productName = { contains: 'морковь', mode: 'insensitive' }
+        } else if (pLower.includes('лимон') || pLower.includes('limon')) {
+          actWhere.productName = { contains: 'лимон', mode: 'insensitive' }
+        } else if (pLower.includes('огур') || pLower.includes('bodring')) {
+          actWhere.productName = { contains: 'огур', mode: 'insensitive' }
+        } else {
+          actWhere.productName = { contains: foundProduct.name, mode: 'insensitive' }
+        }
       }
     }
 
-    const skip = (page - 1) * limit
-
-    const [inspections, total] = await Promise.all([
-      prisma.inspection.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { inspectionDate: 'desc' },
-        include: {
-          supplier: { select: { id: true, name: true } },
-          product: { select: { id: true, name: true, unit: true } },
-          user: { select: { id: true, name: true } },
-        },
-      }),
-      prisma.inspection.count({ where }),
-    ])
-
-    // If Inspection table is empty, query IncomingRawMaterialAct (1,276 live acts)
-    if (total === 0) {
-      const actWhere: any = {}
-      if (search) {
+    if (supplierId && supplierId !== 'all') {
+      const suppNum = parseInt(supplierId)
+      const foundSupplier = await prisma.supplier.findUnique({ where: { id: suppNum }, select: { name: true, shortName: true } })
+      if (foundSupplier) {
         actWhere.OR = [
-          { actNumber: { contains: search, mode: 'insensitive' } },
-          { batchNumber: { contains: search, mode: 'insensitive' } },
-          { supplierName: { contains: search, mode: 'insensitive' } },
-          { productName: { contains: search, mode: 'insensitive' } },
-          { inspectorName: { contains: search, mode: 'insensitive' } },
+          { supplierName: { contains: foundSupplier.name, mode: 'insensitive' } },
+          ...(foundSupplier.shortName ? [{ supplierName: { contains: foundSupplier.shortName, mode: 'insensitive' } }] : [])
         ]
       }
-
-      if (status === 'ACCEPTED') actWhere.decisionRating = { in: [4, 5] }
-      else if (status === 'REJECTED') actWhere.decisionRating = 2
-      else if (status === 'CONDITIONAL') actWhere.decisionRating = 3
-
-      if (dateFrom && dateTo) {
-        actWhere.actDate = { gte: dateFrom, lte: dateTo }
-      } else if (dateFrom) {
-        actWhere.actDate = { gte: dateFrom }
-      } else if (dateTo) {
-        actWhere.actDate = { lte: dateTo }
-      }
-
-      const [rawActs, actTotal] = await Promise.all([
-        prisma.incomingRawMaterialAct.findMany({
-          where: actWhere,
-          skip,
-          take: limit,
-          orderBy: [{ id: 'desc' }]
-        }),
-        prisma.incomingRawMaterialAct.count({ where: actWhere })
-      ])
-
-      const mappedData = rawActs.map(act => {
-        let dateIso = act.createdAt.toISOString()
-        if (act.actDate) {
-          if (act.actDate.includes('.')) {
-            const p = act.actDate.split('.')
-            if (p.length === 3) dateIso = new Date(`${p[2]}-${p[1]}-${p[0]}`).toISOString()
-          } else {
-            const d = new Date(act.actDate)
-            if (!isNaN(d.getTime())) dateIso = d.toISOString()
-          }
-        }
-
-        const st = act.decisionRating === 2 ? 'REJECTED' : act.decisionRating === 3 ? 'CONDITIONAL' : 'ACCEPTED'
-
-        return {
-          id: act.id,
-          actNumber: act.actNumber ? (act.actNumber.startsWith('№') ? act.actNumber : `№ ${act.actNumber}`) : `№ ${act.id}`,
-          inspectionDate: dateIso,
-          batchNumber: act.batchNumber || `LOT-${act.id}`,
-          quantity: act.warehouseKg || 0,
-          quantityUnit: 'kg',
-          temperature: parseFloat((act.temperature || '').replace(',', '.')) || null,
-          temperatureUnit: '°C',
-          conclusion: act.decisionText || (act.decisionRating === 2 ? 'Rad etilgan' : 'Muvofiq'),
-          status: st,
-          notes: act.notes || null,
-          supplier: { id: act.id, name: act.supplierName || 'Ta\'minotchi' },
-          product: { id: act.id, name: act.productName || 'Xomashyo', unit: 'kg' },
-          createdAt: act.createdAt.toISOString()
-        }
-      })
-
-      return NextResponse.json({
-        data: mappedData,
-        total: actTotal,
-        page,
-        limit,
-        totalPages: Math.ceil(actTotal / limit),
-      })
     }
 
+    if (dateFrom && dateTo) {
+      actWhere.actDate = { gte: dateFrom, lte: dateTo }
+    } else if (dateFrom) {
+      actWhere.actDate = { gte: dateFrom }
+    } else if (dateTo) {
+      actWhere.actDate = { lte: dateTo }
+    }
+
+    // Load actual acts sorted chronologically (latest 2026 acts first)
+    const [rawActs, actTotal, allProducts, allSuppliers] = await Promise.all([
+      prisma.incomingRawMaterialAct.findMany({
+        where: actWhere,
+        skip,
+        take: limit,
+        orderBy: [{ actDate: 'desc' }, { id: 'desc' }]
+      }),
+      prisma.incomingRawMaterialAct.count({ where: actWhere }),
+      prisma.product.findMany({ select: { id: true, name: true, unit: true } }),
+      prisma.supplier.findMany({ select: { id: true, name: true, shortName: true } }),
+    ])
+
+    const mappedData = rawActs.map(act => {
+      let dateIso = act.createdAt.toISOString()
+      if (act.actDate) {
+        if (act.actDate.includes('-')) {
+          const parts = act.actDate.split('-')
+          if (parts.length === 3) {
+            dateIso = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}T12:00:00.000Z`
+          }
+        } else if (act.actDate.includes('.')) {
+          const p = act.actDate.split('.')
+          if (p.length === 3) {
+            dateIso = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}T12:00:00.000Z`
+          }
+        }
+      }
+
+      const st = act.decisionRating === 2 ? 'REJECTED' : act.decisionRating === 3 ? 'CONDITIONAL' : 'ACCEPTED'
+
+      // Match actual product and supplier IDs
+      const normProd = (act.productName || '').toLowerCase()
+      const matchedProd = allProducts.find((p) => {
+        const pn = p.name.toLowerCase()
+        if (normProd.includes('айсберг') && (pn.includes('айсберг') || pn.includes('айзберг') || pn.includes('aysberg'))) return true
+        if (normProd.includes('томат') && (pn.includes('томат') || pn.includes('tomat') || pn.includes('pomidor'))) return true
+        if (normProd.includes('морков') && (pn.includes('морков') || pn.includes('sabzi'))) return true
+        if (normProd.includes('лук') && (pn.includes('лук') || pn.includes('piyoz'))) return true
+        if (normProd.includes('капуст') && (pn.includes('капуст') || pn.includes('karom'))) return true
+        if (normProd.includes('лимон') && (pn.includes('лимон') || pn.includes('limon'))) return true
+        if (normProd.includes('огур') && (pn.includes('огур') || pn.includes('bodring'))) return true
+        return pn.includes(normProd) || normProd.includes(pn)
+      })
+
+      const normSupp = (act.supplierName || '').toLowerCase()
+      const matchedSupp = allSuppliers.find((s) => {
+        const sn = s.name.toLowerCase()
+        const sh = (s.shortName || '').toLowerCase()
+        return sn.includes(normSupp) || normSupp.includes(sn) || (sh && normSupp.includes(sh))
+      })
+
+      return {
+        id: act.id,
+        actNumber: act.actNumber ? (act.actNumber.startsWith('№') ? act.actNumber : `№ ${act.actNumber}`) : `№ ${act.id}`,
+        inspectionDate: dateIso,
+        batchNumber: act.batchNumber || `LOT-${act.id}`,
+        quantity: act.warehouseKg !== null && act.warehouseKg !== undefined ? act.warehouseKg : 0,
+        quantityUnit: 'kg',
+        temperature: parseFloat((act.temperature || '').replace(',', '.')) || null,
+        temperatureUnit: '°C',
+        conclusion: act.decisionText || (act.decisionRating === 2 ? 'Rad etilgan' : 'Muvofiq'),
+        status: st,
+        notes: act.notes || null,
+        supplier: { id: matchedSupp?.id || act.id, name: act.supplierName || 'Ta\'minotchi' },
+        product: { id: matchedProd?.id || act.id, name: act.productName || 'Xomashyo', unit: matchedProd?.unit || 'kg' },
+        createdAt: act.createdAt.toISOString()
+      }
+    })
+
     return NextResponse.json({
-      data: inspections,
-      total,
+      data: mappedData,
+      total: actTotal,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(actTotal / limit),
     })
   } catch (error) {
     console.error('Error fetching inspections:', error)
@@ -239,6 +283,34 @@ export async function POST(request: NextRequest) {
         images: true,
       },
     })
+
+    // Sync into IncomingRawMaterialAct so all views (Inspections, Incoming Acts, Reports) are 100% unified
+    try {
+      const dateStr = body.inspectionDate ? String(body.inspectionDate).split('T')[0] : new Date().toISOString().split('T')[0]
+      await prisma.incomingRawMaterialAct.create({
+        data: {
+          actNumber: actNumber.replace(/^№\s*/, ''),
+          actDate: dateStr,
+          productName: inspection.product?.name || body.sheetName || 'Xomashyo',
+          supplierName: inspection.supplier?.name || "Ta'minotchi",
+          temperature: body.temperature ? String(body.temperature) : null,
+          transportCondition: body.packaging === 'Qoniqarsiz' ? 0 : 1,
+          hasDocumentation: 1,
+          structure: body.appearance === 'Nomaqbul' ? 0 : 1,
+          leafColor: body.color === 'Nomaqbul' ? 0 : 1,
+          tasteSmell: body.smell === 'Nomaqbul' ? 0 : 1,
+          decisionRating: status === 'REJECTED' ? 2 : status === 'CONDITIONAL' ? 3 : 4,
+          decisionText: body.conclusion || (status === 'REJECTED' ? 'Rad etildi' : 'Yaxshi'),
+          warehouseKg: acceptedQty,
+          batchNumber: finalBatchNumber || body.batchNumber || null,
+          rejectionActNumber,
+          inspectorName: body.inspector || 'Sifat Nazoratchisi',
+          notes: body.notes || null,
+        }
+      })
+    } catch (syncErr) {
+      console.warn('Sync to IncomingRawMaterialAct warning:', syncErr)
+    }
 
     // Only accepted quantity enters usable inventory in the Warehouse WMS (Requirement 1 & 6)
     if (status !== 'REJECTED' && acceptedQty > 0 && finalBatchNumber) {

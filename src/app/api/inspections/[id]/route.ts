@@ -22,9 +22,13 @@ export async function GET(_req: NextRequest, { params }: Params) {
     }
 
     // Fallback: check IncomingRawMaterialAct
-    const act = await prisma.incomingRawMaterialAct.findUnique({
-      where: { id: numId },
-    })
+    const [act, allProducts, allSuppliers] = await Promise.all([
+      prisma.incomingRawMaterialAct.findUnique({
+        where: { id: numId },
+      }),
+      prisma.product.findMany({ select: { id: true, name: true, unit: true } }),
+      prisma.supplier.findMany({ select: { id: true, name: true, shortName: true } }),
+    ])
 
     if (!act) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -32,23 +36,48 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     let dateIso = act.createdAt.toISOString()
     if (act.actDate) {
-      if (act.actDate.includes('.')) {
+      if (act.actDate.includes('-')) {
+        const parts = act.actDate.split('-')
+        if (parts.length === 3) {
+          dateIso = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}T12:00:00.000Z`
+        }
+      } else if (act.actDate.includes('.')) {
         const p = act.actDate.split('.')
-        if (p.length === 3) dateIso = new Date(`${p[2]}-${p[1]}-${p[0]}`).toISOString()
-      } else {
-        const d = new Date(act.actDate)
-        if (!isNaN(d.getTime())) dateIso = d.toISOString()
+        if (p.length === 3) {
+          dateIso = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}T12:00:00.000Z`
+        }
       }
     }
 
     const st = act.decisionRating === 2 ? 'REJECTED' : act.decisionRating === 3 ? 'CONDITIONAL' : 'ACCEPTED'
 
+    // Match actual product and supplier IDs
+    const normProd = (act.productName || '').toLowerCase()
+    const matchedProd = allProducts.find((p) => {
+      const pn = p.name.toLowerCase()
+      if (normProd.includes('айсберг') && (pn.includes('айсберг') || pn.includes('айзберг') || pn.includes('aysberg'))) return true
+      if (normProd.includes('томат') && (pn.includes('томат') || pn.includes('tomat') || pn.includes('pomidor'))) return true
+      if (normProd.includes('морков') && (pn.includes('морков') || pn.includes('sabzi'))) return true
+      if (normProd.includes('лук') && (pn.includes('лук') || pn.includes('piyoz'))) return true
+      if (normProd.includes('капуст') && (pn.includes('капуст') || pn.includes('karom'))) return true
+      if (normProd.includes('лимон') && (pn.includes('лимон') || pn.includes('limon'))) return true
+      if (normProd.includes('огур') && (pn.includes('огур') || pn.includes('bodring'))) return true
+      return pn.includes(normProd) || normProd.includes(pn)
+    })
+
+    const normSupp = (act.supplierName || '').toLowerCase()
+    const matchedSupp = allSuppliers.find((s) => {
+      const sn = s.name.toLowerCase()
+      const sh = (s.shortName || '').toLowerCase()
+      return sn.includes(normSupp) || normSupp.includes(sn) || (sh && normSupp.includes(sh))
+    })
+
     const mapped = {
       id: act.id,
       actNumber: act.actNumber ? (act.actNumber.startsWith('№') ? act.actNumber : `№ ${act.actNumber}`) : `№ ${act.id}`,
       inspectionDate: dateIso,
-      supplierId: act.id,
-      productId: act.id,
+      supplierId: matchedSupp?.id || act.id,
+      productId: matchedProd?.id || act.id,
       batchNumber: act.batchNumber || `LOT-${act.id}`,
       quantity: act.warehouseKg || 0,
       acceptedQuantity: act.decisionRating === 2 ? 0 : (act.warehouseKg || 0),
@@ -71,8 +100,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
       notes: act.notes || null,
       sheetName: act.productName,
       createdAt: act.createdAt.toISOString(),
-      supplier: { id: act.id, name: act.supplierName || 'Ta\'minotchi', phone: null, address: null },
-      product: { id: act.id, name: act.productName || 'Xomashyo', unit: 'kg', gost: null },
+      supplier: { id: matchedSupp?.id || act.id, name: act.supplierName || 'Ta\'minotchi', phone: null, address: null },
+      product: { id: matchedProd?.id || act.id, name: act.productName || 'Xomashyo', unit: matchedProd?.unit || 'kg', gost: null },
       user: { id: 1, name: act.inspectorName || 'Sifat Nazoratchisi' },
       images: [],
     }

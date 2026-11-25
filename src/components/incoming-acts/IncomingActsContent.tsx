@@ -146,8 +146,8 @@ export default function IncomingActsContent({
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
-  // View Mode: 'authentic' (Exact Excel appearance from screenshots) vs 'numeric' (1/0 numbers)
-  const [viewMode, setViewMode] = useState<'authentic' | 'numeric'>('authentic')
+  // View Mode: 'numeric' (1/0 numbers & 2-5 ratings) vs 'authentic' (Exact text from Excel)
+  const [viewMode, setViewMode] = useState<'authentic' | 'numeric'>('numeric')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // Modals state
@@ -203,8 +203,8 @@ export default function IncomingActsContent({
       importExcel: 'Excel Import',
       exportExcel: 'Excel yuklab olish',
       refresh: 'Yangilash',
-      authenticView: "Asl Excel ko'rinishi (Ranglar va mezonlar)",
-      numericView: 'Raqamli rejim (1 / 0 va 2-5 baholash)',
+      authenticView: "Matnli rejim (да / нет)",
+      numericView: 'Raqamli rejim (1 / 0 va 2-5 baho)',
       totalActs: 'Jami aktlar',
       totalWeight: 'Jami qabul qilingan',
       searchPlaceholder: "Partiya, ta'minotchi, nazoratchi, akt №...",
@@ -217,7 +217,7 @@ export default function IncomingActsContent({
       transport: 'Qadoqlash va tashish sharoiti',
       docs: 'Kuzatuv hujjatlari',
       batch: 'Partiya №',
-      rating: 'Sifat xulosasi (Ruxsat)',
+      rating: 'Baho (2, 3, 4, 5) / Ruxsat',
       issuedGroup: 'Ishlab chiqarishga berildi',
       kgWarehouse: 'Ombor (kg)',
       kgShop: 'Sexga (kg)',
@@ -245,7 +245,7 @@ export default function IncomingActsContent({
       importExcel: 'Импорт из Excel',
       exportExcel: 'Экспорт в Excel',
       refresh: 'Обновить',
-      authenticView: 'Оригинальный Excel вид (Формат клиента / Цвета)',
+      authenticView: 'Текстовый вид (да / нет)',
       numericView: 'Цифровой режим (1 / 0 и оценка 2-5)',
       totalActs: 'Всего актов',
       totalWeight: 'Принято всего',
@@ -259,7 +259,7 @@ export default function IncomingActsContent({
       transport: 'Оценка условий упаковки и транспортирования',
       docs: 'Сопровождающая документация',
       batch: '№ партии',
-      rating: 'Допуск',
+      rating: 'Оценка (2, 3, 4, 5) / Допуск',
       issuedGroup: 'Отпущено в производство',
       kgWarehouse: 'Склад (кг)',
       kgShop: 'КГ ЦЕХ',
@@ -287,7 +287,7 @@ export default function IncomingActsContent({
       importExcel: 'Excel Import',
       exportExcel: 'Export to Excel',
       refresh: 'Refresh',
-      authenticView: 'Authentic Excel View (Client Colors & Format)',
+      authenticView: 'Text Mode (yes / no)',
       numericView: 'Numeric Mode (1 / 0 & 2-5 rating)',
       totalActs: 'Total Acts',
       totalWeight: 'Total Received',
@@ -301,7 +301,7 @@ export default function IncomingActsContent({
       transport: 'Transport & Packaging Condition',
       docs: 'Accompanying Docs',
       batch: 'Batch #',
-      rating: 'Quality Verdict',
+      rating: 'Rating (2, 3, 4, 5) / Verdict',
       issuedGroup: 'Issued to Production',
       kgWarehouse: 'Warehouse (kg)',
       kgShop: 'Shop (kg)',
@@ -633,42 +633,75 @@ export default function IncomingActsContent({
     }
   }
 
-  // Helper for cell value rendering - displays human-readable quality text, NEVER raw 0 and 1
+  // Helper for cell value rendering - supports Numeric mode (1/0 & 2-5 ratings) and Authentic text mode
   const renderCellText = (
     rawVal: any,
     numVal: number,
     isDefect = false
   ) => {
-    // If rawVal is a human-readable text (and not just raw numeric '0' or '1')
-    if (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== '') {
-      const s = String(rawVal).trim()
-      if (s === '1') {
-        return isDefect ? (
-          <span className="text-rose-600 dark:text-rose-400 font-semibold">есть</span>
-        ) : (
-          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">да</span>
+    const s = rawVal !== undefined && rawVal !== null ? String(rawVal).trim() : ''
+
+    // 1. If cell is an explicit 2, 3, 4, 5 rating score
+    if (s === '5' || s === '4' || s === '3' || s === '2') {
+      const num = parseInt(s, 10)
+      const colors: Record<number, string> = {
+        5: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
+        4: 'bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border-blue-300 dark:border-blue-800',
+        3: 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 dark:border-amber-800',
+        2: 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300 dark:border-rose-800'
+      }
+
+      return (
+        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md font-mono font-black text-xs border shadow-xs ${colors[num] || 'bg-slate-100 text-slate-800 border-slate-300'}`}>
+          {num}
+        </span>
+      )
+    }
+
+    // Determine pass / fail status
+    // For defect columns: 0 or "нет" or "отсутствует" = clean/pass; 1 or "есть" or "да" = defect/fail
+    // For regular criteria: 1 or "да" or "есть" = pass; 0 or "нет" = fail
+    const isPass = isDefect
+      ? (s === '0' || s.toLowerCase() === 'нет' || s.toLowerCase() === 'отсутствует' || (!s && numVal === 0))
+      : (s === '1' || s.toLowerCase() === 'да' || s.toLowerCase() === 'есть' || s.toLowerCase().includes('удовл') || s.toLowerCase().includes('средн') || (!s && numVal === 1))
+
+    // 2. Numeric Mode: display 1 (good/pass) and 0 (defect/fail)
+    if (viewMode === 'numeric') {
+      if (isPass) {
+        return (
+          <span
+            className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold font-mono text-[11px] border border-emerald-300 dark:border-emerald-800 shadow-xs"
+            title={isDefect ? "Toza / Nuqson yo'q (1)" : "Muvofiq / Talabga javob beradi (1)"}
+          >
+            1
+          </span>
+        )
+      } else {
+        return (
+          <span
+            className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 font-bold font-mono text-[11px] border border-rose-300 dark:border-rose-800 shadow-xs"
+            title={isDefect ? "Brak / Nuqson mavjud (0)" : "Muvofiq emas (0)"}
+          >
+            0
+          </span>
         )
       }
-      if (s === '0') {
-        return isDefect ? (
-          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">отсутствует</span>
-        ) : (
-          <span className="text-rose-600 dark:text-rose-400 font-semibold">нет</span>
-        )
-      }
+    }
+
+    // 3. Authentic Mode: human-readable text
+    if (s !== '' && s !== '1' && s !== '0') {
       return <span className="font-medium text-slate-800 dark:text-slate-200">{s}</span>
     }
 
-    // Default based on boolean/numeric field:
     if (isDefect) {
-      return numVal === 0 ? (
+      return isPass ? (
         <span className="text-emerald-600 dark:text-emerald-400 font-semibold">отсутствует</span>
       ) : (
         <span className="text-rose-600 dark:text-rose-400 font-semibold">есть</span>
       )
     }
 
-    return numVal === 1 ? (
+    return isPass ? (
       <span className="text-emerald-600 dark:text-emerald-400 font-semibold">да</span>
     ) : (
       <span className="text-rose-600 dark:text-rose-400 font-semibold">нет</span>
@@ -713,12 +746,34 @@ export default function IncomingActsContent({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Format Badge */}
-          <div className="bg-slate-800/90 px-3.5 py-2 rounded-xl border border-slate-700 flex items-center gap-2 text-xs">
-            <TableIcon className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-bold text-slate-200">
-              {t.authenticView}
-            </span>
+          {/* View Mode Switcher: Numeric (1/0 & 2-5) vs Authentic Text */}
+          <div className="bg-slate-800/90 p-1 rounded-xl border border-slate-700 flex items-center gap-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('numeric')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition ${
+                viewMode === 'numeric'
+                  ? 'bg-emerald-600 text-white shadow ring-1 ring-emerald-400'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+              }`}
+              title="Raqamli rejim: 1 / 0 mezonlar va 2, 3, 4, 5 sifat bahosi"
+            >
+              <Hash className="w-3.5 h-3.5" />
+              <span>{t.numericView}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('authentic')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition ${
+                viewMode === 'authentic'
+                  ? 'bg-slate-700 text-amber-300 shadow ring-1 ring-amber-400/50'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+              }`}
+              title="Asl Excel matn ko'rinishi (да / нет)"
+            >
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>{t.authenticView}</span>
+            </button>
           </div>
 
           <button
@@ -1249,21 +1304,50 @@ export default function IncomingActsContent({
                         {act.batchNumber || raw.col20 || '-'}
                       </td>
 
-                      {/* Col 21: Допуск */}
-                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-semibold">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold inline-block ${
-                            act.decisionRating === 5
-                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                              : act.decisionRating === 4
-                              ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
-                              : act.decisionRating === 3
-                              ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                              : 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800'
-                          }`}
-                        >
-                          {raw.col21 || act.decisionText || (act.decisionRating === 2 ? 'не допускается' : 'допускается')}
-                        </span>
+                      {/* Col 21: Baholash (2, 3, 4, 5) / Допуск */}
+                      <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-semibold whitespace-nowrap">
+                        {(() => {
+                          const r = act.decisionRating || (act.rejectionActNumber ? 2 : 4)
+                          const config: Record<number, { label: string; badgeBg: string; pillBg: string }> = {
+                            5: {
+                              label: '5 - Ideal',
+                              badgeBg: 'bg-emerald-600 text-white',
+                              pillBg: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                            },
+                            4: {
+                              label: '4 - Yaxshi',
+                              badgeBg: 'bg-blue-600 text-white',
+                              pillBg: 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800'
+                            },
+                            3: {
+                              label: '3 - Shartli',
+                              badgeBg: 'bg-amber-600 text-white',
+                              pillBg: 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                            },
+                            2: {
+                              label: '2 - Rad etilgan',
+                              badgeBg: 'bg-red-600 text-white',
+                              pillBg: 'bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800'
+                            }
+                          }
+                          const c = config[r] || {
+                            label: `${r}`,
+                            badgeBg: 'bg-slate-600 text-white',
+                            pillBg: 'bg-slate-100 text-slate-800 border-slate-300'
+                          }
+
+                          return (
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-bold inline-flex items-center gap-1.5 border shadow-xs ${c.pillBg}`}
+                              title={`Baho: ${c.label} | ${act.decisionText || (r === 2 ? 'Rad etilgan' : 'Допускается')}`}
+                            >
+                              <span className={`w-4 h-4 rounded-full flex items-center justify-center font-mono font-black text-[11px] shadow-xs ${c.badgeBg}`}>
+                                {r}
+                              </span>
+                              <span>{c.label}</span>
+                            </span>
+                          )
+                        })()}
                       </td>
 
                       {/* Col 22: кг (Приём склад) */}

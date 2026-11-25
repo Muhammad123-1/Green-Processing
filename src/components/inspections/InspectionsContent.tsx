@@ -106,6 +106,7 @@ export default function InspectionsContent() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [productFilter, setProductFilter] = useState('')
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [generatingId, setGeneratingId] = useState<number | null>(null)
 
@@ -147,6 +148,7 @@ export default function InspectionsContent() {
         limit: '20',
         ...(search && { search }),
         ...(statusFilter && { status: statusFilter }),
+        ...(productFilter && { productId: productFilter }),
       })
       const res = await fetch(`/api/inspections?${params}`)
       if (res.ok) {
@@ -160,7 +162,7 @@ export default function InspectionsContent() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter])
+  }, [page, search, statusFilter, productFilter])
 
   const fetchDefects = useCallback(async () => {
     setDefectsLoading(true)
@@ -402,6 +404,20 @@ export default function InspectionsContent() {
                 />
               </div>
 
+              {/* Product Selector */}
+              <select
+                className="bg-dark-900 border border-dark-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 max-w-[200px]"
+                value={productFilter}
+                onChange={(e) => { setProductFilter(e.target.value); setPage(1) }}
+              >
+                <option value="">{formatDual("Barcha mahsulotlar", "Все продукты", "All products")}</option>
+                {productsList
+                  .filter((p) => [230, 229, 234, 233, 235, 285, 288].includes(p.id) || ['айсберг', 'томат', 'лук', 'капуста', 'морковь', 'лимон', 'огур'].some(k => (p.name || '').toLowerCase().includes(k)))
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+              </select>
+
               <select
                 className="bg-dark-900 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
                 value={statusFilter}
@@ -412,6 +428,16 @@ export default function InspectionsContent() {
                 <option value="REJECTED">{formatDual("🔴 Rad etildi", "🔴 Отклонено", "🔴 Rejected")}</option>
                 <option value="CONDITIONAL">{formatDual("🟡 Shartli qabul", "🟡 Условно принято", "🟡 Conditional")}</option>
               </select>
+
+              {(search || productFilter || statusFilter) && (
+                <button
+                  onClick={() => { setSearch(''); setProductFilter(''); setStatusFilter(''); setPage(1) }}
+                  className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-400 hover:text-white transition-colors"
+                  title={formatDual("Filtrlarni tozalash", "Сбросить фильтры", "Clear filters")}
+                >
+                  <RefreshCw size={16} />
+                </button>
+              )}
             </div>
 
             <div className="flex gap-3 w-full sm:w-auto justify-end">
@@ -485,11 +511,11 @@ export default function InspectionsContent() {
                         <td className="p-4 text-slate-300 whitespace-nowrap">
                           {new Date(item.inspectionDate).toLocaleDateString('uz-UZ')}
                         </td>
-                        <td className="p-4 max-w-[160px] truncate font-medium text-slate-200">{item.supplier?.name || '—'}</td>
-                        <td className="p-4 max-w-[160px] truncate font-bold text-white">{item.product?.name || '—'}</td>
+                        <td className="p-4 max-w-[180px] truncate font-medium text-slate-200" title={item.supplier?.name}>{item.supplier?.name || '—'}</td>
+                        <td className="p-4 max-w-[180px] truncate font-bold text-white" title={item.product?.name}>{item.product?.name || '—'}</td>
                         <td className="p-4 font-mono text-slate-300">{item.batchNumber || '—'}</td>
                         <td className="p-4 text-slate-200 font-mono font-bold whitespace-nowrap">
-                          {item.quantity} {item.quantityUnit}
+                          {item.quantity > 0 ? `${item.quantity.toLocaleString()} ${item.quantityUnit || 'kg'}` : '—'}
                         </td>
                         <td className="p-4">{statusBadge(item.status, formatDual)}</td>
                         <td className="p-4">

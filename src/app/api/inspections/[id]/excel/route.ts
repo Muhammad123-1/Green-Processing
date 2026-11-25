@@ -24,12 +24,16 @@ export async function GET(_req: NextRequest, { params }: Params) {
       if (act) {
         let dateIso = act.createdAt.toISOString()
         if (act.actDate) {
-          if (act.actDate.includes('.')) {
+          if (act.actDate.includes('-')) {
+            const parts = act.actDate.split('-')
+            if (parts.length === 3) {
+              dateIso = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}T12:00:00.000Z`
+            }
+          } else if (act.actDate.includes('.')) {
             const p = act.actDate.split('.')
-            if (p.length === 3) dateIso = new Date(`${p[2]}-${p[1]}-${p[0]}`).toISOString()
-          } else {
-            const d = new Date(act.actDate)
-            if (!isNaN(d.getTime())) dateIso = d.toISOString()
+            if (p.length === 3) {
+              dateIso = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}T12:00:00.000Z`
+            }
           }
         }
 
