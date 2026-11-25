@@ -9,13 +9,23 @@ import {
   FileSpreadsheet, 
   ClipboardList, 
   Menu,
-  ArrowLeftRight,
-  ArrowDownRight,
+  ArrowDownLeft,
+  ArrowUpRight,
   Truck,
   LogOut,
   UtensilsCrossed,
   HeartPulse,
-  MessageSquare
+  MessageSquare,
+  ChefHat,
+  DollarSign,
+  BarChart3,
+  AlertTriangle,
+  ShoppingCart,
+  Boxes,
+  ClipboardCheck,
+  Thermometer,
+  Users,
+  Briefcase
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useSidebar } from '@/store/sidebar'
@@ -152,46 +162,335 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     )
   }
 
-  const isDirector = userRole === 'DIRECTOR'
-  const homeHref = isDirector ? '/director' : '/dashboard'
+  interface NavItem {
+    label: string
+    href: string
+    icon: React.ComponentType<{ size?: number; className?: string }>
+    active: boolean
+    badge?: number
+  }
 
-  const navItems = [
-    {
-      label: formatDual('Asosiy', 'Главная', 'Home'),
-      href: homeHref,
-      icon: LayoutDashboard,
-      active: pathname === '/dashboard' || pathname === '/director'
-    },
-    {
-      label: formatDual('Ombor', 'Склад', 'Stock'),
-      href: '/warehouse',
-      icon: Package,
-      active: pathname.startsWith('/warehouse')
-    },
-    {
-      label: formatDual('Sifat (QC)', 'Контроль', 'QC'),
-      href: '/incoming-acts',
-      icon: FileSpreadsheet,
-      active: pathname.startsWith('/incoming-acts') || pathname.startsWith('/inspections')
-    },
-    ...(userRole === 'WAREHOUSE'
-      ? [
+  const getNavItemsForRole = (): NavItem[] => {
+    switch (normalizedRole) {
+      case 'DIRECTOR':
+        return [
           {
-            label: formatDual('Kirim', 'Приход', 'Arrivals'),
-            href: '/shop-report',
-            icon: ArrowDownRight,
-            active: pathname.startsWith('/shop-report'),
+            label: formatDual('Asosiy', 'Главная', 'Home'),
+            href: '/director',
+            icon: LayoutDashboard,
+            active: pathname === '/director'
           },
+          {
+            label: formatDual('Ishlab chiqarish', 'Производство', 'Production'),
+            href: '/production',
+            icon: ChefHat,
+            active: pathname.startsWith('/production')
+          },
+          {
+            label: formatDual('Moliya', 'Финансы', 'Finance'),
+            href: '/accounting',
+            icon: DollarSign,
+            active: pathname.startsWith('/accounting')
+          },
+          {
+            label: formatDual('Hisobotlar', 'Отчеты', 'Reports'),
+            href: '/reports',
+            icon: BarChart3,
+            active: pathname.startsWith('/reports')
+          }
         ]
-      : [
+
+      case 'SUPPLY':
+        return [
           {
-            label: formatDual('Kirim/Chiqim', 'Приход/Расход', 'In/Out'),
-            href: '/shop-report',
-            icon: ArrowLeftRight,
-            active: pathname.startsWith('/shop-report') || pathname.startsWith('/production'),
+            label: formatDual("Ta'minot", 'Снабжение', 'Supply'),
+            href: '/supply',
+            icon: Truck,
+            active: pathname === '/supply'
           },
-        ]),
-  ]
+          {
+            label: formatDual('Kamomad', 'Дефицит', 'Shortages'),
+            href: '/supply/shortages',
+            icon: AlertTriangle,
+            active: pathname.startsWith('/supply/shortages')
+          },
+          {
+            label: formatDual('Buyurtmalar', 'Заказы', 'Orders'),
+            href: '/orders',
+            icon: ShoppingCart,
+            active: pathname.startsWith('/orders')
+          },
+          {
+            label: formatDual('Chat', 'Чат', 'Chat'),
+            href: '/chat',
+            icon: MessageSquare,
+            active: pathname.startsWith('/chat'),
+            badge: unreadCount > 0 ? unreadCount : undefined
+          }
+        ]
+
+      case 'WAREHOUSE':
+        return [
+          {
+            label: formatDual('Ombor', 'Склад', 'Stock'),
+            href: '/warehouse',
+            icon: Package,
+            active: pathname.startsWith('/warehouse')
+          },
+          {
+            label: formatDual('Kirim', 'Приход', 'Inbound'),
+            href: '/inbound',
+            icon: ArrowDownLeft,
+            active: pathname.startsWith('/inbound')
+          },
+          {
+            label: formatDual('Chiqim', 'Расход', 'Outbound'),
+            href: '/outbound',
+            icon: ArrowUpRight,
+            active: pathname.startsWith('/outbound')
+          },
+          {
+            label: formatDual('GP (Tayyor)', 'ГП (Склад)', 'Finished'),
+            href: '/finished-goods',
+            icon: Boxes,
+            active: pathname.startsWith('/finished-goods')
+          }
+        ]
+
+      case 'PRODUCTION':
+      case 'TECHNOLOGY':
+        return [
+          {
+            label: formatDual('Ishlab chiqarish', 'Производство', 'Production'),
+            href: '/production',
+            icon: ChefHat,
+            active: pathname.startsWith('/production')
+          },
+          {
+            label: formatDual('Kunlik hisobot', 'Дневной отчет', 'Daily Log'),
+            href: '/shop-report',
+            icon: ClipboardList,
+            active: pathname.startsWith('/shop-report')
+          },
+          {
+            label: formatDual('Chiqim', 'Расход', 'Outbound'),
+            href: '/outbound',
+            icon: ArrowUpRight,
+            active: pathname.startsWith('/outbound')
+          },
+          {
+            label: formatDual('GP (Tayyor)', 'ГП (Склад)', 'Finished'),
+            href: '/finished-goods',
+            icon: Boxes,
+            active: pathname.startsWith('/finished-goods')
+          }
+        ]
+
+      case 'QUALITY_CONTROL':
+        return [
+          {
+            label: formatDual('Asosiy', 'Главная', 'Home'),
+            href: '/dashboard',
+            icon: LayoutDashboard,
+            active: pathname === '/dashboard'
+          },
+          {
+            label: formatDual('Kirim Aktlari', 'Акты приемки', 'Acts'),
+            href: '/incoming-acts',
+            icon: FileSpreadsheet,
+            active: pathname.startsWith('/incoming-acts')
+          },
+          {
+            label: formatDual('Tekshiruvlar', 'Проверки', 'Inspections'),
+            href: '/inspections',
+            icon: ClipboardList,
+            active: pathname.startsWith('/inspections')
+          },
+          {
+            label: formatDual('Harorat', 'Температура', 'Temp'),
+            href: '/temperature-logs',
+            icon: Thermometer,
+            active: pathname.startsWith('/temperature-logs')
+          }
+        ]
+
+      case 'INSPECTOR':
+        return [
+          {
+            label: formatDual('Asosiy', 'Главная', 'Home'),
+            href: '/inspector',
+            icon: ClipboardCheck,
+            active: pathname === '/inspector'
+          },
+          {
+            label: formatDual('Kirim Aktlari', 'Акты приемки', 'Acts'),
+            href: '/incoming-acts',
+            icon: FileSpreadsheet,
+            active: pathname.startsWith('/incoming-acts')
+          },
+          {
+            label: formatDual('Liniya Nazorati', 'Контроль линий', 'Shop QC'),
+            href: '/shop-report',
+            icon: ClipboardList,
+            active: pathname.startsWith('/shop-report')
+          },
+          {
+            label: formatDual('Harorat', 'Температура', 'Temp'),
+            href: '/temperature-logs',
+            icon: Thermometer,
+            active: pathname.startsWith('/temperature-logs')
+          }
+        ]
+
+      case 'ACCOUNTING':
+      case 'ACCOUNTANT':
+        return [
+          {
+            label: formatDual('Moliya', 'Финансы', 'Finance'),
+            href: '/accounting',
+            icon: DollarSign,
+            active: pathname.startsWith('/accounting')
+          },
+          {
+            label: formatDual('Qarzdorlik', 'Задолженность', 'Debts'),
+            href: '/supplier-debts',
+            icon: DollarSign,
+            active: pathname.startsWith('/supplier-debts')
+          },
+          {
+            label: formatDual('Hisobotlar', 'Отчеты', 'Reports'),
+            href: '/reports',
+            icon: BarChart3,
+            active: pathname.startsWith('/reports')
+          },
+          {
+            label: formatDual('Chat', 'Чат', 'Chat'),
+            href: '/chat',
+            icon: MessageSquare,
+            active: pathname.startsWith('/chat'),
+            badge: unreadCount > 0 ? unreadCount : undefined
+          }
+        ]
+
+      case 'HR':
+        return [
+          {
+            label: formatDual('HR', 'HR', 'HR'),
+            href: '/hr',
+            icon: Briefcase,
+            active: pathname.startsWith('/hr')
+          },
+          {
+            label: formatDual('Xodimlar', 'Сотрудники', 'Staff'),
+            href: '/users',
+            icon: Users,
+            active: pathname.startsWith('/users')
+          },
+          {
+            label: formatDual("Tibbiy ko'rik", 'Медосмотр', 'Medical'),
+            href: '/drivers-medical',
+            icon: Truck,
+            active: pathname.startsWith('/drivers-medical')
+          },
+          {
+            label: formatDual('Chat', 'Чат', 'Chat'),
+            href: '/chat',
+            icon: MessageSquare,
+            active: pathname.startsWith('/chat'),
+            badge: unreadCount > 0 ? unreadCount : undefined
+          }
+        ]
+
+      case 'LOGISTICS':
+        return [
+          {
+            label: formatDual('Logistika', 'Логистика', 'Logistics'),
+            href: '/logistics',
+            icon: Truck,
+            active: pathname.startsWith('/logistics')
+          },
+          {
+            label: formatDual('Buyurtmalar', 'Заказы', 'Orders'),
+            href: '/orders',
+            icon: ShoppingCart,
+            active: pathname.startsWith('/orders')
+          },
+          {
+            label: formatDual('Haydovchilar', 'Водители', 'Drivers'),
+            href: '/drivers-medical',
+            icon: HeartPulse,
+            active: pathname.startsWith('/drivers-medical')
+          },
+          {
+            label: formatDual('Chat', 'Чат', 'Chat'),
+            href: '/chat',
+            icon: MessageSquare,
+            active: pathname.startsWith('/chat'),
+            badge: unreadCount > 0 ? unreadCount : undefined
+          }
+        ]
+
+      case 'SALES':
+        return [
+          {
+            label: formatDual('Savdo', 'Продажи', 'Sales'),
+            href: '/sales',
+            icon: ShoppingCart,
+            active: pathname.startsWith('/sales')
+          },
+          {
+            label: formatDual('GP (Tayyor)', 'ГП (Склад)', 'Finished'),
+            href: '/finished-goods',
+            icon: Boxes,
+            active: pathname.startsWith('/finished-goods')
+          },
+          {
+            label: formatDual('Monitoring', 'Мониторинг', 'Monitoring'),
+            href: '/monitoring',
+            icon: BarChart3,
+            active: pathname.startsWith('/monitoring')
+          },
+          {
+            label: formatDual('Chat', 'Чат', 'Chat'),
+            href: '/chat',
+            icon: MessageSquare,
+            active: pathname.startsWith('/chat'),
+            badge: unreadCount > 0 ? unreadCount : undefined
+          }
+        ]
+
+      default:
+        // ADMIN va boshqa umumiy foydalanuvchilar
+        return [
+          {
+            label: formatDual('Asosiy', 'Главная', 'Home'),
+            href: '/dashboard',
+            icon: LayoutDashboard,
+            active: pathname === '/dashboard' || pathname === '/director'
+          },
+          {
+            label: formatDual('Ombor', 'Склад', 'Stock'),
+            href: '/warehouse',
+            icon: Package,
+            active: pathname.startsWith('/warehouse')
+          },
+          {
+            label: formatDual('Ishlab chiqarish', 'Производство', 'Production'),
+            href: '/production',
+            icon: ChefHat,
+            active: pathname.startsWith('/production')
+          },
+          {
+            label: formatDual('Moliya', 'Финансы', 'Finance'),
+            href: '/accounting',
+            icon: DollarSign,
+            active: pathname.startsWith('/accounting')
+          }
+        ]
+    }
+  }
+
+  const navItems = getNavItemsForRole()
 
   return (
     <nav 
@@ -211,14 +510,20 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
                   : 'text-slate-400 hover:text-slate-200 active:scale-95'
               }`}
             >
-              <div className={`w-9 h-8 flex items-center justify-center rounded-xl transition-all ${
+              <div className={`relative w-9 h-8 flex items-center justify-center rounded-xl transition-all ${
                 item.active 
                   ? 'bg-emerald-500/20 border border-emerald-500/40 shadow-sm shadow-emerald-500/30' 
                   : 'bg-transparent'
               }`}>
                 <Icon size={19} className={item.active ? 'text-emerald-400' : 'text-slate-400'} />
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                  </span>
+                )}
               </div>
-              <span className="text-[10px] mt-0.5 tracking-tight font-medium leading-none truncate max-w-[64px] text-center">
+              <span className="text-[10px] mt-0.5 tracking-tight font-medium leading-none truncate max-w-[70px] text-center">
                 {item.label}
               </span>
               {item.active && (
