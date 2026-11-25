@@ -524,11 +524,23 @@ html.light [class*="bg-slate-950"].text-white * {
 }
 
 /* Light mode text mappings for readable high-contrast dark text (WCAG AAA compliant for elderly / directors) */
-html.light .text-slate-100:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #0f172a !important; }
-html.light .text-slate-200:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #1e293b !important; }
-html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #334155 !important; }
-html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #475569 !important; }
-html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *):not([class*="bg-dark-900"] *) { color: #475569 !important; }
+html.light .text-slate-100:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *) { color: #0f172a !important; }
+html.light .text-slate-200:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *) { color: #1e293b !important; }
+html.light .text-slate-300:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *) { color: #334155 !important; }
+html.light .text-slate-400:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *) { color: #475569 !important; }
+html.light .text-slate-500:not(button *):not(.btn-primary *):not(.btn-success *):not(.btn-danger *):not(.dark-banner *):not([class*="from-slate-900"] *):not([class*="from-dark-900"] *):not([class*="from-dark-850"] *):not([class*="bg-slate-800"] *):not([class*="bg-slate-900"] *) { color: #475569 !important; }
+
+/* Ensure inputs, selects, and textareas in light mode always have dark, high-contrast text and crisp background by default */
+html.light input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not(.btn-primary *):not(.btn-success *):not(.btn-danger *),
+html.light select:not(.btn-primary *):not(.btn-success *):not(.btn-danger *),
+html.light textarea {
+  color: #0f172a !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
 
 /* In light mode, turn general white text to deep dark slate text (unless on solid colored pill/badge or dark banner) */
 html.light h1.text-white:not(button *):not([class*="from-slate-900"]):not([class*="from-dark-900"]):not([class*="from-dark-850"]):not([class*="from-indigo-950"]):not(.dark-banner *):not([class*="bg-slate-"]):not([class*="bg-dark-"]),

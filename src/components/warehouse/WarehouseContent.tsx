@@ -3067,14 +3067,14 @@ export default function WarehouseContent() {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Omborxonadagi Zona</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Omborxonadagi Zona</label>
                 <select 
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none text-white text-sm"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white text-sm"
                   value={showZoneModal.currentZoneId || ''}
                   onChange={e => setShowZoneModal({...showZoneModal, currentZoneId: e.target.value ? Number(e.target.value) : null})}
                 >
-                  <option value="">Belgilash...</option>
-                  {zones.map(z => <option key={z.id} value={z.id}>{z.name} ({z.warehouse.name})</option>)}
+                  <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">Belgilash...</option>
+                  {zones.map(z => <option key={z.id} value={z.id} className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">{z.name} ({z.warehouse.name})</option>)}
                 </select>
               </div>
             </div>
@@ -3093,36 +3093,36 @@ export default function WarehouseContent() {
           onClick={() => setShowReceiveModal(false)}
         >
           <div 
-            className="w-full max-w-2xl bg-dark-900 border border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8"
+            className="w-full max-w-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <Package size={22} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                     {formatDual("Omborga Mahsulot Kirim Qilish", "Приемка сырья на склад", "Warehouse Stock Intake")}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual("Partiya, yetkazib beruvchi, muddat va rasm bilan qabul qilish", "Приход с партией, поставщиком, сроком и фото", "Intake with batch, supplier, expiry and photo")}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setShowReceiveModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800">
+              <button onClick={() => setShowReceiveModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800">
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveReceive} className="space-y-4 pt-4 max-h-[75vh] overflow-y-auto pr-1">
               {/* Toggle: Existing vs New Product */}
-              <div className="flex flex-wrap gap-2 rounded-xl bg-dark-800 p-1 border border-dark-700">
+              <div className="flex flex-wrap gap-2 rounded-xl bg-slate-100 dark:bg-dark-800 p-1 border border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setReceiveForm({ ...receiveForm, isNewProduct: false })}
                   className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                    !receiveForm.isNewProduct ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    !receiveForm.isNewProduct ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {formatDual("Mavjud Mahsulotni Tanlash", "Выбрать существующий", "Select Existing")}
@@ -3131,7 +3131,7 @@ export default function WarehouseContent() {
                   type="button"
                   onClick={() => setReceiveForm({ ...receiveForm, isNewProduct: true, productId: '' })}
                   className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                    receiveForm.isNewProduct ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    receiveForm.isNewProduct ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {formatDual("+ Yangi Mahsulot Ochish", "+ Новый продукт", "+ Create New Product")}
@@ -3141,8 +3141,8 @@ export default function WarehouseContent() {
               {/* Product Selection / Creation */}
               {!receiveForm.isNewProduct ? (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    {formatDual("Mahsulot", "Продукт", "Product")} <span className="text-red-400">*</span>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                    {formatDual("Mahsulot", "Продукт", "Product")} <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
@@ -3156,21 +3156,21 @@ export default function WarehouseContent() {
                         category: p?.category || 'Xomashyo'
                       })
                     }}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 focus:bg-white"
                   >
-                    <option value="">{formatDual("Mahsulotni tanlang...", "Выберите продукт...", "Select product...")}</option>
+                    <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">{formatDual("Mahsulotni tanlang...", "Выберите продукт...", "Select product...")}</option>
                     {inventory.map(item => (
-                      <option key={item.id} value={item.id}>
+                      <option key={item.id} value={item.id} className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">
                         {item.name} {item.code ? `(${item.code})` : ''} - Joriy: {item.totalQuantity} {item.unit}
                       </option>
                     ))}
                   </select>
                 </div>
               ) : (
-                <div className="space-y-3 p-4 bg-dark-800/60 rounded-2xl border border-dark-700">
+                <div className="space-y-3 p-4 bg-slate-50 dark:bg-dark-800/60 rounded-2xl border border-slate-200 dark:border-dark-700">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
-                      {formatDual("Yangi Mahsulot Nomi", "Название нового продукта", "New Product Name")} <span className="text-red-400">*</span>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                      {formatDual("Yangi Mahsulot Nomi", "Название нового продукта", "New Product Name")} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -3178,12 +3178,12 @@ export default function WarehouseContent() {
                       placeholder="Masalan: Go'sht (Mol lahm), Pomidor, Un..."
                       value={receiveForm.newProductName}
                       onChange={(e) => setReceiveForm({ ...receiveForm, newProductName: e.target.value })}
-                      className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-semibold"
+                      className="w-full bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 font-semibold"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                         {formatDual("Kategoriya", "Категория", "Category")}
                       </label>
                       <input
@@ -3191,25 +3191,25 @@ export default function WarehouseContent() {
                         placeholder="Xomashyo, Sabzavot, Go'sht..."
                         value={receiveForm.category}
                         onChange={(e) => setReceiveForm({ ...receiveForm, category: e.target.value })}
-                        className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                        className="w-full bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
                         {formatDual("Birlik", "Единица", "Unit")}
                       </label>
                       <select
                         value={receiveForm.unit}
                         onChange={(e) => setReceiveForm({ ...receiveForm, unit: e.target.value })}
-                        className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+                        className="w-full bg-white dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500"
                       >
-                        <option value="kg">kg (Kilogramm)</option>
-                        <option value="dona">dona (Штук)</option>
-                        <option value="litr">litr (Литр)</option>
-                        <option value="gramm">gramm (Грамм)</option>
-                        <option value="qop">qop (Мешок)</option>
-                        <option value="karobka">karobka (Коробка)</option>
-                        <option value="metr">metr (Метр)</option>
+                        <option value="kg" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">kg (Kilogramm)</option>
+                        <option value="dona" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">dona (Штук)</option>
+                        <option value="litr" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">litr (Литр)</option>
+                        <option value="gramm" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">gramm (Грамм)</option>
+                        <option value="qop" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">qop (Мешок)</option>
+                        <option value="karobka" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">karobka (Коробка)</option>
+                        <option value="metr" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">metr (Метр)</option>
                       </select>
                     </div>
                   </div>
@@ -3219,8 +3219,8 @@ export default function WarehouseContent() {
               {/* Batch & Quantity */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    {formatDual("Kirim Miqdori", "Количество", "Quantity")} ({receiveForm.unit}) <span className="text-red-400">*</span>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                    {formatDual("Kirim Miqdori", "Количество", "Quantity")} ({receiveForm.unit}) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -3229,11 +3229,11 @@ export default function WarehouseContent() {
                     placeholder="Masalan: 50"
                     value={receiveForm.quantity}
                     onChange={(e) => setReceiveForm({ ...receiveForm, quantity: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-base focus:outline-none focus:border-emerald-500 font-mono font-bold"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-base focus:outline-none focus:border-emerald-500 font-mono font-bold focus:bg-white"
                   />
                 </div>
                 <div className="sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Partiya Raqami", "Номер партии", "Batch Number")}
                   </label>
                   <input
@@ -3241,18 +3241,18 @@ export default function WarehouseContent() {
                     placeholder="Avto-generatsiya..."
                     value={receiveForm.batchNumber}
                     onChange={(e) => setReceiveForm({ ...receiveForm, batchNumber: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 font-mono focus:bg-white"
                   />
                 </div>
                 <div className="sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Yaroqlilik muddati (FEFO)", "Срок годности (FEFO)", "Expiry Date")}
                   </label>
                   <input
                     type="date"
                     value={receiveForm.expirationDate}
                     onChange={(e) => setReceiveForm({ ...receiveForm, expirationDate: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 focus:bg-white"
                   />
                 </div>
               </div>
@@ -3260,32 +3260,32 @@ export default function WarehouseContent() {
               {/* Supplier & Zone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Yetkazib Beruvchi", "Поставщик", "Supplier")}
                   </label>
                   <select
                     value={receiveForm.supplierId}
                     onChange={(e) => setReceiveForm({ ...receiveForm, supplierId: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 focus:bg-white"
                   >
-                    <option value="">{formatDual("Tanlang (Ixtiyoriy)...", "Выберите (Опционально)...", "Select (Optional)...")}</option>
+                    <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">{formatDual("Tanlang (Ixtiyoriy)...", "Выберите (Опционально)...", "Select (Optional)...")}</option>
                     {suppliers.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
+                      <option key={s.id} value={s.id} className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">{s.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Saqlash Zonasi", "Зона хранения", "Storage Zone")}
                   </label>
                   <select
                     value={receiveForm.zoneId}
                     onChange={(e) => setReceiveForm({ ...receiveForm, zoneId: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 focus:bg-white"
                   >
-                    <option value="">{formatDual("Zonani tanlang...", "Выберите зону...", "Select zone...")}</option>
+                    <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">{formatDual("Zonani tanlang...", "Выберите зону...", "Select zone...")}</option>
                     {zones.map(z => (
-                      <option key={z.id} value={z.id}>{z.name} ({z.warehouse?.name || 'Ombor'})</option>
+                      <option key={z.id} value={z.id} className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">{z.name} ({z.warehouse?.name || 'Ombor'})</option>
                     ))}
                   </select>
                 </div>
@@ -3294,7 +3294,7 @@ export default function WarehouseContent() {
               {/* Cost, Temp, Date */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Ta'minotchi Hujjati / Nakladnoy", "Номер накладной / партии", "Supplier Batch / Doc")}
                   </label>
                   <input
@@ -3302,11 +3302,11 @@ export default function WarehouseContent() {
                     placeholder="M: N-4819"
                     value={receiveForm.supplierBatchNumber}
                     onChange={(e) => setReceiveForm({ ...receiveForm, supplierBatchNumber: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Kelish Harorati (°C)", "Температура привоза (°C)", "Arrival Temp (°C)")}
                   </label>
                   <input
@@ -3315,31 +3315,31 @@ export default function WarehouseContent() {
                     placeholder="Masalan: 3.5"
                     value={receiveForm.arrivalTemperature}
                     onChange={(e) => setReceiveForm({ ...receiveForm, arrivalTemperature: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 font-mono focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Kirim Sanasi", "Дата прихода", "Intake Date")}
                   </label>
                   <input
                     type="date"
                     value={receiveForm.receivedAt}
                     onChange={(e) => setReceiveForm({ ...receiveForm, receivedAt: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 focus:bg-white"
                   />
                 </div>
               </div>
 
               {/* Photo Upload Section */}
-              <div className="p-4 bg-dark-800/80 rounded-2xl border border-dark-700 space-y-3">
+              <div className="p-4 bg-slate-50 dark:bg-dark-800/80 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
                 <div className="flex flex-wrap gap-2 items-center justify-between">
-                  <label className="text-xs font-bold text-slate-200 uppercase flex items-center gap-2">
-                    <Camera size={16} className="text-emerald-400" />
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase flex items-center gap-2">
+                    <Camera size={16} className="text-emerald-600 dark:text-emerald-400" />
                     <span>{formatDual("Partiya / Mahsulot Rasmi", "Фото партии / сырья", "Batch / Product Photo")}</span>
                   </label>
                   {receiveForm.arrivalPhotoUrl && (
-                    <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                       <CheckCircle size={14} /> {formatDual("Rasm biriktirildi", "Фото прикреплено", "Photo attached")}
                     </span>
                   )}
@@ -3355,7 +3355,7 @@ export default function WarehouseContent() {
                 />
 
                 {receiveForm.arrivalPhotoUrl ? (
-                  <div className="flex items-center gap-4 bg-dark-900 p-3 rounded-xl border border-dark-750">
+                  <div className="flex items-center gap-4 bg-white dark:bg-dark-900 p-3 rounded-xl border border-slate-200 dark:border-dark-750">
                     <img
                       src={receiveForm.arrivalPhotoUrl}
                       alt="Partiya rasmi"
@@ -3363,20 +3363,20 @@ export default function WarehouseContent() {
                       className="w-20 h-20 rounded-xl object-cover border border-emerald-500/40 cursor-pointer hover:opacity-90 shadow"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-300 font-medium truncate mb-1">
+                      <p className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate mb-1">
                         {receiveForm.arrivalPhotoUrl.split('/').pop()}
                       </p>
                       <div className="flex items-center gap-2">
                         <label
                           htmlFor="warehouse-receive-photo-input"
-                          className="px-3 py-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
+                          className="px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
                         >
                           {formatDual("O'zgartirish", "Изменить", "Change")}
                         </label>
                         <button
                           type="button"
                           onClick={() => setReceiveForm({ ...receiveForm, arrivalPhotoUrl: '' })}
-                          className="px-3 py-1 text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                          className="px-3 py-1 text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors"
                         >
                           {formatDual("O'chirish", "Удалить", "Remove")}
                         </button>
@@ -3386,22 +3386,22 @@ export default function WarehouseContent() {
                 ) : (
                   <label
                     htmlFor="warehouse-receive-photo-input"
-                    className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-dark-600 hover:border-emerald-500/50 rounded-2xl cursor-pointer bg-dark-900/40 hover:bg-dark-900 transition-all text-center group"
+                    className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-300 dark:border-dark-600 hover:border-emerald-500/50 rounded-2xl cursor-pointer bg-white dark:bg-dark-900/40 hover:bg-slate-50 dark:hover:bg-dark-900 transition-all text-center group"
                   >
                     {uploadingReceivePhoto ? (
-                      <div className="flex items-center gap-2 text-emerald-400 py-3">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 py-3">
                         <Loader2 size={24} className="animate-spin" />
                         <span className="text-sm font-semibold">{formatDual("Rasm yuklanmoqda...", "Загрузка фото...", "Uploading photo...")}</span>
                       </div>
                     ) : (
                       <>
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 group-hover:bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2 transition-colors">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 group-hover:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2 transition-colors">
                           <Camera size={24} />
                         </div>
-                        <p className="text-xs font-bold text-slate-200">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                           {formatDual("Kamera orqali rasmga oling yoki fayl tanlang", "Сфотографировать на камеру или выбрать файл", "Take photo with camera or choose file")}
                         </p>
-                        <p className="text-[11px] text-slate-400 mt-1">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                           {formatDual("Omborchilar telefonidan bevosita rasmga olib yuklashi mumkin", "Складчик может сразу сделать фото с телефона", "Warehouse staff can take photos directly from smartphone")}
                         </p>
                       </>
@@ -3412,7 +3412,7 @@ export default function WarehouseContent() {
 
               {/* Notes */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                   {formatDual("Izoh / Holati", "Примечание / Состояние", "Notes / Condition")}
                 </label>
                 <input
@@ -3420,12 +3420,12 @@ export default function WarehouseContent() {
                   placeholder="Masalan: Mahsulot sifatli yetib keldi, qadoqlari butun..."
                   value={receiveForm.notes}
                   onChange={(e) => setReceiveForm({ ...receiveForm, notes: e.target.value })}
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-500 focus:bg-white"
                 />
               </div>
 
               {/* Modal Actions */}
-              <div className="flex flex-wrap gap-2 items-center justify-end pt-4 border-t border-dark-700">
+              <div className="flex flex-wrap gap-2 items-center justify-end pt-4 border-t border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setShowReceiveModal(false)}
@@ -3498,34 +3498,34 @@ export default function WarehouseContent() {
           onClick={() => setShowOrderModal(false)}
         >
           <div 
-            className="w-full max-w-lg bg-dark-900 border border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8"
+            className="w-full max-w-lg bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                   <ShoppingCart size={22} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                     {formatDual("Ta'minotga Buyurtma (Talabnoma)", "Заявка в отдел снабжения", "Purchase Request")}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDual("Kamaygan xomashyoni sotib olish uchun talabnoma yuborish", "Отправка заявки на закупку сырья в снабжение и общий чат", "Send order request to supply and chat")}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setShowOrderModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800">
+              <button onClick={() => setShowOrderModal(false)} className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800">
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveOrder} className="space-y-4 pt-4">
               {/* Product Info Card & Selector */}
-              <div className="p-4 bg-dark-800/80 rounded-2xl border border-dark-700 space-y-3">
+              <div className="p-4 bg-slate-50 dark:bg-dark-800/80 rounded-2xl border border-slate-200 dark:border-dark-700 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Mahsulotni tanlash</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${orderingItem.totalQuantity === 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">Mahsulotni tanlash</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${orderingItem.totalQuantity === 0 ? 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30' : 'bg-amber-50 dark:bg-amber-500/20 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30'}`}>
                     Qoldiq: {orderingItem.totalQuantity} {orderingItem.unit}
                   </span>
                 </div>
@@ -3536,25 +3536,25 @@ export default function WarehouseContent() {
                     const found = inventory.find(i => i.id === parseInt(e.target.value))
                     if (found) handleOpenOrderModal(found)
                   }}
-                  className="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-white text-sm font-bold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-white dark:bg-dark-900 border border-slate-300 dark:border-dark-600 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:border-amber-500 shadow-xs"
                 >
                   {inventory.map(inv => (
-                    <option key={inv.id} value={inv.id}>
+                    <option key={inv.id} value={inv.id} className="text-slate-900 dark:text-white bg-white dark:bg-dark-900">
                       {inv.name} (Qoldiq: {inv.totalQuantity} {inv.unit}) {inv.status === 'red' ? ' [Tugagan]' : inv.status === 'yellow' ? ' [Kam]' : ''}
                     </option>
                   ))}
                 </select>
 
-                <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-dark-700">
-                  <span>Kategoriya: <b className="text-slate-300">{orderingItem.category || 'Xomashyo'}</b></span>
-                  <span>Min. me'yor: <b className="text-slate-300">{orderingItem.minStockLevel} {orderingItem.unit}</b></span>
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-dark-700">
+                  <span>Kategoriya: <b className="text-slate-800 dark:text-slate-200">{orderingItem.category || 'Xomashyo'}</b></span>
+                  <span>Min. me'yor: <b className="text-slate-800 dark:text-slate-200">{orderingItem.minStockLevel} {orderingItem.unit}</b></span>
                 </div>
               </div>
 
               {/* Quantity to Order */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                  {formatDual("Kerakli Buyurtma Miqdori", "Необходимое количество", "Required Quantity")} ({orderForm.unit}) <span className="text-red-400">*</span>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                  {formatDual("Kerakli Buyurtma Miqdori", "Необходимое количество", "Required Quantity")} ({orderForm.unit}) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -3564,9 +3564,9 @@ export default function WarehouseContent() {
                     placeholder="Masalan: 100"
                     value={orderForm.quantity}
                     onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-4 pr-16 py-3 text-white text-lg font-mono font-bold focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl pl-4 pr-16 py-3 text-slate-900 dark:text-white text-lg font-mono font-bold focus:outline-none focus:border-amber-500 focus:bg-white shadow-xs"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500 dark:text-slate-400">
                     {orderForm.unit}
                   </span>
                 </div>
@@ -3575,37 +3575,37 @@ export default function WarehouseContent() {
               {/* Expected Date & Time Range */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-                    {formatDual("Qachonga Kerak (Sana)", "К какой дате (Срок)", "Needed By (Date)")} <span className="text-red-400">*</span>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                    {formatDual("Qachonga Kerak (Sana)", "К какой дате (Срок)", "Needed By (Date)")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     required
                     value={orderForm.expectedDate}
                     onChange={(e) => setOrderForm({ ...orderForm, expectedDate: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-amber-500 focus:bg-white shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                     {formatDual("Vaqt Oralig'i", "Время доставки", "Time Range")}
                   </label>
                   <select
                     value={orderForm.timeRange}
                     onChange={(e) => setOrderForm({ ...orderForm, timeRange: e.target.value })}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-amber-500 focus:bg-white shadow-xs"
                   >
-                    <option value="09:00 - 12:00">09:00 - 12:00 (Ertalab)</option>
-                    <option value="12:00 - 15:00">12:00 - 15:00 (Tushdan keyin)</option>
-                    <option value="15:00 - 18:00">15:00 - 18:00 (Kechga)</option>
-                    <option value="Ixtiyoriy">Ixtiyoriy vaqtda</option>
+                    <option value="09:00 - 12:00" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">09:00 - 12:00 (Ertalab)</option>
+                    <option value="12:00 - 15:00" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">12:00 - 15:00 (Tushdan keyin)</option>
+                    <option value="15:00 - 18:00" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">15:00 - 18:00 (Kechga)</option>
+                    <option value="Ixtiyoriy" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">Ixtiyoriy vaqtda</option>
                   </select>
                 </div>
               </div>
 
               {/* Omborchi Izohi (Faqat Ta'minotga ko'rinadi) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
                   {formatDual("Omborchi Izohi (Ta'minot Bo'limiga)", "Примечание склада (Для снабжения)", "Warehouse Note (For Supply)")}
                 </label>
                 <input
@@ -3613,12 +3613,12 @@ export default function WarehouseContent() {
                   placeholder={formatDual("Masalan: Tomat qolmadi, sexga zudlik bilan kerak...", "Например: Томат закончился, срочно нужен в цех...", "E.g. Out of stock, urgently needed in production...")}
                   value={orderForm.notes}
                   onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-300 dark:border-dark-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-amber-500 focus:bg-white shadow-xs"
                 />
               </div>
 
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center gap-2">
-                <ShoppingCart size={16} className="flex-shrink-0" />
+              <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-xs text-amber-900 dark:text-amber-300 flex items-center gap-2">
+                <ShoppingCart size={16} className="flex-shrink-0 text-amber-600 dark:text-amber-400" />
                 <span>
                   {formatDual(
                     "Ombor talabnomasi Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasida aks etadi. Ta'minotchi va narxni Ta'minot bo'limi biriktiradi.",
@@ -3629,7 +3629,7 @@ export default function WarehouseContent() {
               </div>
 
               {/* Modal Actions */}
-              <div className="flex flex-wrap gap-2 items-center justify-end pt-3 border-t border-dark-700">
+              <div className="flex flex-wrap gap-2 items-center justify-end pt-3 border-t border-slate-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={() => setShowOrderModal(false)}
