@@ -299,6 +299,18 @@ export async function loadDefaultTemplateActs(): Promise<IncomingActRecord[]> {
   return parseIncomingActsFromBuffer(buffer)
 }
 
+function getCanonicalProductKey(productName: string): string {
+  const p = (productName || '').trim().toUpperCase()
+  if (p.includes('ТОМАТ') || p.includes('ПОМИДОР') || p.includes('TOMAT') || p.includes('TOMATO')) return 'ТОМАТ'
+  if (p.includes('ЛУК') || p.includes('ПИЁЗ') || p.includes('PIYOZ') || p.includes('ONION')) return 'ЛУК БЕЛЫЙ'
+  if (p.includes('КАПУСТА') || p.includes('KARAM') || p.includes('CABBAGE')) return 'КАПУСТА БЕЛОКОЧАННАЯ'
+  if (p.includes('МОРКОВ') || p.includes('SABZI') || p.includes('CARROT')) return 'МОРКОВЬ'
+  if (p.includes('ЛИМОН') || p.includes('LEMON') || p.includes('LIMON')) return 'ЛИМОН'
+  if (p.includes('ОГУР') || p.includes('BODRING') || p.includes('CUCUMBER')) return 'ОГУРЦЫ СВЕЖИЕ'
+  if (p.includes('АЙСБЕРГ') || p.includes('AYZBERG') || p.includes('AYSBERG') || p.includes('САЛАТ')) return 'САЛАТ АЙСБЕРГ'
+  return p || 'BOSHQA'
+}
+
 /**
  * Builds an authentic worksheet for a single product category
  */
@@ -308,10 +320,27 @@ function buildProductSheet(
   acts: IncomingActRecord[],
   lang: 'uz' | 'ru' | 'en' = 'uz'
 ): ExcelJS.Worksheet {
+  const isStandardVeg = [
+    'САЛАТ АЙСБЕРГ',
+    'ТОМАТ',
+    'КАПУСТА БЕЛОКОЧАННАЯ',
+    'МОРКОВЬ',
+    'ЛУК БЕЛЫЙ',
+    'ЛИМОН',
+    'ОГУРЦЫ СВЕЖИЕ'
+  ].includes(productName)
+
   const theme = getProductTheme(productName, lang)
-  const sheetTitle = theme.name || productName
-  // Excel sheet name max 31 characters, no invalid chars
-  const sheetName = sheetTitle.replace(/[\\/?*\[\]:]/g, ' ').substring(0, 31).trim() || 'Xomashyo'
+  const displayName = isStandardVeg ? (theme.name || productName) : productName
+  const baseName = displayName.replace(/[\\/?*\[\]:]/g, ' ').substring(0, 25).trim() || 'Xomashyo'
+
+  // Ensure unique sheet name in workbook
+  let sheetName = baseName
+  let counter = 1
+  while (wb.getWorksheet(sheetName)) {
+    counter++
+    sheetName = `${baseName.substring(0, 24)} (${counter})`
+  }
 
   const ws = wb.addWorksheet(sheetName)
 
@@ -366,10 +395,10 @@ function buildProductSheet(
   const titleCell = ws.getCell('B5')
   titleCell.value =
     lang === 'ru'
-      ? `ВХОДНОЕ СЫРЬЕ (${theme.name}) - ЖУРНАЛ АКТОВ ПРИЁМКИ И БРАКЕРАЖА`
+      ? `ВХОДНОЕ СЫРЬЕ (${displayName}) - ЖУРНАЛ АКТОВ ПРИЁМКИ И БРАКЕРАЖА`
       : lang === 'en'
-      ? `INCOMING RAW MATERIAL (${theme.name}) - INSPECTION & ACCEPTANCE JOURNAL`
-      : `KIRUVCHI XOMASHYO (${theme.name}) - QABUL QILISH VA SIFAT AKTLARI JURNALI`
+      ? `INCOMING RAW MATERIAL (${displayName}) - INSPECTION & ACCEPTANCE JOURNAL`
+      : `KIRUVCHI XOMASHYO (${displayName}) - QABUL QILISH VA SIFAT AKTLARI JURNALI`
   titleCell.font = { bold: true, size: 13, color: { argb: 'FF1E3A8A' } }
   titleCell.alignment = { vertical: 'middle', horizontal: 'left' }
 
@@ -418,10 +447,10 @@ function buildProductSheet(
       col: 4,
       label:
         lang === 'ru'
-          ? `Наименование основного СЫРЬЯ - ${theme.name}`
+          ? `Наименование основного СЫРЬЯ - ${displayName}`
           : lang === 'en'
-          ? `Main RAW MATERIAL - ${theme.name}`
-          : `Asosiy XOMASHYO nomi - ${theme.name}`
+          ? `Main RAW MATERIAL - ${displayName}`
+          : `Asosiy XOMASHYO nomi - ${displayName}`
     },
     { col: 5, label: lang === 'ru' ? 'Поставщик' : lang === 'en' ? 'Supplier' : "Ta'minotchi" },
     { col: 6, label: lang === 'ru' ? 'Температура' : lang === 'en' ? 'Temperature' : 'Harorat' },
@@ -590,7 +619,7 @@ function buildProductSheet(
 
   ws.mergeCells(`B${totalRowIdx}:U${totalRowIdx}`)
   const totalLabel = totalRow.getCell(2)
-  totalLabel.value = `JAMI (${theme.name}): ${acts.length} ta akt`
+  totalLabel.value = `JAMI (${displayName}): ${acts.length} ta akt`
   totalLabel.font = { bold: true, size: 10 }
   totalLabel.alignment = { vertical: 'middle', horizontal: 'right' }
 
@@ -644,47 +673,38 @@ export async function exportIncomingActsToExcel(
     'ОГУРЦЫ СВЕЖИЕ'
   ]
 
-  // Group acts by product category
+  // Group acts by canonical product key
   const actsByProduct = new Map<string, IncomingActRecord[]>()
   acts.forEach(act => {
-    const theme = getProductTheme(act.productName)
-    const norm = theme.name || act.productName.trim().toUpperCase()
-    if (!actsByProduct.has(norm)) {
-      actsByProduct.set(norm, [])
+    const key = getCanonicalProductKey(act.productName)
+    if (!actsByProduct.has(key)) {
+      actsByProduct.set(key, [])
     }
-    actsByProduct.get(norm)!.push(act)
+    actsByProduct.get(key)!.push(act)
   })
 
-  const distinctKeys = Array.from(actsByProduct.keys())
+  const addedKeys = new Set<string>()
 
-  if (distinctKeys.length <= 1) {
-    // Single product export
-    const singleProd = distinctKeys[0] || 'САЛАТ АЙСБЕРГ'
-    const list = actsByProduct.get(singleProd) || acts
-    buildProductSheet(wb, singleProd, list, lang)
-  } else {
-    // Multi-product export: create sheets in the requested order (САЛАТ АЙСБЕРГ first)
-    const addedSheets = new Set<string>()
-
-    for (const prod of ORDERED_PRODUCTS) {
-      const list = actsByProduct.get(prod) || []
-      if (list.length > 0) {
-        buildProductSheet(wb, prod, list, lang)
-        addedSheets.add(prod)
-      }
+  // 1. Add canonical products in requested order (САЛАТ АЙСБЕРГ first)
+  for (const key of ORDERED_PRODUCTS) {
+    const list = actsByProduct.get(key) || []
+    if (list.length > 0) {
+      buildProductSheet(wb, key, list, lang)
+      addedKeys.add(key)
     }
+  }
 
-    // Any other products not in the canonical list
-    for (const [prod, list] of actsByProduct.entries()) {
-      if (!addedSheets.has(prod)) {
-        buildProductSheet(wb, prod, list, lang)
-        addedSheets.add(prod)
-      }
+  // 2. Add any other non-canonical products if present
+  for (const [key, list] of actsByProduct.entries()) {
+    if (!addedKeys.has(key) && list.length > 0) {
+      buildProductSheet(wb, key, list, lang)
+      addedKeys.add(key)
     }
+  }
 
-    if (addedSheets.size === 0) {
-      buildProductSheet(wb, 'САЛАТ АЙСБЕРГ', [], lang)
-    }
+  // Safety fallback if no sheets added
+  if (wb.worksheets.length === 0) {
+    buildProductSheet(wb, 'САЛАТ АЙСБЕРГ', [], lang)
   }
 
   const buffer = await wb.xlsx.writeBuffer()
