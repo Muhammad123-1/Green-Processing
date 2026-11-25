@@ -87,7 +87,8 @@ export default function ShopReportContent({
 
   const isOnlyAdmin = userRole === 'ADMIN'
   const isAdmin = userRole === 'ADMIN' || userRole === 'DIRECTOR'
-  const isReadOnly = userRole.toUpperCase() === 'SUPPLY'
+  const normRole = (userRole || '').toUpperCase().trim()
+  const isReadOnly = normRole === 'SUPPLY' || normRole === 'QUALITY_CONTROL'
   const shiftWindowActive = isWithinShiftEditWindow()
 
   const [editReasonModal, setEditReasonModal] = useState<{
