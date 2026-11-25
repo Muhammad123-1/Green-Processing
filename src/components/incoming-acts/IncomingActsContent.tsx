@@ -147,8 +147,6 @@ export default function IncomingActsContent({
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
-  // View Mode: 'numeric' (1/0 numbers & 2-5 ratings) vs 'authentic' (Exact text from Excel)
-  const [viewMode, setViewMode] = useState<'authentic' | 'numeric'>('numeric')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // Modals state
@@ -664,7 +662,7 @@ export default function IncomingActsContent({
     }
   }
 
-  // Helper for cell value rendering - supports Numeric mode (1/0 & 2-5 ratings) and Authentic text mode
+  // Helper for cell value rendering - human-readable text (da/net, ha/yo'q, etc.), never raw 0 and 1
   const renderCellText = (
     rawVal: any,
     numVal: number,
@@ -672,55 +670,23 @@ export default function IncomingActsContent({
   ) => {
     const s = rawVal !== undefined && rawVal !== null ? String(rawVal).trim() : ''
 
-    // 1. If cell is an explicit 2, 3, 4, 5 rating score
-    if (s === '5' || s === '4' || s === '3' || s === '2') {
-      const num = parseInt(s, 10)
-      const colors: Record<number, string> = {
-        5: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
-        4: 'bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border-blue-300 dark:border-blue-800',
-        3: 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300 dark:border-amber-800',
-        2: 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300 dark:border-rose-800'
-      }
-
-      return (
-        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md font-mono font-black text-xs border shadow-xs ${colors[num] || 'bg-slate-100 text-slate-800 border-slate-300'}`}>
-          {num}
-        </span>
-      )
-    }
-
     // Determine pass / fail status
-    // For defect columns: 0 or "нет" or "отсутствует" = clean/pass; 1 or "есть" or "да" = defect/fail
-    // For regular criteria: 1 or "да" or "есть" = pass; 0 or "нет" = fail
+    // For defect columns: 0 or "нет" or "отсутствует" or "yo'q" or "none" = clean/pass; 1 or "есть" or "да" or "bor" = defect/fail
+    // For regular criteria: 1 or "да" or "ha" or "yes" or "удовл" = pass; 0 or "нет" or "yo'q" = fail
+    const lowerS = s.toLowerCase()
     const isPass = isDefect
-      ? (s === '0' || s.toLowerCase() === 'нет' || s.toLowerCase() === 'отсутствует' || (!s && numVal === 0))
-      : (s === '1' || s.toLowerCase() === 'да' || s.toLowerCase() === 'есть' || s.toLowerCase().includes('удовл') || s.toLowerCase().includes('средн') || (!s && numVal === 1))
+      ? (s === '0' || lowerS === 'нет' || lowerS === 'отсутствует' || lowerS === "yo'q" || lowerS === 'none' || (!s && numVal === 0))
+      : (s === '1' || lowerS === 'да' || lowerS === 'ha' || lowerS === 'yes' || lowerS === 'есть' || lowerS.includes('удовл') || lowerS.includes('соотв') || lowerS.includes('средн') || (!s && numVal === 1))
 
-    // 2. Numeric Mode: display 1 (good/pass) and 0 (defect/fail)
-    if (viewMode === 'numeric') {
-      if (isPass) {
-        return (
-          <span
-            className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold font-mono text-[11px] border border-emerald-300 dark:border-emerald-800 shadow-xs"
-            title={isDefect ? "Toza / Nuqson yo'q (1)" : "Muvofiq / Talabga javob beradi (1)"}
-          >
-            1
-          </span>
-        )
-      } else {
-        return (
-          <span
-            className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 font-bold font-mono text-[11px] border border-rose-300 dark:border-rose-800 shadow-xs"
-            title={isDefect ? "Brak / Nuqson mavjud (0)" : "Muvofiq emas (0)"}
-          >
-            0
-          </span>
-        )
+    // If s is a rich specific description (e.g. "400г-700г 12см", "удовлетворительная", "средняя")
+    if (s && s !== '1' && s !== '0' && lowerS !== 'да' && lowerS !== 'нет' && lowerS !== 'отсутствует' && lowerS !== 'есть' && lowerS !== 'ha' && lowerS !== "yo'q" && lowerS !== 'yes' && lowerS !== 'no') {
+      if (activeLang === 'uz') {
+        if (lowerS.includes('удовл')) return <span className="font-semibold text-emerald-600 dark:text-emerald-400">qoniqarli</span>
+        if (lowerS.includes('средн')) return <span className="font-medium text-slate-800 dark:text-slate-200">o'rtacha</span>
+      } else if (activeLang === 'en') {
+        if (lowerS.includes('удовл')) return <span className="font-semibold text-emerald-600 dark:text-emerald-400">satisfactory</span>
+        if (lowerS.includes('средн')) return <span className="font-medium text-slate-800 dark:text-slate-200">medium</span>
       }
-    }
-
-    // 3. Authentic Mode: human-readable text
-    if (s !== '' && s !== '1' && s !== '0') {
       return <span className="font-medium text-slate-800 dark:text-slate-200">{s}</span>
     }
 
@@ -785,36 +751,6 @@ export default function IncomingActsContent({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* View Mode Switcher: Numeric (1/0 & 2-5) vs Authentic Text */}
-          <div className="bg-slate-800/90 p-1 rounded-xl border border-slate-700 flex items-center gap-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setViewMode('numeric')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition ${
-                viewMode === 'numeric'
-                  ? 'bg-emerald-600 text-white shadow ring-1 ring-emerald-400'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-              title="Raqamli rejim: 1 / 0 mezonlar va 2, 3, 4, 5 sifat bahosi"
-            >
-              <Hash className="w-3.5 h-3.5" />
-              <span>{t.numericView}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('authentic')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition ${
-                viewMode === 'authentic'
-                  ? 'bg-slate-700 text-amber-300 shadow ring-1 ring-amber-400/50'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-              title="Asl Excel matn ko'rinishi (да / нет)"
-            >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>{t.authenticView}</span>
-            </button>
-          </div>
-
           <button
             onClick={() => {
               setRefreshing(true)
@@ -1359,30 +1295,31 @@ export default function IncomingActsContent({
                       <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 text-center font-semibold whitespace-nowrap">
                         {(() => {
                           const r = act.decisionRating || (act.rejectionActNumber ? 2 : 4)
+                          const ratingText = getRatingText(r, activeLang)
                           const config: Record<number, { label: string; badgeBg: string; pillBg: string }> = {
                             5: {
-                              label: '5 - Ideal',
+                              label: `5 - ${ratingText}`,
                               badgeBg: 'bg-emerald-600 text-white',
                               pillBg: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
                             },
                             4: {
-                              label: '4 - Yaxshi',
+                              label: `4 - ${ratingText}`,
                               badgeBg: 'bg-blue-600 text-white',
                               pillBg: 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800'
                             },
                             3: {
-                              label: '3 - Shartli',
+                              label: `3 - ${ratingText}`,
                               badgeBg: 'bg-amber-600 text-white',
                               pillBg: 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
                             },
                             2: {
-                              label: '2 - Rad etilgan',
+                              label: `2 - ${ratingText}`,
                               badgeBg: 'bg-red-600 text-white',
                               pillBg: 'bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800'
                             }
                           }
                           const c = config[r] || {
-                            label: `${r}`,
+                            label: `${r} - ${ratingText}`,
                             badgeBg: 'bg-slate-600 text-white',
                             pillBg: 'bg-slate-100 text-slate-800 border-slate-300'
                           }
@@ -1390,7 +1327,7 @@ export default function IncomingActsContent({
                           return (
                             <span
                               className={`px-2 py-0.5 rounded text-[11px] font-bold inline-flex items-center gap-1.5 border shadow-xs ${c.pillBg}`}
-                              title={`Baho: ${c.label} | ${act.decisionText || (r === 2 ? 'Rad etilgan' : 'Допускается')}`}
+                              title={`Baho: ${c.label} | ${act.decisionText || (r === 2 ? (activeLang === 'ru' ? 'Отклонено' : 'Rad etilgan') : (activeLang === 'ru' ? 'Допускается' : 'Ruxsat berilgan'))}`}
                             >
                               <span className={`w-4 h-4 rounded-full flex items-center justify-center font-mono font-black text-[11px] shadow-xs ${c.badgeBg}`}>
                                 {r}
@@ -1722,19 +1659,25 @@ export default function IncomingActsContent({
                         outerLeavesRemoved: 1,
                         noMechanicalDamage: 1,
                       })
-                      toast.success("Barcha mezonlar standart 1 (Muvofiq) va 0 (Toza) ga to'ldirildi")
+                      toast.success(
+                        activeLang === 'ru'
+                          ? 'Все критерии заполнены по стандарту (соответствует)'
+                          : activeLang === 'en'
+                          ? 'All criteria filled with standard values'
+                          : "Barcha mezonlar standart talablarga mos qilib to'ldirildi"
+                      )
                     }}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] border border-emerald-500/30 transition shadow-xs"
-                    title="Barcha mezonlarni 1 va 0 bo'yicha toza holatda avto-to'ldirish"
+                    title="Barcha mezonlarni standart talab bo'yicha to'ldirish"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Standart avto-to'ldirish (1 / 0)</span>
+                    <span>{activeLang === 'ru' ? 'Стандартное заполнение' : activeLang === 'en' ? 'Standard auto-fill' : "Standart to'ldirish"}</span>
                   </button>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                   {[
-                    { label: 'Условия транспортировки', state: formData.transportCondition, key: 'transportCondition' },
-                    { label: 'Сопровождающая документация', state: formData.hasDocumentation, key: 'hasDocumentation' },
+                    { label: t.transport, state: formData.transportCondition, key: 'transportCondition' },
+                    { label: t.docs, state: formData.hasDocumentation, key: 'hasDocumentation' },
                     { label: activeTheme.col9, state: formData.structure, key: 'structure' },
                     { label: activeTheme.col10, state: formData.leafColor, key: 'leafColor' },
                     { label: activeTheme.col11, state: formData.tasteSmell, key: 'tasteSmell' },

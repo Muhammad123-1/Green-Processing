@@ -460,33 +460,33 @@ function buildProductSheet(
       col: 7,
       label:
         lang === 'ru'
-          ? 'Условия трансп. [1/0]'
+          ? 'Условия трансп.'
           : lang === 'en'
-          ? 'Transport cond. [1/0]'
-          : 'Tashish sharoiti [1/0]'
+          ? 'Transport cond.'
+          : 'Tashish sharoiti'
     },
     {
       col: 8,
       label:
         lang === 'ru'
-          ? 'Документы [1/0]'
+          ? 'Документы'
           : lang === 'en'
-          ? 'Documents [1/0]'
-          : 'Hujjatlar [1/0]'
+          ? 'Documents'
+          : 'Hujjatlar'
     },
-    { col: 9, label: theme.col9 || (lang === 'ru' ? 'Структура [1/0]' : lang === 'en' ? 'Structure [1/0]' : 'Tuzilishi [1/0]') },
-    { col: 10, label: theme.col10 || (lang === 'ru' ? 'Цвет [1/0]' : lang === 'en' ? 'Color [1/0]' : 'Rangi [1/0]') },
-    { col: 11, label: theme.col11 || (lang === 'ru' ? 'Вкус/Запах [1/0]' : lang === 'en' ? 'Taste/Smell [1/0]' : "Ta'mi/Hidi [1/0]") },
-    { col: 12, label: theme.col12 || (lang === 'ru' ? 'Окисление [0/1]' : lang === 'en' ? 'Oxidation [0/1]' : 'Oksidlanish [0/1]') },
-    { col: 13, label: theme.col13 || (lang === 'ru' ? 'Насекомые [0/1]' : lang === 'en' ? 'Insects [0/1]' : 'Hasharotlar [0/1]') },
-    { col: 14, label: theme.col14 || (lang === 'ru' ? 'Слизь/Гниль [0/1]' : lang === 'en' ? 'Slime/Rot [0/1]' : 'Shilimshiq/Chirish [0/1]') },
-    { col: 15, label: theme.col15 || (lang === 'ru' ? 'Кочерыжка/Срез [1/0]' : lang === 'en' ? 'Core/Cut [1/0]' : "O'zak/Kesim [1/0]") },
-    { col: 16, label: theme.col16 || (lang === 'ru' ? 'Плотность [1/0]' : lang === 'en' ? 'Density [1/0]' : 'Zichlik [1/0]') },
+    { col: 9, label: theme.col9 || (lang === 'ru' ? 'Структура' : lang === 'en' ? 'Structure' : 'Tuzilishi') },
+    { col: 10, label: theme.col10 || (lang === 'ru' ? 'Цвет' : lang === 'en' ? 'Color' : 'Rangi') },
+    { col: 11, label: theme.col11 || (lang === 'ru' ? 'Вкус/Запах' : lang === 'en' ? 'Taste/Smell' : "Ta'mi/Hidi") },
+    { col: 12, label: theme.col12 || (lang === 'ru' ? 'Окисление' : lang === 'en' ? 'Oxidation' : 'Oksidlanish') },
+    { col: 13, label: theme.col13 || (lang === 'ru' ? 'Насекомые' : lang === 'en' ? 'Insects' : 'Hasharotlar') },
+    { col: 14, label: theme.col14 || (lang === 'ru' ? 'Слизь/Гниль' : lang === 'en' ? 'Slime/Rot' : 'Shilimshiq/Chirish') },
+    { col: 15, label: theme.col15 || (lang === 'ru' ? 'Кочерыжка/Срез' : lang === 'en' ? 'Core/Cut' : "O'zak/Kesim") },
+    { col: 16, label: theme.col16 || (lang === 'ru' ? 'Плотность' : lang === 'en' ? 'Density' : 'Zichlik') },
     { col: 17, label: theme.col17 || (lang === 'ru' ? 'Диаметр/Вес' : lang === 'en' ? 'Size/Weight' : "O'lchami/Vazni") },
-    { col: 18, label: theme.col18 || (lang === 'ru' ? 'Покр. листья [1/0]' : lang === 'en' ? 'Cover leaves [1/0]' : 'Ustki barglar [1/0]') },
-    { col: 19, label: theme.col19 || (lang === 'ru' ? 'Без дефектов [1/0]' : lang === 'en' ? 'No defects [1/0]' : "Nuqsonsiz [1/0]") },
+    { col: 18, label: theme.col18 || (lang === 'ru' ? 'Покр. листья' : lang === 'en' ? 'Cover leaves' : 'Ustki barglar') },
+    { col: 19, label: theme.col19 || (lang === 'ru' ? 'Без дефектов' : lang === 'en' ? 'No defects' : "Nuqsonsiz") },
     { col: 20, label: lang === 'ru' ? '№ партии' : lang === 'en' ? 'Batch #' : 'Partiya №' },
-    { col: 21, label: lang === 'ru' ? 'Допуск [2-5]' : lang === 'en' ? 'Verdict [2-5]' : 'Ruxsat [2-5]' },
+    { col: 21, label: lang === 'ru' ? 'Допуск' : lang === 'en' ? 'Verdict' : 'Baho / Ruxsat' },
     { col: 22, label: lang === 'ru' ? 'кг склад' : lang === 'en' ? 'Warehouse (kg)' : 'Ombor (kg)' },
     { col: 23, label: lang === 'ru' ? 'КГ ЦЕХ' : lang === 'en' ? 'Shop (kg)' : 'Sexga (kg)' },
     { col: 24, label: lang === 'ru' ? 'Дата' : lang === 'en' ? 'Date' : 'Sana' },
@@ -526,26 +526,31 @@ function buildProductSheet(
 
     if (act.warehouseKg) totalWarehouseKg += act.warehouseKg
 
+    const passText = lang === 'ru' ? 'да' : lang === 'en' ? 'yes' : 'ha'
+    const failText = lang === 'ru' ? 'нет' : lang === 'en' ? 'no' : "yo'q"
+    const defectAbsentText = lang === 'ru' ? 'отсутствует' : lang === 'en' ? 'none' : "yo'q"
+    const defectPresentText = lang === 'ru' ? 'есть' : lang === 'en' ? 'present' : 'bor'
+
     row.getCell(2).value = act.actNumber || String(idx + 1)
     row.getCell(3).value = act.actDate
     row.getCell(4).value = act.productName
     row.getCell(5).value = act.supplierName
     row.getCell(6).value = act.temperature || '-'
-    row.getCell(7).value = act.transportCondition
-    row.getCell(8).value = act.hasDocumentation
-    row.getCell(9).value = act.structure
-    row.getCell(10).value = act.leafColor
-    row.getCell(11).value = act.tasteSmell
-    row.getCell(12).value = act.internalOxidation
-    row.getCell(13).value = act.insectTraces
-    row.getCell(14).value = act.rotDiseases
-    row.getCell(15).value = act.stemCut
-    row.getCell(16).value = act.density
-    row.getCell(17).value = act.diameterWeight || '-'
-    row.getCell(18).value = act.outerLeavesRemoved
-    row.getCell(19).value = act.noMechanicalDamage
+    row.getCell(7).value = act.rawValues?.col7 || (act.transportCondition === 1 ? (lang === 'ru' ? 'удовлетворительная' : lang === 'en' ? 'satisfactory' : 'qoniqarli') : failText)
+    row.getCell(8).value = act.rawValues?.col8 || (act.hasDocumentation === 1 ? passText : failText)
+    row.getCell(9).value = act.rawValues?.col9 || (act.structure === 1 ? passText : failText)
+    row.getCell(10).value = act.rawValues?.col10 || (act.leafColor === 1 ? passText : failText)
+    row.getCell(11).value = act.rawValues?.col11 || (act.tasteSmell === 1 ? passText : failText)
+    row.getCell(12).value = act.rawValues?.col12 || (act.internalOxidation === 1 ? defectPresentText : defectAbsentText)
+    row.getCell(13).value = act.rawValues?.col13 || (act.insectTraces === 1 ? defectPresentText : defectAbsentText)
+    row.getCell(14).value = act.rawValues?.col14 || (act.rotDiseases === 1 ? defectPresentText : defectAbsentText)
+    row.getCell(15).value = act.rawValues?.col15 || (act.stemCut === 1 ? passText : failText)
+    row.getCell(16).value = act.rawValues?.col16 || (act.density === 1 ? passText : failText)
+    row.getCell(17).value = act.diameterWeight || act.rawValues?.col17 || '-'
+    row.getCell(18).value = act.rawValues?.col18 || (act.outerLeavesRemoved === 1 ? passText : failText)
+    row.getCell(19).value = act.rawValues?.col19 || (act.noMechanicalDamage === 1 ? passText : failText)
     row.getCell(20).value = act.batchNumber || '-'
-    row.getCell(21).value = act.decisionRating
+    row.getCell(21).value = act.decisionText || `${act.decisionRating} - ${getRatingText(act.decisionRating, lang)}`
     row.getCell(22).value = act.warehouseKg ?? ''
     row.getCell(23).value = act.shopIssuedKg || ''
     row.getCell(24).value = act.shopIssuedDate || ''
