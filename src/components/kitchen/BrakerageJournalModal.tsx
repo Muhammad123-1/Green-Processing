@@ -467,15 +467,89 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
 
   return (
     <div
+      id="brakeraj-journal-printable"
       className={`bg-white dark:bg-slate-900 ${
         isFullPage
-          ? 'w-full rounded-3xl shadow-sm border border-slate-300 dark:border-slate-800 flex flex-col text-slate-900 dark:text-white'
-          : 'rounded-3xl w-full max-w-7xl shadow-2xl overflow-hidden border border-slate-300 dark:border-slate-800 flex flex-col max-h-[94vh] my-auto text-slate-900 dark:text-white'
-      } overflow-hidden`}
+          ? 'w-full rounded-3xl shadow-sm border border-slate-300 dark:border-slate-800 flex flex-col text-slate-900 dark:text-white print:border-none print:shadow-none print:rounded-none print:p-0'
+          : 'rounded-3xl w-full max-w-7xl shadow-2xl overflow-hidden border border-slate-300 dark:border-slate-800 flex flex-col max-h-[94vh] my-auto text-slate-900 dark:text-white print:border-none print:shadow-none print:rounded-none print:max-h-none print:p-0'
+      } overflow-hidden print:overflow-visible`}
       onClick={e => e.stopPropagation()}
     >
+      {/* Dedicated Print Styles for A4 Landscape SanPiN Journal */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page {
+            size: A4 landscape !important;
+            margin: 6mm 8mm !important;
+          }
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          #brakeraj-journal-printable {
+            width: 100% !important;
+            max-width: 100% !important;
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+          #brakeraj-journal-printable table {
+            table-layout: fixed !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          #brakeraj-journal-printable th,
+          #brakeraj-journal-printable td {
+            border: 1px solid #1e293b !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            padding: 4px 3px !important;
+          }
+          #brakeraj-journal-printable thead th {
+            background-color: #f1f5f9 !important;
+            color: #000000 !important;
+            font-size: 7.5pt !important;
+            line-height: 1.15 !important;
+          }
+          #brakeraj-journal-printable tbody td {
+            font-size: 8pt !important;
+            line-height: 1.2 !important;
+          }
+        }
+      `}} />
+
+      {/* Official Print Document Header - Only visible during print */}
+      <div className="hidden print:block mb-3 p-1 text-black">
+        <div className="text-center space-y-1">
+          <div className="text-[8.5pt] font-semibold uppercase tracking-wider text-slate-700">
+            {formatDual(
+              "O'zbekiston Respublikasi SanPiN me'yorlari asosida",
+              "На основе норм СанПиН Республики Узбекистан",
+              "Based on SanPiN norms of the Republic of Uzbekistan"
+            )}
+          </div>
+          <h1 className="text-[13pt] font-black uppercase tracking-tight text-black">
+            {formatDual(
+              "TAYYOR MAHSULOTLARNI NAZORAT QILISH (BRAKERAJ) JURNALI",
+              "ЖУРНАЛ КОНТРОЛЯ ГОТОВОЙ ПРОДУКЦИИ (БРАКЕРАЖ)",
+              "FINISHED PRODUCTS INSPECTION (BRAKERAGE) JOURNAL"
+            )}
+          </h1>
+          <div className="flex items-center justify-between text-[8.5pt] font-medium text-slate-800 border-b border-black pb-1 pt-1 mt-1">
+            <span><strong>{formatDual("Tashkilot:", "Организация:", "Organization:")}</strong> Green Processing MChJ (Oshxona)</span>
+            <span><strong>{formatDual("Sana:", "Дата:", "Date:")}</strong> <span className="font-bold underline">{filterDate === 'ALL' ? formatDual("Barcha sanalar", "Все даты", "All dates") : filterDate}</span></span>
+            <span><strong>{formatDual("Jurnal shakli:", "Форма журнала:", "Form:")}</strong> SanPiN № 0027-20 / Oshxona</span>
+          </div>
+        </div>
+      </div>
+
       {/* Top Header - Clean, clinical, high contrast slate styling */}
-      <div className="p-4 sm:p-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 dark:border-slate-800">
+      <div className="p-4 sm:p-5 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 dark:border-slate-800 print:hidden">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 border border-slate-300 dark:border-slate-700 shadow-xs">
             <Utensils size={24} className="text-slate-800 dark:text-white" />
@@ -727,6 +801,7 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                                 <img
                                   src={ch.signatureUrl}
                                   alt={day.chairmanSign}
+                                  onError={e => { (e.currentTarget as HTMLElement).style.display = 'none' }}
                                   className="h-6 max-w-[70px] object-contain filter invert dark:invert-0 drop-shadow-xs"
                                 />
                               ) : null
@@ -764,7 +839,8 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                               type="button"
                               onClick={() => {
                                 setFilterDate(day.date)
-                                setTimeout(() => window.print(), 100)
+                                setViewMode('daily')
+                                setTimeout(() => window.print(), 200)
                               }}
                               className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer text-slate-700 dark:text-slate-300"
                               title={formatDual("Ushbu kunni chop etish", "Распечатать день", "Print day")}
@@ -890,7 +966,7 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
           </div>
 
           {/* Main Table: Sequential Row-by-Row Spreadsheet (Boshqa jadvallar kabi) */}
-          <div className="flex-1 overflow-auto p-3 sm:p-5 bg-slate-100/60 dark:bg-slate-950">
+          <div className="flex-1 overflow-auto p-3 sm:p-5 bg-slate-100/60 dark:bg-slate-950 print:p-0 print:bg-white print:overflow-visible">
             {loading && meals.length === 0 ? (
               <div className="p-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-300 dark:border-slate-800">
                 <Loader2 className="w-8 h-8 animate-spin text-slate-700 dark:text-slate-300 mx-auto" />
@@ -899,78 +975,95 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                 </p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-sm overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
-                      <th className="p-2.5 text-center font-bold w-12 border-r border-slate-300 dark:border-slate-700">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-sm overflow-x-auto print:border-none print:shadow-none print:rounded-none print:overflow-visible">
+                <table className="w-full text-xs border-collapse print:text-[8pt] print:table-fixed print:w-full print:border-collapse">
+                  <thead className="print:table-header-group">
+                    <tr className="bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 print:bg-slate-100 print:text-black print:border-b-2 print:border-black">
+                      <th className="p-2.5 text-center font-bold w-12 print:w-[3.5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("№", "№", "#")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">1</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">1</div>
                       </th>
-                      <th className="p-2.5 text-center font-bold w-36 border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-center font-bold w-36 print:w-[9.5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("Sana va vaqt", "Дата и время", "Date & Time")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">2</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">2</div>
                       </th>
-                      <th className="p-2.5 text-left font-bold min-w-[200px] border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-left font-bold min-w-[200px] print:w-[18%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("Baholangan taom nomi *", "Название блюда *", "Evaluated meal name *")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">3</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">3</div>
                       </th>
-                      <th className="p-2.5 text-center font-bold w-28 border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-center font-bold w-28 print:w-[7.5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("Harorat (°C)", "Температура (°C)", "Temperature (°C)")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">4</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">4</div>
                       </th>
-                      <th className="p-2.5 text-left font-bold min-w-[240px] border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-left font-bold min-w-[240px] print:w-[23.5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("Organoleptik baho (Rang, hid, ta'm, tuzum)", "Органолептическая оценка (Цвет, запах, вкус, консистенция)", "Organoleptic assessment (Color, smell, taste, texture)")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">5</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">5</div>
                       </th>
-                      <th className="p-2.5 text-center font-bold w-44 border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-center font-bold w-44 print:w-[11%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("Xulosa (Holati)", "Заключение (Статус)", "Conclusion (Status)")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">6</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">6</div>
                       </th>
-                      <th className="p-2.5 text-left font-bold min-w-[180px] border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-left font-bold min-w-[180px] print:w-[11%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("Izohlar", "Примечания", "Notes")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">7</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">7</div>
                       </th>
-                      <th className="p-2.5 text-center font-bold min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-center font-bold min-w-[170px] w-48 print:w-[6%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div className="flex items-center justify-center gap-1.5">
                           <span>{formatDual("Rais imzosi", "Подпись председателя", "Chairman Signature")}</span>
                           <Link
                             href="/settings?tab=chairmen"
-                            className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+                            className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition no-print print:hidden"
                             title={formatDual("Raislar va imzolar sozlamalari", "Настройки председателей и подписей", "Chairmen & signatures settings")}
                           >
                             <Settings size={12} />
                           </Link>
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">8</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">8</div>
                       </th>
-                      <th className="p-2.5 text-center font-bold min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-center font-bold min-w-[170px] w-48 print:w-[5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("Hamshira imzosi", "Подпись медсестры", "Nurse Signature")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">9</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">9</div>
                       </th>
-                      <th className="p-2.5 text-center font-bold min-w-[130px] border-r border-slate-300 dark:border-slate-700">
+                      <th className="p-2.5 text-center font-bold min-w-[130px] print:w-[5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                         <div>{formatDual("QC nazoratchi", "QC контролер", "QC Inspector")}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">10</div>
+                        <div className="text-[10px] print:text-[7pt] text-slate-500 dark:text-slate-400 print:text-slate-700 font-normal">10</div>
                       </th>
-                      <th className="p-2.5 text-center font-bold w-24 no-print">{formatDual("Amallar", "Действия", "Actions")}</th>
+                      <th className="p-2.5 text-center font-bold w-24 no-print print:hidden">{formatDual("Amallar", "Действия", "Actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {displayedMeals.length === 0 ? (
-                      <tr>
-                        <td colSpan={11} className="p-8 text-center text-slate-500 dark:text-slate-400">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            <p className="font-medium text-sm">{formatDual("Ushbu sanada taom nazorati yozuvlari mavjud emas", "На эту дату записей контроля блюд нет", "No meal inspection records for this date")}</p>
-                            <button
-                              type="button"
-                              onClick={handleAddNewRow}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:opacity-90 transition cursor-pointer"
-                            >
-                              <Plus size={14} /> {formatDual("Taom qo'shish", "Добавить блюдо", "Add meal")}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                      <>
+                        <tr className="print:hidden">
+                          <td colSpan={11} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <p className="font-medium text-sm">{formatDual("Ushbu sanada taom nazorati yozuvlari mavjud emas", "На эту дату записей контроля блюд нет", "No meal inspection records for this date")}</p>
+                              <button
+                                type="button"
+                                onClick={handleAddNewRow}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold hover:opacity-90 transition cursor-pointer"
+                              >
+                                <Plus size={14} /> {formatDual("Taom qo'shish", "Добавить блюдо", "Add meal")}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {/* Print blank rows fallback (so printed sheet has clean writable lines) */}
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((rowNum) => (
+                          <tr key={`blank-row-${rowNum}`} className="hidden print:table-row h-9 border-b border-black">
+                            <td className="p-1 text-center font-mono text-[8pt] border-r border-black font-bold text-black">{rowNum}</td>
+                            <td className="p-1 border-r border-black text-center font-mono text-[8pt] text-slate-700">{filterDate !== 'ALL' ? filterDate : ''}</td>
+                            <td className="p-1 border-r border-black"></td>
+                            <td className="p-1 border-r border-black"></td>
+                            <td className="p-1 border-r border-black"></td>
+                            <td className="p-1 border-r border-black"></td>
+                            <td className="p-1 border-r border-black"></td>
+                            <td className="p-1 border-r border-black"></td>
+                            <td className="p-1 border-r border-black"></td>
+                            <td className="p-1 border-r border-black"></td>
+                          </tr>
+                        ))}
+                      </>
                     ) : (
                       displayedMeals.map((meal, idx) => {
                         const isMealEmptyNew = meal._isNew && !meal.mealName.trim()
@@ -978,22 +1071,22 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                         return (
                           <tr
                             key={meal.id ? `db-${meal.id}` : meal._clientKey || idx}
-                            className={`border-b border-slate-200 dark:border-slate-800 transition ${
+                            className={`border-b border-slate-200 dark:border-slate-800 print:border-black transition ${
                               meal._dirty
-                                ? 'bg-amber-50/70 dark:bg-amber-950/20'
+                                ? 'bg-amber-50/70 dark:bg-amber-950/20 print:bg-transparent'
                                 : isMealEmptyNew
-                                ? 'bg-slate-50/40 dark:bg-slate-900/40'
-                                : 'hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
+                                ? 'bg-slate-50/40 dark:bg-slate-900/40 print:bg-transparent'
+                                : 'hover:bg-slate-100/70 dark:hover:bg-slate-800/60 print:bg-transparent'
                             }`}
                           >
                             {/* 1. Tartib raqami */}
-                            <td className="p-2 text-center font-mono font-bold text-slate-600 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700">
+                            <td className="p-2 print:p-1 text-center font-mono font-bold text-slate-600 dark:text-slate-400 print:text-black border-r border-slate-300 dark:border-slate-700 print:border-black">
                               {idx + 1}
                             </td>
 
                             {/* 2. Sana va vaqt */}
-                            <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
-                              <div className="flex items-center gap-1 justify-center">
+                            <td className="p-1.5 print:p-1 border-r border-slate-300 dark:border-slate-700 print:border-black">
+                              <div className="flex items-center gap-1 justify-center print:hidden">
                                 <input
                                   type="date"
                                   value={meal.date}
@@ -1007,34 +1100,44 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                                   className="w-16 px-1 py-1 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px] text-slate-900 dark:text-white outline-none"
                                 />
                               </div>
+                              <div className="hidden print:block text-center font-mono text-[8pt] text-black leading-tight">
+                                <div>{meal.date}</div>
+                                <div className="text-[7.5pt] text-slate-700 font-bold">{meal.prepTime || '09:00'}</div>
+                              </div>
                             </td>
 
                             {/* 3. Baholangan taom nomi * */}
-                            <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                            <td className="p-1.5 print:p-1 border-r border-slate-300 dark:border-slate-700 print:border-black">
                               <input
                                 type="text"
                                 required
                                 value={meal.mealName}
                                 onChange={e => updateMealField(idx, { mealName: e.target.value })}
                                 placeholder={formatDual("Masalan: Makaron / Mastava / Salat...", "Например: Макароны / Мастава / Салат...", "For example: Pasta / Soup / Salad...")}
-                                className="w-full px-2.5 py-1.5 rounded-lg border font-bold text-xs text-slate-900 dark:text-white outline-none transition bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 focus:border-slate-900 dark:focus:border-white shadow-2xs placeholder:text-slate-400 placeholder:font-normal"
+                                className="w-full px-2.5 py-1.5 rounded-lg border font-bold text-xs text-slate-900 dark:text-white outline-none transition bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 focus:border-slate-900 dark:focus:border-white shadow-2xs placeholder:text-slate-400 placeholder:font-normal print:hidden"
                               />
+                              <div className="hidden print:block font-bold text-[8.5pt] text-black break-words leading-tight">
+                                {meal.mealName || '-'}
+                              </div>
                             </td>
 
                             {/* 4. Harorat (°C) */}
-                            <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                            <td className="p-1.5 print:p-1 border-r border-slate-300 dark:border-slate-700 print:border-black">
                               <input
                                 type="text"
                                 value={meal.temperature}
                                 onChange={e => updateMealField(idx, { temperature: e.target.value })}
                                 placeholder="+85°C"
-                                className="w-full text-center font-mono font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700"
+                                className="w-full text-center font-mono font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-slate-700 print:hidden"
                               />
+                              <div className="hidden print:block text-center font-mono font-bold text-[8.5pt] text-black">
+                                {meal.temperature || '-'}
+                              </div>
                             </td>
 
                             {/* 5. Organoleptik baho */}
-                            <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
-                              <div className="space-y-1">
+                            <td className="p-1.5 print:p-1 border-r border-slate-300 dark:border-slate-700 print:border-black">
+                              <div className="space-y-1 print:hidden">
                                 <textarea
                                   rows={2}
                                   value={meal.organoleptic}
@@ -1069,14 +1172,17 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                                   </button>
                                 </div>
                               </div>
+                              <div className="hidden print:block text-[8pt] text-black leading-snug break-words">
+                                {meal.organoleptic || '-'}
+                              </div>
                             </td>
 
                             {/* 6. Xulosa (Holati) */}
-                            <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                            <td className="p-1.5 print:p-1 border-r border-slate-300 dark:border-slate-700 print:border-black">
                               <select
                                 value={meal.status}
                                 onChange={e => updateMealField(idx, { status: e.target.value as any })}
-                                className={`w-full px-2 py-1.5 rounded-lg border font-bold text-xs outline-none cursor-pointer ${
+                                className={`w-full px-2 py-1.5 rounded-lg border font-bold text-xs outline-none cursor-pointer print:hidden ${
                                   meal.status === 'REJECTED'
                                     ? 'bg-rose-50 border-rose-300 text-rose-900 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300'
                                     : 'bg-emerald-50 border-emerald-300 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
@@ -1085,27 +1191,34 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                                 <option value="APPROVED">{formatDual("✓ Ruxsat etiladi", "✓ Допущено к употреблению", "✓ Approved")}</option>
                                 <option value="REJECTED">{formatDual("✕ Rad etildi", "✕ Отклонено", "✕ Rejected")}</option>
                               </select>
+                              <div className="hidden print:block text-center font-bold text-[8pt] text-black">
+                                {meal.status === 'REJECTED' ? formatDual("✕ Rad etildi", "✕ Отклонено", "✕ Rejected") : formatDual("✓ Ruxsat etiladi", "✓ Допущено", "✓ Approved")}
+                              </div>
                             </td>
 
                             {/* 7. Izohlar */}
-                            <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                            <td className="p-1.5 print:p-1 border-r border-slate-300 dark:border-slate-700 print:border-black">
                               <input
                                 type="text"
                                 value={meal.notes}
                                 onChange={e => updateMealField(idx, { notes: e.target.value })}
                                 placeholder={formatDual("Yaxshi, iste'molga ruxsat etiladi.", "Хорошо, допущено к употреблению.", "Good, approved for consumption.")}
-                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700"
+                                className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700 print:hidden"
                               />
+                              <div className="hidden print:block text-[8pt] text-slate-800 break-words leading-tight">
+                                {meal.notes || '-'}
+                              </div>
                             </td>
 
                             {/* 8. Rais imzosi va rais tanlovi */}
-                            <td className="p-1.5 min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">
-                              <div className="flex flex-col items-center justify-center gap-1">
+                            <td className="p-1.5 print:p-1 min-w-[170px] w-48 print:w-[6%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
+                              <div className="flex flex-col items-center justify-center gap-1 print:hidden">
                                 {mealChairman?.signatureUrl ? (
                                   <div className="h-9 max-h-9 flex items-center justify-center overflow-hidden py-0.5">
                                     <img
                                       src={mealChairman.signatureUrl}
                                       alt={mealChairman.name}
+                                      onError={e => { (e.currentTarget as HTMLElement).style.display = 'none' }}
                                       className="max-h-9 max-w-[130px] object-contain filter invert dark:invert-0 drop-shadow-xs"
                                     />
                                   </div>
@@ -1131,32 +1244,52 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
                                   )}
                                 </select>
                               </div>
+                              {/* Print signature representation */}
+                              <div className="hidden print:flex flex-col items-center justify-center text-center leading-tight">
+                                {mealChairman?.signatureUrl && (
+                                  <img
+                                    src={mealChairman.signatureUrl}
+                                    alt={mealChairman.name}
+                                    onError={e => { (e.currentTarget as HTMLElement).style.display = 'none' }}
+                                    className="max-h-7 max-w-[65px] object-contain mb-0.5"
+                                  />
+                                )}
+                                <span className="font-serif italic text-[7.5pt] text-black">
+                                  {meal.chairmanSign || mealChairman?.name || DEFAULT_COMMITTEE.chairman}
+                                </span>
+                              </div>
                             </td>
 
                             {/* 9. Hamshira imzosi */}
-                            <td className="p-1.5 min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">
+                            <td className="p-1.5 print:p-1 min-w-[170px] w-48 print:w-[5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                               <input
                                 type="text"
                                 value={meal.medicalStaffSign}
                                 onChange={e => updateMealField(idx, { medicalStaffSign: e.target.value })}
                                 placeholder="Жуманова Ч.Э."
-                                className="w-full text-center font-serif italic font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700 whitespace-nowrap"
+                                className="w-full text-center font-serif italic font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700 whitespace-nowrap print:hidden"
                               />
+                              <div className="hidden print:block text-center font-serif italic text-[7.5pt] text-black break-words leading-tight">
+                                {meal.medicalStaffSign || DEFAULT_COMMITTEE.medicalStaff}
+                              </div>
                             </td>
 
                             {/* 10. QC nazoratchi */}
-                            <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
+                            <td className="p-1.5 print:p-1 min-w-[130px] print:w-[5%] print:min-w-0 border-r border-slate-300 dark:border-slate-700 print:border-black">
                               <input
                                 type="text"
                                 value={meal.qcInspectorSign}
                                 onChange={e => updateMealField(idx, { qcInspectorSign: e.target.value })}
                                 placeholder="Камбарова А.М."
-                                className="w-full text-center font-serif italic px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700"
+                                className="w-full text-center font-serif italic px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-slate-700 print:hidden"
                               />
+                              <div className="hidden print:block text-center font-serif italic text-[7.5pt] text-black break-words leading-tight">
+                                {meal.qcInspectorSign || DEFAULT_COMMITTEE.qcInspector}
+                              </div>
                             </td>
 
                             {/* 11. Amallar */}
-                            <td className="p-1.5 text-center no-print">
+                            <td className="p-1.5 text-center no-print print:hidden">
                               <div className="flex items-center justify-center gap-1">
                                 <button
                                   type="button"
@@ -1201,8 +1334,73 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
         </div>
       )}
 
-      {/* Footer Info & Committee Signatures */}
-      <div className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+      {/* Official Print Committee Signature Block */}
+      <div className="hidden print:block mt-6 pt-3 border-t-2 border-black text-[8.5pt] text-black">
+        <div className="font-bold uppercase tracking-wider mb-3 text-center text-[9pt]">
+          {formatDual(
+            "Brakeraj komissiyasi a'zolari imzolari:",
+            "Подписи членов бракеражной комиссии:",
+            "Signatures of Brakerage Committee Members:"
+          )}
+        </div>
+        <div className="grid grid-cols-4 gap-4 text-center">
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-[8pt]">{formatDual("Komissiya Raisi (Direktor):", "Председатель комиссии (Директор):", "Committee Chairman (Director):")}</span>
+            <div className="h-10 flex items-center justify-center my-1">
+              {activeChairman?.signatureUrl ? (
+                <img
+                  src={activeChairman.signatureUrl}
+                  alt={activeChairman.name}
+                  onError={e => { (e.currentTarget as HTMLElement).style.display = 'none' }}
+                  className="max-h-9 max-w-[100px] object-contain"
+                />
+              ) : (
+                <span className="text-[7.5pt] text-slate-400 italic">(imzo)</span>
+              )}
+            </div>
+            <div className="border-t border-black w-full pt-1 font-serif italic text-[8pt]">
+              {activeChairman?.name || DEFAULT_COMMITTEE.chairman}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-[8pt]">{formatDual("Komissiya a'zosi:", "Член комиссии:", "Committee Member:")}</span>
+            <div className="h-10 flex items-center justify-center my-1">
+              <span className="text-[7.5pt] text-slate-400 italic">(imzo)</span>
+            </div>
+            <div className="border-t border-black w-full pt-1 font-serif italic text-[8pt]">
+              {DEFAULT_COMMITTEE.member1}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-[8pt]">{formatDual("QC Nazoratchi:", "QC Контролер:", "QC Inspector:")}</span>
+            <div className="h-10 flex items-center justify-center my-1">
+              <span className="text-[7.5pt] text-slate-400 italic">(imzo)</span>
+            </div>
+            <div className="border-t border-black w-full pt-1 font-serif italic text-[8pt]">
+              {DEFAULT_COMMITTEE.qcInspector}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-[8pt]">{formatDual("Hamshira (Tibbiy xodim):", "Медсестра:", "Nurse:")}</span>
+            <div className="h-10 flex items-center justify-center my-1">
+              <span className="text-[7.5pt] text-slate-400 italic">(imzo)</span>
+            </div>
+            <div className="border-t border-black w-full pt-1 font-serif italic text-[8pt]">
+              {DEFAULT_COMMITTEE.medicalStaff}
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-between text-[7.5pt] text-slate-600">
+          <span>{formatDual("Hujjat SanPiN № 0027-20 me'yoriy talablari bo'yicha shakllantirildi", "Документ сформирован по требованиям СанПиН № 0027-20", "Generated according to SanPiN No. 0027-20")}</span>
+          <span>{formatDual("Chop etilgan sana:", "Дата печати:", "Print date:")} {new Date().toLocaleDateString('uz-UZ')}</span>
+        </div>
+      </div>
+
+      {/* Screen Footer Info & Committee Signatures */}
+      <div className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400 no-print print:hidden">
         <div className="flex items-center gap-2 flex-wrap">
           <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
           <span>
@@ -1212,6 +1410,7 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
             <img
               src={activeChairman.signatureUrl}
               alt="Chairman Signature"
+              onError={e => { (e.currentTarget as HTMLElement).style.display = 'none' }}
               className="h-6 max-w-[80px] object-contain filter invert dark:invert-0 drop-shadow-xs inline-block ml-1"
             />
           )}

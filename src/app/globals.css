@@ -183,9 +183,7 @@ body {
     display: none !important;
   }
 
-  main {
-    padding: 0 !important;
-    margin: 0 !important;
+  main, div, section {
     overflow: visible !important;
   }
 
