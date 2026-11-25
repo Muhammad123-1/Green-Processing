@@ -35,6 +35,8 @@ import { checkEditPermission, getTodayTashkent, isAfterShiftHours } from '@/lib/
 import {
   EXPENSE_FIELDS,
   readExpenseRow,
+  KITCHEN_EXPENSE_FIELDS,
+  readKitchenExpenseRow,
   formatDMY,
   formatLongDate,
   isDateStr,
@@ -63,8 +65,12 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
   const [isLoading, setIsLoading] = useState(true)
   const [savingExpenses, setSavingExpenses] = useState(false)
 
-  // DB Expenses data
+  // DB Expenses data (Production)
   const [expenses, setExpenses] = useState<any[]>([])
+
+  // DB Kitchen Expenses data (Oshxona chiqimi)
+  const [kitchenExpenses, setKitchenExpenses] = useState<any[]>([])
+  const [savingKitchenExpenses, setSavingKitchenExpenses] = useState(false)
 
   // Filters
   const [selectedMonth, setSelectedMonth] = useState('')
@@ -122,8 +128,13 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
         s.add(e.date.slice(0, 7))
       }
     })
+    kitchenExpenses.forEach((e) => {
+      if (e.date && typeof e.date === 'string' && e.date.length >= 7) {
+        s.add(e.date.slice(0, 7))
+      }
+    })
     return Array.from(s).sort((a, b) => b.localeCompare(a))
-  }, [expenses])
+  }, [expenses, kitchenExpenses])
 
   // Load data
   const loadData = useCallback(async () => {
@@ -134,14 +145,19 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
       if (!res.ok) throw new Error(data?.error || "Ma'lumotlarni yuklashda xatolik")
 
       const mapped = (data.expenses || []).map((e: any) => readExpenseRow(e))
+      const mappedKitchen = (data.expenses || []).map((e: any) => readKitchenExpenseRow(e))
       const today = getTodayTashkent()
 
-      // Auto-ensure today's daily checklist row is available at top
+      // Auto-ensure today's daily checklist row is available at top for both production & kitchen
       if (!mapped.some((e: any) => e.date === today)) {
         mapped.unshift(blankExpense(today))
       }
+      if (!mappedKitchen.some((e: any) => e.date === today)) {
+        mappedKitchen.unshift(blankKitchenExpense(today))
+      }
 
       setExpenses(mapped)
+      setKitchenExpenses(mappedKitchen)
     } catch (e: any) {
       toast.error(e?.message || "Ma'lumotlarni yuklashda xatolik")
     } finally {
@@ -282,6 +298,122 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
     await executeSaveExpenses(rows, '')
   }
 
+  // Kitchen Expense operations (Oshxona Chiqimi)
+  const blankKitchenExpense = (date: string) => {
+    const row: Record<string, any> = { date, _dirty: true, _new: true, total: 0 }
+    KITCHEN_EXPENSE_FIELDS.forEach((f) => (row[f.field] = ''))
+    return row
+  }
+
+  const updateKitchenExpense = (idx: number, patch: any) => {
+    if (isReadOnly) return
+    const row = kitchenExpenses[idx]
+    if (!row) return
+    if (!row._new) {
+      const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+      if (!perm.allowed) {
+        toast.error(perm.reason || "Ushbu yozuvni o'zgartirish huquqi yo'q!")
+        return
+      }
+    }
+    setKitchenExpenses((prev) =>
+      prev.map((r, i) => {
+        if (i !== idx) return r
+        const updated = { ...r, ...patch, _dirty: true }
+        let sum = 0
+        KITCHEN_EXPENSE_FIELDS.forEach((f) => {
+          sum += toNum(updated[f.field])
+        })
+        updated.total = sum
+        return updated
+      })
+    )
+  }
+
+  const addKitchenExpense = () => {
+    if (isReadOnly) return
+    setKitchenExpenses((prev) => [blankKitchenExpense(dateFilter || todayStr()), ...prev])
+  }
+
+  const removeNewKitchenExpense = (idx: number) => {
+    setKitchenExpenses((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleDeleteExistingKitchenExpense = async (date: string) => {
+    if (!isAdmin) {
+      toast.error(lang === 'ru' ? 'Удаление разрешено только Администратору' : "O'chirish faqat Administratorga ruxsat etilgan!")
+      return
+    }
+    if (!confirm(lang === 'ru' ? `Удалить расход кухни за ${date}?` : `${date} sanadagi oshxona chiqimini o'chirmoqchimisiz?`)) return
+    try {
+      const res = await fetch(`/api/shop-report/kitchen-expenses?date=${encodeURIComponent(date)}`, { method: 'DELETE' })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error || "O'chirishda xatolik")
+      toast.success(lang === 'ru' ? 'Расход кухни удален' : "Oshxona chiqimi o'chirildi")
+      await loadData()
+    } catch (e: any) {
+      toast.error(e?.message || "O'chirishda xatolik")
+    }
+  }
+
+  const dirtyKitchenExpenses = kitchenExpenses.filter((r) => r._dirty).length
+
+  const executeSaveKitchenExpenses = async (rows: any[], reason: string) => {
+    setSavingKitchenExpenses(true)
+    try {
+      const res = await fetch('/api/shop-report/kitchen-expenses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rows: rows.map((r) => {
+            const out: Record<string, any> = { date: r.date, editReason: reason || r.editReason }
+            KITCHEN_EXPENSE_FIELDS.forEach((f) => (out[f.field] = toNum(r[f.field])))
+            return out
+          }),
+        }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(j?.error || 'Saqlashda xatolik')
+      toast.success(
+        lang === 'ru'
+          ? `Расход кухни сохранен: ${j.saved} дней`
+          : `Oshxona chiqimi saqlandi: ${j.saved} ta kun`
+      )
+      setEditReasonModal((prev) => ({ ...prev, open: false }))
+      await loadData()
+    } catch (e: any) {
+      toast.error(e?.message || 'Saqlashda xatolik')
+    } finally {
+      setSavingKitchenExpenses(false)
+    }
+  }
+
+  const saveKitchenExpenses = async () => {
+    const rows = kitchenExpenses.filter((r) => r._dirty)
+    if (rows.length === 0) return
+    if (rows.some((r) => !isDateStr(r.date))) {
+      toast.error("Barcha o'zgargan qatorlarda sanani kiriting")
+      return
+    }
+
+    const modifiedExisting = rows.filter((r) => !r._new)
+    const after17 = isAfterShiftHours() && !isAdmin
+
+    if (modifiedExisting.length > 0 || after17) {
+      const summary = rows.map((r) => `Oshxona chiqim sanasi: ${r.date}`)
+      setEditReasonModal({
+        open: true,
+        dirtyItemsCount: rows.length,
+        itemsSummary: summary,
+        reason: '',
+        onConfirm: (reason) => executeSaveKitchenExpenses(rows, reason),
+      })
+      return
+    }
+
+    await executeSaveKitchenExpenses(rows, '')
+  }
+
   // Excel Import
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -347,6 +479,36 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
     }
     return totals
   }, [filteredExpenses, PRODUCTION_EXPENSE_FIELDS])
+
+  // Filtering for Kitchen Expenses
+  const filteredKitchenExpenses = useMemo(() => {
+    return kitchenExpenses
+      .map((row, idx) => ({ row, idx }))
+      .filter(({ row }) => {
+        if (dateFilter && row.date !== dateFilter) return false
+        if (selectedMonth && row.date && !row.date.startsWith(selectedMonth)) return false
+        return true
+      })
+  }, [kitchenExpenses, dateFilter, selectedMonth])
+
+  const kitchenExpensesPagination = useInfiniteTable(filteredKitchenExpenses, 15, [dateFilter, selectedMonth])
+
+  // Calculate kitchen column totals for displayed/filtered records
+  const kitchenColumnTotals = useMemo(() => {
+    const totals: Record<string, number> = {}
+    KITCHEN_EXPENSE_FIELDS.forEach((f) => (totals[f.field] = 0))
+    let grandTotal = 0
+    for (const { row } of filteredKitchenExpenses) {
+      if (row._new) continue
+      for (const f of KITCHEN_EXPENSE_FIELDS) {
+        const val = Number(row[f.field]) || 0
+        totals[f.field] += val
+      }
+      grandTotal += Number(row.total) || 0
+    }
+    totals.total = grandTotal
+    return totals
+  }, [filteredKitchenExpenses])
 
   // Fetch Kitchen Transfers
   const fetchKitchenTransfers = useCallback(async () => {
@@ -474,13 +636,13 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
     let todayKg = 0
     let monthKg = 0
 
-    for (const t of kitchenTransfers) {
-      const tDate = t.issuedAt ? new Date(t.issuedAt).toISOString().slice(0, 10) : ''
-      const qty = Number(t.issuedQuantity) || 0
-      if (tDate === today) {
+    for (const r of kitchenExpenses) {
+      if (r._new) continue
+      const qty = Number(r.total) || 0
+      if (r.date === today) {
         todayKg += qty
       }
-      if (tDate.startsWith(currentMonth)) {
+      if (r.date && r.date.startsWith(currentMonth)) {
         monthKg += qty
       }
     }
@@ -488,10 +650,10 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
     return {
       todayKg: Math.round(todayKg * 10) / 10,
       monthKg: Math.round(monthKg * 10) / 10,
-      totalCount: kitchenTransfers.length,
-      acceptedCount: kitchenTransfers.filter((t: any) => t.status === 'ACCEPTED').length,
+      totalCount: kitchenExpenses.filter((r) => !r._new && (r.total > 0 || r.date)).length,
+      dirtyCount: dirtyKitchenExpenses,
     }
-  }, [kitchenTransfers])
+  }, [kitchenExpenses, dirtyKitchenExpenses])
 
   const inputVal = (v: any) => (v === undefined || v === null ? '' : String(v))
 
@@ -520,6 +682,15 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
           >
             <ChefHat size={16} />
             <span>🏭 Ishlab Chiqarish Sexi Chiqimi</span>
+            {dirtyExpenses > 0 ? (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                {dirtyExpenses}
+              </span>
+            ) : expenses.length > 0 ? (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-blue-500 text-white">
+                {expenses.length}
+              </span>
+            ) : null}
           </button>
           <button
             type="button"
@@ -532,11 +703,15 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
           >
             <UtensilsCrossed size={16} />
             <span>🍽️ Xodimlar Oshxonasi Chiqimi</span>
-            {kitchenTransfers.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-white">
-                {kitchenTransfers.length}
+            {dirtyKitchenExpenses > 0 ? (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                {dirtyKitchenExpenses}
               </span>
-            )}
+            ) : kitchenExpenses.length > 0 ? (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-white">
+                {kitchenExpenses.length}
+              </span>
+            ) : null}
           </button>
         </div>
         <Link
@@ -962,8 +1137,8 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
 
       {/* 2. XODIMLAR OSHXONASI CHIQIMI VIEW */}
       {activeSection === 'kitchen' && (
-        <div className="space-y-4">
-          {/* Header Action Bar for Kitchen */}
+        <>
+          {/* HEADER ACTION BAR FOR KITCHEN */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3 sm:p-4 rounded-2xl shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
@@ -972,230 +1147,371 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                    Xodimlar Oshxonasi Chiqimi
+                    {lang === 'ru' ? 'Расход на кухню персонала' : 'Xodimlar Oshxonasi Chiqimi'}
                   </h1>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                     Oshxona & Ta'minot
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Ombordan xodimlar oshxonasiga chiqarilgan oziq-ovqat va mahsulotlar hisobi (FIFO qoidasi bo'yicha ombor qoldig'idan ayiriladi)
+                  {lang === 'ru'
+                    ? 'Ежедневный расход сырья и продуктов питания на кухню персонала'
+                    : "Xodimlar oshxonasiga chiqarilgan oziq-ovqat va mahsulotlarning kunlik sarfi"}
                 </p>
               </div>
             </div>
 
+            {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-2">
+              {/* Month Filter */}
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 outline-none"
+              >
+                <option value="">{lang === 'ru' ? 'Все месяцы' : 'Barcha oylar'}</option>
+                {availableMonths.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+
+              {/* Quick Day Shifter & Date Filter */}
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-800 rounded-xl p-0.5 border border-slate-200 dark:border-dark-700 shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    let base = dateFilter ? new Date(dateFilter) : new Date()
+                    if (isNaN(base.getTime())) base = new Date()
+                    base.setDate(base.getDate() - 1)
+                    setDateFilter(`${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`)
+                  }}
+                  className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+                  title="Oldingi kun"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDateFilter(todayStr())}
+                  className={`px-2 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
+                    dateFilter === todayStr()
+                      ? 'bg-amber-500 text-white shadow-xs'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-dark-700'
+                  }`}
+                >
+                  {lang === 'ru' ? 'Сегодня' : 'Bugun'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    let base = dateFilter ? new Date(dateFilter) : new Date()
+                    if (isNaN(base.getTime())) base = new Date()
+                    base.setDate(base.getDate() + 1)
+                    setDateFilter(`${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`)
+                  }}
+                  className="p-1 sm:p-1.5 rounded-lg hover:bg-white dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 transition-colors"
+                  title="Keyingi kun"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              <div className="relative flex items-center">
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="px-2 py-1 sm:py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-700 dark:text-slate-200 outline-none"
+                />
+                {dateFilter && (
+                  <button
+                    onClick={() => setDateFilter('')}
+                    className="absolute right-2 text-slate-400 hover:text-rose-500"
+                    title="Filtrni tozalash"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+
+              {/* Add Day Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setKitchenForm({
-                    date: todayStr(),
-                    productId: inventoryProducts.length > 0 ? inventoryProducts[0].id.toString() : '',
-                    issuedQuantity: '',
-                    issuedUnit: inventoryProducts.length > 0 ? (inventoryProducts[0].unit || 'kg') : 'kg',
-                    receiverName: 'Bosh oshpaz',
-                    notes: '',
-                  })
-                  setShowKitchenModal(true)
-                }}
-                className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/25 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer"
+                onClick={addKitchenExpense}
+                disabled={isReadOnly}
+                className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
               >
-                <Plus size={16} />
-                <span>+ Oshxonaga Chiqim Yozish</span>
+                <Plus size={14} />
+                <span>{lang === 'ru' ? '+ Добавить' : "+ Qo'shish"}</span>
+              </button>
+
+              {/* Save Button */}
+              <button
+                type="button"
+                onClick={saveKitchenExpenses}
+                disabled={savingKitchenExpenses || isReadOnly}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                  dirtyKitchenExpenses > 0
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white animate-pulse'
+                    : 'bg-slate-200 dark:bg-dark-700 text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                {savingKitchenExpenses ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Save size={14} />
+                )}
+                <span>{lang === 'ru' ? 'Сохранить' : 'Saqlash'}</span>
+                {dirtyKitchenExpenses > 0 && (
+                  <span className="ml-1 px-1.5 py-0.2 bg-white text-amber-600 rounded-full text-[10px] font-black">
+                    {dirtyKitchenExpenses}
+                  </span>
+                )}
               </button>
             </div>
           </div>
 
-          {/* 4 KPI Summary Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* 3 KPI Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 rounded-2xl shadow-xs">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                <span>Bugungi Oshxona Chiqimi</span>
+                <span>{lang === 'ru' ? 'Сегодняшний расход' : 'Bugungi Oshxona Chiqimi'}</span>
                 <Clock size={16} className="text-amber-500" />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span className="text-2xl font-black text-slate-900 dark:text-white">{kitchenKpis.todayKg}</span>
                 <span className="text-xs font-bold text-slate-500">kg</span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Bugun topshirilgan xomashyo</p>
+              <p className="text-[10px] text-slate-400 mt-1">{lang === 'ru' ? 'Всего выдано продуктов за сегодня' : 'Bugun chiqarilgan jami mahsulotlar'}</p>
             </div>
 
             <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 rounded-2xl shadow-xs">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                <span>Shu Oy Jami Chiqim</span>
+                <span>{lang === 'ru' ? 'Расход за этот месяц' : 'Shu Oy Jami Chiqim'}</span>
                 <Calendar size={16} className="text-emerald-500" />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span className="text-2xl font-black text-slate-900 dark:text-white">{kitchenKpis.monthKg}</span>
                 <span className="text-xs font-bold text-slate-500">kg</span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Oy boshidan buyon</p>
+              <p className="text-[10px] text-slate-400 mt-1">{lang === 'ru' ? 'С начала месяца на кухню' : 'Oy boshidan buyon oshxonaga sarf'}</p>
             </div>
 
             <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 rounded-2xl shadow-xs">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                <span>Jami Chiqimlar</span>
+                <span>{lang === 'ru' ? 'Дней с записями' : "Ro'yxatdagi Kunlar"}</span>
                 <PackageCheck size={16} className="text-blue-500" />
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span className="text-2xl font-black text-slate-900 dark:text-white">{kitchenKpis.totalCount}</span>
-                <span className="text-xs font-bold text-slate-500">ta partiya</span>
+                <span className="text-xs font-bold text-slate-500">kun</span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Barcha hujjatlar</p>
-            </div>
-
-            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 rounded-2xl shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                <span>Qabul Qilinganlar</span>
-                <CheckCircle2 size={16} className="text-emerald-500" />
-              </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{kitchenKpis.acceptedCount}</span>
-                <span className="text-xs font-bold text-slate-500">ta</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">Oshxona tasdiqlagan</p>
+              <p className="text-[10px] text-slate-400 mt-1">{lang === 'ru' ? 'Всего записей в журнале' : 'Jurnaldagi jami chiqim kunlari'}</p>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3 rounded-2xl shadow-xs">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-2.5 text-slate-400" size={15} />
-              <input
-                type="text"
-                placeholder="Mahsulot yoki oshpaz bo'yicha qidirish..."
-                value={kitchenSearch}
-                onChange={(e) => setKitchenSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-amber-500"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-800 rounded-xl p-0.5 border border-slate-200 dark:border-dark-700">
-                <button
-                  type="button"
-                  onClick={() => setKitchenDateFilter(kitchenDateFilter === todayStr() ? '' : todayStr())}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    kitchenDateFilter === todayStr()
-                      ? 'bg-amber-500 text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-dark-700'
-                  }`}
-                >
-                  Bugun
-                </button>
-                <input
-                  type="date"
-                  value={kitchenDateFilter}
-                  onChange={(e) => setKitchenDateFilter(e.target.value)}
-                  className="px-2 py-1 bg-transparent text-xs font-bold text-slate-700 dark:text-slate-300 outline-none"
-                />
-                {kitchenDateFilter && (
-                  <button
-                    type="button"
-                    onClick={() => setKitchenDateFilter('')}
-                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
-                    title="Filtrni tozalash"
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Kitchen Transfers Table */}
+          {/* SPREADSHEET TABLE: KITCHEN EXPENSES */}
           <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-            <div className="overflow-x-auto max-h-[65vh] custom-scrollbar">
+            <div className="overflow-x-auto max-h-[70vh] custom-scrollbar">
               <table className="w-full text-left border-collapse text-xs">
-                <thead className="bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 uppercase text-[10px] font-black tracking-tight sticky top-0 z-10 border-b border-slate-200 dark:border-dark-700">
+                <thead className="bg-amber-500 text-white uppercase text-[11px] font-black tracking-tight sticky top-0 z-10 border-b border-amber-600 shadow-xs">
                   <tr>
-                    <th className="p-3">Sana & Vaqt</th>
-                    <th className="p-3">Hujjat №</th>
-                    <th className="p-3">Mahsulot Nomi</th>
-                    <th className="p-3 text-right">Chiqarilgan Miqdor</th>
-                    <th className="p-3">Ombor Partiyasi</th>
-                    <th className="p-3">Skladchi</th>
-                    <th className="p-3">Qabul Qiluvchi (Oshxona)</th>
-                    <th className="p-3">Maqsad / Izoh</th>
-                    <th className="p-3 text-center">Holati</th>
+                    <th className="relative md:sticky md:left-0 md:z-20 p-3 bg-amber-500 text-white min-w-[125px] border-r border-amber-600 shadow-[inset_-1px_0_0_#d97706]">
+                      <div className="flex items-center justify-between">
+                        <span>{lang === 'ru' ? 'ДАТА' : 'SANA'}</span>
+                        <button
+                          type="button"
+                          onClick={() => setDateFormatMode((prev) => (prev === 'short' ? 'long' : 'short'))}
+                          className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-600 hover:bg-amber-700 text-white tracking-wider cursor-pointer border border-amber-400/40"
+                          title="Sana formatini o'zgartirish (Qisqa / Uzun)"
+                        >
+                          {dateFormatMode === 'short' ? 'QISQA' : 'UZUN'}
+                        </button>
+                      </div>
+                    </th>
+                    {KITCHEN_EXPENSE_FIELDS.map((f) => (
+                      <th
+                        key={f.field}
+                        className="p-2 border-r border-amber-600 text-right min-w-[85px] whitespace-nowrap"
+                      >
+                        <div className="flex flex-col items-end">
+                          <span className="font-bold text-[10px]">{lang === 'ru' ? f.label : f.labelUz}</span>
+                          <span className="text-[9px] text-amber-100 font-medium">({f.unit})</span>
+                        </div>
+                      </th>
+                    ))}
+                    <th className="p-2 border-r border-amber-600 text-right min-w-[95px] bg-amber-600/70 text-white font-black">
+                      <div className="flex flex-col items-end">
+                        <span>{lang === 'ru' ? 'ИТОГО' : 'JAMI'}</span>
+                        <span className="text-[9px] text-amber-100 font-medium">(кг)</span>
+                      </div>
+                    </th>
+                    <th className="p-2 border-r border-amber-600 text-center min-w-[130px]">
+                      {lang === 'ru' ? 'ПОДПИСЬ ОТВ.' : "MAS'UL IMZOSI"}
+                    </th>
+                    <th className="p-2 text-center min-w-[60px]">{lang === 'ru' ? 'ДЕЙСТВИЯ' : 'AMALLAR'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-dark-800 text-slate-800 dark:text-slate-200">
-                  {kitchenLoading ? (
+                  {isLoading ? (
                     <tr>
-                      <td colSpan={9} className="p-12 text-center text-slate-400">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="animate-spin text-amber-500" size={26} />
-                          <span className="font-bold text-xs">Oshxona chiqimlari yuklanmoqda...</span>
+                      <td colSpan={KITCHEN_EXPENSE_FIELDS.length + 4} className="p-16 text-center text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <Loader2 className="animate-spin text-amber-500" size={32} />
+                          <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
+                            Oshxona chiqimlari yuklanmoqda...
+                          </span>
                         </div>
                       </td>
                     </tr>
-                  ) : kitchenPagination.displayedItems.length === 0 ? (
+                  ) : kitchenExpensesPagination.displayedItems.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="p-12 text-center text-slate-400">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <UtensilsCrossed size={32} className="text-slate-300 dark:text-slate-600" />
-                          <span className="font-bold text-sm text-slate-600 dark:text-slate-300">
-                            Xodimlar oshxonasiga chiqimlar topilmadi
-                          </span>
-                          <p className="text-xs text-slate-400 max-w-sm">
-                            Oshxonaga mahsulot chiqarish uchun yuqoridagi "+ Oshxonaga Chiqim Yozish" tugmasini bosing
-                          </p>
-                        </div>
+                      <td colSpan={KITCHEN_EXPENSE_FIELDS.length + 4} className="p-12 text-center text-sm text-slate-400">
+                        {lang === 'ru'
+                          ? 'Записи не найдены. Нажмите «+ Добавить», чтобы создать запись.'
+                          : "Hech qanday ma'lumot topilmadi. Yangi chiqim kiritish uchun «+ Qo'shish» tugmasini bosing."}
                       </td>
                     </tr>
                   ) : (
-                    kitchenPagination.displayedItems.map((t: any) => {
-                      const issuedDateStr = t.issuedAt
-                        ? new Date(t.issuedAt).toLocaleDateString('uz-UZ', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        : '—'
-                      const isAccepted = t.status === 'ACCEPTED'
+                    kitchenExpensesPagination.displayedItems.map(({ row, idx }) => {
+                      const perm = checkEditPermission({ role: userRole, createdAt: row.createdAt })
+                      const isRowEditable = !isReadOnly && (row._new ? true : perm.allowed)
+
+                      const displayDate =
+                        dateFormatMode === 'long'
+                          ? formatLongDate(row.date, lang)
+                          : formatDMY(row.date)
 
                       return (
-                        <tr key={t.id} className="hover:bg-amber-50/40 dark:hover:bg-amber-950/10 transition-colors">
-                          <td className="p-3 whitespace-nowrap font-medium font-mono text-[11px]">
-                            {issuedDateStr}
+                        <tr
+                          key={row.date || idx}
+                          className={`transition-colors ${
+                            row._dirty
+                              ? 'bg-amber-50/80 dark:bg-amber-950/25'
+                              : 'hover:bg-amber-50/30 dark:hover:bg-amber-950/10'
+                          }`}
+                        >
+                          {/* SANA */}
+                          <td className="relative md:sticky md:left-0 md:z-10 p-2 font-mono text-xs border-r border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 shadow-[inset_-1px_0_0_#e2e8f0]">
+                            <div className="flex items-center justify-between gap-1">
+                              <span
+                                className={`font-bold tracking-tight truncate ${
+                                  row._new ? 'text-amber-600' : 'text-slate-900 dark:text-white'
+                                }`}
+                                title={row.date}
+                              >
+                                {displayDate}
+                              </span>
+                              {row._new && (
+                                <label
+                                  className="p-1 rounded hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-400 cursor-pointer relative"
+                                  title={lang === 'ru' ? 'Изменить дату' : "Sanani o'zgartirish"}
+                                >
+                                  <Calendar size={13} />
+                                  <input
+                                    type="date"
+                                    value={row.date || ''}
+                                    onChange={(e) => updateKitchenExpense(idx, { date: e.target.value })}
+                                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                  />
+                                </label>
+                              )}
+                              {!isRowEditable && (
+                                <span className="p-0.5 text-slate-400" title={perm.reason}>
+                                  <Lock size={11} className="text-amber-500 inline" />
+                                </span>
+                              )}
+                            </div>
+                            {row.isEdited && (
+                              <div className="flex flex-col gap-0.5 px-1 pb-0.5">
+                                <span
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase bg-rose-600 text-white shadow-xs"
+                                  title={`17:00 dan keyin tahrirlangan:\nSabab: ${row.editReason || '—'}\nKim: ${row.editedBy || '—'}\nVaqt: ${row.editedAt ? new Date(row.editedAt).toLocaleString('uz-UZ') : ''}`}
+                                >
+                                  <AlertTriangle size={10} className="shrink-0" />
+                                  <span>17:00 dan keyin</span>
+                                </span>
+                                {row.editReason && (
+                                  <span
+                                    className="text-[9px] text-rose-700 dark:text-rose-400 font-medium italic truncate max-w-[110px]"
+                                    title={row.editReason}
+                                  >
+                                    &ldquo;{row.editReason}&rdquo;
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </td>
-                          <td className="p-3 whitespace-nowrap font-mono font-bold text-amber-700 dark:text-amber-400">
-                            {t.transferNumber}
-                          </td>
-                          <td className="p-3 whitespace-nowrap font-bold text-slate-900 dark:text-white">
-                            <span className="inline-flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                              {t.product?.name || "Noma'lum mahsulot"}
+
+                          {/* KITCHEN EXPENSE FIELDS */}
+                          {KITCHEN_EXPENSE_FIELDS.map((f) => (
+                            <td key={f.field} className="p-1 border-r border-amber-200/80">
+                              <input
+                                type="number"
+                                step="0.1"
+                                readOnly={!isRowEditable}
+                                disabled={!isRowEditable}
+                                value={inputVal(row[f.field])}
+                                placeholder="0.0"
+                                onClick={() => {
+                                  if (!isRowEditable) toast.warning(perm.reason || "Ushbu yozuvni tahrirlash qulflangan")
+                                }}
+                                onChange={(e) => {
+                                  if (isRowEditable) updateKitchenExpense(idx, { [f.field]: e.target.value })
+                                }}
+                                className={`w-full min-w-[70px] px-1.5 py-1 text-xs font-mono font-bold text-right outline-none rounded transition-all ${
+                                  !isRowEditable
+                                    ? 'bg-transparent cursor-not-allowed opacity-80'
+                                    : 'bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 focus:border-amber-500'
+                                } text-slate-900 dark:text-slate-100`}
+                              />
+                            </td>
+                          ))}
+
+                          {/* TOTAL FOR THIS DAY */}
+                          <td className="p-1 border-r border-amber-200/80 text-right bg-amber-50/50 dark:bg-amber-950/20">
+                            <span className="font-mono font-black text-xs text-amber-700 dark:text-amber-400 px-1">
+                              {Number(row.total || 0).toLocaleString()} <span className="text-[10px] font-normal text-slate-500">kg</span>
                             </span>
                           </td>
-                          <td className="p-3 whitespace-nowrap font-black font-mono text-sm text-right text-slate-900 dark:text-white">
-                            {t.issuedQuantity} <span className="text-xs font-normal text-slate-500">{t.issuedUnit || 'kg'}</span>
+
+                          {/* MAS'UL IMZOSI */}
+                          <td className="p-1 border-r border-amber-200/80 text-center">
+                            <SignatureCell
+                              url={signature.url}
+                              name={signature.name}
+                              title={signature.title}
+                              formatDual={formatDual}
+                            />
                           </td>
-                          <td className="p-3 whitespace-nowrap font-mono text-[11px] text-slate-600 dark:text-slate-400">
-                            {t.batch?.batchNumber ? `#${t.batch.batchNumber}` : '—'}
-                          </td>
-                          <td className="p-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
-                            {t.issuedByName || 'Skladchi'}
-                          </td>
-                          <td className="p-3 whitespace-nowrap font-semibold text-slate-900 dark:text-white">
-                            {t.receivedByName || 'Bosh oshpaz'}
-                          </td>
-                          <td className="p-3 text-slate-500 dark:text-slate-400 max-w-xs truncate" title={t.notes || ''}>
-                            {t.notes || '—'}
-                          </td>
-                          <td className="p-3 whitespace-nowrap text-center">
-                            {isAccepted ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/40">
-                                <CheckCircle2 size={11} />
-                                Qabul qilingan
+
+                          {/* AMALLAR */}
+                          <td className="p-1 text-center">
+                            {row._new ? (
+                              <button
+                                onClick={() => removeNewKitchenExpense(idx)}
+                                className="p-1.5 rounded text-rose-500 hover:bg-rose-50"
+                                title="Yangi qatorni bekor qilish"
+                              >
+                                <X size={14} />
+                              </button>
+                            ) : isAdmin ? (
+                              <button
+                                onClick={() => handleDeleteExistingKitchenExpense(row.date)}
+                                className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                title="O'chirish (faqat Administrator)"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            ) : !isRowEditable ? (
+                              <span className="p-1 text-slate-400 cursor-help flex items-center justify-center" title={perm.reason}>
+                                <Lock size={12} className="text-amber-500" />
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-300 dark:border-amber-700/40">
-                                <Clock size={11} />
-                                Kutilmoqda
+                              <span className="p-1 text-slate-300 flex items-center justify-center opacity-60">
+                                <Lock size={11} />
                               </span>
                             )}
                           </td>
@@ -1204,21 +1520,51 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                     })
                   )}
                 </tbody>
+                <tfoot className="bg-amber-100 dark:bg-dark-850 border-t-2 border-amber-300 font-bold text-xs sticky bottom-0 z-20 shadow-sm">
+                  <tr>
+                    <td className="relative md:sticky md:left-0 md:z-20 p-2.5 bg-amber-200 dark:bg-dark-800 text-slate-900 dark:text-white font-black border-r border-amber-300 shadow-[inset_-1px_0_0_#fcd34d]">
+                      {lang === 'ru' ? 'ИТОГО:' : 'JAMI:'}
+                    </td>
+                    {KITCHEN_EXPENSE_FIELDS.map((f) => {
+                      const val = kitchenColumnTotals[f.field] || 0
+                      const formatted = val > 0 ? (Math.round(val * 10) / 10).toLocaleString() : '0'
+                      return (
+                        <td
+                          key={f.field}
+                          className="p-1.5 border-r border-amber-300/80 text-right font-mono text-[11px] text-slate-900 dark:text-white whitespace-nowrap"
+                        >
+                          <span className="font-bold">{formatted}</span>
+                          <span className="text-[9px] text-slate-600 dark:text-slate-400 font-semibold ml-0.5">
+                            {f.unit}
+                          </span>
+                        </td>
+                      )
+                    })}
+                    <td className="p-1.5 border-r border-amber-300/80 text-right font-mono text-xs text-amber-800 dark:text-amber-300 font-black whitespace-nowrap bg-amber-200/80">
+                      <span>{(Math.round((kitchenColumnTotals.total || 0) * 10) / 10).toLocaleString()}</span>
+                      <span className="text-[10px] ml-0.5">kg</span>
+                    </td>
+                    <td className="p-1 border-r border-amber-300/80"></td>
+                    <td className="p-1"></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
 
             {/* Pagination footer */}
             <InfiniteTableFooter
-              currentCount={kitchenPagination.visibleCount}
-              totalCount={kitchenPagination.totalCount}
-              hasMore={kitchenPagination.hasMore}
-              showAll={kitchenPagination.showAll}
-              onLoadMore={kitchenPagination.loadMore}
-              onToggleShowAll={kitchenPagination.toggleShowAll}
-              sentinelRef={kitchenPagination.sentinelRef}
+              currentCount={kitchenExpensesPagination.visibleCount}
+              totalCount={kitchenExpensesPagination.totalCount}
+              hasMore={kitchenExpensesPagination.hasMore}
+              showAll={kitchenExpensesPagination.showAll}
+              onLoadMore={kitchenExpensesPagination.loadMore}
+              onToggleShowAll={kitchenExpensesPagination.toggleShowAll}
+              sentinelRef={kitchenExpensesPagination.sentinelRef}
+              pageSize={15}
+              itemName={{ uz: 'oshxona chiqim kuni', ru: 'дней расхода кухни', en: 'kitchen expense days' }}
             />
           </div>
-        </div>
+        </>
       )}
 
       {/* Modal: Oshxonaga Chiqim Yozish */}

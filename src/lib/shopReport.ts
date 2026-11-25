@@ -285,6 +285,106 @@ export function applyExpenseRow(existing: any, row: Record<string, any>) {
 }
 
 // -----------------------------------------------------------------------------
+// TAB KITCHEN: Расход на кухню персонала (Xodimlar oshxonasi chiqimi)
+// Stored in ShopExpense.balances.kitchen with total synced to materials['КУХНЯ']
+// -----------------------------------------------------------------------------
+export interface KitchenExpenseField {
+  field: string
+  label: string
+  labelUz: string
+  unit: string
+}
+
+export const KITCHEN_EXPENSE_FIELDS: KitchenExpenseField[] = [
+  { field: 'tomatoes', label: 'Томаты', labelUz: 'Pomidor', unit: 'кг' },
+  { field: 'cucumber', label: 'Огурцы', labelUz: 'Bodring', unit: 'кг' },
+  { field: 'onion', label: 'Лук', labelUz: 'Piyoz', unit: 'кг' },
+  { field: 'cabbage', label: 'Капуста', labelUz: 'Karam', unit: 'кг' },
+  { field: 'carrot', label: 'Морковь', labelUz: 'Sabzi', unit: 'кг' },
+  { field: 'iceberg', label: 'Айсберг', labelUz: 'Aysberg', unit: 'кг' },
+  { field: 'lemon', label: 'Лимон', labelUz: 'Limon', unit: 'кг' },
+  { field: 'greens', label: 'Зелень', labelUz: "Ko'katlar", unit: 'кг' },
+  { field: 'potato', label: 'Картошка', labelUz: 'Kartoshka', unit: 'кг' },
+  { field: 'meat', label: 'Мясо', labelUz: "Go'sht", unit: 'кг' },
+  { field: 'rice', label: 'Рис', labelUz: 'Guruch', unit: 'кг' },
+  { field: 'oil', label: 'Масло', labelUz: "Yog'", unit: 'л' },
+  { field: 'sugar', label: 'Сахар', labelUz: 'Shakar', unit: 'кг' },
+  { field: 'salt', label: 'Соль', labelUz: 'Tuz', unit: 'кг' },
+  { field: 'tea', label: 'Чай', labelUz: 'Choy', unit: 'кг' },
+  { field: 'other', label: 'Прочее', labelUz: 'Boshqa', unit: 'кг' },
+]
+
+/** DB record -> flat row used by the Kitchen Expense table */
+export function readKitchenExpenseRow(rec: {
+  date: string
+  materials?: any
+  balances?: any
+  createdAt?: any
+  updatedAt?: any
+  isEdited?: boolean
+  editReason?: string | null
+  editedAt?: any
+  editedBy?: string | null
+}) {
+  const balances = (rec.balances || {}) as Record<string, any>
+  const kitchenData = (balances.kitchen || {}) as Record<string, any>
+
+  const row: Record<string, any> = {
+    date: rec.date,
+    createdAt: rec.createdAt,
+    updatedAt: rec.updatedAt,
+    isEdited: Boolean(rec.isEdited || kitchenData.isEdited),
+    editReason: rec.editReason || kitchenData.editReason || null,
+    editedAt: rec.editedAt || kitchenData.editedAt || null,
+    editedBy: rec.editedBy || kitchenData.editedBy || null,
+  }
+
+  let totalKg = 0
+  for (const f of KITCHEN_EXPENSE_FIELDS) {
+    const val = toNum(kitchenData[f.field])
+    row[f.field] = val
+    totalKg += val
+  }
+
+  // If kitchen breakdown is empty but materials['КУХНЯ'] had a historical value:
+  if (totalKg === 0 && rec.materials) {
+    const materials = rec.materials as Record<string, any>
+    const legacyKitchen = toNum(materials['КУХНЯ'] || materials['Кухня'] || materials['Ошхона'])
+    if (legacyKitchen > 0) {
+      row['other'] = legacyKitchen
+      totalKg = legacyKitchen
+    }
+  }
+
+  row['total'] = totalKg
+  return row
+}
+
+/** Apply edited kitchen row into ShopExpense.balances.kitchen and return total */
+export function applyKitchenExpenseRow(existingBalances: any, row: Record<string, any>) {
+  const balances = { ...(existingBalances || {}) }
+  const currentKitchen = { ...(balances.kitchen || {}) }
+
+  let totalKg = 0
+  for (const f of KITCHEN_EXPENSE_FIELDS) {
+    const val = toNum(row[f.field])
+    currentKitchen[f.field] = val
+    totalKg += val
+  }
+  currentKitchen.totalKg = totalKg
+
+  if (row.editReason) {
+    currentKitchen.isEdited = true
+    currentKitchen.editReason = row.editReason
+    currentKitchen.editedAt = new Date().toISOString()
+    if (row.editedBy) currentKitchen.editedBy = row.editedBy
+  }
+
+  balances.kitchen = currentKitchen
+  return { balances, totalKg }
+}
+
+// -----------------------------------------------------------------------------
 // TAB GP: Выпуск готовой продукции (ГП) -> ShopExpense.outputs
 // -----------------------------------------------------------------------------
 export interface GPField {
