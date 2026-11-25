@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import Link from 'next/link'
 import {
   Plus,
   Save,
@@ -19,7 +18,6 @@ import {
   AlertTriangle,
   Sparkles,
   ArrowUpRight,
-  ArrowRight,
   Filter,
   ChefHat,
   UtensilsCrossed,
@@ -714,13 +712,6 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
             ) : null}
           </button>
         </div>
-        <Link
-          href="/warehouse?tab=transfers"
-          className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-3 py-1 flex items-center gap-1 cursor-pointer"
-        >
-          <span>Ombor Handshake Chiqimlariga o'tish</span>
-          <ArrowRight size={13} />
-        </Link>
       </div>
 
       {/* 1. ISHLAB CHIQARISH SEXI CHIQIMI VIEW */}
