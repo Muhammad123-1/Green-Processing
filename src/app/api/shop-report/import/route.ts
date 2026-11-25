@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
     await workbook.xlsx.load(buffer as any)
 
     const arrivals: any[] = []
+    const emptyArrivals: Array<{ date: string; nomenclature: string; supplier: string }> = []
     const flatExpensesMap: Record<string, Record<string, number>> = {}
     const gpMap: Record<string, Record<string, number>> = {}
     const blocksMap: Record<string, any> = {}
@@ -102,7 +103,16 @@ export async function POST(req: NextRequest) {
             const dateStr = parseExcelDate(c1)
             const nomenclature = getCellValueStr(arrRow.getCell(2))
             const qty = getCellValueNum(arrRow.getCell(3))
-            if (!dateStr || !nomenclature || qty <= 0) continue
+            if (!dateStr || !nomenclature) continue
+
+            if (qty <= 0) {
+              emptyArrivals.push({
+                date: dateStr,
+                nomenclature,
+                supplier: getCellValueStr(arrRow.getCell(4)),
+              })
+              continue
+            }
 
             datesFound.add(dateStr)
             arrivals.push({
@@ -515,6 +525,22 @@ export async function POST(req: NextRequest) {
           await prisma.shopArrival.createMany({ data: batch })
         }
         newArrivalsCount = toInsert.length
+      }
+    }
+
+    // Zero out phantom records where cells were cleared in the uploaded file
+    if (emptyArrivals.length > 0) {
+      for (const ea of emptyArrivals) {
+        const sup = (ea.supplier || '').trim()
+        await prisma.shopArrival.updateMany({
+          where: {
+            date: ea.date,
+            nomenclature: { equals: ea.nomenclature, mode: 'insensitive' },
+            ...(sup ? { supplier: { equals: sup, mode: 'insensitive' } } : {}),
+            quantity: { gt: 0 },
+          },
+          data: { quantity: 0 },
+        })
       }
     }
 

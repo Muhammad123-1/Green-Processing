@@ -1442,6 +1442,11 @@ export default function DirectorPage() {
               </span>
             </div>
 
+            {productionDynamics.some((day: any) => day.outputKg > day.consumedKg) && (
+              <p className="mb-3 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                {formatDual("Ayrim kunlarda tayyor mahsulot sarfdan ko‘p. Kunlik hisobotdagi sarf va mahsulot ma’lumotlarini tekshiring.", "В некоторые дни выпуск превышает расход. Проверьте данные дневного отчёта.", "Output exceeds consumption on some days. Check the daily report.")}
+              </p>
+            )}
             <div className="h-[280px] w-full cursor-pointer">
               {mounted && productionDynamics.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
