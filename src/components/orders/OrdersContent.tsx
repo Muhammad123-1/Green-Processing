@@ -1547,17 +1547,6 @@ export default function OrdersContent() {
                 />
               </div>
 
-              {/* Chain Info Banner */}
-              <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 rounded-2xl text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2.5">
-                <Truck size={16} className="shrink-0 mt-0.5 text-blue-500" />
-                <span className="leading-relaxed">
-                  {formatDual(
-                    "Ushbu talabnoma to'g'ridan-to'g'ri Ta'minot bo'limining «Ombordan qolmagan mahsulotlar» sahifasiga yuboriladi. Ta'minotchi tanlash va narxni kelishish Ta'minot bo'limi tomonidan amalga oshiriladi.",
-                    "Эта заявка напрямую поступит в отдел снабжения в раздел «Заявки со склада». Выбор поставщика и согласование цены производит отдел снабжения.",
-                    "This requisition goes directly to the Supply Department under Shortages. Supply will assign the supplier and negotiated price."
-                  )}
-                </span>
-              </div>
 
               {/* Modal Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-750">

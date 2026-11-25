@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
       authorizedByQcId,
       authorizedByQcName,
       exceptionEvidenceUrl,
+      issuedDate,
+      receiverName,
+      autoAccept,
     } = body
 
     if (!productId || !targetLocation || !issuedQuantity || parseFloat(issuedQuantity) <= 0) {
@@ -215,6 +218,9 @@ export async function POST(request: NextRequest) {
       const metaTag = `FIFO_META:${JSON.stringify(deductions)}`
       const finalNotes = [notes, fefoBreakdown, metaTag].filter(Boolean).join('\n')
 
+      const issuedAtDate = issuedDate ? new Date(issuedDate + 'T12:00:00.000Z') : nowTimestamp
+      const isAcceptedImmediate = Boolean(autoAccept) || (normTargetLocation === 'OSHXONA' && Boolean(receiverName))
+
       const createdTransfer = await tx.stockTransfer.create({
         data: {
           transferNumber: transferNum,
@@ -226,8 +232,12 @@ export async function POST(request: NextRequest) {
           issuedUnit: issuedUnit || 'kg',
           issuedById: session.id ? Number(session.id) : null,
           issuedByName: session.name || 'Ombor xodimi',
-          issuedAt: nowTimestamp,
-          status: 'IN_TRANSIT',
+          issuedAt: issuedAtDate,
+          receivedQuantity: isAcceptedImmediate ? qty : null,
+          receivedAt: isAcceptedImmediate ? issuedAtDate : null,
+          receivedById: null,
+          receivedByName: isAcceptedImmediate ? (receiverName || 'Oshxona oshpazi') : null,
+          status: isAcceptedImmediate ? 'ACCEPTED' : 'IN_TRANSIT',
           isFifoException: isExceptionRecorded,
           originalFifoBatchId: isExceptionRecorded ? activeBatch.id : null,
           originalFifoBatchNumber: isExceptionRecorded ? activeBatch.batchNumber : null,

@@ -57,12 +57,23 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
       return false
     }
 
-    // Scroll input smoothly to the center of the available screen area above keyboard
+    // Strictly detect small mobile touch devices (phones <= 767px), NEVER run on desktop computers!
+    const isMobileDevice = () => {
+      if (typeof window === 'undefined') return false
+      const isNarrow = window.innerWidth < 768
+      const hasTouch = 'ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)
+      return isNarrow && hasTouch
+    }
+
+    // Scroll input smoothly to the center of the available screen area above keyboard (mobile only)
     const scrollToTarget = (target: HTMLElement) => {
+      if (!isMobileDevice()) return
       try {
         target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
         setTimeout(() => {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+          if (isMobileDevice()) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+          }
         }, 300)
       } catch {
         try {
@@ -74,6 +85,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     let blurTimer: NodeJS.Timeout | null = null
 
     const handleFocusIn = (e: FocusEvent) => {
+      if (!isMobileDevice()) return
       if (blurTimer) {
         clearTimeout(blurTimer)
         blurTimer = null
@@ -89,7 +101,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     const handleFocusOut = () => {
       if (blurTimer) clearTimeout(blurTimer)
       blurTimer = setTimeout(() => {
-        if (!isInputElement(document.activeElement)) {
+        if (!isMobileDevice() || !isInputElement(document.activeElement)) {
           setIsKeyboardOpen(false)
           document.body.classList.remove('keyboard-open')
         }
@@ -102,6 +114,7 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
     // Detect virtual keyboard resize on mobile (Android Gboard / iOS)
     let initialHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight
     const handleViewportResize = () => {
+      if (!isMobileDevice()) return
       if (!window.visualViewport) return
       const currentHeight = window.visualViewport.height
       const heightDiff = initialHeight - currentHeight
