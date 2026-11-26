@@ -643,3 +643,19 @@ export function getTrilingualInfo(rawName?: string, lang: string = 'uz') {
     categoryLabel,
   }
 }
+
+/**
+ * Formats a clean trilingual product name matching user specification:
+ * e.g. "Морковь, sabzi, carrot" or "Томат, tomat (pomidor), tomato"
+ */
+export function formatTrilingualProductName(meta: ProductMeta): string {
+  const parts: string[] = []
+  if (meta.ru) parts.push(meta.ru)
+  if (meta.uz && !parts.some((p) => p.toLowerCase() === meta.uz.toLowerCase())) {
+    parts.push(meta.uz.toLowerCase())
+  }
+  if (meta.en && !parts.some((p) => p.toLowerCase() === meta.en.toLowerCase())) {
+    parts.push(meta.en.toLowerCase())
+  }
+  return parts.join(', ')
+}

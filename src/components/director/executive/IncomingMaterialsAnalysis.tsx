@@ -27,6 +27,7 @@ import {
   resolveProductMeta,
   getLocalizedName,
   getTrilingualInfo,
+  formatTrilingualProductName,
   ProductMeta,
   ProductCategory,
 } from '@/lib/productTaxonomy'
@@ -760,70 +761,28 @@ export default function IncomingMaterialsAnalysis({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 divide-x divide-y divide-slate-100 dark:divide-dark-800">
-            {visibleProductsSummary.map((row) => {
-              const tri = getTrilingualInfo(row.meta.uz, lang)
-              const isPrimary = row.category === 'PRIMARY'
+            {visibleProductsSummary.map((row) => (
+              <button
+                key={row.canonicalId}
+                onClick={() => {
+                  setSelectedCanonicalId(row.canonicalId)
+                  setSearch('')
+                  setPage(1)
+                }}
+                className="p-4 sm:p-5 text-left hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-colors group flex items-center justify-between gap-4 cursor-pointer min-h-[72px]"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                    {formatTrilingualProductName(row.meta)}
+                  </span>
+                </div>
 
-              return (
-                <button
-                  key={row.canonicalId}
-                  onClick={() => {
-                    setSelectedCanonicalId(row.canonicalId)
-                    setSearch('')
-                    setPage(1)
-                  }}
-                  className="p-4 sm:p-5 text-left hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-colors group flex flex-col justify-between min-h-[125px] relative"
-                >
-                  <div>
-                    {/* Badge: Primary vs Secondary */}
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span
-                        className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md flex items-center gap-1 ${
-                          isPrimary
-                            ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60'
-                            : 'bg-slate-100 dark:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700'
-                        }`}
-                      >
-                        {isPrimary && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>}
-                        {tri.categoryLabel}
-                      </span>
-                      <span className="text-[10px] font-mono font-bold text-slate-400">
-                        {row.unit}
-                      </span>
-                    </div>
-
-                    {/* Primary Name */}
-                    <b className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 block">
-                      {row.name}
-                    </b>
-
-                    {/* Multilingual Subtitle (e.g. Морковь • Carrot) */}
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
-                      {tri.secondary}
-                    </p>
-                  </div>
-
-                  {/* Summary Metric Numbers */}
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="font-mono font-black text-slate-800 dark:text-slate-200">
-                        {formatQty(row.totalQty, row.unit)}
-                      </span>
-                      <span className="text-[10px] text-slate-400 ml-1.5">
-                        ({row.count} ta partiya)
-                      </span>
-                    </div>
-
-                    <div className="flex items-center text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                      <span className="text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-                        {lang === 'ru' ? 'Подробнее' : 'Batafsil'}
-                      </span>
-                      <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
+                <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <span>{lang === 'ru' ? 'Подробнее' : 'Batafsil'}</span>
+                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+            ))}
           </div>
 
           {!visibleProductsSummary.length && (
