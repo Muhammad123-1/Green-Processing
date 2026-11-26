@@ -817,6 +817,7 @@ export default function DirectorPage() {
     // 1. Incoming acts (Quality Control & Accounting)
     ;(details.recentIncomingActs || []).forEach((act: any) => {
       const actDate = parseSafeDate(act.actDate || act.createdAt)
+      const pName = translateProductName(act.productName, directorLang) || (directorLang === 'ru' ? 'Сырье' : 'Xomashyo')
 
       // QC inspection act
       map.quality.push({
@@ -825,7 +826,7 @@ export default function DirectorPage() {
         type: formatDual("QC Xomashyo tekshiruvi (Akt)", "QC Акт приемки сырья", "QC Raw Material Act"),
         date: actDate,
         dateStr: act.actDate || (act.createdAt ? new Date(act.createdAt).toISOString().split('T')[0] : ''),
-        details: `${act.productName || "Xomashyo"} — ${act.warehouseKg ? Number(act.warehouseKg).toLocaleString() + " kg" : ""} (${act.supplierName || "Ta'minotchi"}) • Baho: ${act.decisionRating || 4}/5 (${act.decisionText || "Qabul qilindi"})`,
+        details: `${pName} — ${act.warehouseKg ? Number(act.warehouseKg).toLocaleString() + " kg" : ""} (${act.supplierName || (directorLang === 'ru' ? 'Поставщик' : "Ta'minotchi")}) • Baho: ${act.decisionRating || 4}/5 (${act.decisionText || (directorLang === 'ru' ? 'Принято' : "Qabul qilindi")})`,
         badge: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300",
         category: 'inspection',
         user: act.inspectorName || formatDual("Sifat Nazorati", "Контролер QC", "QC Inspector"),
@@ -841,7 +842,7 @@ export default function DirectorPage() {
           type: formatDual("Kirim hisob-fakturasi va narx tasdig'i", "Учет прихода и расчет цены", "Inbound Invoice & Price Reconciliation"),
           date: actDate,
           dateStr: act.actDate || (act.createdAt ? new Date(act.createdAt).toISOString().split('T')[0] : ''),
-          details: `${act.productName || "Xomashyo"} (${act.supplierName || "Ta'minotchi"}) — ${act.warehouseKg ? Number(act.warehouseKg).toLocaleString() + " kg" : ""} • Narxi: ${Number(act.pricePerKg).toLocaleString()} so'm/kg • Jami: ${totalSum ? totalSum.toLocaleString() + " so'm" : "-"}`,
+          details: `${pName} (${act.supplierName || (directorLang === 'ru' ? 'Поставщик' : "Ta'minotchi")}) — ${act.warehouseKg ? Number(act.warehouseKg).toLocaleString() + " kg" : ""} • Narxi: ${Number(act.pricePerKg).toLocaleString()} so'm/kg • Jami: ${totalSum ? totalSum.toLocaleString() + " so'm" : "-"}`,
           badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
           category: 'finance',
           user: formatDual("Buxgalteriya", "Бухгалтерия", "Accounting"),
@@ -900,6 +901,7 @@ export default function DirectorPage() {
     // 3. Shop Arrivals
     ;(details.recentShopArrivals || []).forEach((sa: any) => {
       const saDate = parseSafeDate(sa.date || sa.createdAt)
+      const pName = translateProductName(sa.nomenclature || sa.productName, directorLang) || (directorLang === 'ru' ? 'Сырье' : 'Xomashyo')
 
       // Inspector
       map.inspector.push({
@@ -908,7 +910,7 @@ export default function DirectorPage() {
         type: formatDual("Sexga xomashyo qabuli", "Прием сырья в цех", "Workshop Raw Material Arrival"),
         date: saDate,
         dateStr: sa.date || (sa.createdAt ? new Date(sa.createdAt).toISOString().split('T')[0] : ''),
-        details: `${sa.nomenclature || sa.productName || "Xomashyo"} — ${sa.quantity ? Number(sa.quantity).toLocaleString() + " kg" : "Qabul"} (Partiya #${sa.batch || "-"}) • Manba: ${sa.supplier || "Ombor"}`,
+        details: `${pName} — ${sa.quantity ? Number(sa.quantity).toLocaleString() + " kg" : "Qabul"} (Partiya #${sa.batch || "-"}) • Manba: ${sa.supplier || (directorLang === 'ru' ? 'Склад' : "Ombor")}`,
         badge: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300",
         category: 'transfer_received',
         user: formatDual("Sex Nazoratchisi", "Инспектор цеха", "Workshop Inspector"),
@@ -922,7 +924,7 @@ export default function DirectorPage() {
         type: formatDual("Liniyaga xomashyo uzatilishi", "Подача сырья на линию", "Raw Material Line Feeding"),
         date: saDate,
         dateStr: sa.date || (sa.createdAt ? new Date(sa.createdAt).toISOString().split('T')[0] : ''),
-        details: `${sa.nomenclature || sa.productName || "Xomashyo"} — ${sa.quantity ? Number(sa.quantity).toLocaleString() + " kg" : ""} ishlab chiqarish liniyasiga topshirildi`,
+        details: `${pName} — ${sa.quantity ? Number(sa.quantity).toLocaleString() + " kg" : ""} ishlab chiqarish liniyasiga topshirildi`,
         badge: "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300",
         category: 'transfer_received',
         user: formatDual("Ishlab Chiqarish", "Производство", "Production"),
@@ -953,13 +955,14 @@ export default function DirectorPage() {
     // 5. Stock Transfers (Inspector)
     ;(details.recentTransfers || []).forEach((tr: any) => {
       const trDate = new Date(tr.createdAt)
+      const pName = translateProductName(tr.product?.name || tr.productName, directorLang) || (directorLang === 'ru' ? 'Продукт' : "Mahsulot")
       map.inspector.push({
         id: `tr-${tr.id}`,
         dept: 'inspector',
         type: formatDual("Ombordan sexga transfer", "Перемещение со склада в цех", "Warehouse to Workshop Transfer"),
         date: trDate,
         dateStr: trDate.toISOString().split('T')[0],
-        details: `${tr.product?.name || "Mahsulot"} — ${tr.issuedQuantity} ${tr.issuedUnit || "kg"} transfer qilindi -> ${tr.targetLocation || "Sex"}`,
+        details: `${pName} — ${tr.issuedQuantity} ${tr.issuedUnit || "kg"} transfer qilindi -> ${tr.targetLocation || "Sex"}`,
         badge: "bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300",
         category: 'transfer_issued',
         user: tr.issuedByName || formatDual("Sex Nazoratchisi", "Инспектор", "Inspector"),
@@ -987,13 +990,14 @@ export default function DirectorPage() {
     // 7. Defect & Wastage Logs (Quality Control)
     ;(details.recentDefectLogs || []).forEach((df: any) => {
       const dfDate = new Date(df.createdAt)
+      const pName = translateProductName(df.productName || df.product?.name, directorLang) || (directorLang === 'ru' ? 'Продукт' : "Mahsulot")
       map.quality.push({
         id: `df-${df.id}`,
         dept: 'quality',
         type: formatDual("Brak va nuqsonlar qaydi", "Акт брака и дефектов", "Defect & Scrap Log"),
         date: dfDate,
         dateStr: dfDate.toISOString().split('T')[0],
-        details: `${df.productName || "Mahsulot"} — ${df.rejectedQuantity || df.quantity || 0} kg (${df.reason || "Sifatsiz"})`,
+        details: `${pName} — ${df.rejectedQuantity || df.quantity || 0} kg (${df.reason || "Sifatsiz"})`,
         badge: "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300",
         category: 'inspection',
         user: df.inspector || formatDual("Sifat Nazorati", "QC", "QC"),
@@ -1003,13 +1007,14 @@ export default function DirectorPage() {
 
     ;(details.recentWastageLogs || []).forEach((w: any) => {
       const wDate = w.incidentDate ? new Date(w.incidentDate + 'T12:00:00Z') : new Date(w.createdAt)
+      const pName = translateProductName(w.productName, directorLang) || (directorLang === 'ru' ? 'Продукт' : "Mahsulot")
       map.quality.push({
         id: `w-${w.id}`,
         dept: 'quality',
         type: formatDual("Chiqindi va yo'qotish dalolatnomasi", "Акт отходов и потерь", "Wastage & Loss Audit"),
         date: wDate,
         dateStr: w.incidentDate || (w.createdAt ? new Date(w.createdAt).toISOString().split('T')[0] : ''),
-        details: `${w.productName || "Mahsulot"} — ${w.netWasteKg || w.totalWasteKg || 0} kg (${w.stage || "Sex"}) • ${w.lossType || "Chiqindi"}`,
+        details: `${pName} — ${w.netWasteKg || w.totalWasteKg || 0} kg (${w.stage || "Sex"}) • ${w.lossType || "Chiqindi"}`,
         badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
         category: 'inspection',
         user: w.reportedByName || formatDual("Sifat Nazorati", "QC", "QC"),
@@ -1083,7 +1088,7 @@ export default function DirectorPage() {
     })
 
     return map
-  }, [details, formatDual])
+  }, [details, directorLang, formatDual])
 
   const employeeActions = useMemo(() => {
     if (!selectedEmployee) return []
@@ -1109,10 +1114,11 @@ export default function DirectorPage() {
     // From inspections
     ;(details.recentInspections || []).forEach((insp: any) => {
       if (insp.inspectorId === uid || insp.user?.id === uid) {
+        const pName = translateProductName(insp.product?.name || insp.productName, directorLang) || "Xomashyo"
         actions.push({
           type: "Xomashyo tekshiruvi (Akt)",
           date: insp.createdAt,
-          details: `${insp.supplier?.name || "Ta'minotchi"} — ${insp.quantity} kg (${insp.status})`,
+          details: `${insp.supplier?.name || "Ta'minotchi"} (${pName}) — ${insp.quantity} kg (${insp.status})`,
           badge: "bg-blue-100 text-blue-800",
           category: 'inspection',
           rawData: insp,
@@ -1122,11 +1128,12 @@ export default function DirectorPage() {
 
     // From transfers
     ;(details.recentTransfers || []).forEach((tr: any) => {
+      const pName = translateProductName(tr.product?.name || tr.productName, directorLang) || "Mahsulot"
       if (tr.issuedById === uid || tr.issuedByName === uname) {
         actions.push({
           type: "Ombordan chiqarish",
           date: tr.createdAt,
-          details: `${tr.product?.name || "Mahsulot"} — ${tr.issuedQuantity} ${tr.issuedUnit} chiqarildi -> ${tr.targetLocation}`,
+          details: `${pName} — ${tr.issuedQuantity} ${tr.issuedUnit} chiqarildi -> ${tr.targetLocation}`,
           badge: "bg-amber-100 text-amber-800",
           category: 'transfer_issued',
           rawData: tr,
@@ -1136,7 +1143,7 @@ export default function DirectorPage() {
         actions.push({
           type: "Tsex/Oshxonaga qabul",
           date: tr.createdAt,
-          details: `${tr.product?.name || "Mahsulot"} — ${tr.receivedQuantity} ${tr.issuedUnit} qabul qilindi (Farq: ${tr.discrepancy || 0})`,
+          details: `${pName} — ${tr.receivedQuantity} ${tr.issuedUnit} qabul qilindi (Farq: ${tr.discrepancy || 0})`,
           badge: "bg-purple-100 text-purple-800",
           category: 'transfer_received',
           rawData: tr,
@@ -1147,10 +1154,11 @@ export default function DirectorPage() {
     // From shop arrivals
     ;(details.recentShopArrivals || []).forEach((sa: any) => {
       if (sa.createdById === uid || sa.receiverName === uname || sa.inspectorName === uname) {
+        const pName = translateProductName(sa.nomenclature || sa.productName, directorLang) || "Xomashyo"
         actions.push({
           type: "Tsexga kirim",
           date: sa.createdAt,
-          details: `${sa.productName || "Xomashyo"} — ${sa.quantity} ${sa.unit || 'kg'} (${sa.sourceLocation || 'Ombor'})`,
+          details: `${pName} — ${sa.quantity} ${sa.unit || 'kg'} (${sa.sourceLocation || 'Ombor'})`,
           badge: "bg-teal-100 text-teal-800",
           category: 'transfer_received',
           rawData: sa,
@@ -1161,10 +1169,11 @@ export default function DirectorPage() {
     // From defect logs
     ;(details.recentDefectLogs || []).forEach((df: any) => {
       if (df.reportedById === uid || df.inspector === uname) {
+        const pName = translateProductName(df.productName || df.product?.name, directorLang) || "Mahsulot"
         actions.push({
           type: "Brak / Yaroqsiz dalolatnomasi",
           date: df.createdAt,
-          details: `${df.productName || "Mahsulot"} — ${df.rejectedQuantity || df.quantity || 0} kg (${df.reason || 'Sifatsiz'})`,
+          details: `${pName} — ${df.rejectedQuantity || df.quantity || 0} kg (${df.reason || 'Sifatsiz'})`,
           badge: "bg-rose-100 text-rose-800",
           category: 'inspection',
           rawData: df,
@@ -1173,7 +1182,7 @@ export default function DirectorPage() {
     })
 
     return actions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [selectedEmployee, details])
+  }, [selectedEmployee, details, directorLang])
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-enter">
@@ -3381,9 +3390,9 @@ export default function DirectorPage() {
                         </h4>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {formatDual(
-                            "Bo'lim ustiga bosib, kun davomida nima qilgani hamda haftalik va oylik nazoratiga kiring (Drill-down)",
-                            "Нажмите на отдел, чтобы увидеть выполненные задачи за день, неделю и месяц (Drill-down)",
-                            "Click on any department to inspect tasks completed today, this week, and this month (Drill-down)"
+                            "Bo'lim ustiga bosib, kun davomida nima qilgani hamda haftalik va oylik nazoratiga kiring",
+                            "Нажмите на отдел, чтобы увидеть выполненные задачи за день, неделю и месяц",
+                            "Click on any department to inspect tasks completed today, this week, and this month"
                           )}
                         </p>
                       </div>
@@ -3999,7 +4008,7 @@ export default function DirectorPage() {
                     <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
                       <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Mahsulot / Nomenklatura:", "Товар / Номенклатура:", "Product / Item:")}</span>
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        {selectedAuditAction.rawData.product?.name || selectedAuditAction.rawData.nomenclature || '-'}
+                        {translateProductName(selectedAuditAction.rawData.product?.name || selectedAuditAction.rawData.nomenclature, directorLang) || '-'}
                       </span>
                     </div>
 
@@ -4152,7 +4161,7 @@ export default function DirectorPage() {
                     <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
                       <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Mahsulot:", "Продукт:", "Product:")}</span>
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        {selectedAuditAction.rawData.product?.name || selectedAuditAction.rawData.productName || '-'}
+                        {translateProductName(selectedAuditAction.rawData.product?.name || selectedAuditAction.rawData.productName, directorLang) || '-'}
                       </span>
                     </div>
 
@@ -4210,7 +4219,7 @@ export default function DirectorPage() {
                       <div className="space-y-1 text-xs">
                         {Object.entries(selectedAuditAction.rawData.materials || {}).slice(0, 6).map(([mat, qty]: any) => (
                           <div key={mat} className="flex items-center justify-between font-mono">
-                            <span className="text-slate-700 dark:text-slate-300 font-sans">{mat}:</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-sans">{translateProductName(mat, directorLang)}:</span>
                             <span className="font-bold text-amber-600">{Number(qty).toLocaleString()} kg</span>
                           </div>
                         ))}
@@ -4224,7 +4233,7 @@ export default function DirectorPage() {
                       <div className="space-y-1 text-xs">
                         {Object.entries(selectedAuditAction.rawData.outputs || {}).slice(0, 6).map(([out, val]: any) => (
                           <div key={out} className="flex items-center justify-between font-mono">
-                            <span className="text-slate-700 dark:text-slate-300 font-sans">{out}:</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-sans">{translateProductName(out, directorLang)}:</span>
                             <span className="font-bold text-emerald-600">{val?.kg ? Number(val.kg).toLocaleString() + ' kg' : (val?.boxes ? val.boxes + ' quti' : JSON.stringify(val))}</span>
                           </div>
                         ))}
@@ -4251,7 +4260,7 @@ export default function DirectorPage() {
                     <div className="bg-slate-50 dark:bg-dark-800 p-3 rounded-xl border border-slate-200 dark:border-dark-700">
                       <span className="text-[10px] text-slate-500 block font-semibold">{formatDual("Mahsulot / Xomashyo:", "Номенклатура:", "Product / Material:")}</span>
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        {selectedAuditAction.rawData.productName || selectedAuditAction.rawData.nomenclature || "Mahsulot"}
+                        {translateProductName(selectedAuditAction.rawData.productName || selectedAuditAction.rawData.nomenclature, directorLang) || "Mahsulot"}
                       </span>
                     </div>
 
