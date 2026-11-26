@@ -55,10 +55,18 @@ interface TableData {
 
 interface DailyStockBalanceTabProps {
   activePeriod?: 'today' | 'week' | 'month' | 'year' | 'all' | 'custom'
+  lang?: 'uz' | 'ru' | 'en'
 }
 
-export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalanceTabProps = {}) {
-  const { lang, formatDual } = useLanguage()
+export default function DailyStockBalanceTab({ activePeriod, lang: propLang }: DailyStockBalanceTabProps = {}) {
+  const { lang: ctxLang, directorLang } = useLanguage()
+  const activeLang = propLang || directorLang || ctxLang || 'uz'
+  const lang = activeLang
+  const formatDual = (uz: string, ru: string, en?: string) => {
+    if (activeLang === 'ru') return ru || uz
+    if (activeLang === 'en') return en || ru || uz
+    return uz
+  }
 
   const allTables = useMemo(() => dailyStockData.tables as TableData[], [])
   const availableDates = useMemo(() => dailyStockData.availableDates, [])

@@ -610,7 +610,7 @@ export default function DirectorDynamicsPage() {
 
       {/* 4. CONTENT SECTIONS - PURE EXCEL TABLES ONLY */}
       {activeTab === 'balance' && (
-        <DailyStockBalanceTab activePeriod={period} />
+        <DailyStockBalanceTab activePeriod={period} lang={directorLang} />
       )}
 
       {/* TABLES FOR EXPENSE, GP, WASTE */}
