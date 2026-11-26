@@ -621,7 +621,7 @@ export default function IncomingMaterialsAnalysis({
                 }`}
               >
                 <Boxes size={13} />
-                <span>{lang === 'ru' ? 'Вторичные материалы / тара' : 'Ikkilamchi vositalar'}</span>
+                <span>{lang === 'ru' ? 'Вторичные материалы / тара' : 'Ikkilamchi mahsulotlar'}</span>
                 <span className="opacity-80 text-[11px]">
                   ({allProductsSummary.filter((p) => p.category === 'SECONDARY').length})
                 </span>
@@ -730,7 +730,7 @@ export default function IncomingMaterialsAnalysis({
                   {categoryFilter === 'PRIMARY'
                     ? lang === 'ru' ? 'Основное сырье и овощи' : 'Asosiy xomashyo va sabzavotlar'
                     : categoryFilter === 'SECONDARY'
-                    ? lang === 'ru' ? 'Вторичные материалы, тара и упаковка' : 'Ikkilamchi vositalar, qadoq va taralar'
+                    ? lang === 'ru' ? 'Вторичные материалы, тара и упаковка' : 'Ikkilamchi mahsulotlar, qadoq va taralar'
                     : categoryFilter === 'kg'
                     ? lang === 'ru' ? 'Весовое сырье' : 'Vazndagi xomashyolar'
                     : categoryFilter === 'dona'
@@ -757,7 +757,7 @@ export default function IncomingMaterialsAnalysis({
               >
                 <div className="min-w-0 flex-1">
                   <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
-                    {formatTrilingualProductName(row.meta)}
+                    {formatTrilingualProductName(row.meta, lang)}
                   </span>
                 </div>
 

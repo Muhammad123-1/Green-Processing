@@ -366,7 +366,7 @@ export default function ConsumptionMaterialsAnalysis({
                 }`}
               >
                 <Boxes size={13} />
-                <span>{lang === 'ru' ? 'Вторичные материалы / тара' : 'Ikkilamchi vositalar'}</span>
+                <span>{lang === 'ru' ? 'Вторичные материалы / тара' : 'Ikkilamchi mahsulotlar'}</span>
                 <span className="opacity-80 text-[11px]">
                   ({allProductsSummary.filter((p) => p.category === 'SECONDARY').length})
                 </span>
@@ -465,7 +465,7 @@ export default function ConsumptionMaterialsAnalysis({
                   {categoryFilter === 'PRIMARY'
                     ? lang === 'ru' ? 'Основное сырье и овощи в расходе' : 'Asosiy xomashyo va sabzavotlar sarfi'
                     : categoryFilter === 'SECONDARY'
-                    ? lang === 'ru' ? 'Вторичные материалы и тара в расходе' : 'Ikkilamchi vositalar va taralar sarfi'
+                    ? lang === 'ru' ? 'Вторичные материалы и тара в расходе' : 'Ikkilamchi mahsulotlar va taralar sarfi'
                     : lang === 'ru' ? 'Вся продукция и тара в расходе (Унифицированные)' : 'Ishlab chiqarishga sarflangan barcha mahsulotlar'}
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
@@ -488,7 +488,7 @@ export default function ConsumptionMaterialsAnalysis({
               >
                 <div className="min-w-0 flex-1">
                   <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                    {formatTrilingualProductName(row.meta)}
+                    {formatTrilingualProductName(row.meta, lang)}
                   </span>
                 </div>
 

@@ -9,6 +9,12 @@ import {
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import DailyStockBalanceTab from '@/components/director/DailyStockBalanceTab'
+import {
+  translateProductName,
+  translateUnit,
+  translateMonthName,
+  translateNoteText
+} from '@/lib/directorLocalization'
 
 interface NoteItem {
   id: string
@@ -168,16 +174,19 @@ export default function DirectorDynamicsPage() {
     return []
   }, [data, isWeekly, activeTab, expenseSubMode])
 
-  // Filter products by search
+  // Filter products by search (supports both Uzbek and Russian search terms)
   const filteredProducts = useMemo(() => {
     if (!currentDataset) return []
     if (!searchQuery.trim()) return currentDataset
     const q = searchQuery.toLowerCase().trim()
-    return currentDataset.filter(item =>
-      item.name.toLowerCase().includes(q) ||
-      (item.unit && item.unit.toLowerCase().includes(q))
-    )
-  }, [currentDataset, searchQuery])
+    return currentDataset.filter(item => {
+      const localizedName = translateProductName(item.name, directorLang).toLowerCase()
+      const rawName = item.name.toLowerCase()
+      const localizedUnit = translateUnit(item.unit || '', directorLang).toLowerCase()
+      const rawUnit = (item.unit || '').toLowerCase()
+      return localizedName.includes(q) || rawName.includes(q) || localizedUnit.includes(q) || rawUnit.includes(q)
+    })
+  }, [currentDataset, searchQuery, directorLang])
 
   // Combined notes list (Audited notes + Custom saved notes)
   const allNotesList = useMemo(() => {
@@ -302,13 +311,14 @@ export default function DirectorDynamicsPage() {
     if (!currentDataset.length) return
     try {
       setExportingDynamics(true)
-      const res = await fetch(`/api/director/export?type=dynamics&tab=${activeTab}&period=${period}&mode=${expenseSubMode}`)
+      const res = await fetch(`/api/director/export?type=dynamics&tab=${activeTab}&period=${period}&mode=${expenseSubMode}&lang=${directorLang}`)
       if (!res.ok) throw new Error('Eksport qilishda xatolik yuz berdi')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `Информация_${activeTab}_${period}.xlsx`
+      const prefix = directorLang === 'ru' ? 'Информация' : 'Dinamika'
+      a.download = `${prefix}_${activeTab}_${period}.xlsx`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -551,7 +561,7 @@ export default function DirectorDynamicsPage() {
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  {formatDual("Сумма (сум)", "Сумма (сум)", "Cost (UZS)")}
+                  {formatDual("Qiymat (so'm)", "Сумма (сум)", "Cost (UZS)")}
                 </button>
                 <button
                   onClick={() => setExpenseSubMode('kg')}
@@ -561,7 +571,7 @@ export default function DirectorDynamicsPage() {
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  {formatDual("Объем (кг)", "Объем (кг)", "Volume (kg)")}
+                  {formatDual("Hajm (kg)", "Объем (кг)", "Volume (kg)")}
                 </button>
               </div>
             )}
@@ -575,7 +585,7 @@ export default function DirectorDynamicsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder={formatDual("Поиск продукции...", "Поиск продукции...", "Search product...")}
+                placeholder={formatDual("Mahsulot qidirish...", "Поиск продукции...", "Search product...")}
                 className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-500 transition-all"
               />
               {searchQuery && (
@@ -616,22 +626,22 @@ export default function DirectorDynamicsPage() {
                       №
                     </th>
                     <th className="py-3 px-3 border-r border-slate-200 dark:border-dark-700 sticky left-12 z-30 bg-slate-100 dark:bg-dark-800 min-w-[180px]">
-                      {formatDual("Наименование", "Наименование", "Product")}
+                      {formatDual("Mahsulot nomi", "Наименование", "Product")}
                     </th>
                     <th className="py-3 px-2 text-center border-r border-slate-200 dark:border-dark-700 w-16">
-                      {formatDual("Ед. изм.", "Ед. изм.", "Unit")}
+                      {formatDual("Birligi", "Ед. изм.", "Unit")}
                     </th>
 
                     {/* Columns for Periods */}
                     {activePeriods.map((period, pIdx) => (
                       <th key={pIdx} className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 min-w-[105px]">
-                        {isWeekly ? `H-${pIdx + 1}` : period}
+                        {isWeekly ? (directorLang === 'ru' ? `H-${pIdx + 1}` : `${pIdx + 1}-h`) : translateMonthName(period, directorLang)}
                       </th>
                     ))}
 
                     {/* Sticky Total Column */}
                     <th className="py-3 px-4 text-right border-l border-slate-200 dark:border-dark-700 min-w-[130px] bg-slate-200/80 dark:bg-dark-700 font-black">
-                      {formatDual("Итого", "Итого", "Total")}
+                      {formatDual("Jami", "Итого", "Total")}
                     </th>
                   </tr>
                 </thead>
@@ -669,12 +679,12 @@ export default function DirectorDynamicsPage() {
                         <td className={`py-2 px-3 border-r border-slate-200/60 dark:border-dark-750 sticky left-12 z-10 font-sans font-bold ${
                           isTotalRow ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-white' : 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white'
                         }`}>
-                          {item.name}
+                          {translateProductName(item.name, directorLang)}
                         </td>
 
                         {/* Unit */}
                         <td className="py-2 px-2 text-center text-slate-500 dark:text-slate-400 border-r border-slate-200/60 dark:border-dark-750 text-[11px]">
-                          {unit}
+                          {translateUnit(unit, directorLang)}
                         </td>
 
                         {/* Period Values */}
@@ -716,7 +726,7 @@ export default function DirectorDynamicsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider">
                   <FileText size={15} className="text-slate-600 dark:text-slate-400" />
-                  <span>{formatDual("Примечания к таблице:", "Примечания к таблице:", "Table Notes:")}</span>
+                  <span>{formatDual("Jadval izohlari:", "Примечания к таблице:", "Table Notes:")}</span>
                   <span className="text-slate-400 font-mono">({tabNotes.length})</span>
                 </div>
 
@@ -737,10 +747,10 @@ export default function DirectorDynamicsPage() {
                       <div>
                         {note.product && (
                           <strong className="text-slate-900 dark:text-white mr-1.5">
-                            [{note.product} · {note.period || '2026'}]:
+                            [{translateProductName(note.product, directorLang)} · {note.period || '2026'}]:
                           </strong>
                         )}
-                        <span>{directorLang === 'ru' ? (note.textRu || note.text) : (note.textUz || note.text)}</span>
+                        <span>{directorLang === 'ru' ? (note.textRu || note.text) : (note.textUz || translateNoteText(note.text || note.textRu, 'uz'))}</span>
                       </div>
                     </div>
 
@@ -769,11 +779,11 @@ export default function DirectorDynamicsPage() {
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs font-bold text-slate-500 mr-1">{formatDual("Kategoriya:", "Категория:", "Category:")}</span>
               {[
-                { id: 'all', label: 'Все' },
-                { id: 'expense', label: 'Расход' },
-                { id: 'production', label: 'Производство' },
-                { id: 'waste', label: 'Отходы' },
-                { id: 'general', label: 'Общие' }
+                { id: 'all', label: formatDual('Barchasi', 'Все', 'All') },
+                { id: 'expense', label: formatDual('Chiqim', 'Расход', 'Expense') },
+                { id: 'production', label: formatDual('Ishlab chiqarish', 'Производство', 'Production') },
+                { id: 'waste', label: formatDual('Otxod', 'Отходы', 'Waste') },
+                { id: 'general', label: formatDual('Umumiy', 'Общие', 'General') }
               ].map(cat => (
                 <button
                   key={cat.id}
@@ -813,12 +823,12 @@ export default function DirectorDynamicsPage() {
                   <div className="flex items-center justify-between text-xs text-slate-500 pb-2 border-b border-slate-100 dark:border-dark-800">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                        {note.product || 'Umumiy'}
+                        {translateProductName(note.product, directorLang) || formatDual('Umumiy', 'Общие', 'General')}
                       </span>
                       {note.period && <span>· {note.period}</span>}
                       {note.author && (
                         <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-dark-800 text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                          {note.author}
+                          {note.author === 'Аудит (ЗФО)' ? formatDual('Audit (ZFO)', 'Аудит (ЗФО)', 'Audit') : note.author}
                         </span>
                       )}
                     </div>
@@ -835,7 +845,7 @@ export default function DirectorDynamicsPage() {
                   </div>
 
                   <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
-                    {directorLang === 'ru' ? (note.textRu || note.text) : (note.textUz || note.text)}
+                    {directorLang === 'ru' ? (note.textRu || note.text) : (note.textUz || translateNoteText(note.text || note.textRu, 'uz'))}
                   </p>
                 </div>
               ))
@@ -869,10 +879,10 @@ export default function DirectorDynamicsPage() {
                   onChange={e => setNewNoteCategory(e.target.value as any)}
                   className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-slate-500"
                 >
-                  <option value="expense">Расход со склада для цеха (Chiqim)</option>
-                  <option value="production">Производство готовой продукции (GP)</option>
-                  <option value="waste">Отход продукции (%)</option>
-                  <option value="general">Запасы на складе / Общее (Zaxiralar)</option>
+                  <option value="expense">{formatDual("Xomashyo chiqimi", "Расход со склада для цеха", "Raw expense")}</option>
+                  <option value="production">{formatDual("Tayyor mahsulot ishlab chiqarish", "Производство готовой продукции", "Finished goods production")}</option>
+                  <option value="waste">{formatDual("Mahsulot chiqindisi (Otxod)", "Отход продукции", "Waste")}</option>
+                  <option value="general">{formatDual("Ombor zaxiralari / Umumiy", "Запасы на складе / Общее", "Warehouse stocks / General")}</option>
                 </select>
               </div>
 

@@ -2350,7 +2350,7 @@ export default function DirectorPage() {
                       </div>
                       <div className="p-3.5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40">
                         <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider block">
-                          {formatDual("Ikkilamchi vositalar", "Тара и упаковка", "Packaging & Supplies")}
+                          {formatDual("Ikkilamchi mahsulotlar", "Вторичные материалы", "Secondary Products")}
                         </span>
                         <div className="text-xl font-black text-blue-700 dark:text-blue-300 mt-1 font-mono">
                           {(kpis?.warehouse?.totalInventoryDona || 0).toLocaleString()} dona
@@ -2418,7 +2418,7 @@ export default function DirectorPage() {
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                           >
-                            <span>{formatDual("Ikkilamchi vositalar (Tara/Qadoq/Kimyo)", "Вторичные материалы (Тара/Упаковка)", "Secondary (Pkg/Chem)")}</span>
+                            <span>{formatDual("Ikkilamchi mahsulotlar (Tara/Qadoq/Kimyo)", "Вторичные материалы (Тара/Упаковка)", "Secondary Products (Pkg/Chem)")}</span>
                           </button>
                         </div>
 

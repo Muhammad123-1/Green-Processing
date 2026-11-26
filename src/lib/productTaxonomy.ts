@@ -634,7 +634,7 @@ export function getTrilingualInfo(rawName?: string, lang: string = 'uz') {
   const categoryLabel =
     meta.category === 'PRIMARY'
       ? isRu ? 'Основное сырье' : isEn ? 'Primary Raw Material' : 'Asosiy xomashyo'
-      : isRu ? 'Вторичные материалы / тара' : isEn ? 'Secondary Materials' : 'Ikkilamchi vositalar'
+      : isRu ? 'Вторичные материалы / тара' : isEn ? 'Secondary Products' : 'Ikkilamchi mahsulotlar'
 
   return {
     meta,
@@ -645,17 +645,11 @@ export function getTrilingualInfo(rawName?: string, lang: string = 'uz') {
 }
 
 /**
- * Formats a clean trilingual product name matching user specification:
- * e.g. "Морковь, sabzi, carrot" or "Томат, tomat (pomidor), tomato"
+ * Formats a clean product name strictly matching the active language (UZ, RU, EN).
+ * User requirement: "faqat o'zbekcha yoki faqat ruscha yoki faqat inglizcha bo'lishi kerak".
  */
-export function formatTrilingualProductName(meta: ProductMeta): string {
-  const parts: string[] = []
-  if (meta.ru) parts.push(meta.ru)
-  if (meta.uz && !parts.some((p) => p.toLowerCase() === meta.uz.toLowerCase())) {
-    parts.push(meta.uz.toLowerCase())
-  }
-  if (meta.en && !parts.some((p) => p.toLowerCase() === meta.en.toLowerCase())) {
-    parts.push(meta.en.toLowerCase())
-  }
-  return parts.join(', ')
+export function formatTrilingualProductName(meta: ProductMeta, lang: string = 'uz'): string {
+  if (lang === 'ru') return meta.ru || meta.uz || meta.en
+  if (lang === 'en') return meta.en || meta.uz || meta.ru
+  return meta.uz || meta.ru || meta.en
 }

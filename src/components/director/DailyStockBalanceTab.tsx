@@ -9,6 +9,13 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import {
+  translateProductName,
+  translateUnit,
+  translateMonthName,
+  translateTableTitle,
+  translateNoteText
+} from '@/lib/directorLocalization'
 import dailyStockData from '@/data/dailyStockLedger.json'
 
 interface StockItem {
@@ -102,16 +109,19 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
 
   const [exporting, setExporting] = useState(false)
 
-  // Filter items by search
+  // Filter items by search (supports both Uzbek and Russian search terms)
   const visibleItems = useMemo(() => {
     if (!currentTable) return []
     if (!searchQuery.trim()) return currentTable.items
     const q = searchQuery.toLowerCase().trim()
-    return currentTable.items.filter(item =>
-      item.name.toLowerCase().includes(q) ||
-      (item.unit && item.unit.toLowerCase().includes(q))
-    )
-  }, [currentTable, searchQuery])
+    return currentTable.items.filter(item => {
+      const localizedName = translateProductName(item.name, lang).toLowerCase()
+      const rawName = item.name.toLowerCase()
+      const unit = (item.unit || '').toLowerCase()
+      const localizedUnit = translateUnit(item.unit, lang).toLowerCase()
+      return localizedName.includes(q) || rawName.includes(q) || unit.includes(q) || localizedUnit.includes(q)
+    })
+  }, [currentTable, searchQuery, lang])
 
   // Stock KPI metrics
   const kpis = useMemo(() => {
@@ -155,13 +165,14 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
     if (!currentTable) return
     try {
       setExporting(true)
-      const res = await fetch(`/api/director/export?type=balance&id=${encodeURIComponent(currentTable.id)}`)
+      const res = await fetch(`/api/director/export?type=balance&id=${encodeURIComponent(currentTable.id)}&lang=${lang}`)
       if (!res.ok) throw new Error('Eksport qilishda xatolik yuz berdi')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `Информация_по_запасам_${currentTable.id}.xlsx`
+      const filePrefix = lang === 'ru' ? 'Информация_по_запасам' : 'Zaxiralar_balansi'
+      a.download = `${filePrefix}_${currentTable.id}.xlsx`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -237,7 +248,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
           <div className="flex items-center flex-wrap gap-2">
             {/* Month Select */}
             <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-slate-500 font-semibold">{formatDual("Месяц:", "Месяц:", "Month:")}</span>
+              <span className="text-slate-500 font-semibold">{formatDual("Oy:", "Месяц:", "Month:")}</span>
               <select
                 value={selectedMonth}
                 onChange={e => {
@@ -249,7 +260,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
               >
                 {allMonths.map(m => (
                   <option key={m} value={m} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
-                    {m}
+                    {translateMonthName(m, lang)}
                   </option>
                 ))}
               </select>
@@ -265,7 +276,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                Все
+                {formatDual("Barchasi", "Все", "All")}
               </button>
               <button
                 onClick={() => setFilterType('daily')}
@@ -275,7 +286,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                Дни
+                {formatDual("Kunlar", "Дни", "Days")}
               </button>
               <button
                 onClick={() => setFilterType('weekly')}
@@ -285,7 +296,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                Недели
+                {formatDual("Haftalar", "Недели", "Weeks")}
               </button>
             </div>
 
@@ -297,7 +308,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
             >
               {filteredOptions.map(opt => (
                 <option key={opt.id} value={opt.id} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
-                  {opt.title} - {(opt.grandTotalSum / 1_000_000).toFixed(1)} млн
+                  {translateTableTitle(opt.title, lang)} - {(opt.grandTotalSum / 1_000_000).toFixed(1)} {formatDual("mln", "млн", "M")}
                 </option>
               ))}
             </select>
@@ -306,7 +317,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
           {/* Current Table Title & Export Button */}
           <div className="flex items-center gap-2">
             <div className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-800 dark:text-slate-200 text-xs font-bold">
-              <span>{currentTable.title}</span>
+              <span>{translateTableTitle(currentTable.title, lang)}</span>
             </div>
 
             <button
@@ -330,37 +341,37 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
               <tr className="bg-slate-100 dark:bg-dark-800 text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-dark-700 font-bold uppercase text-[11px] tracking-wider">
                 <th className="py-3 px-3 text-center w-12 border-r border-slate-200 dark:border-dark-700">№</th>
                 <th className="py-3 px-3 border-r border-slate-200 dark:border-dark-700 min-w-[180px]">
-                  {formatDual("Наименование", "Наименование", "Product Name")}
+                  {formatDual("Mahsulot nomi", "Наименование", "Product Name")}
                 </th>
                 <th className="py-3 px-2 text-center border-r border-slate-200 dark:border-dark-700 w-20">
-                  {formatDual("Ед. изм.", "Ед. изм.", "Unit")}
+                  {formatDual("Birligi", "Ед. изм.", "Unit")}
                 </th>
                 <th className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 w-28">
-                  {formatDual("Цена", "Цена", "Price")}
+                  {formatDual("Narxi", "Цена", "Price")}
                 </th>
                 <th className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 w-28 bg-slate-50/50 dark:bg-dark-800/40">
-                  {formatDual("Остаток (нач)", "Остаток (нач)", "Opening Stock")}
+                  {formatDual("Boshlang'ich qoldiq", "Остаток (нач)", "Opening Stock")}
                 </th>
                 <th className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 w-24">
-                  {formatDual("Приход", "Приход", "Inflow")}
+                  {formatDual("Kirim", "Приход", "Inflow")}
                 </th>
                 <th className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 w-24">
-                  {formatDual("Расход", "Расход", "Outflow")}
+                  {formatDual("Chiqim", "Расход", "Outflow")}
                 </th>
                 <th className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 w-28">
-                  {formatDual("Передача в кухню", "Передача в кухню", "To Kitchen")}
+                  {formatDual("Oshxonaga", "Передача в кухню", "To Kitchen")}
                 </th>
                 <th className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 w-28 bg-slate-50/50 dark:bg-dark-800/40 font-black">
-                  {formatDual("Остаток (кон)", "Остаток (кон)", "Ending Stock")}
+                  {formatDual("Yakuniy qoldiq", "Остаток (кон)", "Ending Stock")}
                 </th>
                 <th className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 w-32">
-                  {formatDual("Средний расход в неделю", "Средний расход в неделю", "Weekly Avg")}
+                  {formatDual("Haftalik sarf", "Средний расход в неделю", "Weekly Avg")}
                 </th>
                 <th className="py-3 px-3 text-center border-r border-slate-200 dark:border-dark-700 w-32">
-                  {formatDual("На сколько недель хватит", "На сколько недель хватит", "Weeks Rem.")}
+                  {formatDual("Yetish muddati", "На сколько недель хватит", "Weeks Rem.")}
                 </th>
                 <th className="py-3 px-4 text-right w-36 font-black">
-                  {formatDual("Сумма (сум)", "Сумма (сум)", "Sum (UZS)")}
+                  {formatDual("Summa (so'm)", "Сумма (сум)", "Sum (UZS)")}
                 </th>
               </tr>
             </thead>
@@ -389,13 +400,13 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
                     {/* Name */}
                     <td className="py-2.5 px-3 border-r border-slate-200/70 dark:border-dark-750 font-sans font-bold">
                       <span className={isHighlightRow ? 'font-black text-slate-950 dark:text-white' : 'text-slate-900 dark:text-white'}>
-                        {item.name}
+                        {translateProductName(item.name, lang)}
                       </span>
                     </td>
 
                     {/* Unit */}
                     <td className="py-2.5 px-2 text-center text-slate-500 dark:text-slate-400 border-r border-slate-200/70 dark:border-dark-750 text-[11px]">
-                      {item.unit}
+                      {translateUnit(item.unit, lang)}
                     </td>
 
                     {/* Price */}
@@ -452,11 +463,11 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
               <tr className="bg-slate-900 text-amber-300 dark:bg-slate-950 border-t-2 border-amber-500 font-black text-sm">
                 <td className="py-3 px-3 text-center">Σ</td>
                 <td colSpan={10} className="py-3 px-4 uppercase tracking-wider text-white">
-                  {formatDual("ИТОГО", "ИТОГО", "GRAND TOTAL")}
+                  {formatDual("JAMI", "ИТОГО", "GRAND TOTAL")}
                 </td>
                 <td className="py-3 px-4 text-right font-mono text-base font-black text-amber-300">
                   {(currentTable.grandTotalSum).toLocaleString('uz-UZ', { maximumFractionDigits: 2 })}
-                  <span className="text-xs text-amber-400 ml-1 font-bold">сум</span>
+                  <span className="text-xs text-amber-400 ml-1 font-bold">{formatDual("so'm", "сум", "so'm")}</span>
                 </td>
               </tr>
             </tbody>
@@ -469,14 +480,14 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
         <div className="bg-slate-50 dark:bg-dark-850 rounded-2xl p-4 border border-slate-200 dark:border-dark-750 space-y-2">
           <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider">
             <FileText size={15} className="text-slate-500" />
-            <span>{formatDual("Примечание к остаткам и расходу:", "Примечание к остаткам и расходу:", "Audited Notes:")}</span>
+            <span>{formatDual("Qoldiq va sarf bo'yicha izohlar:", "Примечание к остаткам и расходу:", "Audited Notes:")}</span>
           </div>
 
           <div className="space-y-1.5 pl-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
             {currentTable.notes.map((note, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 <span className="text-slate-400 font-bold">•</span>
-                <p>{note}</p>
+                <p>{translateNoteText(note, lang)}</p>
               </div>
             ))}
           </div>

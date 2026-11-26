@@ -406,7 +406,7 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
                 }`}
               >
                 <Boxes size={13} />
-                <span>{lang === 'ru' ? 'Вторичные материалы / тара' : 'Ikkilamchi vositalar'}</span>
+                <span>{lang === 'ru' ? 'Вторичные материалы / тара' : 'Ikkilamchi mahsulotlar'}</span>
                 <span className="opacity-80 text-[11px]">
                   ({allProductsSummary.filter((p) => p.category === 'SECONDARY').length})
                 </span>
@@ -505,7 +505,7 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
                   {categoryFilter === 'PRIMARY'
                     ? lang === 'ru' ? 'Основное сырье и овощи (Брак)' : 'Asosiy xomashyo va sabzavotlar braki'
                     : categoryFilter === 'SECONDARY'
-                    ? lang === 'ru' ? 'Вторичные материалы и тара (Брак)' : 'Ikkilamchi vositalar va taralar braki'
+                    ? lang === 'ru' ? 'Вторичные материалы и тара (Брак)' : 'Ikkilamchi mahsulotlar va taralar braki'
                     : lang === 'ru' ? 'Все забракованные материалы (Унифицированные)' : 'Brak qayd etilgan barcha mahsulotlar'}
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
@@ -528,7 +528,7 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
               >
                 <div className="min-w-0 flex-1">
                   <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors line-clamp-2">
-                    {formatTrilingualProductName(row.meta)}
+                    {formatTrilingualProductName(row.meta, lang)}
                   </span>
                 </div>
 

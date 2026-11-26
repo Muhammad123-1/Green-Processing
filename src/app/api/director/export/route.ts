@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import ExcelJS from 'exceljs'
 import path from 'path'
 import fs from 'fs'
+import {
+  translateProductName,
+  translateUnit,
+  translateMonthName,
+  translateTableTitle,
+  translateNoteText
+} from '@/lib/directorLocalization'
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,6 +18,7 @@ export async function GET(req: NextRequest) {
     const tab = searchParams.get('tab') || 'expense'
     const period = searchParams.get('period') || 'week'
     const mode = searchParams.get('mode') || 'sum'
+    const lang = searchParams.get('lang') || 'uz'
 
     const workbook = new ExcelJS.Workbook()
     workbook.creator = 'Green Processing ERP'
@@ -32,7 +40,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Table not found' }, { status: 404 })
       }
 
-      const sheetTitle = (currentTable.title || 'Остатки').replace(/[:\/\\?*\[\]]/g, '_').slice(0, 31)
+      const rawTitle = currentTable.title || 'Остатки'
+      const displayTitle = translateTableTitle(rawTitle, lang)
+      const sheetTitle = displayTitle.replace(/[:\/\\?*\[\]]/g, '_').slice(0, 31)
       const worksheet = workbook.addWorksheet(sheetTitle, {
         views: [{ showGridLines: true }]
       })
@@ -40,8 +50,8 @@ export async function GET(req: NextRequest) {
       // Column widths
       worksheet.columns = [
         { key: 'num', width: 6 },
-        { key: 'name', width: 24 },
-        { key: 'unit', width: 12 },
+        { key: 'name', width: 26 },
+        { key: 'unit', width: 14 },
         { key: 'price', width: 14 },
         { key: 'startStock', width: 16 },
         { key: 'inflow', width: 14 },
@@ -54,26 +64,42 @@ export async function GET(req: NextRequest) {
       ]
 
       // Title row
-      const titleRow = worksheet.addRow([currentTable.title || ''])
+      const titleRow = worksheet.addRow([displayTitle])
       titleRow.font = { bold: true, size: 12, color: { argb: 'FF000000' } }
       titleRow.height = 24
       worksheet.addRow([]) // empty row
 
       // Header row
-      const headers = [
-        '№',
-        'Наименование',
-        'Единица измерения',
-        'Цена',
-        'Остаток',
-        'Приход',
-        'Расход',
-        'Передача в кухню',
-        'Остаток',
-        'Средний расход в неделю',
-        'На сколько недель хватит',
-        'Сумма'
-      ]
+      const headers = lang === 'ru'
+        ? [
+            '№',
+            'Наименование',
+            'Единица измерения',
+            'Цена',
+            'Остаток (нач)',
+            'Приход',
+            'Расход',
+            'Передача в кухню',
+            'Остаток (кон)',
+            'Средний расход в неделю',
+            'На сколько недель хватит',
+            'Сумма'
+          ]
+        : [
+            '№',
+            'Mahsulot nomi',
+            "O'lchov birligi",
+            'Narxi',
+            "Boshlang'ich qoldiq",
+            'Kirim',
+            'Chiqim',
+            'Oshxonaga berilgan',
+            'Yakuniy qoldiq',
+            "O'rtacha haftalik sarf",
+            'Necha haftaga yetadi',
+            "Summa (so'm)"
+          ]
+
       const headerRow = worksheet.addRow(headers)
       headerRow.height = 28
       headerRow.font = { bold: true, size: 10, color: { argb: 'FF000000' } }
@@ -83,7 +109,7 @@ export async function GET(req: NextRequest) {
         cell.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFFFFF00' } // Exact yellow from audited Excel sheet
+          fgColor: { argb: 'FFFFFF00' } // Yellow
         }
         cell.border = {
           top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -99,7 +125,6 @@ export async function GET(req: NextRequest) {
         const isHighlight = item.isHighlight || item.name.toLowerCase() === 'всего'
         const hasKitchen = item.kitchenTransfer !== null && item.kitchenTransfer > 0
 
-        // Format weeks remaining cleanly (no #DIV/0!)
         let weeksVal: any = item.weeksRemaining
         if (
           weeksVal === '#DIV/0!' ||
@@ -114,10 +139,13 @@ export async function GET(req: NextRequest) {
           weeksVal = Number(weeksVal.toFixed(2))
         }
 
+        const localizedProductName = translateProductName(item.name, lang)
+        const localizedUnit = translateUnit(item.unit, lang)
+
         const row = worksheet.addRow([
           isHighlight ? '' : idx + 1,
-          item.name,
-          item.unit,
+          localizedProductName,
+          localizedUnit,
           item.price > 0 ? item.price : 0,
           item.startStock || 0,
           item.inflow && item.inflow > 0 ? item.inflow : '',
@@ -132,7 +160,6 @@ export async function GET(req: NextRequest) {
         row.height = 20
         row.alignment = { vertical: 'middle' }
 
-        // Alignments & Number formats
         row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }
         row.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' }
         row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
@@ -145,7 +172,7 @@ export async function GET(req: NextRequest) {
           row.getCell(8).fill = {
             type: 'pattern',
             pattern: 'solid',
-            fgColor: { argb: 'FFFFFF99' } // Light amber for kitchen
+            fgColor: { argb: 'FFFFFF99' }
           }
         }
         row.getCell(9).numFmt = '#,##0.00'
@@ -160,19 +187,17 @@ export async function GET(req: NextRequest) {
         row.getCell(12).numFmt = '#,##0.00'
         row.getCell(12).font = { bold: true }
 
-        // Row styling for 'Всего'
         if (isHighlight) {
           row.eachCell((cell) => {
             cell.fill = {
               type: 'pattern',
               pattern: 'solid',
-              fgColor: { argb: 'FFD9EAD3' } // Light green
+              fgColor: { argb: 'FFD9EAD3' }
             }
             cell.font = { bold: true }
           })
         }
 
-        // Borders
         row.eachCell((cell) => {
           cell.border = {
             top: { style: 'thin', color: { argb: 'FFD9D9D9' } },
@@ -183,11 +208,11 @@ export async function GET(req: NextRequest) {
         })
       })
 
-      // Grand Total Row (ИТОГО)
+      // Grand Total Row
       const grandTotal = currentTable.grandTotalSum || 0
       const totalRow = worksheet.addRow([
         'Σ',
-        'ИТОГО',
+        lang === 'ru' ? 'ИТОГО' : 'JAMI',
         '',
         '',
         '',
@@ -218,16 +243,17 @@ export async function GET(req: NextRequest) {
       // Notes
       if (currentTable.notes && currentTable.notes.length > 0) {
         worksheet.addRow([])
-        const notesHeader = worksheet.addRow(['Примечание:'])
+        const notesHeader = worksheet.addRow([lang === 'ru' ? 'Примечание:' : 'Izohlar:'])
         notesHeader.font = { bold: true, size: 10 }
         currentTable.notes.forEach((note: string) => {
-          const noteRow = worksheet.addRow(['', note])
+          const noteRow = worksheet.addRow(['', translateNoteText(note, lang)])
           noteRow.font = { italic: true, size: 9, color: { argb: 'FF333333' } }
         })
       }
 
       const buffer = await workbook.xlsx.writeBuffer()
-      const fileName = `Информация_по_запасам_${currentTable.id}.xlsx`
+      const prefix = lang === 'ru' ? 'Информация_по_запасам' : 'Zaxiralar_balansi'
+      const fileName = `${prefix}_${currentTable.id}.xlsx`
 
       return new Response(buffer, {
         headers: {
@@ -251,29 +277,33 @@ export async function GET(req: NextRequest) {
         : (dynData.months || []).slice(0, 10)
 
       let dataset: any[] = []
-      let tabTitle = 'Динамика'
+      let tabTitle = lang === 'ru' ? 'Динамика' : 'Dinamika'
 
       if (isWeekly && dynData.weekly) {
         if (tab === 'expense') {
           dataset = mode === 'sum' ? dynData.weekly.expenseSum : dynData.weekly.expenseKg
-          tabTitle = mode === 'sum' ? 'Расход со склада (сум)' : 'Расход со склада (кг)'
+          tabTitle = mode === 'sum'
+            ? (lang === 'ru' ? 'Расход со склада (сум)' : "Xomashyo chiqimi (so'm)")
+            : (lang === 'ru' ? 'Расход со склада (кг)' : 'Xomashyo chiqimi (kg)')
         } else if (tab === 'gp') {
           dataset = dynData.weekly.gpKg
-          tabTitle = 'Производство ГП (кг)'
+          tabTitle = lang === 'ru' ? 'Производство ГП (кг)' : 'Tayyor mahsulot (kg)'
         } else if (tab === 'waste') {
           dataset = dynData.weekly.wastePercent
-          tabTitle = 'Отход продукции (%)'
+          tabTitle = lang === 'ru' ? 'Отход продукции (%)' : 'Mahsulot chiqindisi (%)'
         }
       } else {
         if (tab === 'expense') {
           dataset = mode === 'sum' ? dynData.expenseSum : dynData.expenseKg
-          tabTitle = mode === 'sum' ? 'Расход со склада (сум)' : 'Расход со склада (кг)'
+          tabTitle = mode === 'sum'
+            ? (lang === 'ru' ? 'Расход со склада (сум)' : "Xomashyo chiqimi (so'm)")
+            : (lang === 'ru' ? 'Расход со склада (кг)' : 'Xomashyo chiqimi (kg)')
         } else if (tab === 'gp') {
           dataset = dynData.gpKg
-          tabTitle = 'Производство ГП (кг)'
+          tabTitle = lang === 'ru' ? 'Производство ГП (кг)' : 'Tayyor mahsulot (kg)'
         } else if (tab === 'waste') {
           dataset = dynData.wastePercent
-          tabTitle = 'Отход продукции (%)'
+          tabTitle = lang === 'ru' ? 'Отход продукции (%)' : 'Mahsulot chiqindisi (%)'
         }
       }
 
@@ -285,7 +315,7 @@ export async function GET(req: NextRequest) {
       const cols: any[] = [
         { key: 'num', width: 6 },
         { key: 'name', width: 26 },
-        { key: 'unit', width: 12 }
+        { key: 'unit', width: 14 }
       ]
       activePeriods.forEach((p, idx) => {
         cols.push({ key: `p_${idx}`, width: 15 })
@@ -301,9 +331,16 @@ export async function GET(req: NextRequest) {
 
       // Header row
       const periodHeaders = isWeekly
-        ? activePeriods.map((_, i) => `H-${i + 1}`)
-        : activePeriods
-      const headers = ['№', 'Наименование', 'Ед. изм.', ...periodHeaders, 'Итого']
+        ? activePeriods.map((_, i) => lang === 'ru' ? `H-${i + 1}` : `${i + 1}-h`)
+        : activePeriods.map(p => translateMonthName(p, lang))
+
+      const headers = [
+        '№',
+        lang === 'ru' ? 'Наименование' : 'Mahsulot nomi',
+        lang === 'ru' ? 'Ед. изм.' : "O'lchov birligi",
+        ...periodHeaders,
+        lang === 'ru' ? 'Итого' : 'Jami'
+      ]
       const headerRow = worksheet.addRow(headers)
       headerRow.height = 28
       headerRow.font = { bold: true, size: 10, color: { argb: 'FF000000' } }
@@ -313,7 +350,7 @@ export async function GET(req: NextRequest) {
         cell.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFFFFF00' } // Yellow header
+          fgColor: { argb: 'FFFFFF00' }
         }
         cell.border = {
           top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -329,10 +366,14 @@ export async function GET(req: NextRequest) {
         const isGrandTotal = item.name.toLowerCase().includes('итого')
         const rawVals = isWeekly ? (item.weekly || []) : (item.monthly || []).slice(0, 10)
 
+        const rawUnit = item.unit || (tab === 'waste' ? '%' : mode === 'sum' ? 'сум' : 'кг')
+        const localizedProductName = translateProductName(item.name, lang)
+        const localizedUnit = translateUnit(rawUnit, lang)
+
         const rowData = [
           isTotalRow || isGrandTotal ? '' : idx + 1,
-          item.name,
-          item.unit || (tab === 'waste' ? '%' : mode === 'sum' ? 'сум' : 'кг'),
+          localizedProductName,
+          localizedUnit,
           ...rawVals.map((v: any) => (v !== null && v !== undefined && !isNaN(v) ? v : '')),
           item.total !== null && item.total !== undefined ? item.total : ''
         ]
@@ -345,7 +386,6 @@ export async function GET(req: NextRequest) {
         row.getCell(2).alignment = { horizontal: 'left' }
         row.getCell(3).alignment = { horizontal: 'center' }
 
-        // Formatting numbers
         for (let c = 4; c <= row.cellCount; c++) {
           const cell = row.getCell(c)
           cell.alignment = { horizontal: 'right', vertical: 'middle' }
@@ -358,7 +398,6 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        // Highlight total row
         if (isTotalRow) {
           row.eachCell((cell) => {
             cell.fill = {
@@ -385,7 +424,8 @@ export async function GET(req: NextRequest) {
       })
 
       const buffer = await workbook.xlsx.writeBuffer()
-      const fileName = `Информация_${tab}_${period}.xlsx`
+      const prefix = lang === 'ru' ? 'Информация' : 'Dinamika'
+      const fileName = `${prefix}_${tab}_${period}.xlsx`
 
       return new Response(buffer, {
         headers: {
