@@ -82,55 +82,90 @@ import DefectMaterialsAnalysis from '@/components/director/executive/DefectMater
 import ProductBalanceTable, { ProductBalanceItem } from '@/components/director/executive/ProductBalanceTable'
 import ProductLossDrawer from '@/components/director/executive/ProductLossDrawer'
 
-const getRecentWorkWeeks = (count = 6) => {
+export interface WeekOption {
+  weekNum: number
+  labelUz: string
+  labelRu: string
+  labelEn: string
+  shortLabel: string
+  from: string
+  to: string
+}
+
+const getWeeksForMonth = (year: number, monthIndex: number): WeekOption[] => {
   const pad = (n: number) => String(n).padStart(2, '0')
   const fmt = (d: Date) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
   const toYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-
-  const baseDate = new Date()
-  const weeks: Array<{ label: string; from: string; to: string }> = []
-
-  for (let i = count - 1; i >= 0; i--) {
-    const d = new Date(baseDate)
-    d.setDate(baseDate.getDate() - i * 7)
-    const day = d.getDay()
-    const diffToMon = (day === 0 ? -6 : 1) - day
-    const mon = new Date(d)
-    mon.setDate(d.getDate() + diffToMon)
-    const sat = new Date(mon)
-    sat.setDate(mon.getDate() + 5)
-    weeks.push({
-      label: `${fmt(mon)} - ${fmt(sat)}`,
-      from: toYMD(mon),
-      to: toYMD(sat),
-    })
-  }
-  return weeks
-}
-
-const getRecentMonths = () => {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const toYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-
-  const now = new Date()
-  const months: Array<{ labelUz: string; labelRu: string; labelEn: string; from: string; to: string; yearMonth: string }> = []
 
   const monthNamesUz = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr']
   const monthNamesRu = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
   const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const y = d.getFullYear()
-    const m = d.getMonth()
-    const lastDay = new Date(y, m + 1, 0)
+  const weeks: WeekOption[] = []
+  const lastDay = new Date(year, monthIndex + 1, 0)
+
+  let curr = new Date(year, monthIndex, 1)
+  const day = curr.getDay()
+  const diffToMon = day === 0 ? 1 : 1 - day
+  curr.setDate(curr.getDate() + diffToMon)
+
+  let weekNum = 1
+  while (true) {
+    const mon = new Date(curr)
+    const sat = new Date(mon)
+    sat.setDate(mon.getDate() + 5)
+
+    if (mon.getMonth() > monthIndex && mon.getFullYear() === year) break
+    if (mon.getFullYear() > year) break
+
+    const mNameUz = monthNamesUz[monthIndex]
+    const mNameRu = monthNamesRu[monthIndex]
+    const mNameEn = monthNamesEn[monthIndex]
+
+    weeks.push({
+      weekNum,
+      labelUz: `${mNameUz} ${weekNum}-haftasi (${fmt(mon)} - ${fmt(sat)})`,
+      labelRu: `${weekNum}-я неделя ${mNameRu} (${fmt(mon)} - ${fmt(sat)})`,
+      labelEn: `${mNameEn} Week ${weekNum} (${fmt(mon)} - ${fmt(sat)})`,
+      shortLabel: `${fmt(mon)} - ${fmt(sat)}`,
+      from: toYMD(mon),
+      to: toYMD(sat),
+    })
+
+    curr.setDate(curr.getDate() + 7)
+    weekNum++
+    if (curr > lastDay && curr.getMonth() !== monthIndex) break
+  }
+
+  // Noyabr 2026: user explicitly requested to remove "Joriy hafta 23.11.2026 - 28.11.2026"
+  if (year === 2026 && monthIndex === 10) {
+    return weeks.filter((w) => w.to <= '2026-11-21')
+  }
+
+  return weeks
+}
+
+const getAllYearMonths = (year = 2026) => {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const toYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+  const monthNamesUz = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr']
+  const monthNamesRu = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+  const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+  const months: Array<{ labelUz: string; labelRu: string; labelEn: string; from: string; to: string; yearMonth: string; monthIndex: number }> = []
+
+  for (let m = 0; m < 12; m++) {
+    const d = new Date(year, m, 1)
+    const lastDay = new Date(year, m + 1, 0)
     months.push({
-      labelUz: `${monthNamesUz[m]} ${y}`,
-      labelRu: `${monthNamesRu[m]} ${y}`,
-      labelEn: `${monthNamesEn[m]} ${y}`,
+      monthIndex: m,
+      labelUz: `${monthNamesUz[m]} ${year}`,
+      labelRu: `${monthNamesRu[m]} ${year}`,
+      labelEn: `${monthNamesEn[m]} ${year}`,
       from: toYMD(d),
       to: toYMD(lastDay),
-      yearMonth: `${y}-${pad(m + 1)}`,
+      yearMonth: `${year}-${pad(m + 1)}`,
     })
   }
   return months
@@ -161,13 +196,19 @@ export default function DirectorPage() {
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
 
-  // Sub-interval states
-  const recentWeeks = useMemo(() => getRecentWorkWeeks(6), [])
-  const recentMonths = useMemo(() => getRecentMonths(), [])
+  // Sub-interval states: all 12 months & monthly weeks
+  const allYearMonths = useMemo(() => getAllYearMonths(2026), [])
   const availableYears = useMemo(() => getAvailableYears(), [])
 
-  const [selectedWeek, setSelectedWeek] = useState(recentWeeks[recentWeeks.length - 1])
-  const [selectedMonth, setSelectedMonth] = useState(recentMonths[recentMonths.length - 1])
+  // Selected month index for the "Hafta" selector (default 10 = Noyabr)
+  const [selectedWeekMonthIndex, setSelectedWeekMonthIndex] = useState(10)
+  const currentMonthWeeks = useMemo(() => getWeeksForMonth(2026, selectedWeekMonthIndex), [selectedWeekMonthIndex])
+
+  const [selectedWeek, setSelectedWeek] = useState<WeekOption>(() => {
+    const novWeeks = getWeeksForMonth(2026, 10)
+    return novWeeks[novWeeks.length - 1] // Noyabr 3-haftasi (16.11.2026 - 21.11.2026)
+  })
+  const [selectedMonth, setSelectedMonth] = useState(() => allYearMonths[10]) // Noyabr 2026
   const [selectedYear, setSelectedYear] = useState(availableYears[availableYears.length - 1])
 
   const getEffectiveRange = useCallback(() => {
@@ -176,7 +217,8 @@ export default function DirectorPage() {
       return { from: today.from, to: today.to, label: today.label }
     }
     if (period === 'week') {
-      return { from: selectedWeek?.from || '', to: selectedWeek?.to || '', label: selectedWeek?.label || '' }
+      const wLabel = directorLang === 'ru' ? selectedWeek?.labelRu : directorLang === 'en' ? selectedWeek?.labelEn : selectedWeek?.labelUz
+      return { from: selectedWeek?.from || '', to: selectedWeek?.to || '', label: wLabel || selectedWeek?.shortLabel || '' }
     }
     if (period === 'month') {
       const mLabel = directorLang === 'ru' ? selectedMonth?.labelRu : directorLang === 'en' ? selectedMonth?.labelEn : selectedMonth?.labelUz
@@ -1256,42 +1298,106 @@ export default function DirectorPage() {
           </div>
         )}
 
-        {/* 2. HAFTA: ACTIVE WEEK SUMMARY */}
+        {/* 2. HAFTA: SINGLE-ROW SELECTOR (HEADER ORALIQDAGIDEK) */}
         {period === 'week' && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 rounded-xl border border-amber-300 dark:border-amber-700/60 text-xs font-bold shadow-xs">
-            <Calendar size={14} className="text-amber-600 dark:text-amber-400" />
-            <span>
-              {formatDual("Faol hafta:", "Активная неделя:", "Active week:")}{' '}
-              <span className="font-mono font-black text-amber-950 dark:text-amber-100">
-                {selectedWeek.label}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Oy tanlash (12 oy) */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-dark-850 rounded-xl border border-amber-300 dark:border-amber-700/60 text-xs font-bold shadow-xs">
+              <span className="text-amber-700 dark:text-amber-400 text-[11px] font-semibold">
+                {formatDual('Oy:', 'Месяц:', 'Month:')}
               </span>
-            </span>
+              <select
+                value={selectedWeekMonthIndex}
+                onChange={(e) => {
+                  const mIdx = Number(e.target.value)
+                  setSelectedWeekMonthIndex(mIdx)
+                  const mWeeks = getWeeksForMonth(2026, mIdx)
+                  if (mWeeks.length > 0) {
+                    setSelectedWeek(mWeeks[mWeeks.length - 1])
+                  }
+                }}
+                className="bg-transparent text-slate-800 dark:text-slate-200 font-bold text-xs focus:outline-none cursor-pointer"
+              >
+                {allYearMonths.map((m) => (
+                  <option key={m.yearMonth} value={m.monthIndex} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
+                    {directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Hafta tanlash: [Oy] [n]-haftasi ([from] - [to]) */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-300 dark:border-amber-700/60 text-xs font-bold text-amber-900 dark:text-amber-200 shadow-xs">
+              <Calendar size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <select
+                value={selectedWeek?.from || ''}
+                onChange={(e) => {
+                  const found = currentMonthWeeks.find((w) => w.from === e.target.value)
+                  if (found) setSelectedWeek(found)
+                }}
+                className="bg-transparent text-amber-950 dark:text-amber-100 font-bold text-xs focus:outline-none cursor-pointer"
+              >
+                {currentMonthWeeks.map((wk) => {
+                  const label = directorLang === 'ru' ? wk.labelRu : directorLang === 'en' ? wk.labelEn : wk.labelUz
+                  return (
+                    <option key={wk.from} value={wk.from} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
+                      {label}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
           </div>
         )}
 
-        {/* 3. OY: ACTIVE MONTH BADGE */}
+        {/* 3. OY: SINGLE-ROW ALL 12 MONTHS SELECTOR */}
         {period === 'month' && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-xl border border-indigo-200 dark:border-indigo-800/50 text-xs font-bold shadow-xs">
-            <Calendar size={14} className="text-indigo-500" />
-            <span>
-              {formatDual("Faol oy:", "Активный месяц:", "Active month:")}{' '}
-              <span className="font-extrabold text-indigo-950 dark:text-indigo-100">
-                {directorLang === 'ru' ? selectedMonth.labelRu : directorLang === 'en' ? selectedMonth.labelEn : selectedMonth.labelUz}
-              </span>
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-800/50 text-xs font-bold text-indigo-900 dark:text-indigo-200 shadow-xs">
+            <Calendar size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <span className="text-indigo-600 dark:text-indigo-400 text-[11px] font-semibold">
+              {formatDual('Faol oy:', 'Активный месяц:', 'Active month:')}
             </span>
+            <select
+              value={selectedMonth.yearMonth}
+              onChange={(e) => {
+                const found = allYearMonths.find((m) => m.yearMonth === e.target.value)
+                if (found) setSelectedMonth(found)
+              }}
+              className="bg-transparent text-indigo-950 dark:text-indigo-100 font-black text-xs focus:outline-none cursor-pointer"
+            >
+              {allYearMonths.map((m) => {
+                const label = directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
+                return (
+                  <option key={m.yearMonth} value={m.yearMonth} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
+                    {label} ({m.from} — {m.to})
+                  </option>
+                )
+              })}
+            </select>
           </div>
         )}
 
-        {/* 4. YIL: ACTIVE YEAR BADGE */}
+        {/* 4. YIL: SINGLE-ROW YEAR SELECTOR */}
         {period === 'year' && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800/50 text-xs font-bold shadow-xs">
-            <Calendar size={14} className="text-emerald-500" />
-            <span>
-              {formatDual("Faol yil:", "Активный год:", "Active year:")}{' '}
-              <span className="font-extrabold text-emerald-950 dark:text-emerald-100">
-                {selectedYear.label}
-              </span>
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800/50 text-xs font-bold text-emerald-900 dark:text-emerald-200 shadow-xs">
+            <Calendar size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
+              {formatDual('Faol yil:', 'Активный год:', 'Active year:')}
             </span>
+            <select
+              value={selectedYear.year}
+              onChange={(e) => {
+                const found = availableYears.find((yr) => yr.year === Number(e.target.value))
+                if (found) setSelectedYear(found)
+              }}
+              className="bg-transparent text-emerald-950 dark:text-emerald-100 font-black text-xs focus:outline-none cursor-pointer"
+            >
+              {availableYears.map((yr) => (
+                <option key={yr.year} value={yr.year} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
+                  {yr.label} ({yr.from} — {yr.to})
+                </option>
+              ))}
+            </select>
           </div>
         )}
 
@@ -1322,120 +1428,6 @@ export default function DirectorPage() {
           </div>
         )}
       </div>
-
-      {/* HAFTA TANLANGANDA: IMAGE 3 DAGI 6 TA HAFTALIK MUDDATLAR JADVALI */}
-      {period === 'week' && (
-        <div className="bg-amber-50 dark:bg-amber-950/20 p-2.5 rounded-2xl border-2 border-amber-300 dark:border-amber-700/60 space-y-2 no-print shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-            <span className="text-xs font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1.5">
-              <Calendar size={14} className="text-amber-600 dark:text-amber-400" />
-              {formatDual("Haftalik muddatlar oralig'i (Dushanba — Shanba):", "Интервалы недель (Пн — Сб):", "Weekly intervals (Mon — Sat):")}
-            </span>
-            <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-200/70 dark:bg-amber-900/50 px-2.5 py-0.5 rounded-lg">
-              {formatDual("Tanlangan oraliq:", "Выбранный период:", "Selected period:")} <span className="font-mono">{selectedWeek.label}</span>
-            </span>
-          </div>
-
-          {/* 6 TA HAFTALIK TUGMALAR — IMAGE 3 DAGIDEK SARIQ FOND VA ANIQ MATN */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            {recentWeeks.map((wk, idx) => {
-              const isSelected = selectedWeek.from === wk.from && selectedWeek.to === wk.to
-              const isLatest = idx === recentWeeks.length - 1
-              return (
-                <button
-                  key={wk.from}
-                  type="button"
-                  onClick={() => setSelectedWeek(wk)}
-                  className={`p-2.5 rounded-xl text-center transition-all cursor-pointer border ${
-                    isSelected
-                      ? 'bg-amber-300 dark:bg-amber-400 text-amber-950 font-black border-amber-500 shadow-sm ring-2 ring-amber-400/60 scale-[1.02]'
-                      : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-amber-200/80 dark:border-amber-900/40 hover:bg-amber-100/60 dark:hover:bg-amber-950/40'
-                  }`}
-                  style={isSelected ? { backgroundColor: '#fef08a', color: '#713f12', borderColor: '#eab308' } : {}}
-                >
-                  <div className="text-[10px] uppercase font-bold tracking-wider opacity-70 mb-0.5">
-                    {isLatest ? formatDual('Joriy hafta', 'Текущая', 'Current') : `${idx + 1}-${formatDual('hafta', 'неделя', 'week')}`}
-                  </div>
-                  <div className="font-mono text-xs font-black whitespace-nowrap">
-                    {wk.label}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* OY TANLANGANDA: OYLIK MUDDATLAR TUGMALARI */}
-      {period === 'month' && (
-        <div className="bg-indigo-50/70 dark:bg-indigo-950/20 p-2.5 rounded-2xl border border-indigo-200 dark:border-indigo-800/40 space-y-2 no-print shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-            <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
-              <Calendar size={14} className="text-indigo-600 dark:text-indigo-400" />
-              {formatDual("Oylik muddatni tanlash:", "Выбор месяца:", "Select month:")}
-            </span>
-            <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/50 px-2.5 py-0.5 rounded-lg font-mono">
-              {directorLang === 'ru' ? selectedMonth.labelRu : directorLang === 'en' ? selectedMonth.labelEn : selectedMonth.labelUz} ({selectedMonth.from} — {selectedMonth.to})
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {recentMonths.map((m) => {
-              const isSelected = selectedMonth.yearMonth === m.yearMonth
-              const label = directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
-              return (
-                <button
-                  key={m.yearMonth}
-                  type="button"
-                  onClick={() => setSelectedMonth(m)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                    isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm ring-2 ring-indigo-400/40'
-                      : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
-                  }`}
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* YIL TANLANGANDA: YILLIK MUDDATLAR TUGMALARI */}
-      {period === 'year' && (
-        <div className="bg-emerald-50/70 dark:bg-emerald-950/20 p-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 space-y-2 no-print shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-            <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
-              <Calendar size={14} className="text-emerald-600 dark:text-emerald-400" />
-              {formatDual("Yillik muddatni tanlash:", "Выбор года:", "Select year:")}
-            </span>
-            <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-0.5 rounded-lg font-mono">
-              {selectedYear.label} ({selectedYear.from} — {selectedYear.to})
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {availableYears.map((yr) => {
-              const isSelected = selectedYear.year === yr.year
-              return (
-                <button
-                  key={yr.year}
-                  type="button"
-                  onClick={() => setSelectedYear(yr)}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                    isSelected
-                      ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-400/40'
-                      : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
-                  }`}
-                >
-                  {yr.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* 3. SUSPICIOUS ALERTS BANNER (IF ANY ANOMALIES DETECTED) */}
