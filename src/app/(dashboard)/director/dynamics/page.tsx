@@ -286,12 +286,18 @@ export default function DirectorDynamicsPage() {
     return []
   }, [data, isWeekly, activeTab, expenseSubMode])
 
-  // Filter products by search (supports both Uzbek and Russian search terms)
+  // Filter products by search (supports both Uzbek and Russian search terms) and clean any raw notes from table rows
   const filteredProducts = useMemo(() => {
     if (!currentDataset) return []
-    if (!searchQuery.trim()) return currentDataset
+    // Never allow raw notes as product rows in the table
+    const cleanRows = currentDataset.filter(item => {
+      const rawName = (item.name || '').trim().toLowerCase()
+      return !rawName.startsWith('примечание') && !rawName.startsWith('note:') && !rawName.startsWith('izoh:')
+    })
+
+    if (!searchQuery.trim()) return cleanRows
     const q = searchQuery.toLowerCase().trim()
-    return currentDataset.filter(item => {
+    return cleanRows.filter(item => {
       const localizedName = translateProductName(item.name, directorLang).toLowerCase()
       const rawName = item.name.toLowerCase()
       const localizedUnit = translateUnit(item.unit || '', directorLang).toLowerCase()
@@ -840,7 +846,7 @@ export default function DirectorDynamicsPage() {
                   {filteredProducts.map((item, idx) => {
                     const isTotalRow = item.name.toLowerCase() === 'всего' || item.name.toLowerCase().includes('всего')
                     const isConsumable = item.name.toLowerCase().includes('коробка') || item.name.toLowerCase().includes('гипохлорид')
-                    const isGrandTotalWithConsumables = item.name.toLowerCase().includes('итого с упаковкой')
+                    const isGrandTotalWithConsumables = item.name.toLowerCase().includes('итого с упаковкой') || item.name.toLowerCase().includes('упаковкой') || item.name.toLowerCase() === 'итого'
 
                     const rawVals = isWeekly ? (item.weekly || []) : (item.monthly || [])
                     const displayVals = isWeekly ? rawVals : rawVals.slice(0, 10)
@@ -859,14 +865,22 @@ export default function DirectorDynamicsPage() {
                       <tr key={`${item.name}-${idx}`} className={rowStyle}>
                         {/* Index */}
                         <td className={`py-2 px-3 text-center border-r border-slate-200/60 dark:border-dark-750 sticky left-0 z-10 ${
-                          isTotalRow ? 'bg-[#d9ead3] dark:bg-emerald-950' : 'bg-white dark:bg-dark-900'
+                          isTotalRow
+                            ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-emerald-100 font-black'
+                            : isGrandTotalWithConsumables
+                            ? 'bg-slate-900 text-amber-400 dark:bg-slate-950 font-black'
+                            : 'bg-white dark:bg-dark-900'
                         }`}>
-                          {isTotalRow ? '★' : idx + 1}
+                          {isTotalRow || isGrandTotalWithConsumables ? '★' : idx + 1}
                         </td>
 
                         {/* Product Name */}
                         <td className={`py-2 px-3 border-r border-slate-200/60 dark:border-dark-750 sticky left-12 z-10 font-sans font-bold ${
-                          isTotalRow ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-white' : 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white'
+                          isTotalRow
+                            ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-white'
+                            : isGrandTotalWithConsumables
+                            ? 'bg-slate-900 text-amber-400 dark:bg-slate-950'
+                            : 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white'
                         }`}>
                           {translateProductName(item.name, directorLang)}
                         </td>
