@@ -1188,7 +1188,7 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       {/* 2. VAQT VA GRAFIKLAR NAZORATI */}
       {/* ========================================================================= */}
-      <div className="pt-4 border-t border-slate-200 dark:border-dark-750 space-y-6">
+      <div className="pt-4 border-t border-slate-200 dark:border-dark-750 space-y-3">
       <div className="bg-slate-100/80 dark:bg-dark-850 p-1.5 rounded-2xl flex flex-wrap items-center justify-between gap-2 border border-slate-200 dark:border-dark-750 no-print">
         <div className="flex items-center gap-1 overflow-x-auto">
           {[
@@ -1213,6 +1213,66 @@ export default function DirectorPage() {
           ))}
         </div>
 
+        {/* 1. BUGUN: EXACT DATE BADGE */}
+        {period === 'today' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-xl border border-blue-200 dark:border-blue-800/50 text-xs font-bold shadow-xs">
+            <Calendar size={14} className="text-blue-500" />
+            <span>
+              {formatDual("Bugun:", "Сегодня:", "Today:")}{' '}
+              <span className="font-mono font-black text-blue-900 dark:text-blue-100 underline decoration-blue-400 underline-offset-2">
+                {getTodayDateInfo().label}
+              </span>
+            </span>
+          </div>
+        )}
+
+        {/* 2. HAFTA: ACTIVE WEEK SUMMARY */}
+        {period === 'week' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 rounded-xl border border-amber-300 dark:border-amber-700/60 text-xs font-bold shadow-xs">
+            <Calendar size={14} className="text-amber-600 dark:text-amber-400" />
+            <span>
+              {formatDual("Faol hafta:", "Активная неделя:", "Active week:")}{' '}
+              <span className="font-mono font-black text-amber-950 dark:text-amber-100">
+                {selectedWeek.label}
+              </span>
+            </span>
+          </div>
+        )}
+
+        {/* 3. OY: ACTIVE MONTH BADGE */}
+        {period === 'month' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-xl border border-indigo-200 dark:border-indigo-800/50 text-xs font-bold shadow-xs">
+            <Calendar size={14} className="text-indigo-500" />
+            <span>
+              {formatDual("Faol oy:", "Активный месяц:", "Active month:")}{' '}
+              <span className="font-extrabold text-indigo-950 dark:text-indigo-100">
+                {directorLang === 'ru' ? selectedMonth.labelRu : directorLang === 'en' ? selectedMonth.labelEn : selectedMonth.labelUz}
+              </span>
+            </span>
+          </div>
+        )}
+
+        {/* 4. YIL: ACTIVE YEAR BADGE */}
+        {period === 'year' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800/50 text-xs font-bold shadow-xs">
+            <Calendar size={14} className="text-emerald-500" />
+            <span>
+              {formatDual("Faol yil:", "Активный год:", "Active year:")}{' '}
+              <span className="font-extrabold text-emerald-950 dark:text-emerald-100">
+                {selectedYear.label}
+              </span>
+            </span>
+          </div>
+        )}
+
+        {/* 5. BARCHASI: ALL-TIME BADGE */}
+        {period === 'all' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 rounded-xl border border-slate-200 dark:border-dark-700 text-xs font-medium">
+            <span>{formatDual("Barcha vaqt (30.08.2025 dan hozirgacha)", "Все время (с 30.08.2025 по настоящее время)", "All time (from 30.08.2025 to present)")}</span>
+          </div>
+        )}
+
+        {/* 6. ORALIQ (CUSTOM) INPUTS */}
         {period === 'custom' && (
           <div className="flex flex-wrap items-center gap-2 px-2 py-1 bg-white dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 text-xs">
             <span className="text-slate-400 text-[11px]">{formatDual("Dan:", "С:", "From:")}</span>
@@ -1232,6 +1292,120 @@ export default function DirectorPage() {
           </div>
         )}
       </div>
+
+      {/* HAFTA TANLANGANDA: IMAGE 3 DAGI 6 TA HAFTALIK MUDDATLAR JADVALI */}
+      {period === 'week' && (
+        <div className="bg-amber-50 dark:bg-amber-950/20 p-2.5 rounded-2xl border-2 border-amber-300 dark:border-amber-700/60 space-y-2 no-print shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <span className="text-xs font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1.5">
+              <Calendar size={14} className="text-amber-600 dark:text-amber-400" />
+              {formatDual("Haftalik muddatlar oralig'i (Dushanba — Shanba):", "Интервалы недель (Пн — Сб):", "Weekly intervals (Mon — Sat):")}
+            </span>
+            <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-200/70 dark:bg-amber-900/50 px-2.5 py-0.5 rounded-lg">
+              {formatDual("Tanlangan oraliq:", "Выбранный период:", "Selected period:")} <span className="font-mono">{selectedWeek.label}</span>
+            </span>
+          </div>
+
+          {/* 6 TA HAFTALIK TUGMALAR — IMAGE 3 DAGIDEK SARIQ FOND VA ANIQ MATN */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {recentWeeks.map((wk, idx) => {
+              const isSelected = selectedWeek.from === wk.from && selectedWeek.to === wk.to
+              const isLatest = idx === recentWeeks.length - 1
+              return (
+                <button
+                  key={wk.from}
+                  type="button"
+                  onClick={() => setSelectedWeek(wk)}
+                  className={`p-2.5 rounded-xl text-center transition-all cursor-pointer border ${
+                    isSelected
+                      ? 'bg-amber-300 dark:bg-amber-400 text-amber-950 font-black border-amber-500 shadow-sm ring-2 ring-amber-400/60 scale-[1.02]'
+                      : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-amber-200/80 dark:border-amber-900/40 hover:bg-amber-100/60 dark:hover:bg-amber-950/40'
+                  }`}
+                  style={isSelected ? { backgroundColor: '#fef08a', color: '#713f12', borderColor: '#eab308' } : {}}
+                >
+                  <div className="text-[10px] uppercase font-bold tracking-wider opacity-70 mb-0.5">
+                    {isLatest ? formatDual('Joriy hafta', 'Текущая', 'Current') : `${idx + 1}-${formatDual('hafta', 'неделя', 'week')}`}
+                  </div>
+                  <div className="font-mono text-xs font-black whitespace-nowrap">
+                    {wk.label}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* OY TANLANGANDA: OYLIK MUDDATLAR TUGMALARI */}
+      {period === 'month' && (
+        <div className="bg-indigo-50/70 dark:bg-indigo-950/20 p-2.5 rounded-2xl border border-indigo-200 dark:border-indigo-800/40 space-y-2 no-print shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+              <Calendar size={14} className="text-indigo-600 dark:text-indigo-400" />
+              {formatDual("Oylik muddatni tanlash:", "Выбор месяца:", "Select month:")}
+            </span>
+            <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/50 px-2.5 py-0.5 rounded-lg font-mono">
+              {directorLang === 'ru' ? selectedMonth.labelRu : directorLang === 'en' ? selectedMonth.labelEn : selectedMonth.labelUz} ({selectedMonth.from} — {selectedMonth.to})
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {recentMonths.map((m) => {
+              const isSelected = selectedMonth.yearMonth === m.yearMonth
+              const label = directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
+              return (
+                <button
+                  key={m.yearMonth}
+                  type="button"
+                  onClick={() => setSelectedMonth(m)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm ring-2 ring-indigo-400/40'
+                      : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* YIL TANLANGANDA: YILLIK MUDDATLAR TUGMALARI */}
+      {period === 'year' && (
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/20 p-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/40 space-y-2 no-print shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
+              <Calendar size={14} className="text-emerald-600 dark:text-emerald-400" />
+              {formatDual("Yillik muddatni tanlash:", "Выбор года:", "Select year:")}
+            </span>
+            <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-0.5 rounded-lg font-mono">
+              {selectedYear.label} ({selectedYear.from} — {selectedYear.to})
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {availableYears.map((yr) => {
+              const isSelected = selectedYear.year === yr.year
+              return (
+                <button
+                  key={yr.year}
+                  type="button"
+                  onClick={() => setSelectedYear(yr)}
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-400/40'
+                      : 'bg-white dark:bg-dark-850 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-dark-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                  }`}
+                >
+                  {yr.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 3. SUSPICIOUS ALERTS BANNER (IF ANY ANOMALIES DETECTED) */}
