@@ -1476,18 +1476,18 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
       {/* Modal: Process QC Log (Liniya Harorati) */}
       {!isDirector && showProcessModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setShowProcessModal(false)}
         >
           <div 
-            className="bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 sm:px-6 py-5 border-b border-dark-800 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Thermometer className="text-indigo-400" size={20} /> Sex Texnologik Parametrlarini Kiritish
+            <div className="px-4 sm:px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Thermometer className="text-indigo-600 dark:text-indigo-400" size={20} /> Sex Texnologik Parametrlarini Kiritish
               </h2>
-              <button onClick={() => setShowProcessModal(false)} className="text-slate-400 hover:text-white p-1 rounded-lg">
+              <button onClick={() => setShowProcessModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg">
                 <X size={20} />
               </button>
             </div>
@@ -1495,23 +1495,23 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             <form onSubmit={handleSaveProcessQC} className="p-4 sm:p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Sana</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Sana</label>
                   <input 
                     type="date"
                     value={processForm.date}
                     onChange={e => setProcessForm({...processForm, date: e.target.value})}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Vaqt</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Vaqt</label>
                   <input 
                     type="text"
                     placeholder="HH:mm"
                     value={processForm.time}
                     onChange={e => setProcessForm({...processForm, time: e.target.value})}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs"
                     required
                   />
                 </div>
@@ -1519,49 +1519,49 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Toza Zona Harorati (°C)</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Toza Zona Harorati (°C)</label>
                   <input 
                     type="number" step="0.1"
                     value={processForm.cleanZoneTemp}
                     onChange={e => setProcessForm({...processForm, cleanZoneTemp: e.target.value})}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs font-mono font-bold"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Nopok Zona Harorati (°C)</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Nopok Zona Harorati (°C)</label>
                   <input 
                     type="number" step="0.1"
                     value={processForm.dirtyZoneTemp}
                     onChange={e => setProcessForm({...processForm, dirtyZoneTemp: e.target.value})}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs font-mono font-bold"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">P/F Айсберг № Partiya</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">P/F Айсберг № Partiya</label>
                   <input 
                     type="text"
                     placeholder="Masalan: B-202"
                     value={processForm.pfIcebergBatch}
                     onChange={e => setProcessForm({...processForm, pfIcebergBatch: e.target.value})}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs font-mono"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">GP Айсберг Harorati (°C)</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">GP Айсберг Harorati (°C)</label>
                   <input 
                     type="number" step="0.1"
                     value={processForm.gpIcebergTemp}
                     onChange={e => setProcessForm({...processForm, gpIcebergTemp: e.target.value})}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs font-mono font-bold"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-bold"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-dark-800">
-                <button type="button" onClick={() => setShowProcessModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-dark-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-800">
+                <button type="button" onClick={() => setShowProcessModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700">
                   Bekor qilish
                 </button>
                 <button type="submit" disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 flex items-center gap-2">
@@ -1576,29 +1576,29 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
       {/* Modal: New BOM */}
       {!isDirector && showBomModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setShowBomModal(false)}
         >
           <div 
-            className="bg-dark-900 rounded-[2rem] w-full max-w-2xl shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-dark-900 rounded-[2rem] w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 sm:px-6 py-6 border-b border-dark-800 flex items-center justify-between bg-dark-900/50">
+            <div className="px-4 sm:px-6 py-6 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between bg-slate-50 dark:bg-dark-900/50">
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Settings2 className="text-indigo-400" /> {l.modalBOMTitle}
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Settings2 className="text-indigo-600 dark:text-indigo-400" /> {l.modalBOMTitle}
                 </h2>
-                <p className="text-sm text-slate-400 mt-1">{l.modalBOMSub}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{l.modalBOMSub}</p>
               </div>
-              <button onClick={() => setShowBomModal(false)} className="text-slate-500 hover:text-white transition-colors"><X size={20} /></button>
+              <button onClick={() => setShowBomModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={20} /></button>
             </div>
             
             <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2">{l.outProduct}</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.outProduct}</label>
                   <select 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                     value={bomForm.outputProductId}
                     onChange={e => setBomForm(prev => ({...prev, outputProductId: e.target.value}))}
                   >
@@ -1607,10 +1607,10 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2">{l.yield}</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{l.yield}</label>
                   <input 
                     type="number" 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                     placeholder="1" min="0.1" step="0.1"
                     value={bomForm.baseYieldQty}
                     onChange={e => setBomForm(prev => ({...prev, baseYieldQty: e.target.value}))}
@@ -1618,14 +1618,14 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                 </div>
               </div>
 
-              <div className="h-px w-full bg-dark-800" />
+              <div className="h-px w-full bg-slate-200 dark:bg-dark-800" />
               
               <div>
                 <div className="flex flex-wrap gap-2 items-center justify-between mb-4">
-                  <label className="block text-sm font-bold text-slate-300">{l.reqMaterials}</label>
+                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">{l.reqMaterials}</label>
                   <button 
                     onClick={addMatRow} 
-                    className="flex items-center gap-1.5 text-sm bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg font-semibold transition-colors border border-indigo-500/20"
+                    className="flex items-center gap-1.5 text-sm bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg font-semibold transition-colors border border-indigo-200 dark:border-indigo-500/20"
                   >
                     <Plus size={16} /> {l.addMat}
                   </button>
@@ -1633,10 +1633,10 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                 
                 <div className="space-y-3">
                   {bomForm.ingredients.map((ing, idx) => (
-                    <div key={idx} className="flex flex-wrap sm:flex-nowrap gap-3 items-center bg-dark-800 p-3 rounded-2xl border border-dark-700">
-                      <div className="w-8 h-8 rounded-full bg-dark-700 flex items-center justify-center text-xs font-bold text-slate-400">{idx + 1}</div>
+                    <div key={idx} className="flex flex-wrap sm:flex-nowrap gap-3 items-center bg-slate-50 dark:bg-dark-800 p-3 rounded-2xl border border-slate-200 dark:border-dark-700">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-dark-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400">{idx + 1}</div>
                       <select 
-                        className="flex-1 bg-dark-900 border border-dark-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-white"
+                        className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white"
                         value={ing.inputProductId}
                         onChange={e => updateMat(idx, 'inputProductId', e.target.value)}
                       >
@@ -1645,14 +1645,14 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                       </select>
                       <input 
                         type="number" 
-                        className="w-28 bg-dark-900 border border-dark-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-white text-center font-bold"
+                        className="w-28 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white text-center font-bold"
                         placeholder="0.0" step="0.01"
                         value={ing.requiredQty}
                         onChange={e => updateMat(idx, 'requiredQty', e.target.value)}
                       />
                       <button 
                         onClick={() => removeMat(idx)} 
-                        className="w-10 h-10 flex items-center justify-center text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                        className="w-10 h-10 flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
                       >
                         <X size={18} />
                       </button>
@@ -1662,7 +1662,15 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               </div>
             </div>
 
-            <div className="px-4 sm:px-6 py-5 border-t border-dark-800 flex justify-end gap-3 bg-dark-900/50">
+            <div className="px-4 sm:px-6 py-5 border-t border-slate-200 dark:border-dark-800 flex justify-end gap-3 bg-slate-50 dark:bg-dark-900/50">
+              <button onClick={() => setShowBomModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-800 transition-colors">{l.cancel}</button>
+              <button onClick={handleSaveBOM} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2">
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {l.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
               <button onClick={() => setShowBomModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-dark-800 transition-colors">{l.cancel}</button>
               <button onClick={handleSaveBOM} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {l.save}

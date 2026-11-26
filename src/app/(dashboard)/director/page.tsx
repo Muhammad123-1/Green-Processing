@@ -30,6 +30,8 @@ import {
   ShoppingCart,
   Award,
   Clock,
+  ArrowUp,
+  ArrowDown,
   ArrowUpRight,
   ArrowDownLeft,
   UserCheck,
@@ -216,7 +218,9 @@ export default function DirectorPage() {
   const [visibleOperationsLimit, setVisibleOperationsLimit] = useState<number>(60)
   const [arrivalsDisplayLimit, setArrivalsDisplayLimit] = useState<number>(100)
   const [arrivalsPage, setArrivalsPage] = useState<number>(1)
+  const [arrivalsSortOrder, setArrivalsSortOrder] = useState<'asc' | 'desc'>('asc') // Requirement 3: Default ascending (kichikdan yuqoriga)
   const [warehouseStockPage, setWarehouseStockPage] = useState<number>(1)
+  const [warehouseCategoryFilter, setWarehouseCategoryFilter] = useState<'ALL' | 'PRIMARY' | 'SECONDARY'>('ALL')
 
   // Interactive 4-Level Chart Drill-Down Modal State
   const [chartDrillModal, setChartDrillModal] = useState<{
@@ -443,11 +447,21 @@ export default function DirectorPage() {
 
   // Filtered lists for modals
   const filteredProducts = useMemo(() => {
-    const list: any[] = details.productStockDetails || []
+    let list: any[] = details.productStockDetails || []
+    if (warehouseCategoryFilter === 'PRIMARY') {
+      list = list.filter((p: any) => p.category === 'PRIMARY')
+    } else if (warehouseCategoryFilter === 'SECONDARY') {
+      list = list.filter((p: any) => p.category === 'SECONDARY')
+    }
     if (!searchQuery) return list
     const q = searchQuery.toLowerCase()
-    return list.filter((p: any) => p.name?.toLowerCase().includes(q))
-  }, [details.productStockDetails, searchQuery])
+    return list.filter((p: any) => 
+      p.name?.toLowerCase().includes(q) ||
+      p.nameUz?.toLowerCase().includes(q) ||
+      p.nameRu?.toLowerCase().includes(q) ||
+      p.nameEn?.toLowerCase().includes(q)
+    )
+  }, [details.productStockDetails, warehouseCategoryFilter, searchQuery])
 
   const filteredChecklists = useMemo(() => {
     const list: any[] = details.recentChecklists || []
@@ -512,11 +526,28 @@ export default function DirectorPage() {
       })
     })
 
-    // Sort all arrivals by date descending
+    // Requirement 3: Sana va partiyalar kichikdan yuqoriga ketadigan tartibda (Ascending sort)
+    const extractBatchNum = (str?: string) => {
+      const m = String(str || '').match(/\b(\d+)\b/)
+      return m ? parseInt(m[1], 10) : 0
+    }
+
     unifiedList.sort((a, b) => {
       const da = a.date || ''
       const db = b.date || ''
-      return db.localeCompare(da)
+      const dateCmp = da.localeCompare(db)
+      const numA = extractBatchNum(a.batch)
+      const numB = extractBatchNum(b.batch)
+      const batchCmp = numA - numB
+
+      let result = 0
+      if (dateCmp !== 0) {
+        result = dateCmp
+      } else {
+        result = batchCmp !== 0 ? batchCmp : String(a.id || '').localeCompare(String(b.id || ''))
+      }
+
+      return arrivalsSortOrder === 'asc' ? result : -result
     })
 
     if (!searchQuery) return unifiedList
@@ -529,7 +560,7 @@ export default function DirectorPage() {
         i.batch?.toLowerCase?.().includes(q) ||
         i.date?.toLowerCase?.().includes(q)
     )
-  }, [details.recentIncomingActs, details.recentShopArrivals, searchQuery, formatDual])
+  }, [details.recentIncomingActs, details.recentShopArrivals, searchQuery, arrivalsSortOrder, formatDual])
 
   // Arrivals 10-per-page Pagination
   const arrivalsPageSize = 10
@@ -2315,16 +2346,24 @@ export default function DirectorPage() {
                 return (
                   <div className="space-y-6">
                     {/* Top Stats Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-750">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                          {formatDual("Jami ombor qoldig'i", "Всего на складе", "Total Warehouse Stock")}
+                          {formatDual("Jami xomashyo qoldig'i", "Всего сырья на складе", "Total Raw Stock")}
                         </span>
                         <div className="text-xl font-black text-slate-900 dark:text-white mt-1 font-mono">
                           {kpis?.warehouse?.totalInventoryKg ? `${(kpis.warehouse.totalInventoryKg / 1000).toFixed(1)} tn` : '-'}
                           <span className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-2 font-sans">
                             ({kpis?.warehouse?.totalInventoryKg ? kpis.warehouse.totalInventoryKg.toLocaleString() : 0} kg)
                           </span>
+                        </div>
+                      </div>
+                      <div className="p-3.5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40">
+                        <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider block">
+                          {formatDual("Ikkilamchi vositalar", "Тара и упаковка", "Packaging & Supplies")}
+                        </span>
+                        <div className="text-xl font-black text-blue-700 dark:text-blue-300 mt-1 font-mono">
+                          {(kpis?.warehouse?.totalInventoryDona || 0).toLocaleString()} dona
                         </div>
                       </div>
                       <div className="p-3.5 rounded-2xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40">
@@ -2354,13 +2393,45 @@ export default function DirectorPage() {
                     </div>
 
                     <div>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                        <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                          <span>{formatDual("Mahsulotlar qoldig'i (Svetofor)", "Остатки продукции (Светофор)", "Stock balances (Traffic light)")}:</span>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono font-bold border border-indigo-200 dark:border-indigo-800">
-                            {filteredProducts.length} {formatDual("ta mahsulot", "товаров", "items")}
-                          </span>
-                        </h4>
+                      {/* CATEGORY FILTER TABS: All, Primary (Vegetables), Secondary (Packaging/Chemicals) */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => { setWarehouseCategoryFilter('ALL'); setWarehouseStockPage(1) }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                              warehouseCategoryFilter === 'ALL'
+                                ? 'bg-white dark:bg-dark-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            {formatDual("Barchasi", "Все", "All")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setWarehouseCategoryFilter('PRIMARY'); setWarehouseStockPage(1) }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                              warehouseCategoryFilter === 'PRIMARY'
+                                ? 'bg-white dark:bg-dark-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>{formatDual("Asosiy xomashyo (Sabzavotlar)", "Основное сырье (Овощи)", "Primary Raw (Vegetables)")}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setWarehouseCategoryFilter('SECONDARY'); setWarehouseStockPage(1) }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                              warehouseCategoryFilter === 'SECONDARY'
+                                ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            <span>{formatDual("Ikkilamchi vositalar (Tara/Qadoq/Kimyo)", "Вторичные материалы (Тара/Упаковка)", "Secondary (Pkg/Chem)")}</span>
+                          </button>
+                        </div>
+
                         <span className="text-xs text-slate-500 font-medium">
                           {formatDual(
                             `${(currentWarehousePage - 1) * warehousePageSize + 1}–${Math.min(currentWarehousePage * warehousePageSize, filteredProducts.length)} tasi ko'rsatilmoqda (10 tadan)`,
@@ -2369,6 +2440,7 @@ export default function DirectorPage() {
                           )}
                         </span>
                       </div>
+
                       <div className="border border-slate-200 dark:border-dark-700 rounded-2xl overflow-x-auto shadow-sm">
                         <table className="w-full text-left">
                           <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
@@ -2384,8 +2456,28 @@ export default function DirectorPage() {
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
                             {pagedWarehouseProducts.map((p: any, idx: number) => (
-                              <tr key={`prod-stock-${p.id || idx}-${p.name || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
-                                <td className="p-3 font-bold text-slate-900 dark:text-white">{p.name}</td>
+                              <tr key={`prod-stock-${p.id || idx}-${p.canonicalId || p.name || idx}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-dark-800/40">
+                                <td className="p-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md shrink-0 ${
+                                      p.category === 'PRIMARY'
+                                        ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60'
+                                        : 'bg-slate-100 dark:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700'
+                                    }`}>
+                                      {p.category === 'PRIMARY' ? formatDual("Asosiy", "Основное", "Primary") : formatDual("Ikkilamchi", "Вторичное", "Secondary")}
+                                    </span>
+                                    <div>
+                                      <span className="block font-bold text-slate-900 dark:text-white">
+                                        {directorLang === 'ru' ? p.nameRu || p.name : directorLang === 'en' ? p.nameEn || p.name : p.nameUz || p.name}
+                                      </span>
+                                      {(p.nameRu || p.nameEn) && (
+                                        <span className="block text-[11px] text-slate-400 font-normal">
+                                          {directorLang === 'uz' ? `${p.nameRu} · ${p.nameEn}` : `${p.nameUz} · ${p.nameEn}`}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
                                 <td className="p-3 text-center font-bold font-mono">{p.currentStock} {p.unit}</td>
                                 <td className="p-3 text-center text-slate-500 text-xs">
                                   {p.approvedMaxStorageDays ? (
@@ -2788,12 +2880,30 @@ export default function DirectorPage() {
                         <table className="w-full text-left">
                           <thead className="bg-slate-50 dark:bg-dark-800 border-b border-slate-200 dark:border-dark-700 font-bold text-slate-600 dark:text-slate-300">
                             <tr>
-                              <th className="p-3">{formatDual("Sana", "Дата", "Date")}</th>
+                              <th 
+                                className="p-3 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 select-none transition-colors"
+                                onClick={() => setArrivalsSortOrder(p => p === 'asc' ? 'desc' : 'asc')}
+                                title="Tartibni o'zgartirish"
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <span>{formatDual("Sana", "Дата", "Date")}</span>
+                                  {arrivalsSortOrder === 'asc' ? <ArrowUp size={13} className="text-emerald-600 dark:text-emerald-400" /> : <ArrowDown size={13} className="text-emerald-600 dark:text-emerald-400" />}
+                                </div>
+                              </th>
                               <th className="p-3">{formatDual("Mahsulot", "Продукт", "Product")}</th>
                               <th className="p-3">{formatDual("Ta'minotchi", "Поставщик", "Supplier")}</th>
                               <th className="p-3">{formatDual("Tekshiruvchi", "Проверил", "Inspector")}</th>
                               <th className="p-3 text-center">{formatDual("Miqdor", "Кол-во", "Quantity")}</th>
-                              <th className="p-3 text-center">{formatDual("Partiya", "Партия", "Batch")}</th>
+                              <th 
+                                className="p-3 text-center cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 select-none transition-colors"
+                                onClick={() => setArrivalsSortOrder(p => p === 'asc' ? 'desc' : 'asc')}
+                                title="Tartibni o'zgartirish"
+                              >
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span>{formatDual("Partiya", "Партия", "Batch")}</span>
+                                  {arrivalsSortOrder === 'asc' ? <ArrowUp size={13} className="text-emerald-600 dark:text-emerald-400" /> : <ArrowDown size={13} className="text-emerald-600 dark:text-emerald-400" />}
+                                </div>
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-dark-800">

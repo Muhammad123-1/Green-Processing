@@ -45,17 +45,38 @@ interface TableData {
   notes: string[]
 }
 
-export default function DailyStockBalanceTab() {
+interface DailyStockBalanceTabProps {
+  activePeriod?: 'today' | 'week' | 'month' | 'year' | 'all' | 'custom'
+}
+
+export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalanceTabProps = {}) {
   const { lang, formatDual } = useLanguage()
 
   const allTables = useMemo(() => dailyStockData.tables as TableData[], [])
   const availableDates = useMemo(() => dailyStockData.availableDates, [])
 
-  // Selected table ID (default to 2026-11-25)
-  const [selectedId, setSelectedId] = useState<string>('2026-11-25')
+  // Selected table ID (default to 2026-11-02_2026-11-07 if week, or 2026-11-25)
+  const [selectedId, setSelectedId] = useState<string>(
+    activePeriod === 'week' ? '2026-11-02_2026-11-07' : '2026-11-25'
+  )
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState<'all' | 'daily' | 'weekly'>('all')
+  const [filterType, setFilterType] = useState<'all' | 'daily' | 'weekly'>(
+    activePeriod === 'week' ? 'weekly' : 'all'
+  )
   const [selectedMonth, setSelectedMonth] = useState<string>('ноябрь 2026')
+
+  // Respond to period changes from parent
+  React.useEffect(() => {
+    if (activePeriod === 'week') {
+      setFilterType('weekly')
+      setSelectedId('2026-11-02_2026-11-07')
+    } else if (activePeriod === 'today') {
+      setFilterType('daily')
+      setSelectedId('2026-11-25')
+    } else if (activePeriod === 'month') {
+      setFilterType('all')
+    }
+  }, [activePeriod])
 
   // Find the active table
   const currentTable = useMemo(() => {

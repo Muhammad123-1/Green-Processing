@@ -332,6 +332,22 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
             </Link>
           </nav>
 
+          {/* Pinned Bottom Settings Link (Fixed above user profile) */}
+          <div className="px-3 py-2 border-t border-dark-700 bg-dark-900/60">
+            <Link
+              href="/settings"
+              onClick={close}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                pathname === '/settings'
+                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              <Settings size={17} />
+              <span>{formatText('Sozlamalar', 'Настройки', 'Settings')}</span>
+            </Link>
+          </div>
+
           <div className="px-5 py-4 border-t border-dark-700 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
