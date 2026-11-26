@@ -6,9 +6,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import {
   ArrowLeft,
-  Edit,
   FileSpreadsheet,
-  Trash2,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -64,7 +62,6 @@ export default function InspectionDetailPage() {
   const [inspection, setInspection] = useState<Inspection | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
-  const [showDelete, setShowDelete] = useState(false)
 
   useEffect(() => {
     fetchInspection()
@@ -107,18 +104,6 @@ export default function InspectionDetailPage() {
       toast.error('Xatolik')
     } finally {
       setGenerating(false)
-    }
-  }
-
-  async function handleDelete() {
-    try {
-      const res = await fetch(`/api/inspections/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        toast.success('Akt o\'chirildi')
-        router.push('/inspections')
-      }
-    } catch {
-      toast.error('O\'chirishda xatolik')
     }
   }
 
@@ -173,13 +158,6 @@ export default function InspectionDetailPage() {
           >
             {generating ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />}
             Excel
-          </button>
-          <Link href={`/inspections/${id}/edit`} className="btn-secondary">
-            <Edit size={16} />
-            Tahrirlash
-          </Link>
-          <button onClick={() => setShowDelete(true)} className="btn-danger cursor-pointer">
-            <Trash2 size={16} />
           </button>
         </div>
       </div>
@@ -294,30 +272,6 @@ export default function InspectionDetailPage() {
         </div>
       </div>
 
-      {/* Delete Modal */}
-      {showDelete && (
-        <div className="modal-backdrop" onClick={() => setShowDelete(false)}>
-          <div className="card p-6 max-w-sm w-full animate-enter" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center">
-                <Trash2 size={18} className="text-red-500 dark:text-red-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white">Aktni o'chirish</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{inspection.actNumber}</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowDelete(false)} className="btn-secondary flex-1 justify-center cursor-pointer">
-                Bekor qilish
-              </button>
-              <button onClick={handleDelete} className="btn-danger flex-1 justify-center bg-red-600/30 cursor-pointer">
-                O'chirish
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

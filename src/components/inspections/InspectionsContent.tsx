@@ -11,9 +11,7 @@ import {
   Filter,
   FileSpreadsheet,
   FileText,
-  Trash2,
   Eye,
-  Edit,
   ChevronLeft,
   ChevronRight,
   CheckCircle,
@@ -107,7 +105,6 @@ export default function InspectionsContent() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [productFilter, setProductFilter] = useState('')
-  const [deleteId, setDeleteId] = useState<number | null>(null)
   const [generatingId, setGeneratingId] = useState<number | null>(null)
 
   // Defects & Scrap state
@@ -219,22 +216,6 @@ export default function InspectionsContent() {
   const defectsPagination = useInfiniteTable(defects, 10, [defectFilterLoc, activeTab])
   const sqsPagination = useInfiniteTable(supplierScores, 10, [activeTab])
 
-  async function handleDelete(id: number) {
-    try {
-      const res = await fetch(`/api/inspections/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        toast.success('Akt o\'chirildi')
-        fetchInspections()
-      } else {
-        toast.error('O\'chirishda xatolik')
-      }
-    } catch {
-      toast.error('Xatolik yuz berdi')
-    } finally {
-      setDeleteId(null)
-    }
-  }
-
   async function handleDownloadExcel(id: number, actNumber: string) {
     setGeneratingId(id)
     try {
@@ -305,7 +286,6 @@ export default function InspectionsContent() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowDefectModal(false)
-        setDeleteId(null)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -547,13 +527,6 @@ export default function InspectionsContent() {
                             >
                               <Eye size={15} />
                             </Link>
-                            <Link
-                              href={`/inspections/${item.id}/edit`}
-                              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer"
-                              title="Tahrirlash"
-                            >
-                              <Edit size={15} />
-                            </Link>
                             <button
                               onClick={() => handleDownloadExcel(item.id, item.actNumber)}
                               disabled={generatingId === item.id}
@@ -565,13 +538,6 @@ export default function InspectionsContent() {
                               ) : (
                                 <FileSpreadsheet size={15} />
                               )}
-                            </button>
-                            <button
-                              onClick={() => setDeleteId(item.id)}
-                              className="p-2 rounded-lg bg-slate-100 hover:bg-rose-50 dark:bg-dark-800 dark:hover:bg-rose-500/20 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                              title="O'chirish"
-                            >
-                              <Trash2 size={15} />
                             </button>
                           </div>
                         </td>
@@ -1111,43 +1077,6 @@ export default function InspectionsContent() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-enter" onClick={() => setDeleteId(null)}>
-          <div
-            className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl shadow-2xl p-6 max-w-sm w-full animate-enter"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/20 flex items-center justify-center">
-                <Trash2 size={18} className="text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white">Aktni o'chirish</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Bu amalni qaytarib bo'lmaydi</p>
-              </div>
-            </div>
-            <p className="text-slate-600 dark:text-slate-300 text-sm mb-6">
-              Haqiqatan ham bu aktni o'chirmoqchimisiz?
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteId(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 flex-1 text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Bekor qilish
-              </button>
-              <button
-                onClick={() => handleDelete(deleteId)}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white flex-1 text-sm font-bold transition-colors cursor-pointer"
-              >
-                O'chirish
-              </button>
-            </div>
           </div>
         </div>
       )}
