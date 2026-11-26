@@ -29,7 +29,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_tomato',
     match: [/томат/i, /помидор/i, /tomato/i, /pomidor/i, /tomat/i],
-    exclude: [/пакет/i, /\bbag/i],
+    exclude: [/пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i, /семен/i, /urug/i],
     uz: 'Tomat',
     ru: 'Томат',
     en: 'Tomato',
@@ -40,6 +40,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_carrot',
     match: [/морковь/i, /морков/i, /carrot/i, /sabzi/i],
+    exclude: [/пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i],
     uz: 'Sabzi',
     ru: 'Морковь',
     en: 'Carrot',
@@ -50,7 +51,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_iceberg',
     match: [/ай[зс]берг/i, /iceberg/i, /ay[zs]berg/i],
-    exclude: [/пакет/i, /\bbag/i, /листов/i, /leaf/i],
+    exclude: [/пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i, /листов/i, /leaf/i, /bargli/i],
     uz: 'Salat Aysberg',
     ru: 'Салат Айсберг',
     en: 'Iceberg Lettuce',
@@ -61,6 +62,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_iceberg_leaf',
     match: [/айсберг.*листов/i, /листов.*айсберг/i, /iceberg.*leaf/i, /leaf.*iceberg/i, /bargli.*aysberg/i],
+    exclude: [/пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i],
     uz: 'Bargli aysberg',
     ru: 'Айсберг листовой',
     en: 'Leaf Iceberg',
@@ -71,7 +73,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_onion_white',
     match: [/лук.*салат/i, /салат.*лук/i, /^лук$/i, /onion/i, /piyoz/i],
-    exclude: [/пакет/i, /\bbag/i],
+    exclude: [/пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i],
     uz: 'Oq salat piyozi',
     ru: 'Лук салатный белый',
     en: 'White Salad Onion',
@@ -82,7 +84,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_cabbage_white',
     match: [/капуста.*белокачан/i, /капуста.*белокочан/i, /^капуста$/i, /cabbage/i, /^karam$/i, /oq.*karam/i],
-    exclude: [/красн/i, /red/i, /коул/i, /cole/i, /slaw/i, /пакет/i, /\bbag/i],
+    exclude: [/красн/i, /red/i, /коул/i, /cole/i, /slaw/i, /пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i],
     uz: 'Oq boshli karam',
     ru: 'Капуста белокочанная',
     en: 'White Cabbage',
@@ -113,6 +115,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_cucumber',
     match: [/огурц/i, /^cucumber$/i, /^cucumbers$/i, /^bodring$/i],
+    exclude: [/пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i],
     uz: 'Bodring',
     ru: 'Огурцы свежие',
     en: 'Fresh Cucumber',
@@ -163,7 +166,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_lemon',
     match: [/^лимон$/i, /^lemon$/i, /^limon$/i, /лимон(?!.*кислот)/i],
-    exclude: [/пакет/i, /кислота/i, /acid/i],
+    exclude: [/пакет/i, /paket/i, /\bbag/i, /коробк/i, /karobk/i, /quti/i, /\bbox/i, /кислота/i, /acid/i, /kislota/i],
     uz: 'Limon',
     ru: 'Лимон',
     en: 'Lemon',
@@ -321,8 +324,11 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   // =========================================================================
   {
     canonicalId: 'pkg_bag_iceberg',
-    match: [/пакет.*ай[зс]берг/i, /ай[зс]берг.*пакет/i],
-    uz: 'Aysberg paketlari',
+    match: [
+      /(?:пакет|paket).*(?:ай[зс]берг|iceberg|aysberg)/i,
+      /(?:ай[зс]берг|iceberg|aysberg).*(?:пакет|paket)/i,
+    ],
+    uz: 'Aysberg uchun paketlar',
     ru: 'Пакеты для салата Айсберг',
     en: 'Iceberg Lettuce Bags',
     category: 'SECONDARY',
@@ -331,8 +337,11 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   },
   {
     canonicalId: 'pkg_bag_tomato',
-    match: [/томат.*пакет/i, /пакет.*томат/i],
-    uz: 'Tomat paketlari',
+    match: [
+      /(?:томат|помидор|tomato|tomat).*(?:пакет|paket)/i,
+      /(?:пакет|paket).*(?:томат|помидор|tomato|tomat)/i,
+    ],
+    uz: 'Tomat uchun paketlar',
     ru: 'Пакеты для томатов',
     en: 'Tomato Bags',
     category: 'SECONDARY',
@@ -341,8 +350,11 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   },
   {
     canonicalId: 'pkg_bag_onion',
-    match: [/пакет.*лук/i, /лук.*пакет/i],
-    uz: 'Piyoz paketlari',
+    match: [
+      /(?:пакет|paket).*(?:лук|onion|piyoz)/i,
+      /(?:лук|onion|piyoz).*(?:пакет|paket)/i,
+    ],
+    uz: 'Piyoz uchun paketlar',
     ru: 'Пакеты для лука',
     en: 'Onion Bags',
     category: 'SECONDARY',
@@ -351,8 +363,11 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   },
   {
     canonicalId: 'pkg_bag_lemon',
-    match: [/пакет.*лимон/i, /лимон.*пакет/i],
-    uz: 'Limon paketlari 30-25',
+    match: [
+      /(?:пакет|paket).*(?:лимон|lemon|limon)/i,
+      /(?:лимон|lemon|limon).*(?:пакет|paket)/i,
+    ],
+    uz: 'Limon uchun paketlar 30-25',
     ru: 'Пакет для лимона 30-25',
     en: 'Lemon Bags 30-25',
     category: 'SECONDARY',

@@ -125,6 +125,15 @@ export function translateProductName(name?: string | null, lang: string = 'uz'):
   const trimmed = name.trim()
   const lower = trimmed.toLowerCase()
 
+  // 1. Direct taxonomy resolution handles primary vs packaging rules, excludes, etc.
+  const meta = resolveProductMeta(trimmed)
+  if (meta && meta.canonicalId !== 'unknown' && !meta.canonicalId.startsWith('custom_')) {
+    if (lang === 'ru') return meta.ru || trimmed
+    if (lang === 'en') return meta.en || trimmed
+    return meta.uz || trimmed
+  }
+
+  // 2. Exact match in DIRECTOR_PRODUCT_MAP
   if (DIRECTOR_PRODUCT_MAP[lower]) {
     const item = DIRECTOR_PRODUCT_MAP[lower]
     if (lang === 'ru') return item.ru
@@ -132,20 +141,10 @@ export function translateProductName(name?: string | null, lang: string = 'uz'):
     return item.uz
   }
 
-  // Exact starts-with or partial lookup for compound names
-  for (const [key, val] of Object.entries(DIRECTOR_PRODUCT_MAP)) {
-    if (lower.startsWith(key) || lower.includes(key)) {
-      if (lang === 'ru') return val.ru
-      if (lang === 'en') return val.en
-      return val.uz
-    }
-  }
-
-  // Fallback to taxonomy resolution
-  const meta = resolveProductMeta(trimmed)
-  if (lang === 'ru') return meta.ru || trimmed
-  if (lang === 'en') return meta.en || trimmed
-  return meta.uz || trimmed
+  // 3. Fallback
+  if (lang === 'ru') return meta?.ru || trimmed
+  if (lang === 'en') return meta?.en || trimmed
+  return meta?.uz || trimmed
 }
 
 export function translateUnit(unit?: string | null, lang: string = 'uz'): string {
