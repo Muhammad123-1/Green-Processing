@@ -58,6 +58,8 @@ interface DailyStockBalanceTabProps {
   activePeriod?: 'today' | 'week' | 'month' | 'year' | 'all' | 'custom'
   startDate?: string
   endDate?: string
+  selectedDateId?: string
+  selectedMonthName?: string
   lang?: 'uz' | 'ru' | 'en'
 }
 
@@ -65,6 +67,8 @@ export default function DailyStockBalanceTab({
   activePeriod = 'week',
   startDate = '2026-11-01',
   endDate = '2026-11-25',
+  selectedDateId,
+  selectedMonthName,
   lang: propLang
 }: DailyStockBalanceTabProps = {}) {
   const { lang: ctxLang, directorLang } = useLanguage()
@@ -84,12 +88,17 @@ export default function DailyStockBalanceTab({
 
   const availableDates = liveAvailableDates
 
-  // Selected table ID (default to 2026-11-02_2026-11-07 if week, or 2026-11-25)
-  const [selectedId, setSelectedId] = useState<string>(
-    activePeriod === 'week' ? '2026-11-02_2026-11-07' : '2026-11-25'
-  )
+  // Selected table ID (default to selectedDateId or 2026-11-02_2026-11-07 if week, or 2026-11-25)
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    if (selectedDateId) return selectedDateId
+    return activePeriod === 'week' ? '2026-11-02_2026-11-07' : '2026-11-25'
+  })
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedMonth, setSelectedMonth] = useState<string>('ноябрь 2026')
+  const [selectedMonth, setSelectedMonth] = useState<string>(selectedMonthName || 'ноябрь 2026')
+
+  const prevPeriodRef = React.useRef(activePeriod)
+  const prevDateIdRef = React.useRef(selectedDateId)
+  const prevMonthPropRef = React.useRef(selectedMonthName)
 
   // Fetch live table from DB API
   const fetchLiveStockBalance = React.useCallback(async (targetId?: string) => {
@@ -103,7 +112,12 @@ export default function DailyStockBalanceTab({
           setLiveTable(data.currentTable)
           setIsLiveDb(Boolean(data.isLiveDb))
           if (Array.isArray(data.availableDates) && data.availableDates.length > 0) {
-            setLiveAvailableDates(data.availableDates)
+            setLiveAvailableDates(prev => {
+              if (prev.length !== data.availableDates.length) {
+                return data.availableDates
+              }
+              return prev
+            })
           }
         }
       }
@@ -118,10 +132,18 @@ export default function DailyStockBalanceTab({
     fetchLiveStockBalance(selectedId)
   }, [selectedId, fetchLiveStockBalance])
 
+  // Sync parent selectedMonthName prop
+  React.useEffect(() => {
+    if (selectedMonthName && selectedMonthName !== prevMonthPropRef.current) {
+      prevMonthPropRef.current = selectedMonthName
+      setSelectedMonth(selectedMonthName)
+    }
+  }, [selectedMonthName])
+
   // Filter available options based on activePeriod, startDate, endDate, and selectedMonth
   const filteredOptions = useMemo(() => {
     return availableDates.filter(d => {
-      // 1. Bugun (Today): only latest day
+      // 1. Bugun (Today): only daily tables
       if (activePeriod === 'today') {
         const latestDaily = availableDates.find(it => it.type === 'daily')
         return d.id === (latestDaily?.id || '2026-11-25')
@@ -134,7 +156,7 @@ export default function DailyStockBalanceTab({
 
       // 3. Oy (Month): filter by selectedMonth
       if (activePeriod === 'month') {
-        return selectedMonth ? d.sheetName === selectedMonth : true
+        return selectedMonth ? d.sheetName.toLowerCase() === selectedMonth.toLowerCase() : true
       }
 
       // 4. Oraliq (Custom): filter by startDate and endDate
@@ -151,29 +173,38 @@ export default function DailyStockBalanceTab({
     })
   }, [availableDates, activePeriod, selectedMonth, startDate, endDate])
 
-  // Respond to period changes from parent
+  // Respond to period or targetDate changes from parent WITHOUT infinite rubber-banding
   React.useEffect(() => {
-    if (activePeriod === 'today') {
-      const latestDaily = availableDates.find(it => it.type === 'daily')
-      setSelectedId(latestDaily?.id || '2026-11-25')
-    } else if (activePeriod === 'week') {
-      const targetWeek = availableDates.find(d => d.id === '2026-11-02_2026-11-07' && d.type === 'weekly')
-      if (targetWeek) setSelectedId(targetWeek.id)
-      else {
-        const anyWeek = availableDates.find(d => d.type === 'weekly')
-        if (anyWeek) setSelectedId(anyWeek.id)
-      }
-    } else if (activePeriod === 'month') {
-      const firstInMonth = availableDates.find(d => d.sheetName === selectedMonth)
-      if (firstInMonth) setSelectedId(firstInMonth.id)
-    } else if (activePeriod === 'custom') {
-      if (filteredOptions.length > 0) {
-        setSelectedId(filteredOptions[0].id)
+    // If parent explicitly passed a selectedDateId and it changed
+    if (selectedDateId && selectedDateId !== prevDateIdRef.current) {
+      prevDateIdRef.current = selectedDateId
+      setSelectedId(selectedDateId)
+      return
+    }
+
+    // Only auto-switch selectedId when activePeriod actually changes
+    if (activePeriod !== prevPeriodRef.current) {
+      prevPeriodRef.current = activePeriod
+
+      if (activePeriod === 'today') {
+        const latestDaily = availableDates.find(it => it.type === 'daily')
+        if (latestDaily) setSelectedId(latestDaily.id)
+      } else if (activePeriod === 'week') {
+        const targetWeek = availableDates.find(d => d.id === '2026-11-02_2026-11-07' && d.type === 'weekly') || availableDates.find(d => d.type === 'weekly')
+        if (targetWeek) setSelectedId(targetWeek.id)
+      } else if (activePeriod === 'month') {
+        const mName = selectedMonthName || selectedMonth
+        const firstInMonth = availableDates.find(d => d.sheetName.toLowerCase() === mName.toLowerCase()) || availableDates.find(d => d.type === 'daily')
+        if (firstInMonth) setSelectedId(firstInMonth.id)
+      } else if (activePeriod === 'custom') {
+        if (filteredOptions.length > 0) {
+          setSelectedId(filteredOptions[0].id)
+        }
       }
     }
-  }, [activePeriod, selectedMonth, startDate, endDate, availableDates])
+  }, [activePeriod, selectedDateId, selectedMonthName, selectedMonth, availableDates, filteredOptions])
 
-  // Ensure selectedId is valid in current filteredOptions
+  // Ensure selectedId is valid in current filteredOptions (only if it doesn't exist)
   React.useEffect(() => {
     if (filteredOptions.length > 0 && !filteredOptions.some(o => o.id === selectedId)) {
       setSelectedId(filteredOptions[0].id)

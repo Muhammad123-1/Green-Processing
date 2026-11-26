@@ -9,12 +9,109 @@ import {
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import DailyStockBalanceTab from '@/components/director/DailyStockBalanceTab'
+import CustomDropdown from '@/components/ui/CustomDropdown'
 import {
   translateProductName,
   translateUnit,
   translateMonthName,
   translateNoteText
 } from '@/lib/directorLocalization'
+
+export interface WeekOption {
+  weekNum: number
+  labelUz: string
+  labelRu: string
+  labelEn: string
+  shortLabel: string
+  from: string
+  to: string
+  monthIndex: number
+}
+
+const getWeeksForMonth = (year: number, monthIndex: number): WeekOption[] => {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const toYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+  const monthNamesUz = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr']
+  const monthNamesRu = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+  const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+  const weeks: WeekOption[] = []
+  const firstDayOfMonth = new Date(year, monthIndex, 1)
+  const lastDayOfMonth = new Date(year, monthIndex + 1, 0)
+
+  let cur = new Date(firstDayOfMonth)
+  while (cur.getDay() !== 1) {
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  let weekNum = 1
+  while (cur <= lastDayOfMonth) {
+    const monday = new Date(cur)
+    const saturday = new Date(cur)
+    saturday.setDate(saturday.getDate() + 5)
+
+    const fromStr = toYMD(monday)
+    const toStr = toYMD(saturday)
+    const mUz = monthNamesUz[monthIndex]
+    const mRu = monthNamesRu[monthIndex]
+    const mEn = monthNamesEn[monthIndex]
+
+    weeks.push({
+      weekNum,
+      labelUz: `${mUz} ${weekNum}-haftasi (${fromStr} - ${toStr})`,
+      labelRu: `${mRu} ${weekNum}-я неделя (${fromStr} - ${toStr})`,
+      labelEn: `${mEn} Week ${weekNum} (${fromStr} - ${toStr})`,
+      shortLabel: `${weekNum}-hafta (${fromStr} - ${toStr})`,
+      from: fromStr,
+      to: toStr,
+      monthIndex,
+    })
+
+    cur.setDate(cur.getDate() + 7)
+    weekNum++
+  }
+
+  if (year === 2026 && monthIndex === 10) {
+    return weeks.filter((w) => w.to <= '2026-11-21')
+  }
+
+  return weeks
+}
+
+const getAllYearMonths = (year = 2026) => {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const toYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+  const monthNamesUz = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr']
+  const monthNamesRu = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+  const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+  const months: Array<{ labelUz: string; labelRu: string; labelEn: string; from: string; to: string; yearMonth: string; monthIndex: number; sheetName: string }> = []
+
+  for (let m = 0; m < 12; m++) {
+    const d = new Date(year, m, 1)
+    const lastDay = new Date(year, m + 1, 0)
+    months.push({
+      monthIndex: m,
+      labelUz: monthNamesUz[m],
+      labelRu: monthNamesRu[m],
+      labelEn: monthNamesEn[m],
+      from: toYMD(d),
+      to: toYMD(lastDay),
+      yearMonth: `${year}-${pad(m + 1)}`,
+      sheetName: `${monthNamesRu[m].toLowerCase()} ${year}`,
+    })
+  }
+  return months
+}
+
+const getAvailableYears = () => {
+  return [
+    { label: '2025', year: 2025, from: '2025-01-01', to: '2025-12-31' },
+    { label: '2026', year: 2026, from: '2026-01-01', to: '2026-12-31' },
+  ]
+}
 
 interface NoteItem {
   id: string
@@ -90,6 +187,21 @@ export default function DirectorDynamicsPage() {
   const [customEndDate, setCustomEndDate] = useState('2026-11-25')
   const [expenseSubMode, setExpenseSubMode] = useState<'sum' | 'kg'>('sum')
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Sub-interval states: all 12 months & monthly weeks
+  const allYearMonths = useMemo(() => getAllYearMonths(2026), [])
+  const availableYears = useMemo(() => getAvailableYears(), [])
+
+  // Selected month index for the "Hafta" selector (default 10 = Noyabr)
+  const [selectedWeekMonthIndex, setSelectedWeekMonthIndex] = useState(10)
+  const currentMonthWeeks = useMemo(() => getWeeksForMonth(2026, selectedWeekMonthIndex), [selectedWeekMonthIndex])
+
+  const [selectedWeek, setSelectedWeek] = useState<WeekOption>(() => {
+    const novWeeks = getWeeksForMonth(2026, 10)
+    return novWeeks[novWeeks.length - 1] // Noyabr 3-haftasi (16.11.2026 - 21.11.2026)
+  })
+  const [selectedMonth, setSelectedMonth] = useState(() => allYearMonths[10]) // Noyabr 2026
+  const [selectedYear, setSelectedYear] = useState(availableYears[availableYears.length - 1])
 
   // Custom Director notes state
   const [customNotes, setCustomNotes] = useState<NoteItem[]>([])
@@ -476,53 +588,96 @@ export default function DirectorDynamicsPage() {
           ))}
         </div>
 
-        {/* Dynamic Context Information Badge or Date Range Pickers */}
+        {/* Dynamic Context Information Badge or Custom Dropdown Pickers */}
         {period === 'today' && (
-          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-800 shadow-xs">
             <Calendar size={13} className="text-blue-500" />
             <span>
               {formatDual("Bugun:", "Сегодня:", "Today:")}{' '}
               <span className="font-mono font-black text-blue-900 dark:text-blue-100">
-                25.11.2026
+                26.11.2026
               </span>
             </span>
           </div>
         )}
 
         {period === 'week' && (
-          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold border border-indigo-200 dark:border-indigo-800">
-            <Calendar size={13} className="text-indigo-500" />
-            <span>
-              {formatDual("Faol hafta:", "Активная неделя:", "Active week:")}{' '}
-              <span className="font-mono font-black text-indigo-950 dark:text-indigo-100">
-                16.11.2026 - 21.11.2026
-              </span>
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CustomDropdown
+              value={selectedWeekMonthIndex}
+              onChange={(mIdx) => {
+                const num = Number(mIdx)
+                setSelectedWeekMonthIndex(num)
+                const mWeeks = getWeeksForMonth(2026, num)
+                if (mWeeks.length > 0) {
+                  setSelectedWeek(mWeeks[mWeeks.length - 1])
+                }
+              }}
+              prefix={formatDual('Oy:', 'Месяц:', 'Month:')}
+              buttonClassName="bg-white dark:bg-dark-850 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200"
+              options={allYearMonths.map((m) => ({
+                value: m.monthIndex,
+                label: directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
+              }))}
+            />
+
+            <CustomDropdown
+              value={selectedWeek?.from || ''}
+              onChange={(fromVal) => {
+                const found = currentMonthWeeks.find((w) => w.from === fromVal)
+                if (found) setSelectedWeek(found)
+              }}
+              icon={<Calendar size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />}
+              buttonClassName="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-950 dark:text-amber-100 font-bold"
+              options={currentMonthWeeks.map((wk) => ({
+                value: wk.from,
+                label: directorLang === 'ru' ? wk.labelRu : directorLang === 'en' ? wk.labelEn : wk.labelUz
+              }))}
+            />
           </div>
         )}
 
         {period === 'month' && (
-          <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-bold border border-emerald-200 dark:border-emerald-800">
-            <Calendar size={13} className="text-emerald-500" />
-            <span>
-              {formatDual("Faol davr:", "Активный период:", "Active period:")}{' '}
-              <span className="font-extrabold text-emerald-950 dark:text-emerald-100">
-                Yanvar — Dekabr 2026 (12 oy)
-              </span>
-            </span>
+          <div className="flex items-center gap-2">
+            <CustomDropdown
+              value={selectedMonth.yearMonth}
+              onChange={(yearMonthVal) => {
+                const found = allYearMonths.find((m) => m.yearMonth === yearMonthVal)
+                if (found) setSelectedMonth(found)
+              }}
+              prefix={formatDual('Faol oy:', 'Активный месяц:', 'Active month:')}
+              icon={<Calendar size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />}
+              buttonClassName="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 text-indigo-950 dark:text-indigo-100 font-black"
+              options={allYearMonths.map((m) => ({
+                value: m.yearMonth,
+                label: directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
+              }))}
+            />
           </div>
         )}
 
         {period === 'year' && (
-          <div className="flex items-center gap-2 px-3 py-1 bg-slate-200/80 dark:bg-dark-750 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold">
-            <Calendar size={13} className="text-slate-500" />
-            <span>2026 Yillik umumiy zaxira va sarf hisoboti</span>
+          <div className="flex items-center gap-2">
+            <CustomDropdown
+              value={selectedYear.year}
+              onChange={(yrVal) => {
+                const found = availableYears.find((yr) => yr.year === Number(yrVal))
+                if (found) setSelectedYear(found)
+              }}
+              prefix={formatDual('Faol yil:', 'Активный год:', 'Active year:')}
+              icon={<Calendar size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />}
+              buttonClassName="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-950 dark:text-emerald-100 font-black"
+              options={availableYears.map((yr) => ({
+                value: yr.year,
+                label: String(yr.year)
+              }))}
+            />
           </div>
         )}
 
         {period === 'all' && (
           <div className="flex items-center gap-2 px-3 py-1 bg-slate-200/80 dark:bg-dark-750 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold">
-            <span>Barcha hisoblangan davrlar (339 ta jadval)</span>
+            <span>{formatDual("Barcha hisoblangan davrlar", "Все периоды", "All periods")}</span>
           </div>
         )}
 
@@ -614,6 +769,14 @@ export default function DirectorDynamicsPage() {
           activePeriod={period}
           startDate={customStartDate}
           endDate={customEndDate}
+          selectedDateId={
+            period === 'today'
+              ? '2026-11-26'
+              : period === 'week'
+              ? (selectedWeek ? `${selectedWeek.from}_${selectedWeek.to}` : undefined)
+              : undefined
+          }
+          selectedMonthName={period === 'month' ? selectedMonth.sheetName : undefined}
           lang={directorLang}
         />
       )}
@@ -637,12 +800,25 @@ export default function DirectorDynamicsPage() {
                       {formatDual("Birligi", "Ед. изм.", "Unit")}
                     </th>
 
-                    {/* Columns for Periods */}
-                    {activePeriods.map((period, pIdx) => (
-                      <th key={pIdx} className="py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 min-w-[105px]">
-                        {isWeekly ? (directorLang === 'ru' ? `H-${pIdx + 1}` : `${pIdx + 1}-h`) : translateMonthName(period, directorLang)}
-                      </th>
-                    ))}
+                    {/* Columns for Periods with Active Highlighting */}
+                    {activePeriods.map((colPeriod, pIdx) => {
+                      const isHighlighted = isWeekly
+                        ? (selectedWeek && (colPeriod.includes(selectedWeek.from) || pIdx === selectedWeek.weekNum - 1))
+                        : (selectedMonth && colPeriod.toLowerCase().includes(selectedMonth.labelRu.toLowerCase()))
+
+                      return (
+                        <th
+                          key={pIdx}
+                          className={`py-3 px-3 text-right border-r border-slate-200 dark:border-dark-700 min-w-[105px] transition-colors ${
+                            isHighlighted
+                              ? 'bg-amber-100/90 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 font-black ring-1 ring-amber-400'
+                              : ''
+                          }`}
+                        >
+                          {isWeekly ? (directorLang === 'ru' ? `H-${pIdx + 1}` : `${pIdx + 1}-h`) : translateMonthName(colPeriod, directorLang)}
+                        </th>
+                      )
+                    })}
 
                     {/* Sticky Total Column */}
                     <th className="py-3 px-4 text-right border-l border-slate-200 dark:border-dark-700 min-w-[130px] bg-slate-200/80 dark:bg-dark-700 font-black">
@@ -692,8 +868,13 @@ export default function DirectorDynamicsPage() {
                           {translateUnit(unit, directorLang)}
                         </td>
 
-                        {/* Period Values */}
+                        {/* Period Values with Active Highlighting */}
                         {displayVals.map((val, vIdx) => {
+                          const colPeriod = activePeriods[vIdx] || ''
+                          const isHighlighted = isWeekly
+                            ? (selectedWeek && (colPeriod.includes(selectedWeek.from) || vIdx === selectedWeek.weekNum - 1))
+                            : (selectedMonth && colPeriod.toLowerCase().includes(selectedMonth.labelRu.toLowerCase()))
+
                           const displayVal = activeTab === 'waste'
                             ? formatPercent(val)
                             : activeTab === 'expense' && expenseSubMode === 'sum'
@@ -701,7 +882,12 @@ export default function DirectorDynamicsPage() {
                             : formatKg(val)
 
                           return (
-                            <td key={vIdx} className="py-2 px-3 text-right border-r border-slate-200/60 dark:border-dark-750 text-slate-800 dark:text-slate-200">
+                            <td
+                              key={vIdx}
+                              className={`py-2 px-3 text-right border-r border-slate-200/60 dark:border-dark-750 text-slate-800 dark:text-slate-200 ${
+                                isHighlighted ? 'bg-amber-100/60 dark:bg-amber-950/40 font-bold text-amber-950 dark:text-amber-100' : ''
+                              }`}
+                            >
                               {displayVal}
                             </td>
                           )
