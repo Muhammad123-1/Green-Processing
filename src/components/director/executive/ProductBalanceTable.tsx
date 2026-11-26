@@ -482,90 +482,27 @@ export default function ProductBalanceTable({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 divide-x divide-y divide-slate-100 dark:divide-dark-800">
-            {sorted.map((item) => {
-              const isDona = item.unit === 'dona'
-              const stockFormatted = isDona
-                ? `${Math.round(item.currentStockKg).toLocaleString('uz-UZ')} dona`
-                : `${(item.currentStockKg / 1000).toFixed(2)} tn`
-
-              return (
-                <button
-                  key={item.productName}
-                  onClick={() => setSelectedCardProduct(item)}
-                  className="p-5 text-left hover:bg-emerald-50/50 dark:hover:bg-dark-800 transition-colors group flex flex-col justify-between min-h-[140px]"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span
-                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
-                          isDona
-                            ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60'
-                            : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
-                        }`}
-                      >
-                        {isDona
-                          ? (lang === 'ru' ? 'Тара / Упаковка' : 'Ikkilamchi mahsulot (Dona)')
-                          : (lang === 'ru' ? 'Основное сырье' : 'Asosiy xomashyo (Vazn)')}
-                      </span>
-                      {renderInventoryStatusPill(item.inventoryStatus)}
-                    </div>
-
-                    <b className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2 block">
-                      {translateProductName(item.productName, lang)}
-                    </b>
-
-                    <div className="mt-2 text-lg font-black font-mono text-slate-900 dark:text-white">
-                      {stockFormatted}
-                      {!isDona && (
-                        <span className="text-xs font-normal text-slate-400 ml-1.5 font-sans">
-                          ({item.currentStockKg.toLocaleString()} kg)
-                        </span>
-                      )}
-                    </div>
+            {sorted.map((item) => (
+              <button
+                key={item.productName}
+                onClick={() => setSelectedCardProduct(item)}
+                className="p-4 sm:p-5 text-left hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-colors group flex items-center justify-between gap-3 cursor-pointer min-h-[76px]"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    {renderInventoryStatusPill(item.inventoryStatus)}
                   </div>
+                  <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2 block">
+                    {translateProductName(item.productName, lang)}
+                  </span>
+                </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                      <Clock size={12} className="text-slate-400" />
-                      {item.stockCoverageDays !== null && item.stockCoverageDays !== undefined ? (
-                        item.inventoryStatus === 'EXCESS' ? (
-                          <span className="text-purple-600 dark:text-purple-400 font-bold">
-                            ~{item.stockCoverageDays} kunga yetadi (Max: {item.approvedMaxStorageDays ?? '-'} kun — Ortiqcha)
-                          </span>
-                        ) : item.inventoryStatus === 'LOW' ? (
-                          <span className="text-amber-600 dark:text-amber-400 font-bold">
-                            ~{item.stockCoverageDays} kunga yetadi (Kam qolgan)
-                          </span>
-                        ) : (
-                          <span>
-                            ~{item.stockCoverageDays} kunga yetadi{item.approvedMaxStorageDays ? ` (Max: ${item.approvedMaxStorageDays} kun)` : ''}
-                          </span>
-                        )
-                      ) : (
-                        <span className="text-slate-400">
-                          {item.approvedMaxStorageDays
-                            ? `Max: ${item.approvedMaxStorageDays} kun saqlanadi`
-                            : isDona ||
-                              item.category === 'SECONDARY' ||
-                              /пакет|коробк|этикет|стикер|шапк|бахил|халат|поддон|ящик|famiy|вода|stul|соль|туз|хлор|уксус|сорбат|бензоат/i.test(
-                                item.productName
-                              )
-                            ? lang === 'ru'
-                              ? 'Запас достаточный (Долгосрочный)'
-                              : 'Zaxira yetarli (Uzoq muddatli)'
-                            : lang === 'ru'
-                              ? 'Запас достаточный'
-                              : 'Zaxira yetarli'}
-                        </span>
-                      )}
-                    </span>
-                    <span className="flex items-center gap-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
-                      {lang === 'ru' ? 'Анализ' : 'Tahlil'} &rarr;
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
+                <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <span>{lang === 'ru' ? 'Анализ' : 'Tahlil'}</span>
+                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+            ))}
           </div>
 
           {!sorted.length && (
@@ -582,14 +519,23 @@ export default function ProductBalanceTable({
           {/* Detailed Product Card */}
           <div className="p-5 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-dark-800 pb-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                  <Sparkles size={12} />
-                  {lang === 'ru' ? 'Анализ остатков и покрытия запасов' : 'Mahsulot zaxirasi va qoplash tahlili'}
-                </span>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
-                  {translateProductName(selectedCardProduct.productName, lang)}
-                </h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedCardProduct(null)}
+                  className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors cursor-pointer"
+                  title={lang === 'ru' ? 'Назад к списку' : 'Ro‘yxatga qaytish'}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <Sparkles size={12} />
+                    {lang === 'ru' ? 'Анализ остатков и покрытия запасов' : 'Mahsulot zaxirasi va qoplash tahlili'}
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
+                    {translateProductName(selectedCardProduct.productName, lang)}
+                  </h2>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {renderInventoryStatusPill(selectedCardProduct.inventoryStatus)}
