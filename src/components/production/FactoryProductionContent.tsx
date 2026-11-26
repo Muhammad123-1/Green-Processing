@@ -1671,14 +1671,6 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
           </div>
         </div>
       )}
-              <button onClick={() => setShowBomModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-dark-800 transition-colors">{l.cancel}</button>
-              <button onClick={handleSaveBOM} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2">
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {l.save}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
