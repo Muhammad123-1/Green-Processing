@@ -70,7 +70,7 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
   const [productSearch, setProductSearch] = useState<string>('')
   const [search, setSearch] = useState<string>('')
   const [selectedItem, setSelectedItem] = useState<DefectItem | null>(null)
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState<number>(1)
   const pageSize = 20
 
@@ -441,32 +441,12 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
               <span className="text-sm font-black text-slate-900 dark:text-white px-2">
                 {selectedProductSummary.name}
               </span>
-              <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-                ({getTrilingualInfo(selectedProductSummary.meta.uz, lang).secondary})
-              </span>
             </div>
           )}
         </div>
 
         {selectedCanonicalId ? (
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors shadow-2xs"
-            >
-              {sortOrder === 'asc' ? (
-                <>
-                  <ArrowUp size={14} className="text-emerald-600" />
-                  <span>{lang === 'ru' ? 'По возрастанию (ранние)' : 'Kichikdan yuqoriga ↑'}</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDown size={14} className="text-blue-600" />
-                  <span>{lang === 'ru' ? 'По убыванию (новые)' : 'Kattadan kichikka ↓'}</span>
-                </>
-              )}
-            </button>
-
             <div className="relative">
               <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
               <input
@@ -566,9 +546,6 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-0.5">
                   {selectedProductSummary?.name}
                 </h2>
-                <p className="text-xs text-slate-400 font-medium">
-                  {getTrilingualInfo(selectedProductSummary?.meta.uz, lang).secondary}
-                </p>
               </div>
               <span
                 className={`text-xs font-black uppercase px-2.5 py-1 rounded-xl ${

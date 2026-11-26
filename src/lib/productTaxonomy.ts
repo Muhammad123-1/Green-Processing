@@ -28,10 +28,10 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   // =========================================================================
   {
     canonicalId: 'prod_tomato',
-    match: [/томат/i],
+    match: [/томат/i, /помидор/i, /pomidor/i, /tomat/i],
     exclude: [/пакет/i],
-    uz: 'Tomat (Pomidor)',
-    ru: 'Томат (Помидоры)',
+    uz: 'Tomat',
+    ru: 'Томат',
     en: 'Tomato',
     category: 'PRIMARY',
     unit: 'kg',
@@ -104,7 +104,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
     match: [/руккол/i],
     uz: 'Rukkola',
     ru: 'Руккола',
-    en: 'Arugula (Rucola)',
+    en: 'Arugula',
     category: 'PRIMARY',
     unit: 'kg',
     subCategory: 'VEGETABLE',
@@ -122,7 +122,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_celery',
     match: [/сельдерей/i],
-    uz: 'Sedana (Selderi)',
+    uz: 'Selderi',
     ru: 'Сельдерей',
     en: 'Celery',
     category: 'PRIMARY',
@@ -173,7 +173,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'prod_salt',
     match: [/соль.*йод/i, /^туз$/i],
-    uz: 'Osh tuzi (yodlangan)',
+    uz: 'Yodlangan osh tuzi',
     ru: 'Соль поваренная йодированная',
     en: 'Iodized Table Salt',
     category: 'PRIMARY',
@@ -207,7 +207,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'chem_potassium_sorbate',
     match: [/сорбат.*калия/i],
-    uz: 'Kaliy sorbat (E202)',
+    uz: 'Kaliy sorbat',
     ru: 'Сорбат калия',
     en: 'Potassium Sorbate',
     category: 'SECONDARY',
@@ -311,7 +311,7 @@ export const TAXONOMY_RULES: TaxonomyRule[] = [
   {
     canonicalId: 'pkg_bag_trash',
     match: [/мус[иы]р.*пакет/i, /мусор.*пакет/i],
-    uz: 'Chiqindi (axlat) paketlari',
+    uz: 'Chiqindi paketlari',
     ru: 'Мусорные пакеты',
     en: 'Trash Bags',
     category: 'SECONDARY',
@@ -621,15 +621,15 @@ export function getTrilingualInfo(rawName?: string, lang: string = 'uz') {
   const isEn = lang === 'en'
 
   let primary = meta.uz
-  let secondary = `${meta.ru} • ${meta.en}`
-
   if (isRu) {
     primary = meta.ru
-    secondary = `${meta.uz} • ${meta.en}`
   } else if (isEn) {
     primary = meta.en
-    secondary = `${meta.uz} • ${meta.ru}`
   }
+
+  // Deduplicate and filter out primary to avoid repetitive subtitles like "Tomat • Tomat"
+  const others = Array.from(new Set([meta.uz, meta.ru, meta.en].filter((s) => Boolean(s) && s !== primary)))
+  const secondary = others.join(' • ')
 
   const categoryLabel =
     meta.category === 'PRIMARY'

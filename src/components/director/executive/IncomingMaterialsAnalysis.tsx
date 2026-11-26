@@ -177,7 +177,7 @@ export default function IncomingMaterialsAnalysis({
   const [selectedItem, setSelectedItem] = useState<IncomingItem | null>(null)
   const [showSuppliersModal, setShowSuppliersModal] = useState<boolean>(false)
   const [supplierSearch, setSupplierSearch] = useState<string>('')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc') // Requirement 3: Default ascending (kichikdan yuqoriga)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc') // Default descending (kattadan kichikka)
   const [mounted, setMounted] = useState(false)
   const [page, setPage] = useState<number>(1)
   const pageSize = 20
@@ -656,38 +656,12 @@ export default function IncomingMaterialsAnalysis({
               <span className="text-sm font-black text-slate-900 dark:text-white px-2">
                 {selectedProductSummary.name}
               </span>
-              <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-                ({getTrilingualInfo(selectedProductSummary.meta.uz, lang).secondary})
-              </span>
             </div>
           )}
         </div>
 
         {selectedCanonicalId ? (
           <div className="flex items-center gap-2">
-            {/* Requirement 3: Sort Order Toggle (Ascending vs Descending) */}
-            <button
-              onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors shadow-2xs"
-              title={
-                sortOrder === 'asc'
-                  ? "Tartib: Kichikdan yuqoriga (O'sish tartibida)"
-                  : 'Tartib: Kattadan kichikka (Kamayish tartibida)'
-              }
-            >
-              {sortOrder === 'asc' ? (
-                <>
-                  <ArrowUp size={14} className="text-emerald-600" />
-                  <span>{lang === 'ru' ? 'По возрастанию (сначала ранние)' : 'Kichikdan yuqoriga ↑'}</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDown size={14} className="text-blue-600" />
-                  <span>{lang === 'ru' ? 'По убыванию (сначала новые)' : 'Kattadan kichikka ↓'}</span>
-                </>
-              )}
-            </button>
-
             <div className="relative">
               <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
               <input
@@ -801,9 +775,6 @@ export default function IncomingMaterialsAnalysis({
                   >
                     {getTrilingualInfo(selectedProductSummary?.meta.uz, lang).categoryLabel}
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {getTrilingualInfo(selectedProductSummary?.meta.uz, lang).secondary}
-                  </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
                   {selectedProductSummary?.name}
@@ -868,11 +839,6 @@ export default function IncomingMaterialsAnalysis({
             <div className="p-3 bg-slate-50/70 dark:bg-dark-800/50 border-b border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
               <span className="font-bold text-slate-600 dark:text-slate-300">
                 {lang === 'ru' ? 'Журнал партий прихода' : 'Kirim partiyalari jurnali'}
-              </span>
-              <span className="text-[11px] text-slate-400 font-mono">
-                {sortOrder === 'asc'
-                  ? (lang === 'ru' ? 'Сортировка: от старых к новым (возрастание)' : "Tartib: Kichikdan yuqoriga (O'sish)")
-                  : (lang === 'ru' ? 'Сортировка: от новых к старым (убывание)' : 'Tartib: Kattadan kichikka (Kamayish)')}
               </span>
             </div>
 
