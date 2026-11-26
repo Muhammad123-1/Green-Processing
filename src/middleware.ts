@@ -14,7 +14,7 @@ function getRedirectPathForRole(role?: string) {
     case 'PRODUCTION': return '/production';
     case 'KITCHEN': return '/kitchen';
     case 'DEGUSTATION': return '/degustatsiya';
-    case 'LOGISTICS': return '/logistics';
+    case 'LOGISTICS': return '/drivers-medical';
     case 'WAREHOUSE': return '/warehouse';
     case 'ACCOUNTING': return '/accounting';
     case 'SUPPLY': return '/supply';

@@ -91,7 +91,7 @@ export async function login(prevState: any, formData: FormData) {
     case 'PRODUCTION': redirectUrl = '/production'; break;
     case 'KITCHEN': redirectUrl = '/kitchen'; break;
     case 'DEGUSTATION': redirectUrl = '/degustatsiya'; break;
-    case 'LOGISTICS': redirectUrl = '/logistics'; break;
+    case 'LOGISTICS': redirectUrl = '/drivers-medical'; break;
     case 'WAREHOUSE': redirectUrl = '/warehouse'; break;
     case 'ACCOUNTING': redirectUrl = '/accounting'; break;
     case 'SUPPLY': redirectUrl = '/supply'; break;

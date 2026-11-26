@@ -105,7 +105,6 @@ const navSections = [
       { key: 'supplyShortages', href: '/supply/shortages', icon: AlertTriangle, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY'] },
       { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'SUPPLY', 'ACCOUNTING'] },
       { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
-      { key: 'logistics', href: '/logistics', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'LOGISTICS'] },
     ]
   },
   {

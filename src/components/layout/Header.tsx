@@ -115,10 +115,6 @@ const getPageInfo = (pathname: string, t: any, formatDual: any) => {
       title: t('director'), 
       subtitle: t('directorSub') 
     },
-    '/logistics': { 
-      title: t('logistics'), 
-      subtitle: t('logisticsSub') 
-    },
     '/accounting': { 
       title: t('accounting'), 
       subtitle: t('accountingSub') 

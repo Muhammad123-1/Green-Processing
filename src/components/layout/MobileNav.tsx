@@ -496,22 +496,16 @@ export default function MobileNav({ userRole }: { userRole?: string }) {
       case 'LOGISTICS':
         return [
           {
-            label: formatDual('Logistika', 'Логистика', 'Logistics'),
-            href: '/logistics',
-            icon: Truck,
-            active: pathname.startsWith('/logistics')
+            label: formatDual('Haydovchilar', 'Водители', 'Drivers'),
+            href: '/drivers-medical',
+            icon: HeartPulse,
+            active: pathname.startsWith('/drivers-medical')
           },
           {
             label: formatDual('Buyurtmalar', 'Заказы', 'Orders'),
             href: '/orders',
             icon: ShoppingCart,
             active: pathname.startsWith('/orders')
-          },
-          {
-            label: formatDual('Haydovchilar', 'Водители', 'Drivers'),
-            href: '/drivers-medical',
-            icon: HeartPulse,
-            active: pathname.startsWith('/drivers-medical')
           },
           {
             label: formatDual('Chat', 'Чат', 'Chat'),
