@@ -1126,6 +1126,9 @@ export async function GET(request: NextRequest) {
         outOfStockCount,
         items: productStockDetails.map((p) => ({
           productName: p.name,
+          canonicalId: p.canonicalId,
+          category: p.category,
+          subCategory: p.subCategory,
           unit: p.unit || 'kg',
           currentStockKg: p.currentStock,
           inflowKg: p.totalInKg || 0,

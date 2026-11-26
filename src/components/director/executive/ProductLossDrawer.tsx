@@ -12,6 +12,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { ProductBalanceItem } from './ProductBalanceTable'
+import { translateProductName } from '@/lib/directorLocalization'
 
 interface Props {
   product: ProductBalanceItem | null
@@ -47,7 +48,7 @@ export default function ProductLossDrawer({
               {lang === 'ru' ? 'Полная история продукта, контроль качества и остатки' : "Mahsulotning to'liq tarixi, sifat nazorati va saqlash sabablari"}
             </span>
             <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mt-0.5">
-              <span>{product.productName}</span>
+              <span>{translateProductName(product.productName, lang)}</span>
               <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 font-bold">
                 {product.unit}
               </span>

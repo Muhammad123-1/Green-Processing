@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { toNum } from '@/lib/shopReport'
+import { resolveProductMeta } from '@/lib/productTaxonomy'
 
 function norm(s: any): string {
   return String(s ?? '').trim().toLowerCase()
@@ -149,6 +150,8 @@ export async function GET(req: NextRequest) {
       string,
       {
         productName: string
+        category: 'PRIMARY' | 'SECONDARY'
+        canonicalId: string
         unit: string
         openingStockKg: number
         hasOpeningRecorded: boolean
@@ -170,41 +173,14 @@ export async function GET(req: NextRequest) {
       }
     > = {}
 
-    const getCanonicalName = (name: string): { key: string; name: string; unit: string } => {
-      const s = String(name || '').trim().toLowerCase()
-      if (
-        s.includes('пакет') ||
-        s.includes('каробк') ||
-        s.includes('короб') ||
-        s.includes('karobka') ||
-        s.includes('этикетк') ||
-        s.includes('стрич') ||
-        s.includes('яшик') ||
-        s.includes('падон')
-      ) {
-        if (s.includes('пакет')) return { key: 'bag', name: 'Пакеты', unit: 'dona' }
-        if (s.includes('этикет')) return { key: 'label', name: 'Этикетки', unit: 'dona' }
-        return { key: 'box', name: 'Коробки', unit: 'dona' }
+    const getCanonicalName = (name: string): { key: string; name: string; unit: string; category: 'PRIMARY' | 'SECONDARY' } => {
+      const meta = resolveProductMeta(name)
+      return {
+        key: meta.canonicalId,
+        name: meta.uz,
+        unit: meta.unit,
+        category: meta.category,
       }
-      if (s === 'tomato' || s === 'tomatoes' || s.includes('томат') || s.includes('помидор')) return { key: 'tomato', name: 'Томаты (Помидор)', unit: 'kg' }
-      if (s === 'iceberg' || ((s.includes('айсберг') || s.includes('айзберг') || s.includes('aysberg') || s.includes('ayzberg')) && !s.includes('листов'))) return { key: 'iceberg', name: 'Салат Айсберг', unit: 'kg' }
-      if (s === 'icebergleaf' || s.includes('листов')) return { key: 'icebergLeaf', name: 'Айсберг (листовой)', unit: 'kg' }
-      if (s === 'cabbage' || (s.includes('капуст') && !s.includes('красная') && !s.includes('коул'))) return { key: 'cabbage', name: 'Капуста белокочанная', unit: 'kg' }
-      if (s === 'carrot' || s.includes('морков')) return { key: 'carrot', name: 'Морковь', unit: 'kg' }
-      if (s === 'onion' || s.includes('лук')) return { key: 'onion', name: 'Лук белый салатный', unit: 'kg' }
-      if (s === 'cucumber' || s === 'cucumbers' || s.includes('огурц') || s.includes('бодринг')) return { key: 'cucumber', name: 'Огурцы свежие', unit: 'kg' }
-      if (s === 'lemon' || (s.includes('лимон') && !s.includes('кислот'))) return { key: 'lemon', name: 'Лимон', unit: 'kg' }
-      if (s === 'lollorosso' || s.includes('лолло') || s.includes('lollo')) return { key: 'lolloRosso', name: 'Lollo Rosso', unit: 'kg' }
-      if (s === 'rukkola' || s.includes('рукол') || s.includes('руккол')) return { key: 'rukkola', name: 'Руккола', unit: 'kg' }
-      if (s === 'spinach' || s.includes('шпинат')) return { key: 'spinach', name: 'Шпинат', unit: 'kg' }
-      if (s === 'mint' || s.includes('мята')) return { key: 'mint', name: 'Мята', unit: 'kg' }
-      if (s === 'celery' || s.includes('сельдерей')) return { key: 'celery', name: 'Сельдерей', unit: 'kg' }
-      if (s.includes('хлор') || s.includes('гипохлорит')) return { key: 'chlorine', name: 'Хлор', unit: 'kg' }
-      if (s.includes('сорбат')) return { key: 'sorbat', name: 'Сорбат', unit: 'kg' }
-      if (s.includes('бензоат')) return { key: 'benzoat', name: 'Бензоат', unit: 'kg' }
-      if (s.includes('уксус')) return { key: 'vinegar', name: 'Уксус', unit: 'kg' }
-      if (s.includes('тайгета')) return { key: 'taygeta', name: 'Тайгета 218', unit: 'dona' }
-      return { key: s, name: name.trim(), unit: 'kg' }
     }
 
     const getOrInitProd = (name: string) => {
@@ -214,6 +190,8 @@ export async function GET(req: NextRequest) {
         const cfg = productConfigMap.get(k)
         productStats[k] = {
           productName: info.name,
+          category: info.category,
+          canonicalId: info.key,
           unit: cfg?.unit || info.unit,
           openingStockKg: 0,
           hasOpeningRecorded: false,
@@ -718,6 +696,8 @@ export async function GET(req: NextRequest) {
 
       return {
         productName: item.productName,
+        category: item.category,
+        canonicalId: item.canonicalId,
         unit: item.unit,
         openingStockKg: Number(item.openingStockKg.toFixed(1)),
         inflowKg: Number(item.inflowKg.toFixed(1)),
@@ -756,6 +736,12 @@ export async function GET(req: NextRequest) {
           },
         },
       }
+    })
+    // Requirement: PRIMARY products (fresh produce) FIRST, SECONDARY products LAST
+    .sort((a, b) => {
+      if (a.category === 'PRIMARY' && b.category !== 'PRIMARY') return -1
+      if (a.category !== 'PRIMARY' && b.category === 'PRIMARY') return 1
+      return b.currentStockKg - a.currentStockKg
     })
 
     // Global Yield, Stock-Relative Output & Defect foizlari (Requirement 5)

@@ -26,6 +26,9 @@ import { translateProductName } from '@/lib/directorLocalization'
 
 export interface ProductBalanceItem {
   productName: string
+  canonicalId?: string
+  category?: 'PRIMARY' | 'SECONDARY'
+  subCategory?: string
   unit: string
   openingStockKg?: number
   inflowKg: number
@@ -100,13 +103,13 @@ export default function ProductBalanceTable({
   // Top Global Totals
   const totalWeightKg = useMemo(() => {
     return products
-      .filter((p) => (p.unit || 'kg') === 'kg')
+      .filter((p) => (p.unit || 'kg') === 'kg' && !p.productName.toLowerCase().includes('famiy'))
       .reduce((sum, p) => sum + (p.currentStockKg || 0), 0)
   }, [products])
 
   const totalDona = useMemo(() => {
     return products
-      .filter((p) => p.unit === 'dona')
+      .filter((p) => p.unit === 'dona' || p.unit === 'litr' || p.productName.toLowerCase().includes('famiy'))
       .reduce((sum, p) => sum + (p.currentStockKg || 0), 0)
   }, [products])
 
@@ -149,6 +152,22 @@ export default function ProductBalanceTable({
 
   const sorted = useMemo(() => {
     return [...filteredProducts].sort((a, b) => {
+      // 1. PRIMARY category (fresh vegetables) ALWAYS FIRST, SECONDARY (packaging/chemicals) LAST
+      const isAPrimary =
+        a.category === 'PRIMARY' ||
+        ((a.unit || 'kg') === 'kg' &&
+          !/пакет|коробк|этикет|стикер|шапк|бахил|халат|поддон|ящик|famiy|вода|stul|соль|туз|хлор|уксус|сорбат|бензоат/i.test(
+            a.productName
+          ))
+      const isBPrimary =
+        b.category === 'PRIMARY' ||
+        ((b.unit || 'kg') === 'kg' &&
+          !/пакет|коробк|этикет|стикер|шапк|бахил|халат|поддон|ящик|famiy|вода|stul|соль|туз|хлор|уксус|сорбат|бензоат/i.test(
+            b.productName
+          ))
+      if (isAPrimary && !isBPrimary) return -1
+      if (!isAPrimary && isBPrimary) return 1
+
       let valA: number = 0
       let valB: number = 0
 
@@ -484,7 +503,7 @@ export default function ProductBalanceTable({
                             : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
                         }`}
                       >
-                        {isDona ? 'Dona' : 'Vazn'}
+                        {isDona ? (lang === 'ru' ? 'Штучный' : 'Dona') : (lang === 'ru' ? 'Весовой' : 'Vazn')}
                       </span>
                       {renderInventoryStatusPill(item.inventoryStatus)}
                     </div>
@@ -522,7 +541,19 @@ export default function ProductBalanceTable({
                         )
                       ) : (
                         <span className="text-slate-400">
-                          {item.approvedMaxStorageDays ? `Max: ${item.approvedMaxStorageDays} kun saqlanadi` : 'Kunlik sarf yo‘q'}
+                          {item.approvedMaxStorageDays
+                            ? `Max: ${item.approvedMaxStorageDays} kun saqlanadi`
+                            : isDona ||
+                              item.category === 'SECONDARY' ||
+                              /пакет|коробк|этикет|стикер|шапк|бахил|халат|поддон|ящик|famiy|вода|stul|соль|туз|хлор|уксус|сорбат|бензоат/i.test(
+                                item.productName
+                              )
+                            ? lang === 'ru'
+                              ? 'Запас достаточный (Долгосрочный)'
+                              : 'Zaxira yetarli (Uzoq muddatli)'
+                            : lang === 'ru'
+                              ? 'Запас достаточный'
+                              : 'Zaxira yetarli'}
                         </span>
                       )}
                     </span>

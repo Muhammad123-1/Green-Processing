@@ -495,7 +495,7 @@ export default function DirectorDynamicsPage() {
             <span>
               {formatDual("Faol hafta:", "Активная неделя:", "Active week:")}{' '}
               <span className="font-mono font-black text-indigo-950 dark:text-indigo-100">
-                02.11.2026 - 07.11.2026 (44-hafta)
+                16.11.2026 - 21.11.2026
               </span>
             </span>
           </div>

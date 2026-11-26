@@ -82,6 +82,7 @@ import DefectMaterialsAnalysis from '@/components/director/executive/DefectMater
 import ProductBalanceTable, { ProductBalanceItem } from '@/components/director/executive/ProductBalanceTable'
 import ProductLossDrawer from '@/components/director/executive/ProductLossDrawer'
 import CustomDropdown from '@/components/ui/CustomDropdown'
+import { translateProductName } from '@/lib/directorLocalization'
 
 export interface WeekOption {
   weekNum: number
@@ -496,6 +497,17 @@ export default function DirectorPage() {
     } else if (warehouseCategoryFilter === 'SECONDARY') {
       list = list.filter((p: any) => p.category === 'SECONDARY')
     }
+
+    // Sort: PRIMARY products (fresh produce) FIRST (sorted by stock desc),
+    // SECONDARY products (packaging, chemicals, etc.) LAST (sorted by stock desc)
+    list = [...list].sort((a: any, b: any) => {
+      const isAPrimary = a.category === 'PRIMARY'
+      const isBPrimary = b.category === 'PRIMARY'
+      if (isAPrimary && !isBPrimary) return -1
+      if (!isAPrimary && isBPrimary) return 1
+      return (b.currentStock || 0) - (a.currentStock || 0)
+    })
+
     if (!searchQuery) return list
     const q = searchQuery.toLowerCase()
     return list.filter((p: any) => 
@@ -2432,13 +2444,8 @@ export default function DirectorPage() {
                                     </span>
                                     <div>
                                       <span className="block font-bold text-slate-900 dark:text-white">
-                                        {directorLang === 'ru' ? p.nameRu || p.name : directorLang === 'en' ? p.nameEn || p.name : p.nameUz || p.name}
+                                        {translateProductName(directorLang === 'ru' ? p.nameRu || p.name : directorLang === 'en' ? p.nameEn || p.name : p.nameUz || p.name, directorLang)}
                                       </span>
-                                      {(p.nameRu || p.nameEn) && (
-                                        <span className="block text-[11px] text-slate-400 font-normal">
-                                          {directorLang === 'uz' ? `${p.nameRu} · ${p.nameEn}` : `${p.nameUz} · ${p.nameEn}`}
-                                        </span>
-                                      )}
                                     </div>
                                   </div>
                                 </td>
@@ -3630,13 +3637,13 @@ export default function DirectorPage() {
 
                       <ProductBalanceTable
                         products={
-                          executiveProductBalances.length > 0
-                            ? executiveProductBalances
-                            : operationsSummary?.ombor?.items?.length > 0
-                              ? operationsSummary.ombor.items
+                          operationsSummary?.ombor?.items?.length > 0
+                            ? operationsSummary.ombor.items
+                            : executiveProductBalances.length > 0
+                              ? executiveProductBalances
                               : []
                         }
-                        loading={loadingExecutiveBalances || loading}
+                        loading={loading}
                         lang={directorLang}
                         onSelectProduct={(p) => setSelectedProduct(p)}
                         onOpenStandards={() => setShowSettingsModal(true)}
