@@ -733,16 +733,16 @@ export default function IncomingActsContent({
       </div>
 
       {/* Top Banner */}
-      <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white rounded-2xl p-5 shadow-xs border border-slate-200 dark:border-dark-750 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-500/30">
               <FileSpreadsheet className="w-7 h-7" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl md:text-2xl font-black tracking-tight">{t.title}</h1>
-                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-medium">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 font-mono font-medium">
                   {t.formCode}
                 </span>
               </div>
@@ -757,7 +757,7 @@ export default function IncomingActsContent({
               fetchActs()
             }}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold border border-slate-200 dark:border-dark-700 transition cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             {t.refresh}
@@ -766,35 +766,35 @@ export default function IncomingActsContent({
           {userRole === 'ADMIN' && (
             <button
               onClick={() => setIsImportOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-semibold shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-dark-800 dark:hover:bg-dark-700 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
             >
-              <Upload className="w-3.5 h-3.5 text-emerald-400" />
+              <Upload className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>{t.importExcel} (Admin)</span>
             </button>
           )}
 
           <button
             onClick={() => handleExport(false)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold shadow-xs transition"
+            className="flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 dark:bg-dark-800 dark:hover:bg-dark-700 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/40 rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
             title="Barcha xomashyo aktlarini alohida varaqlarda (Ayzberg birinchi o'rinda) Excel yuklab olish"
           >
-            <Download className="w-3.5 h-3.5 text-sky-400" />
+            <Download className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
             {t.exportExcel}
           </button>
 
           <button
             onClick={handleSyncFromArrivals}
             disabled={syncingArrivals}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-teal-700 hover:bg-teal-600 text-white rounded-xl text-xs font-bold border border-teal-500 shadow-sm active:scale-95 transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold border border-teal-600 shadow-sm active:scale-95 transition cursor-pointer"
             title="Ombor kirimlaridan (Prixod) barcha xomashyolarni sifat aktlariga avtomatik sinxronlash"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-teal-200 ${syncingArrivals ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-teal-100 ${syncingArrivals ? 'animate-spin' : ''}`} />
             <span>Ombor kirimidan avto-sinxron</span>
           </button>
 
           <button
             onClick={handleOpenCreate}
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-900/40 active:scale-95 transition"
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 active:scale-95 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             {t.newAct}
@@ -1486,16 +1486,16 @@ export default function IncomingActsContent({
             className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl max-w-4xl w-full border border-slate-200 dark:border-dark-750 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-200"
             onClick={e => e.stopPropagation()}
           >
-            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between">
+            <div className="bg-slate-50 dark:bg-dark-850 text-slate-900 dark:text-white border-b border-slate-200 dark:border-dark-700 p-4 sm:p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+                <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold">
                     {editingAct ? 'Aktni Tahrirlash' : 'Yangi Kiruvchi Xomashyo Akti'}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Barcha sifat parametrlari mezonlar bo'yicha qulay kiritiladi.
                   </p>
                 </div>
@@ -1503,7 +1503,7 @@ export default function IncomingActsContent({
               <button
                 type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                className="p-1.5 hover:bg-slate-200 dark:hover:bg-dark-750 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1916,19 +1916,19 @@ export default function IncomingActsContent({
               </div>
             ) : (
               <>
-                <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+                <div className="bg-slate-50 dark:bg-dark-850 text-slate-900 dark:text-white border-b border-slate-200 dark:border-dark-700 p-5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+                    <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
                       <Upload className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-base font-bold">Excel Import (Barcha Xomashyolar)</h2>
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                           ADMIN ONLY
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Tomat, Piyoz, Aysberg, Karam, Sabzi va barcha bo'limlarni bazaga yuklash.
                       </p>
                     </div>
@@ -1936,7 +1936,7 @@ export default function IncomingActsContent({
                   <button
                     type="button"
                     onClick={() => setIsImportOpen(false)}
-                    className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                    className="p-1.5 hover:bg-slate-200 dark:hover:bg-dark-750 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -2086,16 +2086,16 @@ export default function IncomingActsContent({
             className="bg-white dark:bg-dark-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 dark:border-dark-750 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
             onClick={e => e.stopPropagation()}
           >
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+            <div className="bg-slate-50 dark:bg-dark-850 text-slate-900 dark:text-white border-b border-slate-200 dark:border-dark-700 p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl">
+                <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
                   <FileCheck className="w-6 h-6" />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold">
                     Akt № {selectedActForView.actNumber} - {selectedActForView.productName}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Sana: {selectedActForView.actDate} | Ta'minotchi: {selectedActForView.supplierName}
                   </p>
                 </div>
@@ -2103,7 +2103,7 @@ export default function IncomingActsContent({
               <button
                 type="button"
                 onClick={() => setSelectedActForView(null)}
-                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                className="p-1.5 hover:bg-slate-200 dark:hover:bg-dark-750 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

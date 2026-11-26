@@ -330,25 +330,25 @@ export default function DisinfectionActsContent() {
       </div>
 
       {/* Official Form Header Banner */}
-      <div className="bg-gradient-to-r from-teal-900/90 via-slate-900 to-slate-900 text-white p-5 rounded-2xl border border-teal-500/30 shadow-lg relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-10">
-          <FlaskConical className="w-64 h-64 text-teal-400" />
+      <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-6 rounded-3xl shadow-xs relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 opacity-5 dark:opacity-10 pointer-events-none flex items-center pr-10">
+          <FlaskConical className="w-64 h-64 text-teal-600 dark:text-teal-400" />
         </div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40 uppercase tracking-wider">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300 border border-teal-200 dark:border-teal-500/40 uppercase tracking-wider">
                 SanPiN / QC Nazorati
               </span>
             </div>
-            <h1 className="text-xl md:text-2xl font-black text-white tracking-wide">
+            <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-wide">
               {activeLang === 'ru'
                 ? 'Журнал регистрации моющих и дезинфицирующих средств'
                 : activeLang === 'en'
                 ? 'Disinfection and Cleaning Agents Journal'
                 : 'Dezinfeksiya va yuvish vositalari jurnali'}
             </h1>
-            <p className="text-xs md:text-sm text-teal-200/80 mt-1">
+            <p className="text-xs md:text-sm text-slate-500 dark:text-teal-200/80 mt-1">
               {activeLang === 'ru'
                 ? 'Учёт поступления, расхода и остатков партии на складе'
                 : activeLang === 'en'
@@ -359,29 +359,29 @@ export default function DisinfectionActsContent() {
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+            <div className="bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700 rounded-2xl p-3 text-center">
+              <span className="text-[10px] text-slate-500 dark:text-teal-300 uppercase tracking-wider font-semibold block">
                 {formatDual('Jami partiyalar', 'Всего партий', 'Total batches')}
               </span>
-              <span className="text-lg font-black text-white">{stats.totalActs} ta</span>
+              <span className="text-lg font-black text-slate-900 dark:text-white font-mono">{stats.totalActs} ta</span>
             </div>
-            <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+            <div className="bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700 rounded-2xl p-3 text-center">
+              <span className="text-[10px] text-slate-500 dark:text-teal-300 uppercase tracking-wider font-semibold block">
                 {formatDual('Qabul (Hajm)', 'Принято', 'Received')}
               </span>
-              <span className="text-lg font-black text-emerald-400">{stats.totalReceivedKg.toLocaleString()} kg</span>
+              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">{stats.totalReceivedKg.toLocaleString()} kg</span>
             </div>
-            <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+            <div className="bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700 rounded-2xl p-3 text-center">
+              <span className="text-[10px] text-slate-500 dark:text-teal-300 uppercase tracking-wider font-semibold block">
                 {formatDual('Sexga berildi', 'Отпущено', 'Issued')}
               </span>
-              <span className="text-lg font-black text-amber-300">{stats.totalReleasedKg.toLocaleString()} kg</span>
+              <span className="text-lg font-black text-amber-600 dark:text-amber-300 font-mono">{stats.totalReleasedKg.toLocaleString()} kg</span>
             </div>
-            <div className="bg-black/30 backdrop-blur border border-white/10 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-teal-300 uppercase tracking-wider font-semibold block">
+            <div className="bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700 rounded-2xl p-3 text-center">
+              <span className="text-[10px] text-slate-500 dark:text-teal-300 uppercase tracking-wider font-semibold block">
                 {formatDual('Qoldiq omborda', 'Остаток', 'Balance')}
               </span>
-              <span className="text-lg font-black text-cyan-300">{(stats.totalReceivedKg - stats.totalReleasedKg).toLocaleString()} kg</span>
+              <span className="text-lg font-black text-cyan-600 dark:text-cyan-300 font-mono">{(stats.totalReceivedKg - stats.totalReleasedKg).toLocaleString()} kg</span>
             </div>
           </div>
         </div>
@@ -754,18 +754,18 @@ export default function DisinfectionActsContent() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden my-8">
-            <div className="p-5 bg-gradient-to-r from-teal-700 to-slate-800 text-white flex items-center justify-between">
+            <div className="p-5 bg-slate-50 dark:bg-dark-800/80 border-b border-slate-200 dark:border-dark-700 text-slate-900 dark:text-white flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold">
                   {editingAct ? "Qabul aktini tahrirlash" : "Yangi qabul aktini kiritish"}
                 </h3>
-                <p className="text-xs text-teal-200 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-teal-200 mt-0.5">
                   Dezinfeksiya, yuvish va kimyoviy vositalar qabuli jurnali
                 </p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-white/20 text-white/80 hover:text-white transition"
+                className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-dark-700 text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

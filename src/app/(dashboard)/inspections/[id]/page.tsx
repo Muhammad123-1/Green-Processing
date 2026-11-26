@@ -141,8 +141,8 @@ export default function InspectionDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/inspections"
-            className="w-9 h-9 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600
-                       flex items-center justify-center text-slate-400 hover:text-slate-200 transition-all"
+            className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 border border-slate-200 dark:border-dark-600
+                       flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition-all cursor-pointer"
           >
             <ArrowLeft size={18} />
           </Link>
@@ -169,7 +169,7 @@ export default function InspectionDetailPage() {
           <button
             onClick={handleDownloadExcel}
             disabled={generating}
-            className="btn-success"
+            className="btn-success cursor-pointer"
           >
             {generating ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />}
             Excel
@@ -178,7 +178,7 @@ export default function InspectionDetailPage() {
             <Edit size={16} />
             Tahrirlash
           </Link>
-          <button onClick={() => setShowDelete(true)} className="btn-danger">
+          <button onClick={() => setShowDelete(true)} className="btn-danger cursor-pointer">
             <Trash2 size={16} />
           </button>
         </div>
@@ -189,26 +189,26 @@ export default function InspectionDetailPage() {
         {/* Supplier card */}
         <div className="card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Truck size={16} className="text-cyan-400" />
-            <h3 className="font-semibold text-white text-sm">Ta'minotchi</h3>
+            <Truck size={16} className="text-cyan-500 dark:text-cyan-400" />
+            <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Ta'minotchi</h3>
           </div>
-          <p className="text-slate-100 font-medium">{inspection.supplier.name}</p>
+          <p className="text-slate-900 dark:text-slate-100 font-medium">{inspection.supplier.name}</p>
           {inspection.supplier.phone && (
-            <p className="text-sm text-slate-400 mt-1">{inspection.supplier.phone}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{inspection.supplier.phone}</p>
           )}
           {inspection.supplier.address && (
-            <p className="text-sm text-slate-400">{inspection.supplier.address}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{inspection.supplier.address}</p>
           )}
           {inspection.vehicleNumber && (
-            <div className="mt-3 pt-3 border-t border-dark-700">
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-dark-700">
               <p className="text-xs text-slate-500">Transport</p>
-              <p className="text-sm text-slate-300 mt-0.5">{inspection.vehicleNumber}</p>
+              <p className="text-sm text-slate-800 dark:text-slate-300 mt-0.5">{inspection.vehicleNumber}</p>
             </div>
           )}
           {inspection.invoiceNumber && (
             <div className="mt-2">
               <p className="text-xs text-slate-500">Faktura №</p>
-              <p className="text-sm text-slate-300 mt-0.5">{inspection.invoiceNumber}</p>
+              <p className="text-sm text-slate-800 dark:text-slate-300 mt-0.5">{inspection.invoiceNumber}</p>
             </div>
           )}
         </div>
@@ -216,14 +216,14 @@ export default function InspectionDetailPage() {
         {/* Product card */}
         <div className="card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Package size={16} className="text-purple-400" />
-            <h3 className="font-semibold text-white text-sm">Mahsulot</h3>
+            <Package size={16} className="text-purple-500 dark:text-purple-400" />
+            <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Mahsulot</h3>
           </div>
-          <p className="text-slate-100 font-medium">{inspection.product.name}</p>
+          <p className="text-slate-900 dark:text-slate-100 font-medium">{inspection.product.name}</p>
           {inspection.product.gost && (
             <p className="text-xs text-slate-500 mt-1">{inspection.product.gost}</p>
           )}
-          <div className="mt-3 pt-3 border-t border-dark-700 grid grid-cols-2 gap-3">
+          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-dark-700 grid grid-cols-2 gap-3">
             <InfoItem icon={<Hash size={13} />} label="Partiya" value={inspection.batchNumber} />
             <InfoItem
               icon={<Scale size={13} />}
@@ -247,7 +247,7 @@ export default function InspectionDetailPage() {
       {/* Organoleptic */}
       {(inspection.color || inspection.smell || inspection.appearance) && (
         <div className="card p-5">
-          <h3 className="font-semibold text-white text-sm mb-4">Organoleptik ko'rsatkichlar</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm mb-4">Organoleptik ko'rsatkichlar</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {inspection.color && <InfoItem label="Rangi" value={inspection.color} />}
             {inspection.smell && <InfoItem label="Hidi" value={inspection.smell} />}
@@ -258,22 +258,22 @@ export default function InspectionDetailPage() {
 
       {/* Conclusion */}
       <div className="card p-5">
-        <h3 className="font-semibold text-white text-sm mb-4">Xulosa</h3>
+        <h3 className="font-semibold text-slate-900 dark:text-white text-sm mb-4">Xulosa</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-slate-500 mb-1">Xulosa matni</p>
-            <p className="text-slate-200">{inspection.conclusion}</p>
+            <p className="text-slate-800 dark:text-slate-200">{inspection.conclusion}</p>
           </div>
           {inspection.inspector && (
             <div>
               <p className="text-xs text-slate-500 mb-1">Nazoratchi</p>
-              <p className="text-slate-200">{inspection.inspector}</p>
+              <p className="text-slate-800 dark:text-slate-200">{inspection.inspector}</p>
             </div>
           )}
           {inspection.notes && (
             <div className="md:col-span-2">
               <p className="text-xs text-slate-500 mb-1">Izoh</p>
-              <p className="text-slate-200">{inspection.notes}</p>
+              <p className="text-slate-800 dark:text-slate-200">{inspection.notes}</p>
             </div>
           )}
         </div>
@@ -300,18 +300,18 @@ export default function InspectionDetailPage() {
           <div className="card p-6 max-w-sm w-full animate-enter" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center">
-                <Trash2 size={18} className="text-red-400" />
+                <Trash2 size={18} className="text-red-500 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Aktni o'chirish</h3>
-                <p className="text-sm text-slate-400">{inspection.actNumber}</p>
+                <h3 className="font-semibold text-slate-900 dark:text-white">Aktni o'chirish</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{inspection.actNumber}</p>
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowDelete(false)} className="btn-secondary flex-1 justify-center">
+              <button onClick={() => setShowDelete(false)} className="btn-secondary flex-1 justify-center cursor-pointer">
                 Bekor qilish
               </button>
-              <button onClick={handleDelete} className="btn-danger flex-1 justify-center bg-red-600/30">
+              <button onClick={handleDelete} className="btn-danger flex-1 justify-center bg-red-600/30 cursor-pointer">
                 O'chirish
               </button>
             </div>
@@ -337,7 +337,7 @@ function InfoItem({
         {icon}
         {label}
       </p>
-      <p className="text-sm text-slate-200">{value}</p>
+      <p className="text-sm text-slate-800 dark:text-slate-200 font-medium">{value}</p>
     </div>
   )
 }

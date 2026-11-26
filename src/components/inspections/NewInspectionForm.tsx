@@ -368,8 +368,8 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-4">
-          <Link href="/inspections" className="w-9 h-9 rounded-xl bg-dark-700 hover:bg-dark-600 border border-dark-600
-                                               flex items-center justify-center text-slate-400 hover:text-slate-200
+          <Link href="/inspections" className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 border border-slate-200 dark:border-dark-600
+                                               flex items-center justify-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200
                                                transition-all duration-200">
             <ArrowLeft size={18} />
           </Link>
@@ -384,7 +384,7 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
         <button
           type="button"
           onClick={() => setShowGuideModal(true)}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all shadow-sm self-start sm:self-auto active:scale-95"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all shadow-sm self-start sm:self-auto active:scale-95 cursor-pointer"
         >
           <BookOpen size={15} />
           <span>📘 Xodim uchun qo'llanma & Birliklar konverteri</span>
@@ -395,9 +395,9 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       <div className="form-section">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
-            <FileText size={14} className="text-blue-400" />
+            <FileText size={14} className="text-blue-500 dark:text-blue-400" />
           </div>
-          <h3 className="font-semibold text-white text-sm">Asosiy ma'lumotlar</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Asosiy ma'lumotlar</h3>
         </div>
         <div className="divider !mt-2" />
 
@@ -472,9 +472,9 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       <div className="form-section">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-lg bg-purple-500/15 border border-purple-500/20 flex items-center justify-center">
-            <Package size={14} className="text-purple-400" />
+            <Package size={14} className="text-purple-500 dark:text-purple-400" />
           </div>
-          <h3 className="font-semibold text-white text-sm">Mahsulot ma'lumotlari</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Mahsulot ma'lumotlari</h3>
         </div>
         <div className="divider !mt-2" />
 
@@ -629,9 +629,9 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       <div className="form-section">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
-            <ClipboardCheck size={14} className="text-emerald-400" />
+            <ClipboardCheck size={14} className="text-emerald-500 dark:text-emerald-400" />
           </div>
-          <h3 className="font-semibold text-white text-sm">
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
             {form.sheetName && SHEET_CONFIGS[form.sheetName]?.customFields.length > 0 
               ? 'Maxsus ko\'rsatkichlar' 
               : 'Organoleptik ko\'rsatkichlar'}
@@ -695,28 +695,28 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       <div className="form-section">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center">
-            <Camera size={14} className="text-indigo-400" />
+            <Camera size={14} className="text-indigo-500 dark:text-indigo-400" />
           </div>
-          <h3 className="font-semibold text-white text-sm">Akt rasmlari</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Akt rasmlari</h3>
         </div>
         <div className="divider !mt-2" />
         
         <div className="space-y-4">
           <div className="flex flex-wrap gap-4">
             {(form.uploadedImages || []).map((url, idx) => (
-              <div key={idx} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-dark-600">
+              <div key={idx} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-slate-200 dark:border-dark-600">
                 <Image src={url} alt="Uploaded" fill className="object-cover" />
                 <button
                   type="button"
                   onClick={() => removeImage(idx)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   <X size={14} />
                 </button>
               </div>
             ))}
             
-            <label className="w-24 h-24 rounded-lg border-2 border-dashed border-dark-600 hover:border-dark-400 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-dark-800">
+            <label className="w-24 h-24 rounded-lg border-2 border-dashed border-slate-300 dark:border-dark-600 hover:border-slate-400 dark:hover:border-dark-400 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-slate-50 dark:bg-dark-800">
               {uploadingImage ? (
                 <Loader2 size={20} className="text-slate-400 animate-spin" />
               ) : (
@@ -736,9 +736,9 @@ export default function NewInspectionForm({ initialData }: { initialData?: Parti
       <div className="form-section">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center">
-            <CheckCircle size={14} className="text-amber-400" />
+            <CheckCircle size={14} className="text-amber-500 dark:text-amber-400" />
           </div>
-          <h3 className="font-semibold text-white text-sm">Xulosa va natija</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Xulosa va natija</h3>
         </div>
         <div className="divider !mt-2" />
 
