@@ -75,7 +75,8 @@ export async function GET(req: NextRequest) {
       gpKg: parsed.gpKg,
       wastePercent: parsed.wastePercent,
       notes: parsed.notes,
-      weeklyPeriods: parsed.weeklyPeriods,
+      weekly: parsed.weekly,
+      weeklyPeriods: parsed.weekly?.periods || parsed.weeklyPeriods,
       weeklyExpenseKg: parsed.weeklyExpenseKg,
     })
   } catch (error: any) {

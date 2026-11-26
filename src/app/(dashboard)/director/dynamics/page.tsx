@@ -3,46 +3,14 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Package,
-  Layers,
-  AlertTriangle,
-  Info,
-  Calendar,
-  Filter,
-  RefreshCw,
-  Search,
-  ChevronDown,
-  ChevronRight,
-  ArrowLeft,
-  Printer,
-  Sparkles,
-  BarChart3,
-  CheckCircle2,
-  FileSpreadsheet,
-  AlertCircle,
-  HelpCircle,
-  ExternalLink,
-  ShieldAlert,
-  Boxes,
-  ChefHat,
-  X
+  TrendingUp, TrendingDown, Package, DollarSign, AlertTriangle,
+  ChevronDown, ChevronUp, Search, Calendar, Layers, RefreshCw,
+  Info, Filter, Printer, ArrowLeft, ArrowRight, Eye, CheckCircle2,
+  Boxes, FileText, X, Sparkles
 } from 'lucide-react'
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Cell
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, BarChart, Bar
 } from 'recharts'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 
@@ -57,6 +25,39 @@ interface NoteItem {
   titleRu: string
   textRu: string
   textUz: string
+}
+
+interface WeeklyNoteItem {
+  id: string
+  blockIndex: number
+  period: string
+  weekIndices: number[]
+  category: 'waste' | 'expense' | 'production' | 'cost'
+  product: string
+  titleUz: string
+  titleRu: string
+  textRu: string
+  textUz: string
+}
+
+interface ProductItem {
+  name: string
+  unit?: string
+  monthly?: number[] | (number | null)[]
+  weekly?: number[] | (number | null)[]
+  total?: number
+  weeklyAvg?: number
+}
+
+interface ChartPoint {
+  label: string
+  shortLabel: string
+  value: number
+  notesCount: number
+  notes: any[]
+  periodStr?: string
+  weekIndex?: number
+  shortDate?: string
 }
 
 interface DynamicsData {
@@ -75,13 +76,47 @@ interface DynamicsData {
     notesCount: number
   }
   months: string[]
-  expenseKg: Array<{ name: string; unit: string; monthly: number[]; total: number }>
-  expenseSum: Array<{ name: string; unit: string; monthly: number[]; total: number }>
-  gpKg: Array<{ name: string; unit: string; monthly: number[]; total: number }>
-  wastePercent: Array<{ name: string; unit: string; monthly: (number | null)[] }>
+  expenseKg: ProductItem[]
+  expenseSum: ProductItem[]
+  gpKg: ProductItem[]
+  wastePercent: ProductItem[]
   notes: NoteItem[]
-  weeklyPeriods: string[]
-  weeklyExpenseKg: Array<{ name: string; unit: string; weeks: Array<{ period: string; value: number }> }>
+  weekly?: {
+    periods: string[]
+    summary: {
+      totalVegetableSum: number
+      totalWithConsumables: number
+      totalVegetableKg: number
+      totalFinishedGoodsKg: number
+      yieldEfficiency: number
+      avgWastePercent: number
+      avgWeeklySpend: number
+      avgWeeklyVolume: number
+      avgWeeklyGp: number
+      totalBoxes: number
+      totalHypoKg: number
+      weeksCount: number
+      notesCount: number
+    }
+    expenseKg: ProductItem[]
+    expenseSum: ProductItem[]
+    gpKg: ProductItem[]
+    wastePercent: ProductItem[]
+    notes: WeeklyNoteItem[]
+    totals: {
+      totalExpKgVeg: number[]
+      totalExpSumVeg: number[]
+      boxesQty: number[]
+      boxesSum: number[]
+      hypoKg: number[]
+      hypoSum: number[]
+      grandTotalSum: number[]
+      totalGpKg: number[]
+      weeklyAvgWaste: number[]
+    }
+  }
+  weeklyPeriods?: string[]
+  weeklyExpenseKg?: any[]
 }
 
 export default function DirectorDynamicsPage() {
@@ -96,12 +131,18 @@ export default function DirectorDynamicsPage() {
   const [activeTab, setActiveTab] = useState<'expense' | 'gp' | 'waste' | 'notes'>('expense')
   const [expenseSubMode, setExpenseSubMode] = useState<'sum' | 'kg'>('sum')
   
+  // Weekly Quarter filter (All, Q1, Q2, Q3, Q4)
+  const [weekQuarter, setWeekQuarter] = useState<'all' | 'q1' | 'q2' | 'q3' | 'q4'>('all')
+
   // Drill-down & filter state
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedProducts, setExpandedProducts] = useState<Record<string, boolean>>({})
   const [onlyNotesFilter, setOnlyNotesFilter] = useState(false)
   const [viewStyle, setViewStyle] = useState<'cards' | 'matrix'>('cards')
-  const [selectedNoteModal, setSelectedNoteModal] = useState<NoteItem | null>(null)
+  const [selectedNoteModal, setSelectedNoteModal] = useState<any | null>(null)
+
+  // Notes tab category filter
+  const [notesCategoryFilter, setNotesCategoryFilter] = useState<'all' | 'waste' | 'expense'>('all')
 
   useEffect(() => {
     fetchDynamicsData()
@@ -121,6 +162,25 @@ export default function DirectorDynamicsPage() {
     }
   }
 
+  const isWeekly = periodType === 'weekly'
+
+  // Current active periods list
+  const activePeriods = useMemo(() => {
+    if (isWeekly && data?.weekly?.periods) {
+      return data.weekly.periods
+    }
+    return data?.months?.slice(0, 10) || []
+  }, [isWeekly, data])
+
+  // Current active summary
+  const currentSummary = useMemo(() => {
+    if (isWeekly && data?.weekly?.summary) {
+      return data.weekly.summary
+    }
+    return data?.summary
+  }, [isWeekly, data])
+
+  // Toggle product expansion in drill-down cards
   const toggleProductExpand = (productName: string) => {
     setExpandedProducts(prev => ({
       ...prev,
@@ -161,12 +221,26 @@ export default function DirectorDynamicsPage() {
 
   const formatPercent = (val: number | null | undefined): string => {
     if (val === null || val === undefined || isNaN(val)) return '—'
-    return `${(val * 100).toFixed(2)}%`
+    const pct = val > 1 ? val : val * 100
+    return `${pct.toFixed(2)}%`
   }
 
-  // Active dataset according to current tab & subMode
+  // Active dataset according to current tab & subMode & periodType
   const currentDataset = useMemo(() => {
     if (!data) return []
+    if (isWeekly && data.weekly) {
+      if (activeTab === 'expense') {
+        return expenseSubMode === 'sum' ? data.weekly.expenseSum : data.weekly.expenseKg
+      }
+      if (activeTab === 'gp') {
+        return data.weekly.gpKg
+      }
+      if (activeTab === 'waste') {
+        return data.weekly.wastePercent
+      }
+      return []
+    }
+    // Monthly mode
     if (activeTab === 'expense') {
       return expenseSubMode === 'sum' ? data.expenseSum : data.expenseKg
     }
@@ -177,20 +251,38 @@ export default function DirectorDynamicsPage() {
       return data.wastePercent
     }
     return []
-  }, [data, activeTab, expenseSubMode])
+  }, [data, isWeekly, activeTab, expenseSubMode])
+
+  // Current notes list
+  const currentNotes = useMemo(() => {
+    if (isWeekly && data?.weekly?.notes) {
+      return data.weekly.notes
+    }
+    return data?.notes || []
+  }, [isWeekly, data])
 
   // Map notes by product name
   const notesByProduct = useMemo(() => {
-    const map = new Map<string, NoteItem[]>()
-    if (!data?.notes) return map
-    data.notes.forEach(note => {
-      const pName = note.product.toLowerCase().trim()
-      const existing = map.get(pName) || []
-      existing.push(note)
-      map.set(pName, existing)
+    const map = new Map<string, any[]>()
+    if (!currentNotes) return map
+    currentNotes.forEach((note: any) => {
+      const pName = (note.product || '').toLowerCase().trim()
+      // Split on delimiters if multiple products mentioned
+      const targets = pName.split(/[,&/]|va|\s+и\s+/).map((t: string) => t.trim()).filter(Boolean)
+      if (targets.length > 0) {
+        targets.forEach((t: string) => {
+          const existing = map.get(t) || []
+          existing.push(note)
+          map.set(t, existing)
+        })
+      } else {
+        const existing = map.get(pName) || []
+        existing.push(note)
+        map.set(pName, existing)
+      }
     })
     return map
-  }, [data?.notes])
+  }, [currentNotes])
 
   // Filtered products list
   const currentProductsList = useMemo(() => {
@@ -209,42 +301,92 @@ export default function DirectorDynamicsPage() {
     })
   }, [currentDataset, searchQuery, onlyNotesFilter, notesByProduct])
 
-  // Trend chart data (10 months aggregate)
-  const chartData = useMemo(() => {
-    if (!data || !data.months) return []
-    return data.months.slice(0, 10).map((monthName, idx) => {
-      let totalValue = 0
-      if (activeTab === 'expense') {
-        const totalRow = (expenseSubMode === 'sum' ? data.expenseSum : data.expenseKg).find(i => i.name === 'Всего')
-        totalValue = totalRow?.monthly?.[idx] || 0
-      } else if (activeTab === 'gp') {
-        const totalRow = data.gpKg.find(i => i.name === 'Всего')
-        totalValue = totalRow?.monthly?.[idx] || 0
-      } else if (activeTab === 'waste') {
-        // Average waste for the month
-        const validWaste = data.wastePercent
-          .map(w => w.monthly[idx])
-          .filter((v): v is number => v !== null && !isNaN(v) && v > 0)
-        totalValue = validWaste.length > 0
-          ? Math.round((validWaste.reduce((a, b) => a + b, 0) / validWaste.length) * 10000) / 100
-          : 0
-      }
+  // Trend chart data (either 10 months or 47 weeks, with quarter zoom option)
+  const chartData = useMemo<ChartPoint[]>(() => {
+    if (!data) return []
 
-      // Check if this month has any management notes
-      const monthNotes = data.notes.filter(n => {
-        if (Array.isArray(n.monthIndex)) return n.monthIndex.includes(idx)
-        return n.monthIndex === idx
+    if (!isWeekly) {
+      // MONTHLY CHART (10 months)
+      if (!data.months) return []
+      return data.months.slice(0, 10).map((monthName, idx) => {
+        let totalValue = 0
+        if (activeTab === 'expense') {
+          const totalRow = (expenseSubMode === 'sum' ? data.expenseSum : data.expenseKg).find(i => i.name === 'Всего')
+          const vals: any = totalRow?.monthly || []
+          totalValue = vals[idx] || 0
+        } else if (activeTab === 'gp') {
+          const totalRow = data.gpKg.find(i => i.name === 'Всего')
+          const vals: any = totalRow?.monthly || []
+          totalValue = vals[idx] || 0
+        } else if (activeTab === 'waste') {
+          const validWaste = data.wastePercent
+            .map(w => {
+              const vals: any = w.monthly || []
+              return vals[idx]
+            })
+            .filter((v): v is number => v !== null && !isNaN(v) && v > 0)
+          totalValue = validWaste.length > 0
+            ? Math.round((validWaste.reduce((a, b) => a + b, 0) / validWaste.length) * 10000) / 100
+            : 0
+        }
+
+        const monthNotes = data.notes.filter(n => {
+          if (Array.isArray(n.monthIndex)) return n.monthIndex.includes(idx)
+          return n.monthIndex === idx
+        })
+
+        return {
+          label: monthName,
+          shortLabel: monthName.slice(0, 3),
+          value: totalValue,
+          notesCount: monthNotes.length,
+          notes: monthNotes
+        }
+      })
+    } else {
+      // WEEKLY CHART (47 weeks)
+      if (!data.weekly?.periods) return []
+      const allWeeksData = data.weekly.periods.map((periodStr, idx) => {
+        let totalValue = 0
+        if (activeTab === 'expense') {
+          if (expenseSubMode === 'sum') {
+            totalValue = data.weekly?.totals?.totalExpSumVeg?.[idx] || 0
+          } else {
+            totalValue = data.weekly?.totals?.totalExpKgVeg?.[idx] || 0
+          }
+        } else if (activeTab === 'gp') {
+          totalValue = data.weekly?.totals?.totalGpKg?.[idx] || 0
+        } else if (activeTab === 'waste') {
+          totalValue = data.weekly?.totals?.weeklyAvgWaste?.[idx] || 0
+        }
+
+        const weekNotes = (data.weekly?.notes || []).filter(n => n.weekIndices.includes(idx))
+
+        // Short date display e.g. "29.12 - 03.01"
+        const cleanDates = periodStr.replace(/\s+/g, ' ')
+        const parts = cleanDates.split('-').map(s => s.trim())
+        const shortDate = parts.length === 2 ? `${parts[0].slice(0, 5)} - ${parts[1].slice(0, 5)}` : cleanDates
+
+        return {
+          weekIndex: idx + 1,
+          label: `H${idx + 1} (${cleanDates})`,
+          shortLabel: `H${idx + 1}`,
+          shortDate,
+          periodStr,
+          value: totalValue,
+          notesCount: weekNotes.length,
+          notes: weekNotes
+        }
       })
 
-      return {
-        month: monthName,
-        shortMonth: monthName.slice(0, 3),
-        value: totalValue,
-        notesCount: monthNotes.length,
-        notes: monthNotes
-      }
-    })
-  }, [data, activeTab, expenseSubMode])
+      // Filter by quarter if selected
+      if (weekQuarter === 'q1') return allWeeksData.slice(0, 12)
+      if (weekQuarter === 'q2') return allWeeksData.slice(12, 24)
+      if (weekQuarter === 'q3') return allWeeksData.slice(24, 36)
+      if (weekQuarter === 'q4') return allWeeksData.slice(36, 47)
+      return allWeeksData
+    }
+  }, [data, isWeekly, activeTab, expenseSubMode, weekQuarter])
 
   if (loading) {
     return (
@@ -265,7 +407,7 @@ export default function DirectorDynamicsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/70 dark:bg-dark-950 text-slate-800 dark:text-slate-100 p-3 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto">
+    <div className="min-h-screen bg-slate-50/70 dark:bg-dark-950 text-slate-800 dark:text-slate-100 p-3 sm:p-6 lg:p-8 space-y-6 max-w-[1750px] mx-auto">
       {/* 1. TOP HEADER & BREADCRUMB */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-dark-800 pb-5">
         <div>
@@ -287,6 +429,11 @@ export default function DirectorDynamicsPage() {
             <span className="text-xs px-2.5 py-1 rounded-full bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 font-extrabold uppercase tracking-wider">
               2026
             </span>
+            {isWeekly && (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold">
+                47 Hafta
+              </span>
+            )}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl">
             {formatDual(
@@ -316,12 +463,12 @@ export default function DirectorDynamicsPage() {
               onClick={() => setPeriodType('weekly')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 periodType === 'weekly'
-                  ? 'bg-white dark:bg-dark-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                  ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Layers size={13} />
-              <span>{formatDual("Haftalik", "По неделям", "Weekly")}</span>
+              <span>{formatDual("Haftalik (47 hafta)", "По неделям (47 нед)", "Weekly (47 w)")}</span>
             </button>
           </div>
 
@@ -329,7 +476,7 @@ export default function DirectorDynamicsPage() {
           <button
             onClick={fetchDynamicsData}
             title={formatDual("Ma'lumotlarni yangilash", "Обновить данные", "Refresh data")}
-            className="p-2 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-750 transition-colors shadow-xs"
+            className="p-2 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors shadow-xs"
           >
             <RefreshCw size={15} />
           </button>
@@ -338,7 +485,7 @@ export default function DirectorDynamicsPage() {
           <button
             onClick={() => window.print()}
             title={formatDual("Chop etish", "Печать", "Print")}
-            className="p-2 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-750 transition-colors shadow-xs hidden sm:block"
+            className="p-2 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-750 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors shadow-xs hidden sm:block"
           >
             <Printer size={15} />
           </button>
@@ -360,16 +507,31 @@ export default function DirectorDynamicsPage() {
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatSum(data?.summary?.totalVegetableSum)} <span className="text-xs font-semibold text-slate-400">so'm</span>
+              {formatSum(currentSummary?.totalVegetableSum)} <span className="text-xs font-semibold text-slate-400">so'm</span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
-              <span>{formatDual("Sabzavotlar xarajati", "Расход на овощи", "Vegetables only")}:</span>
-              <span className="font-bold text-slate-700 dark:text-slate-300">12.25 mlrd</span>
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
-              <span>{formatDual("Qadoq & Dezinfeksiya", "Упаковка и химия", "Boxes & Chemicals")}:</span>
-              <span className="font-bold text-slate-700 dark:text-slate-300">477.4 mln</span>
-            </div>
+            {isWeekly ? (
+              <>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
+                  <span>{formatDual("O'rtacha haftalik xarajat", "Средненедельный расход", "Weekly average")}:</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{formatSum((currentSummary as any)?.avgWeeklySpend)} / h</span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
+                  <span>{formatDual("Qadoq & Gipoxlorid bilan", "Итого с расходниками", "Grand Total")}:</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatSum(currentSummary?.totalWithConsumables)} so'm</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
+                  <span>{formatDual("Sabzavotlar xarajati", "Расход на овощи", "Vegetables only")}:</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">12.25 mlrd</span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
+                  <span>{formatDual("Qadoq & Dezinfeksiya", "Упаковка и химия", "Boxes & Chemicals")}:</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">477.4 mln</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -386,16 +548,31 @@ export default function DirectorDynamicsPage() {
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatKg(data?.summary?.totalVegetableKg)}
+              {formatKg(currentSummary?.totalVegetableKg)}
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
-              <span>{formatDual("Gofra qutilar sarfi", "Расход гофрокоробок", "Boxes used")}:</span>
-              <span className="font-bold text-slate-700 dark:text-slate-300">{(data?.summary?.boxCount || 0).toLocaleString()} dona</span>
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
-              <span>{formatDual("Gipoxlorid sarfi", "Расход гипохлорида", "Hypochlorite")}:</span>
-              <span className="font-bold text-slate-700 dark:text-slate-300">{formatKg(data?.summary?.hypoKg)}</span>
-            </div>
+            {isWeekly ? (
+              <>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
+                  <span>{formatDual("O'rtacha haftalik hajm", "Средненедельный объем", "Weekly avg volume")}:</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{formatKg((currentSummary as any)?.avgWeeklyVolume)} / h</span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
+                  <span>{formatDual("Gofra qutilar sarfi", "Расход гофрокоробок", "Boxes used")}:</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{((currentSummary as any)?.totalBoxes || 0).toLocaleString()} dona</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
+                  <span>{formatDual("Gofra qutilar sarfi", "Расход гофрокоробок", "Boxes used")}:</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{(data?.summary?.boxCount || 0).toLocaleString()} dona</span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
+                  <span>{formatDual("Gipoxlorid sarfi", "Расход гипохлорида", "Hypochlorite")}:</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{formatKg(data?.summary?.hypoKg)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -412,15 +589,17 @@ export default function DirectorDynamicsPage() {
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatKg(data?.summary?.totalFinishedGoodsKg)}
+              {formatKg(currentSummary?.totalFinishedGoodsKg)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
               <span>{formatDual("Chiqim samaradorligi", "Коэффициент выхода (КПД)", "Yield Efficiency")}:</span>
-              <span className="font-black text-emerald-600 dark:text-emerald-400">{data?.summary?.yieldEfficiency}%</span>
+              <span className="font-black text-emerald-600 dark:text-emerald-400">{currentSummary?.yieldEfficiency}%</span>
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
-              <span>{formatDual("O'rtacha oylik ishlab chiqarish", "Среднемесячный выпуск", "Monthly Average")}:</span>
-              <span className="font-bold text-slate-700 dark:text-slate-300">{formatKg((data?.summary?.totalFinishedGoodsKg || 0) / 10)}</span>
+              <span>{isWeekly ? formatDual("O'rtacha haftalik GP", "Средненедельный выпуск", "Weekly Avg GP") : formatDual("O'rtacha oylik GP", "Среднемесячный выпуск", "Monthly Avg GP")}:</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                {isWeekly ? formatKg((currentSummary as any)?.avgWeeklyGp) : formatKg((currentSummary?.totalFinishedGoodsKg || 0) / 10)}
+              </span>
             </div>
           </div>
         </div>
@@ -438,228 +617,289 @@ export default function DirectorDynamicsPage() {
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {data?.summary?.avgWastePercent}%
+              {currentSummary?.avgWastePercent}%
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
               <span>{formatDual("Boshqaruv izohlari", "Примечания руководства", "Management Notes")}:</span>
               <span className="font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/15 px-1.5 py-0.2 rounded-md">
-                {data?.summary?.notesCount || 11} ta anomaliya
+                {currentSummary?.notesCount || (isWeekly ? 24 : 11)} ta anomaliya
               </span>
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
-              <span>{formatDual("Asosiy sabab", "Ключевой фактор", "Key factor")}:</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Yozgi issiq / Qurg'oqchilik</span>
+              <span>{formatDual("Tahlil davri", "Период анализа", "Analysis scope")}:</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                {isWeekly ? "47 Hafta (2026)" : "10 Oy (Yan—Okt)"}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. DRILL-DOWN NAVIGATION & CONTROL TABS */}
-      <div className="bg-white dark:bg-dark-900/90 rounded-2xl border border-slate-200/90 dark:border-dark-750 p-3 sm:p-4 shadow-xs space-y-3.5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          {/* Main 4 Pillar Tabs */}
-          <div className="flex items-center flex-wrap gap-1.5 bg-slate-100 dark:bg-dark-800 p-1.5 rounded-xl border border-slate-200 dark:border-dark-700">
+      {/* 3. MAIN NAVIGATION TABS & FILTER BAR */}
+      <div className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200/90 dark:border-dark-750 p-2 sm:p-2.5 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Main 4 Tabs */}
+          <div className="flex items-center flex-wrap gap-1.5">
             <button
               onClick={() => setActiveTab('expense')}
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 ${
                 activeTab === 'expense'
-                  ? 'bg-white dark:bg-dark-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
               }`}
             >
               <Package size={15} />
-              <span>{formatDual("1. Xomashyo Chiqimi (Склад -> Цех)", "1. Расход сырья для цеха", "1. Raw Materials to Workshop")}</span>
+              <span>1. {formatDual("Xomashyo Chiqimi (Sklad → Sex)", "Расход сырья со склада в цех", "Raw Expense")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('gp')}
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 ${
                 activeTab === 'gp'
-                  ? 'bg-white dark:bg-dark-900 text-purple-600 dark:text-purple-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
               }`}
             >
               <Boxes size={15} />
-              <span>{formatDual("2. Tayyor Mahsulot (ГП)", "2. Производство готовой продукции", "2. Finished Goods")}</span>
+              <span>2. {formatDual("Tayyor Mahsulot (GP)", "Производство готовой продукции", "Finished GP")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('waste')}
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 ${
                 activeTab === 'waste'
-                  ? 'bg-white dark:bg-dark-900 text-amber-600 dark:text-amber-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
               }`}
             >
               <AlertTriangle size={15} />
-              <span>{formatDual("3. Chiqindi & Yo'qotish (% Отход)", "3. Отход продукции (%)", "3. Waste Rate (%)")}</span>
+              <span>3. {formatDual("Chiqindi & Otxod (%)", "Отход продукции (%)", "Waste / Scrap %")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('notes')}
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 relative ${
                 activeTab === 'notes'
-                  ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                  : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10'
               }`}
             >
               <Info size={15} />
-              <span>{formatDual("4. Boshqaruv Izohlari (Примечания)", "4. Примечания руководства", "4. Management Notes")}</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-[10px] font-black">
-                {data?.notes?.length || 11}
+              <span>4. {formatDual("Boshqaruv Izohlari", "Примечания руководства", "Executive Notes")}</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                activeTab === 'notes' ? 'bg-slate-950 text-white' : 'bg-amber-200 dark:bg-amber-500/30 text-amber-900 dark:text-amber-200'
+              }`}>
+                {currentNotes.length}
               </span>
             </button>
           </div>
 
-          {/* Submode toggles (Summa vs Kg) when on Expense Tab */}
-          {activeTab === 'expense' && (
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700 self-start lg:self-auto">
-              <button
-                onClick={() => setExpenseSubMode('sum')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  expenseSubMode === 'sum'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <DollarSign size={13} />
-                <span>{formatDual("Summa (So'm)", "Сумма (сум)", "Cost (UZS)")}</span>
-              </button>
-              <button
-                onClick={() => setExpenseSubMode('kg')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  expenseSubMode === 'kg'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Package size={13} />
-                <span>{formatDual("Hajm (Kg)", "Объём (кг)", "Volume (kg)")}</span>
-              </button>
-            </div>
-          )}
-        </div>
+          {/* Sub-Controls: Sum/Kg switch for Tab 1, Search, and Matrix/Card switch */}
+          <div className="flex items-center flex-wrap gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-dark-800">
+            {/* Expense Metric Switcher (Summa / Hajm) */}
+            {activeTab === 'expense' && (
+              <div className="bg-slate-100 dark:bg-dark-800 p-0.5 rounded-lg flex items-center border border-slate-200 dark:border-dark-700">
+                <button
+                  onClick={() => setExpenseSubMode('sum')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                    expenseSubMode === 'sum'
+                      ? 'bg-white dark:bg-dark-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  {formatDual("Summa (so'm)", "Сумма (сум)", "Cost (UZS)")}
+                </button>
+                <button
+                  onClick={() => setExpenseSubMode('kg')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                    expenseSubMode === 'kg'
+                      ? 'bg-white dark:bg-dark-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  {formatDual("Hajm (kg)", "Объем (кг)", "Volume (kg)")}
+                </button>
+              </div>
+            )}
 
-        {/* Filter and View mode bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-100 dark:border-dark-800">
-          <div className="flex items-center flex-wrap gap-2 flex-1">
             {/* Search Input */}
-            <div className="relative min-w-[200px] sm:min-w-[260px] flex-1 sm:flex-none">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder={formatDual("Mahsulot qidirish...", "Поиск продукции...", "Search product...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 text-slate-900 dark:text-white"
+                placeholder={formatDual("Mahsulot qidirish...", "Поиск продукции...", "Search product...")}
+                className="pl-8 pr-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-emerald-500 w-36 sm:w-48"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   <X size={12} />
                 </button>
               )}
             </div>
 
-            {/* Filter by items with notes */}
-            <button
-              onClick={() => setOnlyNotesFilter(!onlyNotesFilter)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
-                onlyNotesFilter
-                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold'
-                  : 'bg-white dark:bg-dark-800 border-slate-200 dark:border-dark-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
-              }`}
-            >
-              <Info size={12} />
-              <span>{formatDual("Faqat izohli mahsulotlar", "Только с примечаниями", "Only with notes")}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            </button>
-          </div>
+            {/* Expand / Collapse All buttons */}
+            {activeTab !== 'notes' && viewStyle === 'cards' && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={expandAll}
+                  title={formatDual("Hammasini yoyish", "Раскрыть все", "Expand all")}
+                  className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-750"
+                >
+                  {formatDual("Yoyish", "Все +", "Expand")}
+                </button>
+                <button
+                  onClick={collapseAll}
+                  title={formatDual("Hammasini yig'ish", "Свернуть все", "Collapse all")}
+                  className="px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-750"
+                >
+                  {formatDual("Yig'ish", "Все -", "Collapse")}
+                </button>
+              </div>
+            )}
 
-          <div className="flex items-center gap-2">
-            {/* Expand / Collapse all */}
-            <button
-              onClick={expandAll}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 text-xs font-semibold hover:text-slate-900 dark:hover:text-white"
-            >
-              {formatDual("Barchasini ochish", "Раскрыть все", "Expand all")}
-            </button>
-            <button
-              onClick={collapseAll}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 text-xs font-semibold hover:text-slate-900 dark:hover:text-white"
-            >
-              {formatDual("Yig'ish", "Свернуть", "Collapse")}
-            </button>
-
-            {/* View style: Cards vs Matrix Table */}
-            <div className="bg-slate-100 dark:bg-dark-800 p-0.5 rounded-xl border border-slate-200 dark:border-dark-700 flex items-center">
-              <button
-                onClick={() => setViewStyle('cards')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                  viewStyle === 'cards'
-                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500'
-                }`}
-              >
-                {formatDual("Drill-Down Kartalar", "Карточки", "Cards")}
-              </button>
-              <button
-                onClick={() => setViewStyle('matrix')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                  viewStyle === 'matrix'
-                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500'
-                }`}
-              >
-                {formatDual("To'liq Jadval (Matrix)", "Матрица", "Matrix")}
-              </button>
-            </div>
+            {/* View Style Switcher: Cards vs Matrix */}
+            {activeTab !== 'notes' && (
+              <div className="bg-slate-100 dark:bg-dark-800 p-0.5 rounded-lg flex items-center border border-slate-200 dark:border-dark-700">
+                <button
+                  onClick={() => setViewStyle('cards')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                    viewStyle === 'cards'
+                      ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  {formatDual("Drill-Down", "Карточки", "Cards")}
+                </button>
+                <button
+                  onClick={() => setViewStyle('matrix')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                    viewStyle === 'matrix'
+                      ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  {formatDual("Matritsa", "Матрица", "Matrix")}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* 4. EXECUTIVE MONTHLY TREND CHART */}
+      {/* 4. EXECUTIVE TREND CHART (Monthly or Weekly) */}
       {activeTab !== 'notes' && chartData.length > 0 && (
-        <div className="bg-white dark:bg-dark-900/90 rounded-2xl border border-slate-200/90 dark:border-dark-750 p-4 sm:p-5 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="bg-white dark:bg-dark-900/90 rounded-2xl border border-slate-200/90 dark:border-dark-750 p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <TrendingUp size={16} className="text-emerald-500" />
+                <TrendingUp size={16} className={activeTab === 'waste' ? "text-amber-500" : "text-emerald-500"} />
                 <span>
                   {activeTab === 'expense'
-                    ? (expenseSubMode === 'sum' ? formatDual("Oylik Xomashyo Xarajatlari Dinamikasi (So'm)", "Динамика расходов на сырье по месяцам (сум)", "Monthly Raw Materials Cost (UZS)") : formatDual("Oylik Xomashyo Chiqimi Dinamikasi (Kg)", "Динамика расхода сырья по месяцам (кг)", "Monthly Raw Materials Volume (kg)"))
+                    ? (expenseSubMode === 'sum' 
+                        ? (isWeekly ? formatDual("Haftalik Xomashyo Xarajatlari Dinamikasi (So'm)", "Недельная динамика расходов на сырье (сум)", "Weekly Raw Cost (UZS)") : formatDual("Oylik Xomashyo Xarajatlari Dinamikasi (So'm)", "Динамика расходов на сырье по месяцам (сум)", "Monthly Raw Materials Cost (UZS)"))
+                        : (isWeekly ? formatDual("Haftalik Xomashyo Chiqimi Dinamikasi (Kg)", "Недельная динамика расхода сырья (кг)", "Weekly Raw Volume (kg)") : formatDual("Oylik Xomashyo Chiqimi Dinamikasi (Kg)", "Динамика расхода сырья по месяцам (кг)", "Monthly Raw Materials Volume (kg)")))
                     : activeTab === 'gp'
-                    ? formatDual("Oylik Tayyor Mahsulot Chiqarilishi (Kg)", "Динамика выпуска готовой продукции (кг)", "Monthly Finished Goods Output (kg)")
-                    : formatDual("Oylik O'rtacha Chiqindi Foizi (% Otxod)", "Динамика процента отходов (%)", "Monthly Average Scrap Rate (%)")}
+                    ? (isWeekly ? formatDual("Haftalik Tayyor Mahsulot Chiqarilishi (GP, Kg)", "Недельная динамика выпуска готовой продукции (кг)", "Weekly Finished Goods (kg)") : formatDual("Oylik Tayyor Mahsulot Chiqarilishi (Kg)", "Динамика выпуска готовой продукции (кг)", "Monthly Finished Goods Output (kg)"))
+                    : (isWeekly ? formatDual("Haftalik O'rtacha Chiqindi Foizi (% Otxod)", "Недельный процент отходов (%)", "Weekly Scrap Rate (%)") : formatDual("Oylik O'rtacha Chiqindi Foizi (% Otxod)", "Динамика процента отходов (%)", "Monthly Average Scrap Rate (%)"))}
                 </span>
               </h3>
               <p className="text-xs text-slate-500">
-                {formatDual("10 oylik umumiy tendensiya va anomaliyalar", "Общая тенденция за 10 месяцев с примечаниями", "10-month trend curve with contextual anomalies")}
+                {isWeekly
+                  ? formatDual("47 haftalik dinamika, korxona aksiyalari va anomaliyalar", "Недельная динамика за 47 недель с примечаниями", "47-week performance trend with annotations")
+                  : formatDual("10 oylik umumiy tendensiya va anomaliyalar", "Общая тенденция за 10 месяцев с примечаниями", "10-month trend curve with contextual anomalies")}
               </p>
             </div>
 
-            <div className="text-xs text-slate-400 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-              <span>Yanvar — Oktabr 2026</span>
-            </div>
+            {/* Quarter Filter when Weekly mode is active */}
+            {isWeekly && (
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl self-start sm:self-auto">
+                <button
+                  onClick={() => setWeekQuarter('all')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    weekQuarter === 'all'
+                      ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  {formatDual("Barchasi (47 h)", "Все (47)", "All")}
+                </button>
+                <button
+                  onClick={() => setWeekQuarter('q1')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    weekQuarter === 'q1'
+                      ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  Q1 (1-12)
+                </button>
+                <button
+                  onClick={() => setWeekQuarter('q2')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    weekQuarter === 'q2'
+                      ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  Q2 (13-24)
+                </button>
+                <button
+                  onClick={() => setWeekQuarter('q3')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    weekQuarter === 'q3'
+                      ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  Q3 (25-36)
+                </button>
+                <button
+                  onClick={() => setWeekQuarter('q4')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    weekQuarter === 'q4'
+                      ? 'bg-white dark:bg-dark-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  Q4 (37-47)
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="h-64 sm:h-72 w-full pt-2">
+          <div className="h-64 sm:h-72 w-full pt-1">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={activeTab === 'waste' ? '#f59e0b' : '#10b981'} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={activeTab === 'waste' ? '#f59e0b' : '#10b981'} stopOpacity={0.0} />
+                  <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="5%"
+                      stopColor={activeTab === 'waste' ? '#f59e0b' : isWeekly ? '#3b82f6' : '#10b981'}
+                      stopOpacity={0.35}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={activeTab === 'waste' ? '#f59e0b' : isWeekly ? '#3b82f6' : '#10b981'}
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} />
+                <XAxis
+                  dataKey="shortLabel"
+                  stroke="#94a3b8"
+                  fontSize={10}
+                  tickLine={false}
+                  interval={isWeekly && weekQuarter === 'all' ? 2 : 0}
+                />
                 <YAxis
                   stroke="#94a3b8"
-                  fontSize={11}
+                  fontSize={10}
                   tickLine={false}
                   tickFormatter={(v) => {
                     if (activeTab === 'waste') return `${v}%`
@@ -673,16 +913,16 @@ export default function DirectorDynamicsPage() {
                     if (active && payload && payload.length) {
                       const p = payload[0].payload
                       return (
-                        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl text-xs space-y-1.5 max-w-xs border border-slate-700">
-                          <div className="font-extrabold text-sm border-b border-slate-800 pb-1 flex items-center justify-between">
-                            <span>{p.month} 2026</span>
+                        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl text-xs space-y-1.5 max-w-sm border border-slate-700">
+                          <div className="font-extrabold text-sm border-b border-slate-800 pb-1 flex items-center justify-between gap-2">
+                            <span>{p.label || p.periodStr}</span>
                             {p.notesCount > 0 && (
-                              <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded text-[10px]">
+                              <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded text-[10px] font-bold">
                                 {p.notesCount} ta izoh
                               </span>
                             )}
                           </div>
-                          <div className="font-mono text-emerald-400 font-bold text-base">
+                          <div className="font-mono text-emerald-400 font-black text-base">
                             {activeTab === 'waste'
                               ? `${p.value}%`
                               : activeTab === 'expense' && expenseSubMode === 'sum'
@@ -690,9 +930,13 @@ export default function DirectorDynamicsPage() {
                               : `${formatKg(p.value)}`}
                           </div>
                           {p.notes?.length > 0 && (
-                            <div className="pt-1.5 border-t border-slate-800 text-[11px] text-amber-300">
-                              <span className="font-bold">⚠️ Boshqaruv xulosasi: </span>
-                              <span>{directorLang === 'ru' ? p.notes[0].textRu : p.notes[0].textUz}</span>
+                            <div className="pt-1.5 border-t border-slate-800 text-[11px] text-amber-300 space-y-1">
+                              <span className="font-bold flex items-center gap-1">
+                                <AlertTriangle size={11} /> Boshqaruv xulosasi:
+                              </span>
+                              <div className="leading-relaxed">
+                                {directorLang === 'ru' ? p.notes[0].textRu : p.notes[0].textUz}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -704,10 +948,10 @@ export default function DirectorDynamicsPage() {
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke={activeTab === 'waste' ? '#f59e0b' : '#10b981'}
+                  stroke={activeTab === 'waste' ? '#f59e0b' : isWeekly ? '#3b82f6' : '#10b981'}
                   strokeWidth={2.5}
                   fillOpacity={1}
-                  fill="url(#emeraldGradient)"
+                  fill="url(#trendGradient)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -718,67 +962,135 @@ export default function DirectorDynamicsPage() {
       {/* 5. TAB 4: DEDICATED MANAGEMENT NOTES (Примечания) */}
       {activeTab === 'notes' && (
         <div className="space-y-4">
-          <div className="bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 p-4 rounded-2xl flex items-start gap-3">
-            <Info className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={18} />
-            <div>
-              <h4 className="text-sm font-bold text-blue-900 dark:text-blue-200">
-                {formatDual(
-                  "Boshqaruv Hisobotlari va Anomaliyalar bo'yicha Izohlar (Примечания)",
-                  "Управленческие примечания к аномалиям в отчетах",
-                  "Management Annotations to Operational Anomalies"
-                )}
-              </h4>
-              <p className="text-xs text-blue-700 dark:text-blue-300/90 mt-0.5">
-                {formatDual(
-                  "Ushbu izohlar har bir oydagi me'yordan og'ishlar, narx o'zgarishlari, bozor defitsiti va iqlimiy omillar ta'sirini tushuntirib beradi.",
-                  "Данные примечания объясняют отклонения от норм, ценовые колебания, дефицит на рынке и климатические факторы.",
-                  "These annotations explain variances from standards, price shifts, market deficits, and climatic impacts."
-                )}
-              </p>
+          <div className="bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 p-4 rounded-2xl flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-3">
+              <Info className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={18} />
+              <div>
+                <h4 className="text-sm font-bold text-blue-900 dark:text-blue-200">
+                  {isWeekly
+                    ? formatDual(
+                        "Haftalik Boshqaruv Hisobotlari va Izohlar (24 ta Prilojenie)",
+                        "Недельные примечания руководства к отклонениям (24 примечания)",
+                        "Weekly Executive Annotations to Production Variances"
+                      )
+                    : formatDual(
+                        "Oylik Boshqaruv Hisobotlari va Izohlar (11 ta Prilojenie)",
+                        "Месячные примечания руководства к отклонениям (11 примечаний)",
+                        "Monthly Executive Annotations to Operational Anomalies"
+                      )}
+                </h4>
+                <p className="text-xs text-blue-700 dark:text-blue-300/90 mt-0.5">
+                  {formatDual(
+                    "Ushbu izohlar me'yordan og'ishlar, Eron aysbergi defitsiti, yozgi issiq, brak mahsulotlar va xomashyo narxlarini tushuntirib beradi.",
+                    "Данные примечания объясняют отклонения от норм, дефицит иранского айсберга, летнюю жару, брак и ценовые колебания.",
+                    "These annotations document underlying causes: climate, market deficits, re-batching, and seasonal density variances."
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Note category filter */}
+            <div className="flex items-center gap-1.5 self-start">
+              <button
+                onClick={() => setNotesCategoryFilter('all')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  notesCategoryFilter === 'all'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-dark-700'
+                }`}
+              >
+                {formatDual("Barchasi", "Все", "All")} ({currentNotes.length})
+              </button>
+              <button
+                onClick={() => setNotesCategoryFilter('waste')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  notesCategoryFilter === 'waste'
+                    ? 'bg-amber-500 text-slate-950 shadow-xs'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-dark-700'
+                }`}
+              >
+                {formatDual("Otxod & Chiqindi", "Отходы", "Scrap")}
+              </button>
+              <button
+                onClick={() => setNotesCategoryFilter('expense')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  notesCategoryFilter === 'expense'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-dark-700'
+                }`}
+              >
+                {formatDual("Chiqim & Sarf", "Расходы", "Expense")}
+              </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {data?.notes?.map((note) => {
-              const isWaste = note.category === 'waste'
-              const isCost = note.category === 'cost'
-              return (
-                <div
-                  key={note.id}
-                  className={`bg-white dark:bg-dark-900 rounded-2xl border p-4 shadow-xs relative overflow-hidden transition-all hover:shadow-md ${
-                    isWaste
-                      ? 'border-amber-200 dark:border-amber-500/30'
-                      : isCost
-                      ? 'border-rose-200 dark:border-rose-500/30'
-                      : 'border-blue-200 dark:border-blue-500/30'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-white inline-block" />
-                      {note.product}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+            {currentNotes
+              .filter(note => {
+                if (notesCategoryFilter === 'waste') return note.category === 'waste'
+                if (notesCategoryFilter === 'expense') return note.category === 'expense' || note.category === 'cost'
+                if (searchQuery) {
+                  const q = searchQuery.toLowerCase().trim()
+                  return (
+                    note.product.toLowerCase().includes(q) ||
+                    note.titleUz.toLowerCase().includes(q) ||
+                    note.titleRu.toLowerCase().includes(q) ||
+                    note.textUz.toLowerCase().includes(q) ||
+                    note.textRu.toLowerCase().includes(q)
+                  )
+                }
+                return true
+              })
+              .map((note: any) => {
+                const isWaste = note.category === 'waste'
+                const isCost = note.category === 'cost'
+                return (
+                  <div
+                    key={note.id}
+                    onClick={() => setSelectedNoteModal(note)}
+                    className={`bg-white dark:bg-dark-900 rounded-2xl border p-4 shadow-xs relative overflow-hidden transition-all hover:shadow-md cursor-pointer hover:border-amber-400 dark:hover:border-amber-500 ${
                       isWaste
-                        ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                        ? 'border-amber-200/90 dark:border-amber-500/30'
                         : isCost
-                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300'
-                        : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                    }`}>
-                      {note.monthName} · {note.metric}
-                    </span>
+                        ? 'border-rose-200/90 dark:border-rose-500/30'
+                        : 'border-blue-200/90 dark:border-blue-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2 gap-2">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                        <span className={`w-2 h-2 rounded-full inline-block ${isWaste ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                        {note.product}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex-shrink-0 ${
+                        isWaste
+                          ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                          : isCost
+                          ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                          : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                      }`}>
+                        {note.period || note.monthName}
+                      </span>
+                    </div>
+
+                    <h5 className="text-xs font-extrabold text-slate-900 dark:text-slate-100 mb-1.5 line-clamp-1">
+                      {directorLang === 'ru' ? note.titleRu : note.titleUz}
+                    </h5>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3">
+                      {directorLang === 'ru' ? note.textRu : note.textUz}
+                    </p>
+
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                      <span>{formatDual("To'liq o'qish", "Подробнее", "Read details")} →</span>
+                      {note.weekIndices && (
+                        <span className="text-[10px] text-slate-400">
+                          {note.weekIndices.length} ta haftaga taalluqli
+                        </span>
+                      )}
+                    </div>
                   </div>
-
-                  <h5 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 mb-1">
-                    {directorLang === 'ru' ? note.titleRu : note.titleUz}
-                  </h5>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {directorLang === 'ru' ? note.textRu : note.textUz}
-                  </p>
-                </div>
-              )
-            })}
+                )
+              })}
           </div>
         </div>
       )}
@@ -789,7 +1101,7 @@ export default function DirectorDynamicsPage() {
           <div className="flex items-center justify-between text-xs text-slate-500 px-1">
             <span>{formatDual(`Ko'rsatilmoqda: ${currentProductsList.length} ta mahsulot`, `Показано: ${currentProductsList.length} позиций`, `Showing: ${currentProductsList.length} items`)}</span>
             <span className="text-[11px] text-slate-400">
-              {formatDual("Tafsilotlarni ko'rish uchun mahsulot qatorini bosing", "Нажмите на строку для раскрытия динамики", "Click on any product to drill down")}
+              {formatDual("Tafsilotlarni ko'rish uchun mahsulot qatorini bosing (Drill-Down)", "Нажмите на строку для раскрытия динамики", "Click on any product to drill down")}
             </span>
           </div>
 
@@ -798,15 +1110,19 @@ export default function DirectorDynamicsPage() {
               const isExpanded = Boolean(expandedProducts[item.name])
               const notes = notesByProduct.get(item.name.toLowerCase().trim()) || []
               const hasNotes = notes.length > 0
-              const unit = item.unit || 'kg'
+              const unit = item.unit || (activeTab === 'waste' ? '%' : expenseSubMode === 'sum' ? 'сум' : 'кг')
 
-              // Calculate monthly avg
-              const validValues = item.monthly.slice(0, 10).filter((v: any) => v !== null && !isNaN(v) && v > 0)
-              const avgMonth = validValues.length > 0
-                ? validValues.reduce((a: number, b: number) => a + b, 0) / validValues.length
-                : 0
+              // Values array (monthly or weekly)
+              const rawValues: (number | null)[] = isWeekly ? (item.weekly || []) : (item.monthly || [])
+              const displayValues = isWeekly ? rawValues : rawValues.slice(0, 10)
 
-              const isTotalRow = item.name === 'Всего'
+              // Totals and averages
+              const validNumbers = displayValues.filter((v): v is number => v !== null && !isNaN(v) && v > 0)
+              const sumVal = validNumbers.reduce((a, b) => a + b, 0)
+              const avgVal = item.weeklyAvg ?? (validNumbers.length > 0 ? sumVal / validNumbers.length : 0)
+              const totalVal = item.total ?? sumVal
+
+              const isTotalRow = item.name.includes('Всего') || item.name.includes('Итого')
 
               return (
                 <div
@@ -824,7 +1140,7 @@ export default function DirectorDynamicsPage() {
                     onClick={() => toggleProductExpand(item.name)}
                     className="p-3.5 sm:p-4 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3 select-none"
                   >
-                    <div className="flex items-center gap-3 min-w-[200px]">
+                    <div className="flex items-center gap-3 min-w-[220px]">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0 ${
                         isTotalRow
                           ? 'bg-emerald-600 text-white'
@@ -847,105 +1163,165 @@ export default function DirectorDynamicsPage() {
                         <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
                           <span>{formatDual("Birlik", "Ед. изм.", "Unit")}: <strong>{unit}</strong></span>
                           <span>·</span>
-                          <span>{formatDual("10 oylik o'rtacha", "Среднее за 10 мес", "10-mo avg")}: <strong>
-                            {activeTab === 'waste'
-                              ? formatPercent(avgMonth)
-                              : activeTab === 'expense' && expenseSubMode === 'sum'
-                              ? `${formatSum(avgMonth)} so'm`
-                              : `${formatKg(avgMonth)}`}
-                          </strong></span>
+                          <span>
+                            {isWeekly
+                              ? formatDual("Haftalik o'rtacha", "Средненедельное", "Weekly avg")
+                              : formatDual("10 oylik o'rtacha", "Среднее за 10 мес", "10-mo avg")}:{' '}
+                            <strong>
+                              {activeTab === 'waste'
+                                ? formatPercent(avgVal)
+                                : activeTab === 'expense' && expenseSubMode === 'sum'
+                                ? `${formatSum(avgVal)} so'm`
+                                : formatKg(avgVal)}
+                            </strong>
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Total & Expand Trigger */}
-                    <div className="flex items-center justify-between md:justify-end gap-5">
+                    {/* Middle: Sparkline Mini-bar visualization */}
+                    <div className="hidden sm:flex items-center gap-1 flex-1 max-w-xs md:max-w-md mx-2 h-7">
+                      {displayValues.map((val: any, vIdx: number) => {
+                        const numericVal = val || 0
+                        const heightPct = validNumbers.length > 0 && Math.max(...validNumbers) > 0
+                          ? Math.min(100, Math.max(12, (numericVal / Math.max(...validNumbers)) * 100))
+                          : 12
+                        const isHighWaste = activeTab === 'waste' && (numericVal > 30 || numericVal > 0.3)
+                        return (
+                          <div
+                            key={vIdx}
+                            title={`${activePeriods[vIdx] || `H${vIdx+1}`}: ${activeTab === 'waste' ? formatPercent(val) : val}`}
+                            className="flex-1 h-full flex items-end justify-center group/bar relative"
+                          >
+                            <div
+                              style={{ height: `${heightPct}%` }}
+                              className={`w-full rounded-t-xs transition-all ${
+                                isHighWaste
+                                  ? 'bg-amber-500 dark:bg-amber-400'
+                                  : isTotalRow
+                                  ? 'bg-emerald-500'
+                                  : 'bg-slate-300 dark:bg-dark-700 group-hover/bar:bg-emerald-500'
+                              }`}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Right: Total Value & Expand Icon */}
+                    <div className="flex items-center justify-between md:justify-end gap-3 flex-shrink-0">
                       <div className="text-right">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                          {formatDual("Yillik Jami", "Итого за 10 мес", "Annual Total")}
-                        </span>
-                        <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono">
+                        <div className="text-sm sm:text-base font-black text-slate-900 dark:text-white font-mono">
                           {activeTab === 'waste'
-                            ? formatPercent(avgMonth)
+                            ? formatPercent(avgVal)
                             : activeTab === 'expense' && expenseSubMode === 'sum'
-                            ? `${formatSum(item.total)} so'm`
-                            : `${formatKg(item.total)}`}
-                        </span>
+                            ? `${formatSum(totalVal)} so'm`
+                            : formatKg(totalVal)}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-semibold">
+                          {activeTab === 'waste'
+                            ? formatDual("O'rtacha chiqindi", "Средний отход", "Average scrap")
+                            : isWeekly
+                            ? formatDual("47 haftalik jami", "Всего за 47 нед", "47-week total")
+                            : formatDual("10 oylik jami", "Всего за 10 мес", "10-month total")}
+                        </div>
                       </div>
 
-                      <div className={`w-7 h-7 rounded-lg bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-                        <ChevronDown size={14} />
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform ${
+                        isExpanded ? 'bg-slate-100 dark:bg-dark-800 rotate-180' : 'text-slate-400'
+                      }`}>
+                        <ChevronDown size={16} />
                       </div>
                     </div>
                   </div>
 
-                  {/* Expanded Drill-Down Dossier */}
+                  {/* Expanded Drill-down Dossier */}
                   {isExpanded && (
-                    <div className="px-3.5 pb-4 pt-1 border-t border-slate-100 dark:border-dark-800 bg-slate-50/50 dark:bg-dark-950/40 space-y-3.5">
-                      {/* Product Management Notes if any */}
+                    <div className="border-t border-slate-100 dark:border-dark-800 bg-slate-50/60 dark:bg-dark-950/60 p-4 space-y-3">
+                      {/* Contextual Management Notes Banner if available for this product */}
                       {hasNotes && (
-                        <div className="space-y-2 pt-2">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                            <AlertCircle size={13} />
-                            <span>{formatDual("Ushbu mahsulot bo'yicha rahbariyat izohlari (Примечания):", "Примечания руководства по данной позиции:", "Management notes for this item:")}</span>
-                          </span>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {notes.map(n => (
-                              <div key={n.id} className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-xs">
-                                <div className="flex items-center justify-between font-bold text-amber-900 dark:text-amber-200 mb-1">
-                                  <span>{n.monthName}</span>
-                                  <span className="px-1.5 py-0.2 rounded bg-amber-200 dark:bg-amber-500/30 text-[10px] font-black">{n.metric}</span>
+                        <div className="space-y-1.5">
+                          {notes.map((note, nIdx) => (
+                            <div
+                              key={nIdx}
+                              onClick={() => setSelectedNoteModal(note)}
+                              className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 flex items-start justify-between gap-2 cursor-pointer hover:bg-amber-100/60 transition-colors"
+                            >
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <div className="font-extrabold">
+                                    {note.period || note.monthName}: {directorLang === 'ru' ? note.titleRu : note.titleUz}
+                                  </div>
+                                  <div className="text-[11px] text-amber-800 dark:text-amber-300/90 mt-0.5">
+                                    {directorLang === 'ru' ? note.textRu : note.textUz}
+                                  </div>
                                 </div>
-                                <p className="text-amber-800 dark:text-amber-300/90 text-[11px] leading-relaxed">
-                                  {directorLang === 'ru' ? n.textRu : n.textUz}
-                                </p>
                               </div>
-                            ))}
-                          </div>
+                              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 underline flex-shrink-0">
+                                {formatDual("Batafsil", "Подробнее", "Details")}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       )}
 
-                      {/* 10-month detailed progression */}
+                      {/* Periods Grid / Matrix */}
                       <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1.5">
-                          {formatDual("10 oylik taqsimot (Oylar kesimida):", "Помесячная разбивка (10 месяцев):", "10-month breakdown:")}
-                        </span>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2">
-                          {data?.months.slice(0, 10).map((mName, mIdx) => {
-                            const val = item.monthly[mIdx]
-                            const isNull = val === null || val === undefined || isNaN(val)
+                        <div className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                          <span>
+                            {isWeekly
+                              ? formatDual("Haftalar kesimidagi ko'rsatkichlar", "Понедельные показатели", "Weekly breakdown")
+                              : formatDual("Oylar kesimidagi ko'rsatkichlar", "Помесячные показатели", "Monthly breakdown")}
+                          </span>
+                          <span className="text-slate-400 font-normal">
+                            {displayValues.length} {isWeekly ? "ta hafta" : "ta oy"}
+                          </span>
+                        </div>
+
+                        <div className={`grid gap-2 ${
+                          isWeekly
+                            ? 'grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8'
+                            : 'grid-cols-2 sm:grid-cols-5 md:grid-cols-10'
+                        }`}>
+                          {displayValues.map((val: any, pIdx: number) => {
+                            const pName = activePeriods[pIdx] || (isWeekly ? `H${pIdx+1}` : `M${pIdx+1}`)
+                            const isHighWaste = activeTab === 'waste' && (val > 30 || val > 0.3)
                             
-                            // Check if this month has a note for this product
-                            const monthNote = notes.find(n => {
-                              if (Array.isArray(n.monthIndex)) return n.monthIndex.includes(mIdx)
-                              return n.monthIndex === mIdx
+                            // Check if this week or month has a note
+                            const periodHasNote = notes.some((n: any) => {
+                              if (isWeekly) return n.weekIndices?.includes(pIdx)
+                              return Array.isArray(n.monthIndex) ? n.monthIndex.includes(pIdx) : n.monthIndex === pIdx
                             })
 
                             return (
                               <div
-                                key={mName}
-                                onClick={() => monthNote && setSelectedNoteModal(monthNote)}
+                                key={pIdx}
                                 className={`p-2.5 rounded-xl border text-center transition-all ${
-                                  monthNote
-                                    ? 'bg-amber-50 dark:bg-amber-500/15 border-amber-300 dark:border-amber-500/40 cursor-pointer hover:shadow-xs'
-                                    : 'bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-750'
+                                  periodHasNote
+                                    ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/40 ring-1 ring-amber-400/30'
+                                    : isHighWaste
+                                    ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
+                                    : 'bg-white dark:bg-dark-900 border-slate-200 dark:border-dark-800'
                                 }`}
                               >
-                                <div className="text-[10px] font-bold text-slate-400 mb-1 flex items-center justify-center gap-1">
-                                  <span>{mName.slice(0, 3)}</span>
-                                  {monthNote && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block animate-pulse" />}
+                                <div className="text-[10px] text-slate-400 font-bold truncate" title={pName}>
+                                  {isWeekly ? `H${pIdx+1}` : pName.slice(0, 3)}
                                 </div>
-                                <div className={`text-xs font-black font-mono ${
-                                  monthNote ? 'text-amber-700 dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'
+                                <div className={`text-xs font-black font-mono mt-1 ${
+                                  isHighWaste ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-200'
                                 }`}>
-                                  {isNull
-                                    ? '—'
-                                    : activeTab === 'waste'
-                                    ? `${(val * 100).toFixed(1)}%`
+                                  {activeTab === 'waste'
+                                    ? formatPercent(val)
                                     : activeTab === 'expense' && expenseSubMode === 'sum'
                                     ? formatSum(val)
-                                    : formatKg(val)}
+                                    : val ? Math.round(val * 10) / 10 : '0'}
                                 </div>
+                                {periodHasNote && (
+                                  <div className="mt-1 text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase">
+                                    ⚠️ Izoh
+                                  </div>
+                                )}
                               </div>
                             )
                           })}
@@ -960,83 +1336,86 @@ export default function DirectorDynamicsPage() {
         </div>
       )}
 
-      {/* 7. FULL MATRIX TABLE VIEW (For comprehensive spreadsheet inspections) */}
+      {/* 7. FULL MATRIX SPREADSHEET VIEW */}
       {activeTab !== 'notes' && viewStyle === 'matrix' && (
-        <div className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs min-w-[1100px]">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="p-3.5 sticky left-0 bg-slate-50 dark:bg-dark-800 z-10 min-w-[200px]">
-                    {formatDual("Mahsulot Nomi", "Наименование", "Product Name")}
+        <div className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <Layers size={16} className="text-emerald-500" />
+              <span>
+                {isWeekly
+                  ? formatDual("47 Haftalik To'liq Matritsa Jadvali", "Полная понедельная матрица (47 недель)", "Full 47-Week Matrix Table")
+                  : formatDual("10 Oylik To'liq Matritsa Jadvali", "Полная помесячная матрица (10 месяцев)", "Full 10-Month Matrix Table")}
+              </span>
+            </h3>
+            <span className="text-xs text-slate-400">
+              {formatDual("Gorizontal o'tkazish orqali barcha davrlarni ko'ring", "Прокрутите таблицу по горизонтали", "Scroll horizontally")}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto max-h-[600px] rounded-xl border border-slate-200 dark:border-dark-800">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="sticky top-0 z-20 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-extrabold text-[11px] uppercase tracking-wider">
+                <tr className="border-b border-slate-200 dark:border-dark-700">
+                  <th className="p-3 sticky left-0 z-30 bg-slate-100 dark:bg-dark-800 min-w-[200px] border-r border-slate-200 dark:border-dark-700">
+                    {formatDual("Mahsulot", "Наименование", "Product")}
                   </th>
                   <th className="p-3 text-center min-w-[60px]">{formatDual("Birlik", "Ед.", "Unit")}</th>
-                  {data?.months.slice(0, 10).map(m => (
-                    <th key={m} className="p-3 text-right min-w-[95px]">{m}</th>
+                  {activePeriods.map((p, idx) => (
+                    <th key={idx} className="p-3 text-right min-w-[110px]" title={p}>
+                      {isWeekly ? `H${idx+1}` : p.slice(0, 3)}
+                    </th>
                   ))}
-                  <th className="p-3.5 text-right font-black text-slate-900 dark:text-white min-w-[120px] bg-slate-100/60 dark:bg-dark-750/50">
-                    {formatDual("Yillik Jami", "Итого", "Total")}
+                  <th className="p-3 text-right min-w-[130px] font-black bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300">
+                    {formatDual("Jami / O'rtacha", "Итого", "Total")}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-mono">
-                {currentProductsList.map((row: any) => {
-                  const isTotal = row.name === 'Всего'
-                  const notes = notesByProduct.get(row.name.toLowerCase().trim()) || []
+                {currentProductsList.map((item: any) => {
+                  const rawValues: (number | null)[] = isWeekly ? (item.weekly || []) : (item.monthly || [])
+                  const displayValues = isWeekly ? rawValues : rawValues.slice(0, 10)
+                  const unit = item.unit || (activeTab === 'waste' ? '%' : expenseSubMode === 'sum' ? 'сум' : 'кг')
+                  const isTotalRow = item.name.includes('Всего') || item.name.includes('Итого')
+                  const validNumbers = displayValues.filter((v): v is number => v !== null && !isNaN(v) && v > 0)
+                  const sumVal = validNumbers.reduce((a, b) => a + b, 0)
+                  const avgVal = item.weeklyAvg ?? (validNumbers.length > 0 ? sumVal / validNumbers.length : 0)
+                  const totalVal = item.total ?? sumVal
 
                   return (
                     <tr
-                      key={row.name}
-                      className={`hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors ${
-                        isTotal ? 'bg-emerald-50/30 dark:bg-emerald-500/10 font-bold' : ''
+                      key={item.name}
+                      className={`hover:bg-slate-50 dark:hover:bg-dark-800/40 ${
+                        isTotalRow ? 'bg-emerald-50/30 dark:bg-emerald-500/5 font-bold' : ''
                       }`}
                     >
-                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-white sticky left-0 bg-white dark:bg-dark-900 z-10 whitespace-nowrap flex items-center gap-2">
-                        <span>{row.name}</span>
-                        {notes.length > 0 && (
-                          <span
-                            onClick={() => setSelectedNoteModal(notes[0])}
-                            className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-[10px] font-black cursor-pointer"
-                            title={`${notes.length} ta izoh`}
-                          >
-                            !
-                          </span>
-                        )}
+                      <td className="p-3 sticky left-0 z-10 bg-white dark:bg-dark-900 border-r border-slate-200 dark:border-dark-800 font-sans font-bold text-slate-900 dark:text-white">
+                        {item.name}
                       </td>
-                      <td className="p-3 text-center text-slate-400 font-sans">{row.unit || 'kg'}</td>
-                      {row.monthly.slice(0, 10).map((val: any, idx: number) => {
-                        const isNull = val === null || val === undefined || isNaN(val)
-                        const cellNote = notes.find(n => {
-                          if (Array.isArray(n.monthIndex)) return n.monthIndex.includes(idx)
-                          return n.monthIndex === idx
-                        })
-
+                      <td className="p-3 text-center text-slate-400 font-sans">{unit}</td>
+                      {displayValues.map((val: any, idx: number) => {
+                        const isHighWaste = activeTab === 'waste' && (val > 30 || val > 0.3)
                         return (
                           <td
                             key={idx}
-                            onClick={() => cellNote && setSelectedNoteModal(cellNote)}
-                            className={`p-3 text-right whitespace-nowrap ${
-                              cellNote
-                                ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold cursor-pointer underline decoration-amber-400 decoration-dotted'
-                                : 'text-slate-700 dark:text-slate-300'
+                            className={`p-3 text-right ${
+                              isHighWaste ? 'text-amber-600 dark:text-amber-400 font-bold bg-amber-50/50 dark:bg-amber-500/10' : 'text-slate-800 dark:text-slate-200'
                             }`}
                           >
-                            {isNull
-                              ? '—'
-                              : activeTab === 'waste'
-                              ? `${(val * 100).toFixed(2)}%`
+                            {activeTab === 'waste'
+                              ? formatPercent(val)
                               : activeTab === 'expense' && expenseSubMode === 'sum'
-                              ? Math.round(val).toLocaleString()
-                              : typeof val === 'number' ? (Math.round(val * 10) / 10).toLocaleString() : val}
+                              ? formatSum(val)
+                              : val ? Math.round(val * 10) / 10 : 0}
                           </td>
                         )
                       })}
-                      <td className="p-3.5 text-right font-black text-slate-900 dark:text-white bg-slate-50 dark:bg-dark-800/50 whitespace-nowrap">
+                      <td className="p-3 text-right font-black bg-emerald-50/30 dark:bg-emerald-500/5 text-emerald-700 dark:text-emerald-300">
                         {activeTab === 'waste'
-                          ? '—'
+                          ? formatPercent(avgVal)
                           : activeTab === 'expense' && expenseSubMode === 'sum'
-                          ? Math.round(row.total).toLocaleString()
-                          : typeof row.total === 'number' ? (Math.round(row.total * 10) / 10).toLocaleString() : row.total}
+                          ? `${formatSum(totalVal)}`
+                          : formatKg(totalVal)}
                       </td>
                     </tr>
                   )
@@ -1047,51 +1426,7 @@ export default function DirectorDynamicsPage() {
         </div>
       )}
 
-      {/* 8. WEEKLY PERIODS VIEW (When periodType === 'weekly') */}
-      {periodType === 'weekly' && (
-        <div className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 p-4 sm:p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-dark-800 pb-3">
-            <div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <Layers className="text-emerald-500" size={18} />
-                <span>{formatDual("Haftalik Xomashyo Sarfi Dinamikasi", "Недельная динамика расхода сырья", "Weekly Raw Materials Dynamics")}</span>
-              </h3>
-              <p className="text-xs text-slate-500">
-                {formatDual("Haftalar kesimidagi hisobotlar (yangi haftalar avtomatik qo'shiladi)", "Отчеты в разрезе недель (новые недели добавляются автоматически)", "Weekly periods breakdown")}
-              </p>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs min-w-[900px]">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-dark-750 bg-slate-50 dark:bg-dark-800 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="p-3 min-w-[200px]">{formatDual("Mahsulot", "Наименование", "Product")}</th>
-                  <th className="p-3 text-center">{formatDual("Birlik", "Ед.", "Unit")}</th>
-                  {data?.weeklyPeriods.slice(0, 6).map(p => (
-                    <th key={p} className="p-3 text-right min-w-[130px]">{p}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-mono">
-                {data?.weeklyExpenseKg?.map((item: any) => (
-                  <tr key={item.name} className="hover:bg-slate-50 dark:hover:bg-dark-800/40">
-                    <td className="p-3 font-sans font-bold text-slate-900 dark:text-white">{item.name}</td>
-                    <td className="p-3 text-center text-slate-400 font-sans">{item.unit || 'kg'}</td>
-                    {item.weeks.slice(0, 6).map((w: any, idx: number) => (
-                      <td key={idx} className="p-3 text-right text-slate-800 dark:text-slate-200">
-                        {w.value ? Math.round(w.value * 10) / 10 : 0}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* 9. MODAL FOR NOTE / INSIGHT DETAILS */}
+      {/* 8. MODAL FOR NOTE / INSIGHT DETAILS */}
       {selectedNoteModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-750 p-6 max-w-lg w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
@@ -1105,7 +1440,7 @@ export default function DirectorDynamicsPage() {
                     {directorLang === 'ru' ? selectedNoteModal.titleRu : selectedNoteModal.titleUz}
                   </h4>
                   <span className="text-xs text-slate-400">
-                    {selectedNoteModal.product} · {selectedNoteModal.monthName} ({selectedNoteModal.metric})
+                    {selectedNoteModal.product} · {selectedNoteModal.period || selectedNoteModal.monthName}
                   </span>
                 </div>
               </div>
@@ -1118,18 +1453,20 @@ export default function DirectorDynamicsPage() {
             </div>
 
             <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
-              <p className="font-semibold mb-1 text-amber-900 dark:text-amber-300">
-                {formatDual("Rahbariyat xulosasi va tushuntirishi:", "Официальное примечание руководства:", "Official Management Note:")}
-              </p>
+              <div className="font-semibold text-slate-900 dark:text-white mb-1.5 flex items-center gap-1.5">
+                <FileText size={14} className="text-amber-600" />
+                <span>{directorLang === 'ru' ? "Примечание руководства:" : "Boshqaruv xulosasi va izohi:"}</span>
+              </div>
               {directorLang === 'ru' ? selectedNoteModal.textRu : selectedNoteModal.textUz}
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-dark-800">
+              <span>{formatDual("Holat", "Статус", "Status")}: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{formatDual("Tasdiqlangan", "Утверждено", "Confirmed")}</strong></span>
               <button
                 onClick={() => setSelectedNoteModal(null)}
-                className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:opacity-90"
+                className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs hover:bg-slate-800"
               >
-                {formatDual("Tushundim", "Закрыть", "Close")}
+                {formatDual("Tushundim", "Понятно", "Understood")}
               </button>
             </div>
           </div>
