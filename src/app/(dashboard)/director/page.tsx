@@ -1699,9 +1699,6 @@ export default function DirectorPage() {
               <h2 className="text-lg font-black text-slate-900 dark:text-white">
                 {formatDual("Asosiy operatsion analitika", "Ключевая операционная аналитика", "Primary Operational Analytics")}
               </h2>
-              <p className="text-xs text-slate-500">
-                {formatDual("Haqiqiy ma'lumotlar tahlili va interaktiv burg'ulash (drill-down)", "Анализ реальных данных с интерактивной детализацией", "Real data analytics with progressive drill-down")}
-              </p>
             </div>
           </div>
           <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">

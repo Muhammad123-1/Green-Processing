@@ -15,14 +15,14 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark')
+  const [theme, setThemeState] = useState<Theme>('light')
   const [fontSize, setFontSizeState] = useState<FontSize>('normal')
 
   useEffect(() => {
     try {
-      // Normalize any legacy/stray 'light' theme to 'dark' for Green Processing ERP
+      // Default to 'light' mode as requested by user
       const storedTheme = localStorage.getItem('theme') as Theme
-      const currentTheme: Theme = (!storedTheme || storedTheme === 'light') ? 'dark' : storedTheme
+      const currentTheme: Theme = storedTheme === 'dark' ? 'dark' : 'light'
       setThemeState(currentTheme)
       localStorage.setItem('theme', currentTheme)
 
@@ -40,7 +40,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         applyFontSize(storedFontSize)
       }
     } catch (e) {
-      document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.add('light')
     }
   }, [])
 

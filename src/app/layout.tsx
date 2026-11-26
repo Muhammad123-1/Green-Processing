@@ -11,7 +11,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
-  themeColor: '#070C16',
+  themeColor: '#ffffff',
   interactiveWidget: 'resizes-content',
 }
 
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'Green Processing ERP',
   },
 }
@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="uz" className="dark" suppressHydrationWarning>
+    <html lang="uz" className="light" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -44,9 +44,9 @@ export default function RootLayout({
               (function() {
                 try {
                   var t = localStorage.getItem('theme');
-                  if (!t || t === 'light') {
-                    localStorage.setItem('theme', 'dark');
-                    t = 'dark';
+                  if (!t) {
+                    localStorage.setItem('theme', 'light');
+                    t = 'light';
                   }
                   if (t === 'dark') {
                     document.documentElement.classList.add('dark');
