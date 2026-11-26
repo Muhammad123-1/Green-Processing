@@ -13,6 +13,7 @@ import {
   ResponsiveContainer, BarChart, Bar
 } from 'recharts'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import DailyStockBalanceTab from '@/components/director/DailyStockBalanceTab'
 
 interface NoteItem {
   id: string
@@ -128,7 +129,7 @@ export default function DirectorDynamicsPage() {
 
   // View state
   const [periodType, setPeriodType] = useState<'monthly' | 'weekly'>('monthly')
-  const [activeTab, setActiveTab] = useState<'expense' | 'gp' | 'waste' | 'notes'>('expense')
+  const [activeTab, setActiveTab] = useState<'balance' | 'expense' | 'gp' | 'waste' | 'notes'>('balance')
   const [expenseSubMode, setExpenseSubMode] = useState<'sum' | 'kg'>('sum')
   
   // Weekly Quarter filter (All, Q1, Q2, Q3, Q4)
@@ -493,6 +494,7 @@ export default function DirectorDynamicsPage() {
       </div>
 
       {/* 2. EXECUTIVE MACRO KPI CARDS */}
+      {activeTab !== 'balance' && (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Xomashyo Mablag'i */}
         <div className="bg-white dark:bg-dark-900/90 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-dark-750 shadow-xs relative overflow-hidden group hover:border-emerald-500/40 transition-all">
@@ -634,12 +636,26 @@ export default function DirectorDynamicsPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* 3. MAIN NAVIGATION TABS & FILTER BAR */}
       <div className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200/90 dark:border-dark-750 p-2 sm:p-2.5 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Main 4 Tabs */}
+          {/* Main 5 Tabs */}
           <div className="flex items-center flex-wrap gap-1.5">
+            {/* Tab 0: Daily & Weekly Stock Balance */}
+            <button
+              onClick={() => setActiveTab('balance')}
+              className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-1.5 ${
+                activeTab === 'balance'
+                  ? 'bg-emerald-600 text-white shadow-sm font-black'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800'
+              }`}
+            >
+              <Layers size={15} />
+              <span>{formatDual("0. Zaxiralar Balansi (Склад)", "0. Запасы продукции для цеха", "0. Stock Balance & Flow")}</span>
+            </button>
+
             <button
               onClick={() => setActiveTab('expense')}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 ${
@@ -695,6 +711,7 @@ export default function DirectorDynamicsPage() {
           </div>
 
           {/* Sub-Controls: Sum/Kg switch for Tab 1, Search, and Matrix/Card switch */}
+          {activeTab !== 'balance' && (
           <div className="flex items-center flex-wrap gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-dark-800">
             {/* Expense Metric Switcher (Summa / Hajm) */}
             {activeTab === 'expense' && (
@@ -788,10 +805,15 @@ export default function DirectorDynamicsPage() {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 
-      {/* 4. EXECUTIVE TREND CHART (Monthly or Weekly) */}
+      {activeTab === 'balance' ? (
+        <DailyStockBalanceTab />
+      ) : (
+        <>
+          {/* 4. EXECUTIVE TREND CHART (Monthly or Weekly) */}
       {activeTab !== 'notes' && chartData.length > 0 && (
         <div className="bg-white dark:bg-dark-900/90 rounded-2xl border border-slate-200/90 dark:border-dark-750 p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1424,6 +1446,8 @@ export default function DirectorDynamicsPage() {
             </table>
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* 8. MODAL FOR NOTE / INSIGHT DETAILS */}

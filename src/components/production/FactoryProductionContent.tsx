@@ -503,18 +503,21 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
   return (
     <div className="flex flex-col min-h-full animate-enter space-y-6">
       {/* Industrial Header */}
-      <div className="dark-banner relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <div className="relative overflow-hidden bg-white dark:bg-gradient-to-r dark:from-slate-900 dark:via-indigo-950 dark:to-slate-900 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-2xl border border-slate-200 dark:border-white/10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30">
               <Factory size={32} />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {l.title}
               </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {l.subtitle}
+              </p>
             </div>
           </div>
           
@@ -522,7 +525,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             <div className="flex flex-wrap items-center gap-3">
               <button 
                 onClick={() => setShowBomModal(true)}
-                className="flex items-center gap-2 bg-dark-800 hover:bg-dark-700 text-white px-4 py-2.5 rounded-xl border border-dark-600 transition-all text-sm font-semibold"
+                className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-800 dark:text-white px-4 py-2.5 rounded-xl border border-slate-300 dark:border-dark-600 transition-all text-sm font-semibold"
               >
                 <Settings2 size={16} />
                 {l.btnNewBOM}
@@ -552,15 +555,15 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               {/* Total Finished Goods */}
               <div className="bg-white dark:bg-dark-900/90 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {formatDual("Tayyor Mahsulot", "Готовая Продукция", "Finished Goods")}
                   </span>
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
                     <PackageCheck size={18} />
                   </div>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">
                     {productionSummary?.totalFinishedGoodsTonnes !== undefined
                       ? `${productionSummary.totalFinishedGoodsTonnes} tn`
                       : '871.2 tn'}
@@ -571,15 +574,15 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               {/* Raw Material Consumed */}
               <div className="bg-white dark:bg-dark-900/90 border border-slate-200 dark:border-dark-750 p-5 rounded-2xl shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {formatDual("Sarflangan Xomashyo", "Расход Сырья", "Raw Consumed")}
                   </span>
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
                     <Layers size={18} />
                   </div>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">
                     {productionSummary?.totalRawConsumedTonnes !== undefined
                       ? `${productionSummary.totalRawConsumedTonnes} tn`
                       : '1,573.8 tn'}
@@ -592,13 +595,13 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             <div className="bg-white dark:bg-dark-900/90 border border-slate-200 dark:border-dark-750 p-3 sm:p-4 rounded-2xl shadow-sm space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {formatDual("Mahsulot Kategoriyasi:", "Категория Продукции:", "Product Category:")}
                   </span>
-                  <span className="font-extrabold text-white text-xs sm:text-sm">
+                  <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm">
                     {selectedFilterDisplay.name}
                   </span>
-                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
                     {selectedFilterDisplay.totalTonnes} tn ({selectedFilterDisplay.percent}%)
                   </span>
                 </div>
@@ -609,9 +612,9 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                     setProductModalSearch('')
                     setShowProductFilterModal(true)
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-indigo-300 hover:text-white font-bold text-xs border border-indigo-500/30 transition-all ml-auto"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-white font-bold text-xs border border-indigo-200 dark:border-indigo-500/30 transition-all ml-auto"
                 >
-                  <Filter size={13} className="text-indigo-400" />
+                  <Filter size={13} className="text-indigo-500 dark:text-indigo-400" />
                   <span>
                     {formatDual(
                       `Barcha ${finishedGoodsPortfolio.length > 0 ? finishedGoodsPortfolio.length : 14} tur mahsulot...`,
@@ -641,14 +644,14 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                       className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
                         isSelected
                           ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30 scale-[1.02]'
-                          : 'bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border-dark-700'
+                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-dark-700'
                       }`}
                     >
                       <span>{cat.nameUz}</span>
                       <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-md ${
                         isSelected
                           ? 'bg-indigo-900/70 text-indigo-200'
-                          : 'bg-dark-750 text-slate-400'
+                          : 'bg-slate-200 dark:bg-dark-750 text-slate-600 dark:text-slate-400'
                       }`}>
                         {cat.totalTonnes} tn
                       </span>
@@ -659,36 +662,36 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             </div>
 
             {/* Filter and Search Bar */}
-            <div className="bg-white dark:bg-dark-900/80 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+            <div className="bg-white dark:bg-dark-900/80 border border-slate-200 dark:border-dark-750 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-sm">
               <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                 {/* Search */}
                 <div className="relative flex-1 min-w-[180px]">
-                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     placeholder={formatDual("Mahsulot, liniya yoki partiya kodi bo'yicha qidirish...", "Поиск по продукту, линии или партии...", "Search product, line or batch...")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-750 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white">
                       <X size={13} />
                     </button>
                   )}
                 </div>
 
                 {/* Date Filter */}
-                <div className="flex items-center gap-1.5 bg-dark-800 border border-dark-700 rounded-xl px-3 py-1.5">
-                  <Calendar size={14} className="text-slate-400" />
+                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-750 rounded-xl px-3 py-1.5">
+                  <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
                   <input
                     type="date"
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="bg-transparent text-xs text-white outline-none cursor-pointer"
+                    className="bg-transparent text-xs text-slate-800 dark:text-white outline-none cursor-pointer"
                   />
                   {dateFilter && (
-                    <button onClick={() => setDateFilter('')} className="text-slate-500 hover:text-white">
+                    <button onClick={() => setDateFilter('')} className="text-slate-400 hover:text-slate-700 dark:hover:text-white">
                       <X size={12} />
                     </button>
                   )}
@@ -703,7 +706,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     statusFilter === 'ALL'
                       ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {formatDual("Barchasi", "Все", "All")} ({orders.length})
@@ -714,10 +717,10 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     statusFilter === 'IN_PROGRESS'
                       ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                   <span>{formatDual("Jarayonda", "В процессе", "In Progress")}</span>
                 </button>
                 <button
@@ -726,7 +729,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     statusFilter === 'COMPLETED'
                       ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   <CheckCircle2 size={13} />
@@ -736,11 +739,11 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             </div>
 
             {/* Orders Table */}
-            <div className="bg-dark-900 border border-dark-750 rounded-3xl overflow-hidden shadow-xl">
+            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl overflow-hidden shadow-sm dark:shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="bg-slate-100 dark:bg-dark-800/60 border-b border-slate-200 dark:border-dark-750 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+                    <tr className="bg-slate-50 dark:bg-dark-800/60 border-b border-slate-200 dark:border-dark-750 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="p-4">{l.colDate}</th>
                       <th className="p-4">{l.colProduct}</th>
                       <th className="p-4 text-center">{l.colQty}</th>
@@ -750,12 +753,12 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                       <th className="p-4 text-center">{formatDual("Batafsil", "Детали", "Details")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-dark-750">
+                  <tbody className="divide-y divide-slate-100 dark:divide-dark-750 bg-white dark:bg-dark-900">
                     {filteredOrders.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="p-16 text-center text-slate-500">
-                          <Factory size={48} className="mx-auto text-dark-600 mb-3 opacity-30" />
-                          <p className="text-base font-bold text-white">{l.emptyOrdersTitle}</p>
+                          <Factory size={48} className="mx-auto text-slate-300 dark:text-dark-600 mb-3 opacity-40" />
+                          <p className="text-base font-bold text-slate-800 dark:text-white">{l.emptyOrdersTitle}</p>
                           <p className="text-xs text-slate-400 mt-1">{l.emptyOrdersSub}</p>
                         </td>
                       </tr>
@@ -785,23 +788,23 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                           <tr
                             key={o.id}
                             onClick={() => openOrderModal(o)}
-                            className="hover:bg-dark-800/40 transition-colors cursor-pointer group"
+                            className="hover:bg-slate-50/80 dark:hover:bg-dark-800/40 transition-colors cursor-pointer group"
                           >
-                            {/* Sana - faqat sana, hech qanday buyruq/kod yo'q */}
-                            <td className="p-4 font-mono font-bold text-white text-xs">
+                            {/* Sana */}
+                            <td className="p-4 font-mono font-bold text-slate-900 dark:text-white text-xs">
                               {o.date || (o.createdAt ? o.createdAt.slice(0, 10) : '—')}
                             </td>
 
-                            {/* Tayyor Mahsulot - faqat toza o'zbekcha nomi */}
+                            {/* Tayyor Mahsulot */}
                             <td className="p-4">
-                              <div className="font-bold text-white text-sm">
+                              <div className="font-bold text-slate-900 dark:text-white text-sm">
                                 {outputTitle}
                               </div>
                             </td>
 
-                            {/* Umumiy - Reja/Fakt o'rniga faqat toza umumiy chiqish */}
+                            {/* Umumiy */}
                             <td className="p-4 text-center">
-                              <span className="font-mono font-bold text-emerald-400 text-xs bg-dark-800/90 px-3 py-1.5 rounded-xl border border-dark-700 whitespace-nowrap">
+                              <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-xs bg-emerald-50 dark:bg-dark-800/90 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-dark-700 whitespace-nowrap">
                                 {relevantQty >= 1000
                                   ? `${(relevantQty / 1000).toFixed(2)} tn`
                                   : `${Math.round(relevantQty).toLocaleString()} kg`}
@@ -815,41 +818,41 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                                 {o.rawMaterialBatches.slice(0, 2).map((b: any, bIdx: number) => (
                                   <span
                                     key={bIdx}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs font-semibold text-indigo-300"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-xs font-semibold text-indigo-700 dark:text-indigo-300"
                                     title={`${b.name} — Partiya #${b.batchNumber} · ${b.quantityKg} kg`}
                                   >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                                    <span className="text-white font-bold">{b.name}:</span>
-                                    <span className="font-mono font-black text-indigo-200">#{b.batchNumber}</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                    <span className="text-slate-800 dark:text-white font-bold">{b.name}:</span>
+                                    <span className="font-mono font-black text-indigo-600 dark:text-indigo-200">#{b.batchNumber}</span>
                                   </span>
                                 ))}
                                 {o.rawMaterialBatches.length > 2 && (
-                                  <span className="text-[10px] text-slate-400 font-bold bg-dark-800 px-1.5 py-0.5 rounded border border-dark-700">
+                                  <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold bg-slate-100 dark:bg-dark-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-dark-700">
                                     +{o.rawMaterialBatches.length - 2} ta
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="font-mono font-bold text-indigo-400 text-xs bg-dark-800/80 px-2 py-1 rounded-lg border border-dark-700">
+                              <span className="font-mono font-bold text-indigo-700 dark:text-indigo-400 text-xs bg-indigo-50 dark:bg-dark-800/80 px-2 py-1 rounded-lg border border-indigo-200 dark:border-dark-700">
                                 {o.usedBatchesDisplay || `Partiya #${o.finishedBatchCode || o.id}`}
                               </span>
                             )}
                           </td>
 
-                          {/* Liniya - faqat liniya nomi, texnolog/boshliq yo'q */}
-                          <td className="p-4 text-xs font-medium text-slate-300">
+                          {/* Liniya */}
+                          <td className="p-4 text-xs font-medium text-slate-700 dark:text-slate-300">
                             {o.lineName || 'Asosiy liniya'}
                           </td>
 
                           {/* Holat */}
                           <td className="p-4 text-center">
                             {o.status === 'IN_PROGRESS' ? (
-                              <span className="inline-flex items-center gap-1.5 bg-blue-500/15 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-full text-xs font-bold animate-pulse">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 px-2.5 py-1 rounded-full text-xs font-bold animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                                 {formatDual("Jarayonda", "В процессе", "In Progress")}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-bold">
+                              <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-bold">
                                 <CheckCircle2 size={13} />
                                 {formatDual("Chiqarilgan", "Выпущено", "Completed")}
                               </span>
@@ -864,7 +867,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                                 e.stopPropagation()
                                 openOrderModal(o)
                               }}
-                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-400 hover:text-white bg-indigo-500/10 hover:bg-indigo-600/30 border border-indigo-500/20 transition-colors"
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-white bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-600/30 border border-indigo-200 dark:border-indigo-500/20 transition-colors"
                             >
                               <Eye size={13} />
                             </button>
@@ -897,52 +900,52 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
       {/* Modal: Barcha Mahsulotlarni Tanlash */}
       {showProductFilterModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setShowProductFilterModal(false)}
         >
           <div
-            className="bg-dark-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-dark-700 flex flex-col max-h-[85vh] overflow-hidden"
+            className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col max-h-[85vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between bg-dark-950/60">
+            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between bg-slate-50 dark:bg-dark-950/60">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30">
                   <Sparkles size={20} />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
                     {formatDual("Mahsulotni Tanlash", "Выбор Продукта", "Select Product")}
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {formatDual("Zavodning barcha mahsulotlari bo'yicha saralash", "Фильтр по всем продуктам фабрики", "Filter by all factory products")}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowProductFilterModal(false)}
-                className="text-slate-400 hover:text-white p-2 rounded-xl bg-dark-800 hover:bg-dark-750 transition-colors"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Search Input */}
-            <div className="p-4 border-b border-dark-800 bg-dark-850/50">
+            <div className="p-4 border-b border-slate-200 dark:border-dark-800 bg-slate-50/50 dark:bg-dark-850/50">
               <div className="relative">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                 <input
                   type="text"
                   placeholder={formatDual("Mahsulot nomi bo'yicha qidirish...", "Поиск по названию продукта...", "Search by product name...")}
                   value={productModalSearch}
                   onChange={(e) => setProductModalSearch(e.target.value)}
-                  className="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                  className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-indigo-500 transition-colors"
                   autoFocus
                 />
                 {productModalSearch && (
                   <button
                     onClick={() => setProductModalSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
                   >
                     <X size={14} />
                   </button>
@@ -962,28 +965,28 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                   }}
                   className={`w-full p-3.5 rounded-2xl flex items-center justify-between transition-all border ${
                     selectedCategory === 'all'
-                      ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-sm'
-                      : 'bg-dark-850/80 hover:bg-dark-800 border-dark-750 text-slate-300 hover:text-white'
+                      ? 'bg-indigo-50 dark:bg-indigo-600/20 border-indigo-300 dark:border-indigo-500 text-indigo-950 dark:text-white shadow-sm ring-2 ring-indigo-400/40'
+                      : 'bg-slate-50 hover:bg-slate-100 dark:bg-dark-850/80 dark:hover:bg-dark-800 border-slate-200 dark:border-dark-750 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                    <span className="font-bold text-sm">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">
                       {formatDual("Barcha Mahsulotlar (Jami)", "Все Продукты (Всего)", "All Products (Total)")}
                     </span>
                   </div>
                   <div className="font-mono text-xs">
-                    <span className="font-black text-emerald-400">
+                    <span className="font-black text-emerald-600 dark:text-emerald-400">
                       {productionSummary?.totalFinishedGoodsTonnes !== undefined ? `${productionSummary.totalFinishedGoodsTonnes} tn` : '871.2 tn'}
                     </span>
-                    <span className="text-slate-500 ml-2">(100%)</span>
+                    <span className="text-slate-400 dark:text-slate-500 ml-2">(100%)</span>
                   </div>
                 </button>
               )}
 
               {/* Asosiy Mahsulot Guruhlari (Kategoriyalar) */}
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 block mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1 block mb-2">
                   {formatDual("Asosiy Mahsulot Guruhlari", "Основные группы продукции", "Primary Product Groups")}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1002,17 +1005,17 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                           }}
                           className={`p-3 rounded-xl flex items-center justify-between text-left transition-all border ${
                             isSel
-                              ? 'bg-indigo-600/20 border-indigo-500 text-white'
-                              : 'bg-dark-850/70 hover:bg-dark-800 border-dark-750 text-slate-300 hover:text-white'
+                              ? 'bg-indigo-50 dark:bg-indigo-600/20 border-indigo-300 dark:border-indigo-500 text-indigo-950 dark:text-white ring-2 ring-indigo-400/40'
+                              : 'bg-slate-50 hover:bg-slate-100 dark:bg-dark-850/70 dark:hover:bg-dark-800 border-slate-200 dark:border-dark-750 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                            <span className="font-bold text-xs">{cat.nameUz}</span>
+                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                            <span className="font-bold text-xs text-slate-900 dark:text-white">{cat.nameUz}</span>
                           </div>
                           <div className="font-mono text-xs">
-                            <span className="font-black text-indigo-300">{cat.totalTonnes} tn</span>
-                            <span className="text-slate-500 ml-1.5 text-[11px]">({cat.percent}%)</span>
+                            <span className="font-black text-indigo-600 dark:text-indigo-300">{cat.totalTonnes} tn</span>
+                            <span className="text-slate-400 dark:text-slate-500 ml-1.5 text-[11px]">({cat.percent}%)</span>
                           </div>
                         </button>
                       )
@@ -1022,7 +1025,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
 
               {/* Barcha Alohida Mahsulot Turlari (SKU) */}
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 block mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1 block mb-2">
                   {formatDual("Barcha Mahsulot Turlari (Alohida)", "Все отдельные виды продукции", "All Specific Products")}
                 </span>
                 <div className="space-y-1.5">
@@ -1040,8 +1043,8 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                           }}
                           className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-all border ${
                             isSel
-                              ? 'bg-indigo-600/20 border-indigo-500 text-white'
-                              : 'bg-dark-850/50 hover:bg-dark-800 border-dark-750 text-slate-300 hover:text-white'
+                              ? 'bg-indigo-50 dark:bg-indigo-600/20 border-indigo-300 dark:border-indigo-500 text-indigo-950 dark:text-white ring-2 ring-indigo-400/40'
+                              : 'bg-slate-50 hover:bg-slate-100 dark:bg-dark-850/50 dark:hover:bg-dark-800 border-slate-200 dark:border-dark-750 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -1076,42 +1079,42 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
       {/* Read-Only Modal: Order Detail Drill-down */}
       {selectedOrderModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setSelectedOrderModal(null)}
         >
           <div
-            className="bg-dark-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-hidden"
+            className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="px-6 py-5 border-b border-dark-800 flex items-center justify-between bg-dark-950/60">
+            <div className="px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between bg-slate-50 dark:bg-dark-950/60">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30">
                   <Factory size={20} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-black text-white font-mono">{selectedOrderModal.orderNumber}</h2>
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white font-mono">{selectedOrderModal.orderNumber}</h2>
                     {selectedOrderModal.status === 'IN_PROGRESS' ? (
-                      <span className="inline-flex items-center gap-1.5 bg-blue-500/15 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full text-xs font-bold animate-pulse">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                      <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 px-2.5 py-0.5 rounded-full text-xs font-bold animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                         {formatDual("Jarayonda", "В процессе", "In Progress")}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-xs font-bold">
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-0.5 rounded-full text-xs font-bold">
                         <CheckCircle2 size={13} />
                         {formatDual("Chiqarilgan", "Выпущено", "Completed")}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {formatDual("Sana:", "Дата:", "Date:")} {selectedOrderModal.date} · {selectedOrderModal.lineName}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedOrderModal(null)}
-                className="text-slate-400 hover:text-white p-2 rounded-xl bg-dark-800 hover:bg-dark-750 transition-colors"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -1121,27 +1124,27 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
               {/* Summary Metrics */}
               <div className="grid grid-cols-3 gap-2.5">
-                <div className="bg-dark-850 p-3 rounded-2xl border border-dark-750">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+                <div className="bg-slate-50 dark:bg-dark-850 p-3 rounded-2xl border border-slate-200 dark:border-dark-750">
+                  <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-0.5">
                     {formatDual("Umumiy Chiqish", "Общий Выпуск", "Total Output")}
                   </span>
-                  <span className="text-lg sm:text-xl font-black text-emerald-400 font-mono">
+                  <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                     {(selectedOrderModal.actualOutput || selectedOrderModal.plannedOutput || 0).toLocaleString()} kg
                   </span>
                 </div>
-                <div className="bg-dark-850 p-3 rounded-2xl border border-dark-750">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+                <div className="bg-slate-50 dark:bg-dark-850 p-3 rounded-2xl border border-slate-200 dark:border-dark-750">
+                  <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-0.5">
                     {formatDual("Sarflangan Xomashyo", "Расход сырья", "Raw Consumed")}
                   </span>
-                  <span className="text-lg sm:text-xl font-black text-amber-400 font-mono">
+                  <span className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
                     {(selectedOrderModal.rawConsumedKg || 0).toLocaleString()} kg
                   </span>
                 </div>
-                <div className="bg-dark-850 p-3 rounded-2xl border border-dark-750">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+                <div className="bg-slate-50 dark:bg-dark-850 p-3 rounded-2xl border border-slate-200 dark:border-dark-750">
+                  <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block mb-0.5">
                     {formatDual("Chiqish Normasi", "Норма выхода", "Yield Rate")}
                   </span>
-                  <span className="text-lg sm:text-xl font-black text-indigo-400 font-mono">
+                  <span className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
                     {selectedOrderModal.yieldPercent || 78}%
                   </span>
                 </div>
@@ -1149,9 +1152,9 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
 
               {/* Mahsulotlar & Partiyalar Zanjiri (Collapsible / Yig'iladigan) */}
               <div className="space-y-2.5">
-                <div className="flex items-center justify-between pb-2 border-b border-dark-750">
-                  <span className="text-xs font-bold uppercase text-slate-200 flex items-center gap-2">
-                    <GitBranch size={14} className="text-indigo-400" />
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-dark-750">
+                  <span className="text-xs font-bold uppercase text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <GitBranch size={14} className="text-indigo-500 dark:text-indigo-400" />
                     <span>
                       {formatDual(
                         "Ishlab Chiqarilgan Mahsulotlar & Partiyalar",
@@ -1159,7 +1162,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                         "Products & Batch Traceability"
                       )}
                     </span>
-                    <span className="text-[11px] text-slate-500 font-mono">
+                    <span className="text-[11px] text-slate-400 font-mono">
                       ({(selectedOrderModal.traceability && selectedOrderModal.traceability.length > 0
                         ? selectedOrderModal.traceability
                         : selectedOrderModal.allOutputs || []).length} ta)
@@ -1183,8 +1186,8 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                     }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                       showBatchDetails
-                        ? 'bg-indigo-600/30 text-indigo-200 border-indigo-500/50 hover:bg-indigo-600/40'
-                        : 'bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border-dark-700'
+                        ? 'bg-indigo-50 dark:bg-indigo-600/30 text-indigo-700 dark:text-indigo-200 border-indigo-300 dark:border-indigo-500/50 hover:bg-indigo-100 dark:hover:bg-indigo-600/40'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-dark-700'
                     }`}
                   >
                     {showBatchDetails ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -1212,30 +1215,30 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                     return (
                       <div
                         key={tIdx}
-                        className="bg-dark-850 rounded-2xl border border-dark-750 overflow-hidden shadow-xs transition-all"
+                        className="bg-slate-50 dark:bg-dark-850 rounded-2xl border border-slate-200 dark:border-dark-750 overflow-hidden shadow-xs transition-all"
                       >
                         {/* Compact Row Header: Clicking toggles this specific product */}
                         <div
                           onClick={() => toggleProductExpand(tIdx)}
-                          className="flex items-center justify-between p-3 cursor-pointer hover:bg-dark-800/80 transition-colors"
+                          className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-100/70 dark:hover:bg-dark-800/80 transition-colors"
                         >
                           <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                            <span className="font-bold text-xs text-white truncate">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                            <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
                               {trace.outputName}
                             </span>
                             {hasInputs && (
-                              <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px] font-bold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                              <span className="hidden sm:inline-flex items-center gap-1 font-mono text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
                                 Partiya #{trace.inputs[0].batchNumber}
                               </span>
                             )}
                           </div>
 
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="font-mono font-bold text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
+                            <span className="font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-500/20 whitespace-nowrap">
                               {trace.outputKg?.toLocaleString()} kg
                             </span>
-                            <span className="font-mono text-[11px] text-slate-400 bg-dark-800 px-2 py-0.5 rounded border border-dark-700 font-bold whitespace-nowrap">
+                            <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400 bg-slate-200/80 dark:bg-dark-800 px-2 py-0.5 rounded border border-slate-300 dark:border-dark-700 font-bold whitespace-nowrap">
                               {trace.yieldPercent}%
                             </span>
                             <button
@@ -1244,12 +1247,12 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                                 e.stopPropagation()
                                 toggleProductExpand(tIdx)
                               }}
-                              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-dark-750"
+                              className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-dark-750"
                               title={isExpanded ? "Yopish" : "Partiyani ko'rish"}
                             >
                               <ChevronDown
                                 size={15}
-                                className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-indigo-400' : ''}`}
+                                className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-indigo-500 dark:text-indigo-400' : ''}`}
                               />
                             </button>
                           </div>
@@ -1257,8 +1260,8 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
 
                         {/* Collapsible Details: Shown ONLY when expanded */}
                         {isExpanded && (
-                          <div className="px-3 pb-3 pt-1 border-t border-dark-750/70 bg-dark-900/60 animate-enter space-y-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                          <div className="px-3 pb-3 pt-1 border-t border-slate-200 dark:border-dark-750/70 bg-white/60 dark:bg-dark-900/60 animate-enter space-y-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                               {formatDual(
                                 "Ishlatilgan Xomashyo Kirim Partiyalari:",
                                 "Использованные партии прихода сырья:",
@@ -1270,17 +1273,17 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                                 {trace.inputs.map((inp: any, iIdx: number) => (
                                   <div
                                     key={iIdx}
-                                    className="bg-dark-850 border border-dark-700/80 px-3 py-2 rounded-xl flex items-center justify-between text-xs gap-2"
+                                    className="bg-slate-50 dark:bg-dark-850 border border-slate-200 dark:border-dark-700/80 px-3 py-2 rounded-xl flex items-center justify-between text-xs gap-2"
                                   >
-                                    <div className="font-bold text-slate-200 flex items-center gap-2 truncate">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                                    <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 truncate">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
                                       <span className="truncate">{inp.name}</span>
                                     </div>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                      <span className="inline-block font-mono font-black text-xs text-indigo-300 bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 rounded-lg">
+                                      <span className="inline-block font-mono font-black text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200 dark:border-indigo-500/30 px-2 py-0.5 rounded-lg">
                                         Partiya #{inp.batchNumber}
                                       </span>
-                                      <span className="font-mono font-bold text-amber-300 text-xs">
+                                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300 text-xs">
                                         {inp.quantityKg?.toLocaleString()} kg
                                       </span>
                                     </div>
@@ -1288,7 +1291,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                                 ))}
                               </div>
                             ) : (
-                              <div className="text-xs text-slate-500 italic p-2 bg-dark-850/60 rounded-xl">
+                              <div className="text-xs text-slate-500 italic p-2 bg-slate-100 dark:bg-dark-850/60 rounded-xl">
                                 {formatDual("Partiya kiritilmagan", "Партия не указана", "No batch specified")}
                               </div>
                             )}
@@ -1302,11 +1305,11 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 bg-dark-950/60 border-t border-dark-800 flex justify-end">
+            <div className="px-6 py-4 bg-slate-50 dark:bg-dark-950/60 border-t border-slate-200 dark:border-dark-800 flex justify-end">
               <button
                 type="button"
                 onClick={() => setSelectedOrderModal(null)}
-                className="px-5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-750 transition-colors"
+                className="px-5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-750 transition-colors"
               >
                 {formatDual("Yopish", "Закрыть", "Close")}
               </button>
@@ -1318,27 +1321,27 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
       {/* Modal: New Production Order */}
       {!isDirector && showProdModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-enter"
           onClick={() => setShowProdModal(false)}
         >
           <div 
-            className="bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-dark-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-dark-700 flex flex-col max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 sm:px-6 py-5 border-b border-dark-800 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Factory className="text-indigo-400" size={20} /> {l.modalProdTitle}
+            <div className="px-4 sm:px-6 py-5 border-b border-slate-200 dark:border-dark-800 flex items-center justify-between bg-slate-50 dark:bg-dark-950/60">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Factory className="text-indigo-600 dark:text-indigo-400" size={20} /> {l.modalProdTitle}
               </h2>
-              <button onClick={() => setShowProdModal(false)} className="text-slate-400 hover:text-white p-1 rounded-lg">
+              <button onClick={() => setShowProdModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg">
                 <X size={20} />
               </button>
             </div>
             
             <div className="p-4 sm:p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.selectBOM} <span className="text-indigo-400">*</span></label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">{l.selectBOM} <span className="text-indigo-600 dark:text-indigo-400">*</span></label>
                 <select 
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none text-white text-sm"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white text-sm"
                   value={prodForm.recipeId}
                   onChange={e => setProdForm(prev => ({...prev, recipeId: e.target.value}))}
                 >
@@ -1349,10 +1352,10 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.planQty} <span className="text-indigo-400">*</span></label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">{l.planQty} <span className="text-indigo-600 dark:text-indigo-400">*</span></label>
                   <input 
                     type="number" 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-lg font-black text-indigo-400 focus:ring-2 focus:ring-indigo-500 outline-none text-center font-mono"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-lg font-black text-indigo-600 dark:text-indigo-400 focus:ring-2 focus:ring-indigo-500 outline-none text-center font-mono"
                     placeholder="0.0" min="0.1" step="0.1"
                     value={prodForm.plannedOutput}
                     onChange={e => setProdForm(prev => ({...prev, plannedOutput: e.target.value}))}
@@ -1360,10 +1363,10 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.actualQty}</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">{l.actualQty}</label>
                   <input 
                     type="number" 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-lg font-black text-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none text-center font-mono"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2.5 text-lg font-black text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none text-center font-mono"
                     placeholder="0.0" min="0.1" step="0.1"
                     value={prodForm.actualOutput}
                     onChange={e => setProdForm(prev => ({...prev, actualOutput: e.target.value}))}
@@ -1373,9 +1376,9 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.lineSelect}</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">{l.lineSelect}</label>
                   <select 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs"
                     value={prodForm.lineName}
                     onChange={e => setProdForm(prev => ({...prev, lineName: e.target.value}))}
                   >
@@ -1386,10 +1389,10 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{l.supervisorInput}</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">{l.supervisorInput}</label>
                   <input 
                     type="text" 
-                    className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2 text-white text-xs"
+                    className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs"
                     placeholder="Nazoratchi FIO"
                     value={prodForm.supervisorName}
                     onChange={e => setProdForm(prev => ({...prev, supervisorName: e.target.value}))}
@@ -1398,10 +1401,10 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Ishchi identifikatsiyasi (PIN) <span className="text-indigo-400">*</span></label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Ishchi identifikatsiyasi (PIN) <span className="text-indigo-600 dark:text-indigo-400">*</span></label>
                 <input 
                   type="text" 
-                  className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2 text-white text-sm"
+                  className="w-full bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-4 py-2 text-slate-900 dark:text-white text-sm"
                   placeholder="PIN kod yoki ID karta raqami"
                   value={prodForm.workerPinCode}
                   onChange={e => setProdForm(prev => ({...prev, workerPinCode: e.target.value}))}
@@ -1410,58 +1413,58 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
               </div>
 
               {/* Reagents */}
-              <div className="bg-dark-800/50 p-4 rounded-xl border border-dark-700">
+              <div className="bg-slate-50 dark:bg-dark-800/50 p-4 rounded-xl border border-slate-200 dark:border-dark-700">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-xs font-bold text-slate-300 uppercase">Reagentlar (Xlor, Tuz va h.k.)</label>
-                  <button type="button" onClick={() => setProdForm(p => ({...p, reagentUsages: [...p.reagentUsages, {reagentName: '', quantityUsed: '', unit: 'g'}]}))} className="text-indigo-400 text-xs flex items-center gap-1 hover:text-indigo-300">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Reagentlar (Xlor, Tuz va h.k.)</label>
+                  <button type="button" onClick={() => setProdForm(p => ({...p, reagentUsages: [...p.reagentUsages, {reagentName: '', quantityUsed: '', unit: 'g'}]}))} className="text-indigo-600 dark:text-indigo-400 text-xs flex items-center gap-1 hover:text-indigo-800 dark:hover:text-indigo-300">
                     <Plus size={14} /> Qo'shish
                   </button>
                 </div>
                 <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
                   {prodForm.reagentUsages.map((r, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
-                      <input type="text" placeholder="Reagent nomi" className="flex-1 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={r.reagentName} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].reagentName = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }} />
-                      <input type="number" placeholder="Miqdor" className="w-20 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={r.quantityUsed} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].quantityUsed = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }} />
-                      <select className="bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={r.unit} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].unit = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }}>
+                      <input type="text" placeholder="Reagent nomi" className="flex-1 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white" value={r.reagentName} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].reagentName = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }} />
+                      <input type="number" placeholder="Miqdor" className="w-20 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white" value={r.quantityUsed} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].quantityUsed = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }} />
+                      <select className="bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white" value={r.unit} onChange={e => { const newArr = [...prodForm.reagentUsages]; newArr[idx].unit = e.target.value; setProdForm(p => ({...p, reagentUsages: newArr})) }}>
                         <option value="g">g</option>
                         <option value="ml">ml</option>
                         <option value="kg">kg</option>
                       </select>
-                      <button type="button" onClick={() => setProdForm(p => ({...p, reagentUsages: p.reagentUsages.filter((_, i) => i !== idx)}))} className="text-red-400 hover:text-red-300 p-1"><X size={14} /></button>
+                      <button type="button" onClick={() => setProdForm(p => ({...p, reagentUsages: p.reagentUsages.filter((_, i) => i !== idx)}))} className="text-red-500 hover:text-red-700 dark:hover:text-red-300 p-1"><X size={14} /></button>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Temps */}
-              <div className="bg-dark-800/50 p-4 rounded-xl border border-dark-700">
+              <div className="bg-slate-50 dark:bg-dark-800/50 p-4 rounded-xl border border-slate-200 dark:border-dark-700">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-xs font-bold text-slate-300 uppercase">Jarayon Harorati</label>
-                  <button type="button" onClick={() => setProdForm(p => ({...p, processTemps: [...p.processTemps, {processStep: '', temperatureC: ''}]}))} className="text-indigo-400 text-xs flex items-center gap-1 hover:text-indigo-300">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Jarayon Harorati</label>
+                  <button type="button" onClick={() => setProdForm(p => ({...p, processTemps: [...p.processTemps, {processStep: '', temperatureC: ''}]}))} className="text-indigo-600 dark:text-indigo-400 text-xs flex items-center gap-1 hover:text-indigo-800 dark:hover:text-indigo-300">
                     <Plus size={14} /> Qo'shish
                   </button>
                 </div>
                 <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
                   {prodForm.processTemps.map((t, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
-                      <input type="text" placeholder="Jarayon (Masalan: Yuvish)" className="flex-1 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={t.processStep} onChange={e => { const newArr = [...prodForm.processTemps]; newArr[idx].processStep = e.target.value; setProdForm(p => ({...p, processTemps: newArr})) }} />
-                      <input type="number" step="0.1" placeholder="°C" className="w-24 bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-xs text-white" value={t.temperatureC} onChange={e => { const newArr = [...prodForm.processTemps]; newArr[idx].temperatureC = e.target.value; setProdForm(p => ({...p, processTemps: newArr})) }} />
-                      <button type="button" onClick={() => setProdForm(p => ({...p, processTemps: p.processTemps.filter((_, i) => i !== idx)}))} className="text-red-400 hover:text-red-300 p-1"><X size={14} /></button>
+                      <input type="text" placeholder="Jarayon (Masalan: Yuvish)" className="flex-1 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white" value={t.processStep} onChange={e => { const newArr = [...prodForm.processTemps]; newArr[idx].processStep = e.target.value; setProdForm(p => ({...p, processTemps: newArr})) }} />
+                      <input type="number" step="0.1" placeholder="°C" className="w-24 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white" value={t.temperatureC} onChange={e => { const newArr = [...prodForm.processTemps]; newArr[idx].temperatureC = e.target.value; setProdForm(p => ({...p, processTemps: newArr})) }} />
+                      <button type="button" onClick={() => setProdForm(p => ({...p, processTemps: p.processTemps.filter((_, i) => i !== idx)}))} className="text-red-500 hover:text-red-700 dark:hover:text-red-300 p-1"><X size={14} /></button>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-indigo-500/10 p-3.5 rounded-2xl border border-indigo-500/20">
-                <p className="text-xs text-indigo-300 flex items-start gap-2 leading-relaxed">
-                  <AlertOctagon size={16} className="mt-0.5 shrink-0 text-indigo-400" />
+              <div className="bg-indigo-50 dark:bg-indigo-500/10 p-3.5 rounded-2xl border border-indigo-200 dark:border-indigo-500/20">
+                <p className="text-xs text-indigo-800 dark:text-indigo-300 flex items-start gap-2 leading-relaxed">
+                  <AlertOctagon size={16} className="mt-0.5 shrink-0 text-indigo-600 dark:text-indigo-400" />
                   <span>{l.fefoInfo}</span>
                 </p>
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-dark-800/50 flex justify-end gap-3 border-t border-dark-800">
-              <button onClick={() => setShowProdModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-dark-700">{l.cancel}</button>
+            <div className="px-6 py-4 bg-slate-50 dark:bg-dark-800/50 flex justify-end gap-3 border-t border-slate-200 dark:border-dark-800">
+              <button onClick={() => setShowProdModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700">{l.cancel}</button>
               <button onClick={handleProduce} disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 flex items-center gap-2 transition-all">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} fill="currentColor" />} {l.start}
               </button>
