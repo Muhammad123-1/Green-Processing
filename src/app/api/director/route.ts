@@ -26,7 +26,12 @@ export async function GET(request: NextRequest) {
     let startDate: Date | undefined
     let endDate: Date = new Date()
 
-    if (period === 'today') {
+    if (from) {
+      startDate = new Date(from + 'T00:00:00')
+      if (to) {
+        endDate = new Date(to + 'T23:59:59.999')
+      }
+    } else if (period === 'today') {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
       endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
     } else if (period === 'week') {
@@ -36,11 +41,6 @@ export async function GET(request: NextRequest) {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0)
     } else if (period === 'year') {
       startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0)
-    } else if (period === 'custom' && from) {
-      startDate = new Date(from + 'T00:00:00')
-      if (to) {
-        endDate = new Date(to + 'T23:59:59.999')
-      }
     }
 
     const toYMD = (d: Date) => {

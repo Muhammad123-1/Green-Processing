@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
@@ -80,6 +80,75 @@ import DefectMaterialsAnalysis from '@/components/director/executive/DefectMater
 import ProductBalanceTable, { ProductBalanceItem } from '@/components/director/executive/ProductBalanceTable'
 import ProductLossDrawer from '@/components/director/executive/ProductLossDrawer'
 
+const getRecentWorkWeeks = (count = 6) => {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const fmt = (d: Date) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
+  const toYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+  const baseDate = new Date()
+  const weeks: Array<{ label: string; from: string; to: string }> = []
+
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(baseDate)
+    d.setDate(baseDate.getDate() - i * 7)
+    const day = d.getDay()
+    const diffToMon = (day === 0 ? -6 : 1) - day
+    const mon = new Date(d)
+    mon.setDate(d.getDate() + diffToMon)
+    const sat = new Date(mon)
+    sat.setDate(mon.getDate() + 5)
+    weeks.push({
+      label: `${fmt(mon)} - ${fmt(sat)}`,
+      from: toYMD(mon),
+      to: toYMD(sat),
+    })
+  }
+  return weeks
+}
+
+const getRecentMonths = () => {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const toYMD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+  const now = new Date()
+  const months: Array<{ labelUz: string; labelRu: string; labelEn: string; from: string; to: string; yearMonth: string }> = []
+
+  const monthNamesUz = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr']
+  const monthNamesRu = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+  const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const y = d.getFullYear()
+    const m = d.getMonth()
+    const lastDay = new Date(y, m + 1, 0)
+    months.push({
+      labelUz: `${monthNamesUz[m]} ${y}`,
+      labelRu: `${monthNamesRu[m]} ${y}`,
+      labelEn: `${monthNamesEn[m]} ${y}`,
+      from: toYMD(d),
+      to: toYMD(lastDay),
+      yearMonth: `${y}-${pad(m + 1)}`,
+    })
+  }
+  return months
+}
+
+const getAvailableYears = () => {
+  return [
+    { label: '2025-yil', year: 2025, from: '2025-01-01', to: '2025-12-31' },
+    { label: '2026-yil', year: 2026, from: '2026-01-01', to: '2026-12-31' },
+  ]
+}
+
+const getTodayDateInfo = () => {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const now = new Date()
+  const toYMD = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  const fmt = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`
+  return { from: toYMD, to: toYMD, label: fmt }
+}
+
 export default function DirectorPage() {
   const { directorLang, setDirectorLang, formatDirector } = useLanguage()
   const formatDual = formatDirector
@@ -89,6 +158,36 @@ export default function DirectorPage() {
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('all')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
+
+  // Sub-interval states
+  const recentWeeks = useMemo(() => getRecentWorkWeeks(6), [])
+  const recentMonths = useMemo(() => getRecentMonths(), [])
+  const availableYears = useMemo(() => getAvailableYears(), [])
+
+  const [selectedWeek, setSelectedWeek] = useState(recentWeeks[recentWeeks.length - 1])
+  const [selectedMonth, setSelectedMonth] = useState(recentMonths[recentMonths.length - 1])
+  const [selectedYear, setSelectedYear] = useState(availableYears[availableYears.length - 1])
+
+  const getEffectiveRange = useCallback(() => {
+    if (period === 'today') {
+      const today = getTodayDateInfo()
+      return { from: today.from, to: today.to, label: today.label }
+    }
+    if (period === 'week') {
+      return { from: selectedWeek?.from || '', to: selectedWeek?.to || '', label: selectedWeek?.label || '' }
+    }
+    if (period === 'month') {
+      const mLabel = directorLang === 'ru' ? selectedMonth?.labelRu : directorLang === 'en' ? selectedMonth?.labelEn : selectedMonth?.labelUz
+      return { from: selectedMonth?.from || '', to: selectedMonth?.to || '', label: mLabel || '' }
+    }
+    if (period === 'year') {
+      return { from: selectedYear?.from || '', to: selectedYear?.to || '', label: selectedYear?.label || '' }
+    }
+    if (period === 'custom') {
+      return { from: customFrom, to: customTo, label: `${customFrom} - ${customTo}` }
+    }
+    return { from: '', to: '', label: formatDual('Barcha davr', 'Все время', 'All time') }
+  }, [period, selectedWeek, selectedMonth, selectedYear, customFrom, customTo, directorLang, formatDual])
 
   // Executive 1-Page Summary Report Modal State
   const [showSummaryReportModal, setShowSummaryReportModal] = useState(false)
@@ -199,22 +298,19 @@ export default function DirectorPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
+      const { from: effFrom, to: effTo } = getEffectiveRange()
       const params = new URLSearchParams({
         period,
         discrepancyThreshold: thresholds.discrepancyThreshold.toString(),
         minYieldThreshold: thresholds.minYieldThreshold.toString(),
         maxRejectThreshold: thresholds.maxRejectThreshold.toString(),
       })
-      if (period === 'custom') {
-        if (customFrom) params.append('from', customFrom)
-        if (customTo) params.append('to', customTo)
-      }
+      if (effFrom) params.append('from', effFrom)
+      if (effTo) params.append('to', effTo)
 
       const execParams = new URLSearchParams()
-      if (period === 'custom') {
-        if (customFrom) execParams.append('dateFrom', customFrom)
-        if (customTo) execParams.append('dateTo', customTo)
-      }
+      if (effFrom) execParams.append('dateFrom', effFrom)
+      if (effTo) execParams.append('dateTo', effTo)
 
       const [res, execRes] = await Promise.all([
         fetch(`/api/director?${params.toString()}`),
@@ -244,7 +340,7 @@ export default function DirectorPage() {
 
   useEffect(() => {
     fetchData()
-  }, [period, customFrom, customTo, thresholds])
+  }, [period, selectedWeek?.from, selectedWeek?.to, selectedMonth?.yearMonth, selectedYear?.year, customFrom, customTo, thresholds])
 
   // Lazy load archive events for director modal
   useEffect(() => {
@@ -1041,6 +1137,15 @@ export default function DirectorPage() {
               </button>
             ))}
           </div>
+
+          <Link
+            href="/director/dynamics"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-black transition-all border border-emerald-300 dark:border-emerald-700 shadow-xs"
+          >
+            <TrendingUp size={15} />
+            <span>{formatDual("Oylik & Haftalik Dinamika", "Динамика и аналитика", "Monthly Dynamics")}</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-emerald-600 text-white text-[9px] font-black uppercase">Drill-down</span>
+          </Link>
 
           <Link
             href="/archive"
@@ -1892,6 +1997,15 @@ export default function DirectorPage() {
           </Link>}
 
           {/* Card 9: General Archive */}
+          <Link
+            href="/director/dynamics"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-black transition-all border border-emerald-300 dark:border-emerald-700 shadow-xs"
+          >
+            <TrendingUp size={15} />
+            <span>{formatDual("Oylik & Haftalik Dinamika", "Динамика и аналитика", "Monthly Dynamics")}</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-emerald-600 text-white text-[9px] font-black uppercase">Drill-down</span>
+          </Link>
+
           <Link
             href="/archive"
             className="group p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
@@ -3225,8 +3339,8 @@ export default function DirectorPage() {
                   {operationsTab === 'prixod' && (
                     <IncomingMaterialsAnalysis
                       items={operationsSummary?.prixod?.items || []}
-                      dateFrom={period === 'custom' ? customFrom : ''}
-                      dateTo={period === 'custom' ? customTo : ''}
+                      dateFrom={getEffectiveRange().from}
+                      dateTo={getEffectiveRange().to}
                       lang={directorLang}
                     />
                   )}

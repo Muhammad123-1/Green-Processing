@@ -12,7 +12,18 @@ import {
   X,
   Scale,
   Boxes,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  Sparkles,
 } from 'lucide-react'
+import {
+  resolveProductMeta,
+  getLocalizedName,
+  getTrilingualInfo,
+  ProductMeta,
+  ProductCategory,
+} from '@/lib/productTaxonomy'
 
 export interface DefectItem {
   id: string
@@ -38,14 +49,27 @@ interface Props {
   lang?: string
 }
 
+export interface DefectProductSummary {
+  canonicalId: string
+  name: string
+  rawNames: Set<string>
+  meta: ProductMeta
+  count: number
+  totalQty: number
+  unit: string
+  category: ProductCategory
+  reasons: Set<string>
+}
+
 export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo = '', lang = 'uz' }: Props) {
   const [fetchedItems, setFetchedItems] = useState<DefectItem[]>([])
   const [loading, setLoading] = useState(false)
-  const [unitFilter, setUnitFilter] = useState<'ALL' | 'kg' | 'dona'>('ALL')
-  const [selectedProduct, setSelectedProduct] = useState<string>('')
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'PRIMARY' | 'SECONDARY' | 'kg' | 'dona'>('ALL')
+  const [selectedCanonicalId, setSelectedCanonicalId] = useState<string>('')
   const [productSearch, setProductSearch] = useState<string>('')
   const [search, setSearch] = useState<string>('')
   const [selectedItem, setSelectedItem] = useState<DefectItem | null>(null)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState<number>(1)
   const pageSize = 20
 
@@ -59,14 +83,13 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
         const p = new URLSearchParams()
         if (dateFrom) p.set('dateFrom', dateFrom)
         if (dateTo) p.set('dateTo', dateTo)
-        p.set('pageSize', '100')
         const res = await fetch(`/api/director/wastage-logs?${p}`, { cache: 'no-store' })
         const json = await res.json()
-        if (!cancelled && json?.items) {
-          const mapped: DefectItem[] = json.items.map((r: any) => ({
+        if (!cancelled && json?.records) {
+          const mapped: DefectItem[] = json.records.map((r: any) => ({
             id: String(r.id),
             type: 'BRAK',
-            defectNumber: r.actNumber,
+            defectNumber: r.incidentNumber || `BRK-${r.id}`,
             productName: r.productName,
             batchNumber: r.batchNumber || '',
             quantityKg: Number(r.weightKg || 0),
@@ -97,76 +120,168 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
   // 1. Separate totals for KG and DONA
   const totalKg = useMemo(() => {
     return effectiveItems
-      .filter((i) => (i.unit || 'kg') === 'kg')
+      .filter((i) => {
+        const meta = resolveProductMeta(i.productName)
+        return meta.unit === 'kg'
+      })
       .reduce((sum, i) => sum + (i.quantityKg || 0), 0)
   }, [effectiveItems])
 
   const totalDona = useMemo(() => {
     return effectiveItems
-      .filter((i) => i.unit === 'dona')
+      .filter((i) => {
+        const meta = resolveProductMeta(i.productName)
+        return meta.unit === 'dona'
+      })
       .reduce((sum, i) => sum + (i.quantityKg || 0), 0)
   }, [effectiveItems])
 
-  // 2. Group items by product for product cards (Image 2 style)
-  const allProductsSummary = useMemo(() => {
+  // 2. Group items by canonical product
+  const allProductsSummary = useMemo<DefectProductSummary[]>(() => {
     const map = new Map<
       string,
-      { name: string; count: number; totalQty: number; unit: string; reasons: Set<string> }
-    >()
-    effectiveItems.forEach((item) => {
-      const name = item.productName || 'Noma’lum mahsulot'
-      const unit = item.unit || 'kg'
-      const existing = map.get(name) || {
-        name,
-        count: 0,
-        totalQty: 0,
-        unit,
-        reasons: new Set<string>(),
+      {
+        canonicalId: string
+        meta: ProductMeta
+        rawNames: Set<string>
+        count: number
+        totalQty: number
+        unit: string
+        category: ProductCategory
+        reasons: Set<string>
       }
+    >()
+
+    effectiveItems.forEach((item) => {
+      const rawName = (item.productName || '').trim()
+      if (!rawName) return
+
+      const meta = resolveProductMeta(rawName)
+      const canonicalId = meta.canonicalId
+      const unit = meta.unit
+
+      let existing = map.get(canonicalId)
+      if (!existing) {
+        existing = {
+          canonicalId,
+          meta,
+          rawNames: new Set<string>(),
+          count: 0,
+          totalQty: 0,
+          unit,
+          category: meta.category,
+          reasons: new Set<string>(),
+        }
+        map.set(canonicalId, existing)
+      }
+
+      existing.rawNames.add(rawName)
       existing.count += 1
       existing.totalQty += item.quantityKg || 0
       if (item.reason) existing.reasons.add(item.reason)
-      map.set(name, existing)
     })
-    return Array.from(map.values()).sort((a, b) => b.totalQty - a.totalQty)
-  }, [effectiveItems])
 
-  // Filter products by unit tab & search
+    const groups: DefectProductSummary[] = Array.from(map.values()).map((g) => {
+      const localizedName = lang === 'ru' ? g.meta.ru : lang === 'en' ? g.meta.en : g.meta.uz
+      return {
+        canonicalId: g.canonicalId,
+        name: localizedName,
+        rawNames: g.rawNames,
+        meta: g.meta,
+        count: g.count,
+        totalQty: g.totalQty,
+        unit: g.unit,
+        category: g.category,
+        reasons: g.reasons,
+      }
+    })
+
+    // Strict Requirement 6: PRIMARY products first, SECONDARY products below!
+    return groups.sort((a, b) => {
+      if (a.category === 'PRIMARY' && b.category !== 'PRIMARY') return -1
+      if (a.category !== 'PRIMARY' && b.category === 'PRIMARY') return 1
+      return b.totalQty - a.totalQty
+    })
+  }, [effectiveItems, lang])
+
+  // Filter products by category tab & search
   const visibleProductsSummary = useMemo(() => {
     let list = allProductsSummary
-    if (unitFilter !== 'ALL') {
-      list = list.filter((p) => p.unit === unitFilter)
+    if (categoryFilter === 'PRIMARY') {
+      list = list.filter((p) => p.category === 'PRIMARY')
+    } else if (categoryFilter === 'SECONDARY') {
+      list = list.filter((p) => p.category === 'SECONDARY')
+    } else if (categoryFilter === 'kg') {
+      list = list.filter((p) => p.unit === 'kg')
+    } else if (categoryFilter === 'dona') {
+      list = list.filter((p) => p.unit === 'dona')
     }
+
     if (productSearch.trim()) {
       const q = productSearch.toLowerCase().trim()
-      list = list.filter((p) => p.name.toLowerCase().includes(q))
+      list = list.filter((p) => {
+        const tri = getTrilingualInfo(p.meta.uz, lang)
+        return (
+          p.name.toLowerCase().includes(q) ||
+          p.meta.uz.toLowerCase().includes(q) ||
+          p.meta.ru.toLowerCase().includes(q) ||
+          p.meta.en.toLowerCase().includes(q) ||
+          tri.secondary.toLowerCase().includes(q)
+        )
+      })
     }
     return list
-  }, [allProductsSummary, unitFilter, productSearch])
+  }, [allProductsSummary, categoryFilter, productSearch, lang])
 
   // Selected product summary stats
   const selectedProductSummary = useMemo(() => {
-    if (!selectedProduct) return null
-    return allProductsSummary.find((p) => p.name === selectedProduct) || null
-  }, [allProductsSummary, selectedProduct])
+    if (!selectedCanonicalId) return null
+    return allProductsSummary.find((p) => p.canonicalId === selectedCanonicalId) || null
+  }, [allProductsSummary, selectedCanonicalId])
 
-  // Filtered records when a product is selected
+  // Filtered records when a product is selected (Chronological Ascending Sort)
   const filteredRecords = useMemo(() => {
-    if (!selectedProduct) return []
-    return effectiveItems.filter((item) => {
-      const matchProduct = item.productName === selectedProduct
-      if (!matchProduct) return false
+    if (!selectedCanonicalId || !selectedProductSummary) return []
+    const rawSet = selectedProductSummary.rawNames
+
+    const matches = effectiveItems.filter((item) => {
+      const rawName = (item.productName || '').trim()
+      if (!rawSet.has(rawName)) return false
       if (!search) return true
       const q = search.toLowerCase()
       return (
-        item.defectNumber?.toLowerCase().includes(q) ||
         item.batchNumber?.toLowerCase().includes(q) ||
+        item.defectNumber?.toLowerCase().includes(q) ||
         item.reason?.toLowerCase().includes(q) ||
         item.responsible?.toLowerCase().includes(q) ||
         item.date?.includes(q)
       )
     })
-  }, [effectiveItems, selectedProduct, search])
+
+    const extractBatchNum = (str?: string) => {
+      const m = (str || '').match(/\b(\d+)\b/)
+      return m ? parseInt(m[1], 10) : 0
+    }
+
+    return matches.sort((a, b) => {
+      const dateA = a.date || ''
+      const dateB = b.date || ''
+      const dateCmp = dateA.localeCompare(dateB)
+
+      const batchA = extractBatchNum(a.batchNumber)
+      const batchB = extractBatchNum(b.batchNumber)
+      const batchCmp = batchA - batchB
+
+      let result = 0
+      if (dateCmp !== 0) {
+        result = dateCmp
+      } else {
+        result = batchCmp !== 0 ? batchCmp : (a.id || '').localeCompare(b.id || '')
+      }
+
+      return sortOrder === 'asc' ? result : -result
+    })
+  }, [effectiveItems, selectedCanonicalId, selectedProductSummary, search, sortOrder])
 
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize))
   const paginatedRecords = useMemo(() => {
@@ -186,12 +301,12 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
 
   return (
     <div className="space-y-4">
-      {/* 1. Top Stats Cards */}
+      {/* 1. Top Stats Cards - Separating KG and DONA */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Card 1: Xomashyo chiqindisi (KG) */}
+        {/* Card 1: Xomashyo braki (KG) */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Отходы сырья (Вес)' : 'Xomashyo chiqindisi (Vazn)'}</span>
+            <span>{lang === 'ru' ? 'Вес брака (Сырье)' : 'Vazn (Xomashyo braki)'}</span>
             <div className="w-6 h-6 rounded-lg bg-rose-500/10 text-rose-600 flex items-center justify-center">
               <Scale size={14} />
             </div>
@@ -200,14 +315,15 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
             {formatKgOnly(totalKg)} kg
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.filter((p) => p.unit === 'kg').length} {lang === 'ru' ? 'вид(ов) сырья' : 'xil xomashyo'}
+            {(totalKg / 1000).toFixed(1)} tn • {allProductsSummary.filter((p) => p.unit === 'kg').length}{' '}
+            {lang === 'ru' ? 'видов сырья' : 'xil xomashyo'}
           </p>
         </div>
 
         {/* Card 2: Qadoq braki (DONA) */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Брак упаковки (Шт)' : 'Qadoq braki (Sanoq)'}</span>
+            <span>{lang === 'ru' ? 'Штучный брак (Тара)' : 'Dona (Tara va qadoq)'}</span>
             <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center">
               <Boxes size={14} />
             </div>
@@ -216,14 +332,15 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
             {Math.round(totalDona).toLocaleString('uz-UZ')} dona
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.filter((p) => p.unit === 'dona').length} {lang === 'ru' ? 'вид(ов) тары' : 'xil qadoq braki'}
+            {allProductsSummary.filter((p) => p.unit === 'dona').length}{' '}
+            {lang === 'ru' ? 'видов упаковки' : 'xil qadoq va tara'}
           </p>
         </div>
 
-        {/* Card 3: Brak aktlari */}
+        {/* Card 3: Brak dalolatnomalari soni */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Акты брака' : 'Brak holatlari'}</span>
+            <span>{lang === 'ru' ? 'Акты брака' : 'Brak dalolatnomalari'}</span>
             <div className="w-6 h-6 rounded-lg bg-rose-500/10 text-rose-600 flex items-center justify-center">
               <FileText size={14} />
             </div>
@@ -232,47 +349,47 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
             {effectiveItems.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'актов' : 'ta'}
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.length} {lang === 'ru' ? 'наименований' : 'ta mahsulot turi'}
+            {allProductsSummary.length} {lang === 'ru' ? 'уникальных позиций' : 'unikal pozitsiya (birlashtirilgan)'}
           </p>
         </div>
 
-        {/* Card 4: Nazorat holati */}
+        {/* Card 4: Asosiy sabab */}
         <div className="p-3.5 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-500">
-            <span>{lang === 'ru' ? 'Статус контроля' : 'Nazorat holati'}</span>
-            <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+            <span>{lang === 'ru' ? 'Контроль брака' : 'Brak nazorati'}</span>
+            <div className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
               <ShieldAlert size={14} />
             </div>
           </div>
-          <div className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400">
-            100% {lang === 'ru' ? 'Учтено' : 'Hisoblangan'}
+          <div className="mt-2 text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
+            100%
           </div>
           <p className="mt-0.5 text-[11px] text-slate-400 font-medium truncate">
-            Aktlar va jurnallar bilan bog‘langan
+            Qabul, Sex va Ombor nazorati
           </p>
         </div>
       </div>
 
-      {/* 2. Unit Filter Toolbar: Barchasi / Faqat KG / Faqat DONA */}
+      {/* 2. Filter Toolbar */}
       <div className="p-3 rounded-2xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-2 flex-wrap">
-          {selectedProduct ? (
+          {selectedCanonicalId ? (
             <button
               onClick={() => {
-                setSelectedProduct('')
+                setSelectedCanonicalId('')
                 setSearch('')
                 setPage(1)
               }}
               className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition-colors flex items-center gap-1.5 shadow-xs"
             >
-              ← {lang === 'ru' ? 'Все позиции брака' : 'Barcha brak mahsulotlar'}
+              &larr; {lang === 'ru' ? 'Все продукты' : 'Barcha mahsulotlar'}
             </button>
           ) : (
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-dark-800 rounded-xl">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-dark-800 rounded-xl flex-wrap">
               <button
-                onClick={() => setUnitFilter('ALL')}
+                onClick={() => setCategoryFilter('ALL')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  unitFilter === 'ALL'
+                  categoryFilter === 'ALL'
                     ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
@@ -280,132 +397,229 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
                 {lang === 'ru' ? 'Все позиции' : 'Barchasi'} ({allProductsSummary.length})
               </button>
               <button
-                onClick={() => setUnitFilter('kg')}
+                onClick={() => setCategoryFilter('PRIMARY')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  unitFilter === 'kg'
-                    ? 'bg-rose-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-rose-600'
+                  categoryFilter === 'PRIMARY'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600'
                 }`}
               >
-                <Scale size={13} />
-                <span>{lang === 'ru' ? 'Сырье' : "Xomashyo"}</span>
+                <Sparkles size={13} />
+                <span>{lang === 'ru' ? 'Основное сырье' : 'Asosiy xomashyo'}</span>
                 <span className="opacity-80 text-[11px]">
-                  ({allProductsSummary.filter((p) => p.unit === 'kg').length})
+                  ({allProductsSummary.filter((p) => p.category === 'PRIMARY').length})
                 </span>
               </button>
               <button
-                onClick={() => setUnitFilter('dona')}
+                onClick={() => setCategoryFilter('SECONDARY')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  unitFilter === 'dona'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-purple-600'
+                  categoryFilter === 'SECONDARY'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600'
                 }`}
               >
                 <Boxes size={13} />
-                <span>{lang === 'ru' ? 'Упаковка' : "Qadoq / Idish"}</span>
+                <span>{lang === 'ru' ? 'Вторичные материалы / тара' : 'Ikkilamchi vositalar'}</span>
                 <span className="opacity-80 text-[11px]">
-                  ({allProductsSummary.filter((p) => p.unit === 'dona').length})
+                  ({allProductsSummary.filter((p) => p.category === 'SECONDARY').length})
                 </span>
+              </button>
+              <button
+                onClick={() => setCategoryFilter('kg')}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                  categoryFilter === 'kg'
+                    ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Scale size={12} />
+                <span>kg</span>
+              </button>
+              <button
+                onClick={() => setCategoryFilter('dona')}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                  categoryFilter === 'dona'
+                    ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Boxes size={12} />
+                <span>dona</span>
               </button>
             </div>
           )}
 
-          {selectedProduct && (
-            <span className="text-xs font-black text-slate-900 dark:text-white px-2">
-              {selectedProduct}
-            </span>
+          {selectedProductSummary && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black text-slate-900 dark:text-white px-2">
+                {selectedProductSummary.name}
+              </span>
+              <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+                ({getTrilingualInfo(selectedProductSummary.meta.uz, lang).secondary})
+              </span>
+            </div>
           )}
         </div>
 
-        {selectedProduct && (
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder={lang === 'ru' ? 'Поиск по номеру / причине...' : 'Raqam / sabab bo‘yicha qidirish...'}
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 w-56"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* 3. Product Cards Grid - Old style divided grid (4 per row), product name only */}
-      {!selectedProduct ? (
-        <div className="rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 overflow-hidden shadow-2xs">
-          <div className="p-4 border-b border-slate-100 dark:border-dark-800 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-black text-slate-900 dark:text-white text-sm">
-                {unitFilter === 'kg'
-                  ? lang === 'ru' ? 'Отходы и потери сырья' : 'Xomashyo va sabzavotlar chiqindisi'
-                  : unitFilter === 'dona'
-                  ? lang === 'ru' ? 'Брак упаковочных материалов' : 'Yaroqsiz qadoq va idishlar braki'
-                  : lang === 'ru' ? 'Все позиции брака и отходов' : 'Barcha chiqindi va brak mahsulotlar'}
-              </h3>
-              <span className="text-xs text-slate-400 font-medium">
-                {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta mahsulot'}
-              </span>
-            </div>
+        {selectedCanonicalId ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-700 transition-colors shadow-2xs"
+            >
+              {sortOrder === 'asc' ? (
+                <>
+                  <ArrowUp size={14} className="text-emerald-600" />
+                  <span>{lang === 'ru' ? 'По возрастанию (ранние)' : 'Kichikdan yuqoriga ↑'}</span>
+                </>
+              ) : (
+                <>
+                  <ArrowDown size={14} className="text-blue-600" />
+                  <span>{lang === 'ru' ? 'По убыванию (новые)' : 'Kattadan kichikka ↓'}</span>
+                </>
+              )}
+            </button>
 
             <div className="relative">
               <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
               <input
                 type="text"
-                placeholder={lang === 'ru' ? 'Поиск продукта...' : 'Mahsulotni qidirish...'}
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 w-48 sm:w-60"
+                placeholder={lang === 'ru' ? 'Поиск по партии / причине...' : 'Partiya / sabab bo‘yicha qidirish...'}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 w-52 sm:w-60"
               />
             </div>
           </div>
+        ) : (
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder={lang === 'ru' ? 'Поиск продукта (UZ / RU / EN)...' : 'Mahsulotni qidirish (UZ / RU / EN)...'}
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 w-48 sm:w-64"
+            />
+          </div>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-x divide-y divide-slate-100 dark:divide-dark-800">
-            {visibleProductsSummary.map((row) => (
-              <button
-                key={row.name}
-                onClick={() => {
-                  setSelectedProduct(row.name)
-                  setSearch('')
-                  setPage(1)
-                }}
-                className="p-5 text-left hover:bg-rose-50/50 dark:hover:bg-dark-800 transition-colors group flex flex-col justify-between min-h-[92px]"
-              >
-                <b className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors line-clamp-2">
-                  {row.name}
-                </b>
-                <div className="mt-3 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
-                  <span className="text-[11px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                    {lang === 'ru' ? 'Подробнее' : 'Batafsil'}
-                  </span>
-                  <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform ml-auto" />
-                </div>
-              </button>
-            ))}
+      {/* 3. Product Cards Grid */}
+      {!selectedCanonicalId ? (
+        <div className="rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 overflow-hidden shadow-2xs">
+          <div className="p-4 border-b border-slate-100 dark:border-dark-800 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-black text-slate-900 dark:text-white text-sm flex items-center gap-2">
+                <span>
+                  {categoryFilter === 'PRIMARY'
+                    ? lang === 'ru' ? 'Основное сырье и овощи (Брак)' : 'Asosiy xomashyo va sabzavotlar braki'
+                    : categoryFilter === 'SECONDARY'
+                    ? lang === 'ru' ? 'Вторичные материалы и тара (Брак)' : 'Ikkilamchi vositalar va taralar braki'
+                    : lang === 'ru' ? 'Все забракованные материалы (Унифицированные)' : 'Brak qayd etilgan barcha mahsulotlar'}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
+                  {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta mahsulot'}
+                </span>
+              </h3>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 divide-x divide-y divide-slate-100 dark:divide-dark-800">
+            {visibleProductsSummary.map((row) => {
+              const tri = getTrilingualInfo(row.meta.uz, lang)
+              const isPrimary = row.category === 'PRIMARY'
+
+              return (
+                <button
+                  key={row.canonicalId}
+                  onClick={() => {
+                    setSelectedCanonicalId(row.canonicalId)
+                    setSearch('')
+                    setPage(1)
+                  }}
+                  className="p-4 sm:p-5 text-left hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-colors group flex flex-col justify-between min-h-[125px] relative"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span
+                        className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md flex items-center gap-1 ${
+                          isPrimary
+                            ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60'
+                            : 'bg-slate-100 dark:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700'
+                        }`}
+                      >
+                        {isPrimary && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>}
+                        {tri.categoryLabel}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-slate-400">
+                        {row.unit}
+                      </span>
+                    </div>
+
+                    <b className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors line-clamp-1 block">
+                      {row.name}
+                    </b>
+
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                      {tri.secondary}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-mono font-black text-rose-600 dark:text-rose-400">
+                        {formatQty(row.totalQty, row.unit)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 ml-1.5">
+                        ({row.count} ta akt)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                      <span className="text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity mr-1">
+                        {lang === 'ru' ? 'Подробнее' : 'Batafsil'}
+                      </span>
+                      <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
           {!visibleProductsSummary.length && (
             <div className="p-12 text-center text-sm text-slate-400">
-              {lang === 'ru' ? 'Данные брака не найдены.' : 'Brak ma’lumotlari topilmadi.'}
+              {loading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <span>Brak ma’lumotlari yuklanmoqda...</span>
+                </div>
+              ) : lang === 'ru' ? (
+                'Данные брака не найдены.'
+              ) : (
+                'Brak ma’lumotlari topilmadi.'
+              )}
             </div>
           )}
         </div>
       ) : (
-        /* 4. Inside Product: Numbers & Filtered Records Table */
+        /* 4. Inside Product: Filtered Records Table */
         <div className="space-y-3">
-          {/* Product KPI Statistics (Mahsulot ichiga kirganda raqamlar ko'rsatiladi) */}
           <div className="p-4 rounded-3xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-dark-800 pb-3">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
-                  {lang === 'ru' ? 'Отчет по браку продукта' : 'Mahsulot braki va chiqindisi hisoboti'}
+                  {lang === 'ru' ? 'Брак по выбранному продукту' : 'Tanlangan mahsulot braki'}
                 </span>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
-                  {selectedProduct}
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+                  {selectedProductSummary?.name}
                 </h2>
+                <p className="text-xs text-slate-400 font-medium">
+                  {getTrilingualInfo(selectedProductSummary?.meta.uz, lang).secondary}
+                </p>
               </div>
               <span
                 className={`text-xs font-black uppercase px-2.5 py-1 rounded-xl ${
@@ -414,235 +628,195 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
                     : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
                 }`}
               >
-                {selectedProductSummary?.unit === 'dona' ? 'DONA (Sanoq)' : 'KG (Vazn)'}
+                {selectedProductSummary?.unit === 'dona' ? (lang === 'ru' ? 'ШТ' : 'DONA') : (lang === 'ru' ? 'ВЕС' : 'VAZN')}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  {lang === 'ru' ? 'Общий брак / отход' : 'Jami chiqindi miqdori'}
+                  {lang === 'ru' ? 'Общий объем брака' : 'Jami brak miqdori'}
                 </span>
                 <div className="mt-1 text-lg sm:text-xl font-black font-mono text-rose-600 dark:text-rose-400">
                   {formatQty(selectedProductSummary?.totalQty || 0, selectedProductSummary?.unit)}
                 </div>
-                {selectedProductSummary?.unit === 'kg' && (
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    {((selectedProductSummary?.totalQty || 0) / 1000).toFixed(2)} tn
-                  </span>
-                )}
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  {lang === 'ru' ? 'Актов брака' : 'Brak aktlari soni'}
+                  {lang === 'ru' ? 'Количество актов' : 'Dalolatnomalar soni'}
                 </span>
                 <div className="mt-1 text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white">
-                  {selectedProductSummary?.count || 0} ta akt
+                  {selectedProductSummary?.count || 0} ta
                 </div>
-                <span className="text-[10px] text-slate-400 font-medium">
-                  {lang === 'ru' ? 'Зафиксировано' : 'Qayd etilgan'}
-                </span>
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  {lang === 'ru' ? 'Средний брак' : 'O‘rtacha bitta akt'}
+                  {lang === 'ru' ? 'Причины брака' : 'Brak sabablari'}
                 </span>
                 <div className="mt-1 text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white">
-                  {formatQty(
-                    selectedProductSummary?.count
-                      ? selectedProductSummary.totalQty / selectedProductSummary.count
-                      : 0,
-                    selectedProductSummary?.unit
-                  )}
-                </div>
-                <span className="text-[10px] text-slate-400 font-medium">
-                  {lang === 'ru' ? 'На один акт' : 'Har bir dalolatnomaga'}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-200/70 dark:border-dark-700/70">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                  {lang === 'ru' ? 'Причины' : 'Asosiy sabablar'}
-                </span>
-                <div className="mt-1 text-lg sm:text-xl font-black font-mono text-rose-600 dark:text-rose-400">
                   {selectedProductSummary?.reasons.size || 0} xil
                 </div>
-                <span className="text-[10px] text-slate-400 font-medium truncate block">
-                  {selectedProductSummary?.reasons.size
-                    ? Array.from(selectedProductSummary.reasons).slice(0, 2).join(', ')
-                    : 'Texnologik chiqindi'}
-                </span>
               </div>
             </div>
           </div>
 
-          {/* Filtered Records Table for Selected Product */}
           <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-dark-750 bg-white dark:bg-dark-900 shadow-2xs">
-          <table className="w-full min-w-[760px] text-left text-xs">
-            <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
-              <tr>
-                <th className="p-3.5">{lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Наименование' : 'Nomi'}</th>
-                <th className="p-3.5 text-right">{lang === 'ru' ? 'Количество' : 'Chiqindi miqdori'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Причина' : 'Sabab / izoh'}</th>
-                <th className="p-3.5">{lang === 'ru' ? 'Ответственный' : 'Mas’ul shaxs'}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
-              {paginatedRecords.map((item, idx) => (
-                <tr
-                  key={item.id || idx}
-                  onClick={() => setSelectedItem(item)}
-                  className="cursor-pointer hover:bg-rose-50/50 dark:hover:bg-dark-800 transition-colors"
-                >
-                  <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">
-                    {(() => {
-                      const bNum = item.batchNumber || item.defectNumber
-                      if (!bNum || bNum === '-' || bNum === 'YOZILMAGAN' || bNum.toUpperCase().includes('PAR-') || bNum.toUpperCase().startsWith('AKT-')) {
-                        return (
-                          <span className="text-slate-400 dark:text-slate-500 font-medium text-xs">
-                            {lang === 'ru' ? 'Партия не указана' : 'Partiya yozilmagan'}
-                          </span>
-                        )
-                      }
-                      return bNum.toLowerCase().startsWith('partiya') ? bNum : `Partiya #${bNum}`
-                    })()}
-                    <span className="block mt-0.5 text-[10px] font-normal text-slate-400">
-                      {item.date}
-                    </span>
-                  </td>
-                  <td className="p-3 font-bold text-slate-800 dark:text-slate-200">
-                    {item.productName}
-                  </td>
-                  <td className="p-3 text-right font-mono font-black text-rose-600 dark:text-rose-400">
-                    {formatQty(item.quantityKg, item.unit)}
-                  </td>
-                  <td className="p-3 text-slate-600 dark:text-slate-300 truncate max-w-xs">
-                    {item.reason || 'Texnologik chiqindi'}
-                  </td>
-                  <td className="p-3 text-slate-600 dark:text-slate-300">
-                    {item.responsible || 'Sex texnologi'}
-                  </td>
+            <table className="w-full min-w-[760px] text-left text-xs">
+              <thead className="bg-slate-100/80 dark:bg-dark-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th
+                    className="p-3.5 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
+                    onClick={() => setSortOrder((p) => (p === 'asc' ? 'desc' : 'asc'))}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>{lang === 'ru' ? 'Дата' : 'Sana'}</span>
+                      <ArrowUpDown size={12} />
+                    </div>
+                  </th>
+                  <th className="p-3.5">{lang === 'ru' ? 'Наименование' : 'Nomi'}</th>
+                  <th className="p-3.5">{lang === 'ru' ? 'Причина' : 'Sabab'}</th>
+                  <th className="p-3.5 text-right">{lang === 'ru' ? 'Количество / Вес' : 'Miqdor / Vazn'}</th>
+                  <th className="p-3.5">{lang === 'ru' ? 'Ответственный' : "Mas'ul"}</th>
+                  <th className="p-3.5">{lang === 'ru' ? 'Номер партии / Акт' : 'Partiya / Akt'}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+                {paginatedRecords.map((item) => (
+                  <tr
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    className="hover:bg-rose-50/50 dark:hover:bg-dark-800/60 cursor-pointer transition-colors"
+                  >
+                    <td className="p-3.5 font-mono text-slate-900 dark:text-white">
+                      <span className="font-bold">{item.date}</span>
+                    </td>
+                    <td className="p-3.5 font-bold text-slate-900 dark:text-white">
+                      <div>
+                        <span>{getLocalizedName(item.productName, lang)}</span>
+                        {item.productName !== getLocalizedName(item.productName, lang) && (
+                          <span className="text-[10px] text-slate-400 block font-normal">
+                            {item.productName}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3.5 text-rose-600 dark:text-rose-400 font-medium">
+                      <span>{item.reason || 'Sifat chetlanishi'}</span>
+                    </td>
+                    <td className="p-3.5 text-right font-mono font-bold text-rose-600 dark:text-rose-400">
+                      {formatQty(item.quantityKg, item.unit)}
+                    </td>
+                    <td className="p-3.5 text-slate-500 font-medium">
+                      {item.responsible || 'Sifat nazorati'}
+                    </td>
+                    <td className="p-3.5 font-mono font-bold text-slate-700 dark:text-slate-300">
+                      {item.defectNumber || item.batchNumber || '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          {!filteredRecords.length && (
-            <div className="p-12 text-center text-sm text-slate-400">
-              {lang === 'ru' ? 'Позиции не найдены.' : 'Brak yozuvlari topilmadi.'}
-            </div>
-          )}
+            {!paginatedRecords.length && (
+              <div className="p-12 text-center text-sm text-slate-400">
+                {lang === 'ru' ? 'Записи брака не найдены.' : 'Brak yozuvlari topilmadi.'}
+              </div>
+            )}
 
-          {/* Pagination */}
-          <div className="p-3 border-t border-slate-200 dark:border-dark-750 flex justify-between items-center text-xs">
-            <span className="text-slate-500 font-medium">
-              {filteredRecords.length} {lang === 'ru' ? 'записей' : 'ta yozuv'}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-dark-800"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="px-2 font-bold text-slate-700 dark:text-slate-300">
-                {page} / {totalPages}
+            <div className="p-3.5 border-t border-slate-100 dark:border-dark-800 flex items-center justify-between text-xs text-slate-500">
+              <span>
+                {lang === 'ru' ? 'Всего:' : 'Jami:'}{' '}
+                <b className="text-slate-900 dark:text-white font-mono">{filteredRecords.length}</b>{' '}
+                {lang === 'ru' ? 'записей' : 'ta yozuv'}
               </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-dark-800"
-              >
-                <ChevronRight size={16} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-dark-800"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="px-2 font-mono font-bold text-slate-700 dark:text-slate-300">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-dark-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-dark-800"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
 
-      {/* 5. Detail Modal / Drawer */}
+      {/* 5. Detail Drawer Modal */}
       {selectedItem && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 p-4 flex justify-end"
+          className="fixed inset-0 z-50 bg-black/60 p-4 flex justify-end backdrop-blur-sm"
           onClick={() => setSelectedItem(null)}
         >
           <aside
-            className="w-full max-w-xl h-full overflow-y-auto bg-white dark:bg-dark-900 p-6 shadow-2xl rounded-l-3xl border-l border-slate-200 dark:border-dark-700"
+            className="w-full max-w-xl h-full overflow-y-auto bg-white dark:bg-dark-900 p-5 shadow-2xl rounded-l-3xl border-l border-slate-200 dark:border-dark-750"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-dark-800 pb-4">
+            <div className="flex justify-between items-center border-b pb-3 border-slate-200 dark:border-dark-750">
               <div>
-                <p className="text-[11px] font-black text-rose-600 uppercase tracking-wider">
-                  {lang === 'ru' ? 'АКТ БРАКА / ОТХОДОВ' : 'BRAK VA CHIQINDI DALOLATNOMASI'}
+                <p className="text-[11px] font-black tracking-wider text-rose-600 uppercase">
+                  {lang === 'ru' ? 'Акт брака' : 'Brak dalolatnomasi'}
                 </p>
-                <h3 className="font-mono font-black text-slate-900 dark:text-white text-base">
-                  {selectedItem.defectNumber || selectedItem.batchNumber}
+                <h3 className="font-mono font-black text-xl text-slate-900 dark:text-white">
+                  {selectedItem.defectNumber || selectedItem.batchNumber || 'BRAK'}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedItem(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-dark-800"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 py-5 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
-                <span className="block text-[10px] text-slate-400 font-bold uppercase">
-                  {lang === 'ru' ? 'Наименование' : 'Mahsulot nomi'}
-                </span>
-                <span className="font-bold text-slate-900 dark:text-white text-sm mt-0.5 block">
-                  {selectedItem.productName}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
-                <span className="block text-[10px] text-slate-400 font-bold uppercase">
-                  {lang === 'ru' ? 'Объем потерь' : 'Yo‘qotish miqdori'}
-                </span>
-                <span className="font-mono font-black text-rose-600 dark:text-rose-400 text-sm mt-0.5 block">
-                  {formatQty(selectedItem.quantityKg, selectedItem.unit)}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
-                <span className="block text-[10px] text-slate-400 font-bold uppercase">
-                  {lang === 'ru' ? 'Ответственный' : 'Mas’ul shaxs'}
-                </span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                  {selectedItem.responsible || 'Sex texnologi'}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800/60 border border-slate-100 dark:border-dark-700">
-                <span className="block text-[10px] text-slate-400 font-bold uppercase">
-                  {lang === 'ru' ? 'Дата регистрации' : 'Qayd etilgan sana'}
-                </span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                  {selectedItem.date}
-                </span>
-              </div>
+            <div className="grid grid-cols-2 gap-4 py-4 text-xs">
+              <Detail
+                label={lang === 'ru' ? 'Продукт' : 'Mahsulot'}
+                value={`${getLocalizedName(selectedItem.productName, lang)} (${selectedItem.productName})`}
+              />
+              <Detail label={lang === 'ru' ? 'Дата' : 'Sana'} value={selectedItem.date} />
+              <Detail
+                label={lang === 'ru' ? 'Причина' : 'Sabab'}
+                value={selectedItem.reason || 'Sifat chetlanishi'}
+              />
+              <Detail
+                label={lang === 'ru' ? 'Количество / Вес' : 'Miqdori / Vazni'}
+                value={formatQty(selectedItem.quantityKg, selectedItem.unit)}
+              />
+              <Detail
+                label={lang === 'ru' ? 'Ответственный' : "Mas'ul"}
+                value={selectedItem.responsible || 'Sifat nazorati'}
+              />
+              <Detail
+                label={lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}
+                value={selectedItem.batchNumber || '—'}
+              />
             </div>
-
-            {selectedItem.reason && (
-              <section className="p-4 rounded-2xl bg-rose-50/60 dark:bg-dark-800 border border-rose-200 dark:border-rose-900/40 text-xs mt-2">
-                <b className="text-rose-700 dark:text-rose-300 block mb-1">
-                  {lang === 'ru' ? 'Причина брака / отходов:' : 'Chiqindi / brak sababi:'}
-                </b>
-                <p className="text-slate-700 dark:text-slate-300 font-medium">
-                  {selectedItem.reason}
-                </p>
-              </section>
-            )}
           </aside>
         </div>
       )}
+    </div>
+  )
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="block text-[10px] text-slate-400 font-semibold">{label}</span>
+      <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">{value}</span>
     </div>
   )
 }
