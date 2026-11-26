@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { detectItemUnit } from '@/lib/units'
 import { getDayReport, hasReportData, PERCENT_COLS, PERCENT_ROWS } from '@/lib/shopReport'
+import { resolveProductMeta, ProductMeta } from '@/lib/productTaxonomy'
 
 export async function GET(request: NextRequest) {
   try {
@@ -874,44 +875,51 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const allMaterialNames = new Set<string>([...productInMap.keys(), ...productOutMap.keys()])
-    let sufficientCount = 0
-    let lowStockCount = 0
-    let outOfStockCount = 0
-    let excessStockCount = 0
-    let totalStockRemainingKg = 0
-    const globalOperationalDays = operationalDaysSet.size
+    // Canonical Grouping of all inventory products using ProductTaxonomy engine
+    // Deduplicates raw items (e.g. Пакеты 30х35, пакеты 30х35, karobka, гофра каробка, Огурцы, Огурцы свежие)
+    interface CanonicalStockAcc {
+      canonicalId: string
+      nameUz: string
+      nameRu: string
+      nameEn: string
+      category: 'PRIMARY' | 'SECONDARY'
+      unit: 'kg' | 'dona'
+      subCategory: string
+      isNonPerishable: boolean
+      rawNames: Set<string>
+      inQty: number
+      outQty: number
+      recordedEndSum?: number
+      hasRecordedEnd: boolean
+      activeDaysSet: Set<string>
+      approvedMaxStorageDays: number | null
+      minStock: number | null
+      maxRecommendedStockKg: number | null
+    }
 
-    const productStockDetails = Array.from(allMaterialNames)
-      .filter((name) => {
-        const raw = name.trim()
-        if (!raw || /^[\s?\uFFFD\-_.]+$/.test(raw) || raw.replace(/[\uFFFD\s?\-_.]/g, '').length < 2) return false
-        return true
-      })
-      .map((name, idx) => {
-        const inKg = productInMap.get(name) || 0
-        const outKg = productOutMap.get(name) || 0
-        const recordedEnd = recordedClosingByProduct.get(name)
-        const currentStock =
-          recordedEnd !== undefined ? Math.round(recordedEnd * 10) / 10 : Math.max(0, Math.round((inKg - outKg) * 10) / 10)
-        totalStockRemainingKg += currentStock
+    const canonicalMap = new Map<string, CanonicalStockAcc>()
+    const allRawMaterialNames = new Set<string>([
+      ...productInMap.keys(),
+      ...productOutMap.keys(),
+      ...recordedClosingByProduct.keys()
+    ])
 
-        const cfg = productConfigMap.get(name.toLowerCase())
-        const sLower = name.toLowerCase()
+    allRawMaterialNames.forEach((raw) => {
+      const trimmed = raw.trim()
+      if (!trimmed || /^[\s?\uFFFD\-_.]+$/.test(trimmed) || trimmed.replace(/[\uFFFD\s?\-_.]/g, '').length < 2) return
 
-        const isNonPerishable =
-          cfg?.unit === 'dona' ||
-          /коробк|каробк|пакет|этикет|шапка|перчатк|бахил|халат|маск|салфетк|полотенц|бумаг|мусир|стрич|вода|хлор|уксус|кислот|сорбат|бензоат|соль|туз|divosan|suma/i.test(sLower)
-        const unit = isNonPerishable
-          ? (sLower.includes('вода') ? 'litr' : /suma|хлор|уксус|кислот|сорбат|бензоат/i.test(sLower) ? 'kg' : 'dona')
-          : (cfg?.unit || 'kg')
+      const meta = resolveProductMeta(trimmed)
+      const canonicalId = meta.canonicalId
 
-        let approvedMaxStorageDays = cfg?.maxStorageDays ?? cfg?.shelfLifeDays ?? null
-        if (approvedMaxStorageDays === null && !isNonPerishable) {
-          if (sLower.includes('айсберг') || sLower.includes('ayzberg') || sLower.includes('aysberg')) approvedMaxStorageDays = 21
-          else if (sLower.includes('томат') || sLower.includes('tomat') || sLower.includes('помидор')) approvedMaxStorageDays = 10
-          else if (sLower.includes('лимон') || sLower.includes('limon')) approvedMaxStorageDays = 10
-          else if (sLower.includes('сельдер') || sLower.includes('seldre')) approvedMaxStorageDays = 3
+      if (!canonicalMap.has(canonicalId)) {
+        const isNonPerishable = meta.category === 'SECONDARY'
+        let approvedMaxStorageDays: number | null = null
+        if (!isNonPerishable) {
+          const sLower = meta.ru.toLowerCase()
+          if (sLower.includes('айсберг') || sLower.includes('aysberg')) approvedMaxStorageDays = 21
+          else if (sLower.includes('томат') || sLower.includes('pomidor')) approvedMaxStorageDays = 10
+          else if (sLower.includes('лимон')) approvedMaxStorageDays = 10
+          else if (sLower.includes('сельдер')) approvedMaxStorageDays = 3
           else if (sLower.includes('капуст')) approvedMaxStorageDays = 30
           else if (sLower.includes('лук')) approvedMaxStorageDays = 25
           else if (sLower.includes('морков')) approvedMaxStorageDays = 30
@@ -920,20 +928,95 @@ export async function GET(request: NextRequest) {
           else if (sLower.includes('руккол')) approvedMaxStorageDays = 5
           else if (sLower.includes('lollo') || sLower.includes('лолло')) approvedMaxStorageDays = 7
           else if (sLower.includes('мят')) approvedMaxStorageDays = 5
+          else approvedMaxStorageDays = 30
         }
-        const minStock = cfg?.minStockLevel && cfg.minStockLevel > 0 ? cfg.minStockLevel : null
 
-        const activeDays = productDaysMap.get(name)?.size || globalOperationalDays
+        canonicalMap.set(canonicalId, {
+          canonicalId,
+          nameUz: meta.uz,
+          nameRu: meta.ru,
+          nameEn: meta.en,
+          category: meta.category,
+          unit: meta.unit,
+          subCategory: meta.subCategory,
+          isNonPerishable,
+          rawNames: new Set([trimmed]),
+          inQty: 0,
+          outQty: 0,
+          recordedEndSum: undefined,
+          hasRecordedEnd: false,
+          activeDaysSet: new Set(),
+          approvedMaxStorageDays,
+          minStock: null,
+          maxRecommendedStockKg: null,
+        })
+      }
+
+      const acc = canonicalMap.get(canonicalId)!
+      acc.rawNames.add(trimmed)
+      acc.inQty += (productInMap.get(trimmed) || 0)
+      acc.outQty += (productOutMap.get(trimmed) || 0)
+
+      const rec = recordedClosingByProduct.get(trimmed)
+      if (rec !== undefined) {
+        acc.hasRecordedEnd = true
+        acc.recordedEndSum = (acc.recordedEndSum || 0) + rec
+      }
+
+      const days = productDaysMap.get(trimmed)
+      if (days) {
+        days.forEach(d => acc.activeDaysSet.add(d))
+      }
+
+      const cfg = productConfigMap.get(trimmed.toLowerCase())
+      if (cfg) {
+        if (cfg.maxStorageDays !== undefined || cfg.shelfLifeDays !== undefined) {
+          acc.approvedMaxStorageDays = cfg.maxStorageDays ?? cfg.shelfLifeDays ?? acc.approvedMaxStorageDays
+        }
+        if (cfg.minStockLevel && cfg.minStockLevel > 0) {
+          acc.minStock = cfg.minStockLevel
+        }
+        if (cfg.maxRecommendedStock && cfg.maxRecommendedStock > 0) {
+          acc.maxRecommendedStockKg = cfg.maxRecommendedStock
+        }
+      }
+    })
+
+    let sufficientCount = 0
+    let lowStockCount = 0
+    let outOfStockCount = 0
+    let excessStockCount = 0
+    let totalStockRemainingKg = 0
+    let totalStockRemainingDona = 0
+    const globalOperationalDays = operationalDaysSet.size
+
+    const productStockDetails = Array.from(canonicalMap.values())
+      .map((acc, idx) => {
+        const inQty = acc.inQty
+        const outQty = acc.outQty
+        const currentStock =
+          acc.hasRecordedEnd && acc.recordedEndSum !== undefined
+            ? Math.round(acc.recordedEndSum * 10) / 10
+            : Math.max(0, Math.round((inQty - outQty) * 10) / 10)
+
+        // STRICT SEGREGATION: only count kg in totalStockRemainingKg!
+        if (acc.unit === 'kg') {
+          totalStockRemainingKg += currentStock
+        } else {
+          totalStockRemainingDona += Math.round(currentStock)
+        }
+
+        const activeDays = acc.activeDaysSet.size || globalOperationalDays
         // Formula A: Average Daily & Weekly Consumption
-        const avgDailyConsumptionKg = activeDays > 0 && outKg > 0 ? Number((outKg / activeDays).toFixed(2)) : null
+        const avgDailyConsumptionKg = activeDays > 0 && outQty > 0 ? Number((outQty / activeDays).toFixed(2)) : null
         const avgWeeklyConsumptionKg = avgDailyConsumptionKg !== null ? Number((avgDailyConsumptionKg * 7).toFixed(2)) : null
 
         // Formula B: Maximum Recommended Inventory
         const maxRecommendedStockKg =
-          cfg?.maxRecommendedStock && cfg.maxRecommendedStock > 0
-            ? cfg.maxRecommendedStock
-            : avgDailyConsumptionKg !== null && approvedMaxStorageDays !== null
-              ? Number((avgDailyConsumptionKg * approvedMaxStorageDays).toFixed(1))
+          acc.maxRecommendedStockKg !== null
+            ? acc.maxRecommendedStockKg
+            : avgDailyConsumptionKg !== null && acc.approvedMaxStorageDays !== null
+              ? Number((avgDailyConsumptionKg * acc.approvedMaxStorageDays).toFixed(1))
               : null
 
         // Formula C & D: Stock Coverage (days & weeks)
@@ -946,9 +1029,8 @@ export async function GET(request: NextRequest) {
             ? Number((currentStock / avgWeeklyConsumptionKg).toFixed(2))
             : null
 
-        // Safe storage low threshold (e.g. 25% of max storage days, or at least 1.5 days)
-        const lowCoverageDaysThreshold = approvedMaxStorageDays !== null
-          ? Math.max(1.0, Number((approvedMaxStorageDays * 0.25).toFixed(1)))
+        const lowCoverageDaysThreshold = acc.approvedMaxStorageDays !== null
+          ? Math.max(1.0, Number((acc.approvedMaxStorageDays * 0.25).toFixed(1)))
           : 1.5
 
         let status: 'SUFFICIENT' | 'LOW' | 'OUT_OF_STOCK' | 'EXCESS' = 'SUFFICIENT'
@@ -956,16 +1038,16 @@ export async function GET(request: NextRequest) {
           status = 'OUT_OF_STOCK'
           outOfStockCount++
         } else if (
-          !isNonPerishable &&
-          ((approvedMaxStorageDays !== null && stockCoverageDays !== null && stockCoverageDays > approvedMaxStorageDays * 1.5) ||
+          !acc.isNonPerishable &&
+          ((acc.approvedMaxStorageDays !== null && stockCoverageDays !== null && stockCoverageDays > acc.approvedMaxStorageDays * 1.5) ||
           (maxRecommendedStockKg !== null && currentStock > maxRecommendedStockKg * 1.5))
         ) {
           status = 'EXCESS'
           excessStockCount++
         } else if (
-          (!isNonPerishable && stockCoverageDays !== null && stockCoverageDays <= lowCoverageDaysThreshold) ||
-          (minStock !== null && currentStock <= minStock) ||
-          (isNonPerishable && currentStock < 100)
+          (!acc.isNonPerishable && stockCoverageDays !== null && stockCoverageDays <= lowCoverageDaysThreshold) ||
+          (acc.minStock !== null && currentStock <= acc.minStock) ||
+          (acc.isNonPerishable && currentStock < 100)
         ) {
           status = 'LOW'
           lowStockCount++
@@ -975,13 +1057,19 @@ export async function GET(request: NextRequest) {
         }
 
         return {
-          id: `stock-${idx + 1}-${name.toLowerCase().replace(/[^a-z0-9а-яё]/gi, '-')}`,
-          name,
-          unit,
-          isNonPerishable,
+          id: `stock-${idx + 1}-${acc.canonicalId}`,
+          canonicalId: acc.canonicalId,
+          name: acc.nameUz,
+          nameUz: acc.nameUz,
+          nameRu: acc.nameRu,
+          nameEn: acc.nameEn,
+          category: acc.category,
+          subCategory: acc.subCategory,
+          unit: acc.unit,
+          isNonPerishable: acc.isNonPerishable,
           currentStock,
-          minStock,
-          approvedMaxStorageDays,
+          minStock: acc.minStock,
+          approvedMaxStorageDays: acc.approvedMaxStorageDays,
           avgDailyConsumptionKg,
           avgWeeklyConsumptionKg,
           maxRecommendedStockKg,
@@ -989,29 +1077,20 @@ export async function GET(request: NextRequest) {
           stockCoverageWeeks,
           operationalDaysCount: activeDays,
           status,
-          totalInKg: Math.round(inKg),
-          totalOutKg: Math.round(outKg),
+          totalInKg: Math.round(inQty),
+          totalOutKg: Math.round(outQty),
         }
       })
-      .sort((a, b) => b.currentStock - a.currentStock)
+      // SORT: PRIMARY products (fresh produce) FIRST (sorted by stock desc),
+      // SECONDARY products (packaging, chemicals, etc.) LAST (sorted by stock desc)
+      .sort((a, b) => {
+        if (a.category === 'PRIMARY' && b.category !== 'PRIMARY') return -1
+        if (a.category !== 'PRIMARY' && b.category === 'PRIMARY') return 1
+        return b.currentStock - a.currentStock
+      })
 
     const totalTrackedSKUs = productStockDetails.length || 1
     const sufficiencyRate = Math.round((sufficientCount / totalTrackedSKUs) * 100)
-
-    // Calculate packaging dona balance
-    let totalStockRemainingDona = 0
-    Array.from(allMaterialNames)
-      .filter((name) => {
-        const lower = name.toLowerCase()
-        return lower.includes('коробк') || lower.includes('пакет') || lower.includes('этикет') || lower.includes('шапка')
-      })
-      .forEach((name) => {
-        const inDona = productInMap.get(name) || 0
-        const outDona = productOutMap.get(name) || 0
-        const recordedEnd = recordedClosingByProduct.get(name)
-        const currentDona = recordedEnd !== undefined ? Math.round(recordedEnd) : Math.max(0, Math.round(inDona - outDona))
-        totalStockRemainingDona += currentDona
-      })
     if (totalStockRemainingDona === 0 && acceptedPrixodDona > totalRasxodDona) {
       totalStockRemainingDona = Math.round(acceptedPrixodDona - totalRasxodDona)
     }
@@ -1839,6 +1918,7 @@ export async function GET(request: NextRequest) {
           excessStockCount,
           sufficiencyRate,
           totalInventoryKg: Math.round(totalStockRemainingKg),
+          totalInventoryDona: Math.round(totalStockRemainingDona),
           transfersCount: stockTransfers.length,
           fifoExceptionsCount: stockTransfers.filter((t) => t.isFifoException).length,
           transfersIssuedKg: Math.round(totalTransfersIssuedKg),
