@@ -444,7 +444,9 @@ export default function DailyStockBalanceTab({
                 return (
                   <tr key={`${item.name}-${idx}`} className={rowClass}>
                     {/* Index */}
-                    <td className="py-2.5 px-3 text-center text-slate-400 dark:text-slate-500 border-r border-slate-200/70 dark:border-dark-750 text-[11px]">
+                    <td className={`py-2.5 px-3 text-center border-r border-slate-200/70 dark:border-dark-750 text-[11px] ${
+                      isHighlightRow ? 'font-black text-slate-950 dark:text-emerald-100 text-sm' : 'text-slate-400 dark:text-slate-500'
+                    }`}>
                       {isHighlightRow ? '★' : idx + 1}
                     </td>
 
@@ -456,7 +458,9 @@ export default function DailyStockBalanceTab({
                     </td>
 
                     {/* Unit */}
-                    <td className="py-2.5 px-2 text-center text-slate-500 dark:text-slate-400 border-r border-slate-200/70 dark:border-dark-750 text-[11px]">
+                    <td className={`py-2.5 px-2 text-center border-r border-slate-200/70 dark:border-dark-750 text-[11px] ${
+                      isHighlightRow ? 'font-bold text-slate-700 dark:text-emerald-200' : 'text-slate-500 dark:text-slate-400'
+                    }`}>
                       {translateUnit(item.unit, lang)}
                     </td>
 

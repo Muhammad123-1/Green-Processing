@@ -845,9 +845,9 @@ export default function DirectorDynamicsPage() {
                 {/* Table Body */}
                 <tbody className="divide-y divide-slate-100 dark:divide-dark-800 font-mono">
                   {filteredProducts.map((item, idx) => {
-                    const isTotalRow = item.name.toLowerCase() === 'всего' || item.name.toLowerCase().includes('всего')
+                    const isTotalRow = item.name.toLowerCase() === 'всего' || item.name.toLowerCase().includes('всего') || item.name.toLowerCase() === 'jami' || item.name.toLowerCase().includes("o'rtacha chiqindi")
                     const isConsumable = item.name.toLowerCase().includes('коробка') || item.name.toLowerCase().includes('гипохлорид')
-                    const isGrandTotalWithConsumables = item.name.toLowerCase().includes('итого с упаковкой') || item.name.toLowerCase().includes('упаковкой') || item.name.toLowerCase() === 'итого'
+                    const isGrandTotalWithConsumables = item.name.toLowerCase().includes('итого с упаковкой') || item.name.toLowerCase().includes('упаковкой') || item.name.toLowerCase() === 'итого' || item.name.toLowerCase().includes('qadoq va dez')
 
                     const rawVals = isWeekly ? (item.weekly || []) : (item.monthly || [])
                     const displayVals = isWeekly ? rawVals : rawVals.slice(0, 10)
@@ -855,9 +855,9 @@ export default function DirectorDynamicsPage() {
 
                     let rowStyle = 'hover:bg-slate-50 dark:hover:bg-dark-800/60 transition-colors'
                     if (isTotalRow) {
-                      rowStyle = 'bg-[#d9ead3] dark:bg-emerald-950/70 text-slate-900 dark:text-emerald-100 font-black border-y-2 border-emerald-500'
+                      rowStyle = 'bg-[#d9ead3] dark:bg-emerald-950/70 text-slate-950 dark:text-emerald-100 font-black border-y-2 border-emerald-500'
                     } else if (isGrandTotalWithConsumables) {
-                      rowStyle = 'bg-slate-900 text-amber-400 dark:bg-slate-950 border-t-2 border-amber-500 font-black'
+                      rowStyle = 'bg-slate-900 text-amber-300 dark:bg-slate-950 border-t-2 border-amber-500 font-black'
                     } else if (isConsumable) {
                       rowStyle = 'bg-slate-50/70 dark:bg-dark-850/60 font-semibold text-slate-700 dark:text-slate-300'
                     }
@@ -867,9 +867,9 @@ export default function DirectorDynamicsPage() {
                         {/* Index */}
                         <td className={`py-2 px-2 text-center border-r border-slate-200/60 dark:border-dark-750 sticky left-0 z-20 w-12 min-w-[48px] max-w-[48px] ${
                           isTotalRow
-                            ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-emerald-100 font-black'
+                            ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-950 dark:text-emerald-100 font-black'
                             : isGrandTotalWithConsumables
-                            ? 'bg-slate-900 text-amber-400 dark:bg-slate-950 font-black'
+                            ? 'bg-slate-900 text-amber-300 dark:bg-slate-950 font-black'
                             : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300'
                         }`}>
                           {isTotalRow || isGrandTotalWithConsumables ? '★' : idx + 1}
@@ -878,16 +878,22 @@ export default function DirectorDynamicsPage() {
                         {/* Product Name */}
                         <td className={`py-2 px-3 border-r border-slate-200/60 dark:border-dark-750 sticky left-[47px] z-20 font-sans font-bold min-w-[180px] ${
                           isTotalRow
-                            ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-white'
+                            ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-950 dark:text-white font-black'
                             : isGrandTotalWithConsumables
-                            ? 'bg-slate-900 text-amber-400 dark:bg-slate-950'
+                            ? 'bg-slate-900 text-amber-300 dark:bg-slate-950 font-black'
                             : 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white'
                         }`}>
                           {translateProductName(item.name, directorLang)}
                         </td>
 
                         {/* Unit */}
-                        <td className="py-2 px-2 text-center text-slate-500 dark:text-slate-400 border-r border-slate-200/60 dark:border-dark-750 text-[11px]">
+                        <td className={`py-2 px-2 text-center border-r text-[11px] ${
+                          isGrandTotalWithConsumables
+                            ? 'bg-slate-900 dark:bg-slate-950 text-amber-200 font-bold border-slate-800'
+                            : isTotalRow
+                            ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-700 dark:text-emerald-200 font-bold border-slate-200/60 dark:border-dark-750'
+                            : 'text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-dark-750'
+                        }`}>
                           {translateUnit(unit, directorLang)}
                         </td>
 
@@ -904,12 +910,24 @@ export default function DirectorDynamicsPage() {
                             ? formatSum(val)
                             : formatKg(val)
 
+                          let cellClass = 'py-2 px-3 text-right border-r border-slate-200/60 dark:border-dark-750 text-slate-800 dark:text-slate-200'
+
+                          if (isGrandTotalWithConsumables) {
+                            cellClass = isHighlighted
+                              ? 'py-2 px-3 text-right border-r border-slate-800 bg-amber-950 dark:bg-amber-900/60 text-amber-200 dark:text-amber-100 font-black ring-1 ring-amber-400/50'
+                              : 'py-2 px-3 text-right border-r border-slate-800 dark:border-dark-750 bg-slate-900 dark:bg-slate-950 text-amber-300 dark:text-amber-200 font-black'
+                          } else if (isTotalRow) {
+                            cellClass = isHighlighted
+                              ? 'py-2 px-3 text-right border-r border-emerald-400 dark:border-emerald-800 bg-[#c2deb8] dark:bg-emerald-900 text-slate-950 dark:text-emerald-50 font-black ring-1 ring-emerald-500/50'
+                              : 'py-2 px-3 text-right border-r border-slate-200/60 dark:border-dark-750 bg-[#d9ead3] dark:bg-emerald-950/70 text-slate-950 dark:text-emerald-100 font-black'
+                          } else if (isHighlighted) {
+                            cellClass = 'py-2 px-3 text-right border-r border-slate-200/60 dark:border-dark-750 bg-amber-100/60 dark:bg-amber-950/40 font-bold text-amber-950 dark:text-amber-100'
+                          }
+
                           return (
                             <td
                               key={vIdx}
-                              className={`py-2 px-3 text-right border-r border-slate-200/60 dark:border-dark-750 text-slate-800 dark:text-slate-200 ${
-                                isHighlighted ? 'bg-amber-100/60 dark:bg-amber-950/40 font-bold text-amber-950 dark:text-amber-100' : ''
-                              }`}
+                              className={cellClass}
                             >
                               {displayVal}
                             </td>
@@ -917,8 +935,12 @@ export default function DirectorDynamicsPage() {
                         })}
 
                         {/* Total / Average */}
-                        <td className={`py-2 px-4 text-right border-l border-slate-200 dark:border-dark-700 font-black text-slate-900 dark:text-white ${
-                          isTotalRow ? 'bg-[#c6e0b4] dark:bg-emerald-900' : 'bg-slate-100/70 dark:bg-dark-800'
+                        <td className={`py-2 px-4 text-right border-l font-black ${
+                          isGrandTotalWithConsumables
+                            ? 'bg-slate-950 dark:bg-black text-amber-300 dark:text-amber-300 border-amber-500/50 text-sm'
+                            : isTotalRow
+                            ? 'bg-[#c6e0b4] dark:bg-emerald-900 text-slate-950 dark:text-white border-emerald-400 dark:border-emerald-700'
+                            : 'bg-slate-100/70 dark:bg-dark-800 text-slate-900 dark:text-white border-slate-200 dark:border-dark-700'
                         }`}>
                           {activeTab === 'waste'
                             ? formatPercent(item.total)
