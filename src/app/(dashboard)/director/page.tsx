@@ -1593,7 +1593,7 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       {/* 4. EXECUTIVE SUMMARY KPIS (CLICKABLE DRILL-DOWNS) */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* CARD 1: XOMASHYO VA TA'MINOT */}
         <div
           onClick={() => setActiveModal('arrivals')}
@@ -1613,26 +1613,7 @@ export default function DirectorPage() {
           </h4>
         </div>
 
-        {/* CARD 2: ISHLAB CHIQARISH VA SMENA NATIJALARI */}
-        <div
-          onClick={() => setActiveModal('production')}
-          className="group relative overflow-hidden bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 hover:border-emerald-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-              <ChefHat size={24} />
-            </div>
-            <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
-              {formatDual("Ko'rish", "Открыть", "Inspect")} &rarr;
-            </span>
-          </div>
-
-          <h4 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">
-            {formatDual("Ishlab chiqarish", "Производство", "Production")}
-          </h4>
-        </div>
-
-        {/* CARD 3: OMBOR HOLATI */}
+        {/* CARD 2: OMBOR HOLATI */}
         <div
           onClick={() => setActiveModal('warehouse')}
           className="group relative overflow-hidden bg-white dark:bg-dark-900 p-5 rounded-3xl border border-slate-200 dark:border-dark-750 hover:border-purple-500 shadow-sm hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
