@@ -804,10 +804,10 @@ export default function DirectorDynamicsPage() {
                 {/* Sticky Header */}
                 <thead className="sticky top-0 z-20 bg-slate-100 dark:bg-dark-800 text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-dark-700 font-bold uppercase text-[11px] tracking-wider">
                   <tr>
-                    <th className="py-3 px-3 text-center w-12 border-r border-slate-200 dark:border-dark-700 sticky left-0 z-30 bg-slate-100 dark:bg-dark-800">
+                    <th className="py-3 px-2 text-center w-12 min-w-[48px] max-w-[48px] border-r border-slate-200 dark:border-dark-700 sticky left-0 z-30 bg-slate-100 dark:bg-dark-800">
                       №
                     </th>
-                    <th className="py-3 px-3 border-r border-slate-200 dark:border-dark-700 sticky left-12 z-30 bg-slate-100 dark:bg-dark-800 min-w-[180px]">
+                    <th className="py-3 px-3 border-r border-slate-200 dark:border-dark-700 sticky left-[47px] z-30 bg-slate-100 dark:bg-dark-800 min-w-[180px]">
                       {formatDual("Mahsulot nomi", "Наименование", "Product")}
                     </th>
                     <th className="py-3 px-2 text-center border-r border-slate-200 dark:border-dark-700 w-16">
@@ -864,18 +864,18 @@ export default function DirectorDynamicsPage() {
                     return (
                       <tr key={`${item.name}-${idx}`} className={rowStyle}>
                         {/* Index */}
-                        <td className={`py-2 px-3 text-center border-r border-slate-200/60 dark:border-dark-750 sticky left-0 z-10 ${
+                        <td className={`py-2 px-2 text-center border-r border-slate-200/60 dark:border-dark-750 sticky left-0 z-20 w-12 min-w-[48px] max-w-[48px] ${
                           isTotalRow
                             ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-emerald-100 font-black'
                             : isGrandTotalWithConsumables
                             ? 'bg-slate-900 text-amber-400 dark:bg-slate-950 font-black'
-                            : 'bg-white dark:bg-dark-900'
+                            : 'bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-300'
                         }`}>
                           {isTotalRow || isGrandTotalWithConsumables ? '★' : idx + 1}
                         </td>
 
                         {/* Product Name */}
-                        <td className={`py-2 px-3 border-r border-slate-200/60 dark:border-dark-750 sticky left-12 z-10 font-sans font-bold ${
+                        <td className={`py-2 px-3 border-r border-slate-200/60 dark:border-dark-750 sticky left-[47px] z-20 font-sans font-bold min-w-[180px] ${
                           isTotalRow
                             ? 'bg-[#d9ead3] dark:bg-emerald-950 text-slate-900 dark:text-white'
                             : isGrandTotalWithConsumables
