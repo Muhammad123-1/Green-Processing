@@ -2266,7 +2266,7 @@ export default function DirectorPage() {
                       formatDual("Omborxona zanjiri", "Складские остатки", "Warehouse Stock")
                     )}
                   </h3>
-                  {(activeModal === 'employees' || activeModal === 'operations') && (
+                  {(activeModal === 'employees' || (activeModal === 'operations' && operationsTab !== 'ombor')) && (
                     <p className="text-xs text-slate-500">
                       {activeModal === 'employees'
                         ? formatDual("5 ta asosiy bo'lim faoliyati va kunlik, haftalik hamda oylik qilingan ishlar nazorati", "Контроль деятельности 5 ключевых отделов, ежедневных, еженедельных и ежемесячных задач", "Monitoring of 5 core departments and daily, weekly, and monthly completed tasks")
@@ -2276,7 +2276,7 @@ export default function DirectorPage() {
                         ? formatDual("Sexlarga xomashyo chiqimi va sarfi", "Расход сырья по цехам", "Material consumption")
                         : operationsTab === 'brak'
                         ? formatDual("Brak va texnologik chiqindi dalolatnomalari", "Акты брака и отходов", "Defect and scrap records")
-                        : formatDual("Ombordagi barcha xomashyo va taralar qoldig'i tahlili", "Анализ остатков сырья и тары на складе", "Warehouse material and packaging stock analysis")}
+                        : null}
                     </p>
                   )}
                 </div>
@@ -3542,12 +3542,13 @@ export default function DirectorPage() {
                            operationsTab === 'brak' ? formatDual("Brak va chiqindilar nazorati", "Учет брака и отходов", "Defect & Scrap Records") :
                            formatDual("Omborxona (Qoldiq va zaxiralar)", "Склад сырья и тары (Остатки)", "Warehouse Stock & Inventory")}
                         </h4>
-                        <p className="text-[11px] text-slate-500">
-                          {operationsTab === 'prixod' ? formatDual("Barcha qabul qilingan xomashyo partiyalari", "Все принятые партии сырья", "Inbound arrival batches") :
-                           operationsTab === 'rasxod' ? formatDual("Sexlarga sarflangan xomashyo va chiqim hujjatlari", "Расход сырья по цехам", "Workshop consumption records") :
-                           operationsTab === 'brak' ? formatDual("Ishlab chiqarish, qabul va ombordagi brak dalolatnomalari", "Акты брака и отходов", "Defect and scrap acts") :
-                           formatDual("Xomashyo va taralar qoldig'i, yetarlilik holati va zaxira muddati tahlili", "Остатки сырья, тары, статус запаса и покрытие", "Stock balance, inventory sufficiency & coverage")}
-                        </p>
+                        {operationsTab !== 'ombor' && (
+                          <p className="text-[11px] text-slate-500">
+                            {operationsTab === 'prixod' ? formatDual("Barcha qabul qilingan xomashyo partiyalari", "Все принятые партии сырья", "Inbound arrival batches") :
+                             operationsTab === 'rasxod' ? formatDual("Sexlarga sarflangan xomashyo va chiqim hujjatlari", "Расход сырья по цехам", "Workshop consumption records") :
+                             formatDual("Ishlab chiqarish, qabul va ombordagi brak dalolatnomalari", "Акты брака и отходов", "Defect and scrap acts")}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -3630,9 +3631,6 @@ export default function DirectorPage() {
                             <span>{formatDual("Yo'qotish me'yorlarini sozlash", "Настройка норм потерь", "Configure Loss Standards")}</span>
                           </button>
                         </div>
-                        <span className="text-xs text-slate-500 font-medium">
-                          {formatDual("Barcha xomashyo va qadoqlar tahlili (Drill-down)", "Анализ всего сырья и тары (Drill-down)", "All materials & packaging drill-down")}
-                        </span>
                       </div>
 
                       <ProductBalanceTable

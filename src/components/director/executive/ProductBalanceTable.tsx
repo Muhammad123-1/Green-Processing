@@ -440,7 +440,7 @@ export default function ProductBalanceTable({
                 setViewMode('cards')
                 setSelectedCardProduct(null)
               }}
-              title={lang === 'ru' ? 'Карточки (drill-down)' : 'Kartochkalar (Drill-down)'}
+              title={lang === 'ru' ? 'Карточки' : 'Kartochkalar'}
               className={`p-1.5 rounded-lg transition-all ${
                 viewMode === 'cards'
                   ? 'bg-white dark:bg-dark-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
@@ -475,11 +475,6 @@ export default function ProductBalanceTable({
               <h3 className="font-black text-sm text-slate-900 dark:text-white">
                 {lang === 'ru' ? 'Номенклатура склада сырья и материалов' : 'Omborxona mahsulotlari va zaxira holati'}
               </h3>
-              <p className="text-[11px] text-slate-400">
-                {lang === 'ru'
-                  ? 'Выберите любой продукт для подробного анализа остатков, расхода и сроков хранения'
-                  : 'Mahsulot ustiga bosib qoldiq, sarf va zaxira muddati tahliliga kiring (Drill-down)'}
-              </p>
             </div>
             <span className="text-xs font-mono font-bold text-slate-500">
               {sorted.length} {lang === 'ru' ? 'позиций' : 'ta mahsulot'}
