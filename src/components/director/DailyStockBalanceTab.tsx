@@ -16,7 +16,6 @@ import {
   translateTableTitle,
   translateNoteText
 } from '@/lib/directorLocalization'
-import CustomDropdown from '@/components/ui/CustomDropdown'
 import dailyStockData from '@/data/dailyStockLedger.json'
 
 interface StockItem {
@@ -87,24 +86,83 @@ export default function DailyStockBalanceTab({
   const [isLiveDb, setIsLiveDb] = useState<boolean>(false)
 
   const availableDates = liveAvailableDates
-
-  // Selected table ID (default to selectedDateId or 2026-11-02_2026-11-07 if week, or 2026-11-25)
-  const [selectedId, setSelectedId] = useState<string>(() => {
-    if (selectedDateId) return selectedDateId
-    return activePeriod === 'week' ? '2026-11-02_2026-11-07' : '2026-11-25'
-  })
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedMonth, setSelectedMonth] = useState<string>(selectedMonthName || 'ноябрь 2026')
 
-  const prevPeriodRef = React.useRef(activePeriod)
-  const prevDateIdRef = React.useRef(selectedDateId)
-  const prevMonthPropRef = React.useRef(selectedMonthName)
+  // Resolve effective target table ID based on parent top bar period and selections
+  const effectiveTargetId = useMemo(() => {
+    // 1. Bugun (Today)
+    if (activePeriod === 'today') {
+      const todayMatch = availableDates.find(d => d.id === '2026-11-26') || availableDates.find(d => d.id === '2026-11-25')
+      if (todayMatch) return todayMatch.id
+      const latestDaily = availableDates.filter(d => d.type === 'daily').slice(-1)[0]
+      return latestDaily?.id || '2026-11-25'
+    }
+
+    // 2. Hafta (Week)
+    if (activePeriod === 'week') {
+      if (selectedDateId) {
+        // Direct match by ID or isoDate
+        const exact = availableDates.find(d => d.id === selectedDateId || d.isoDate === selectedDateId)
+        if (exact) return exact.id
+        // Match start date prefix
+        const start = selectedDateId.split('_')[0]
+        const matchStart = availableDates.find(d => d.type === 'weekly' && d.id.startsWith(start))
+        if (matchStart) return matchStart.id
+      }
+      // If month sheet is given, find the week in that sheet
+      if (selectedMonthName) {
+        const sheetWeeks = availableDates.filter(d => d.type === 'weekly' && d.sheetName.toLowerCase() === selectedMonthName.toLowerCase())
+        if (sheetWeeks.length > 0) return sheetWeeks[sheetWeeks.length - 1].id
+      }
+      // Default to Noyabr 3-haftasi or latest weekly
+      const nov3 = availableDates.find(d => d.id === '2026-11-16_2026-11-21')
+      if (nov3) return nov3.id
+      const lastWeekly = availableDates.filter(d => d.type === 'weekly').slice(-1)[0]
+      return lastWeekly?.id || '2026-11-02_2026-11-07'
+    }
+
+    // 3. Oy (Month)
+    if (activePeriod === 'month') {
+      const mName = (selectedMonthName || 'ноябрь 2026').toLowerCase()
+      // 3.1 Check if there is a monthly summary table in this sheet (e.g. 2026-01-01_2026-01-31)
+      const monthlySummary = availableDates.find(d => {
+        if (d.sheetName.toLowerCase() !== mName) return false
+        if (!d.id.includes('_')) return false
+        const [p1, p2] = d.id.split('_')
+        return p1.endsWith('-01') && (p2.endsWith('-31') || p2.endsWith('-30') || p2.endsWith('-28') || p2.endsWith('-29'))
+      })
+      if (monthlySummary) return monthlySummary.id
+
+      // 3.2 If no summary table (like November), find the latest table in that month
+      const sheetTables = availableDates.filter(d => d.sheetName.toLowerCase() === mName)
+      if (sheetTables.length > 0) return sheetTables[sheetTables.length - 1].id
+    }
+
+    // 4. Oraliq (Custom)
+    if (activePeriod === 'custom') {
+      if (startDate && endDate) {
+        const matched = availableDates.find(d => {
+          const itemStart = d.isoDate.split('_')[0]
+          const itemEnd = d.isoDate.includes('_') ? d.isoDate.split('_')[1] : itemStart
+          return itemStart >= startDate && itemEnd <= endDate
+        })
+        if (matched) return matched.id
+      }
+    }
+
+    // 5. Yil / Barchasi fallback: latest overall table
+    if (selectedDateId) {
+      const found = availableDates.find(d => d.id === selectedDateId || d.isoDate === selectedDateId)
+      if (found) return found.id
+    }
+    return '2026-11-25'
+  }, [activePeriod, selectedDateId, selectedMonthName, startDate, endDate, availableDates])
 
   // Fetch live table from DB API
   const fetchLiveStockBalance = React.useCallback(async (targetId?: string) => {
     try {
       setIsLiveLoading(true)
-      const qId = targetId || selectedId
+      const qId = targetId || effectiveTargetId
       const res = await fetch(`/api/director/stock-balance?date=${encodeURIComponent(qId)}`)
       if (res.ok) {
         const data = await res.json()
@@ -126,98 +184,19 @@ export default function DailyStockBalanceTab({
     } finally {
       setIsLiveLoading(false)
     }
-  }, [selectedId])
+  }, [effectiveTargetId])
 
   React.useEffect(() => {
-    fetchLiveStockBalance(selectedId)
-  }, [selectedId, fetchLiveStockBalance])
-
-  // Sync parent selectedMonthName prop
-  React.useEffect(() => {
-    if (selectedMonthName && selectedMonthName !== prevMonthPropRef.current) {
-      prevMonthPropRef.current = selectedMonthName
-      setSelectedMonth(selectedMonthName)
-    }
-  }, [selectedMonthName])
-
-  // Filter available options based on activePeriod, startDate, endDate, and selectedMonth
-  const filteredOptions = useMemo(() => {
-    return availableDates.filter(d => {
-      // 1. Bugun (Today): only daily tables
-      if (activePeriod === 'today') {
-        const latestDaily = availableDates.find(it => it.type === 'daily')
-        return d.id === (latestDaily?.id || '2026-11-25')
-      }
-
-      // 2. Hafta (Week): only weekly tables
-      if (activePeriod === 'week') {
-        return d.type === 'weekly'
-      }
-
-      // 3. Oy (Month): filter by selectedMonth
-      if (activePeriod === 'month') {
-        return selectedMonth ? d.sheetName.toLowerCase() === selectedMonth.toLowerCase() : true
-      }
-
-      // 4. Oraliq (Custom): filter by startDate and endDate
-      if (activePeriod === 'custom') {
-        const itemStart = d.isoDate.split('_')[0]
-        const itemEnd = d.isoDate.includes('_') ? d.isoDate.split('_')[1] : itemStart
-        if (startDate && itemEnd < startDate) return false
-        if (endDate && itemStart > endDate) return false
-        return true
-      }
-
-      // 5. Yil / Barchasi: all tables
-      return true
-    })
-  }, [availableDates, activePeriod, selectedMonth, startDate, endDate])
-
-  // Respond to period or targetDate changes from parent WITHOUT infinite rubber-banding
-  React.useEffect(() => {
-    // If parent explicitly passed a selectedDateId and it changed
-    if (selectedDateId && selectedDateId !== prevDateIdRef.current) {
-      prevDateIdRef.current = selectedDateId
-      setSelectedId(selectedDateId)
-      return
-    }
-
-    // Only auto-switch selectedId when activePeriod actually changes
-    if (activePeriod !== prevPeriodRef.current) {
-      prevPeriodRef.current = activePeriod
-
-      if (activePeriod === 'today') {
-        const latestDaily = availableDates.find(it => it.type === 'daily')
-        if (latestDaily) setSelectedId(latestDaily.id)
-      } else if (activePeriod === 'week') {
-        const targetWeek = availableDates.find(d => d.id === '2026-11-02_2026-11-07' && d.type === 'weekly') || availableDates.find(d => d.type === 'weekly')
-        if (targetWeek) setSelectedId(targetWeek.id)
-      } else if (activePeriod === 'month') {
-        const mName = selectedMonthName || selectedMonth
-        const firstInMonth = availableDates.find(d => d.sheetName.toLowerCase() === mName.toLowerCase()) || availableDates.find(d => d.type === 'daily')
-        if (firstInMonth) setSelectedId(firstInMonth.id)
-      } else if (activePeriod === 'custom') {
-        if (filteredOptions.length > 0) {
-          setSelectedId(filteredOptions[0].id)
-        }
-      }
-    }
-  }, [activePeriod, selectedDateId, selectedMonthName, selectedMonth, availableDates, filteredOptions])
-
-  // Ensure selectedId is valid in current filteredOptions (only if it doesn't exist)
-  React.useEffect(() => {
-    if (filteredOptions.length > 0 && !filteredOptions.some(o => o.id === selectedId)) {
-      setSelectedId(filteredOptions[0].id)
-    }
-  }, [filteredOptions, selectedId])
+    fetchLiveStockBalance(effectiveTargetId)
+  }, [effectiveTargetId, fetchLiveStockBalance])
 
   // Find the active table (prefer liveTable from DB)
   const currentTable = useMemo(() => {
-    if (liveTable && (liveTable.id === selectedId || liveTable.isoDate === selectedId)) {
+    if (liveTable && (liveTable.id === effectiveTargetId || liveTable.isoDate === effectiveTargetId)) {
       return liveTable
     }
-    return allTables.find(t => t.id === selectedId) || allTables.find(t => t.id === '2026-11-25') || allTables[allTables.length - 1]
-  }, [liveTable, allTables, selectedId])
+    return allTables.find(t => t.id === effectiveTargetId || t.isoDate === effectiveTargetId) || allTables.find(t => t.id === '2026-11-25') || allTables[allTables.length - 1] || null
+  }, [liveTable, allTables, effectiveTargetId])
 
   // All months list
   const allMonths = useMemo(() => {
@@ -360,72 +339,47 @@ export default function DailyStockBalanceTab({
 
   return (
     <div className="space-y-4">
-      {/* 1. STABLE MONOCHROME DATE & TABLE SELECTOR */}
-      <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-dark-750 shadow-xs">
-        {/* Dropdown Filters & Table Selector */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
-          <div className="flex items-center flex-wrap gap-2">
-            {/* Month Select (shown when period is month or all) */}
-            {(activePeriod === 'month' || activePeriod === 'all') && (
-              <CustomDropdown
-                value={selectedMonth}
-                onChange={val => {
-                  setSelectedMonth(String(val))
-                  const firstInMonth = availableDates.find(d => d.sheetName === val)
-                  if (firstInMonth) setSelectedId(firstInMonth.id)
-                }}
-                prefix={formatDual("Oy:", "Месяц:", "Month:")}
-                options={allMonths.map(m => ({
-                  value: m,
-                  label: translateMonthName(m.split(' ')[0], lang)
-                }))}
-              />
-            )}
+      {/* 1. SEARCH & EXPORT TOOLBAR (PERIOD/DATE CONTROLLED BY TOP BAR) */}
+      <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-dark-750 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Left: Product Search */}
+        <div className="relative w-full sm:w-72">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={formatDual("Mahsulot qidirish...", "Поиск продукции...", "Search product...")}
+            className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-500 transition-all"
+          />
+        </div>
 
-            {/* Table Dropdown (Dynamically filtered by activePeriod / dates) */}
-            <CustomDropdown
-              value={selectedId}
-              onChange={val => setSelectedId(String(val))}
-              options={filteredOptions.map(opt => ({
-                value: opt.id,
-                label: `${translateTableTitle(opt.title, lang)} - ${(opt.grandTotalSum / 1_000_000).toFixed(1)} ${formatDual("mln", "млн", "M")}`
-              }))}
-              menuClassName="min-w-[280px]"
-            />
-          </div>
+        {/* Right: Live DB Status, Refresh & Excel Export */}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {isLiveDb && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{formatDual("Jonli DB (Real vaqt)", "Живые данные из БД", "Live DB Real-time")}</span>
+            </span>
+          )}
 
-          {/* Current Table Title, Live DB Badge & Export Button */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {isLiveDb && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{formatDual("Jonli DB (Real vaqt)", "Живые данные из БД", "Live DB Real-time")}</span>
-              </span>
-            )}
+          <button
+            type="button"
+            onClick={() => fetchLiveStockBalance(effectiveTargetId)}
+            disabled={isLiveLoading}
+            title={formatDual("DB ma'lumotlarini yangilash", "Обновить данные из БД", "Refresh DB data")}
+            className="p-2 rounded-xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+          >
+            <RefreshCw size={13} className={isLiveLoading ? "animate-spin text-emerald-600" : ""} />
+          </button>
 
-            <button
-              type="button"
-              onClick={() => fetchLiveStockBalance(selectedId)}
-              disabled={isLiveLoading}
-              title={formatDual("DB ma'lumotlarini yangilash", "Обновить данные из БД", "Refresh DB data")}
-              className="p-2 rounded-xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
-            >
-              <RefreshCw size={13} className={isLiveLoading ? "animate-spin text-emerald-600" : ""} />
-            </button>
-
-            <div className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-800 dark:text-slate-200 text-xs font-bold">
-              <span>{translateTableTitle(currentTable.title, lang)}</span>
-            </div>
-
-            <button
-              onClick={handleExportExcel}
-              disabled={exporting}
-              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-            >
-              {exporting ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-              <span>Excel (.xlsx)</span>
-            </button>
-          </div>
+          <button
+            onClick={handleExportExcel}
+            disabled={exporting}
+            className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+          >
+            {exporting ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+            <span>Excel (.xlsx)</span>
+          </button>
         </div>
       </div>
 

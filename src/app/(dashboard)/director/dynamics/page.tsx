@@ -771,12 +771,20 @@ export default function DirectorDynamicsPage() {
           endDate={customEndDate}
           selectedDateId={
             period === 'today'
-              ? '2026-11-26'
+              ? '2026-11-25'
               : period === 'week'
               ? (selectedWeek ? `${selectedWeek.from}_${selectedWeek.to}` : undefined)
+              : period === 'month'
+              ? (selectedMonth ? `${selectedMonth.from}_${selectedMonth.to}` : undefined)
               : undefined
           }
-          selectedMonthName={period === 'month' ? selectedMonth.sheetName : undefined}
+          selectedMonthName={
+            period === 'week'
+              ? allYearMonths[selectedWeekMonthIndex]?.sheetName
+              : period === 'month'
+              ? selectedMonth.sheetName
+              : undefined
+          }
           lang={directorLang}
         />
       )}
