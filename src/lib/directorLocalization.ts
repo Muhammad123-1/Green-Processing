@@ -113,6 +113,7 @@ export const DIRECTOR_PRODUCT_MAP: Record<string, { uz: string; ru: string; en: 
 
   // 16. Total / Summary
   'всего': { uz: 'Jami', ru: 'Всего', en: 'Total' },
+  'всего (o\'rtacha chiqindi)': { uz: "Jami (O'rtacha chiqindi %)", ru: 'Всего (Средний отход %)', en: 'Total (Average waste %)' },
   'итого': { uz: 'Jami', ru: 'Итого', en: 'Total' },
   'jami': { uz: 'Jami', ru: 'Итого', en: 'Total' },
   'total': { uz: 'Jami', ru: 'Итого', en: 'Total' },

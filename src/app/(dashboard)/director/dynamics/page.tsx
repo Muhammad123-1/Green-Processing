@@ -366,7 +366,8 @@ export default function DirectorDynamicsPage() {
   const formatPercent = (val: number | null | undefined) => {
     if (val === null || val === undefined || isNaN(val)) return '-'
     if (val === 0) return '0.0%'
-    return `${val.toFixed(1)}%`
+    const pct = val <= 1.0 && val > 0 ? val * 100 : val
+    return `${pct.toFixed(1)}%`
   }
 
   // Handle Save Note
