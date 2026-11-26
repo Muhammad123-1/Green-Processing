@@ -295,25 +295,30 @@ export default function DirectorDynamicsPage() {
     }
   }
 
-  // Export Table to CSV
-  const handleExportTable = () => {
-    if (!currentDataset.length) return
-    const headers = ['№', 'Наименование', 'Ед. изм.', ...activePeriods, 'Итого']
-    const rows = filteredProducts.map((p, idx) => {
-      const vals = isWeekly ? (p.weekly || []) : (p.monthly || []).slice(0, 10)
-      const rowVals = vals.map(v => v !== null && v !== undefined ? v : '')
-      return [idx + 1, `"${p.name}"`, p.unit || '', ...rowVals, p.total || '']
-    })
+  const [exportingDynamics, setExportingDynamics] = useState(false)
 
-    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `Zaxiralar_${activeTab}_${period}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  // Export Table to Real Styled Excel (.xlsx) using ExcelJS API
+  const handleExportDynamicsExcel = async () => {
+    if (!currentDataset.length) return
+    try {
+      setExportingDynamics(true)
+      const res = await fetch(`/api/director/export?type=dynamics&tab=${activeTab}&period=${period}&mode=${expenseSubMode}`)
+      if (!res.ok) throw new Error('Eksport qilishda xatolik yuz berdi')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Информация_${activeTab}_${period}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success(formatDual("Excel jadval yuklandi", "Excel файл успешно загружен", "Excel file downloaded"))
+    } catch (err: any) {
+      toast.error(err.message || "Excel faylni yuklab olishda xatolik yuz berdi")
+    } finally {
+      setExportingDynamics(false)
+    }
   }
 
   return (
@@ -322,10 +327,7 @@ export default function DirectorDynamicsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-dark-750">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <span>{formatDual("Sex Uchun Mahsulot Zaxiralari va Sarfi (2026)", "Информация по запасам продукции для цеха (2026)", "Workshop Stocks & Production (2026)")}</span>
-            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800 text-white font-mono font-bold">
-              {isWeekly ? '47W' : '2026'}
-            </span>
+            <span>{formatDual("Sex Uchun Mahsulot Zaxiralari va Sarfi", "Информация по запасам продукции для цеха", "Workshop Stocks & Production")}</span>
           </h1>
         </div>
 
@@ -394,7 +396,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <Package size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("1. Sklad Chiqimi (Sexga)", "1. Расход со склада", "1. Raw Expense")}</span>
+            <span className="truncate">{formatDual("1. Xomashyo Chiqimi", "1. Расход со склада", "1. Raw Expense")}</span>
           </button>
 
           {/* Tab 2: GP */}
@@ -407,7 +409,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <Boxes size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("2. Tayyor Mahsulot (GP)", "2. Производство ГП", "2. Finished GP")}</span>
+            <span className="truncate">{formatDual("2. Tayyor Mahsulot", "2. Производство продукции", "2. Finished Goods")}</span>
           </button>
 
           {/* Tab 3: Waste */}
@@ -420,7 +422,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <AlertTriangle size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("3. Chiqindi & Otxod (%)", "3. Отход (%)", "3. Waste %")}</span>
+            <span className="truncate">{formatDual("3. Chiqindi & Otxod", "3. Отход продукции", "3. Waste")}</span>
           </button>
 
           {/* Tab 4: Notes */}
@@ -471,7 +473,7 @@ export default function DirectorDynamicsPage() {
             <span>
               {formatDual("Bugun:", "Сегодня:", "Today:")}{' '}
               <span className="font-mono font-black text-blue-900 dark:text-blue-100">
-                25.11.2026 (Chorshanba)
+                25.11.2026
               </span>
             </span>
           </div>
@@ -483,7 +485,7 @@ export default function DirectorDynamicsPage() {
             <span>
               {formatDual("Faol hafta:", "Активная неделя:", "Active week:")}{' '}
               <span className="font-mono font-black text-indigo-950 dark:text-indigo-100">
-                02.11.2026 - 07.11.2026 (44-hafta) · 47 haftalik to'liq dinamika
+                02.11.2026 - 07.11.2026 (44-hafta)
               </span>
             </span>
           </div>
@@ -583,13 +585,14 @@ export default function DirectorDynamicsPage() {
               )}
             </div>
 
-            {/* Export CSV */}
+            {/* Export Excel (.xlsx) */}
             <button
-              onClick={handleExportTable}
-              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
+              onClick={handleExportDynamicsExcel}
+              disabled={exportingDynamics}
+              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-50 cursor-pointer"
             >
-              <Download size={13} />
-              <span>Excel (CSV)</span>
+              {exportingDynamics ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+              <span>Excel (.xlsx)</span>
             </button>
           </div>
         </div>

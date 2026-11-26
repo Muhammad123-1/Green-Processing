@@ -315,10 +315,6 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
           <div className="mt-2 text-xl font-black text-rose-600 dark:text-rose-400 font-mono">
             {formatKgOnly(totalKg)} kg
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {(totalKg / 1000).toFixed(1)} tn • {allProductsSummary.filter((p) => p.unit === 'kg').length}{' '}
-            {lang === 'ru' ? 'видов сырья' : 'xil xomashyo'}
-          </p>
         </div>
 
         {/* Card 2: Qadoq braki (DONA) */}
@@ -332,10 +328,6 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
           <div className="mt-2 text-xl font-black text-purple-600 dark:text-purple-400 font-mono">
             {Math.round(totalDona).toLocaleString('uz-UZ')} dona
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.filter((p) => p.unit === 'dona').length}{' '}
-            {lang === 'ru' ? 'видов упаковки' : 'xil qadoq va tara'}
-          </p>
         </div>
 
         {/* Card 3: Brak dalolatnomalari soni */}
@@ -349,9 +341,6 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
             {effectiveItems.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'актов' : 'ta'}
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.length} {lang === 'ru' ? 'уникальных позиций' : 'unikal pozitsiya (birlashtirilgan)'}
-          </p>
         </div>
 
         {/* Card 4: Asosiy sabab */}
@@ -365,9 +354,6 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
           <div className="mt-2 text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
             100%
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium truncate">
-            Qabul, Sex va Ombor nazorati
-          </p>
         </div>
       </div>
 

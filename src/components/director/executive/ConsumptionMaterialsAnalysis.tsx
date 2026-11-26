@@ -275,10 +275,6 @@ export default function ConsumptionMaterialsAnalysis({
           <div className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
             {formatKgOnly(totalKg)} kg
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {(totalKg / 1000).toFixed(1)} tn • {allProductsSummary.filter((p) => p.unit === 'kg').length}{' '}
-            {lang === 'ru' ? 'видов сырья' : 'xil xomashyo'}
-          </p>
         </div>
 
         {/* Card 2: Qadoq sarfi (DONA) */}
@@ -292,10 +288,6 @@ export default function ConsumptionMaterialsAnalysis({
           <div className="mt-2 text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
             {Math.round(totalDona).toLocaleString('uz-UZ')} dona
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.filter((p) => p.unit === 'dona').length}{' '}
-            {lang === 'ru' ? 'видов упаковки' : 'xil qadoq va tara'}
-          </p>
         </div>
 
         {/* Card 3: Chiqim operatsiyalari soni */}
@@ -309,9 +301,6 @@ export default function ConsumptionMaterialsAnalysis({
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
             {items.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'операций' : 'ta'}
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.length} {lang === 'ru' ? 'уникальных позиций' : 'unikal pozitsiya (birlashtirilgan)'}
-          </p>
         </div>
 
         {/* Card 4: Sexlar soni */}
@@ -325,9 +314,6 @@ export default function ConsumptionMaterialsAnalysis({
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
             {distinctWorkshopsCount || 2} {lang === 'ru' ? 'цехов' : 'ta sex'}
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium truncate">
-            Tayyorlash, Oshxona, Qadoqlash
-          </p>
         </div>
       </div>
 

@@ -516,10 +516,6 @@ export default function IncomingMaterialsAnalysis({
           <div className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
             {formatKgOnly(totalKg)} kg
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {(totalKg / 1000).toFixed(1)} tn • {allProductsSummary.filter((p) => p.unit === 'kg').length}{' '}
-            {lang === 'ru' ? 'видов сырья' : 'xil xomashyo'}
-          </p>
         </div>
 
         {/* Card 2: Qadoq va idishlar kirimi (DONA) */}
@@ -533,10 +529,6 @@ export default function IncomingMaterialsAnalysis({
           <div className="mt-2 text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
             {Math.round(totalDona).toLocaleString('uz-UZ')} dona
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.filter((p) => p.unit === 'dona').length}{' '}
-            {lang === 'ru' ? 'видов упаковки' : 'xil qadoq va tara'}
-          </p>
         </div>
 
         {/* Card 3: Jami kirim partiyalari (1,576 ta partiya, 50 ta unikal mahsulot) */}
@@ -550,9 +542,6 @@ export default function IncomingMaterialsAnalysis({
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
             {effectiveItems.length.toLocaleString('uz-UZ')} {lang === 'ru' ? 'партий' : 'ta'}
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {allProductsSummary.length} {lang === 'ru' ? 'уникальных позиций' : 'unikal pozitsiya (birlashtirilgan)'}
-          </p>
         </div>
 
         {/* Card 4: Ta'minotchilar (Interactive click opens Suppliers Modal - Requirement 5) */}
@@ -752,11 +741,6 @@ export default function IncomingMaterialsAnalysis({
                   {visibleProductsSummary.length} {lang === 'ru' ? 'позиций' : 'ta mahsulot'}
                 </span>
               </h3>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">
-                {lang === 'ru'
-                  ? 'Все дубликаты объединены, названия переведены на 3 языка, основное сырье расположено сверху'
-                  : "Barcha takrorlanuvchi nomlar bitta qilindi, 3 tilda ko'rsatiladi, asosiy xomashyolar yuqorida"}
-              </p>
             </div>
           </div>
 

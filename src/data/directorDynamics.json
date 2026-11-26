@@ -2758,7 +2758,7 @@
         "weeklyAvg": 0.0
       },
       {
-        "name": "Всего (Sabzavotlar)",
+        "name": "Всего",
         "unit": "кг",
         "weekly": [
           11971.6,
@@ -3750,7 +3750,7 @@
         "weeklyAvg": 0.0
       },
       {
-        "name": "Всего (Sabzavotlar)",
+        "name": "Всего",
         "unit": "сум",
         "weekly": [
           282634260.0,

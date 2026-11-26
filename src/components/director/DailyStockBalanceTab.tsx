@@ -5,8 +5,9 @@ import {
   Calendar, Layers, Download, Search, AlertTriangle,
   CheckCircle2, Clock, Filter, ChevronDown,
   Package, DollarSign, ArrowUpRight, ArrowDownRight,
-  UtensilsCrossed, HelpCircle, Check, Info, FileText
+  UtensilsCrossed, HelpCircle, Check, Info, FileText, Loader2
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import dailyStockData from '@/data/dailyStockLedger.json'
 
@@ -99,17 +100,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
     return Array.from(set)
   }, [availableDates])
 
-  // Quick preset dates for November 2026
-  const quickPresets = [
-    { id: '2026-11-25', label: '25.11 (Сегодня / Посл.)', labelUz: '25.11 (Bugun / Oxirgi)', type: 'daily' },
-    { id: '2026-11-02_2026-11-07', label: '02.11 - 07.11 (Неделя)', labelUz: '02.11 - 07.11 (Haftalik)', type: 'weekly' },
-    { id: '2026-11-02', label: '02.11 Пон', labelUz: '02.11 Dush', type: 'daily' },
-    { id: '2026-11-03', label: '03.11 Вт', labelUz: '03.11 Sesh', type: 'daily' },
-    { id: '2026-11-04', label: '04.11 Ср', labelUz: '04.11 Chor', type: 'daily' },
-    { id: '2026-11-05', label: '05.11 Чт', labelUz: '05.11 Pay', type: 'daily' },
-    { id: '2026-11-06', label: '06.11 Пт', labelUz: '06.11 Juma', type: 'daily' },
-    { id: '2026-11-07', label: '07.11 Сб', labelUz: '07.11 Shan', type: 'daily' },
-  ]
+  const [exporting, setExporting] = useState(false)
 
   // Filter items by search
   const visibleItems = useMemo(() => {
@@ -159,70 +150,28 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
     }
   }, [currentTable])
 
-  // Export to CSV
-  const handleExportCSV = () => {
+  // Export to Real Styled Excel (.xlsx) using ExcelJS API
+  const handleExportExcel = async () => {
     if (!currentTable) return
-
-    const headers = [
-      '№',
-      'Наименование',
-      'Единица измерения',
-      'Цена (сум)',
-      'Остаток (нач)',
-      'Приход',
-      'Расход',
-      'Передача в кухню',
-      'Остаток (кон)',
-      'Средний расход в неделю',
-      'На сколько недель хватит',
-      'Сумма (сум)'
-    ]
-
-    const rows = currentTable.items.map((item, idx) => {
-      let weeksVal = item.weeksRemaining
-      if (typeof weeksVal === 'string' && (weeksVal.includes('#DIV') || weeksVal === '-')) {
-        weeksVal = '-'
-      }
-      return [
-        idx + 1,
-        `"${item.name}"`,
-        item.unit,
-        item.price,
-        item.startStock,
-        item.inflow ?? '',
-        item.outflow ?? '',
-        item.kitchenTransfer ?? '',
-        item.endStock,
-        item.weeklyAvg,
-        weeksVal ?? '-',
-        item.sum
-      ]
-    })
-
-    rows.push([
-      '',
-      '"ИТОГО (ОБЩАЯ СУММА)"',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      currentTable.grandTotalSum
-    ])
-
-    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `Zaxiralar_Balansi_${currentTable.id}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    try {
+      setExporting(true)
+      const res = await fetch(`/api/director/export?type=balance&id=${encodeURIComponent(currentTable.id)}`)
+      if (!res.ok) throw new Error('Eksport qilishda xatolik yuz berdi')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Информация_по_запасам_${currentTable.id}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success(formatDual("Excel jadval yuklandi", "Excel файл успешно загружен", "Excel file downloaded"))
+    } catch (err: any) {
+      toast.error(err.message || "Excel faylni yuklab olishda xatolik yuz berdi")
+    } finally {
+      setExporting(false)
+    }
   }
 
   // Helper for weeksRemaining traffic-light badge (Clean monochrome / subtle borders)
@@ -281,40 +230,8 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
 
   return (
     <div className="space-y-4">
-      {/* 1. STABLE MONOCHROME DATE SELECTOR & PRESETS */}
-      <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-dark-750 shadow-xs space-y-3">
-        {/* Quick Presets */}
-        <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-slate-100 dark:border-dark-800">
-          <div className="flex items-center gap-2">
-            <Calendar size={15} className="text-slate-500" />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-              {formatDual("Быстрый выбор:", "Быстрый выбор:", "Quick select:")}
-            </span>
-          </div>
-
-          <div className="flex items-center flex-wrap gap-1.5">
-            {quickPresets.map(preset => {
-              const active = selectedId === preset.id
-              return (
-                <button
-                  key={preset.id}
-                  onClick={() => {
-                    setSelectedId(preset.id)
-                    setSelectedMonth('ноябрь 2026')
-                  }}
-                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    active
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                      : 'bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {lang === 'uz' ? preset.labelUz : preset.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
+      {/* 1. STABLE MONOCHROME DATE & TABLE SELECTOR */}
+      <div className="bg-white dark:bg-dark-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-dark-750 shadow-xs">
         {/* Dropdown Filters & Table Selector */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
           <div className="flex items-center flex-wrap gap-2">
@@ -380,7 +297,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
             >
               {filteredOptions.map(opt => (
                 <option key={opt.id} value={opt.id} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
-                  {opt.title} {opt.dayRu ? `(${opt.dayRu})` : ''} - {(opt.grandTotalSum / 1_000_000).toFixed(1)} млн
+                  {opt.title} - {(opt.grandTotalSum / 1_000_000).toFixed(1)} млн
                 </option>
               ))}
             </select>
@@ -390,15 +307,15 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
           <div className="flex items-center gap-2">
             <div className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-800 dark:text-slate-200 text-xs font-bold">
               <span>{currentTable.title}</span>
-              {currentTable.dayRu && <span className="opacity-70 ml-1">({currentTable.dayRu})</span>}
             </div>
 
             <button
-              onClick={handleExportCSV}
-              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 text-xs font-bold transition-all flex items-center gap-1.5"
+              onClick={handleExportExcel}
+              disabled={exporting}
+              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
-              <Download size={13} />
-              <span>Excel (CSV)</span>
+              {exporting ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+              <span>Excel (.xlsx)</span>
             </button>
           </div>
         </div>
@@ -535,7 +452,7 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
               <tr className="bg-slate-900 text-amber-300 dark:bg-slate-950 border-t-2 border-amber-500 font-black text-sm">
                 <td className="py-3 px-3 text-center">Σ</td>
                 <td colSpan={10} className="py-3 px-4 uppercase tracking-wider text-white">
-                  {formatDual("ИТОГО (ОБЩАЯ СУММА ЗАПАСОВ)", "ИТОГО (ОБЩАЯ СУММА ЗАПАСОВ)", "GRAND TOTAL VALUATION")}
+                  {formatDual("ИТОГО", "ИТОГО", "GRAND TOTAL")}
                 </td>
                 <td className="py-3 px-4 text-right font-mono text-base font-black text-amber-300">
                   {(currentTable.grandTotalSum).toLocaleString('uz-UZ', { maximumFractionDigits: 2 })}

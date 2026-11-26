@@ -255,9 +255,6 @@ export default function ProductBalanceTable({
           <div className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
             {(totalWeightKg / 1000).toFixed(1)} tn
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {totalWeightKg.toLocaleString()} kg • {products.filter((p) => (p.unit || 'kg') === 'kg').length} xil xomashyo
-          </p>
         </div>
 
         {/* Card 2: Qadoqlar & Taralar (DONA) */}
@@ -271,9 +268,6 @@ export default function ProductBalanceTable({
           <div className="mt-2 text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
             {Math.round(totalDona).toLocaleString('uz-UZ')} dona
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {products.filter((p) => p.unit === 'dona').length} xil qadoq pozitsiyasi
-          </p>
         </div>
 
         {/* Card 3: Yetarli Zaxiralar */}
@@ -287,9 +281,6 @@ export default function ProductBalanceTable({
           <div className="mt-2 text-xl font-black text-slate-900 dark:text-white font-mono">
             {sufficientCount} ta mahsulot
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {lang === 'ru' ? 'Производство обеспечено' : 'Ishlab chiqarishga yetarli'}
-          </p>
         </div>
 
         {/* Card 4: Kam Qolgan yoki Tugagan */}
@@ -303,9 +294,6 @@ export default function ProductBalanceTable({
           <div className="mt-2 text-xl font-black text-rose-600 dark:text-rose-400 font-mono">
             {lowOrOutCount} ta
           </div>
-          <p className="mt-0.5 text-[11px] text-slate-400 font-medium">
-            {lang === 'ru' ? 'Требуется закупка' : 'Ta’minot buyurtmasi kerak'}
-          </p>
         </div>
       </div>
 
