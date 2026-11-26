@@ -85,7 +85,9 @@ export default function DirectorDynamicsPage() {
 
   // Navigation & View state - 0. Zaxiralar Balansi is default
   const [activeTab, setActiveTab] = useState<'balance' | 'expense' | 'gp' | 'waste' | 'notes'>('balance')
-  const [period, setPeriod] = useState<'week' | 'month'>('month')
+  const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('week')
+  const [customStartDate, setCustomStartDate] = useState('2026-11-01')
+  const [customEndDate, setCustomEndDate] = useState('2026-11-25')
   const [expenseSubMode, setExpenseSubMode] = useState<'sum' | 'kg'>('sum')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -449,40 +451,111 @@ export default function DirectorDynamicsPage() {
         </div>
       </div>
 
-      {/* SUB-CONTROLS BAR FOR EXPENSE, GP, WASTE (Search, Oylik/Haftalik, Sum/Kg switch, Excel Export) */}
+      {/* 2.5 MUDDAT / DAVR TANLASH: [ Bugun | Hafta | Oy | Yil | Barchasi | Oraliq ] */}
+      <div className="bg-slate-100/80 dark:bg-dark-850 p-1.5 rounded-2xl flex flex-wrap items-center justify-between gap-2.5 border border-slate-200/60 dark:border-dark-750">
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {[
+            { id: 'today', label: formatDual('Bugun', 'Сегодня', 'Today') },
+            { id: 'week', label: formatDual('Hafta', 'Неделя', 'Week') },
+            { id: 'month', label: formatDual('Oy', 'Месяц', 'Month') },
+            { id: 'year', label: formatDual('Yil', 'Год', 'Year') },
+            { id: 'all', label: formatDual('Barchasi', 'Все', 'All') },
+            { id: 'custom', label: formatDual('Oraliq', 'Период', 'Custom') },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setPeriod(tab.id as any)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                period === tab.id
+                  ? 'bg-white dark:bg-dark-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/80 dark:border-dark-700'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Dynamic Context Information Badge or Date Range Pickers */}
+        {period === 'today' && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-800">
+            <Calendar size={13} className="text-blue-500" />
+            <span>
+              {formatDual("Bugun:", "Сегодня:", "Today:")}{' '}
+              <span className="font-mono font-black text-blue-900 dark:text-blue-100">
+                25.11.2026
+              </span>
+            </span>
+          </div>
+        )}
+
+        {period === 'week' && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold border border-indigo-200 dark:border-indigo-800">
+            <Calendar size={13} className="text-indigo-500" />
+            <span>
+              {formatDual("Faol hafta:", "Активная неделя:", "Active week:")}{' '}
+              <span className="font-mono font-black text-indigo-950 dark:text-indigo-100">
+                02.11.2026 - 07.11.2026 (44-hafta)
+              </span>
+            </span>
+          </div>
+        )}
+
+        {period === 'month' && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-bold border border-emerald-200 dark:border-emerald-800">
+            <Calendar size={13} className="text-emerald-500" />
+            <span>
+              {formatDual("Faol davr:", "Активный период:", "Active period:")}{' '}
+              <span className="font-extrabold text-emerald-950 dark:text-emerald-100">
+                Yanvar — Dekabr 2026 (12 oy)
+              </span>
+            </span>
+          </div>
+        )}
+
+        {period === 'year' && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-slate-200/80 dark:bg-dark-750 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold">
+            <Calendar size={13} className="text-slate-500" />
+            <span>2026 Yillik umumiy zaxira va sarf hisoboti</span>
+          </div>
+        )}
+
+        {period === 'all' && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-slate-200/80 dark:bg-dark-750 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold">
+            <span>Barcha hisoblangan davrlar (339 ta jadval)</span>
+          </div>
+        )}
+
+        {period === 'custom' && (
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-white dark:bg-dark-900 rounded-xl border border-slate-200 dark:border-dark-700 text-xs shadow-xs">
+            <span className="text-slate-500 font-bold">{formatDual("Dan:", "С:", "From:")}</span>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={e => setCustomStartDate(e.target.value)}
+              className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+            />
+            <span className="text-slate-500 font-bold">{formatDual("Gacha:", "По:", "To:")}</span>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={e => setCustomEndDate(e.target.value)}
+              className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 3. STABLE SUB-CONTROLS BAR (Search, Sum/Kg switch, CSV Export) */}
       {activeTab !== 'balance' && activeTab !== 'notes' && (
         <div className="bg-white dark:bg-dark-900 rounded-2xl border border-slate-200 dark:border-dark-750 p-2.5 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
           <div className="flex items-center flex-wrap gap-2">
-            {/* Period Switcher: Oylik / Haftalik */}
-            <div className="bg-slate-100 dark:bg-dark-800 p-0.5 rounded-xl flex items-center border border-slate-200 dark:border-dark-700 text-xs font-bold">
-              <button
-                onClick={() => setPeriod('month')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  period !== 'week'
-                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {formatDual("Oylik dinamika", "По месяцам", "Monthly")}
-              </button>
-              <button
-                onClick={() => setPeriod('week')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  period === 'week'
-                    ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {formatDual("Haftalik dinamika", "По неделям", "Weekly")}
-              </button>
-            </div>
-
             {/* Expense Metric Switcher (Summa / Hajm) */}
             {activeTab === 'expense' && (
               <div className="bg-slate-100 dark:bg-dark-800 p-0.5 rounded-xl flex items-center border border-slate-200 dark:border-dark-700 text-xs font-bold">
                 <button
                   onClick={() => setExpenseSubMode('sum')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     expenseSubMode === 'sum'
                       ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -492,7 +565,7 @@ export default function DirectorDynamicsPage() {
                 </button>
                 <button
                   onClick={() => setExpenseSubMode('kg')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     expenseSubMode === 'kg'
                       ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -537,7 +610,12 @@ export default function DirectorDynamicsPage() {
 
       {/* 4. CONTENT SECTIONS - PURE EXCEL TABLES ONLY */}
       {activeTab === 'balance' && (
-        <DailyStockBalanceTab lang={directorLang} />
+        <DailyStockBalanceTab
+          activePeriod={period}
+          startDate={customStartDate}
+          endDate={customEndDate}
+          lang={directorLang}
+        />
       )}
 
       {/* TABLES FOR EXPENSE, GP, WASTE */}

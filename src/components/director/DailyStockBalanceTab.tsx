@@ -55,10 +55,17 @@ interface TableData {
 
 interface DailyStockBalanceTabProps {
   activePeriod?: 'today' | 'week' | 'month' | 'year' | 'all' | 'custom'
+  startDate?: string
+  endDate?: string
   lang?: 'uz' | 'ru' | 'en'
 }
 
-export default function DailyStockBalanceTab({ activePeriod, lang: propLang }: DailyStockBalanceTabProps = {}) {
+export default function DailyStockBalanceTab({
+  activePeriod = 'week',
+  startDate = '2026-11-01',
+  endDate = '2026-11-25',
+  lang: propLang
+}: DailyStockBalanceTabProps = {}) {
   const { lang: ctxLang, directorLang } = useLanguage()
   const activeLang = propLang || directorLang || ctxLang || 'uz'
   const lang = activeLang
@@ -76,37 +83,73 @@ export default function DailyStockBalanceTab({ activePeriod, lang: propLang }: D
     activePeriod === 'week' ? '2026-11-02_2026-11-07' : '2026-11-25'
   )
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState<'all' | 'daily' | 'weekly'>(
-    activePeriod === 'week' ? 'weekly' : 'all'
-  )
   const [selectedMonth, setSelectedMonth] = useState<string>('ноябрь 2026')
+
+  // Filter available options based on activePeriod, startDate, endDate, and selectedMonth
+  const filteredOptions = useMemo(() => {
+    return availableDates.filter(d => {
+      // 1. Bugun (Today): only latest day
+      if (activePeriod === 'today') {
+        return d.id === '2026-11-25'
+      }
+
+      // 2. Hafta (Week): only weekly tables
+      if (activePeriod === 'week') {
+        return d.type === 'weekly'
+      }
+
+      // 3. Oy (Month): filter by selectedMonth
+      if (activePeriod === 'month') {
+        return selectedMonth ? d.sheetName === selectedMonth : true
+      }
+
+      // 4. Oraliq (Custom): filter by startDate and endDate
+      if (activePeriod === 'custom') {
+        const itemStart = d.isoDate.split('_')[0]
+        const itemEnd = d.isoDate.includes('_') ? d.isoDate.split('_')[1] : itemStart
+        if (startDate && itemEnd < startDate) return false
+        if (endDate && itemStart > endDate) return false
+        return true
+      }
+
+      // 5. Yil / Barchasi: all tables
+      return true
+    })
+  }, [availableDates, activePeriod, selectedMonth, startDate, endDate])
 
   // Respond to period changes from parent
   React.useEffect(() => {
-    if (activePeriod === 'week') {
-      setFilterType('weekly')
-      setSelectedId('2026-11-02_2026-11-07')
-    } else if (activePeriod === 'today') {
-      setFilterType('daily')
+    if (activePeriod === 'today') {
       setSelectedId('2026-11-25')
+    } else if (activePeriod === 'week') {
+      const targetWeek = availableDates.find(d => d.id === '2026-11-02_2026-11-07' && d.type === 'weekly')
+      if (targetWeek) setSelectedId(targetWeek.id)
+      else {
+        const anyWeek = availableDates.find(d => d.type === 'weekly')
+        if (anyWeek) setSelectedId(anyWeek.id)
+      }
     } else if (activePeriod === 'month') {
-      setFilterType('all')
+      const firstInMonth = availableDates.find(d => d.sheetName === selectedMonth)
+      if (firstInMonth) setSelectedId(firstInMonth.id)
+    } else if (activePeriod === 'custom') {
+      if (filteredOptions.length > 0) {
+        setSelectedId(filteredOptions[0].id)
+      }
     }
-  }, [activePeriod])
+  }, [activePeriod, selectedMonth, startDate, endDate])
+
+  // Ensure selectedId is valid in current filteredOptions
+  React.useEffect(() => {
+    if (filteredOptions.length > 0 && !filteredOptions.some(o => o.id === selectedId)) {
+      setSelectedId(filteredOptions[0].id)
+    }
+  }, [filteredOptions, selectedId])
 
   // Find the active table
   const currentTable = useMemo(() => {
     return allTables.find(t => t.id === selectedId) || allTables.find(t => t.id === '2026-11-25') || allTables[allTables.length - 1]
   }, [allTables, selectedId])
 
-  // Filter available options by month and type
-  const filteredOptions = useMemo(() => {
-    return availableDates.filter(d => {
-      const matchMonth = selectedMonth ? d.sheetName === selectedMonth : true
-      const matchType = filterType === 'all' ? true : d.type === filterType
-      return matchMonth && matchType
-    })
-  }, [availableDates, selectedMonth, filterType])
 
   // All months list
   const allMonths = useMemo(() => {
@@ -254,65 +297,33 @@ export default function DailyStockBalanceTab({ activePeriod, lang: propLang }: D
         {/* Dropdown Filters & Table Selector */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
           <div className="flex items-center flex-wrap gap-2">
-            {/* Month Select */}
-            <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-slate-500 font-semibold">{formatDual("Oy:", "Месяц:", "Month:")}</span>
-              <select
-                value={selectedMonth}
-                onChange={e => {
-                  setSelectedMonth(e.target.value)
-                  const firstInMonth = availableDates.find(d => d.sheetName === e.target.value)
-                  if (firstInMonth) setSelectedId(firstInMonth.id)
-                }}
-                className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
-              >
-                {allMonths.map(m => (
-                  <option key={m} value={m} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
-                    {translateMonthName(m, lang)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Month Select (shown when period is month or all) */}
+            {(activePeriod === 'month' || activePeriod === 'all') && (
+              <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-1.5 text-xs">
+                <span className="text-slate-500 font-semibold">{formatDual("Oy:", "Месяц:", "Month:")}</span>
+                <select
+                  value={selectedMonth}
+                  onChange={e => {
+                    setSelectedMonth(e.target.value)
+                    const firstInMonth = availableDates.find(d => d.sheetName === e.target.value)
+                    if (firstInMonth) setSelectedId(firstInMonth.id)
+                  }}
+                  className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+                >
+                  {allMonths.map(m => (
+                    <option key={m} value={m} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
+                      {translateMonthName(m, lang)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-            {/* Daily / Weekly Filter */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-800 rounded-xl p-0.5 text-xs">
-              <button
-                onClick={() => setFilterType('all')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                  filterType === 'all'
-                    ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {formatDual("Barchasi", "Все", "All")}
-              </button>
-              <button
-                onClick={() => setFilterType('daily')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                  filterType === 'daily'
-                    ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {formatDual("Kunlar", "Дни", "Days")}
-              </button>
-              <button
-                onClick={() => setFilterType('weekly')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                  filterType === 'weekly'
-                    ? 'bg-white dark:bg-dark-700 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {formatDual("Haftalar", "Недели", "Weeks")}
-              </button>
-            </div>
-
-            {/* Table Dropdown */}
+            {/* Table Dropdown (Dynamically filtered by activePeriod / dates) */}
             <select
               value={selectedId}
               onChange={e => setSelectedId(e.target.value)}
-              className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer pr-6 max-w-[260px] truncate"
+              className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer pr-6 max-w-[320px] truncate"
             >
               {filteredOptions.map(opt => (
                 <option key={opt.id} value={opt.id} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
