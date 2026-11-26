@@ -2026,10 +2026,10 @@ export default function DirectorPage() {
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                {formatDual("Ta'minot, moliya va sex tahlili", "Аналитика снабжения, финансов и смен", "Supply, Financial & Shift Analytics")}
+                {formatDual("Ta'minot, moliya va ombor tahlili", "Аналитика снабжения, финансов и склада", "Supply, Financial & Warehouse Analytics")}
               </h2>
               <p className="text-xs text-slate-500">
-                {formatDual("Ta'minotchilar sifati, qarz majburiyatlari, zaxiralar salomatligi va smenalar faoliyati", "Качество поставщиков, кредиторская задолженность, структура запасов и работа смен", "Supplier quality, debt liabilities, stock distribution and shift operations")}
+                {formatDual("Ta'minotchilar sifati, qarz majburiyatlari va zaxiralar salomatligi balansi", "Качество поставщиков, кредиторская задолженность и структура запасов", "Supplier quality, debt liabilities and stock distribution")}
               </p>
             </div>
           </div>
@@ -2226,7 +2226,7 @@ export default function DirectorPage() {
           </div>
 
           {/* CHART 6: STOCK DISTRIBUTION & HEALTH */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-emerald-500/30 transition-all flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-emerald-500/30 transition-all flex flex-col justify-between">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
               <div>
                 <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -2234,133 +2234,86 @@ export default function DirectorPage() {
                   {formatDual("6. Ombor zaxiralari salomatligi va taqsimoti", "6. Состояние и структура складских запасов", "6. Stock Inventory Health & Distribution")}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {formatDual("Xomashyo va materiallarning yetarlilik darajasi", "Уровень обеспеченности сырьем и материалами", "Raw materials sufficiency and risk categories")}
+                  {formatDual("Xomashyo va materiallarning yetarlilik darajasi bo'yicha toifalanishi", "Уровень обеспеченности сырьем и материалами", "Raw materials sufficiency and risk categories")}
                 </p>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 {stockDistribution.reduce((sum: number, s: any) => sum + (Number(s.value) || 0), 0)} {formatDual("xomashyo pozitsiyasi", "позиций сырья", "items")}
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 text-xs mb-3 px-1">
-              {stockDistribution.map((entry: any, idx: number) => (
-                <span key={`leg-stk-${idx}`} className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }}></span>
-                  {entry.name}: <strong className="text-slate-900 dark:text-white">{entry.value}</strong>
-                </span>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              {/* Left: Donut Chart */}
+              <div className="h-[280px] w-full flex items-center justify-center">
+                {mounted && stockDistribution.some((s: any) => s.value > 0) ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stockDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={95}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {stockDistribution.map((entry: any, index: number) => (
+                          <Cell key={`pie-cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1e293b',
+                          borderColor: '#334155',
+                          borderRadius: '12px',
+                          color: '#fff',
+                          fontSize: '12px',
+                        }}
+                        formatter={(val: any) => [
+                          `${val} ${formatDual("tur mahsulot", "наименований", "products")}`,
+                          formatDual("Miqdori", "Количество", "Count"),
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-slate-400 text-xs">
+                    {formatDual("Ombor zaxira ma'lumotlari mavjud emas", "Нет данных о запасах", "No stock distribution data")}
+                  </div>
+                )}
+              </div>
+
+              {/* Right: Category details with progress / badges */}
+              <div className="space-y-3">
+                {stockDistribution.map((entry: any, idx: number) => {
+                  const total = stockDistribution.reduce((sum: number, s: any) => sum + (Number(s.value) || 0), 0)
+                  const percent = total > 0 ? Math.round((Number(entry.value || 0) / total) * 100) : 0
+                  return (
+                    <div
+                      key={`card-stk-${idx}`}
+                      className="p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 border border-slate-100 dark:border-dark-700/60 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></span>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{entry.name}</p>
+                          <p className="text-[11px] text-slate-400">
+                            {percent}% {formatDual("jami zaxiradan", "от всех запасов", "of total stock")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-base font-black text-slate-900 dark:text-white">{entry.value}</span>
+                        <span className="text-xs text-slate-400 ml-1">{formatDual("tur", "наим.", "items")}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
 
-            <div className="h-[280px] w-full flex items-center justify-center">
-              {mounted && stockDistribution.some((s: any) => s.value > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={stockDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={65}
-                      outerRadius={95}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {stockDistribution.map((entry: any, index: number) => (
-                        <Cell key={`pie-cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1e293b',
-                        borderColor: '#334155',
-                        borderRadius: '12px',
-                        color: '#fff',
-                        fontSize: '12px',
-                      }}
-                      formatter={(val: any) => [
-                        `${val} ${formatDual("tur mahsulot", "наименований", "products")}`,
-                        formatDual("Miqdori", "Количество", "Count"),
-                      ]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
-                  {formatDual("Ombor zaxira ma'lumotlari mavjud emas", "Нет данных о запасах", "No stock distribution data")}
-                </div>
-              )}
-            </div>
             <p className="text-[11px] text-slate-400 mt-2 text-right">
               {formatDual("Zaxira holati tahlili: Yetarli, kam qolgan va tugagan pozitsiyalar", "Анализ запасов: норма, мало и нулевой остаток", "Stock audit: sufficient, low and depleted items")}
-            </p>
-          </div>
-
-          {/* CHART 7: SHIFT PERFORMANCE & FINISHED OUTPUT */}
-          <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl p-5 shadow-sm hover:border-violet-500/30 transition-all flex flex-col justify-between">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-dark-800">
-              <div>
-                <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <Factory size={16} className="text-violet-500" />
-                  {formatDual("7. Smenalar va sex unumdorligi", "7. Производительность смен и цеха", "7. Shift Performance & Workshop Output")}
-                </h3>
-                <p className="text-xs text-slate-400">
-                  {formatDual("Smenalar bo'yicha tayyor mahsulot (quti) va brak (kg)", "Выпуск по сменам (коробки) и брак (кг)", "Finished boxes and rejected kg by shift")}
-                </p>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 border border-violet-500/20">
-                {shiftComparison.reduce((sum: number, s: any) => sum + (Number(s.outputBoxes) || 0), 0)} {formatDual("jami quti", "всего коробок", "total boxes")}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 text-xs mb-3 px-1">
-              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
-                {formatDual("Tayyor qutilar (dona)", "Выпуск коробок", "Output boxes")}
-              </span>
-              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                {formatDual("Brak xomashyo (kg)", "Брак (кг)", "Defect kg")}
-              </span>
-            </div>
-
-            <div className="h-[280px] w-full cursor-pointer">
-              {mounted && shiftComparison.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={shiftComparison}
-                    margin={{ top: 10, right: 10, left: -10, bottom: 10 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
-                    <XAxis dataKey="shift" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1e293b',
-                        borderColor: '#334155',
-                        borderRadius: '12px',
-                        color: '#fff',
-                        fontSize: '12px',
-                      }}
-                      formatter={(val: any, name: any) => [
-                        name === 'outputBoxes'
-                          ? `${Number(val).toLocaleString()} ${formatDual("quti", "коробок", "boxes")}`
-                          : `${Number(val).toLocaleString()} kg`,
-                        name === 'outputBoxes'
-                          ? formatDual("Tayyor qutilar", "Выпуск (коробки)", "Output boxes")
-                          : formatDual("Brak xomashyo", "Брак", "Defects"),
-                      ]}
-                    />
-                    <Bar dataKey="outputBoxes" fill="#8b5cf6" radius={[4, 4, 0, 0]} animationDuration={400} animationEasing="ease-out" />
-                    <Bar dataKey="rejectedKg" fill="#f43f5e" radius={[4, 4, 0, 0]} animationDuration={400} animationEasing="ease-out" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
-                  {formatDual("Smenalar bo'yicha ma'lumot mavjud emas", "Нет данных по сменам", "No shift performance data")}
-                </div>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400 mt-2 text-right">
-              {formatDual("Smenalar bo'yicha qadoqlangan mahsulot va sifat nazorati solishtirmasi", "Сравнение выпуска и качества по производственным сменам", "Shift production and quality comparison")}
             </p>
           </div>
         </div>
