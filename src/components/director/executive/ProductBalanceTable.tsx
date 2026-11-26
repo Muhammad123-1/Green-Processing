@@ -22,6 +22,7 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react'
+import { translateProductName } from '@/lib/directorLocalization'
 
 export interface ProductBalanceItem {
   productName: string
@@ -131,7 +132,8 @@ export default function ProductBalanceTable({
   // Filtered and sorted products
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const matchSearch = p.productName.toLowerCase().includes(search.toLowerCase())
+      const localized = translateProductName(p.productName, lang).toLowerCase()
+      const matchSearch = p.productName.toLowerCase().includes(search.toLowerCase()) || localized.includes(search.toLowerCase())
       let matchStatus = true
       if (statusFilter === 'NORMAL') {
         matchStatus = p.inventoryStatus === 'SUFFICIENT' || p.status === 'NORMAL'
@@ -488,7 +490,7 @@ export default function ProductBalanceTable({
                     </div>
 
                     <b className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-2 block">
-                      {item.productName}
+                      {translateProductName(item.productName, lang)}
                     </b>
 
                     <div className="mt-2 text-lg font-black font-mono text-slate-900 dark:text-white">
@@ -553,7 +555,7 @@ export default function ProductBalanceTable({
                   {lang === 'ru' ? 'Анализ остатков и покрытия запасов' : 'Mahsulot zaxirasi va qoplash tahlili'}
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
-                  {selectedCardProduct.productName}
+                  {translateProductName(selectedCardProduct.productName, lang)}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -828,7 +830,7 @@ export default function ProductBalanceTable({
                         <td className="p-3.5 font-bold text-slate-900 dark:text-white">
                           <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                            <span>{item.productName}</span>
+                            <span>{translateProductName(item.productName, lang)}</span>
                           </div>
                           {item.approvedMaxStorageDays && (
                             <span className="text-[10px] text-slate-400 font-normal block pl-4">

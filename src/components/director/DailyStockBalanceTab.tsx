@@ -16,6 +16,7 @@ import {
   translateTableTitle,
   translateNoteText
 } from '@/lib/directorLocalization'
+import CustomDropdown from '@/components/ui/CustomDropdown'
 import dailyStockData from '@/data/dailyStockLedger.json'
 
 interface StockItem {
@@ -299,38 +300,31 @@ export default function DailyStockBalanceTab({
           <div className="flex items-center flex-wrap gap-2">
             {/* Month Select (shown when period is month or all) */}
             {(activePeriod === 'month' || activePeriod === 'all') && (
-              <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-1.5 text-xs">
-                <span className="text-slate-500 font-semibold">{formatDual("Oy:", "Месяц:", "Month:")}</span>
-                <select
-                  value={selectedMonth}
-                  onChange={e => {
-                    setSelectedMonth(e.target.value)
-                    const firstInMonth = availableDates.find(d => d.sheetName === e.target.value)
-                    if (firstInMonth) setSelectedId(firstInMonth.id)
-                  }}
-                  className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
-                >
-                  {allMonths.map(m => (
-                    <option key={m} value={m} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
-                      {translateMonthName(m, lang)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomDropdown
+                value={selectedMonth}
+                onChange={val => {
+                  setSelectedMonth(String(val))
+                  const firstInMonth = availableDates.find(d => d.sheetName === val)
+                  if (firstInMonth) setSelectedId(firstInMonth.id)
+                }}
+                prefix={formatDual("Oy:", "Месяц:", "Month:")}
+                options={allMonths.map(m => ({
+                  value: m,
+                  label: translateMonthName(m.split(' ')[0], lang)
+                }))}
+              />
             )}
 
             {/* Table Dropdown (Dynamically filtered by activePeriod / dates) */}
-            <select
+            <CustomDropdown
               value={selectedId}
-              onChange={e => setSelectedId(e.target.value)}
-              className="bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer pr-6 max-w-[320px] truncate"
-            >
-              {filteredOptions.map(opt => (
-                <option key={opt.id} value={opt.id} className="bg-white dark:bg-dark-900 text-slate-900 dark:text-white">
-                  {translateTableTitle(opt.title, lang)} - {(opt.grandTotalSum / 1_000_000).toFixed(1)} {formatDual("mln", "млн", "M")}
-                </option>
-              ))}
-            </select>
+              onChange={val => setSelectedId(String(val))}
+              options={filteredOptions.map(opt => ({
+                value: opt.id,
+                label: `${translateTableTitle(opt.title, lang)} - ${(opt.grandTotalSum / 1_000_000).toFixed(1)} ${formatDual("mln", "млн", "M")}`
+              }))}
+              menuClassName="min-w-[280px]"
+            />
           </div>
 
           {/* Current Table Title & Export Button */}

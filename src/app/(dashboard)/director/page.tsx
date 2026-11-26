@@ -81,6 +81,7 @@ import ConsumptionMaterialsAnalysis from '@/components/director/executive/Consum
 import DefectMaterialsAnalysis from '@/components/director/executive/DefectMaterialsAnalysis'
 import ProductBalanceTable, { ProductBalanceItem } from '@/components/director/executive/ProductBalanceTable'
 import ProductLossDrawer from '@/components/director/executive/ProductLossDrawer'
+import CustomDropdown from '@/components/ui/CustomDropdown'
 
 export interface WeekOption {
   weekNum: number
@@ -160,9 +161,9 @@ const getAllYearMonths = (year = 2026) => {
     const lastDay = new Date(year, m + 1, 0)
     months.push({
       monthIndex: m,
-      labelUz: `${monthNamesUz[m]} ${year}`,
-      labelRu: `${monthNamesRu[m]} ${year}`,
-      labelEn: `${monthNamesEn[m]} ${year}`,
+      labelUz: monthNamesUz[m],
+      labelRu: monthNamesRu[m],
+      labelEn: monthNamesEn[m],
       from: toYMD(d),
       to: toYMD(lastDay),
       yearMonth: `${year}-${pad(m + 1)}`,
@@ -173,8 +174,8 @@ const getAllYearMonths = (year = 2026) => {
 
 const getAvailableYears = () => {
   return [
-    { label: '2025-yil', year: 2025, from: '2025-01-01', to: '2025-12-31' },
-    { label: '2026-yil', year: 2026, from: '2026-01-01', to: '2026-12-31' },
+    { label: '2025', year: 2025, from: '2025-01-01', to: '2025-12-31' },
+    { label: '2026', year: 2026, from: '2026-01-01', to: '2026-12-31' },
   ]
 }
 
@@ -1302,102 +1303,78 @@ export default function DirectorPage() {
         {period === 'week' && (
           <div className="flex items-center gap-2 flex-wrap">
             {/* Oy tanlash (12 oy) */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-dark-850 rounded-xl border border-amber-300 dark:border-amber-700/60 text-xs font-bold shadow-xs">
-              <span className="text-amber-700 dark:text-amber-400 text-[11px] font-semibold">
-                {formatDual('Oy:', 'Месяц:', 'Month:')}
-              </span>
-              <select
-                value={selectedWeekMonthIndex}
-                onChange={(e) => {
-                  const mIdx = Number(e.target.value)
-                  setSelectedWeekMonthIndex(mIdx)
-                  const mWeeks = getWeeksForMonth(2026, mIdx)
-                  if (mWeeks.length > 0) {
-                    setSelectedWeek(mWeeks[mWeeks.length - 1])
-                  }
-                }}
-                className="bg-transparent text-slate-800 dark:text-slate-200 font-bold text-xs focus:outline-none cursor-pointer"
-              >
-                {allYearMonths.map((m) => (
-                  <option key={m.yearMonth} value={m.monthIndex} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
-                    {directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              value={selectedWeekMonthIndex}
+              onChange={(mIdx) => {
+                const num = Number(mIdx)
+                setSelectedWeekMonthIndex(num)
+                const mWeeks = getWeeksForMonth(2026, num)
+                if (mWeeks.length > 0) {
+                  setSelectedWeek(mWeeks[mWeeks.length - 1])
+                }
+              }}
+              prefix={formatDual('Oy:', 'Месяц:', 'Month:')}
+              buttonClassName="bg-white dark:bg-dark-850 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200"
+              options={allYearMonths.map((m) => ({
+                value: m.monthIndex,
+                label: directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
+              }))}
+            />
 
-            {/* Hafta tanlash: [Oy] [n]-haftasi ([from] - [to]) */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-300 dark:border-amber-700/60 text-xs font-bold text-amber-900 dark:text-amber-200 shadow-xs">
-              <Calendar size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
-              <select
-                value={selectedWeek?.from || ''}
-                onChange={(e) => {
-                  const found = currentMonthWeeks.find((w) => w.from === e.target.value)
-                  if (found) setSelectedWeek(found)
-                }}
-                className="bg-transparent text-amber-950 dark:text-amber-100 font-bold text-xs focus:outline-none cursor-pointer"
-              >
-                {currentMonthWeeks.map((wk) => {
-                  const label = directorLang === 'ru' ? wk.labelRu : directorLang === 'en' ? wk.labelEn : wk.labelUz
-                  return (
-                    <option key={wk.from} value={wk.from} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
-                      {label}
-                    </option>
-                  )
-                })}
-              </select>
-            </div>
+            {/* Hafta tanlash: [Oy] [n]-haftasi */}
+            <CustomDropdown
+              value={selectedWeek?.from || ''}
+              onChange={(fromVal) => {
+                const found = currentMonthWeeks.find((w) => w.from === fromVal)
+                if (found) setSelectedWeek(found)
+              }}
+              icon={<Calendar size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />}
+              buttonClassName="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-950 dark:text-amber-100 font-bold"
+              options={currentMonthWeeks.map((wk) => ({
+                value: wk.from,
+                label: directorLang === 'ru' ? wk.labelRu : directorLang === 'en' ? wk.labelEn : wk.labelUz
+              }))}
+            />
           </div>
         )}
 
-        {/* 3. OY: SINGLE-ROW ALL 12 MONTHS SELECTOR */}
+        {/* 3. OY: SINGLE-ROW ALL 12 MONTHS SELECTOR - ONLY MONTH NAME */}
         {period === 'month' && (
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-800/50 text-xs font-bold text-indigo-900 dark:text-indigo-200 shadow-xs">
-            <Calendar size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
-            <span className="text-indigo-600 dark:text-indigo-400 text-[11px] font-semibold">
-              {formatDual('Faol oy:', 'Активный месяц:', 'Active month:')}
-            </span>
-            <select
+          <div className="flex items-center gap-2">
+            <CustomDropdown
               value={selectedMonth.yearMonth}
-              onChange={(e) => {
-                const found = allYearMonths.find((m) => m.yearMonth === e.target.value)
+              onChange={(yearMonthVal) => {
+                const found = allYearMonths.find((m) => m.yearMonth === yearMonthVal)
                 if (found) setSelectedMonth(found)
               }}
-              className="bg-transparent text-indigo-950 dark:text-indigo-100 font-black text-xs focus:outline-none cursor-pointer"
-            >
-              {allYearMonths.map((m) => {
-                const label = directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
-                return (
-                  <option key={m.yearMonth} value={m.yearMonth} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
-                    {label} ({m.from} — {m.to})
-                  </option>
-                )
-              })}
-            </select>
+              prefix={formatDual('Faol oy:', 'Активный месяц:', 'Active month:')}
+              icon={<Calendar size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />}
+              buttonClassName="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 text-indigo-950 dark:text-indigo-100 font-black"
+              options={allYearMonths.map((m) => ({
+                value: m.yearMonth,
+                label: directorLang === 'ru' ? m.labelRu : directorLang === 'en' ? m.labelEn : m.labelUz
+              }))}
+            />
           </div>
         )}
 
-        {/* 4. YIL: SINGLE-ROW YEAR SELECTOR */}
+        {/* 4. YIL: SINGLE-ROW YEAR SELECTOR - ONLY YEAR NUMBER */}
         {period === 'year' && (
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800/50 text-xs font-bold text-emerald-900 dark:text-emerald-200 shadow-xs">
-            <Calendar size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span className="text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
-              {formatDual('Faol yil:', 'Активный год:', 'Active year:')}
-            </span>
-            <select
+          <div className="flex items-center gap-2">
+            <CustomDropdown
               value={selectedYear.year}
-              onChange={(e) => {
-                const found = availableYears.find((yr) => yr.year === Number(e.target.value))
+              onChange={(yrVal) => {
+                const found = availableYears.find((yr) => yr.year === Number(yrVal))
                 if (found) setSelectedYear(found)
               }}
-              className="bg-transparent text-emerald-950 dark:text-emerald-100 font-black text-xs focus:outline-none cursor-pointer"
-            >
-              {availableYears.map((yr) => (
-                <option key={yr.year} value={yr.year} className="bg-white dark:bg-dark-900 text-slate-800 dark:text-slate-200">
-                  {yr.label} ({yr.from} — {yr.to})
-                </option>
-              ))}
-            </select>
+              prefix={formatDual('Faol yil:', 'Активный год:', 'Active year:')}
+              icon={<Calendar size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />}
+              buttonClassName="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-950 dark:text-emerald-100 font-black"
+              options={availableYears.map((yr) => ({
+                value: yr.year,
+                label: String(yr.year)
+              }))}
+            />
           </div>
         )}
 
