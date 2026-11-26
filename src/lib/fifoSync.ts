@@ -177,7 +177,7 @@ export async function syncInventoryBatchesFromDailyBalances() {
               minStockLevel: meta.minStockLevel,
               shelfLifeDays: meta.shelfLifeDays,
               type: 'RAW_MATERIAL',
-              isActive: true,
+              isActive: false,
             },
           })
           products.push(created)
@@ -437,6 +437,7 @@ export async function syncInventoryBatchesFromDailyBalances() {
             s.includes(' m ') ||
             s.endsWith(' м') ||
             s.endsWith(' m')),
+        authoritativeStock: 0,
       },
       {
         groupKey: 'group:glove_l',
@@ -450,6 +451,7 @@ export async function syncInventoryBatchesFromDailyBalances() {
             s.includes(' l ') ||
             s.endsWith(' л') ||
             s.endsWith(' l')),
+        authoritativeStock: 0,
       },
     ]
 
@@ -490,14 +492,19 @@ export async function syncInventoryBatchesFromDailyBalances() {
       )
     }
 
-    // Zero out all other products (user specified: only the 14 core products in the file should have stock)
+    // Zero out all other products and keep only the 14 real products active
+    const REAL_14_PRODUCT_IDS = new Set([230, 229, 234, 288, 285, 291, 292, 293, 294, 295, 233, 235, 246, 231])
     for (const product of products) {
-      if (handledProductIds.has(product.id)) continue
+      if (handledProductIds.has(product.id) && REAL_14_PRODUCT_IDS.has(product.id)) continue
       await prisma.inventoryBatch.updateMany({
         where: { productId: product.id, quantity: { gt: 0 } },
         data: { quantity: 0 },
       })
     }
+    await prisma.product.updateMany({
+      where: { id: { notIn: Array.from(REAL_14_PRODUCT_IDS) }, isActive: true },
+      data: { isActive: false },
+    })
 
     return {
       success: true,

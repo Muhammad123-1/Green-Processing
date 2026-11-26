@@ -19,6 +19,60 @@ const SYRYE_12_KEYS = new Set([
   'celery',
 ])
 
+const REAL_14_KEYS = new Set([
+  'iceberg',
+  'tomato',
+  'onion',
+  'cucumber',
+  'lemon',
+  'celery',
+  'rukkola',
+  'lolloRosso',
+  'spinach',
+  'mint',
+  'cabbage',
+  'carrot',
+  'box',
+  'chlorine',
+])
+
+const REAL_14_ORDER = [
+  'iceberg',
+  'tomato',
+  'onion',
+  'cucumber',
+  'lemon',
+  'celery',
+  'rukkola',
+  'lolloRosso',
+  'spinach',
+  'mint',
+  'cabbage',
+  'carrot',
+  'box',
+  'chlorine',
+]
+
+const REAL_14_METRICS: Record<
+  string,
+  { price: number; avgWeeklyExpense: number; weeksLeft: number; totalCost: number }
+> = {
+  iceberg: { price: 16883.32, avgWeeklyExpense: 7813.0, weeksLeft: 0.37, totalCost: 48795233.17 },
+  tomato: { price: 26500.00, avgWeeklyExpense: 8248.0, weeksLeft: 0.29, totalCost: 63088550.00 },
+  onion: { price: 11500.00, avgWeeklyExpense: 523.0, weeksLeft: 0.13, totalCost: 785461.50 },
+  cucumber: { price: 24000.00, avgWeeklyExpense: 0.0, weeksLeft: 0.00, totalCost: 0.00 },
+  lemon: { price: 35000.00, avgWeeklyExpense: 5.0, weeksLeft: 0.00, totalCost: 0.00 },
+  celery: { price: 35000.00, avgWeeklyExpense: 9.0, weeksLeft: 1.52, totalCost: 479500.00 },
+  rukkola: { price: 50000.00, avgWeeklyExpense: 132.0, weeksLeft: 0.21, totalCost: 1415000.00 },
+  lolloRosso: { price: 50000.00, avgWeeklyExpense: 78.0, weeksLeft: 0.47, totalCost: 1824500.00 },
+  spinach: { price: 50000.00, avgWeeklyExpense: 101.0, weeksLeft: 0.26, totalCost: 1335000.00 },
+  mint: { price: 50000.00, avgWeeklyExpense: 15.0, weeksLeft: 0.47, totalCost: 350000.00 },
+  cabbage: { price: 5000.00, avgWeeklyExpense: 1699.0, weeksLeft: 1.56, totalCost: 13288500.00 },
+  carrot: { price: 10000.00, avgWeeklyExpense: 288.0, weeksLeft: 0.38, totalCost: 1094800.00 },
+  box: { price: 5000.00, avgWeeklyExpense: 2653.0, weeksLeft: 2.81, totalCost: 37305000.00 },
+  chlorine: { price: 7000.00, avgWeeklyExpense: 132.0, weeksLeft: 3.89, totalCost: 3597090.00 },
+}
+
 function round2(n: number): number {
   if (!Number.isFinite(n)) return 0
   const r = Math.round(n * 100) / 100
@@ -774,8 +828,10 @@ export async function GET(req: NextRequest) {
     // Find latest confirmed daily shop balance report (Chain: start + income - expense = end)
     const { latestDate: latestReportDate, endBalances: latestClosingBalances } = getLatestSyryeClosingBalances(expenses)
 
-    // 4. Format all materials (calculating net stock and traffic light status)
-    const formattedMaterials = Object.values(materialsData).map((m) => {
+    // 4. Format all materials (strictly restricted to the 14 real warehouse products)
+    const formattedMaterials = Object.values(materialsData)
+      .filter((m) => REAL_14_KEYS.has(m.key))
+      .map((m) => {
       // Rule B (default for products NOT in 12-item Сырье table):
       let balance = 0
 
@@ -820,6 +876,12 @@ export async function GET(req: NextRequest) {
       } else if (effectiveMinStock > 0 && balance <= effectiveMinStock * 1.3) {
         status = 'yellow'
       }
+
+      const metric = REAL_14_METRICS[m.key]
+      const unitPrice = metric?.price || 0
+      const avgWeeklyExpense = metric?.avgWeeklyExpense || 0
+      const weeksLeft = metric ? (avgWeeklyExpense > 0 ? round2(balance / avgWeeklyExpense) : 0) : 0
+      const totalValue = metric ? round2(balance * unitPrice) : 0
 
       // Top supplier
       const sortedSuppliers = Object.entries(m.suppliersMap).sort((a, b) => b[1] - a[1])
@@ -937,9 +999,13 @@ export async function GET(req: NextRequest) {
         unit: m.unit,
         totalArrivalKg: Math.round(m.totalArrivalKg * 10) / 10,
         totalExpenseKg: Math.round(m.totalExpenseKg * 10) / 10,
-        currentStockKg: Math.round(balance * 10) / 10,
+        currentStockKg: round2(balance),
         minStock: effectiveMinStock,
         status,
+        price: unitPrice,
+        avgWeeklyExpense,
+        weeksLeft,
+        totalValue,
         arrivalsCount: m.arrivalsCount,
         lastArrivalDate: m.lastArrivalDate || '2026-08-01',
         topSupplier: topSupplierName,
@@ -947,28 +1013,26 @@ export async function GET(req: NextRequest) {
         fifo: fifoData
       }
     }).sort((a, b) => {
-      // Eng ko'p ishlatiladigoni birinchi: sexga berilgan chiqim hajmi bo'yicha (totalExpenseKg kamayish tartibida)
-      if (b.totalExpenseKg !== a.totalExpenseKg) {
-        return b.totalExpenseKg - a.totalExpenseKg
-      }
-      return b.currentStockKg - a.currentStockKg
+      const idxA = REAL_14_ORDER.indexOf(a.key)
+      const idxB = REAL_14_ORDER.indexOf(b.key)
+      return (idxA >= 0 ? idxA : 999) - (idxB >= 0 ? idxB : 999)
     })
 
     // Summary calculations separated by unit
     const foodMaterials = formattedMaterials.filter((m) => m.unit === 'kg')
     const totalArrivalKg = foodMaterials.reduce((acc, m) => acc + m.totalArrivalKg, 0)
     const totalExpenseKg = foodMaterials.reduce((acc, m) => acc + m.totalExpenseKg, 0)
-    const currentStockKg = foodMaterials.reduce((acc, m) => acc + m.currentStockKg, 0)
+    const currentStockKg = round2(foodMaterials.reduce((acc, m) => acc + m.currentStockKg, 0))
 
     const donaMaterials = formattedMaterials.filter((m) => m.unit === 'dona')
     const totalArrivalDona = donaMaterials.reduce((acc, m) => acc + m.totalArrivalKg, 0)
     const totalExpenseDona = donaMaterials.reduce((acc, m) => acc + m.totalExpenseKg, 0)
-    const currentStockDona = donaMaterials.reduce((acc, m) => acc + m.currentStockKg, 0)
+    const currentStockDona = round2(donaMaterials.reduce((acc, m) => acc + m.currentStockKg, 0))
 
     const litrMaterials = formattedMaterials.filter((m) => m.unit === 'litr')
     const totalArrivalLitr = litrMaterials.reduce((acc, m) => acc + m.totalArrivalKg, 0)
     const totalExpenseLitr = litrMaterials.reduce((acc, m) => acc + m.totalExpenseKg, 0)
-    const currentStockLitr = litrMaterials.reduce((acc, m) => acc + m.currentStockKg, 0)
+    const currentStockLitr = round2(litrMaterials.reduce((acc, m) => acc + m.currentStockKg, 0))
 
     const criticalCount = formattedMaterials.filter((m) => m.status === 'red').length
     const warningCount = formattedMaterials.filter((m) => m.status === 'yellow').length
