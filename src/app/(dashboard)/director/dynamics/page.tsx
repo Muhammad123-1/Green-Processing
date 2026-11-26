@@ -421,11 +421,11 @@ export default function DirectorDynamicsPage() {
             </Link>
             <span className="text-slate-300 dark:text-slate-700">/</span>
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-500/20">
-              {formatDual("Executive Dinamika (Drill-Down)", "Управленческая динамика (Drill-Down)", "Executive Dynamics (Drill-Down)")}
+              {formatDual("Sex Zaxiralari & Dinamika (Drill-Down)", "Информация по запасам для цеха (Drill-Down)", "Workshop Stocks & Dynamics")}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-            <span>{formatDual("Korxona Ishlab Chiqarish Dinamikasi", "Динамика производства и расхода цеха", "Enterprise Dynamics & Performance")}</span>
+            <span>{formatDual("Sex Uchun Mahsulot Zaxiralari va Sarfi", "Информация по запасам продукции для цеха", "Workshop Stocks & Product Consumption")}</span>
             <span className="text-xs px-2.5 py-1 rounded-full bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 font-extrabold uppercase tracking-wider">
               2026
             </span>
@@ -437,9 +437,9 @@ export default function DirectorDynamicsPage() {
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl">
             {formatDual(
-              "Sexga berilgan xomashyo sarfi, tayyor mahsulot (GP) chiqarilishi, chiqindilar (% otxod) va rahbariyatning maxsus boshqaruv izohlari.",
-              "Расход сырья со склада в цех, производство готовой продукции (ГП), процент отходов и примечания руководства.",
-              "Raw materials to workshop, finished goods output, scrap percentages and management annotations."
+              "Sexga berilgan xomashyo sarfi, tayyor mahsulot (GP) chiqarilishi, chiqindilar (% otxod) va rahbariyatning maxsus boshqaruv izohlari (Oylik va 47 haftalik dinamika).",
+              "Расход сырья со склада в цех, производство готовой продукции (ГП), процент отходов и примечания руководства (Месячная и 47-недельная динамика).",
+              "Raw materials to workshop, finished goods output, scrap percentages and management annotations (Monthly & 47-week dynamics)."
             )}
           </p>
         </div>

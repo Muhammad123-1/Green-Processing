@@ -1143,7 +1143,7 @@ export default function DirectorPage() {
             className="flex items-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-black transition-all border border-emerald-300 dark:border-emerald-700 shadow-xs"
           >
             <TrendingUp size={15} />
-            <span>{formatDual("Oylik & Haftalik Dinamika", "Динамика и аналитика", "Monthly Dynamics")}</span>
+            <span>{formatDual("Sex zaxiralari va sarfi (2026)", "Запасы продукции для цеха (2026)", "Workshop Stocks (2026)")}</span>
             <span className="px-1.5 py-0.2 rounded-md bg-emerald-600 text-white text-[9px] font-black uppercase">Drill-down</span>
           </Link>
 
@@ -2176,7 +2176,7 @@ export default function DirectorPage() {
             className="flex items-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-black transition-all border border-emerald-300 dark:border-emerald-700 shadow-xs"
           >
             <TrendingUp size={15} />
-            <span>{formatDual("Oylik & Haftalik Dinamika", "Динамика и аналитика", "Monthly Dynamics")}</span>
+            <span>{formatDual("Sex zaxiralari va sarfi (2026)", "Запасы продукции для цеха (2026)", "Workshop Stocks (2026)")}</span>
             <span className="px-1.5 py-0.2 rounded-md bg-emerald-600 text-white text-[9px] font-black uppercase">Drill-down</span>
           </Link>
 
