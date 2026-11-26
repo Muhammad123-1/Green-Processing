@@ -279,7 +279,12 @@ export async function GET(request: NextRequest) {
         if (ins.status === 'ACCEPTED') productMap[pname].accepted++
         if (ins.status === 'REJECTED') productMap[pname].rejected++
       })
-      const byProduct = Object.values(productMap).sort((a, b) => b.count - a.count)
+      const byProduct = Object.values(productMap)
+        .map((p) => ({
+          ...p,
+          totalQuantity: Math.round(p.totalQuantity * 10) / 10,
+        }))
+        .sort((a, b) => b.count - a.count)
 
       // By Supplier
       const supplierMap: Record<
@@ -311,7 +316,12 @@ export async function GET(request: NextRequest) {
         if (ins.status === 'ACCEPTED') supplierMap[sname].accepted++
         if (ins.status === 'REJECTED') supplierMap[sname].rejected++
       })
-      const bySupplier = Object.values(supplierMap).sort((a, b) => b.count - a.count)
+      const bySupplier = Object.values(supplierMap)
+        .map((s) => ({
+          ...s,
+          totalQuantity: Math.round(s.totalQuantity * 10) / 10,
+        }))
+        .sort((a, b) => b.count - a.count)
 
       // By Inspector
       const inspectorMap: Record<
@@ -346,6 +356,7 @@ export async function GET(request: NextRequest) {
       const byInspector = Object.values(inspectorMap)
         .map((item) => ({
           ...item,
+          totalQuantity: Math.round(item.totalQuantity * 10) / 10,
           acceptRate: item.total > 0 ? Math.round((item.accepted / item.total) * 100) : 0,
         }))
         .sort((a, b) => b.total - a.total)
@@ -441,6 +452,7 @@ export async function GET(request: NextRequest) {
       })
 
       monthlyData.forEach((m) => {
+        m.quantity = Math.round(m.quantity * 10) / 10
         m.acceptRate = m.total > 0 ? Math.round((m.accepted / m.total) * 100) : 0
       })
 
@@ -448,7 +460,7 @@ export async function GET(request: NextRequest) {
       const acceptedYear = yearActs.filter((i) => i.status === 'ACCEPTED').length
       const rejectedYear = yearActs.filter((i) => i.status === 'REJECTED').length
       const conditionalYear = yearActs.filter((i) => i.status === 'CONDITIONAL').length
-      const totalQuantityYear = yearActs.reduce((s, i) => s + (i.quantity || 0), 0)
+      const totalQuantityYear = Math.round(yearActs.reduce((s, i) => s + (i.quantity || 0), 0) * 10) / 10
 
       // By Inspector across year
       const inspectorMap: Record<

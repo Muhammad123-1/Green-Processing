@@ -35,6 +35,7 @@ import {
   Cell,
 } from 'recharts'
 import { useLanguage } from '@/components/providers/LanguageProvider'
+import { translateProductName, translateUnit } from '@/lib/directorLocalization'
 
 const MONTHS_UZ = [
   'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
@@ -519,7 +520,7 @@ function MonthlyReport({
                       {item.actNumber}
                     </span>
                     <h4 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100">
-                      {item.productName}
+                      {translateProductName(item.productName, lang)}
                     </h4>
                     <span className="text-xs text-slate-500 font-medium">— {item.supplierName}</span>
                   </div>
@@ -559,7 +560,7 @@ function MonthlyReport({
                     </span>
                     <span>•</span>
                     <span>
-                      {formatDual("Miqdor:", "Объем:", "Qty:")} <b>{item.quantity} {item.quantityUnit}</b>
+                      {formatDual("Miqdor:", "Объем:", "Qty:")} <b>{Number(item.quantity).toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} {translateUnit(item.quantityUnit, lang)}</b>
                     </span>
                     {item.temperature !== null && item.temperature !== undefined && (
                       <>
@@ -619,8 +620,12 @@ function MonthlyReport({
               return (
                 <div key={p.productId}>
                   <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span className="text-slate-800 dark:text-slate-200 truncate flex-1">{p.name}</span>
-                    <span className="text-slate-500 ml-2">{p.count} ta ({p.totalQuantity} kg)</span>
+                    <span className="text-slate-800 dark:text-slate-200 truncate flex-1">
+                      {translateProductName(p.name, lang)}
+                    </span>
+                    <span className="text-slate-500 ml-2">
+                      {p.count} {formatDual('ta', 'шт', 'pcs')} ({Number(p.totalQuantity).toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} kg)
+                    </span>
                   </div>
                   <div className="w-full bg-slate-100 dark:bg-dark-800 rounded-full h-2 overflow-hidden">
                     <div className="h-full rounded-full bg-purple-500" style={{ width: `${pct}%` }} />
@@ -646,7 +651,9 @@ function MonthlyReport({
                 <div key={s.supplierId}>
                   <div className="flex justify-between text-xs font-semibold mb-1">
                     <span className="text-slate-800 dark:text-slate-200 truncate flex-1">{s.name}</span>
-                    <span className="text-slate-500 ml-2">{s.count} ta</span>
+                    <span className="text-slate-500 ml-2">
+                      {s.count} {formatDual('ta', 'шт', 'pcs')}{s.totalQuantity ? ` (${Number(s.totalQuantity).toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} kg)` : ''}
+                    </span>
                   </div>
                   <div className="w-full bg-slate-100 dark:bg-dark-800 rounded-full h-2 overflow-hidden">
                     <div className="h-full rounded-full bg-cyan-500" style={{ width: `${pct}%` }} />
@@ -805,7 +812,9 @@ function YearlyReport({
                     <span className="text-xs font-mono font-black bg-white dark:bg-dark-800 px-2 py-0.5 rounded border border-slate-200 dark:border-dark-700">
                       {item.actNumber}
                     </span>
-                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{item.productName}</h4>
+                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                      {translateProductName(item.productName, lang)}
+                    </h4>
                     <span className="text-xs text-slate-500 font-medium">— {item.supplierName}</span>
                   </div>
                   <span className="text-xs text-slate-400 font-mono">
@@ -820,7 +829,7 @@ function YearlyReport({
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
                   <div>
-                    {formatDual("Qabul qiluvchi:", "Инспектор:", "Inspector:")} <b>{item.inspector}</b> · {item.quantity} {item.quantityUnit}
+                    {formatDual("Qabul qiluvchi:", "Инспектор:", "Inspector:")} <b>{item.inspector}</b> · {Number(item.quantity).toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} {translateUnit(item.quantityUnit, lang)}
                   </div>
                   {item.images.length > 0 && (
                     <div className="flex items-center gap-1.5">
