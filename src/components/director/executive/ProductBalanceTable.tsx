@@ -92,7 +92,7 @@ export default function ProductBalanceTable({
   onOpenStandards,
 }: Props) {
   const [search, setSearch] = useState('')
-  const [unitFilter, setUnitFilter] = useState<'ALL' | 'kg' | 'dona'>('kg')
+  const [unitFilter, setUnitFilter] = useState<'ALL' | 'kg' | 'dona'>('ALL')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'NORMAL' | 'WARNING' | 'CRITICAL'>('ALL')
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
   const [selectedCardProduct, setSelectedCardProduct] = useState<ProductBalanceItem | null>(null)
@@ -334,8 +334,18 @@ export default function ProductBalanceTable({
             </button>
           ) : (
             <>
-              {/* Unit Switcher: Xomashyo (kg) first, Qadoq/tara (dona) second, Barchasi third */}
+              {/* Unit Switcher */}
               <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-dark-800 rounded-xl text-xs font-bold">
+                <button
+                  onClick={() => setUnitFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    unitFilter === 'ALL'
+                      ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {lang === 'ru' ? 'Все' : 'Barchasi'} ({products.length})
+                </button>
                 <button
                   onClick={() => setUnitFilter('kg')}
                   className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
@@ -359,16 +369,6 @@ export default function ProductBalanceTable({
                   <Boxes size={13} />
                   <span>{lang === 'ru' ? 'Тара и упаковка (Шт)' : 'Qadoq va tara (Dona)'}</span>
                   <span className="text-[10px] opacity-80 font-mono">({countDona})</span>
-                </button>
-                <button
-                  onClick={() => setUnitFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${
-                    unitFilter === 'ALL'
-                      ? 'bg-white dark:bg-dark-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  {lang === 'ru' ? 'Все' : 'Barchasi'} ({products.length})
                 </button>
               </div>
 

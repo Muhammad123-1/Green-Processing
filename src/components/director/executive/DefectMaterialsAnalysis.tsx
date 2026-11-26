@@ -638,7 +638,13 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
                       {item.responsible || 'Sifat nazorati'}
                     </td>
                     <td className="p-3.5 font-mono font-bold text-slate-700 dark:text-slate-300">
-                      {item.defectNumber || item.batchNumber || '—'}
+                      {(() => {
+                        const d = item.defectNumber
+                        const b = item.batchNumber
+                        if (d && !d.startsWith('PKG-BRAK') && !d.startsWith('TECH-')) return d
+                        if (b && !b.startsWith('EXP-') && !b.startsWith('PKG-BRAK') && b !== 'Partiya yozilmagan' && b !== 'Партия не указана') return b
+                        return lang === 'ru' ? 'Партия не указана' : 'Partiya yozilmagan'
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -697,7 +703,9 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
                   {lang === 'ru' ? 'Акт брака' : 'Brak dalolatnomasi'}
                 </p>
                 <h3 className="font-mono font-black text-xl text-slate-900 dark:text-white">
-                  {selectedItem.defectNumber || selectedItem.batchNumber || 'BRAK'}
+                  {selectedItem.defectNumber && !selectedItem.defectNumber.startsWith('PKG-BRAK') && !selectedItem.defectNumber.startsWith('TECH-')
+                    ? selectedItem.defectNumber
+                    : (lang === 'ru' ? 'Акт брака' : 'Brak dalolatnomasi')}
                 </h3>
               </div>
               <button
@@ -728,7 +736,14 @@ export default function DefectMaterialsAnalysis({ items, dateFrom = '', dateTo =
               />
               <Detail
                 label={lang === 'ru' ? 'Номер партии' : 'Partiya raqami'}
-                value={selectedItem.batchNumber || '—'}
+                value={
+                  selectedItem.batchNumber &&
+                  !selectedItem.batchNumber.startsWith('EXP-') &&
+                  !selectedItem.batchNumber.startsWith('PKG-BRAK') &&
+                  selectedItem.batchNumber !== 'Partiya yozilmagan'
+                    ? selectedItem.batchNumber
+                    : (lang === 'ru' ? 'Партия не указана' : 'Partiya yozilmagan')
+                }
               />
             </div>
           </aside>

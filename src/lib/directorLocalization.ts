@@ -87,10 +87,10 @@ export const DIRECTOR_PRODUCT_MAP: Record<string, { uz: string; ru: string; en: 
   'бензоат': { uz: 'Natriy benzoat', ru: 'Бензоат натрия', en: 'Sodium Benzoate' },
   'уксус': { uz: 'Sirka kislotasi', ru: 'Уксусная кислота', en: 'Acetic Acid' },
   'пакет брак': { uz: 'Yaroqsiz paketlar (Brak)', ru: 'Пакеты (Брак)', en: 'Defective Bags' },
-  'пакет 2 брак': { uz: 'Yaroqsiz paketlar 2 (Brak)', ru: 'Пакеты 2 (Брак)', en: 'Defective Bags 2' },
+  'пакет 2 брак': { uz: 'Yaroqsiz paketlar (Brak)', ru: 'Пакеты (Брак)', en: 'Defective Bags' },
   'коробки брак': { uz: 'Yaroqsiz qutilar (Brak)', ru: 'Коробки (Брак)', en: 'Defective Boxes' },
-  'коробки2 брак': { uz: 'Yaroqsiz qutilar 2 (Brak)', ru: 'Коробки 2 (Брак)', en: 'Defective Boxes 2' },
-  'коробки 2 брак': { uz: 'Yaroqsiz qutilar 2 (Brak)', ru: 'Коробки 2 (Брак)', en: 'Defective Boxes 2' },
+  'коробки2 брак': { uz: 'Yaroqsiz qutilar (Brak)', ru: 'Коробки (Брак)', en: 'Defective Boxes' },
+  'коробки 2 брак': { uz: 'Yaroqsiz qutilar (Brak)', ru: 'Коробки (Брак)', en: 'Defective Boxes' },
 
   // English keys from database shop reports
   'tomato': { uz: 'Tomat', ru: 'Томат', en: 'Tomato' },
