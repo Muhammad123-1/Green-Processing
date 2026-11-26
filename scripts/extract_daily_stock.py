@@ -47,19 +47,19 @@ def parse_nullable_num(v):
 
 def parse_weeks(v):
     if v is None:
-        return '#DIV/0!'
+        return '-'
     if isinstance(v, (int, float)):
         if abs(v) < 1e-6:
             return 0.0
         return round(float(v), 2)
     s = str(v).strip()
     if '#DIV/0' in s or '#VALUE' in s or not s:
-        return '#DIV/0!'
+        return '-'
     try:
         val = float(s.replace(',', ''))
         return round(val, 2)
     except:
-        return s
+        return '-'
 
 all_tables = []
 available_dates = []

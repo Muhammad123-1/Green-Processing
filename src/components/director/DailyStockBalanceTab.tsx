@@ -178,20 +178,26 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
       'Сумма (сум)'
     ]
 
-    const rows = currentTable.items.map((item, idx) => [
-      idx + 1,
-      `"${item.name}"`,
-      item.unit,
-      item.price,
-      item.startStock,
-      item.inflow ?? '',
-      item.outflow ?? '',
-      item.kitchenTransfer ?? '',
-      item.endStock,
-      item.weeklyAvg,
-      item.weeksRemaining,
-      item.sum
-    ])
+    const rows = currentTable.items.map((item, idx) => {
+      let weeksVal = item.weeksRemaining
+      if (typeof weeksVal === 'string' && (weeksVal.includes('#DIV') || weeksVal === '-')) {
+        weeksVal = '-'
+      }
+      return [
+        idx + 1,
+        `"${item.name}"`,
+        item.unit,
+        item.price,
+        item.startStock,
+        item.inflow ?? '',
+        item.outflow ?? '',
+        item.kitchenTransfer ?? '',
+        item.endStock,
+        item.weeklyAvg,
+        weeksVal ?? '-',
+        item.sum
+      ]
+    })
 
     rows.push([
       '',
@@ -221,17 +227,25 @@ export default function DailyStockBalanceTab({ activePeriod }: DailyStockBalance
 
   // Helper for weeksRemaining traffic-light badge (Clean monochrome / subtle borders)
   const renderWeeksBadge = (val: number | string) => {
-    if (val === '#DIV/0!' || val === '' || val === null || val === undefined) {
+    if (
+      val === '#DIV/0!' ||
+      val === '#VALUE!' ||
+      val === '-' ||
+      val === '' ||
+      val === null ||
+      val === undefined ||
+      String(val).includes('#DIV')
+    ) {
       return (
-        <span className="font-mono text-slate-400 dark:text-slate-500 text-[11px]">
-          #DIV/0!
+        <span className="font-mono text-slate-400 dark:text-slate-500 text-xs font-semibold">
+          -
         </span>
       )
     }
 
     const num = typeof val === 'number' ? val : parseFloat(String(val))
-    if (isNaN(num)) {
-      return <span className="font-mono text-slate-400 text-xs">{val}</span>
+    if (isNaN(num) || num <= 0) {
+      return <span className="font-mono text-slate-400 dark:text-slate-500 text-xs font-semibold">-</span>
     }
 
     if (num < 0.3) {
