@@ -5,7 +5,7 @@ import {
   Calendar, Layers, Download, Search, AlertTriangle,
   CheckCircle2, Clock, Filter, ChevronDown,
   Package, DollarSign, ArrowUpRight, ArrowDownRight,
-  UtensilsCrossed, HelpCircle, Check, Info, FileText, Loader2
+  UtensilsCrossed, HelpCircle, Check, Info, FileText, Loader2, RefreshCw
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -77,7 +77,12 @@ export default function DailyStockBalanceTab({
   }
 
   const allTables = useMemo(() => dailyStockData.tables as TableData[], [])
-  const availableDates = useMemo(() => dailyStockData.availableDates, [])
+  const [liveAvailableDates, setLiveAvailableDates] = useState<any[]>(dailyStockData.availableDates)
+  const [liveTable, setLiveTable] = useState<TableData | null>(null)
+  const [isLiveLoading, setIsLiveLoading] = useState<boolean>(false)
+  const [isLiveDb, setIsLiveDb] = useState<boolean>(false)
+
+  const availableDates = liveAvailableDates
 
   // Selected table ID (default to 2026-11-02_2026-11-07 if week, or 2026-11-25)
   const [selectedId, setSelectedId] = useState<string>(
@@ -86,12 +91,40 @@ export default function DailyStockBalanceTab({
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState<string>('ноябрь 2026')
 
+  // Fetch live table from DB API
+  const fetchLiveStockBalance = React.useCallback(async (targetId?: string) => {
+    try {
+      setIsLiveLoading(true)
+      const qId = targetId || selectedId
+      const res = await fetch(`/api/director/stock-balance?date=${encodeURIComponent(qId)}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.currentTable) {
+          setLiveTable(data.currentTable)
+          setIsLiveDb(Boolean(data.isLiveDb))
+          if (Array.isArray(data.availableDates) && data.availableDates.length > 0) {
+            setLiveAvailableDates(data.availableDates)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch live stock balance from DB:', e)
+    } finally {
+      setIsLiveLoading(false)
+    }
+  }, [selectedId])
+
+  React.useEffect(() => {
+    fetchLiveStockBalance(selectedId)
+  }, [selectedId, fetchLiveStockBalance])
+
   // Filter available options based on activePeriod, startDate, endDate, and selectedMonth
   const filteredOptions = useMemo(() => {
     return availableDates.filter(d => {
       // 1. Bugun (Today): only latest day
       if (activePeriod === 'today') {
-        return d.id === '2026-11-25'
+        const latestDaily = availableDates.find(it => it.type === 'daily')
+        return d.id === (latestDaily?.id || '2026-11-25')
       }
 
       // 2. Hafta (Week): only weekly tables
@@ -121,7 +154,8 @@ export default function DailyStockBalanceTab({
   // Respond to period changes from parent
   React.useEffect(() => {
     if (activePeriod === 'today') {
-      setSelectedId('2026-11-25')
+      const latestDaily = availableDates.find(it => it.type === 'daily')
+      setSelectedId(latestDaily?.id || '2026-11-25')
     } else if (activePeriod === 'week') {
       const targetWeek = availableDates.find(d => d.id === '2026-11-02_2026-11-07' && d.type === 'weekly')
       if (targetWeek) setSelectedId(targetWeek.id)
@@ -137,7 +171,7 @@ export default function DailyStockBalanceTab({
         setSelectedId(filteredOptions[0].id)
       }
     }
-  }, [activePeriod, selectedMonth, startDate, endDate])
+  }, [activePeriod, selectedMonth, startDate, endDate, availableDates])
 
   // Ensure selectedId is valid in current filteredOptions
   React.useEffect(() => {
@@ -146,11 +180,13 @@ export default function DailyStockBalanceTab({
     }
   }, [filteredOptions, selectedId])
 
-  // Find the active table
+  // Find the active table (prefer liveTable from DB)
   const currentTable = useMemo(() => {
+    if (liveTable && (liveTable.id === selectedId || liveTable.isoDate === selectedId)) {
+      return liveTable
+    }
     return allTables.find(t => t.id === selectedId) || allTables.find(t => t.id === '2026-11-25') || allTables[allTables.length - 1]
-  }, [allTables, selectedId])
-
+  }, [liveTable, allTables, selectedId])
 
   // All months list
   const allMonths = useMemo(() => {
@@ -327,8 +363,25 @@ export default function DailyStockBalanceTab({
             />
           </div>
 
-          {/* Current Table Title & Export Button */}
-          <div className="flex items-center gap-2">
+          {/* Current Table Title, Live DB Badge & Export Button */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {isLiveDb && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{formatDual("Jonli DB (Real vaqt)", "Живые данные из БД", "Live DB Real-time")}</span>
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => fetchLiveStockBalance(selectedId)}
+              disabled={isLiveLoading}
+              title={formatDual("DB ma'lumotlarini yangilash", "Обновить данные из БД", "Refresh DB data")}
+              className="p-2 rounded-xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+            >
+              <RefreshCw size={13} className={isLiveLoading ? "animate-spin text-emerald-600" : ""} />
+            </button>
+
             <div className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800 text-slate-800 dark:text-slate-200 text-xs font-bold">
               <span>{translateTableTitle(currentTable.title, lang)}</span>
             </div>
