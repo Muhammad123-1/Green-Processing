@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Plus,
   Search,
@@ -100,6 +101,11 @@ export default function OrdersContent() {
   const [savingReconcile, setSavingReconcile] = useState(false)
   const [matchedArrivalsList, setMatchedArrivalsList] = useState<any[]>([])
   const [loadingMatchedArrivals, setLoadingMatchedArrivals] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Close modals on Escape key
   useEffect(() => {
@@ -1408,13 +1414,13 @@ export default function OrdersContent() {
       {/* ========================================================================= */}
       {/* MODAL 1: Yangi Buyurtma (Zayavka) Yaratish */}
       {/* ========================================================================= */}
-      {showOrderModal && (
+      {showOrderModal && mounted && createPortal(
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-enter"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto"
           onClick={() => setShowOrderModal(false)}
         >
           <div 
-            className="w-full max-w-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[90vh] overflow-y-auto animate-enter"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -1568,19 +1574,20 @@ export default function OrdersContent() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
       {/* MODAL 2: Yetkazib Berishni Prixod bilan Solishtirish (Reconciliation) */}
       {/* ========================================================================= */}
-      {showReconcileModal && selectedOrder && (
+      {showReconcileModal && selectedOrder && mounted && createPortal(
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-enter"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto"
           onClick={() => setShowReconcileModal(false)}
         >
           <div 
-            className="w-full max-w-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl shadow-2xl p-6 overflow-hidden max-h-[92vh] overflow-y-auto"
+            className="w-full max-w-xl bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-3xl shadow-2xl p-6 overflow-hidden max-h-[92vh] overflow-y-auto animate-enter"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1805,7 +1812,8 @@ export default function OrdersContent() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

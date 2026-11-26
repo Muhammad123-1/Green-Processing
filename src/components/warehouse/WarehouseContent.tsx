@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -538,6 +539,11 @@ export default function WarehouseContent() {
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [orderingItem, setOrderingItem] = useState<ProductInventory | null>(null)
   const [orderLoading, setOrderLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Stock Level Modal states
   const [stockLevelModal, setStockLevelModal] = useState<{
@@ -3947,13 +3953,13 @@ export default function WarehouseContent() {
       )}
 
       {/* MODAL: ORDER TO SUPPLY (TA'MINOTGA ZAYAVKA / BUYURTMA) */}
-      {showOrderModal && orderingItem && (
+      {showOrderModal && orderingItem && mounted && createPortal(
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-enter overflow-y-auto"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto"
           onClick={() => setShowOrderModal(false)}
         >
           <div 
-            className="w-full max-w-lg bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8"
+            className="w-full max-w-lg bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-3xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto my-8 animate-enter"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-dark-700">
@@ -4092,7 +4098,8 @@ export default function WarehouseContent() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Stock Level Customization Modal */}
