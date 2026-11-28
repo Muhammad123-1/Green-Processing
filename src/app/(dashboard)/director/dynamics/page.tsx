@@ -248,6 +248,15 @@ export default function DirectorDynamicsPage() {
     fetchCustomNotes()
   }, [])
 
+  useEffect(() => {
+    if (!noteModalOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNoteModalOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [noteModalOpen])
+
   const isWeekly = period === 'week'
 
   // Available column periods
@@ -1092,14 +1101,20 @@ export default function DirectorDynamicsPage() {
 
       {/* 6. NOTE CREATION MODAL (SAQLANADIGAN VA YOZILADIGAN QILIB BERISH) */}
       {noteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-750 p-5 sm:p-6 max-w-lg w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div
+          onClick={() => setNoteModalOpen(false)}
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-dark-900 rounded-3xl border border-slate-200 dark:border-dark-750 p-5 sm:p-6 max-w-lg w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 cursor-default"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-dark-800">
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <FileText size={18} />
                 <span>{formatDual("Rahbariyat Izohini Yozish (Примечание)", "Добавить примечание руководства", "Add Executive Note")}</span>
               </h3>
-              <button onClick={() => setNoteModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+              <button onClick={() => setNoteModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer">
                 <X size={18} />
               </button>
             </div>
