@@ -388,6 +388,8 @@ model Product {
   defects          DefectLog[]
   salesOrderItems  SalesOrderItem[]
   purchaseOrderItems PurchaseOrderItem[]
+  cogsPerUnit      Float?   @default(0) // Standard COGS per unit in UZS
+  salesReturns     SalesReturn[]
 }
 
 model Supplier {
@@ -801,9 +803,19 @@ model Customer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Sales Channel & Distribution Classification
+  distributionType String?  @default("DIRECT") // DIRECT, INDIRECT
+  channelCategory  String?  @default("UNCLASSIFIED") // RESTAURANTS_FOOD_SERVICE, CORPORATE_END_CUSTOMERS, SUPERMARKETS, RETAIL_STORES, DISTRIBUTORS, WHOLESALERS, EXPORT_PARTNERS, OTHER, UNCLASSIFIED
+  businessRole     String?  // B2B End-User (Own Operations), Reseller, Distributor, etc.
+  contractNumber   String?
+  contractDate     DateTime?
+  creditTermDays   Int?     @default(15) // Credit payment term in days
+  creditLimit      Float?   @default(0) // Credit limit in UZS
+
   orders      SalesOrder[]
   invoices    Invoice[]
   activities  CrmActivity[]
+  returns     SalesReturn[]
 }
 
 model SalesOrder {
@@ -822,6 +834,9 @@ model SalesOrder {
   customer       Customer          @relation(fields: [customerId], references: [id])
   items          SalesOrderItem[]
   invoices       Invoice[]
+  returns        SalesReturn[]
+  logisticsCost  Float?            @default(0)
+  discountAmount Float?            @default(0)
 }
 
 model SalesOrderItem {
@@ -832,6 +847,8 @@ model SalesOrderItem {
   unitPrice    Float
   totalPrice   Float
   discount     Float?   @default(0)
+  cogsPerUnit  Float?   @default(0) // Cost of Goods Sold per unit in UZS
+  logisticsCost Float?  @default(0)
 
   // Traceability
   batchId      Int?
@@ -1601,4 +1618,26 @@ model EmployeeMedicalExam {
   @@index([isDriver])
   @@index([status])
   @@index([parsedDate])
+}
+
+
+model SalesReturn {
+  id           Int        @id @default(autoincrement())
+  returnNumber String     @unique
+  salesOrderId Int?
+  customerId   Int
+  productId    Int
+  quantity     Float
+  unitPrice    Float
+  returnAmount Float
+  cogsAmount   Float?     @default(0)
+  reason       String?    // DEFECT, EXPIRED, WRONG_DELIVERY, CUSTOMER_CANCEL
+  status       String     @default("APPROVED") // PENDING, APPROVED, REJECTED
+  returnDate   DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  salesOrder   SalesOrder? @relation(fields: [salesOrderId], references: [id])
+  customer     Customer    @relation(fields: [customerId], references: [id])
+  product      Product     @relation(fields: [productId], references: [id])
 }
