@@ -43,6 +43,14 @@ export interface ConcentrationThresholds {
     hhiModerateLimit: number
     hhiCriticalLimit: number
   }
+  geographic: {
+    nameUz: string
+    nameRu: string
+    maxTop1Share: number
+    maxTop3Share: number
+    hhiModerateLimit: number
+    hhiCriticalLimit: number
+  }
 }
 
 export interface ConcentrationEntity {
@@ -64,7 +72,7 @@ export interface ConcentrationEntity {
 }
 
 export interface DimensionConcentrationReport {
-  dimension: 'CUSTOMER' | 'SUPPLIER' | 'PRODUCT' | 'CHANNEL'
+  dimension: 'CUSTOMER' | 'SUPPLIER' | 'PRODUCT' | 'CHANNEL' | 'GEOGRAPHIC'
   totalValue: number
   unit: string
   entitiesCount: number
@@ -109,7 +117,7 @@ export interface ScenarioSimulationResult {
 export interface ConcentrationRiskAlert {
   id: string
   level: 'CRITICAL' | 'WARNING' | 'INFO'
-  dimension: 'CUSTOMER' | 'SUPPLIER' | 'PRODUCT' | 'CHANNEL'
+  dimension: 'CUSTOMER' | 'SUPPLIER' | 'PRODUCT' | 'CHANNEL' | 'GEOGRAPHIC'
   titleUz: string
   titleRu: string
   descriptionUz: string
@@ -144,7 +152,8 @@ export function getConcentrationThresholds(): ConcentrationThresholds {
     customer: { nameUz: 'Mijozlar', nameRu: 'Клиенты', maxTop1Share: 30, maxTop3Share: 60, hhiModerateLimit: 1800, hhiCriticalLimit: 2500 },
     supplier: { nameUz: 'Yetkazib beruvchilar', nameRu: 'Поставщики', maxTop1Share: 25, maxTop3Share: 50, hhiModerateLimit: 1500, hhiCriticalLimit: 2200 },
     product: { nameUz: 'Mahsulotlar', nameRu: 'Продукты', maxTop1Share: 35, maxTop3Share: 70, hhiModerateLimit: 2000, hhiCriticalLimit: 2800 },
-    channel: { nameUz: 'Kanallar', nameRu: 'Каналы', maxTop1Share: 45, maxTop3Share: 80, hhiModerateLimit: 2200, hhiCriticalLimit: 3000 }
+    channel: { nameUz: 'Kanallar', nameRu: 'Каналы', maxTop1Share: 45, maxTop3Share: 80, hhiModerateLimit: 2200, hhiCriticalLimit: 3000 },
+    geographic: { nameUz: 'Geografik Bozorlar', nameRu: 'Географические рынки', maxTop1Share: 50, maxTop3Share: 85, hhiModerateLimit: 2500, hhiCriticalLimit: 3500 }
   }
 }
 
@@ -180,7 +189,7 @@ export function evaluateRiskLevel(
  * Builds a standardized Dimension Concentration Report with Pareto cumulative sorting
  */
 export function buildDimensionReport(
-  dimension: 'CUSTOMER' | 'SUPPLIER' | 'PRODUCT' | 'CHANNEL',
+  dimension: 'CUSTOMER' | 'SUPPLIER' | 'PRODUCT' | 'CHANNEL' | 'GEOGRAPHIC',
   items: Array<{
     id: string | number
     name: string

@@ -29,7 +29,8 @@ import {
   Percent,
   Flame,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Globe
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -65,6 +66,7 @@ interface ApiResponse {
     supplier: DimensionConcentrationReport
     product: DimensionConcentrationReport
     channel: DimensionConcentrationReport
+    geographic: DimensionConcentrationReport
   }
   singleSourceMaterials: SingleSourceRawMaterial[]
   scenarios: ScenarioSimulationResult[]
@@ -82,6 +84,9 @@ interface ApiResponse {
     top1ProductName: string
     productHhi: number
     channelHhi: number
+    geographicHhi: number
+    top1GeographicMarket: string
+    top1GeographicShare: number
     singleSourceCount: number
   }
   error?: string
@@ -95,29 +100,30 @@ export default function BusinessDiversificationAnalytics() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ApiResponse | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState('2026-11')
-  const [activeTab, setActiveTab] = useState<'customers' | 'suppliers' | 'products' | 'channels'>('customers')
+  const [activeTab, setActiveTab] = useState<'customers' | 'suppliers' | 'products' | 'channels' | 'geographic'>('customers')
   const [searchQuery, setSearchQuery] = useState('')
 
   // Interactive Scenario Simulation Sliders
   const [customerShockPct, setCustomerShockPct] = useState(100)
   const [costSurgePct, setCostSurgePct] = useState(20)
+  const [demandShockPct, setDemandShockPct] = useState(25)
   const [simulating, setSimulating] = useState(false)
 
   // Modals
   const [drillDownEntity, setDrillDownEntity] = useState<ConcentrationEntity | null>(null)
   const [configModalOpen, setConfigModalOpen] = useState(false)
-  const [editingDimension, setEditingDimension] = useState<'customer' | 'supplier' | 'product' | 'channel'>('customer')
+  const [editingDimension, setEditingDimension] = useState<'customer' | 'supplier' | 'product' | 'channel' | 'geographic'>('customer')
   const [tempMaxTop1, setTempMaxTop1] = useState(30)
   const [tempMaxTop3, setTempMaxTop3] = useState(60)
   const [tempHhiModerate, setTempHhiModerate] = useState(1800)
   const [tempHhiCritical, setTempHhiCritical] = useState(2500)
   const [savingConfig, setSavingConfig] = useState(false)
 
-  const fetchData = async (period: string, custShock = customerShockPct, costSurge = costSurgePct) => {
+  const fetchData = async (period: string, custShock = customerShockPct, costSurge = costSurgePct, demandShock = demandShockPct) => {
     try {
       setLoading(true)
       const res = await fetch(
-        `/api/director/concentration-risk?period=${period}&customerShockPct=${custShock}&costSurgePct=${costSurge}`
+        `/api/director/concentration-risk?period=${period}&customerShockPct=${custShock}&costSurgePct=${costSurge}&demandShockPct=${demandShock}`
       )
       const json: ApiResponse = await res.json()
       if (json.success) {
@@ -139,7 +145,7 @@ export default function BusinessDiversificationAnalytics() {
 
   const handleRunSimulation = () => {
     setSimulating(true)
-    fetchData(selectedPeriod, customerShockPct, costSurgePct)
+    fetchData(selectedPeriod, customerShockPct, costSurgePct, demandShockPct)
   }
 
   const handleSaveThresholds = async () => {
@@ -217,6 +223,8 @@ export default function BusinessDiversificationAnalytics() {
         return data.reports.product
       case 'channels':
         return data.reports.channel
+      case 'geographic':
+        return data.reports.geographic
     }
   }, [data, activeTab])
 
@@ -534,12 +542,12 @@ export default function BusinessDiversificationAnalytics() {
         </div>
 
         {/* Sliders Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 rounded-xl bg-slate-50 dark:bg-dark-800/60 border border-slate-200 dark:border-dark-750">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-4 rounded-xl bg-slate-50 dark:bg-dark-800/60 border border-slate-200 dark:border-dark-750">
           {/* Slider 1: Customer Loss Shock */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-700 dark:text-slate-300">
-                {isUz ? '1. Eng yirik mijoz yoʻqotilishi / pasayishi:' : '1. Потеря крупнейшего клиента:'}
+                {isUz ? '1. Eng yirik mijoz qisqarishi:' : '1. Потеря топ-клиента:'}
               </span>
               <span className="px-2 py-0.5 rounded-md font-mono font-bold bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                 -{customerShockPct}%
@@ -555,9 +563,9 @@ export default function BusinessDiversificationAnalytics() {
               className="w-full accent-blue-600 cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
-              <span>-10% (Kichik pasayish)</span>
+              <span>-10%</span>
               <span>-50% (Yarim hajm)</span>
-              <span>-100% (Toʻliq boy berish)</span>
+              <span>-100% (Toʻliq)</span>
             </div>
           </div>
 
@@ -565,7 +573,7 @@ export default function BusinessDiversificationAnalytics() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-700 dark:text-slate-300">
-                {isUz ? '2. Xomashyo narxlari oshishi (Inflyatsiya):' : '2. Рост цен на сырье:'}
+                {isUz ? '2. Xomashyo narxi oshishi:' : '2. Рост цен на сырье:'}
               </span>
               <span className="px-2 py-0.5 rounded-md font-mono font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
                 +{costSurgePct}%
@@ -581,9 +589,35 @@ export default function BusinessDiversificationAnalytics() {
               className="w-full accent-amber-600 cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
-              <span>+5% (Oddiy inflyatsiya)</span>
-              <span>+20% (Mavsumiy sakrash)</span>
-              <span>+60% (Kritik defitsit)</span>
+              <span>+5% (Inflyatsiya)</span>
+              <span>+20% (Sakrash)</span>
+              <span>+60% (Defitsit)</span>
+            </div>
+          </div>
+
+          {/* Slider 3: Product Demand Reduction Shock */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                {isUz ? '3. Asosiy mahsulot talabi pasayishi:' : '3. Падение спроса на топ-продукт:'}
+              </span>
+              <span className="px-2 py-0.5 rounded-md font-mono font-bold bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+                -{demandShockPct}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="10"
+              max="80"
+              step="5"
+              value={demandShockPct}
+              onChange={e => setDemandShockPct(parseInt(e.target.value, 10))}
+              className="w-full accent-rose-600 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400">
+              <span>-10% (Tebranish)</span>
+              <span>-30% (Oʻrtacha)</span>
+              <span>-80% (Kritik tushish)</span>
             </div>
           </div>
         </div>
@@ -710,7 +744,22 @@ export default function BusinessDiversificationAnalytics() {
               <Layers size={14} />
               <span>{isUz ? 'Taqsimot Kanallari' : 'Каналы сбыта'}</span>
               <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-700/20">
-                {data?.reports.channel.entitiesCount || 0}
+                {data?.reports.channel?.entitiesCount || 0}
+              </span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('geographic'); setSearchQuery('') }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'geographic'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+              }`}
+            >
+              <Globe size={14} />
+              <span>{isUz ? 'Geografik Bozorlar' : 'Гео-рынки'}</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-700/20">
+                {data?.reports.geographic?.entitiesCount || 0}
               </span>
             </button>
           </div>
@@ -738,6 +787,7 @@ export default function BusinessDiversificationAnalytics() {
                   {activeTab === 'suppliers' && (isUz ? 'Yetkazib Beruvchilar Xarajat Pareto Grafigi' : 'Парето-анализ поставщиков')}
                   {activeTab === 'products' && (isUz ? 'Mahsulot Portfeli Ulushi Grafigi' : 'Парето-анализ продуктов')}
                   {activeTab === 'channels' && (isUz ? 'Sotuv Kanallari Ulush Grafigi' : 'Парето-анализ каналов')}
+                  {activeTab === 'geographic' && (isUz ? 'Geografik Bozorlar Konsentratsiyasi Pareto Grafigi' : 'Парето-анализ географических рынков')}
                 </h3>
                 <p className="text-xs text-slate-400">
                   {isUz ? 'Ustunlar: Yakka ulush (%), Chiziq: Kumulyativ jamlanma (%)' : 'Столбцы: Доля (%), Линия: Накопительный итог (%)'}
@@ -1049,7 +1099,7 @@ export default function BusinessDiversificationAnalytics() {
                 <select
                   value={editingDimension}
                   onChange={e => {
-                    const dim = e.target.value as 'customer' | 'supplier' | 'product' | 'channel'
+                    const dim = e.target.value as 'customer' | 'supplier' | 'product' | 'channel' | 'geographic'
                     setEditingDimension(dim)
                     const th = data?.thresholds ? data.thresholds[dim] : undefined
                     if (th) {
@@ -1065,6 +1115,7 @@ export default function BusinessDiversificationAnalytics() {
                   <option value="supplier">{isUz ? 'Yetkazib beruvchilar konsentratsiyasi' : 'Концентрация поставщиков'}</option>
                   <option value="product">{isUz ? 'Mahsulot portfeli' : 'Продуктовый портфель'}</option>
                   <option value="channel">{isUz ? 'Taqsimot kanallari' : 'Каналы сбыта'}</option>
+                  <option value="geographic">{isUz ? 'Geografik bozorlar' : 'Географические рынки'}</option>
                 </select>
               </div>
 

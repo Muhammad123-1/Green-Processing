@@ -303,7 +303,73 @@ export async function GET(request: NextRequest) {
       thresholds.product
     )
 
-    // E. WHAT-IF SCENARIO SIMULATION ENGINE
+    // E. GEOGRAPHIC MARKET CONCENTRATION ANALYSIS
+    const geoMap: Record<string, { name: string; revenue: number; grossProfit: number; totalKg: number; customersCount: number }> = {}
+
+    for (const c of customers) {
+      let custRevenue = 0
+      let custCogs = 0
+      let custKg = 0
+
+      for (const order of c.orders) {
+        custRevenue += (order.totalAmount || 0)
+        for (const it of order.items) {
+          const qty = it.quantity || 0
+          custKg += qty
+          const unitCogs = (it.cogsPerUnit && it.cogsPerUnit > 0)
+            ? it.cogsPerUnit
+            : (it.product?.cogsPerUnit && it.product.cogsPerUnit > 0)
+            ? it.product.cogsPerUnit
+            : (it.unitPrice * 0.65)
+          custCogs += (qty * unitCogs)
+        }
+      }
+
+      if (custRevenue <= 0) continue
+
+      const profit = Math.max(0, custRevenue - custCogs)
+      const addr = (c.address || '').toLowerCase()
+      const cName = c.name.toLowerCase()
+
+      let geoRegion = 'Toshkent Shahri (Poytaxt Bozor)'
+      if (addr.includes('qozog') || addr.includes('olmaota') || addr.includes('almaty') || cName.includes('eurasia')) {
+        geoRegion = 'Qozog\'iston (Markaziy Osiyo Eksport)'
+      } else if (addr.includes('germaniya') || addr.includes('de') || addr.includes('frankfurt') || cName.includes('silk road')) {
+        geoRegion = 'Yevropa Ittifoqi (Germaniya Eksport)'
+      } else if (addr.includes('samarqand')) {
+        geoRegion = 'Samarqand Mintaqasi (Ichki Bozor)'
+      } else if (addr.includes('farg\'ona') || addr.includes('fergana') || addr.includes('vodiy')) {
+        geoRegion = 'Farg\'ona Vodiysi (Ichki Bozor)'
+      } else if (addr.includes('vil.') || addr.includes('zangiota') || addr.includes('yangiyo\'l') || addr.includes('toshkent vil')) {
+        geoRegion = 'Toshkent Viloyati (Viloyat Markazi)'
+      }
+
+      if (!geoMap[geoRegion]) {
+        geoMap[geoRegion] = { name: geoRegion, revenue: 0, grossProfit: 0, totalKg: 0, customersCount: 0 }
+      }
+      geoMap[geoRegion].revenue += custRevenue
+      geoMap[geoRegion].grossProfit += profit
+      geoMap[geoRegion].totalKg += custKg
+      geoMap[geoRegion].customersCount++
+    }
+
+    const geographicReport = buildDimensionReport(
+      'GEOGRAPHIC',
+      Object.entries(geoMap).map(([regionName, val], idx) => ({
+        id: idx + 1,
+        name: regionName,
+        value: val.revenue,
+        grossProfit: val.grossProfit,
+        category: val.customersCount > 1 ? `${val.customersCount} ta mijoz` : '1 ta xalqaro hamkor',
+        secondaryLabel: 'Yetkazilgan hajm',
+        secondaryValue: val.totalKg,
+        secondaryUnit: 'kg'
+      })),
+      'so\'m',
+      thresholds.geographic
+    )
+
+    // F. WHAT-IF SCENARIO SIMULATION ENGINE
     // Scenario 1: Top Customer Loss Simulation
     const topCustomer = customerReport.entities[0]
     const customerShockMultiplier = customerShockPct / 100
@@ -379,6 +445,28 @@ export async function GET(request: NextRequest) {
       recommendedMitigationRu: 'Фиксация закупочных цен в долгосрочных контрактах и повышение технологического выхода.'
     }
 
+    // Scenario 4: Top Product Demand Shock
+    const topProduct = productReport.entities[0]
+    const demandShockMultiplier = demandShockPct / 100
+    const simProductLossRev = topProduct ? (topProduct.value * demandShockMultiplier) : 0
+    const simProductLossProfit = topProduct && topProduct.grossProfit ? (topProduct.grossProfit * demandShockMultiplier) : (simProductLossRev * 0.35)
+    const simProductLossKg = topProduct?.secondaryMetric?.value ? (topProduct.secondaryMetric.value * demandShockMultiplier) : 0
+
+    const scenarioProductDemandShock: ScenarioSimulationResult = {
+      scenarioType: 'DEMAND_SHOCK',
+      titleUz: `Asosiy Mahsulot (${topProduct?.name || 'Mahsulot'}) Bozor Talabining -${demandShockPct}% ga Qisqarishi`,
+      titleRu: `Сценарий падения спроса на ключевой продукт (${topProduct?.name || 'Продукт'}) на -${demandShockPct}%`,
+      baselineDescription: `"${topProduct?.name}" mahsuloti jami savdo aylanmasining ${topProduct?.sharePercent}% ulushini tashkil etadi.`,
+      simulationAssumptions: `Mavsumiy to'yinish yoki raqobatchilar kirib kelishi tufayli talabning ${demandShockPct}% pasayishi.`,
+      financialExposureUzs: simProductLossRev,
+      volumeExposureKg: simProductLossKg,
+      grossMarginImpactPercent: productReport.totalValue > 0 ? Number(((simProductLossProfit / productReport.totalValue) * 100).toFixed(1)) : 0,
+      productionDowntimeRiskDays: null,
+      postShockHhi: productReport.hhiIndex,
+      recommendedMitigationUz: 'Mahsulot sortimentini chuqur qayta ishlangan tayyor sabzavotlar bilan kengaytirish va yangi savdo tarmoqlari bilan promolar o\'tkazish.',
+      recommendedMitigationRu: 'Расширение ассортимента продукции глубокой переработки и проведение промо-акций.'
+    }
+
     // F. INTELLIGENT CONCENTRATION ALERTS
     const alerts: ConcentrationRiskAlert[] = []
 
@@ -450,13 +538,15 @@ export async function GET(request: NextRequest) {
         customer: customerReport,
         supplier: supplierReport,
         product: productReport,
-        channel: channelReport
+        channel: channelReport,
+        geographic: geographicReport
       },
       singleSourceMaterials,
       scenarios: [
         scenarioCustomerLoss,
         scenarioSupplierDisruption,
-        scenarioCostSurge
+        scenarioCostSurge,
+        scenarioProductDemandShock
       ],
       alerts,
       summaryKpis: {
@@ -472,6 +562,9 @@ export async function GET(request: NextRequest) {
         top1ProductName: productReport.top1EntityName,
         productHhi: productReport.hhiIndex,
         channelHhi: channelReport.hhiIndex,
+        geographicHhi: geographicReport.hhiIndex,
+        top1GeographicMarket: geographicReport.top1EntityName,
+        top1GeographicShare: geographicReport.top1SharePercent,
         singleSourceCount: singleSourceMaterials.length
       }
     })
@@ -497,7 +590,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { dimension, maxTop1Share, maxTop3Share, hhiModerateLimit, hhiCriticalLimit } = body
 
-    if (!dimension || !['customer', 'supplier', 'product', 'channel'].includes(dimension)) {
+    if (!dimension || !['customer', 'supplier', 'product', 'channel', 'geographic'].includes(dimension)) {
       return NextResponse.json({ error: 'Noto\'g\'ri parametrlar' }, { status: 400 })
     }
 

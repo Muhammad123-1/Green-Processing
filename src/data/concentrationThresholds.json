@@ -34,6 +34,14 @@
       "maxTop3Share": 80.0,
       "hhiModerateLimit": 2200,
       "hhiCriticalLimit": 3000
+    },
+    "geographic": {
+      "nameUz": "Geografik Bozorlar Konsentratsiyasi",
+      "nameRu": "Концентрация географических рынков",
+      "maxTop1Share": 50.0,
+      "maxTop3Share": 85.0,
+      "hhiModerateLimit": 2500,
+      "hhiCriticalLimit": 3500
     }
   }
 }
