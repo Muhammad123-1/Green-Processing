@@ -542,9 +542,9 @@ export default function PlanForecastActualAnalytics() {
       </div>
 
       {/* 4. PRIMARY CHARTS: TIME-SERIES & PRODUCT VARIANCES */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* CHART 1: PLAN VS FORECAST VS ACTUAL TIME-SERIES */}
-        <div className="lg:col-span-2 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm space-y-4">
+      <div className="space-y-6">
+        {/* CHART 1: PLAN VS FORECAST VS ACTUAL TIME-SERIES (FULL WIDTH) */}
+        <div className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-black text-slate-900 dark:text-white">
@@ -572,9 +572,9 @@ export default function PlanForecastActualAnalytics() {
             </div>
           </div>
 
-          <div className="h-[320px] w-full">
+          <div className="h-[360px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data.timeSeries} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <ComposedChart data={data.timeSeries} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                 <XAxis
                   dataKey="dayIndex"
@@ -586,7 +586,7 @@ export default function PlanForecastActualAnalytics() {
                   tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`}
                 />
                 <Tooltip
-                  content={({ active, payload, label }) => {
+                  content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const pt = payload[0].payload as DailyTimeSeriesPoint
                       return (
@@ -636,36 +636,48 @@ export default function PlanForecastActualAnalytics() {
                   y={data.executiveSummary.production.fullPeriodPlan}
                   stroke="#ef4444"
                   strokeDasharray="3 3"
-                  label={{ value: 'Oylik Reja Chegarasi (95k kg)', fill: '#ef4444', fontSize: 10, position: 'insideTopLeft' }}
+                  label={{ value: `Oylik Reja Chegarasi (${(data.executiveSummary.production.fullPeriodPlan / 1000).toFixed(0)}k kg)`, fill: '#ef4444', fontSize: 10, position: 'insideTopLeft' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* CHART 2: PRODUCT LEVEL VARIANCES (WATERFALL / BAR) */}
-        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm space-y-4">
-          <div>
-            <h2 className="text-base font-black text-slate-900 dark:text-white">
-              {isUz ? 'Mahsulotlar Bo\'yicha Farq' : 'Отклонения по продуктам'}
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {isUz ? 'Reja-to-date ko\'rsatkichiga nisbatan farq (kg)' : 'Отклонение к плану-to-date (кг)'}
-            </p>
+        {/* CHART 2: PRODUCT LEVEL VARIANCES - FULL WIDTH BELOW CHART 1 */}
+        <div className="w-full bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-black text-slate-900 dark:text-white">
+                {isUz ? 'Mahsulotlar Bo\'yicha Farq (Asosiy xomashyo va mahsulotlar)' : 'Отклонения по видам сырья и продукции'}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {isUz ? 'Reja-to-date ko\'rsatkichiga nisbatan farq (kg): Yashil - rejadan ortiq, Qizil - rejadan orqada' : 'Отклонение к плану-to-date (кг): Зелёный - опережение, Красный - отставание'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                <span className="w-3 h-3 rounded bg-emerald-500 inline-block"></span>
+                <span>{isUz ? 'Rejadan ortiq (+)' : 'Сверх плана (+)'}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-rose-500">
+                <span className="w-3 h-3 rounded bg-rose-500 inline-block"></span>
+                <span>{isUz ? 'Rejadan kam (-)' : 'Ниже плана (-)'}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="h-[320px] w-full">
+          <div className="h-[440px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data.products}
                 layout="vertical"
-                margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
+                margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `${v > 0 ? '+' : ''}${v} kg`} />
-                <YAxis dataKey="nameUz" type="category" tick={{ fontSize: 10 }} width={85} />
+                <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v > 0 ? '+' : ''}${v.toLocaleString()} kg`} />
+                <YAxis dataKey={isUz ? 'nameUz' : 'nameRu'} type="category" tick={{ fontSize: 11 }} width={190} />
                 <Tooltip
-                  formatter={(val: any) => [`${val > 0 ? '+' : ''}${val} kg`, 'Farq']}
+                  formatter={(val: any) => [`${val > 0 ? '+' : ''}${Number(val).toLocaleString()} kg`, isUz ? 'Farq' : 'Отклонение']}
                   contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #334155', color: '#fff', fontSize: '11px' }}
                 />
                 <ReferenceLine x={0} stroke="#94a3b8" />
