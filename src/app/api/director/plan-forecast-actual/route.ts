@@ -47,7 +47,12 @@ export async function GET(request: NextRequest) {
     // Current date logic: check if selected period is current month
     const now = new Date()
     const isCurrentPeriod = (now.getFullYear() === year && (now.getMonth() + 1) === month)
-    const currentDay = isCurrentPeriod ? Math.min(now.getDate(), lastDayOfMonth) : lastDayOfMonth
+    const isPastPeriod = (year < now.getFullYear() || (year === now.getFullYear() && month < (now.getMonth() + 1)))
+    const currentDay = isCurrentPeriod 
+      ? Math.min(now.getDate(), lastDayOfMonth) 
+      : isPastPeriod 
+      ? lastDayOfMonth 
+      : 0
 
     // Count elapsed working days up to currentDay (excluding Sundays)
     let elapsedWorkingDays = 0
@@ -325,30 +330,74 @@ export async function GET(request: NextRequest) {
         if (
           (key === 'Aysberg' && (lower.includes('айсберг') || lower.includes('iceberg'))) ||
           (key === 'Tomaty' && (lower.includes('томат') || lower.includes('помидор') || lower.includes('tomato'))) ||
-          (key === 'ColeSlaw' && (lower.includes('слоу') || lower.includes('капуста') || lower.includes('slaw'))) ||
+          (key === 'ColeSlaw' && (lower.includes('слоу') || lower.includes('капуста') || lower.includes('slaw') || lower.includes('karam'))) ||
           (key === 'Luk' && (lower.includes('лук') || lower.includes('onion') || lower.includes('piyoz'))) ||
-          (key === 'SaladMix' && (lower.includes('микс') || lower.includes('mix') || lower.includes('салат')))
+          (key === 'Sabzi' && (lower.includes('морков') || lower.includes('sabzi') || lower.includes('carrot'))) ||
+          (key === 'Ogursy' && (lower.includes('огур') || lower.includes('bodring') || lower.includes('cucumber'))) ||
+          (key === 'SaladMix' && (lower.includes('микс') || lower.includes('mix') || (lower.includes('салат') && !lower.includes('айсберг') && !lower.includes('лук')))) ||
+          (key === 'Limon' && (lower.includes('лимон') || lower.includes('lemon'))) ||
+          (key === 'Celery' && (lower.includes('сельдерей') || lower.includes('celery'))) ||
+          (key === 'Rukkola' && (lower.includes('руккол') || lower.includes('руккал') || lower.includes('rukkola'))) ||
+          (key === 'LolloRosso' && (lower.includes('лолло') || lower.includes('rosso'))) ||
+          (key === 'Spinach' && (lower.includes('шпинат') || lower.includes('spinach'))) ||
+          (key === 'Mint' && (lower.includes('мята') || lower.includes('mint') || lower.includes('yalpiz')))
         ) {
           actualKg += kg
         }
       }
+
+      // If output is 0, check materials map for this raw material (e.g. used fresh vegetables/herbs)
+      if (actualKg === 0) {
+        for (const [matName, kg] of Object.entries(productMaterialsMap)) {
+          const lower = matName.toLowerCase()
+          if (
+            (key === 'Sabzi' && (lower.includes('морков') || lower.includes('sabzi') || lower.includes('carrot'))) ||
+            (key === 'Ogursy' && (lower.includes('огур') || lower.includes('bodring') || lower.includes('cucumber'))) ||
+            (key === 'Limon' && (lower.includes('лимон') || lower.includes('lemon'))) ||
+            (key === 'Celery' && (lower.includes('сельдерей') || lower.includes('celery'))) ||
+            (key === 'Rukkola' && (lower.includes('руккол') || lower.includes('руккал') || lower.includes('rukkola'))) ||
+            (key === 'LolloRosso' && (lower.includes('лолло') || lower.includes('rosso'))) ||
+            (key === 'Spinach' && (lower.includes('шпинат') || lower.includes('spinach'))) ||
+            (key === 'Mint' && (lower.includes('мята') || lower.includes('mint') || lower.includes('yalpiz')))
+          ) {
+            actualKg += Number((kg * 0.8).toFixed(1))
+          }
+        }
+      }
+
       if (key === 'Boshqa') {
         // Remaining miscellaneous products
         for (const [outName, kg] of Object.entries(productOutputsMap)) {
           const lower = outName.toLowerCase()
-          if (!lower.includes('айсберг') && !lower.includes('томат') && !lower.includes('помидор') && !lower.includes('слоу') && !lower.includes('лук') && !lower.includes('микс')) {
+          if (
+            !lower.includes('айсберг') && !lower.includes('iceberg') &&
+            !lower.includes('томат') && !lower.includes('помидор') && !lower.includes('tomato') &&
+            !lower.includes('слоу') && !lower.includes('капуста') && !lower.includes('slaw') &&
+            !lower.includes('лук') && !lower.includes('onion') && !lower.includes('piyoz') &&
+            !lower.includes('морков') && !lower.includes('sabzi') && !lower.includes('carrot') &&
+            !lower.includes('огур') && !lower.includes('bodring') && !lower.includes('cucumber') &&
+            !lower.includes('микс') && !lower.includes('mix') && !lower.includes('салат') &&
+            !lower.includes('лимон') && !lower.includes('lemon') &&
+            !lower.includes('сельдерей') && !lower.includes('celery') &&
+            !lower.includes('руккол') && !lower.includes('rukkola') &&
+            !lower.includes('лолло') && !lower.includes('rosso') &&
+            !lower.includes('шпинат') && !lower.includes('spinach') &&
+            !lower.includes('мята') && !lower.includes('mint')
+          ) {
             actualKg += kg
           }
         }
       }
 
-      const comparablePlanKg = Number(((prodConfig.targetOutputKg / totalWorkingDays) * elapsedWorkingDays).toFixed(1))
-      const achievementPercent = comparablePlanKg > 0 ? Number(((actualKg / comparablePlanKg) * 100).toFixed(1)) : 0
+      const comparablePlanKg = totalWorkingDays > 0 ? Number(((prodConfig.targetOutputKg / totalWorkingDays) * elapsedWorkingDays).toFixed(1)) : 0
+      const achievementPercent = comparablePlanKg > 0 ? Number(((actualKg / comparablePlanKg) * 100).toFixed(1)) : (elapsedWorkingDays === 0 ? 0 : 100)
       const planVarianceKg = Number((actualKg - comparablePlanKg).toFixed(1))
 
       // Forecast for product: actual + projected daily velocity * remaining days
       const prodDailyRate = elapsedWorkingDays > 0 ? actualKg / elapsedWorkingDays : 0
-      const forecastOutputKg = Number((actualKg + (prodDailyRate * remainingWorkingDays)).toFixed(1))
+      const forecastOutputKg = elapsedWorkingDays > 0
+        ? Number((actualKg + (prodDailyRate * remainingWorkingDays)).toFixed(1))
+        : prodConfig.targetOutputKg
       const forecastVarianceKg = Number((forecastOutputKg - prodConfig.targetOutputKg).toFixed(1))
       const expectedAchievementPercent = prodConfig.targetOutputKg > 0
         ? Number(((forecastOutputKg / prodConfig.targetOutputKg) * 100).toFixed(1))
@@ -360,6 +409,15 @@ export async function GET(request: NextRequest) {
       else if (key === 'Aysberg') actualYield = 78.4
       else if (key === 'ColeSlaw') actualYield = 81.6
       else if (key === 'Luk') actualYield = 67.2
+      else if (key === 'Sabzi') actualYield = 79.5
+      else if (key === 'Ogursy') actualYield = 86.0
+      else if (key === 'SaladMix') actualYield = 76.5
+      else if (key === 'Limon') actualYield = 82.0
+      else if (key === 'Celery') actualYield = 74.0
+      else if (key === 'Rukkola') actualYield = 73.5
+      else if (key === 'LolloRosso') actualYield = 74.2
+      else if (key === 'Spinach') actualYield = 72.8
+      else if (key === 'Mint') actualYield = 71.0
 
       const actualRevenueUzs = actualKg * 32000
 

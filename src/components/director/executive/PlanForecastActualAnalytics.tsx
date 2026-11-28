@@ -202,6 +202,33 @@ export default function PlanForecastActualAnalytics() {
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [editTargetValue, setEditTargetValue] = useState<string>('95000')
 
+  const availablePeriods = useMemo(() => {
+    const months = [
+      { num: '12', uz: 'Dekabr', ru: 'Декабрь' },
+      { num: '11', uz: 'Noyabr', ru: 'Ноябрь' },
+      { num: '10', uz: 'Oktyabr', ru: 'Октябрь' },
+      { num: '09', uz: 'Sentyabr', ru: 'Сентябрь' },
+      { num: '08', uz: 'Avgust', ru: 'Август' },
+      { num: '07', uz: 'Iyul', ru: 'Июль' },
+      { num: '06', uz: 'Iyun', ru: 'Июнь' },
+      { num: '05', uz: 'May', ru: 'Май' },
+      { num: '04', uz: 'Aprel', ru: 'Апрель' },
+      { num: '03', uz: 'Mart', ru: 'Март' },
+      { num: '02', uz: 'Fevral', ru: 'Февраль' },
+      { num: '01', uz: 'Yanvar', ru: 'Январь' },
+    ]
+    const list: Array<{ value: string; label: string }> = []
+    for (const yr of [2026, 2025]) {
+      for (const m of months) {
+        list.push({
+          value: `${yr}-${m.num}`,
+          label: `${isUz ? m.uz : m.ru} ${yr}`
+        })
+      }
+    }
+    return list
+  }, [isUz])
+
   const fetchData = async (period: string, modelCode?: string) => {
     try {
       setLoading(true)
@@ -317,7 +344,7 @@ export default function PlanForecastActualAnalytics() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Period Selector */}
+            {/* Period Selector with all months */}
             <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
               <Calendar size={16} className="text-slate-500 ml-2" />
               <select
@@ -325,22 +352,9 @@ export default function PlanForecastActualAnalytics() {
                 onChange={(e) => setSelectedPeriod(e.target.value)}
                 className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 px-2 py-1.5 outline-none cursor-pointer"
               >
-                <option value="2026-11">Noyabr 2026</option>
-                <option value="2026-10">Oktyabr 2026</option>
-              </select>
-            </div>
-
-            {/* Forecast Model Selector */}
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-800 p-1 rounded-xl border border-slate-200 dark:border-dark-700">
-              <Zap size={16} className="text-amber-500 ml-2" />
-              <select
-                value={selectedModel}
-                onChange={(e) => handleModelChange(e.target.value)}
-                className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 px-2 py-1.5 outline-none cursor-pointer max-w-[200px] truncate"
-              >
-                {data.forecastEvaluation.models.map((m) => (
-                  <option key={m.methodCode} value={m.methodCode}>
-                    {m.isRecommended ? '★ ' : ''}{m.methodCode === 'CONFIRMED_ORDERS_BLENDED' ? 'Buyurtmalar Gibridi' : m.methodCode === 'MOVING_AVG_7D' ? '7-kunlik O\'rtacha' : m.methodCode === 'LINEAR_TREND' ? 'Chiziqli Trend' : 'Eksponensial'} (WAPE {m.wapePercent}%)
+                {availablePeriods.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
                   </option>
                 ))}
               </select>
