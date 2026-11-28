@@ -821,13 +821,21 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const totalBrakKg = totalActualBrakKg
-    const totalBrakDona = totalActualBrakDona
+    const totalBrakItemsKg = brakItems
+      .filter((b) => b.unit === 'kg' || !b.unit)
+      .reduce((sum, b) => sum + (Number(b.quantityKg) || 0), 0)
+
+    const totalBrakItemsDona = brakItems
+      .filter((b) => b.unit === 'dona')
+      .reduce((sum, b) => sum + (Number(b.quantityKg) || 0), 0)
+
+    const totalBrakKg = totalBrakItemsKg || (totalActualBrakKg + totalNaturalTechWasteKg)
+    const totalBrakDona = totalBrakItemsDona || totalActualBrakDona
     const defectRatePercent =
       totalRasxodKg > 0
-        ? (totalActualBrakKg / totalRasxodKg) * 100
+        ? ((totalActualBrakKg || totalBrakKg) / totalRasxodKg) * 100
         : acceptedPrixodKg > 0
-          ? (totalActualBrakKg / acceptedPrixodKg) * 100
+          ? ((totalActualBrakKg || totalBrakKg) / acceptedPrixodKg) * 100
           : 0
 
     // -------------------------------------------------------------------------
@@ -1110,10 +1118,12 @@ export async function GET(request: NextRequest) {
         items: rasxodItems,
       },
       brak: {
-        totalKg: Math.round(totalActualBrakKg * 10) / 10,
+        totalKg: Math.round(totalBrakKg * 10) / 10,
+        actualDefectKg: Math.round(totalActualBrakKg * 10) / 10,
         naturalTechWasteKg: Math.round(totalNaturalTechWasteKg * 10) / 10,
-        totalDona: Math.round(totalActualBrakDona),
-        totalCount: brakItems.filter((b) => b.wastageCategory === 'ACTUAL_DEFECT').length,
+        totalDona: Math.round(totalBrakDona),
+        totalCount: brakItems.length,
+        actualDefectCount: brakItems.filter((b) => b.wastageCategory === 'ACTUAL_DEFECT').length,
         defectRate: Math.round(defectRatePercent * 10) / 10,
         items: brakItems,
       },
@@ -1949,8 +1959,9 @@ export async function GET(request: NextRequest) {
           roleBreakdown: roleCountsMap,
         },
         defectAnalytics: {
-          totalBrakKg: Math.round(totalActualBrakKg),
-          totalBrakDona: Math.round(totalActualBrakDona),
+          totalBrakKg: Math.round(totalBrakKg),
+          actualDefectKg: Math.round(totalActualBrakKg),
+          totalBrakDona: Math.round(totalBrakDona),
           naturalTechWasteKg: Math.round(totalNaturalTechWasteKg),
           defectRatePercent: Math.round(defectRatePercent * 10) / 10,
         },

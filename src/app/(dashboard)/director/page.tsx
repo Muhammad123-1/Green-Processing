@@ -3682,7 +3682,16 @@ export default function DirectorPage() {
                         }`}>
                           {operationsTab === 'prixod' && `${(operationsSummary?.prixod?.totalKg || 0).toLocaleString()} kg`}
                           {operationsTab === 'rasxod' && `${(operationsSummary?.rasxod?.totalKg || 0).toLocaleString()} kg`}
-                          {operationsTab === 'brak' && `${(operationsSummary?.brak?.totalKg || 0).toLocaleString()} kg`}
+                          {operationsTab === 'brak' && `${(
+                            (operationsSummary?.brak?.totalKg && operationsSummary.brak.totalKg > 0)
+                              ? operationsSummary.brak.totalKg
+                              : (operationsSummary?.brak?.items || [])
+                                  .filter((b: any) => {
+                                    const u = (b.unit || '').toLowerCase()
+                                    return u === 'kg' || (!u.includes('dona') && !u.includes('шт'))
+                                  })
+                                  .reduce((s: number, b: any) => s + (Number(b.quantityKg) || 0), 0)
+                          ).toLocaleString()} kg`}
                           {operationsTab === 'ombor' && `${(operationsSummary?.ombor?.totalKg || data?.kpis?.warehouse?.totalInventoryKg || 0).toLocaleString()} kg`}
                         </span>
                       </div>
@@ -3699,7 +3708,16 @@ export default function DirectorPage() {
                         }`}>
                           {operationsTab === 'prixod' && `${(operationsSummary?.prixod?.totalDona || 0).toLocaleString()} dona`}
                           {operationsTab === 'rasxod' && `${(operationsSummary?.rasxod?.totalDona || 0).toLocaleString()} dona`}
-                          {operationsTab === 'brak' && `${(operationsSummary?.brak?.totalDona || 0).toLocaleString()} dona`}
+                          {operationsTab === 'brak' && `${(
+                            (operationsSummary?.brak?.totalDona && operationsSummary.brak.totalDona > 0)
+                              ? operationsSummary.brak.totalDona
+                              : (operationsSummary?.brak?.items || [])
+                                  .filter((b: any) => {
+                                    const u = (b.unit || '').toLowerCase()
+                                    return u === 'dona' || u.includes('dona') || u.includes('шт')
+                                  })
+                                  .reduce((s: number, b: any) => s + (Number(b.quantityKg) || 0), 0)
+                          ).toLocaleString()} dona`}
                           {operationsTab === 'ombor' && `${(operationsSummary?.ombor?.totalDona || 415275).toLocaleString()} dona`}
                         </span>
                       </div>
