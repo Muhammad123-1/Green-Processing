@@ -701,7 +701,7 @@ function YearlyReport({
           icon={<CheckCircle className="text-emerald-500" size={20} />}
           label={formatDual("Yillik Qabul", "Принято за год", "Annual Accepted")}
           value={`${summary.accepted} ta`}
-          subtext={`${summary.acceptRate}% ${formatDual("o'rtacha sifat", "среднее кач-во", "avg quality")}`}
+          subtext={`${summary.acceptRate}% ${formatDual("qabul darajasi", "уровень приемки", "acceptance rate")}`}
           color="emerald"
         />
         <StatCard
