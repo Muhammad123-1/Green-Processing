@@ -40,7 +40,6 @@ import { Archive,
   HelpCircle,
   TrendingUp,
   Target,
-  Share2,
   Network
  } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
@@ -57,9 +56,6 @@ const navSections = [
       { key: 'director', href: '/director', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'directorDynamics', href: '/director/dynamics', icon: TrendingUp, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'planForecastActual', href: '/director/plan-forecast-actual', icon: Target, roles: ['ADMIN', 'DIRECTOR'] },
-      { key: 'deliveryIntelligence', href: '/director/delivery-intelligence', icon: Truck, roles: ['ADMIN', 'DIRECTOR'] },
-      { key: 'distributionChannels', href: '/director/distribution-channels', icon: Share2, roles: ['ADMIN', 'DIRECTOR'] },
-      { key: 'diversificationRisk', href: '/director/diversification-risk', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'erpEcosystem', href: '/director/ecosystem', icon: Network, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'surveys', href: '/surveys', icon: HelpCircle, roles: ['ADMIN', 'QUALITY_CONTROL', 'SALES'] },
       { key: 'archive', href: '/archive', icon: Archive, roles: ['ADMIN', 'DIRECTOR'] },
@@ -569,9 +565,6 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 'director',
                 'directorDynamics',
                 'planForecastActual',
-                'deliveryIntelligence',
-                'distributionChannels',
-                'diversificationRisk',
                 'erpEcosystem',
                 'warehouse',
                 'demandSupply',

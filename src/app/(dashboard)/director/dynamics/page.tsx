@@ -72,10 +72,6 @@ const getWeeksForMonth = (year: number, monthIndex: number): WeekOption[] => {
     weekNum++
   }
 
-  if (year === 2026 && monthIndex === 10) {
-    return weeks.filter((w) => w.to <= '2026-11-21')
-  }
-
   return weeks
 }
 
@@ -107,10 +103,19 @@ const getAllYearMonths = (year = 2026) => {
 }
 
 const getAvailableYears = () => {
-  return [
-    { label: '2025', year: 2025, from: '2025-01-01', to: '2025-12-31' },
-    { label: '2026', year: 2026, from: '2026-01-01', to: '2026-12-31' },
-  ]
+  const curY = new Date().getFullYear()
+  const startY = 2025
+  const endY = Math.max(curY + 1, 2027)
+  const years: Array<{ label: string; year: number; from: string; to: string }> = []
+  for (let y = startY; y <= endY; y++) {
+    years.push({
+      label: String(y),
+      year: y,
+      from: `${y}-01-01`,
+      to: `${y}-12-31`,
+    })
+  }
+  return years
 }
 
 interface NoteItem {
@@ -180,7 +185,12 @@ export default function DirectorDynamicsPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<DynamicsData | null>(null)
 
-  // Navigation & View state - 0. Zaxiralar Balansi is default
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const todayDateObj = useMemo(() => new Date(), [])
+  const todayIso = useMemo(() => `${todayDateObj.getFullYear()}-${pad(todayDateObj.getMonth() + 1)}-${pad(todayDateObj.getDate())}`, [todayDateObj])
+  const todayFormatted = useMemo(() => `${pad(todayDateObj.getDate())}.${pad(todayDateObj.getMonth() + 1)}.${todayDateObj.getFullYear()}`, [todayDateObj])
+
+  // Navigation & View state - Zaxiralar Balansi is default
   const [activeTab, setActiveTab] = useState<'balance' | 'expense' | 'gp' | 'waste' | 'notes'>('balance')
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('week')
   const [customStartDate, setCustomStartDate] = useState('2026-11-01')
@@ -264,7 +274,7 @@ export default function DirectorDynamicsPage() {
     if (isWeekly && data?.weekly?.periods) {
       return data.weekly.periods
     }
-    return data?.months?.slice(0, 10) || []
+    return data?.months || []
   }, [isWeekly, data])
 
   // Current active dataset
@@ -521,7 +531,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <Layers size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("0. Zaxiralar Balansi", "0. Запасы (Склад)", "0. Stock Balance")}</span>
+            <span className="truncate">{formatDual("Zaxiralar Balansi", "Запасы (Склад)", "Stock Balance")}</span>
           </button>
 
           {/* Tab 1: Chiqim */}
@@ -534,7 +544,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <Package size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("1. Xomashyo Chiqimi", "1. Расход со склада", "1. Raw Expense")}</span>
+            <span className="truncate">{formatDual("Xomashyo Chiqimi", "Расход со склада", "Raw Expense")}</span>
           </button>
 
           {/* Tab 2: GP */}
@@ -547,7 +557,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <Boxes size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("2. Tayyor Mahsulot", "2. Производство продукции", "2. Finished Goods")}</span>
+            <span className="truncate">{formatDual("Tayyor Mahsulot", "Производство продукции", "Finished Goods")}</span>
           </button>
 
           {/* Tab 3: Waste */}
@@ -560,7 +570,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <AlertTriangle size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("3. Chiqindi & Otxod", "3. Отход продукции", "3. Waste")}</span>
+            <span className="truncate">{formatDual("Chiqindi & Otxod", "Отход продукции", "Waste")}</span>
           </button>
 
           {/* Tab 4: Notes */}
@@ -573,7 +583,7 @@ export default function DirectorDynamicsPage() {
             }`}
           >
             <FileText size={14} className="shrink-0" />
-            <span className="truncate">{formatDual("4. Boshqaruv Izohlari", "4. Примечания", "4. Notes")}</span>
+            <span className="truncate">{formatDual("Boshqaruv Izohlari", "Примечания", "Notes")}</span>
             <span className="text-[11px] font-mono opacity-70">({allNotesList.length})</span>
           </button>
         </div>
@@ -611,7 +621,7 @@ export default function DirectorDynamicsPage() {
             <span>
               {formatDual("Bugun:", "Сегодня:", "Today:")}{' '}
               <span className="font-mono font-black text-blue-900 dark:text-blue-100">
-                26.11.2026
+                {todayFormatted}
               </span>
             </span>
           </div>
@@ -787,11 +797,17 @@ export default function DirectorDynamicsPage() {
           endDate={customEndDate}
           selectedDateId={
             period === 'today'
-              ? '2026-11-25'
+              ? todayIso
               : period === 'week'
               ? (selectedWeek ? `${selectedWeek.from}_${selectedWeek.to}` : undefined)
               : period === 'month'
               ? (selectedMonth ? `${selectedMonth.from}_${selectedMonth.to}` : undefined)
+              : period === 'year'
+              ? (selectedYear ? `${selectedYear.from}_${selectedYear.to}` : undefined)
+              : period === 'custom'
+              ? `${customStartDate}_${customEndDate}`
+              : period === 'all'
+              ? `all_${todayIso}`
               : undefined
           }
           selectedMonthName={
@@ -859,7 +875,7 @@ export default function DirectorDynamicsPage() {
                     const isGrandTotalWithConsumables = item.name.toLowerCase().includes('итого с упаковкой') || item.name.toLowerCase().includes('упаковкой') || item.name.toLowerCase() === 'итого' || item.name.toLowerCase().includes('qadoq va dez')
 
                     const rawVals = isWeekly ? (item.weekly || []) : (item.monthly || [])
-                    const displayVals = isWeekly ? rawVals : rawVals.slice(0, 10)
+                    const displayVals = isWeekly ? rawVals : (rawVals || [])
                     const unit = item.unit || (activeTab === 'waste' ? '%' : expenseSubMode === 'sum' ? 'сум' : 'кг')
 
                     let rowStyle = 'hover:bg-slate-50 dark:hover:bg-dark-800/60 transition-colors'

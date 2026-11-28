@@ -69,7 +69,7 @@ const MONTH_NAMES_RU = [
   'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
 ]
 
-// Dynamic table builder from PostgreSQL DB records
+// Dynamic table builder from PostgreSQL DB records for a single day
 async function buildLiveTableFromDb(date: string): Promise<TableData | null> {
   const expense = await prisma.shopExpense.findUnique({ where: { date } })
   const arrivals = await prisma.shopArrival.findMany({ where: { date } })
@@ -299,11 +299,261 @@ async function buildLiveTableFromDb(date: string): Promise<TableData | null> {
   }
 }
 
+// Dynamic range table builder from PostgreSQL DB records for weekly / monthly / yearly / custom ranges
+async function buildPeriodTableFromDb(
+  startDate: string,
+  endDate: string,
+  periodType: string = 'weekly'
+): Promise<TableData | null> {
+  const [expenses, arrivals, pastExpenses] = await Promise.all([
+    prisma.shopExpense.findMany({
+      where: { date: { gte: startDate, lte: endDate } },
+      orderBy: { date: 'asc' }
+    }),
+    prisma.shopArrival.findMany({
+      where: { date: { gte: startDate, lte: endDate } },
+      orderBy: { date: 'asc' }
+    }),
+    prisma.shopExpense.findMany({
+      where: {
+        date: {
+          gte: new Date(new Date(endDate + 'T12:00:00Z').getTime() - 28 * 86400000).toISOString().split('T')[0],
+          lte: endDate
+        }
+      },
+      select: { balances: true, materials: true }
+    })
+  ])
+
+  if (expenses.length === 0 && arrivals.length === 0) {
+    const baseline = (dailyStockData.tables as TableData[]).find(t => t.id === `${startDate}_${endDate}` || t.id.startsWith(startDate))
+    return baseline || null
+  }
+
+  // Calculate 28-day rolling average consumption
+  const rollingExpenseSum: Record<string, number> = {}
+  for (const rec of pastExpenses) {
+    const rb = ((rec.balances || {}) as any)
+    const rExp = rb.expense || rb.report?.balances?.expense || {}
+    for (const p of PRODUCT_DEFS) {
+      rollingExpenseSum[p.key] = (rollingExpenseSum[p.key] || 0) + Number(rExp[p.key] || 0)
+    }
+  }
+
+  // Aggregate arrivals in range
+  const arrMap: Record<string, number> = {}
+  for (const a of arrivals) {
+    const k = matchSyrye12Key(a.nomenclature) || a.nomenclature
+    arrMap[k] = (arrMap[k] || 0) + Number(a.quantity || 0)
+  }
+
+  // Aggregate expenses and kitchen transfers in range
+  const expMap: Record<string, number> = {}
+  const kitchenMap: Record<string, number> = {}
+  let boxOutflowTotal = 0
+  let hypOutflowTotal = 0
+
+  for (const e of expenses) {
+    const b = ((e.balances || {}) as any)
+    const eExp = b.expense || b.report?.balances?.expense || {}
+    const eKit = b.kitchen || {}
+    const mats = (e.materials || {}) as Record<string, any>
+
+    for (const p of PRODUCT_DEFS) {
+      let val = Number(eExp[p.key] || 0)
+      if (!val && mats[p.name]) val = Number(mats[p.name])
+      expMap[p.key] = (expMap[p.key] || 0) + val
+      kitchenMap[p.key] = (kitchenMap[p.key] || 0) + Number(eKit[p.key] || 0)
+    }
+
+    boxOutflowTotal += Number(mats['Коробка'] || mats['Коробки'] || mats['КОРОБКИ'] || 0)
+    hypOutflowTotal += Number(mats['Гипохлорид'] || mats['Хлор'] || mats['ХЛОР'] || 0)
+  }
+
+  // Start balances from first day in range (or baseline table)
+  const firstExpense = expenses[0]
+  const lastExpense = expenses[expenses.length - 1]
+  const firstB = ((firstExpense?.balances || {}) as any)
+  const startMap = firstB.start || firstB.report?.balances?.start || {}
+
+  // End balances from last day in range
+  const lastB = ((lastExpense?.balances || {}) as any)
+  const endMap = lastB.end || lastB.report?.balances?.end || {}
+  const lastConsumables = lastB.consumables || {}
+
+  // Baseline table fallbacks for prices
+  const baselineTable = (dailyStockData.tables as any[]).find(t => t.id === `${startDate}_${endDate}`)
+    || (dailyStockData.tables as any[]).find(t => t.isoDate === endDate)
+    || (dailyStockData.tables as any[]).find(t => t.id === '2026-11-25')
+
+  const baselineItemMap: Record<string, any> = {}
+  if (baselineTable?.items) {
+    baselineTable.items.forEach((it: any) => { baselineItemMap[it.name] = it })
+  }
+
+  // Build items for all 12 core vegetables
+  const items: StockItem[] = PRODUCT_DEFS.map((p) => {
+    const baseline = baselineItemMap[p.name]
+    const price = baseline?.price && baseline.price > 0 ? baseline.price : p.fallbackPrice
+
+    const startStock = startMap[p.key] !== undefined && startMap[p.key] !== null
+      ? Math.round(Number(startMap[p.key]) * 100) / 100
+      : (baseline?.startStock || 0)
+
+    const inflow = arrMap[p.key] ? Math.round(arrMap[p.key] * 100) / 100 : (baseline?.inflow || null)
+    const outflow = expMap[p.key] ? Math.round(expMap[p.key] * 100) / 100 : (baseline?.outflow || null)
+    const kitchenTransfer = kitchenMap[p.key] ? Math.round(kitchenMap[p.key] * 100) / 100 : (baseline?.kitchenTransfer || null)
+
+    let endStock = endMap[p.key] !== undefined && endMap[p.key] !== null
+      ? Math.round(Number(endMap[p.key]) * 100) / 100
+      : (startStock + (inflow || 0) - (outflow || 0) - (kitchenTransfer || 0))
+
+    endStock = Math.max(0, Math.round(endStock * 100) / 100)
+
+    const recentSum = rollingExpenseSum[p.key] || 0
+    let weeklyAvg = recentSum > 0 ? Math.round((recentSum / 4) * 10) / 10 : (baseline?.weeklyAvg || 0)
+    if (weeklyAvg === 0 && outflow && outflow > 0) {
+      weeklyAvg = Math.round((outflow / Math.max(1, expenses.length)) * 6 * 10) / 10
+    }
+
+    let weeksRemaining: number | string = '-'
+    if (weeklyAvg > 0 && endStock > 0) {
+      weeksRemaining = Math.round((endStock / weeklyAvg) * 100) / 100
+    }
+
+    const sum = Math.round(endStock * price * 100) / 100
+
+    return {
+      name: p.name,
+      unit: p.unit,
+      price,
+      startStock,
+      inflow,
+      outflow,
+      kitchenTransfer,
+      endStock,
+      weeklyAvg,
+      weeksRemaining,
+      sum,
+      isHighlight: false,
+      isConsumable: false,
+    }
+  })
+
+  // Total for vegetables (Всего)
+  let totalStart = 0
+  let totalInflow = 0
+  let totalOutflow = 0
+  let totalKitchen = 0
+  let totalEnd = 0
+  let totalWeeklyAvg = 0
+  let totalSum = 0
+
+  items.forEach(it => {
+    totalStart += it.startStock
+    totalInflow += it.inflow || 0
+    totalOutflow += it.outflow || 0
+    totalKitchen += it.kitchenTransfer || 0
+    totalEnd += it.endStock
+    totalWeeklyAvg += it.weeklyAvg
+    totalSum += it.sum
+  })
+
+  const totalVegetables: StockItem = {
+    name: 'Всего',
+    unit: 'кг',
+    price: Math.round(items.reduce((acc, it) => acc + it.price, 0)),
+    startStock: Math.round(totalStart * 100) / 100,
+    inflow: totalInflow > 0 ? Math.round(totalInflow * 100) / 100 : null,
+    outflow: totalOutflow > 0 ? Math.round(totalOutflow * 100) / 100 : null,
+    kitchenTransfer: totalKitchen > 0 ? Math.round(totalKitchen * 100) / 100 : null,
+    endStock: Math.round(totalEnd * 100) / 100,
+    weeklyAvg: Math.round(totalWeeklyAvg * 10) / 10,
+    weeksRemaining: totalWeeklyAvg > 0 ? Math.round((totalEnd / totalWeeklyAvg) * 100) / 100 : '-',
+    sum: Math.round(totalSum * 100) / 100,
+    isHighlight: true,
+  }
+
+  // Consumables: Boxes (Коробка)
+  const boxBaseline = baselineTable?.boxes
+  const boxEndStock = lastConsumables.box !== undefined ? Number(lastConsumables.box) : (boxBaseline?.endStock || 14000)
+  const boxStartStock = boxEndStock + boxOutflowTotal
+  const boxPrice = boxBaseline?.price || 5000
+  const boxWeeklyAvg = boxBaseline?.weeklyAvg || 2340
+  const boxWeeks = boxWeeklyAvg > 0 ? Math.round((boxEndStock / boxWeeklyAvg) * 100) / 100 : '-'
+
+  const boxes: StockItem = {
+    name: 'Коробка',
+    unit: 'шт',
+    price: boxPrice,
+    startStock: Math.round(boxStartStock),
+    inflow: boxBaseline?.inflow || null,
+    outflow: boxOutflowTotal > 0 ? Math.round(boxOutflowTotal) : null,
+    kitchenTransfer: null,
+    endStock: Math.round(boxEndStock),
+    weeklyAvg: boxWeeklyAvg,
+    weeksRemaining: boxWeeks,
+    sum: Math.round(boxEndStock * boxPrice),
+    isConsumable: true,
+  }
+
+  // Consumables: Hypochlorite (Гипохлорид)
+  const hypBaseline = baselineTable?.hypochlorite
+  const hypEndStock = lastConsumables.chlorine !== undefined ? Number(lastConsumables.chlorine) : (hypBaseline?.endStock || 900)
+  const hypStartStock = hypEndStock + hypOutflowTotal
+  const hypPrice = hypBaseline?.price || 7000
+  const hypWeeklyAvg = hypBaseline?.weeklyAvg || 131
+  const hypWeeks = hypWeeklyAvg > 0 ? Math.round((hypEndStock / hypWeeklyAvg) * 100) / 100 : '-'
+
+  const hypochlorite: StockItem = {
+    name: 'Гипохлорид',
+    unit: 'кг',
+    price: hypPrice,
+    startStock: Math.round(hypStartStock * 100) / 100,
+    inflow: hypBaseline?.inflow || null,
+    outflow: hypOutflowTotal > 0 ? Math.round(hypOutflowTotal * 100) / 100 : null,
+    kitchenTransfer: null,
+    endStock: Math.round(hypEndStock * 100) / 100,
+    weeklyAvg: hypWeeklyAvg,
+    weeksRemaining: hypWeeks,
+    sum: Math.round(hypEndStock * hypPrice),
+    isConsumable: true,
+  }
+
+  const grandTotalSum = Math.round((totalSum + boxes.sum + hypochlorite.sum) * 100) / 100
+
+  // Date formatting for title
+  const [sY, sM, sD] = startDate.split('-')
+  const [eY, eM, eD] = endDate.split('-')
+  const monthIdx = parseInt(eM, 10) - 1
+  const sheetName = `${MONTH_NAMES_RU[monthIdx]} ${eY}`
+
+  return {
+    id: `${startDate}_${endDate}`,
+    type: 'weekly',
+    title: `${sD}.${sM}.${sY} - ${eD}.${eM}.${eY}`,
+    startDate,
+    endDate,
+    isoDate: `${startDate}_${endDate}`,
+    sheetName,
+    items,
+    vegetableCount: items.length,
+    totalVegetables,
+    boxes,
+    hypochlorite,
+    grandTotalSum,
+    notes: baselineTable?.notes || [],
+    isLiveDb: true,
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const dateParam = searchParams.get('date') // e.g. 2026-11-26, 2026-11-25, 2026-11-02_2026-11-07
-    const typeParam = searchParams.get('type') // daily or weekly
+    const dateParam = searchParams.get('date') // e.g. 2026-11-28, 2026-11-23_2026-11-28, 2026-11-01_2026-11-30, all_2026-11-28
+    const periodParam = searchParams.get('period') // today, week, month, year, all, custom
+    const startParam = searchParams.get('startDate')
+    const endParam = searchParams.get('endDate')
 
     const baseTables = dailyStockData.tables as TableData[]
     const baseAvailableDates = [...(dailyStockData.availableDates as any[])]
@@ -313,13 +563,13 @@ export async function GET(request: NextRequest) {
       prisma.shopExpense.findMany({
         select: { date: true, updatedAt: true },
         orderBy: { date: 'desc' },
-        take: 30,
+        take: 60,
       }),
       prisma.shopArrival.findMany({
         select: { date: true },
         distinct: ['date'],
         orderBy: { date: 'desc' },
-        take: 30,
+        take: 60,
       }),
     ])
 
@@ -355,38 +605,72 @@ export async function GET(request: NextRequest) {
         })
         existingIds.add(dStr)
       } else {
-        // Tag existing availableDate entry as having live DB backing
         const found = baseAvailableDates.find(d => d.id === dStr)
         if (found) found.isLiveDb = true
       }
     }
 
-    // Determine target date
-    let targetDate = dateParam
-    if (!targetDate) {
-      // Default to latest available active DB date or latest ledger date
-      targetDate = newDbDates[0] || '2026-11-25'
+    const latestActiveDate = newDbDates[0] || '2026-11-28'
+    let targetDate = dateParam || ''
+
+    // If today is requested, resolve to latest active DB date
+    if (periodParam === 'today' || targetDate === 'today' || !targetDate) {
+      targetDate = latestActiveDate
     }
 
     let selectedTable: TableData | null = null
 
-    // If target date is a single ISO date and exists in DB, compute live from DB
-    if (/^\d{4}-\d{2}-\d{2}$/.test(targetDate) && dbDatesSet.has(targetDate)) {
+    // 2. CHECK RANGE QUERIES (week, month, year, all, custom)
+    let rangeStart: string | null = null
+    let rangeEnd: string | null = null
+
+    if (targetDate.startsWith('all_') || periodParam === 'all' || targetDate === 'all') {
+      rangeStart = '2025-08-30'
+      rangeEnd = latestActiveDate
+    } else if (targetDate.includes('_')) {
+      const parts = targetDate.split('_')
+      rangeStart = parts[0]
+      rangeEnd = parts[1]
+    } else if (periodParam === 'custom' && startParam && endParam) {
+      rangeStart = startParam
+      rangeEnd = endParam
+    } else if (periodParam === 'year' && targetDate.length === 4) {
+      rangeStart = `${targetDate}-01-01`
+      rangeEnd = `${targetDate}-12-31`
+    }
+
+    if (rangeStart && rangeEnd) {
       try {
-        selectedTable = await buildLiveTableFromDb(targetDate)
+        selectedTable = await buildPeriodTableFromDb(rangeStart, rangeEnd, periodParam || 'weekly')
       } catch (err) {
-        console.error(`Failed to build live table for ${targetDate}:`, err)
+        console.error(`Failed to build period table for ${rangeStart}_${rangeEnd}:`, err)
       }
     }
 
-    // Fallback to baseline table from dailyStockLedger.json
+    // 3. SINGLE DATE QUERIES
+    if (!selectedTable && /^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+      if (dbDatesSet.has(targetDate)) {
+        try {
+          selectedTable = await buildLiveTableFromDb(targetDate)
+        } catch (err) {
+          console.error(`Failed to build live table for ${targetDate}:`, err)
+        }
+      }
+    }
+
+    // 4. FALLBACK TO BASELINE TABLE FROM dailyStockLedger.json
     if (!selectedTable) {
       selectedTable = baseTables.find(t => t.id === targetDate || t.isoDate === targetDate || t.title.includes(targetDate)) || null
     }
 
-    // Ultimate fallback to latest available table
+    // 5. ULTIMATE FALLBACK TO LATEST TABLE
     if (!selectedTable) {
-      selectedTable = baseTables.find(t => t.id === '2026-11-25') || baseTables[baseTables.length - 1]
+      if (dbDatesSet.has(latestActiveDate)) {
+        selectedTable = await buildLiveTableFromDb(latestActiveDate)
+      }
+      if (!selectedTable) {
+        selectedTable = baseTables.find(t => t.id === '2026-11-25') || baseTables[baseTables.length - 1]
+      }
     }
 
     // Update grandTotalSum in availableDates for targetDate if live

@@ -90,72 +90,49 @@ export default function DailyStockBalanceTab({
 
   // Resolve effective target table ID based on parent top bar period and selections
   const effectiveTargetId = useMemo(() => {
+    // If selectedDateId is provided, use it directly (handles today, week, month, year, all, custom)
+    if (selectedDateId) {
+      return selectedDateId
+    }
+
     // 1. Bugun (Today)
     if (activePeriod === 'today') {
-      const todayMatch = availableDates.find(d => d.id === '2026-11-26') || availableDates.find(d => d.id === '2026-11-25')
-      if (todayMatch) return todayMatch.id
-      const latestDaily = availableDates.filter(d => d.type === 'daily').slice(-1)[0]
-      return latestDaily?.id || '2026-11-25'
+      const liveDay = availableDates.find(d => d.type === 'daily' || d.isLiveDb)
+      return liveDay?.id || '2026-11-28'
     }
 
     // 2. Hafta (Week)
     if (activePeriod === 'week') {
-      if (selectedDateId) {
-        // Direct match by ID or isoDate
-        const exact = availableDates.find(d => d.id === selectedDateId || d.isoDate === selectedDateId)
-        if (exact) return exact.id
-        // Match start date prefix
-        const start = selectedDateId.split('_')[0]
-        const matchStart = availableDates.find(d => d.type === 'weekly' && d.id.startsWith(start))
-        if (matchStart) return matchStart.id
-      }
-      // If month sheet is given, find the week in that sheet
       if (selectedMonthName) {
         const sheetWeeks = availableDates.filter(d => d.type === 'weekly' && d.sheetName.toLowerCase() === selectedMonthName.toLowerCase())
         if (sheetWeeks.length > 0) return sheetWeeks[sheetWeeks.length - 1].id
       }
-      // Default to Noyabr 3-haftasi or latest weekly
-      const nov3 = availableDates.find(d => d.id === '2026-11-16_2026-11-21')
-      if (nov3) return nov3.id
-      const lastWeekly = availableDates.filter(d => d.type === 'weekly').slice(-1)[0]
-      return lastWeekly?.id || '2026-11-02_2026-11-07'
+      return '2026-11-23_2026-11-28'
     }
 
     // 3. Oy (Month)
     if (activePeriod === 'month') {
-      const mName = (selectedMonthName || 'ноябрь 2026').toLowerCase()
-      // 3.1 Check if there is a monthly summary table in this sheet (e.g. 2026-01-01_2026-01-31)
-      const monthlySummary = availableDates.find(d => {
-        if (d.sheetName.toLowerCase() !== mName) return false
-        if (!d.id.includes('_')) return false
-        const [p1, p2] = d.id.split('_')
-        return p1.endsWith('-01') && (p2.endsWith('-31') || p2.endsWith('-30') || p2.endsWith('-28') || p2.endsWith('-29'))
-      })
-      if (monthlySummary) return monthlySummary.id
-
-      // 3.2 If no summary table (like November), find the latest table in that month
-      const sheetTables = availableDates.filter(d => d.sheetName.toLowerCase() === mName)
-      if (sheetTables.length > 0) return sheetTables[sheetTables.length - 1].id
+      return '2026-11-01_2026-11-30'
     }
 
     // 4. Oraliq (Custom)
     if (activePeriod === 'custom') {
       if (startDate && endDate) {
-        const matched = availableDates.find(d => {
-          const itemStart = d.isoDate.split('_')[0]
-          const itemEnd = d.isoDate.includes('_') ? d.isoDate.split('_')[1] : itemStart
-          return itemStart >= startDate && itemEnd <= endDate
-        })
-        if (matched) return matched.id
+        return `${startDate}_${endDate}`
       }
     }
 
-    // 5. Yil / Barchasi fallback: latest overall table
-    if (selectedDateId) {
-      const found = availableDates.find(d => d.id === selectedDateId || d.isoDate === selectedDateId)
-      if (found) return found.id
+    // 5. Yil (Year)
+    if (activePeriod === 'year') {
+      return '2026-01-01_2026-12-31'
     }
-    return '2026-11-25'
+
+    // 6. Barchasi (All)
+    if (activePeriod === 'all') {
+      return 'all_2026-11-28'
+    }
+
+    return '2026-11-28'
   }, [activePeriod, selectedDateId, selectedMonthName, startDate, endDate, availableDates])
 
   // Fetch live table from DB API
@@ -163,7 +140,8 @@ export default function DailyStockBalanceTab({
     try {
       setIsLiveLoading(true)
       const qId = targetId || effectiveTargetId
-      const res = await fetch(`/api/director/stock-balance?date=${encodeURIComponent(qId)}`)
+      const url = `/api/director/stock-balance?date=${encodeURIComponent(qId)}&period=${activePeriod}&startDate=${startDate || ''}&endDate=${endDate || ''}`
+      const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()
         if (data.success && data.currentTable) {
@@ -184,7 +162,7 @@ export default function DailyStockBalanceTab({
     } finally {
       setIsLiveLoading(false)
     }
-  }, [effectiveTargetId])
+  }, [effectiveTargetId, activePeriod, startDate, endDate])
 
   React.useEffect(() => {
     fetchLiveStockBalance(effectiveTargetId)
@@ -192,7 +170,7 @@ export default function DailyStockBalanceTab({
 
   // Find the active table (prefer liveTable from DB)
   const currentTable = useMemo(() => {
-    if (liveTable && (liveTable.id === effectiveTargetId || liveTable.isoDate === effectiveTargetId)) {
+    if (liveTable) {
       return liveTable
     }
     return allTables.find(t => t.id === effectiveTargetId || t.isoDate === effectiveTargetId) || allTables.find(t => t.id === '2026-11-25') || allTables[allTables.length - 1] || null

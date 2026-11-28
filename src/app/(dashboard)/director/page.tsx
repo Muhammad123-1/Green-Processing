@@ -1236,14 +1236,6 @@ export default function DirectorPage() {
           </div>
 
           <Link
-            href="/director/dynamics"
-            className="flex items-center gap-2 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-black transition-all border border-emerald-300 dark:border-emerald-700 shadow-xs"
-          >
-            <TrendingUp size={15} />
-            <span>{formatDual("Sex zaxiralari va sarfi", "Запасы продукции для цеха", "Workshop Stocks")}</span>
-          </Link>
-
-          <Link
             href="/archive"
             className="flex items-center gap-2 px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-bold transition-all border border-indigo-200 dark:border-indigo-800"
           >
