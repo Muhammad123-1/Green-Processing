@@ -457,10 +457,10 @@ export default function ProductsPage() {
                           {formatDual(p.nameUz || getProductName(p.name, 'uz'), p.name, p.nameEn || getProductName(p.name, 'en'))}
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-dark-800 border border-dark-700 text-slate-300">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono bg-dark-800 border border-dark-700 text-slate-300 whitespace-nowrap">
                             {p.code || 'PRD'}
                           </span>
-                          <span className="text-[10px] text-slate-400 truncate">
+                          <span className="text-[10px] text-slate-400 truncate whitespace-nowrap">
                             {p.category || 'Xomashyo'}
                           </span>
                         </div>
@@ -522,26 +522,26 @@ export default function ProductsPage() {
             </div>
 
             {/* Desktop View: Full Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
+            <div className="hidden sm:block overflow-x-auto rounded-2xl border border-dark-750">
+              <table className="w-full min-w-[960px] text-left border-collapse text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-dark-800/60 border-b border-slate-200 dark:border-dark-750 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    <th className="py-4 px-5">{formatDual("Mahsulot Nomi", "Наименование", "Product Name")}</th>
-                    <th className="py-4 px-5">{formatDual("Kod", "Код", "Code")}</th>
-                    <th className="py-4 px-5">{formatDual("Kategoriya", "Категория", "Category")}</th>
-                    <th className="py-4 px-5 text-center">{formatDual("Birlik", "Ед. изм.", "Unit")}</th>
-                    <th className="py-4 px-5 text-center">{formatDual("Jami Kirim", "Общий приход", "Total Inflow")}</th>
-                    <th className="py-4 px-5 text-center">{formatDual("Partiyalar", "Партий", "Batches")}</th>
-                    <th className="py-4 px-5 text-center">{formatDual("Harorat Norma", "Норма темп.", "Temp Norm")}</th>
-                    <th className="py-4 px-5">{formatDual("GOST / Standart", "ГОСТ", "Standard")}</th>
-                    <th className="py-4 px-5 text-right">{formatDual("Amallar", "Действия", "Actions")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("Mahsulot Nomi", "Наименование", "Product Name")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("Kod", "Код", "Code")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("Kategoriya", "Категория", "Category")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Birlik", "Ед. изм.", "Unit")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Jami Kirim", "Общий приход", "Total Inflow")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Partiyalar", "Партий", "Batches")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Harorat Norma", "Норма темп.", "Temp Norm")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("GOST / Standart", "ГОСТ", "Standard")}</th>
+                    <th className="py-4 px-5 text-right whitespace-nowrap">{formatDual("Amallar", "Действия", "Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-750">
                   {productsPagination.displayedItems.map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                       {/* Name & Photo */}
-                      <td className="py-4 px-5">
+                      <td className="py-4 px-5 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           {p.imageUrl ? (
                             <img
@@ -555,12 +555,12 @@ export default function ProductsPage() {
                               <Package size={18} />
                             </div>
                           )}
-                          <div>
-                            <span className="font-extrabold text-white text-sm block hover:text-emerald-400 transition-colors">
+                          <div className="whitespace-nowrap">
+                            <span className="font-extrabold text-white text-sm block hover:text-emerald-400 transition-colors whitespace-nowrap">
                               {formatDual(p.nameUz || getProductName(p.name, 'uz'), p.name, p.nameEn || getProductName(p.name, 'en'))}
                             </span>
                             {p.imageUrl && (
-                              <span className="text-[10px] text-teal-400 font-semibold flex items-center gap-1 mt-0.5">
+                              <span className="text-[10px] text-teal-400 font-semibold flex items-center gap-1 mt-0.5 whitespace-nowrap">
                                 <Camera size={10} /> Rasmli
                               </span>
                             )}
@@ -569,27 +569,27 @@ export default function ProductsPage() {
                       </td>
 
                       {/* Code */}
-                      <td className="py-4 px-5 font-mono text-xs text-slate-300">
-                        <span className="px-2 py-0.5 rounded-lg bg-dark-800 border border-dark-700">
+                      <td className="py-4 px-5 font-mono text-xs text-slate-300 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-dark-800 border border-dark-700 whitespace-nowrap">
                           {p.code || '—'}
                         </span>
                       </td>
 
                       {/* Category */}
-                      <td className="py-4 px-5">
-                        <span className="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-xs font-semibold text-slate-300">
+                      <td className="py-4 px-5 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-xs font-semibold text-slate-300 whitespace-nowrap">
                           {p.category || '—'}
                         </span>
                       </td>
 
                       {/* Unit */}
-                      <td className="py-4 px-5 text-center font-mono font-bold text-xs text-slate-300">
+                      <td className="py-4 px-5 text-center font-mono font-bold text-xs text-slate-300 whitespace-nowrap">
                         {p.unit}
                       </td>
 
                       {/* Total Inflow from Prixod */}
-                      <td className="py-4 px-5 text-center">
-                        <div className={`font-black text-sm ${p.unit === 'dona' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      <td className="py-4 px-5 text-center whitespace-nowrap">
+                        <div className={`font-black text-sm whitespace-nowrap ${p.unit === 'dona' ? 'text-amber-400' : 'text-emerald-400'}`}>
                           {p.unit === 'dona'
                             ? `${(p.totalArrivalKg || 0).toLocaleString()} dona`
                             : (p.totalArrivalTonnes || 0) >= 1
@@ -597,44 +597,44 @@ export default function ProductsPage() {
                             : `${(p.totalArrivalKg || 0).toLocaleString()} ${p.unit}`}
                         </div>
                         {p.unit !== 'dona' && (p.totalArrivalTonnes || 0) >= 1 && (
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5 whitespace-nowrap">
                             {(p.totalArrivalKg || 0).toLocaleString()} {p.unit}
                           </div>
                         )}
                       </td>
 
                       {/* Deliveries Count */}
-                      <td className="py-4 px-5 text-center">
-                        <span className="px-2 py-0.5 rounded-lg bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200">
+                      <td className="py-4 px-5 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200 whitespace-nowrap">
                           {p.deliveriesCount || 0} ta
                         </span>
                       </td>
 
                       {/* Temperature */}
-                      <td className="py-4 px-5 text-center font-mono text-xs text-cyan-300">
+                      <td className="py-4 px-5 text-center font-mono text-xs text-cyan-300 whitespace-nowrap">
                         {p.minTemperature != null && p.maxTemperature != null
                           ? `${p.minTemperature}°C — ${p.maxTemperature}°C`
                           : '—'}
                       </td>
 
                       {/* GOST */}
-                      <td className="py-4 px-5 text-xs text-slate-400">
+                      <td className="py-4 px-5 text-xs text-slate-400 whitespace-nowrap">
                         {p.gost || '—'}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="py-4 px-5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           <button 
                             onClick={() => openEdit(p)} 
-                            className="p-2 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700 text-slate-400 hover:text-amber-400 transition-all"
+                            className="p-2 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer"
                             title="Tahrirlash"
                           >
                             <Edit size={14} />
                           </button>
                           <button 
                             onClick={() => setDeleteId(p.id)} 
-                            className="p-2 rounded-xl bg-dark-800 hover:bg-rose-500/20 border border-dark-700 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-all"
+                            className="p-2 rounded-xl bg-dark-800 hover:bg-rose-500/20 border border-dark-700 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-all cursor-pointer"
                             title="O'chirish"
                           >
                             <Trash2 size={14} />

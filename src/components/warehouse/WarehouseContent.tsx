@@ -2254,8 +2254,8 @@ export default function WarehouseContent() {
                               {formatDual(item.nameUz || getProductName(item.name, 'uz'), item.name, item.nameEn || getProductName(item.name, 'en'))}
                             </h4>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[10px] text-slate-500 font-medium">{item.category || 'Xomashyo'}</span>
-                              {item.code && <span className="text-[10px] text-slate-400 font-mono">#{item.code}</span>}
+                              <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap">{item.category || 'Xomashyo'}</span>
+                              {item.code && <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">#{item.code}</span>}
                             </div>
                           </div>
                         </div>
@@ -2434,10 +2434,10 @@ export default function WarehouseContent() {
                             </div>
                           </div>
                         </td>
-                        <td className="p-5">
-                          <div className="flex flex-col">
-                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{item.code || '-'}</span>
-                            <span className="text-xs text-slate-400 dark:text-slate-500">{item.category || 'Xomashyo'}</span>
+                        <td className="p-5 whitespace-nowrap">
+                          <div className="flex flex-col whitespace-nowrap">
+                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{item.code || '-'}</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">{item.category || 'Xomashyo'}</span>
                           </div>
                         </td>
                         <td className="p-5 font-mono text-sm text-slate-700 dark:text-slate-300 font-bold">
