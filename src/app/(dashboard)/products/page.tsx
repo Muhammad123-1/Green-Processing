@@ -457,10 +457,16 @@ export default function ProductsPage() {
                           {formatDual(p.nameUz || getProductName(p.name, 'uz'), p.name, p.nameEn || getProductName(p.name, 'en'))}
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono bg-dark-800 border border-dark-700 text-slate-300 whitespace-nowrap">
+                          <span 
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono bg-dark-800 border border-dark-700 text-slate-300 whitespace-nowrap shrink-0"
+                            style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all', overflowWrap: 'normal' }}
+                          >
                             {p.code || 'PRD'}
                           </span>
-                          <span className="text-[10px] text-slate-400 truncate whitespace-nowrap">
+                          <span 
+                            className="text-[10px] text-slate-400 truncate whitespace-nowrap shrink-0"
+                            style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all', overflowWrap: 'normal' }}
+                          >
                             {p.category || 'Xomashyo'}
                           </span>
                         </div>
@@ -523,25 +529,25 @@ export default function ProductsPage() {
 
             {/* Desktop View: Full Table */}
             <div className="hidden sm:block overflow-x-auto rounded-2xl border border-dark-750">
-              <table className="w-full min-w-[960px] text-left border-collapse text-sm">
+              <table className="w-full min-w-[1250px] text-left border-collapse text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-dark-800/60 border-b border-slate-200 dark:border-dark-750 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("Mahsulot Nomi", "Наименование", "Product Name")}</th>
-                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("Kod", "Код", "Code")}</th>
-                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("Kategoriya", "Категория", "Category")}</th>
-                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Birlik", "Ед. изм.", "Unit")}</th>
-                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Jami Kirim", "Общий приход", "Total Inflow")}</th>
-                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Partiyalar", "Партий", "Batches")}</th>
-                    <th className="py-4 px-5 text-center whitespace-nowrap">{formatDual("Harorat Norma", "Норма темп.", "Temp Norm")}</th>
-                    <th className="py-4 px-5 whitespace-nowrap">{formatDual("GOST / Standart", "ГОСТ", "Standard")}</th>
-                    <th className="py-4 px-5 text-right whitespace-nowrap">{formatDual("Amallar", "Действия", "Actions")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap min-w-[260px]">{formatDual("Mahsulot Nomi", "Наименование", "Product Name")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap min-w-[140px] w-[140px]">{formatDual("Kod", "Код", "Code")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap min-w-[180px] w-[180px]">{formatDual("Kategoriya", "Категория", "Category")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap min-w-[90px]">{formatDual("Birlik", "Ед. изм.", "Unit")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap min-w-[140px]">{formatDual("Jami Kirim", "Общий приход", "Total Inflow")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap min-w-[110px]">{formatDual("Partiyalar", "Партий", "Batches")}</th>
+                    <th className="py-4 px-5 text-center whitespace-nowrap min-w-[140px]">{formatDual("Harorat Norma", "Норма темп.", "Temp Norm")}</th>
+                    <th className="py-4 px-5 whitespace-nowrap min-w-[160px]">{formatDual("GOST / Standart", "ГОСТ", "Standard")}</th>
+                    <th className="py-4 px-5 text-right whitespace-nowrap min-w-[110px]">{formatDual("Amallar", "Действия", "Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-750">
                   {productsPagination.displayedItems.map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-dark-800/40 transition-colors">
                       {/* Name & Photo */}
-                      <td className="py-4 px-5 whitespace-nowrap">
+                      <td className="py-4 px-5 whitespace-nowrap min-w-[260px]">
                         <div className="flex items-center gap-3">
                           {p.imageUrl ? (
                             <img
@@ -569,26 +575,32 @@ export default function ProductsPage() {
                       </td>
 
                       {/* Code */}
-                      <td className="py-4 px-5 font-mono text-xs text-slate-300 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-dark-800 border border-dark-700 whitespace-nowrap">
+                      <td className="py-4 px-5 font-mono text-xs text-slate-300 whitespace-nowrap min-w-[140px] w-[140px]">
+                        <span 
+                          className="inline-flex items-center px-2 py-0.5 rounded-lg bg-dark-800 border border-dark-700 whitespace-nowrap shrink-0"
+                          style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all', overflowWrap: 'normal' }}
+                        >
                           {p.code || '—'}
                         </span>
                       </td>
 
                       {/* Category */}
-                      <td className="py-4 px-5 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-xs font-semibold text-slate-300 whitespace-nowrap">
+                      <td className="py-4 px-5 whitespace-nowrap min-w-[180px] w-[180px]">
+                        <span 
+                          className="inline-flex items-center px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-xs font-semibold text-slate-300 whitespace-nowrap shrink-0"
+                          style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all', overflowWrap: 'normal' }}
+                        >
                           {p.category || '—'}
                         </span>
                       </td>
 
                       {/* Unit */}
-                      <td className="py-4 px-5 text-center font-mono font-bold text-xs text-slate-300 whitespace-nowrap">
+                      <td className="py-4 px-5 text-center font-mono font-bold text-xs text-slate-300 whitespace-nowrap min-w-[90px]">
                         {p.unit}
                       </td>
 
                       {/* Total Inflow from Prixod */}
-                      <td className="py-4 px-5 text-center whitespace-nowrap">
+                      <td className="py-4 px-5 text-center whitespace-nowrap min-w-[140px]">
                         <div className={`font-black text-sm whitespace-nowrap ${p.unit === 'dona' ? 'text-amber-400' : 'text-emerald-400'}`}>
                           {p.unit === 'dona'
                             ? `${(p.totalArrivalKg || 0).toLocaleString()} dona`
@@ -604,26 +616,26 @@ export default function ProductsPage() {
                       </td>
 
                       {/* Deliveries Count */}
-                      <td className="py-4 px-5 text-center whitespace-nowrap">
+                      <td className="py-4 px-5 text-center whitespace-nowrap min-w-[110px]">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-dark-800 border border-dark-700 font-bold text-xs text-slate-200 whitespace-nowrap">
                           {p.deliveriesCount || 0} ta
                         </span>
                       </td>
 
                       {/* Temperature */}
-                      <td className="py-4 px-5 text-center font-mono text-xs text-cyan-300 whitespace-nowrap">
+                      <td className="py-4 px-5 text-center font-mono text-xs text-cyan-300 whitespace-nowrap min-w-[140px]">
                         {p.minTemperature != null && p.maxTemperature != null
                           ? `${p.minTemperature}°C — ${p.maxTemperature}°C`
                           : '—'}
                       </td>
 
                       {/* GOST */}
-                      <td className="py-4 px-5 text-xs text-slate-400 whitespace-nowrap">
+                      <td className="py-4 px-5 text-xs text-slate-400 whitespace-nowrap min-w-[160px]">
                         {p.gost || '—'}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-5 text-right whitespace-nowrap">
+                      <td className="py-4 px-5 text-right whitespace-nowrap min-w-[110px]">
                         <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           <button 
                             onClick={() => openEdit(p)} 

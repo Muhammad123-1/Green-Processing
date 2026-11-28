@@ -56,7 +56,6 @@ const navSections = [
       { key: 'directorDynamics', href: '/director/dynamics', icon: TrendingUp, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'planForecastActual', href: '/director/plan-forecast-actual', icon: Target, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'surveys', href: '/surveys', icon: HelpCircle, roles: ['ADMIN', 'QUALITY_CONTROL', 'SALES'] },
-      { key: 'archive', href: '/archive', icon: Archive, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   },
   {
@@ -80,7 +79,6 @@ const navSections = [
     key: 'navWarehouse',
     title: 'Omborxona',
     items: [
-      { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
       { key: 'prihod', href: '/inbound', icon: ArrowDownLeft, roles: ['ADMIN', 'WAREHOUSE'] },
       { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE'] },
       { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'SALES'] },
@@ -134,6 +132,7 @@ const navSections = [
       { key: 'chat', href: '/chat', icon: MessageSquare, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'INSPECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'HR', 'ACCOUNTING', 'ACCOUNTANT', 'KITCHEN', 'DEGUSTATION'] },
       { key: 'security', href: '/security', icon: ShieldAlert, roles: ['ADMIN', 'DIRECTOR', 'SECURITY'] },
       { key: 'backup', href: '/backup', icon: Database, roles: ['ADMIN'] },
+      { key: 'archive', href: '/archive', icon: Archive, roles: ['ADMIN', 'DIRECTOR'] },
     ]
   }
 ]
@@ -563,7 +562,6 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
                 'director',
                 'directorDynamics',
                 'planForecastActual',
-                'warehouse',
                 'demandSupply',
                 'archive',
                 'production',
