@@ -78,7 +78,7 @@ const navSections = [
     key: 'navWarehouse',
     title: 'Omborxona',
     items: [
-      { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'WAREHOUSE'] },
+      { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'WAREHOUSE'] },
       { key: 'prihod', href: '/inbound', icon: ArrowDownLeft, roles: ['ADMIN', 'WAREHOUSE'] },
       { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE'] },
       { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'SALES'] },
@@ -559,6 +559,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               const directorAllowedKeys = [
                 'director',
                 'directorDynamics',
+                'warehouse',
                 'archive',
                 'production',
                 'accounting',

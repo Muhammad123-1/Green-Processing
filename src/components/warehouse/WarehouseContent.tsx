@@ -52,6 +52,7 @@ import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import { SignatureCell, useWarehouseSignature } from './SignatureCell'
 import { AnimatedNumber } from '@/components/common/MotionComponents'
+import AbcInventoryAnalysis from '@/components/warehouse/AbcInventoryAnalysis'
 
 const tBase = {
   uz: {
@@ -383,7 +384,7 @@ export default function WarehouseContent() {
     (l as any)[key] = formatDual((tBase.uz as any)[key] || '', (tBase.ru as any)[key] || '', (tBase.en as any)[key] || '');
   }
 
-  const [activeTab, setActiveTab] = useState<'inventory' | 'transfers'>('inventory')
+  const [activeTab, setActiveTab] = useState<'inventory' | 'transfers' | 'abc_analysis'>('inventory')
 
   // Inbound & Outbound states (Kirim va Chiqim)
   const [prihodSearch, setPrihodSearch] = useState('')
@@ -1436,6 +1437,17 @@ export default function WarehouseContent() {
             >
               <Scale size={15} />
               <span>{formatDual("Chiqim Aktlari (Transfer)", "Акты списания & трансфер", "Dispatches / Transfers")}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('abc_analysis')}
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+                activeTab === 'abc_analysis'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Layers size={15} />
+              <span>{formatDual("ABC Tahlil (Pareto)", "ABC-Анализ (Парето)", "ABC Analysis")}</span>
             </button>
             <Link
               href="/inbound"
@@ -3096,6 +3108,11 @@ export default function WarehouseContent() {
             )}
           </div>
         </div>
+      )}
+
+      {/* TAB 3: ABC INVENTORY ANALYSIS (PARETO 80/20 & CAPITAL ALLOCATION) */}
+      {activeTab === 'abc_analysis' && (
+        <AbcInventoryAnalysis />
       )}
 
       {/* MODAL: CREATE DISPATCH / TRANSFER */}

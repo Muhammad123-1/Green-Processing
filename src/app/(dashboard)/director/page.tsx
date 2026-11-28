@@ -1680,9 +1680,18 @@ export default function DirectorPage() {
               </h2>
             </div>
           </div>
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
-            {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/warehouse"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
+            >
+              <Layers size={14} />
+              <span>{formatDual("Ombor ABC Tahlili", "ABC-Анализ склада", "Warehouse ABC Analysis")}</span>
+            </Link>
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
+              {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
+            </span>
+          </div>
         </div>
 
         {/* PRIMARY CHARTS — RESPONSIVE GRID */}
@@ -2042,9 +2051,18 @@ export default function DirectorPage() {
               </p>
             </div>
           </div>
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
-            {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/warehouse"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
+            >
+              <Layers size={14} />
+              <span>{formatDual("Ombor ABC Tahlili", "ABC-Анализ склада", "Warehouse ABC Analysis")}</span>
+            </Link>
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
+              {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
