@@ -148,18 +148,248 @@ export interface ExecutiveAlert {
 }
 
 /**
- * Reads planning targets from ERP planning config file
+ * Reads planning targets from ERP planning config file or generates dynamic standard targets for any period
  */
-export function getPlanningPeriodConfig(periodKey: string): PlanningPeriodConfig | null {
+export function getPlanningPeriodConfig(periodKey: string): PlanningPeriodConfig {
+  const [yearStr, monthStr] = periodKey.split('-')
+  const year = parseInt(yearStr, 10) || 2026
+  const month = parseInt(monthStr, 10) || 11
+  const totalDays = new Date(year, month, 0).getDate()
+
+  // Calculate working days (excluding Sundays)
+  let workingDays = 0
+  for (let d = 1; d <= totalDays; d++) {
+    if (new Date(year, month - 1, d).getDay() !== 0) {
+      workingDays++
+    }
+  }
+
+  const monthNamesUz = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr']
+  const monthNamesRu = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+  const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const mIdx = Math.max(0, Math.min(11, month - 1))
+
+  // Base factory target: standard 3,500 kg/working day
+  const targetOutputKg = workingDays * 3500
+
+  // 12 core raw materials (siryo)
+  const coreProducts: Record<string, any> = {
+    Aysberg: {
+      code: 'Aysberg',
+      nameUz: 'Aysberg (to\'g\'ralgan)',
+      nameRu: 'Салат Айсберг нарезанный',
+      nameEn: 'Chopped Iceberg',
+      targetOutputKg: Math.round(targetOutputKg * 0.22),
+      targetRevenueUzs: 672000000,
+      targetYield: 78.0,
+      unit: 'kg'
+    },
+    Tomaty: {
+      code: 'Tomaty',
+      nameUz: 'Pomidor (butun)',
+      nameRu: 'Томаты целые',
+      nameEn: 'Whole Tomatoes',
+      targetOutputKg: Math.round(targetOutputKg * 0.25),
+      targetRevenueUzs: 768000000,
+      targetYield: 84.0,
+      unit: 'kg'
+    },
+    ColeSlaw: {
+      code: 'ColeSlaw',
+      nameUz: 'Karam (Коул Слоу)',
+      nameRu: 'Коул Слоу (капуста)',
+      nameEn: 'Cole Slaw Cabbage',
+      targetOutputKg: Math.round(targetOutputKg * 0.08),
+      targetRevenueUzs: 110000000,
+      targetYield: 82.0,
+      unit: 'kg'
+    },
+    Luk: {
+      code: 'Luk',
+      nameUz: 'Piyoz (to\'g\'ralgan)',
+      nameRu: 'Лук салатный нарезанный',
+      nameEn: 'Chopped Salad Onion',
+      targetOutputKg: Math.round(targetOutputKg * 0.03),
+      targetRevenueUzs: 27000000,
+      targetYield: 68.0,
+      unit: 'kg'
+    },
+    Sabzi: {
+      code: 'Sabzi',
+      nameUz: 'Sabzi (qizil)',
+      nameRu: 'Морковь красная',
+      nameEn: 'Red Carrot',
+      targetOutputKg: Math.round(targetOutputKg * 0.04),
+      targetRevenueUzs: 35000000,
+      targetYield: 80.0,
+      unit: 'kg'
+    },
+    Ogursy: {
+      code: 'Ogursy',
+      nameUz: 'Bodring (yangi)',
+      nameRu: 'Огурцы свежие',
+      nameEn: 'Fresh Cucumbers',
+      targetOutputKg: Math.round(targetOutputKg * 0.03),
+      targetRevenueUzs: 36000000,
+      targetYield: 85.0,
+      unit: 'kg'
+    },
+    SaladMix: {
+      code: 'SaladMix',
+      nameUz: 'Salat Miks (Mix)',
+      nameRu: 'Микс салат',
+      nameEn: 'Salad Mix',
+      targetOutputKg: Math.round(targetOutputKg * 0.02),
+      targetRevenueUzs: 45000000,
+      targetYield: 75.0,
+      unit: 'kg'
+    },
+    Limon: {
+      code: 'Limon',
+      nameUz: 'Limon',
+      nameRu: 'Лимоны',
+      nameEn: 'Lemons',
+      targetOutputKg: Math.round(targetOutputKg * 0.01),
+      targetRevenueUzs: 18000000,
+      targetYield: 80.0,
+      unit: 'kg'
+    },
+    Celery: {
+      code: 'Celery',
+      nameUz: 'Selderay',
+      nameRu: 'Сельдерей',
+      nameEn: 'Celery',
+      targetOutputKg: Math.round(targetOutputKg * 0.01),
+      targetRevenueUzs: 25000000,
+      targetYield: 75.0,
+      unit: 'kg'
+    },
+    Rukkola: {
+      code: 'Rukkola',
+      nameUz: 'Rukkola',
+      nameRu: 'Руккола',
+      nameEn: 'Rukkola',
+      targetOutputKg: Math.round(targetOutputKg * 0.01),
+      targetRevenueUzs: 25000000,
+      targetYield: 75.0,
+      unit: 'kg'
+    },
+    LolloRosso: {
+      code: 'LolloRosso',
+      nameUz: 'Lollo Rosso',
+      nameRu: 'Лолло Россо',
+      nameEn: 'Lollo Rosso',
+      targetOutputKg: Math.round(targetOutputKg * 0.008),
+      targetRevenueUzs: 23000000,
+      targetYield: 75.0,
+      unit: 'kg'
+    },
+    Spinach: {
+      code: 'Spinach',
+      nameUz: 'Shpinat',
+      nameRu: 'Шпинат',
+      nameEn: 'Spinach',
+      targetOutputKg: Math.round(targetOutputKg * 0.008),
+      targetRevenueUzs: 20000000,
+      targetYield: 75.0,
+      unit: 'kg'
+    },
+    Mint: {
+      code: 'Mint',
+      nameUz: 'Myata (Yalpiz)',
+      nameRu: 'Мята',
+      nameEn: 'Mint',
+      targetOutputKg: Math.round(targetOutputKg * 0.005),
+      targetRevenueUzs: 12000000,
+      targetYield: 75.0,
+      unit: 'kg'
+    },
+    Boshqa: {
+      code: 'Boshqa',
+      nameUz: 'Boshqa sabzavotlar',
+      nameRu: 'Прочие овощи',
+      nameEn: 'Other Vegetables',
+      targetOutputKg: Math.round(targetOutputKg * 0.02),
+      targetRevenueUzs: 60000000,
+      targetYield: 75.0,
+      unit: 'kg'
+    }
+  }
+
+  // Try reading custom target overrides from file if present
   try {
     const filePath = path.join(process.cwd(), 'src/data/erpPlanningTargets.json')
-    if (!fs.existsSync(filePath)) return null
-    const content = fs.readFileSync(filePath, 'utf-8')
-    const parsed = JSON.parse(content)
-    return parsed.periods?.[periodKey] || null
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      const parsed = JSON.parse(content)
+      const existing = parsed.periods?.[periodKey]
+      if (existing) {
+        // Merge core products into existing if existing only had a few
+        return {
+          ...existing,
+          products: {
+            ...coreProducts,
+            ...(existing.products || {})
+          }
+        }
+      }
+    }
   } catch (err) {
-    console.error('Failed to load ERP planning targets:', err)
-    return null
+    console.error('Failed to load ERP planning targets from file:', err)
+  }
+
+  return {
+    period: periodKey,
+    labelUz: `${monthNamesUz[mIdx]} ${year}`,
+    labelRu: `${monthNamesRu[mIdx]} ${year}`,
+    labelEn: `${monthNamesEn[mIdx]} ${year}`,
+    totalDays,
+    workingDays,
+    dailyCapacityKg: 3500,
+    maxOvertimeCapacityKg: 4000,
+    departments: {
+      production: {
+        code: 'production',
+        nameUz: 'Ishlab Chiqarish',
+        nameRu: 'Производство',
+        nameEn: 'Production',
+        targetOutputKg,
+        targetInputKg: Math.round(targetOutputKg / 0.76),
+        targetYieldPercent: 76.0,
+        unit: 'kg'
+      },
+      sales: {
+        code: 'sales',
+        nameUz: 'Savdo va Sotuv',
+        nameRu: 'Продажи и Сбыт',
+        nameEn: 'Sales & Commerce',
+        targetVolumeKg: Math.round(targetOutputKg * 0.95),
+        targetRevenueUzs: 2700000000,
+        avgPricePerKg: 30000,
+        unit: 'so\'m'
+      },
+      supply: {
+        code: 'supply',
+        nameUz: 'Ta\'minot va Xarid',
+        nameRu: 'Снабжение и Закупки',
+        nameEn: 'Supply & Procurement',
+        targetProcurementKg: Math.round(targetOutputKg * 1.35),
+        targetBudgetUzs: 1450000000,
+        targetOnTimePercent: 95.0,
+        unit: 'kg'
+      },
+      finance: {
+        code: 'finance',
+        nameUz: 'Moliya va Byudjet',
+        nameRu: 'Финансы и Бюджет',
+        nameEn: 'Finance & Budget',
+        targetRevenueUzs: 2700000000,
+        targetCogsUzs: 1650000000,
+        targetGrossMarginPercent: 38.8,
+        unit: 'so\'m'
+      }
+    },
+    products: coreProducts
   }
 }
 
