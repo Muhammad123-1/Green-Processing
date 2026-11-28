@@ -65,9 +65,11 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
 
   // DB Expenses data (Production)
   const [expenses, setExpenses] = useState<any[]>([])
+  const expensesRef = useRef<any[]>([])
 
   // DB Kitchen Expenses data (Oshxona chiqimi)
   const [kitchenExpenses, setKitchenExpenses] = useState<any[]>([])
+  const kitchenExpensesRef = useRef<any[]>([])
   const [savingKitchenExpenses, setSavingKitchenExpenses] = useState(false)
 
   // Filters
@@ -167,14 +169,44 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
     loadData()
   }, [loadData])
 
-  // Har kuni sanani avtomatik yangilab borish (kun almashganda avtomatik yangi kunga o'tish)
+  useEffect(() => {
+    expensesRef.current = expenses
+  }, [expenses])
+
+  useEffect(() => {
+    kitchenExpensesRef.current = kitchenExpenses
+  }, [kitchenExpenses])
+
+  // Har kuni sanani avtomatik yangilab borish (12:00 dan keyin avtomatik saqlash va yangi kun ochish)
   useEffect(() => {
     let lastDate = getTodayTashkent()
-    const checkDay = () => {
+    const checkDay = async () => {
       const nowToday = getTodayTashkent()
       if (nowToday !== lastDate) {
+        // 12:00 dan keyin kun almashganda: kiritilgan ishlab chiqarish va oshxona chiqimlarini avto-saqlash
+        const dirtyProd = (expensesRef.current || []).filter((r) => r._dirty && isDateStr(r.date))
+        if (dirtyProd.length > 0) {
+          try {
+            await executeSaveExpenses(dirtyProd, 'Kechki 12:00 dan keyin kun almashuvida avtomatik saqlandi')
+          } catch (e) {
+            console.error('Day transition auto-save expenses error:', e)
+          }
+        }
+        const dirtyKitchen = (kitchenExpensesRef.current || []).filter((r) => r._dirty && isDateStr(r.date))
+        if (dirtyKitchen.length > 0) {
+          try {
+            await executeSaveKitchenExpenses(dirtyKitchen, 'Kechki 12:00 dan keyin kun almashuvida avtomatik saqlandi')
+          } catch (e) {
+            console.error('Day transition auto-save kitchen expenses error:', e)
+          }
+        }
         lastDate = nowToday
-        loadData()
+        await loadData()
+        toast.info(
+          lang === 'ru'
+            ? 'Наступил новый рабочий день. Данные сохранены, открыт новый день.'
+            : "Yangi ish kuni boshlandi. Oldingi kun ma'lumotlari saqlandi va yangi kun avtomatik ochildi."
+        )
       }
     }
 
@@ -190,7 +222,7 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [loadData])
+  }, [loadData, lang])
 
   const blankExpense = (date: string) => {
     const row: Record<string, any> = { date, _dirty: true, _new: true }

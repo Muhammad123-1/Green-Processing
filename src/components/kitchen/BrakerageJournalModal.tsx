@@ -131,6 +131,8 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
   const [archiveLogs, setArchiveLogs] = useState<any[]>([])
   const [loadingArchive, setLoadingArchive] = useState(false)
   const [archiveSearchQuery, setArchiveSearchQuery] = useState('')
+  const [auditPeriod, setAuditPeriod] = useState<'ALL' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'>('ALL')
+  const [showAuditModal, setShowAuditModal] = useState(false)
 
   // Load chairmen from DB settings
   useEffect(() => {
@@ -203,15 +205,54 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
     })
   }, [archiveLogs])
 
+  const periodFilteredLogs = useMemo(() => {
+    if (auditPeriod === 'ALL') return archiveLogs
+    const today = getTodayTashkent()
+    if (auditPeriod === 'DAILY') {
+      return archiveLogs.filter(l => l.date === today)
+    }
+    if (auditPeriod === 'WEEKLY') {
+      const now = new Date()
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      return archiveLogs.filter(l => l.date >= weekAgo && l.date <= today)
+    }
+    if (auditPeriod === 'MONTHLY') {
+      const ym = today.slice(0, 7)
+      return archiveLogs.filter(l => l.date.startsWith(ym))
+    }
+    if (auditPeriod === 'YEARLY') {
+      const y = today.slice(0, 4)
+      return archiveLogs.filter(l => l.date.startsWith(y))
+    }
+    return archiveLogs
+  }, [archiveLogs, auditPeriod])
+
   const filteredArchivedDays = useMemo(() => {
-    if (!archiveSearchQuery.trim()) return archivedDays
+    let days = archivedDays
+    if (auditPeriod !== 'ALL') {
+      const today = getTodayTashkent()
+      if (auditPeriod === 'DAILY') {
+        days = days.filter(d => d.date === today)
+      } else if (auditPeriod === 'WEEKLY') {
+        const now = new Date()
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        days = days.filter(d => d.date >= weekAgo && d.date <= today)
+      } else if (auditPeriod === 'MONTHLY') {
+        const ym = today.slice(0, 7)
+        days = days.filter(d => d.date.startsWith(ym))
+      } else if (auditPeriod === 'YEARLY') {
+        const y = today.slice(0, 4)
+        days = days.filter(d => d.date.startsWith(y))
+      }
+    }
+    if (!archiveSearchQuery.trim()) return days
     const q = archiveSearchQuery.toLowerCase()
-    return archivedDays.filter(day => {
+    return days.filter(day => {
       const matchDate = day.date.includes(q)
       const matchMeal = day.items.some((i: any) => i.mealName?.toLowerCase().includes(q))
       return matchDate || matchMeal
     })
-  }, [archivedDays, archiveSearchQuery])
+  }, [archivedDays, archiveSearchQuery, auditPeriod])
 
   // Fetch from DB (faqat mavjud saqlangan ma'lumotlarni yuklaydi, avtomatik bo'sh qator qo'shmaydi)
   const fetchLogs = useCallback(async (dateVal = filterDate) => {
@@ -722,28 +763,67 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
             </div>
           </div>
 
+          {/* Audit Period Selector & Official Audit Act Trigger */}
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-300 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1">
+                <ShieldCheck size={14} className="text-blue-500" />
+                {formatDual("Audit davri:", "Период аудита:", "Audit period:")}
+              </span>
+              {[
+                { id: 'ALL' as const, label: formatDual("Barchasi", "Все", "All") },
+                { id: 'DAILY' as const, label: formatDual("Kunlik", "Дневной", "Daily") },
+                { id: 'WEEKLY' as const, label: formatDual("Haftalik", "Недельный", "Weekly") },
+                { id: 'MONTHLY' as const, label: formatDual("Oylik", "Месячный", "Monthly") },
+                { id: 'YEARLY' as const, label: formatDual("Yillik", "Годовой", "Yearly") }
+              ].map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setAuditPeriod(p.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    auditPeriod === p.id
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAuditModal(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black shadow-md shadow-blue-500/20 transition cursor-pointer"
+            >
+              <FileSpreadsheet size={15} />
+              <span>{formatDual("Rasmiy SanPiN Audit Dalolatnomasi (5 Imzo)", "Официальный Акт Аудита (5 Подписей)", "Official Audit Act (5 Sigs)")}</span>
+            </button>
+          </div>
+
           {/* Summary Stat Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
               <span className="text-slate-500 dark:text-slate-400 block mb-1">{formatDual("Arxivlangan kunlar", "Архивных дней", "Archived days")}</span>
-              <strong className="text-lg font-black text-slate-900 dark:text-white font-mono">{archivedDays.length} {formatDual("kun", "дн.", "days")}</strong>
+              <strong className="text-lg font-black text-slate-900 dark:text-white font-mono">{filteredArchivedDays.length} {formatDual("kun", "дн.", "days")}</strong>
             </div>
             <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800">
               <span className="text-slate-500 dark:text-slate-400 block mb-1">{formatDual("Jami baholangan taomlar", "Всего оцененных блюд", "Total evaluated meals")}</span>
               <strong className="text-lg font-black text-slate-900 dark:text-white font-mono">
-                {archiveLogs.filter(l => l.mealName?.trim()).length} {formatDual("ta", "блюд", "meals")}
+                {periodFilteredLogs.filter(l => l.mealName?.trim()).length} {formatDual("ta", "блюд", "meals")}
               </strong>
             </div>
             <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-900/40">
               <span className="text-emerald-700 dark:text-emerald-400 block mb-1">{formatDual("Muvofiq (Ruxsat)", "Соответствует (Допуск)", "Approved (Cleared)")}</span>
               <strong className="text-lg font-black text-emerald-800 dark:text-emerald-300 font-mono">
-                {archiveLogs.filter(l => l.status === 'APPROVED' && l.mealName?.trim()).length} {formatDual("ta", "блюд", "meals")}
+                {periodFilteredLogs.filter(l => l.status === 'APPROVED' && l.mealName?.trim()).length} {formatDual("ta", "блюд", "meals")}
               </strong>
             </div>
             <div className="p-3.5 bg-rose-50 dark:bg-rose-950/20 rounded-xl border border-rose-200 dark:border-rose-900/40">
               <span className="text-rose-700 dark:text-rose-400 block mb-1">{formatDual("Rad etilgan (Yaroqsiz)", "Отклонено (Брак)", "Rejected (Defect)")}</span>
               <strong className="text-lg font-black text-rose-800 dark:text-rose-300 font-mono">
-                {archiveLogs.filter(l => l.status === 'REJECTED' && l.mealName?.trim()).length} {formatDual("ta", "блюд", "meals")}
+                {periodFilteredLogs.filter(l => l.status === 'REJECTED' && l.mealName?.trim()).length} {formatDual("ta", "блюд", "meals")}
               </strong>
             </div>
           </div>
@@ -1424,6 +1504,166 @@ export function BrakerageJournalModal({ isOpen = true, onClose, isFullPage = fal
           </button>
         )}
       </div>
+
+      {/* Official SanPiN Audit Act Modal (5 Signatures) */}
+      {showAuditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/70 backdrop-blur-xs animate-enter no-print">
+          <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-4xl w-full max-h-[92vh] overflow-y-auto">
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700 mb-6">
+              <span className="text-xs font-black uppercase tracking-wider text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-3 py-1 rounded-lg border border-blue-200 dark:border-blue-800">
+                СанПиН 0027-20 / Расмий Аудит Далолатномаси
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition cursor-pointer shadow-xs"
+                >
+                  <Printer size={14} /> Chop etish (Print)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAuditModal(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Document Area */}
+            <div className="space-y-6 text-slate-900 dark:text-slate-100 font-serif">
+              {/* Header */}
+              <div className="text-center space-y-1 pb-4 border-b-2 border-slate-900 dark:border-slate-100">
+                <h4 className="text-sm font-bold tracking-wider font-sans uppercase">ЎЗБЕКИСТОН РЕСПУБЛИКАСИ СОҒЛИҚНИ САҚЛАШ ВАЗИРЛИГИ</h4>
+                <h3 className="text-base sm:text-lg font-black uppercase font-sans">ООО "GREEN PROCESSING" ТАШКИЛОТИ</h3>
+                <h2 className="text-lg sm:text-xl font-black mt-2 underline">
+                  ОШХОНА ТАОМЛАРИ СИФАТИ ВА СУТКАЛИК СИНАМАЛАРНИНГ {auditPeriod === 'DAILY' ? 'КУНЛИК' : auditPeriod === 'WEEKLY' ? 'ҲАФТАЛИК' : auditPeriod === 'MONTHLY' ? 'ОЙЛИК' : auditPeriod === 'YEARLY' ? 'ЙИЛЛИК' : 'УМУМИЙ'} АУДИТ ДАЛОЛАТНОМАСИ
+                </h2>
+                <p className="text-xs italic font-sans text-slate-600 dark:text-slate-400">
+                  Сана: {getTodayTashkent()} • Аудит қамрови: {auditPeriod === 'DAILY' ? 'Бугунги кун' : auditPeriod === 'WEEKLY' ? 'Охирги 7 кунлик' : auditPeriod === 'MONTHLY' ? 'Жорий ой' : auditPeriod === 'YEARLY' ? '2026 йил' : 'Барча даврлар'}
+                </p>
+              </div>
+
+              {/* Statement */}
+              <div className="text-xs sm:text-sm leading-relaxed space-y-2">
+                <p>
+                  Бизлар, қуйида имзо чекувчи комиссия аъзолари: Комиссия раиси <strong>{activeChairman?.name || DEFAULT_COMMITTEE.chairman}</strong> (Директор), Сифат назоратчиси <strong>{DEFAULT_COMMITTEE.qcInspector}</strong>, комиссия аъзолари <strong>{DEFAULT_COMMITTEE.member1}</strong>, <strong>{DEFAULT_COMMITTEE.member2}</strong> ҳамда Ҳамшира (Синама олувчи) <strong>{DEFAULT_COMMITTEE.medicalStaff}</strong> ушбу далолатномани туздик шу ҳақдаким, корхона ошхонасида СанПиН талаблари асосида тайёрланган таомларнинг органолептик сифати, тайёрлаш ҳарорати ҳамда 48 соатлик суткалик синамалар ҳолати аудити ўтказилди.
+                </p>
+              </div>
+
+              {/* Statistics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-sans text-xs">
+                <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700">
+                  <span className="text-slate-500 block mb-1">Аудит кунлари</span>
+                  <strong className="text-base font-black text-slate-900 dark:text-white font-mono">{filteredArchivedDays.length} кун</strong>
+                </div>
+                <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700">
+                  <span className="text-slate-500 block mb-1">Жами баҳоланган таомлар</span>
+                  <strong className="text-base font-black text-slate-900 dark:text-white font-mono">{periodFilteredLogs.filter(l => l.mealName?.trim()).length} та</strong>
+                </div>
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-300 dark:border-emerald-800">
+                  <span className="text-emerald-700 dark:text-emerald-400 block mb-1">Мувофиқ (Рухсат)</span>
+                  <strong className="text-base font-black text-emerald-800 dark:text-emerald-300 font-mono">
+                    {periodFilteredLogs.filter(l => l.status === 'APPROVED' && l.mealName?.trim()).length} та
+                  </strong>
+                </div>
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-300 dark:border-rose-800">
+                  <span className="text-rose-700 dark:text-rose-400 block mb-1">Рад этилган (Брак)</span>
+                  <strong className="text-base font-black text-rose-800 dark:text-rose-300 font-mono">
+                    {periodFilteredLogs.filter(l => l.status === 'REJECTED' && l.mealName?.trim()).length} та
+                  </strong>
+                </div>
+              </div>
+
+              {/* Summary Conclusion */}
+              <div className="p-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs sm:text-sm">
+                <strong>КОМИССИЯ ХУЛОСАСИ:</strong> Текширилган таомларнинг ташқи кўриниши, ҳиди, таъми ва консистенцияси белгиланган санитария талаблари ва рецептурага тўлиқ мос келади. Ҳарорат меъёрлари сақланган (+80°C...+85°C). Тайёр таомлардан суткалик стерил синамалар олиниб, махсус совутгичда сақланмоқда. Истеъмолга тўлиқ рухсат этилади.
+              </div>
+
+              {/* The 5 Official Signatures */}
+              <div className="pt-6 border-t border-slate-300 dark:border-slate-700 font-sans">
+                <h4 className="text-xs font-black uppercase tracking-wider mb-4 text-center">
+                  КОМИССИЯ АЪЗОЛАРИНИНГ РАСМИЙ ИМЗОЛАРИ:
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  {/* 1. Rais */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">1. Комиссия раиси (Директор)</span>
+                      <strong className="text-slate-900 dark:text-white">{activeChairman?.name || DEFAULT_COMMITTEE.chairman}</strong>
+                    </div>
+                    <div className="text-right">
+                      {activeChairman?.signatureUrl ? (
+                        <img
+                          src={activeChairman.signatureUrl}
+                          alt="Signature"
+                          className="h-8 max-w-[90px] object-contain filter invert dark:invert-0 inline-block"
+                        />
+                      ) : (
+                        <span className="font-serif italic text-blue-600 font-bold border-b border-dotted border-blue-500 pb-0.5">Иминов С.М. (Имзо)</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. Sifat Nazoratchisi */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">2. Сифат назоратчиси (QC)</span>
+                      <strong className="text-slate-900 dark:text-white">{DEFAULT_COMMITTEE.qcInspector}</strong>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-serif italic text-blue-600 font-bold border-b border-dotted border-blue-500 pb-0.5">Камбарова А.М. (Имзо)</span>
+                    </div>
+                  </div>
+
+                  {/* 3. 1-komissiya a'zosi */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">3. Комиссия аъзоси</span>
+                      <strong className="text-slate-900 dark:text-white">{DEFAULT_COMMITTEE.member1}</strong>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-serif italic text-blue-600 font-bold border-b border-dotted border-blue-500 pb-0.5">Зимина Л.Г. (Имзо)</span>
+                    </div>
+                  </div>
+
+                  {/* 4. 2-komissiya a'zosi */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">4. Комиссия аъзоси</span>
+                      <strong className="text-slate-900 dark:text-white">{DEFAULT_COMMITTEE.member2}</strong>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-serif italic text-blue-600 font-bold border-b border-dotted border-blue-500 pb-0.5">Расулов А.А. (Имзо)</span>
+                    </div>
+                  </div>
+
+                  {/* 5. Hamshira / Sinama Oluvchi */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between sm:col-span-2">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">5. Ҳамшира / Синама олувчи</span>
+                      <strong className="text-slate-900 dark:text-white">{DEFAULT_COMMITTEE.medicalStaff}</strong>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-serif italic text-blue-600 font-bold border-b border-dotted border-blue-500 pb-0.5">Жуманова Ч.Э. (Имзо)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* M.P. Stamp note */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 font-sans">
+                <div>М.П. (Муҳр ўрни)</div>
+                <div>Ҳужжат рақами: #GP-SANPIN-AUDIT-{auditPeriod}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

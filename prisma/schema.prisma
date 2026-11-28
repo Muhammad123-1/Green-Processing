@@ -1548,3 +1548,57 @@ model ExecutiveWastageLog {
   @@index([responsibilityStatus])
 }
 
+
+
+// -----------------------------------------------------------------------------
+// 17. TAYYOR TAOMLARDAN SUTKALIK SINAMA JURNALI (Daily Food Samples / SanPiN)
+// -----------------------------------------------------------------------------
+model DailyFoodSampleLog {
+  id                 Int      @id @default(autoincrement())
+  date               String   // YYYY-MM-DD
+  orderNumber        Int      @default(1) // No
+  dishName           String   // Taom nomi (Osh 1-xorak, Salat kaprez...)
+  sampleTime         String   // Sinama olingan vaqt (09:05)
+  sampleWeight       String   @default("100 gr") // Sinama miqdori (g)
+  containerCondition String   @default("Idish toza, dezinfeksiya qilingan") // Idish holati va markirovkasi
+  fridgeTime         String   // Sovutgichga joylashtirilgan vaqt (09:15)
+  fridgeTemp         String   @default("+2...+6C") // Sovutgich harorati (C)
+  expiryTime         String   // Saqlash muddati tugagan vaqt (48 soat)
+  responsiblePerson  String   @default("Jumanova Ch.E.") // Masul shaxs (Hamshira / Sinama oluvchi)
+  signature          String?  // Imzo
+  status             String   @default("APPROVED") // APPROVED | REJECTED
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+// -----------------------------------------------------------------------------
+// 18. XODIMLAR VA HAYDOVCHILAR TIBBIY KORIGI (Medosmotr & Drivers Fleet)
+// SPISOK RABOTNIKOV OOO "GREEN PROCESSING" NA MEDITSINSKIY OSMOTR
+// -----------------------------------------------------------------------------
+model EmployeeMedicalExam {
+  id             Int       @id @default(autoincrement())
+  orderNumber    Int?      // No p/p
+  fullName       String    // F.I.O.
+  department     String    // Bolinma (Sex, Oshxona, Logistika / Haydovchilar, AUP va ITR)
+  position       String    // Lavozim (gruzchik, operator sexi, haydovchi, oshpaz...)
+  examDate       String    // Medosmotr sanasi (13.11.2026g / YYYY-MM-DD)
+  parsedDate     DateTime? // Tartiblash va muddatini avtomatik tekshirish uchun
+  bloodPressure  String?   // A/D (100/70, 120/80, 140/100, 210/120...)
+  conclusion     String?   // Xulosa (GODEN V OCHKOX, yaqinni yaxshi kormaslik, A/D nazorat...)
+  status         String    @default("ACTIVE") // EXPIRED (Qizil) | URGENT (Qizil) | VALID (Yashil)
+  isDriver       Boolean   @default(false)
+  signature      String?   // Xodim / Haydovchi imzosi
+  nurseSignature String?   @default("Jumanova Ch.E.") // Hamshira imzosi
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([department])
+  @@index([isDriver])
+  @@index([status])
+  @@index([parsedDate])
+}

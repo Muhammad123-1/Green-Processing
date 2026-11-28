@@ -83,6 +83,37 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
   const [archiveSearchQuery, setArchiveSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'daily' | 'archive'>('daily')
   const [savingAll, setSavingAll] = useState(false)
+  const [medAlerts, setMedAlerts] = useState<{
+    total: number
+    expired: number
+    urgent: number
+    redTotal: number
+    urgentList: { fullName: string; department: string; examDate: string; bloodPressure: string; status: string }[]
+  }>({ total: 0, expired: 0, urgent: 0, redTotal: 0, urgentList: [] })
+
+  // Fetch Medosmotr RED alerts to warn First Aid nurse
+  useEffect(() => {
+    fetch('/api/medosmotr?status=RED')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.summary) {
+          setMedAlerts({
+            total: data.summary.total || 0,
+            expired: data.summary.expired || 0,
+            urgent: data.summary.urgent || 0,
+            redTotal: data.summary.redTotal || 0,
+            urgentList: (data.items || []).slice(0, 10).map((i: any) => ({
+              fullName: i.fullName,
+              department: i.department,
+              examDate: i.examDate,
+              bloodPressure: i.bloodPressure || '',
+              status: i.status
+            }))
+          })
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Load from localStorage (filtrlash: eski mock/demo namunalar tozalanadi)
   useEffect(() => {
@@ -481,6 +512,48 @@ export function FirstAidJournalView({ isFullPage = true }: { isFullPage?: boolea
             </button>
           </div>
         </div>
+
+        {/* Medosmotr RED Alert Banner for First Aid Nurse */}
+        {medAlerts.redTotal > 0 && (
+          <div className="mx-4 sm:mx-5 mt-4 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-500/80 text-rose-900 dark:text-rose-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-in fade-in duration-300 no-print">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5 md:mt-0">
+                <AlertTriangle size={22} className="animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white">
+                    {formatDual("Tibbiy ko'rik ogohlantirishi", "Предупреждение медосмотра", "Medical Exam Alert")}
+                  </span>
+                  <span className="text-xs font-bold text-rose-700 dark:text-rose-300">
+                    {formatDual(
+                      `${medAlerts.redTotal} nafar xodim tibbiy ko'rik (Medosmotr) QIZIL zonasida!`,
+                      `${medAlerts.redTotal} сотрудников в КРАСНОЙ зоне периодического медосмотра!`,
+                      `${medAlerts.redTotal} employees in RED medical exam alert zone!`
+                    )}
+                  </span>
+                </div>
+                <p className="text-xs text-rose-800 dark:text-rose-200 mt-1 leading-relaxed">
+                  {formatDual(
+                    `Muddati o'tgan (${medAlerts.expired} ta) yoki qon bosimi yuqori / yaqinlashgan (${medAlerts.urgent} ta) xodimlarga e'tibor bering. Birinchi yordam ko'rsatishda ularning tibbiy ko'rik holatini inobatga oling.`,
+                    `Обратите внимание на сотрудников с истекшим сроком (${medAlerts.expired}) или высоким давлением (${medAlerts.urgent}). Учитывайте статус при допуске к работе.`,
+                    `Pay attention to employees with expired checkups (${medAlerts.expired}) or high BP (${medAlerts.urgent}).`
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+              <Link
+                href="/medosmotr?status=RED"
+                className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                <span>{formatDual("Qizil ro'yxatni ko'rish (Medosmotr)", "Смотреть красный список", "View Red List")}</span>
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* View Switcher Content */}
         {viewMode === 'archive' ? (

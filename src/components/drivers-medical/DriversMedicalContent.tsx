@@ -42,32 +42,49 @@ export interface DriverMedicalExamItem {
   bloodPressure: string // 6. Артериал босим (120/80)
   breathAlcohol: string // 7. Чиқарилаётган нафас таркибида алкогол миқдори (аниқланмади)
   result: string // 8. Ҳайдовчиларни тиббий кўрикдан ўтказиш натижалари (соғлом, рейска рухсат)
-  signature: string // 9. Имзо
+  driverSignature?: string // 9. Ҳайдовчи имзоси
+  signature: string // 10. Ҳамшира имзоси
+  examDueDate?: string // Даврий медосмотр муддати
+  isRed?: boolean // Муддати яқинлашган/ўтган
   _dirty?: boolean
   _isNew?: boolean
 }
 
-// Корхонанинг доимий ҳайдовчилари рўйхати (3 ва 4-расмлардан олинган)
-export const OFFICIAL_FLEET_DRIVERS = [
-  'Расилов И.',
-  'Салихов Х.',
-  'Матқобилов М.',
-  'Мирзаев И.',
-  'Пўлатов М.',
-  'Нажмиддинов Ф.',
-  'Шокирбеков Д.',
-  'Худойберганов Х.',
-  'Тўхтаев А.',
-  'Жўраев Б.',
-  'Солиев В.',
-  'Азизов Д.',
-  'Асқаров Т.',
-  'Собиров Д.',
-  'Мавланов А.',
-  'Пирманов А.',
-  'Садибеков И.',
-  'Шерматов Р.'
+// Корхонанинг 30 нафар расмий ҳайдовчилари рўйхати
+export const OFFICIAL_FLEET_DRIVERS_DATA = [
+  { name: 'Пулатов Миркомил Мирзарахим угли', shortName: 'Пулатов М.М.', examDate: '19.11.2026г', bp: '110/80', isRed: true },
+  { name: 'Жалилов Иброхим Исломиддин угли', shortName: 'Жалилов И.И.', examDate: '14.11.2026г', bp: '100/60', isRed: true },
+  { name: 'Солнцев Виталий Шайдуллаевич', shortName: 'Солнцев В.Ш.', examDate: '7.11.2026г', bp: '130/100', isRed: true },
+  { name: 'Рахмонбердиев Бехзод Кудрат угли', shortName: 'Рахмонбердиев Б.К.', examDate: '20.11.2026г', bp: '120/80', isRed: true },
+  { name: 'Шержонов Рустамжон Бокижон угли', shortName: 'Шержонов Р.Б.', examDate: '17.12.2026г', bp: '100/60', isRed: false },
+  { name: 'Жураев Бекзод Фахриддин угли', shortName: 'Жураев Б.Ф.', examDate: '23.12.2026г', bp: '120/80', isRed: false },
+  { name: 'Азизов Хусан Кабилджанович', shortName: 'Азизов Х.К.', examDate: '15.12.2026г', bp: '120/80', isRed: false },
+  { name: 'Эшназаров Собиржон Юнусович', shortName: 'Эшназаров С.Ю.', examDate: '12.12.2026г', bp: '130/90', isRed: false },
+  { name: 'Муратов Мамир Хасанович', shortName: 'Муратов М.Х.', examDate: '25.11.2026г', bp: '140/100', isRed: true },
+  { name: 'Шакирбеков Рустамбек Анварбекович', shortName: 'Шакирбеков Р.А.', examDate: '13.02.2027г', bp: '120/80', isRed: false },
+  { name: 'Пирманов Ахрор Толиб угли', shortName: 'Пирманов А.Т.', examDate: '30.01.2027г', bp: '120/80', isRed: false },
+  { name: 'Мамаюнусов Бехзод Хабибулло угли', shortName: 'Мамаюнусов Б.Х.', examDate: '30.01.2027г', bp: '120/80', isRed: false },
+  { name: 'Муминов Бекзод Шоди угли', shortName: 'Муминов Б.Ш.', examDate: '17.01.2027г', bp: '110/80', isRed: false },
+  { name: 'Садибеков Ихтиёр Бахтиёрович', shortName: 'Садибеков И.Б.', examDate: '17.01.2027г', bp: '120/80', isRed: false },
+  { name: 'Маткобилов Мирзохид Абдикаримович', shortName: 'Маткобилов М.А.', examDate: '16.01.2027г', bp: '120/90', isRed: false },
+  { name: 'Рахимов Ихтиёр Бахтиёр угли', shortName: 'Рахимов И.Б.', examDate: '30.01.2027г', bp: '110/80', isRed: false },
+  { name: 'Жумаев Маъсуджон Мустафо угли', shortName: 'Жумаев М.М.', examDate: '06.02.2027г', bp: '120/80', isRed: false },
+  { name: 'Мамаджонов Ровшан Алимджанович', shortName: 'Мамаджонов Р.А.', examDate: '10.02.2027г', bp: '120/80', isRed: false },
+  { name: 'Камалов Учкунбек Дилмурод угли', shortName: 'Камалов У.Д.', examDate: '18.02.2027г', bp: '110/70', isRed: false },
+  { name: 'Салихов Равшан Хейтбаевич', shortName: 'Салихов Р.Х.', examDate: '25.02.2027г', bp: '130/100', isRed: false },
+  { name: 'Киркбаев Алижон Сайфиддин угли', shortName: 'Киркбаев А.С.', examDate: '30.03.2027г', bp: '120/80', isRed: false },
+  { name: 'Салихов Хайрулла Жураевич', shortName: 'Салихов Х.Ж.', examDate: '15.03.2027г', bp: '100/80', isRed: false },
+  { name: 'Худойбердиев Худоёр Бахтиёр угли', shortName: 'Худойбердиев Х.Б.', examDate: '27.09.2026г', bp: '90/60', isRed: true },
+  { name: 'Мирзаев Шухрат Рустамович', shortName: 'Мирзаев Ш.Р.', examDate: '22.04.2027г', bp: '160/100', isRed: true },
+  { name: 'Суннатов Жахонгир Кахрамон угли', shortName: 'Суннатов Ж.К.', examDate: '27.04.2027г', bp: '110/80', isRed: false },
+  { name: 'Аскаров Равшан Рустамович', shortName: 'Аскаров Р.Р.', examDate: '29.04.2027г', bp: '150/100', isRed: true },
+  { name: 'Сангиров Исраил Умирзакович', shortName: 'Сангиров И.У.', examDate: '19.04.2027г', bp: '130/80', isRed: false },
+  { name: 'Дусматов Уктамжон Рахматуллаевич', shortName: 'Дусматов У.Р.', examDate: '16.04.2027г', bp: '120/80', isRed: false },
+  { name: 'Дусаев Достон Каримович', shortName: 'Дусаев Д.К.', examDate: '23.04.2027г', bp: '110/80', isRed: false },
+  { name: 'Юлдашев Эркинжон Эргашхужаевич', shortName: 'Юлдашев Э.Э.', examDate: '02.05.2027г', bp: '120/90', isRed: false },
 ]
+
+export const OFFICIAL_FLEET_DRIVERS = OFFICIAL_FLEET_DRIVERS_DATA.map(d => d.name)
 
 const getTodayTashkent = () => {
   const d = new Date()
@@ -75,18 +92,21 @@ const getTodayTashkent = () => {
   return new Date(d.getTime() + tzOffset).toISOString().slice(0, 10)
 }
 
-const createEmptyDriverRow = (date: string, orderNumber: number): DriverMedicalExamItem => ({
+const createEmptyDriverRow = (date: string, orderNumber: number, driverInfo?: any): DriverMedicalExamItem => ({
   id: `new-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
   orderNumber,
   date: date || getTodayTashkent(),
-  driverName: '',
+  driverName: driverInfo?.name || '',
   complaints: 'йўқ',
   pulse: '76-78',
   bodyTemp: '36.2',
-  bloodPressure: '120/80',
+  bloodPressure: driverInfo?.bp || '120/80',
   breathAlcohol: 'аниқланмади',
   result: 'соғлом, рейска рухсат',
+  driverSignature: driverInfo?.name ? driverInfo.name.split(' ')[0] + ' (Имзо)' : '',
   signature: 'Жуманова Ч.Э.',
+  examDueDate: driverInfo?.examDate || '2027-01-01',
+  isRed: !!driverInfo?.isRed,
   _isNew: true,
   _dirty: false
 })
@@ -256,20 +276,22 @@ export default function DriversMedicalContent() {
     const temps = ['36.2', '36.3', '36.4', '36.2', '36.5']
     const pressures = ['120/80', '120/70', '115/70', '130/80', '125/80']
 
-    // 10 ta asosiy haydovchini bir tugma bilan qo'shish
-    const bulkDrivers = OFFICIAL_FLEET_DRIVERS.slice(0, 10)
-    const newRows: DriverMedicalExamItem[] = bulkDrivers.map((driver, idx) => ({
+    // 30 ta rasmiy haydovchini to'liq baza asosida kiritish
+    const newRows: DriverMedicalExamItem[] = OFFICIAL_FLEET_DRIVERS_DATA.map((driverInfo, idx) => ({
       id: `dm-bulk-${Date.now()}-${idx}`,
       orderNumber: idx + 1,
       date: targetDate,
-      driverName: driver,
+      driverName: driverInfo.name,
       complaints: 'йўқ',
       pulse: pulses[idx % pulses.length],
       bodyTemp: temps[idx % temps.length],
-      bloodPressure: pressures[idx % pressures.length],
+      bloodPressure: driverInfo.bp || pressures[idx % pressures.length],
       breathAlcohol: 'аниқланмади',
-      result: 'соғлом, рейска рухсат',
+      result: driverInfo.isRed ? 'соғлом, назорат билан рухсат' : 'соғлом, рейска рухсат',
+      driverSignature: driverInfo.name.split(' ')[0] + ' (Имзо)',
       signature: 'Жуманова Ч.Э.',
+      examDueDate: driverInfo.examDate,
+      isRed: driverInfo.isRed,
       _dirty: true,
       _isNew: false
     }))
@@ -277,12 +299,12 @@ export default function DriversMedicalContent() {
     const merged = [...newRows, ...withoutDate]
     setLogs(merged)
     persistLogs(merged)
-    toast.success(formatDual(`Bugungi ${bulkDrivers.length} ta haydovchi ko'rik jadvaliga kiritildi!`, `Сегодняшние ${bulkDrivers.length} водителей внесены в журнал осмотра!`, `Today's ${bulkDrivers.length} drivers populated in examination journal!`))
+    toast.success(formatDual(`Barcha ${OFFICIAL_FLEET_DRIVERS_DATA.length} ta haydovchi ko'rik jadvaliga kiritildi!`, `Все ${OFFICIAL_FLEET_DRIVERS_DATA.length} водителей внесены в журнал осмотра!`, `All ${OFFICIAL_FLEET_DRIVERS_DATA.length} fleet drivers populated!`))
   }
 
-  // Table items displayed - faqat mavjud va yangi qo'shilgan qatorlar ko'rsatiladi
+  // Table items displayed - qizil ro'yxatdagilar (muddati kelgan/o'tgan) TEPADA chiqadi
   const displayedRows = useMemo(() => {
-    return logs.filter(item => {
+    const list = logs.filter(item => {
       const matchDate = filterDate === 'ALL' || item.date === filterDate
       const matchSearch =
         !searchQuery.trim() ||
@@ -291,6 +313,15 @@ export default function DriversMedicalContent() {
         item.result.toLowerCase().includes(searchQuery.toLowerCase())
       return matchDate && matchSearch
     })
+
+    // Sort: isRed === true (muddati yaqinlashgan/o'tgan) har doim TEPADA!
+    list.sort((a, b) => {
+      if (a.isRed && !b.isRed) return -1
+      if (!a.isRed && b.isRed) return 1
+      return (a.orderNumber || 0) - (b.orderNumber || 0)
+    })
+
+    return list
   }, [logs, filterDate, searchQuery])
 
   // Group all logs by date for Archive view
@@ -843,9 +874,13 @@ export default function DriversMedicalContent() {
                     <div>{formatDual("Tibbiy ko'rik natijalari", "Результаты медосмотра", "Medical Exam Results")}</div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">8</div>
                   </th>
+                  <th className="p-2.5 text-center font-bold min-w-[150px] w-40 border-r border-slate-300 dark:border-slate-700">
+                    <div>{formatDual("Haydovchi imzosi", "Подпись водителя", "Driver Signature")}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">9</div>
+                  </th>
                   <th className="p-2.5 text-center font-bold min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">
                     <div>{formatDual("Hamshira imzosi", "Подпись медсестры", "Nurse Signature")}</div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">9</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">10</div>
                   </th>
                   <th className="p-2.5 text-center font-bold w-24 no-print">{formatDual("Amallar", "Действия", "Actions")}</th>
                 </tr>
@@ -887,15 +922,36 @@ export default function DriversMedicalContent() {
 
                         {/* 2. Haydovchi F.I.Sh. (Direct Input with fast suggestions) */}
                         <td className="p-1.5 border-r border-slate-300 dark:border-slate-700">
-                          <div className="relative flex items-center">
-                            <input
-                              type="text"
-                              list="fleet-drivers-list"
-                              value={row.driverName}
-                              onChange={e => updateRowField(row.id, { driverName: e.target.value })}
-                              placeholder={formatDual("Haydovchi F.I.Sh.ni yozing yoki tanlang", "Введите или выберите ФИО водителя", "Enter or select driver full name")}
-                              className="w-full px-2.5 py-1.5 rounded-lg border font-bold text-xs text-slate-900 dark:text-white outline-none transition bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 focus:border-slate-900 dark:focus:border-white shadow-2xs"
-                            />
+                          <div className="flex flex-col gap-1">
+                            <div className="relative flex items-center">
+                              <input
+                                type="text"
+                                list="fleet-drivers-list"
+                                value={row.driverName}
+                                onChange={e => {
+                                  const nameVal = e.target.value
+                                  const matched = OFFICIAL_FLEET_DRIVERS_DATA.find(d => d.name === nameVal)
+                                  updateRowField(row.id, {
+                                    driverName: nameVal,
+                                    driverSignature: nameVal ? nameVal.split(' ')[0] + ' (Имзо)' : '',
+                                    bloodPressure: matched?.bp || row.bloodPressure,
+                                    examDueDate: matched?.examDate || row.examDueDate,
+                                    isRed: !!matched?.isRed
+                                  })
+                                }}
+                                placeholder={formatDual("Haydovchi F.I.Sh.ni yozing yoki tanlang", "Введите или выберите ФИО водителя", "Enter or select driver full name")}
+                                className={`w-full px-2.5 py-1.5 rounded-lg border font-bold text-xs outline-none transition shadow-2xs ${
+                                  row.isRed
+                                    ? 'bg-rose-50/70 border-rose-400 text-rose-900 dark:bg-rose-950/40 dark:border-rose-700 dark:text-rose-200'
+                                    : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-white'
+                                }`}
+                              />
+                            </div>
+                            {row.isRed && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-800">
+                                ⚠️ Даврий кўрик муддати: {row.examDueDate || '19.11.2026г'} (Қизил)
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -971,11 +1027,23 @@ export default function DriversMedicalContent() {
                           }`}
                         >
                           <option value="соғлом, рейска рухсат">{formatDual("✓ sog'lom, reysga ruxsat", "✓ здоров, допуск в рейс", "✓ healthy, trip cleared")}</option>
+                          <option value="соғлом, назорат билан рухсат">{formatDual("⚠️ sog'lom, nazorat bilan ruxsat", "⚠️ здоров, под контролем", "⚠️ cleared under control")}</option>
                           <option value="соғлом эмас, четлатилди">{formatDual("✕ sog'lom emas, chetlatildi", "✕ не здоров, отстранен", "✕ not healthy, suspended")}</option>
                         </select>
                       </td>
 
-                      {/* 9. Hamshira imzosi */}
+                      {/* 9. Haydovchi imzosi */}
+                      <td className="p-1.5 min-w-[150px] w-40 border-r border-slate-300 dark:border-slate-700">
+                        <input
+                          type="text"
+                          value={row.driverSignature || ''}
+                          onChange={e => updateRowField(row.id, { driverSignature: e.target.value })}
+                          placeholder={formatDual("Haydovchi imzosi", "Подпись водителя", "Driver Sig")}
+                          className="w-full text-center font-serif italic text-blue-600 dark:text-blue-400 font-bold px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs outline-none focus:border-blue-500 whitespace-nowrap"
+                        />
+                      </td>
+
+                      {/* 10. Hamshira imzosi */}
                       <td className="p-1.5 min-w-[170px] w-48 border-r border-slate-300 dark:border-slate-700">
                         <input
                           type="text"

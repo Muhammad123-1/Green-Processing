@@ -20,7 +20,8 @@ import {
   Package,
   Layers,
   Filter,
-  Thermometer
+  Thermometer,
+  CheckCircle2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -51,6 +52,9 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
 
   // Raw DB arrivals data
   const [arrivals, setArrivals] = useState<any[]>([])
+  const arrivalsRef = useRef<any[]>([])
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Filters
   const [selectedMonth, setSelectedMonth] = useState('')
@@ -121,7 +125,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
       )
 
       if (!hasEmptyToday) {
-        // User request: exactly 1 auto row per day!
+        // User request: exactly 1 auto row per day at top!
         const singleAutoRow = {
           date: today,
           nomenclature: '',
@@ -135,9 +139,15 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
           _isAutoToday: true,
           _clientKey: `auto-today-${Date.now()}`,
         }
-        setArrivals([...todayArrivals, singleAutoRow, ...pastArrivals])
+        setArrivals([singleAutoRow, ...todayArrivals, ...pastArrivals])
       } else {
-        setArrivals(mapped)
+        const emptyRows = todayArrivals.filter(
+          (a: any) => !String(a.nomenclature || '').trim() && (!a.quantity || toNum(a.quantity) === 0)
+        )
+        const filledRows = todayArrivals.filter(
+          (a: any) => String(a.nomenclature || '').trim() || toNum(a.quantity) > 0
+        )
+        setArrivals([...emptyRows, ...filledRows, ...pastArrivals])
       }
 
       // Fetch products catalog
@@ -158,14 +168,35 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
     loadData()
   }, [loadData])
 
-  // Har kuni sanani avtomatik yangilab borish (kun almashganda avtomatik yangi kunga o'tish)
+  useEffect(() => {
+    arrivalsRef.current = arrivals
+  }, [arrivals])
+
+  // Har kuni sanani avtomatik yangilab borish (12:00 dan keyin avtomatik saqlash va yangi kun ochish)
   useEffect(() => {
     let lastDate = getTodayTashkent()
-    const checkDay = () => {
+    const checkDay = async () => {
       const nowToday = getTodayTashkent()
       if (nowToday !== lastDate) {
+        // 12:00 dan keyin / tun yarmida kun almashganda: barcha kiritilgan ma'lumotlarni avtomatik saqlash
+        const currentList = arrivalsRef.current || []
+        const dirtyToSave = currentList.filter(
+          (r) => r._dirty && String(r.nomenclature || '').trim() && toNum(r.quantity) > 0 && isDateStr(r.date)
+        )
+        if (dirtyToSave.length > 0) {
+          try {
+            await executeSaveArrivals(dirtyToSave, 'Kechki 12:00 dan keyin kun almashuvida avtomatik saqlandi', true)
+          } catch (e) {
+            console.error('Day rollover auto-save error:', e)
+          }
+        }
         lastDate = nowToday
-        loadData()
+        await loadData()
+        toast.info(
+          lang === 'ru'
+            ? 'Наступил новый рабочий день. Предыдущие данные сохранены, открыт новый день.'
+            : "Yangi ish kuni boshlandi. Oldingi kun ma'lumotlari saqlandi va yangi kun avtomatik ochildi."
+        )
       }
     }
 
@@ -181,7 +212,7 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [loadData])
+  }, [loadData, lang])
 
   // Compute next batch number per product in that month (1, 2, 3...)
   const computeNextBatch = (list: any[], nom: string, dateStr: string): string => {
@@ -493,8 +524,9 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
   const dirtyArrivals = arrivals.filter((r) => r._dirty).length
 
   // Save execution
-  const executeSaveArrivals = async (rows: any[], reason: string) => {
-    setSavingArrivals(true)
+  const executeSaveArrivals = async (rows: any[], reason: string, silent = false) => {
+    if (!silent) setSavingArrivals(true)
+    setAutoSaveStatus('saving')
     try {
       const res = await fetch('/api/shop-report/arrivals', {
         method: 'PUT',
@@ -514,19 +546,50 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(j?.error || 'Saqlashda xatolik')
-      toast.success(
-        lang === 'ru'
-          ? `Приход сохранен: ${j.updated} обновлено, ${j.created} добавлено`
-          : `Kirim saqlandi: ${j.updated} ta yangilandi, ${j.created} ta qo'shildi`
-      )
+      if (!silent) {
+        toast.success(
+          lang === 'ru'
+            ? `Приход сохранен: ${j.updated} обновлено, ${j.created} добавлено`
+            : `Kirim saqlandi: ${j.updated} ta yangilandi, ${j.created} ta qo'shildi`
+        )
+      }
+      setAutoSaveStatus('saved')
       setEditReasonModal((prev) => ({ ...prev, open: false }))
       await loadData()
     } catch (e: any) {
-      toast.error(e?.message || 'Saqlashda xatolik')
+      if (!silent) toast.error(e?.message || 'Saqlashda xatolik')
+      setAutoSaveStatus('error')
     } finally {
-      setSavingArrivals(false)
+      if (!silent) setSavingArrivals(false)
     }
   }
+
+  // Debounced auto-save whenever filled valid dirty rows exist
+  useEffect(() => {
+    const dirtyFilled = arrivals.filter(
+      (r) => r._dirty && String(r.nomenclature || '').trim() && toNum(r.quantity) > 0 && isDateStr(r.date)
+    )
+
+    // Only auto-save newly added rows or eligible un-restricted rows
+    const eligible = dirtyFilled.filter((r) => {
+      if (r._new) return true
+      const perm = checkEditPermission({ role: userRole, createdAt: r.createdAt })
+      return perm.allowed && !isAfterShiftHours()
+    })
+
+    if (eligible.length === 0) return
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    setAutoSaveStatus('saving')
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      executeSaveArrivals(eligible, 'Avtomatik saqlandi (Auto-save)', true)
+    }, 2500)
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    }
+  }, [arrivals, userRole])
 
   const saveArrivals = async () => {
     const rows = arrivals.filter(
@@ -795,6 +858,20 @@ export default function PrihodContent({ userRole, userName }: PrihodContentProps
                 {dirtyArrivals > 0 ? ` (${dirtyArrivals})` : ''}
               </span>
             </button>
+          )}
+
+          {/* Auto-save status indicator */}
+          {!isReadOnly && autoSaveStatus === 'saving' && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 animate-pulse">
+              <Loader2 size={12} className="animate-spin" />
+              <span>{lang === 'ru' ? 'Авто-сохранение...' : 'Avto-saqlanmoqda...'}</span>
+            </span>
+          )}
+          {!isReadOnly && autoSaveStatus === 'saved' && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 size={13} />
+              <span>{lang === 'ru' ? 'Авто-сохранено' : 'Avtomatik saqlandi'}</span>
+            </span>
           )}
 
           {/* Excel Import (Faqat ADMIN) */}

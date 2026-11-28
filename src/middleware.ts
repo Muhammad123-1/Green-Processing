@@ -72,7 +72,7 @@ export function middleware(request: NextRequest) {
     // STRICT PRIVACY & ISOLATION FOR DEGUSTATION ROLE:
     // Degustation/SanPiN department accesses Oshxona brakeraj, First Aid, Drivers Medical, chat, and settings
     if (userRole === 'DEGUSTATION') {
-      const allowedDegustationPrefixes = ['/degustatsiya', '/first-aid', '/drivers-medical', '/chat', '/settings']
+      const allowedDegustationPrefixes = ['/degustatsiya', '/first-aid', '/drivers-medical', '/medosmotr', '/chat', '/settings']
       const isAllowed = allowedDegustationPrefixes.some(prefix => pathname.startsWith(prefix))
       if (!isAllowed) {
         return NextResponse.redirect(new URL('/degustatsiya', request.url))

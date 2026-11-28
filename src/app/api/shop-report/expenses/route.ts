@@ -6,6 +6,7 @@ import { checkEditPermission, isAfterShiftHours } from '@/lib/auditRules'
 import { recordShiftEditAudit } from '@/lib/auditImport'
 import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
+import { autoSyncShopReportForDates } from '@/lib/shopReportSync'
 
 export const dynamic = 'force-dynamic'
 
@@ -153,6 +154,12 @@ export async function PUT(req: NextRequest) {
       try {
         invalidateSupplyDashboardCache()
       } catch {}
+
+      // AUTO-SYNC into Sex Hisoboti (Daily Workshop Report Archive: Kirim, Chiqim, Ortib qolgan qoldiqlar)
+      const affectedDates = Array.from(byDate.keys())
+      await autoSyncShopReportForDates(affectedDates).catch((err) =>
+        console.error('Error auto-syncing shop report after expenses save:', err)
+      )
     }
 
     return NextResponse.json({ success: true, saved })
@@ -188,6 +195,10 @@ export async function DELETE(req: NextRequest) {
     try {
       invalidateSupplyDashboardCache()
     } catch {}
+
+    await autoSyncShopReportForDates([date]).catch((err) =>
+      console.error('Error auto-syncing shop report after expense delete:', err)
+    )
     return NextResponse.json({ success: true, deletedDate: date })
   } catch (error: any) {
     console.error('Shop expense delete error:', error)

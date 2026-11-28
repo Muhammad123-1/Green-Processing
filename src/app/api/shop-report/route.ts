@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { parseDateToYearMonth, normalizeProductKey } from '@/lib/batchNumbering'
 import { getTodayTashkent, isAfterShiftHours } from '@/lib/auditRules'
+import { autoSyncShopReportForDates } from '@/lib/shopReportSync'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,11 @@ export async function GET(req: NextRequest) {
         // already created concurrently
       }
     }
+
+    // Auto-sync daily workshop report balances and archive for today
+    autoSyncShopReportForDates([todayStr]).catch((err) =>
+      console.error('Error auto-syncing shop report in GET /api/shop-report:', err)
+    )
 
     // Check if any arrivals are missing batch numbers
     const needsBatch = arrivals.some(a => !a.batch || a.batch.trim() === '')
@@ -140,6 +146,18 @@ export async function POST(req: NextRequest) {
       await prisma.shopExpense.createMany({
         data: dataToInsert
       })
+    }
+
+    const allDates = Array.from(
+      new Set([
+        ...(body.arrivals || []).map((a: any) => a.date),
+        ...(body.expenses || []).map((e: any) => e.date),
+      ].filter(Boolean))
+    )
+    if (allDates.length > 0) {
+      autoSyncShopReportForDates(allDates).catch((err) =>
+        console.error('Error auto-syncing shop report after bulk import:', err)
+      )
     }
 
     return NextResponse.json({ success: true })

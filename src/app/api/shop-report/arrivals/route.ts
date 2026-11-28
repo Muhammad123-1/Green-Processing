@@ -8,6 +8,7 @@ import { recordShiftEditAudit } from '@/lib/auditImport'
 import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
 import { invalidateSupplyDashboardCache } from '@/lib/supplyDashboardCache'
 import { syncIncomingActFromArrival } from '@/lib/incoming-acts/autoAct'
+import { autoSyncShopReportForDates } from '@/lib/shopReportSync'
 
 export const dynamic = 'force-dynamic'
 
@@ -216,6 +217,14 @@ export async function PUT(req: NextRequest) {
           console.error('Error auto-syncing arrival to incoming acts:', err)
         )
       }
+
+      // AUTO-SYNC into Sex Hisoboti (Daily Workshop Report Archive: Kirim, Chiqim, Ortib qolgan qoldiqlar)
+      const affectedDates = Array.from(new Set(syncedArrivals.map((a) => a.date).filter(Boolean)))
+      if (affectedDates.length > 0) {
+        await autoSyncShopReportForDates(affectedDates).catch((err) =>
+          console.error('Error auto-syncing shop report after arrivals save:', err)
+        )
+      }
     }
 
     return NextResponse.json({ success: true, updated, created })
@@ -255,11 +264,18 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Yozuv topilmadi' }, { status: 404 })
     }
 
+    const deletedDate = existing.date
     await prisma.shopArrival.delete({ where: { id } })
     await syncInventoryBatchesFromDailyBalances().catch((e) => console.error('FIFO sync after arrival delete error:', e))
     try {
       invalidateSupplyDashboardCache()
     } catch {}
+
+    if (deletedDate) {
+      await autoSyncShopReportForDates([deletedDate]).catch((err) =>
+        console.error('Error auto-syncing shop report after arrival delete:', err)
+      )
+    }
 
     // Auto-clean unedited quality act generated for this arrival
     try {
