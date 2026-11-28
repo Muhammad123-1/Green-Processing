@@ -112,7 +112,7 @@ const navSections = [
       { key: 'sales', href: '/sales', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SALES'] },
       { key: 'orders', href: '/orders', icon: ShoppingCart, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'supplyShortages', href: '/supply/shortages', icon: AlertTriangle, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY'] },
-      { key: 'demandSupply', href: '/supply/demand-supply', icon: TrendingUp, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
+      { key: 'demandSupply', href: '/supply/demand-supply', icon: TrendingUp, roles: ['ADMIN', 'DIRECTOR', 'SUPPLY', 'PRODUCTION', 'SALES'] },
       { key: 'supplierDebts', href: '/supplier-debts', icon: DollarSign, roles: ['ADMIN', 'SUPPLY', 'ACCOUNTING'] },
       { key: 'suppliers', href: '/suppliers', icon: Truck, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
     ]
