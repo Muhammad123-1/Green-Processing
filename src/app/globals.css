@@ -491,24 +491,24 @@ html.light .dark-banner h1,
 html.light .dark-banner h2,
 html.light .dark-banner h3,
 html.light .dark-banner h4,
-html.light [class*="from-slate-900"] h1,
-html.light [class*="from-slate-900"] h2,
-html.light [class*="from-slate-900"] h3,
-html.light [class*="from-slate-900"] h4,
-html.light [class*="from-dark-900"] h1,
-html.light [class*="from-dark-900"] h2,
-html.light [class*="from-dark-900"] h3,
-html.light [class*="from-dark-900"] h4,
-html.light [class*="from-dark-850"] h1,
-html.light [class*="from-dark-850"] h2,
-html.light [class*="from-dark-850"] h3,
-html.light [class*="from-dark-850"] h4 {
+html.light [class*="from-slate-900"]:not([class*="bg-white"]) h1,
+html.light [class*="from-slate-900"]:not([class*="bg-white"]) h2,
+html.light [class*="from-slate-900"]:not([class*="bg-white"]) h3,
+html.light [class*="from-slate-900"]:not([class*="bg-white"]) h4,
+html.light [class*="from-dark-900"]:not([class*="bg-white"]) h1,
+html.light [class*="from-dark-900"]:not([class*="bg-white"]) h2,
+html.light [class*="from-dark-900"]:not([class*="bg-white"]) h3,
+html.light [class*="from-dark-900"]:not([class*="bg-white"]) h4,
+html.light [class*="from-dark-850"]:not([class*="bg-white"]) h1,
+html.light [class*="from-dark-850"]:not([class*="bg-white"]) h2,
+html.light [class*="from-dark-850"]:not([class*="bg-white"]) h3,
+html.light [class*="from-dark-850"]:not([class*="bg-white"]) h4 {
   color: #ffffff !important;
 }
 html.light .dark-banner p,
-html.light [class*="from-slate-900"] p,
-html.light [class*="from-dark-900"] p,
-html.light [class*="from-dark-850"] p {
+html.light [class*="from-slate-900"]:not([class*="bg-white"]) p,
+html.light [class*="from-dark-900"]:not([class*="bg-white"]) p,
+html.light [class*="from-dark-850"]:not([class*="bg-white"]) p {
   color: #cbd5e1 !important;
 }
 

@@ -503,19 +503,19 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
   return (
     <div className="flex flex-col min-h-full animate-enter space-y-6">
       {/* Industrial Header */}
-      <div className="relative overflow-hidden bg-white dark:bg-gradient-to-r dark:from-slate-900 dark:via-indigo-950 dark:to-slate-900 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-2xl border border-slate-200 dark:border-white/10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 shadow-xl dark:shadow-2xl border border-slate-800 dark:border-white/10 dark-banner">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30 shadow-inner">
               <Factory size={32} />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
                 {l.title}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs sm:text-sm text-slate-300 dark:text-slate-400 mt-1 font-medium">
                 {l.subtitle}
               </p>
             </div>
@@ -525,7 +525,7 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
             <div className="flex flex-wrap items-center gap-3">
               <button 
                 onClick={() => setShowBomModal(true)}
-                className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-800 dark:text-white px-4 py-2.5 rounded-xl border border-slate-300 dark:border-dark-600 transition-all text-sm font-semibold"
+                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl border border-slate-700 transition-all text-sm font-semibold shadow-xs"
               >
                 <Settings2 size={16} />
                 {l.btnNewBOM}
