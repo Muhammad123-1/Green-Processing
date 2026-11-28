@@ -23,7 +23,6 @@ import {
   Settings,
   Sliders,
   Printer,
-  Network,
   FileSpreadsheet,
   Eye,
   X,
@@ -1672,70 +1671,14 @@ export default function DirectorPage() {
       {/* ========================================================================= */}
       <div className="space-y-8">
         {/* PRIMARY ANALYTICS HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
-              <BarChart3 size={20} />
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                {formatDual("Asosiy operatsion analitika", "Ключевая операционная аналитика", "Primary Operational Analytics")}
-              </h2>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
+            <BarChart3 size={20} />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/warehouse"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Layers size={14} />
-              <span>{formatDual("Ombor ABC Tahlili", "ABC-Анализ склада", "Warehouse ABC Analysis")}</span>
-            </Link>
-            <Link
-              href="/supply/demand-supply"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <TrendingUp size={14} />
-              <span>{formatDual("Talab & Ta'minot (30 kun)", "Спрос и Поставки (30 дн)", "Demand & Supply (30d)")}</span>
-            </Link>
-            <Link
-              href="/director/plan-forecast-actual"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Target size={14} />
-              <span>{formatDual("Reja vs Prognoz vs Fakt", "План vs Прогноз vs Факт", "Plan vs Forecast vs Actual")}</span>
-            </Link>
-            <Link
-              href="/director/delivery-intelligence"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Truck size={14} />
-              <span>{formatDual("Logistika & OTIF", "Логистика & OTIF", "Logistics & OTIF")}</span>
-            </Link>
-            <Link
-              href="/director/distribution-channels"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Share2 size={14} />
-              <span>{formatDual("Taqsimot Kanallari", "Каналы сбыта", "Distribution Channels")}</span>
-            </Link>
-            <Link
-              href="/director/diversification-risk"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <ShieldAlert size={14} />
-              <span>{formatDual("Diversifikatsiya & Xavflar", "Диверсификация & Риски", "Diversification & Risk")}</span>
-            </Link>
-            <Link
-              href="/director/ecosystem"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Network size={14} />
-              <span>{formatDual("Yagona ERP Ekosistemasi", "Единая экосистема ERP", "ERP Ecosystem")}</span>
-            </Link>
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
-              {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
-            </span>
+          <div>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">
+              {formatDual("Asosiy operatsion analitika", "Ключевая операционная аналитика", "Primary Operational Analytics")}
+            </h2>
           </div>
         </div>
 
@@ -2082,73 +2025,17 @@ export default function DirectorPage() {
       {/* 4.9. ADVANCED EXECUTIVE ANALYTICS: SUPPLY, FINANCE & WORKSHOP CHARTS */}
       {/* ========================================================================= */}
       <div className="space-y-4 pt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
-              <TrendingUp size={20} />
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                {formatDual("Ta'minot, moliya va ombor tahlili", "Аналитика снабжения, финансов и склада", "Supply, Financial & Warehouse Analytics")}
-              </h2>
-              <p className="text-xs text-slate-500">
-                {formatDual("Ta'minotchilar sifati, qarz majburiyatlari va zaxiralar salomatligi balansi", "Качество поставщиков, кредиторская задолженность и структура запасов", "Supplier quality, debt liabilities and stock distribution")}
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
+            <TrendingUp size={20} />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/warehouse"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Layers size={14} />
-              <span>{formatDual("Ombor ABC Tahlili", "ABC-Анализ склада", "Warehouse ABC Analysis")}</span>
-            </Link>
-            <Link
-              href="/supply/demand-supply"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <TrendingUp size={14} />
-              <span>{formatDual("Talab & Ta'minot (30 kun)", "Спрос и Поставки (30 дн)", "Demand & Supply (30d)")}</span>
-            </Link>
-            <Link
-              href="/director/plan-forecast-actual"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Target size={14} />
-              <span>{formatDual("Reja vs Prognoz vs Fakt", "План vs Прогноз vs Факт", "Plan vs Forecast vs Actual")}</span>
-            </Link>
-            <Link
-              href="/director/delivery-intelligence"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Truck size={14} />
-              <span>{formatDual("Logistika & OTIF", "Логистика & OTIF", "Logistics & OTIF")}</span>
-            </Link>
-            <Link
-              href="/director/distribution-channels"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Share2 size={14} />
-              <span>{formatDual("Taqsimot Kanallari", "Каналы сбыта", "Distribution Channels")}</span>
-            </Link>
-            <Link
-              href="/director/diversification-risk"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <ShieldAlert size={14} />
-              <span>{formatDual("Diversifikatsiya & Xavflar", "Диверсификация & Риски", "Diversification & Risk")}</span>
-            </Link>
-            <Link
-              href="/director/ecosystem"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm transition-all"
-            >
-              <Network size={14} />
-              <span>{formatDual("Yagona ERP Ekosistemasi", "Единая экосистема ERP", "ERP Ecosystem")}</span>
-            </Link>
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
-              {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
-            </span>
+          <div>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">
+              {formatDual("Ta'minot, moliya va ombor tahlili", "Аналитика снабжения, финансов и склада", "Supply, Financial & Warehouse Analytics")}
+            </h2>
+            <p className="text-xs text-slate-500">
+              {formatDual("Ta'minotchilar sifati, qarz majburiyatlari va zaxiralar salomatligi balansi", "Качество поставщиков, кредиторская задолженность и структура запасов", "Supplier quality, debt liabilities and stock distribution")}
+            </p>
           </div>
         </div>
 
