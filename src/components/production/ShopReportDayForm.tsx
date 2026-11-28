@@ -132,18 +132,26 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
   const [cells, setCells] = useState<Record<string, string>>(savedCells)
   const [saving, setSaving] = useState(false)
 
-  // Re-load the form whenever the date or the saved record changes
+  // Auto-calculate and auto-sync to DB/archive
   useEffect(() => {
-    if (saved && (hasReportData(saved) || saved.isUnfilled)) {
+    const autoRes = autoBuildDayReport(date, arrivals || [], record, prevEnd)
+    if (autoRes.hasData) {
+      const newCells = reportToCells(autoRes.report)
+      setCells(newCells)
+      // If report is not yet saved in DB or if values differ, auto-save to archive silently
+      const currentReport = cellsToReport(newCells)
+      const needPersist = !saved || !saved.status || saved.status === 'unfilled' || normalize(newCells) !== normalize(savedCells)
+      if (needPersist && date) {
+        fetch('/api/shop-report/day', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date, report: currentReport }),
+        }).catch((err) => console.error('Silent auto-archive day report error:', err))
+      }
+    } else if (saved && (hasReportData(saved) || saved.isUnfilled)) {
       setCells(savedCells)
     } else {
-      // Check if auto data exists for this date
-      const autoRes = autoBuildDayReport(date, arrivals || [], record, prevEnd)
-      if (autoRes.hasData) {
-        setCells(reportToCells(autoRes.report))
-      } else {
-        setCells({})
-      }
+      setCells({})
     }
   }, [date, saved, savedCells, record, prevEnd, arrivals])
 
@@ -216,19 +224,23 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
     })
   }
 
-  const numInput = (key: string, opts?: { highlight?: boolean; red?: boolean; bold?: boolean; placeholder?: string }) => (
-    <input
-      type="number"
-      step="any"
-      value={cells[key] ?? ''}
-      placeholder={opts?.placeholder}
-      onChange={(e) => setCell(key, e.target.value)}
-      disabled={readOnly}
-      className={`excel-cell-input w-full min-w-[64px] h-7 sm:h-8 px-1 text-center text-[11px] sm:text-xs font-mono outline-none bg-transparent placeholder:text-slate-300 ${
-        opts?.highlight ? 'font-bold text-red-600' : ''
-      } ${opts?.red ? 'text-red-600 font-bold' : ''} ${opts?.bold ? 'font-bold' : ''}`}
-    />
-  )
+  const numInput = (key: string, opts?: { highlight?: boolean; red?: boolean; bold?: boolean; placeholder?: string }) => {
+    const val = cells[key] ?? ''
+    const num = toNum(val)
+    return (
+      <div
+        className={`w-full min-w-[64px] h-7 sm:h-8 px-1 flex items-center justify-center text-[11px] sm:text-xs font-mono font-bold select-all ${
+          opts?.highlight ? 'text-red-600 bg-amber-50/50' : 'text-slate-900 dark:text-white'
+        } ${opts?.red ? 'text-red-600' : ''}`}
+      >
+        {num !== 0 ? (
+          num % 1 === 0 ? num.toLocaleString() : num.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 3 })
+        ) : (
+          <span className="text-slate-300 dark:text-slate-600 font-normal">—</span>
+        )}
+      </div>
+    )
+  }
 
   const colTotal = (field: string) =>
     round3(OUTPUT_ROWS.reduce((s, n) => s + toNum(cells[keyO(n, field)]), 0))
@@ -237,44 +249,39 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
 
   return (
     <div className="flex-1 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl md:rounded-3xl shadow-sm dark:shadow-xl overflow-y-auto custom-scrollbar flex flex-col p-3 sm:p-4 space-y-4 sm:space-y-6">
-      {/* Header: title + date + save */}
+      {/* Header: title + date + auto-sync info */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3 border-b border-slate-200 dark:border-dark-750 pb-3">
         <div>
-          <h2 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white uppercase">
-            Производственный отчет ЦЕХ (Kunlik kiritish)
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              {lang === 'ru' ? 'Производственный отчет ЦЕХ' : 'Sex Hisoboti (100% Avtomatik Jurnal)'}
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              AVTO-ARXIV
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {lang === 'ru'
+              ? 'Приход сырья, расход цеха/кухни и остатки продукции рассчитываются и архивируются системой автоматически.'
+              : "Xomashyo kirimi, sex/oshxona chiqimlari va ortib qolgan qoldiqlar tizim tomonidan avtomatik yuritiladi va arxivlanadi."}
+          </p>
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] sm:text-xs">
-            {saved?.isUnfilled || saved?.status === 'unfilled' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                <AlertTriangle size={13} /> To&apos;ldirilmagan (Kunlik ma&apos;lumot kiritilmagan)
-              </span>
-            ) : saved?.isAutoGenerated ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
-                <Sparkles size={13} /> Avtomatik yig&apos;ilgan (23:00 arxiv) · {fmtTime(saved.updatedAt)}
-              </span>
-            ) : saved?.updatedAt ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 size={13} /> Saqlangan: {saved.updatedBy || '—'} · {fmtTime(saved.updatedAt)}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 text-slate-500 font-medium">
-                <Info size={13} /> Bu kun uchun hisobot hali saqlanmagan
-              </span>
-            )}
-            {dirty && <span className="text-amber-600 font-bold ml-1">● Saqlanmagan o&apos;zgarishlar bor</span>}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              <CheckCircle2 size={13} /> {lang === 'ru' ? 'Автоматически рассчитано и заархивировано' : 'Avtomatik hisoblangan va arxivga saqlangan'}
+            </span>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span className="text-xs sm:text-sm font-bold text-slate-500">Sana:</span>
-          {!readOnly && <button
+          <button
             type="button"
             onClick={() => changeDate(shiftDate(date, -1))}
             className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700"
             title="Oldingi kun"
           >
             <ChevronLeft size={16} />
-          </button>}
+          </button>
           <div className="flex flex-wrap items-center gap-1.5">
             <input
               type="date"
@@ -294,33 +301,16 @@ export default function ShopReportDayForm({ date, onDateChange, record, prevEnd,
           >
             <ChevronRight size={16} />
           </button>
-          {!readOnly && <button
-            type="button"
-            onClick={handleAutoFill}
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-500 shadow-md shadow-blue-600/20 transition-colors"
-            title="Kirim, chiqim va GP ma'lumotlaridan avtomatik to'ldirish"
-          >
-            <Sparkles size={14} />
-            <span>Avto-to&apos;ldirish</span>
-          </button>}
-          {!readOnly && <button
-            type="button"
-            onClick={handleReset}
-            disabled={!dirty || saving}
-            className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 disabled:opacity-40"
-            title="O'zgarishlarni bekor qilish"
-          >
-            <RotateCcw size={14} /> Bekor
-          </button>}
-          {!readOnly && <button
+          <button
             type="button"
             onClick={handleSave}
             disabled={saving || !date}
-            className="flex items-center gap-1.5 bg-amber-600 text-white hover:bg-amber-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold text-xs transition-colors shadow-md shadow-amber-600/20 disabled:opacity-50"
+            className="flex items-center gap-1.5 bg-emerald-600 text-white hover:bg-emerald-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold text-xs transition-colors shadow-md shadow-emerald-600/20 disabled:opacity-50"
+            title="Qayta sinxronlash va arxivlash"
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>Saqlash</span>
-          </button>}
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+            <span>{lang === 'ru' ? 'Синхронизировать' : 'Sinxronlash'}</span>
+          </button>
         </div>
       </div>
 
