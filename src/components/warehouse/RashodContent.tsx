@@ -1304,45 +1304,6 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
             </div>
           </div>
 
-          {/* 3 KPI Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 rounded-2xl shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                <span>{lang === 'ru' ? 'Сегодняшний расход' : 'Bugungi Oshxona Chiqimi'}</span>
-                <Clock size={16} className="text-amber-500" />
-              </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-slate-900 dark:text-white">{kitchenKpis.todayKg}</span>
-                <span className="text-xs font-bold text-slate-500">kg</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">{lang === 'ru' ? 'Всего выдано продуктов за сегодня' : 'Bugun chiqarilgan jami mahsulotlar'}</p>
-            </div>
-
-            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 rounded-2xl shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                <span>{lang === 'ru' ? 'Расход за этот месяц' : 'Shu Oy Jami Chiqim'}</span>
-                <Calendar size={16} className="text-emerald-500" />
-              </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-slate-900 dark:text-white">{kitchenKpis.monthKg}</span>
-                <span className="text-xs font-bold text-slate-500">kg</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">{lang === 'ru' ? 'С начала месяца на кухню' : 'Oy boshidan buyon oshxonaga sarf'}</p>
-            </div>
-
-            <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 p-3.5 rounded-2xl shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
-                <span>{lang === 'ru' ? 'Дней с записями' : "Ro'yxatdagi Kunlar"}</span>
-                <PackageCheck size={16} className="text-blue-500" />
-              </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-slate-900 dark:text-white">{kitchenKpis.totalCount}</span>
-                <span className="text-xs font-bold text-slate-500">kun</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">{lang === 'ru' ? 'Всего записей в журнале' : 'Jurnaldagi jami chiqim kunlari'}</p>
-            </div>
-          </div>
-
           {/* SPREADSHEET TABLE: KITCHEN EXPENSES */}
           <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-750 rounded-2xl shadow-sm overflow-hidden flex flex-col">
             <div className="overflow-x-auto max-h-[70vh] custom-scrollbar">
