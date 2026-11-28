@@ -1454,13 +1454,6 @@ export default function FactoryProductionContent({ userRole, userName }: Factory
                   ))}
                 </div>
               </div>
-
-              <div className="bg-indigo-50 dark:bg-indigo-500/10 p-3.5 rounded-2xl border border-indigo-200 dark:border-indigo-500/20">
-                <p className="text-xs text-indigo-800 dark:text-indigo-300 flex items-start gap-2 leading-relaxed">
-                  <AlertOctagon size={16} className="mt-0.5 shrink-0 text-indigo-600 dark:text-indigo-400" />
-                  <span>{l.fefoInfo}</span>
-                </p>
-              </div>
             </div>
 
             <div className="px-6 py-4 bg-slate-50 dark:bg-dark-800/50 flex justify-end gap-3 border-t border-slate-200 dark:border-dark-800">

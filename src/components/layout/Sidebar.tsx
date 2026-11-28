@@ -80,8 +80,8 @@ const navSections = [
     items: [
       { key: 'warehouse', href: '/warehouse', icon: Package, roles: ['ADMIN', 'WAREHOUSE'] },
       { key: 'prihod', href: '/inbound', icon: ArrowDownLeft, roles: ['ADMIN', 'WAREHOUSE'] },
-      { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION'] },
-      { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'PRODUCTION', 'SALES'] },
+      { key: 'rashod', href: '/outbound', icon: ArrowUpRight, roles: ['ADMIN', 'WAREHOUSE'] },
+      { key: 'gp', href: '/finished-goods', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE', 'SALES'] },
       { key: 'products', href: '/products', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY', 'WAREHOUSE'] },
       { key: 'kitchen', href: '/kitchen', icon: Utensils, roles: ['ADMIN', 'KITCHEN', 'HR'] },
     ]
@@ -93,7 +93,7 @@ const navSections = [
       { key: 'production', href: '/production', icon: ChefHat, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION'] },
       { key: 'productionJournals', href: '/production/journals', icon: ClipboardCheck, roles: ['ADMIN', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
       { key: 'dailyChecklist', href: '/production/daily-checklist', icon: CheckCircle2, roles: ['ADMIN', 'PRODUCTION', 'QUALITY_CONTROL', 'INSPECTOR'] },
-      { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY'] },
+      { key: 'shopReport', href: '/shop-report', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL', 'SUPPLY'] },
       { key: 'monitoring', href: '/monitoring', icon: BarChart3, roles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'QUALITY_CONTROL', 'SUPPLY', 'SALES'] },
     ]
   },

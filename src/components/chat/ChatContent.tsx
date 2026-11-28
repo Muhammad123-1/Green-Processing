@@ -12,6 +12,7 @@ import {
   Shield,
   Utensils,
   ChefHat,
+  Factory,
   Search,
   MessageSquare,
   Building,
@@ -65,6 +66,14 @@ const CHANNELS = [
     badge: 'E\'lonlar',
   },
   {
+    id: 'production_dept',
+    name: 'Ishlab Chiqarish (Sex)',
+    desc: 'Ishlab chiqarish jarayoni, liniyalar va partiyalar nazorati',
+    icon: Factory,
+    color: 'from-blue-600 to-cyan-600',
+    badge: 'Sex / Ishlab Chiqarish',
+  },
+  {
     id: 'kitchen_supply',
     name: 'Oshxona & Ta\'minot',
     desc: 'Kunlik oziq-ovqat va menyu ta\'minoti',
@@ -112,7 +121,7 @@ const ROLE_INFO: Record<string, { labelUz: string; labelRu: string; labelEn: str
   QUALITY_CONTROL: { labelUz: 'Bosh Sifat Nazoratchisi', labelRu: 'Гл. Контролер качества', labelEn: 'Lead Quality Inspector', color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/30' },
   INSPECTOR: { labelUz: 'Sex Nazoratchisi (QC)', labelRu: 'Контролер цеха (QC)', labelEn: 'Shop QC Inspector', color: 'text-teal-500', bg: 'bg-teal-500/10 border-teal-500/30' },
   TECHNOLOGY: { labelUz: 'Bosh Texnolog', labelRu: 'Главный технолог', labelEn: 'Chief Technologist', color: 'text-indigo-500', bg: 'bg-indigo-500/10 border-indigo-500/30' },
-  PRODUCTION: { labelUz: 'Ishlab Chiqarish', labelRu: 'Производство', labelEn: 'Production', color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/30' },
+  PRODUCTION: { labelUz: 'Ishlab Chiqarish (Sex)', labelRu: 'Производство (Цех)', labelEn: 'Production (Shop)', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30' },
   KITCHEN: { labelUz: 'Bosh Oshpaz (Kuxnya)', labelRu: 'Шеф-повар кухни', labelEn: 'Head Chef', color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/30' },
   DEGUSTATION: { labelUz: 'Degustatsiya', labelRu: 'Дегустация', labelEn: 'Degustation', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
   WAREHOUSE: { labelUz: 'Ombor Xodimi', labelRu: 'Сотрудник склада', labelEn: 'Warehouse Staff', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' },
@@ -661,8 +670,14 @@ export default function ChatContent({
                     >
                       {/* Avatar with status dot and pulsating red unread badge */}
                       <div className="relative shrink-0">
-                        <div className={`w-10 h-10 rounded-xl ${u.role === 'SUPPLIER' ? 'bg-gradient-to-tr from-teal-700 to-emerald-700' : 'bg-gradient-to-tr from-slate-700 to-slate-900 dark:from-dark-700 dark:to-dark-600'} flex items-center justify-center text-white font-extrabold text-xs shadow-sm border border-slate-300/30`}>
-                          {u.role === 'SUPPLIER' ? <Truck size={17} /> : (initials || <UserIcon size={16} />)}
+                        <div className={`w-10 h-10 rounded-xl ${
+                          u.role === 'SUPPLIER'
+                            ? 'bg-gradient-to-tr from-teal-700 to-emerald-700'
+                            : u.role === 'PRODUCTION'
+                            ? 'bg-gradient-to-tr from-blue-600 to-indigo-700'
+                            : 'bg-gradient-to-tr from-slate-700 to-slate-900 dark:from-dark-700 dark:to-dark-600'
+                        } flex items-center justify-center text-white font-extrabold text-xs shadow-sm border border-slate-300/30`}>
+                          {u.role === 'SUPPLIER' ? <Truck size={17} /> : u.role === 'PRODUCTION' ? <Factory size={17} /> : (initials || <UserIcon size={16} />)}
                         </div>
                         {/* Active online dot */}
                         <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-dark-900 ${u.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
@@ -798,8 +813,14 @@ export default function ChatContent({
                 /* Selected DM Header */
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className={`w-10 h-10 rounded-xl ${selectedUser.role === 'SUPPLIER' ? 'bg-gradient-to-tr from-teal-600 to-emerald-600' : 'bg-gradient-to-tr from-emerald-600 to-teal-500'} flex items-center justify-center text-white font-extrabold text-sm shadow-sm`}>
-                      {selectedUser.role === 'SUPPLIER' ? <Truck size={20} /> : (selectedUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase())}
+                    <div className={`w-10 h-10 rounded-xl ${
+                      selectedUser.role === 'SUPPLIER'
+                        ? 'bg-gradient-to-tr from-teal-600 to-emerald-600'
+                        : selectedUser.role === 'PRODUCTION'
+                        ? 'bg-gradient-to-tr from-blue-600 to-indigo-700'
+                        : 'bg-gradient-to-tr from-emerald-600 to-teal-500'
+                    } flex items-center justify-center text-white font-extrabold text-sm shadow-sm`}>
+                      {selectedUser.role === 'SUPPLIER' ? <Truck size={20} /> : selectedUser.role === 'PRODUCTION' ? <Factory size={20} /> : (selectedUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase())}
                     </div>
                     <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-dark-900 ${selectedUser.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                   </div>

@@ -11,6 +11,13 @@ export interface ChatUserContext {
 
 export const DEPARTMENT_CHANNELS = [
   {
+    id: 'production_dept',
+    name: 'Ishlab Chiqarish (Sex)',
+    desc: 'Ishlab chiqarish jarayoni, liniyalar va partiyalar nazorati',
+    badge: 'Sex / Ishlab Chiqarish',
+    allowedRoles: ['ADMIN', 'DIRECTOR', 'PRODUCTION', 'TECHNOLOGY', 'INSPECTOR', 'OPERATOR'],
+  },
+  {
     id: 'kitchen_supply',
     name: 'Oshxona & Ta\'minot',
     desc: 'Kunlik oziq-ovqat va menyu ta\'minoti',
@@ -98,6 +105,9 @@ export function canUserAccessGroup(groupId: string, user: ChatUserContext): bool
 
   // 3. Department Channels
   switch (groupId) {
+    case 'production_dept':
+      return ['PRODUCTION', 'TECHNOLOGY', 'INSPECTOR', 'OPERATOR'].includes(userRole)
+
     case 'kitchen_supply':
       return ['KITCHEN', 'DEGUSTATION', 'SUPPLY'].includes(userRole)
 
@@ -165,8 +175,10 @@ export function getDefaultGroupForRole(role: string): string {
     case 'WAREHOUSE':
       return 'qa_warehouse'
 
-    case 'TECHNOLOGY':
     case 'PRODUCTION':
+      return 'production_dept'
+
+    case 'TECHNOLOGY':
     case 'OPERATOR':
       return 'tech_prod'
 
