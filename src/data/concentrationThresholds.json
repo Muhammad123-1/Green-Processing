@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-11-28T06:30:00.000Z",
+  "updatedBy": "ERP Enterprise Risk Committee / Director",
+  "thresholds": {
+    "customer": {
+      "nameUz": "Mijozlar Konsentratsiyasi",
+      "nameRu": "Концентрация клиентов",
+      "maxTop1Share": 30.0,
+      "maxTop3Share": 60.0,
+      "hhiModerateLimit": 1800,
+      "hhiCriticalLimit": 2500
+    },
+    "supplier": {
+      "nameUz": "Yetkazib Beruvchilar Konsentratsiyasi",
+      "nameRu": "Концентрация поставщиков",
+      "maxTop1Share": 25.0,
+      "maxTop3Share": 50.0,
+      "hhiModerateLimit": 1500,
+      "hhiCriticalLimit": 2200
+    },
+    "product": {
+      "nameUz": "Mahsulotlar Portfolio Konsentratsiyasi",
+      "nameRu": "Концентрация продуктового портфеля",
+      "maxTop1Share": 35.0,
+      "maxTop3Share": 70.0,
+      "hhiModerateLimit": 2000,
+      "hhiCriticalLimit": 2800
+    },
+    "channel": {
+      "nameUz": "Taqsimot Kanallari Konsentratsiyasi",
+      "nameRu": "Концентрация каналов сбыта",
+      "maxTop1Share": 45.0,
+      "maxTop3Share": 80.0,
+      "hhiModerateLimit": 2200,
+      "hhiCriticalLimit": 3000
+    }
+  }
+}
