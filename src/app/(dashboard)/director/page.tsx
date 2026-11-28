@@ -54,6 +54,7 @@ import {
   ClipboardCheck,
   CheckSquare,
   Factory,
+  Target,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -1695,6 +1696,13 @@ export default function DirectorPage() {
               <TrendingUp size={14} />
               <span>{formatDual("Talab & Ta'minot (30 kun)", "Спрос и Поставки (30 дн)", "Demand & Supply (30d)")}</span>
             </Link>
+            <Link
+              href="/director/plan-forecast-actual"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-sm transition-all"
+            >
+              <Target size={14} />
+              <span>{formatDual("Reja vs Prognoz vs Fakt", "План vs Прогноз vs Факт", "Plan vs Forecast vs Actual")}</span>
+            </Link>
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
               {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}
             </span>
@@ -2072,6 +2080,13 @@ export default function DirectorPage() {
             >
               <TrendingUp size={14} />
               <span>{formatDual("Talab & Ta'minot (30 kun)", "Спрос и Поставки (30 дн)", "Demand & Supply (30d)")}</span>
+            </Link>
+            <Link
+              href="/director/plan-forecast-actual"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-sm transition-all"
+            >
+              <Target size={14} />
+              <span>{formatDual("Reja vs Prognoz vs Fakt", "План vs Прогноз vs Факт", "Plan vs Forecast vs Actual")}</span>
             </Link>
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 self-start sm:self-auto">
               {formatDual("Grafik elementini bosing → tahlil ochiladi", "Кликните на элемент для детализации", "Click on chart to drill down")}

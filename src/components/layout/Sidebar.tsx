@@ -38,7 +38,8 @@ import { Archive,
   Boxes,
   AlertTriangle,
   HelpCircle,
-  TrendingUp
+  TrendingUp,
+  Target
  } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -53,6 +54,7 @@ const navSections = [
       { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR', 'QUALITY_CONTROL'] },
       { key: 'director', href: '/director', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'directorDynamics', href: '/director/dynamics', icon: TrendingUp, roles: ['ADMIN', 'DIRECTOR'] },
+      { key: 'planForecastActual', href: '/director/plan-forecast-actual', icon: Target, roles: ['ADMIN', 'DIRECTOR'] },
       { key: 'surveys', href: '/surveys', icon: HelpCircle, roles: ['ADMIN', 'QUALITY_CONTROL', 'SALES'] },
       { key: 'archive', href: '/archive', icon: Archive, roles: ['ADMIN', 'DIRECTOR'] },
     ]
@@ -560,6 +562,7 @@ function SidebarInner({ userRole = 'OPERATOR', userName = 'Foydalanuvchi' }: { u
               const directorAllowedKeys = [
                 'director',
                 'directorDynamics',
+                'planForecastActual',
                 'warehouse',
                 'demandSupply',
                 'archive',

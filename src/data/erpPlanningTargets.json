@@ -1,0 +1,195 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-11-28T06:00:00.000Z",
+  "updatedBy": "ERP Planning System / Boshqaruv kengashi",
+  "periods": {
+    "2026-11": {
+      "period": "2026-11",
+      "labelUz": "Noyabr 2026",
+      "labelRu": "Ноябрь 2026",
+      "labelEn": "November 2026",
+      "totalDays": 30,
+      "workingDays": 26,
+      "dailyCapacityKg": 3500,
+      "maxOvertimeCapacityKg": 4000,
+      "departments": {
+        "production": {
+          "code": "production",
+          "nameUz": "Ishlab Chiqarish",
+          "nameRu": "Производство",
+          "nameEn": "Production",
+          "targetOutputKg": 95000,
+          "targetInputKg": 128000,
+          "targetYieldPercent": 76.0,
+          "unit": "kg"
+        },
+        "sales": {
+          "code": "sales",
+          "nameUz": "Savdo va Sotuv",
+          "nameRu": "Продажи и Сбыт",
+          "nameEn": "Sales & Commerce",
+          "targetVolumeKg": 90000,
+          "targetRevenueUzs": 2700000000,
+          "avgPricePerKg": 30000,
+          "unit": "so'm"
+        },
+        "supply": {
+          "code": "supply",
+          "nameUz": "Ta'minot va Xarid",
+          "nameRu": "Снабжение и Закупки",
+          "nameEn": "Supply & Procurement",
+          "targetProcurementKg": 135000,
+          "targetBudgetUzs": 1450000000,
+          "targetOnTimePercent": 95.0,
+          "unit": "kg"
+        },
+        "finance": {
+          "code": "finance",
+          "nameUz": "Moliya va Byudjet",
+          "nameRu": "Финансы и Бюджет",
+          "nameEn": "Finance & Budget",
+          "targetRevenueUzs": 2700000000,
+          "targetCogsUzs": 1650000000,
+          "targetGrossMarginPercent": 38.8,
+          "unit": "so'm"
+        }
+      },
+      "products": {
+        "Aysberg": {
+          "code": "Aysberg",
+          "nameUz": "Aysberg (to'g'ralgan)",
+          "nameRu": "Салат Айсберг нарезанный",
+          "nameEn": "Chopped Iceberg",
+          "targetOutputKg": 21000,
+          "targetRevenueUzs": 672000000,
+          "targetYield": 78.0,
+          "unit": "kg"
+        },
+        "Tomaty": {
+          "code": "Tomaty",
+          "nameUz": "Pomidor (butun)",
+          "nameRu": "Томаты целые",
+          "nameEn": "Whole Tomatoes",
+          "targetOutputKg": 24000,
+          "targetRevenueUzs": 768000000,
+          "targetYield": 83.8,
+          "unit": "kg"
+        },
+        "ColeSlaw": {
+          "code": "ColeSlaw",
+          "nameUz": "Karam (Коул Слоу)",
+          "nameRu": "Коул Слоу (капуста)",
+          "nameEn": "Cole Slaw Cabbage",
+          "targetOutputKg": 5500,
+          "targetRevenueUzs": 110000000,
+          "targetYield": 82.0,
+          "unit": "kg"
+        },
+        "Luk": {
+          "code": "Luk",
+          "nameUz": "Piyoz (to'g'ralgan)",
+          "nameRu": "Лук салатный нарезанный",
+          "nameEn": "Chopped Salad Onion",
+          "targetOutputKg": 1500,
+          "targetRevenueUzs": 27000000,
+          "targetYield": 68.0,
+          "unit": "kg"
+        },
+        "SaladMix": {
+          "code": "SaladMix",
+          "nameUz": "Salat Miks (Mix)",
+          "nameRu": "Микс салат",
+          "nameEn": "Salad Mix",
+          "targetOutputKg": 1000,
+          "targetRevenueUzs": 45000000,
+          "targetYield": 75.0,
+          "unit": "kg"
+        },
+        "Boshqa": {
+          "code": "Boshqa",
+          "nameUz": "Boshqa sabzavotlar",
+          "nameRu": "Прочие овощи",
+          "nameEn": "Other Vegetables",
+          "targetOutputKg": 2500,
+          "targetRevenueUzs": 60000000,
+          "targetYield": 75.0,
+          "unit": "kg"
+        }
+      }
+    },
+    "2026-10": {
+      "period": "2026-10",
+      "labelUz": "Oktyabr 2026",
+      "labelRu": "Октябрь 2026",
+      "labelEn": "October 2026",
+      "totalDays": 31,
+      "workingDays": 27,
+      "dailyCapacityKg": 3500,
+      "maxOvertimeCapacityKg": 4000,
+      "departments": {
+        "production": {
+          "code": "production",
+          "nameUz": "Ishlab Chiqarish",
+          "nameRu": "Производство",
+          "nameEn": "Production",
+          "targetOutputKg": 92000,
+          "targetInputKg": 122000,
+          "targetYieldPercent": 75.4,
+          "unit": "kg"
+        },
+        "sales": {
+          "code": "sales",
+          "nameUz": "Savdo va Sotuv",
+          "nameRu": "Продажи и Сбыт",
+          "nameEn": "Sales & Commerce",
+          "targetVolumeKg": 88000,
+          "targetRevenueUzs": 2600000000,
+          "avgPricePerKg": 29500,
+          "unit": "so'm"
+        },
+        "supply": {
+          "code": "supply",
+          "nameUz": "Ta'minot va Xarid",
+          "nameRu": "Снабжение и Закупки",
+          "nameEn": "Supply & Procurement",
+          "targetProcurementKg": 130000,
+          "targetBudgetUzs": 1400000000,
+          "targetOnTimePercent": 95.0,
+          "unit": "kg"
+        },
+        "finance": {
+          "code": "finance",
+          "nameUz": "Moliya va Byudjet",
+          "nameRu": "Финансы и Бюджет",
+          "nameEn": "Finance & Budget",
+          "targetRevenueUzs": 2600000000,
+          "targetCogsUzs": 1580000000,
+          "targetGrossMarginPercent": 39.2,
+          "unit": "so'm"
+        }
+      },
+      "products": {
+        "Aysberg": {
+          "code": "Aysberg",
+          "nameUz": "Aysberg",
+          "nameRu": "Айсберг",
+          "nameEn": "Iceberg",
+          "targetOutputKg": 20000,
+          "targetRevenueUzs": 640000000,
+          "targetYield": 78.0,
+          "unit": "kg"
+        },
+        "Tomaty": {
+          "code": "Tomaty",
+          "nameUz": "Pomidor",
+          "nameRu": "Томаты",
+          "nameEn": "Tomatoes",
+          "targetOutputKg": 23000,
+          "targetRevenueUzs": 736000000,
+          "targetYield": 84.0,
+          "unit": "kg"
+        }
+      }
+    }
+  }
+}
