@@ -23,10 +23,14 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
+import { getProductName } from '@/lib/productTranslation'
 
 interface Product {
   id: number
   name: string
+  nameUz?: string
+  nameRu?: string
+  nameEn?: string
   code: string | null
   category: string | null
   unit: string
@@ -139,6 +143,7 @@ export default function ProductsPage() {
       if (!q) return true
       const normQuery = q.replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
       const normName = p.name.toLowerCase().replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
+      const uzName = (p.nameUz || getProductName(p.name, 'uz')).toLowerCase()
       const normCat = (p.category || '').toLowerCase().replace(/йзберг/g, 'йсберг').replace(/ayzberg/g, 'aysberg')
       const normCode = (p.code || '').toLowerCase()
       const normGost = (p.gost || '').toLowerCase()
@@ -146,6 +151,8 @@ export default function ProductsPage() {
       return (
         normName.includes(normQuery) ||
         p.name.toLowerCase().includes(q) ||
+        uzName.includes(q) ||
+        uzName.includes(normQuery) ||
         normCat.includes(normQuery) ||
         (p.category && p.category.toLowerCase().includes(q)) ||
         normCode.includes(q) ||
@@ -446,7 +453,9 @@ export default function ProductsPage() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <span className="font-bold text-white text-xs truncate block">{p.name}</span>
+                        <span className="font-bold text-white text-xs truncate block">
+                          {formatDual(p.nameUz || getProductName(p.name, 'uz'), p.name, p.nameEn || getProductName(p.name, 'en'))}
+                        </span>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-dark-800 border border-dark-700 text-slate-300">
                             {p.code || 'PRD'}
@@ -548,7 +557,7 @@ export default function ProductsPage() {
                           )}
                           <div>
                             <span className="font-extrabold text-white text-sm block hover:text-emerald-400 transition-colors">
-                              {p.name}
+                              {formatDual(p.nameUz || getProductName(p.name, 'uz'), p.name, p.nameEn || getProductName(p.name, 'en'))}
                             </span>
                             {p.imageUrl && (
                               <span className="text-[10px] text-teal-400 font-semibold flex items-center gap-1 mt-0.5">
@@ -670,11 +679,11 @@ export default function ProductsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">
-                  Mahsulot Nomi <span className="text-red-400">*</span>
+                  {formatDual("Mahsulot Nomi", "Наименование продукта", "Product Name")} <span className="text-red-400">*</span>
                 </label>
                 <input
                   className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
-                  placeholder="Masalan: Qizil pomidor yoki Vakuum paket"
+                  placeholder={formatDual("Masalan: Pomidor yoki Vakuum paket", "Например: Томаты или Вакуум пакет", "e.g. Tomato or Vacuum pack")}
                   value={form.name}
                   onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
                 />
@@ -682,7 +691,7 @@ export default function ProductsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Kodi</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{formatDual("Kodi", "Код", "Code")}</label>
                   <input
                     className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono"
                     placeholder="PRD-TOM-101"
@@ -691,10 +700,10 @@ export default function ProductsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Kategoriya</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{formatDual("Kategoriya", "Категория", "Category")}</label>
                   <input
                     className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
-                    placeholder="Sabzavot / Qadoqlash"
+                    placeholder={formatDual("Sabzavot / Qadoqlash", "Овощи / Упаковка", "Vegetables / Packaging")}
                     value={form.category}
                     onChange={(e) => setForm(f => ({ ...f, category: e.target.value }))}
                   />
@@ -703,7 +712,7 @@ export default function ProductsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Birlik</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{formatDual("Birlik", "Ед. изм.", "Unit")}</label>
                   <select
                     className="w-full bg-dark-800 border border-dark-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"
                     value={form.unit}
@@ -716,7 +725,7 @@ export default function ProductsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Min Temp (°C)</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{formatDual("Min Temp (°C)", "Мин Темп (°C)", "Min Temp (°C)")}</label>
                   <input
                     type="number"
                     step="any"
@@ -727,7 +736,7 @@ export default function ProductsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Max Temp (°C)</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{formatDual("Max Temp (°C)", "Макс Темп (°C)", "Max Temp (°C)")}</label>
                   <input
                     type="number"
                     step="any"
@@ -740,7 +749,7 @@ export default function ProductsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">GOST / Standart</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">{formatDual("GOST / Standart", "ГОСТ / Стандарт", "GOST / Standard")}</label>
                 <input
                   className="w-full bg-dark-800 border border-dark-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 font-mono"
                   placeholder="GOST 34298-2017"

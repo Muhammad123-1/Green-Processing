@@ -43,6 +43,7 @@ import {
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import AdminImportModal from '@/components/common/AdminImportModal'
 import { SignatureCell, useWarehouseSignature } from './SignatureCell'
+import { getProductName } from '@/lib/productTranslation'
 
 interface RashodContentProps {
   userRole?: string
@@ -1644,10 +1645,10 @@ export default function RashodContent({ userRole, userName }: RashodContentProps
                   }}
                   className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-900 dark:text-white outline-none focus:border-amber-500 font-medium"
                 >
-                  <option value="">-- Mahsulotni tanlang --</option>
+                  <option value="">-- {formatDual("Mahsulotni tanlang", "Выберите продукт", "Select product")} --</option>
                   {inventoryProducts.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (Qoldiq: {p.totalQuantity || 0} {p.unit || 'kg'})
+                      {formatDual(getProductName(p.name, 'uz'), p.name, getProductName(p.name, 'en'))} ({formatDual("Qoldiq", "Остаток", "Stock")}: {p.totalQuantity || 0} {p.unit || 'kg'})
                     </option>
                   ))}
                 </select>

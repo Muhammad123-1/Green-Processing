@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getProductName } from '@/lib/productTranslation'
 
 function inferProductDetails(name: string) {
   const s = name.toLowerCase()
@@ -299,6 +300,9 @@ export async function GET() {
         return {
           id: p.id,
           name: p.name,
+          nameUz: getProductName(p.name, 'uz'),
+          nameRu: p.name,
+          nameEn: getProductName(p.name, 'en'),
           code: p.code,
           category: p.category,
           unit: p.unit,

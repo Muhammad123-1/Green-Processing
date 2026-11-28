@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/app/actions/auth'
 import { syncInventoryBatchesFromDailyBalances } from '@/lib/fifoSync'
+import { getProductName } from '@/lib/productTranslation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,6 +63,9 @@ export async function GET(request: NextRequest) {
       return {
         id: product.id,
         name: product.name,
+        nameUz: getProductName(product.name, 'uz'),
+        nameRu: product.name,
+        nameEn: getProductName(product.name, 'en'),
         code: product.code,
         category: product.category,
         unit: product.unit,

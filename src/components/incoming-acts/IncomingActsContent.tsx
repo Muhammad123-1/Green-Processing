@@ -36,6 +36,7 @@ import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import { PRODUCT_THEMES, getProductTheme, getRatingText } from '@/lib/incoming-acts/constants'
 import { checkQcActEditPermission, checkQcActDeletePermission } from '@/lib/auditRules'
+import { getProductName } from '@/lib/productTranslation'
 
 interface IncomingAct {
   id: number
@@ -1251,7 +1252,7 @@ export default function IncomingActsContent({
 
                       {/* Col 4: Наименование сырья */}
                       <td className="border border-slate-300 dark:border-dark-750 py-1.5 px-2 font-bold whitespace-nowrap text-slate-900 dark:text-white">
-                        {act.productName}
+                        {formatDual(getProductName(act.productName, 'uz'), act.productName, getProductName(act.productName, 'en'))}
                       </td>
 
                       {/* Col 5: Поставщик */}
@@ -2093,7 +2094,7 @@ export default function IncomingActsContent({
                 </div>
                 <div>
                   <h2 className="text-lg font-bold">
-                    Akt № {selectedActForView.actNumber} - {selectedActForView.productName}
+                    Akt № {selectedActForView.actNumber} - {formatDual(getProductName(selectedActForView.productName, 'uz'), selectedActForView.productName, getProductName(selectedActForView.productName, 'en'))}
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Sana: {selectedActForView.actDate} | Ta'minotchi: {selectedActForView.supplierName}

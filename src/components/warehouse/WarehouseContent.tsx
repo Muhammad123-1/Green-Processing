@@ -52,6 +52,7 @@ import { useLanguage } from '@/components/providers/LanguageProvider'
 import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/InfiniteTable'
 import { SignatureCell, useWarehouseSignature } from './SignatureCell'
 import { AnimatedNumber } from '@/components/common/MotionComponents'
+import { getProductName } from '@/lib/productTranslation'
 
 const tBase = {
   uz: {
@@ -205,6 +206,9 @@ type InventoryBatch = {
 type ProductInventory = {
   id: number
   name: string
+  nameUz?: string
+  nameRu?: string
+  nameEn?: string
   code: string | null
   category: string | null
   unit: string
@@ -1130,8 +1134,11 @@ export default function WarehouseContent() {
   }
 
   const filteredInventory = inventory.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) || 
-                          (item.code && item.code.toLowerCase().includes(search.toLowerCase()))
+    const q = search.toLowerCase()
+    const uzName = getProductName(item.name, 'uz').toLowerCase()
+    const matchesSearch = item.name.toLowerCase().includes(q) || 
+                          uzName.includes(q) ||
+                          (item.code && item.code.toLowerCase().includes(q))
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter
     
     return matchesSearch && matchesStatus
@@ -1208,8 +1215,10 @@ export default function WarehouseContent() {
       if (prihodCategory !== 'all' && b.category !== prihodCategory) return false
       if (!prihodSearch) return true
       const q = prihodSearch.toLowerCase()
+      const uzNom = getProductName(b.nomenclature, 'uz').toLowerCase()
       return (
         b.nomenclature.toLowerCase().includes(q) ||
+        uzNom.includes(q) ||
         b.batchNumber.toLowerCase().includes(q) ||
         b.supplier.toLowerCase().includes(q) ||
         b.date.includes(q)
@@ -1224,8 +1233,10 @@ export default function WarehouseContent() {
       if (rashodCategory !== 'all' && d.category !== rashodCategory) return false
       if (!rashodSearch) return true
       const q = rashodSearch.toLowerCase()
+      const uzNom = getProductName(d.nomenclature, 'uz').toLowerCase()
       return (
         d.nomenclature.toLowerCase().includes(q) ||
+        uzNom.includes(q) ||
         d.destination.toLowerCase().includes(q) ||
         d.date.includes(q)
       )
@@ -2009,7 +2020,9 @@ export default function WarehouseContent() {
                       </div>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-extrabold text-slate-900 dark:text-white text-sm leading-tight truncate">{b.nomenclature}</div>
+                          <div className="font-extrabold text-slate-900 dark:text-white text-sm leading-tight truncate">
+                            {formatDual(getProductName(b.nomenclature, 'uz'), b.nomenclature, getProductName(b.nomenclature, 'en'))}
+                          </div>
                           <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{b.supplier} · <span className="text-slate-400 dark:text-slate-500">{b.category}</span></div>
                         </div>
                         <div className="text-right flex-shrink-0">
@@ -2058,7 +2071,7 @@ export default function WarehouseContent() {
                             {b.date}
                           </td>
                           <td className="p-4 font-extrabold text-slate-900 dark:text-white">
-                            {b.nomenclature}
+                            {formatDual(getProductName(b.nomenclature, 'uz'), b.nomenclature, getProductName(b.nomenclature, 'en'))}
                           </td>
                           <td className="p-4 text-center font-black text-amber-600 dark:text-amber-400">
                             {b.quantity.toLocaleString()} {b.unit}
@@ -2238,7 +2251,7 @@ export default function WarehouseContent() {
                           )}
                           <div className="min-w-0">
                             <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">
-                              {item.name}
+                              {formatDual(item.nameUz || getProductName(item.name, 'uz'), item.name, item.nameEn || getProductName(item.name, 'en'))}
                             </h4>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-[10px] text-slate-500 font-medium">{item.category || 'Xomashyo'}</span>
@@ -2415,7 +2428,7 @@ export default function WarehouseContent() {
                             )}
                             <div>
                               <div className="font-bold text-slate-900 dark:text-white text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                {item.name}
+                                {formatDual(item.nameUz || getProductName(item.name, 'uz'), item.name, item.nameEn || getProductName(item.name, 'en'))}
                               </div>
                               <span className="text-xs text-slate-500">{item.category || 'Xomashyo'}</span>
                             </div>
@@ -3084,7 +3097,7 @@ export default function WarehouseContent() {
                     <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">{formatDual("Mahsulotni tanlang...", "Выберите продукт...", "Select product...")}</option>
                     {inventory.map(item => (
                       <option key={item.id} value={item.id} className="text-slate-900 dark:text-white bg-white dark:bg-dark-800">
-                        {item.name} {item.code ? `(${item.code})` : ''} - Joriy: {item.totalQuantity} {item.unit}
+                        {formatDual(item.nameUz || getProductName(item.name, 'uz'), item.name, item.nameEn || getProductName(item.name, 'en'))} {item.code ? `(${item.code})` : ''} - Joriy: {item.totalQuantity} {item.unit}
                       </option>
                     ))}
                   </select>
