@@ -370,61 +370,16 @@ export default function PlanForecastActualAnalytics() {
         </div>
       </div>
 
-      {/* 2. INTELLIGENT ALERTS BARRIER */}
-      {data.alerts && data.alerts.length > 0 && (
-        <div className="space-y-3">
-          {data.alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`p-4 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${
-                alert.level === 'CRITICAL'
-                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-900 dark:text-rose-100'
-                  : 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-100'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <span className={`p-2 rounded-xl shrink-0 ${alert.level === 'CRITICAL' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'}`}>
-                  <ShieldAlert size={18} />
-                </span>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-sm">
-                      {isUz ? alert.titleUz : alert.titleRu}
-                    </h3>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-white/40 dark:bg-dark-900/40 border">
-                      {alert.category}
-                    </span>
-                  </div>
-                  <p className="text-xs mt-1 text-slate-700 dark:text-slate-300">
-                    {isUz ? alert.descriptionUz : alert.descriptionRu}
-                  </p>
-                  <p className="text-xs font-semibold mt-1 text-slate-900 dark:text-white">
-                    <span className="text-emerald-600 dark:text-emerald-400">💡 Tavsiya: </span>
-                    {isUz ? alert.recommendedActionUz : alert.recommendedActionRu}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setDrillDownItem({ type: 'alert', payload: alert })}
-                className="shrink-0 px-3 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-700 transition-all text-slate-800 dark:text-slate-200"
-              >
-                {isUz ? 'Batafsil ko\'rish' : 'Подробнее'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 3. EXECUTIVE COMPANY-WIDE KPI GRID (LEVEL 1) */}
+      {/* 2. EXECUTIVE COMPANY-WIDE KPI GRID (LEVEL 1) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: PRODUCTION */}
-        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-xs relative">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Factory size={15} className="text-emerald-500" />
               {isUz ? 'Ishlab Chiqarish' : 'Производство'}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
               prodSummary.planAchievementPercent >= 100
                 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                 : prodSummary.planAchievementPercent >= 90
@@ -435,178 +390,139 @@ export default function PlanForecastActualAnalytics() {
             </span>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-slate-900 dark:text-white">
-                {prodSummary.actualToDate.toLocaleString()}
-              </span>
-              <span className="text-xs text-slate-500 font-semibold">
-                / {prodSummary.comparablePlan.toLocaleString()} {prodSummary.unit}
-              </span>
+          <div className="mt-2">
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {prodSummary.actualToDate.toLocaleString()} <span className="text-sm font-semibold text-slate-500">{prodSummary.unit}</span>
             </div>
-            <p className="text-[11px] text-slate-500 flex items-center justify-between">
-              <span>{isUz ? 'Plan-to-date farqi:' : 'Отклонение к плану:'}</span>
+            <div className="mt-1.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>{isUz ? 'Reja:' : 'План:'} <strong className="text-slate-700 dark:text-slate-200">{prodSummary.comparablePlan.toLocaleString()} {prodSummary.unit}</strong></span>
               <span className={`font-bold ${prodSummary.planVariance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 {prodSummary.planVariance > 0 ? '+' : ''}{prodSummary.planVariance.toLocaleString()} {prodSummary.unit}
               </span>
-            </p>
+            </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs space-y-1.5">
-            <div className="flex justify-between">
-              <span className="text-slate-500">{isUz ? 'Kutilayotgan prognoz:' : 'Ожидаемый прогноз:'}</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {prodSummary.forecastFullPeriod.toLocaleString()} {prodSummary.unit} ({prodSummary.expectedAchievementPercent}%)
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500">{isUz ? 'Talab qilinadigan sur\'at:' : 'Требуемый темп:'}</span>
-              <span className={`font-bold px-1.5 py-0.5 rounded ${
-                prodSummary.isCapacityRisk
-                  ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 font-black'
-                  : 'text-slate-700 dark:text-slate-300'
-              }`}>
-                {prodSummary.requiredDailyPerformance.toLocaleString()} {prodSummary.unit}/kun
-              </span>
-            </div>
+          {/* Simple progress bar */}
+          <div className="mt-3.5 w-full bg-slate-100 dark:bg-dark-800 h-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                prodSummary.planAchievementPercent >= 100 ? 'bg-emerald-500' : prodSummary.planAchievementPercent >= 90 ? 'bg-blue-500' : 'bg-rose-500'
+              }`}
+              style={{ width: `${Math.min(100, prodSummary.planAchievementPercent)}%` }}
+            />
           </div>
         </div>
 
         {/* KPI 2: SALES */}
-        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-xs relative">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <ShoppingCart size={15} className="text-blue-500" />
               {isUz ? 'Savdo va Tushum' : 'Продажи и Выручка'}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
-              salesSummary.planAchievementPercent >= 95
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+              salesSummary.planAchievementPercent >= 100
                 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
             }`}>
               {salesSummary.planAchievementPercent}%
             </span>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-slate-900 dark:text-white">
-                {(salesSummary.actualToDate / 1000000).toFixed(1)}M
-              </span>
-              <span className="text-xs text-slate-500 font-semibold">
-                / {(salesSummary.comparablePlan / 1000000).toFixed(1)}M {salesSummary.unit}
+          <div className="mt-2">
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {(salesSummary.actualToDate / 1000000).toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} <span className="text-sm font-semibold text-slate-500">mln so'm</span>
+            </div>
+            <div className="mt-1.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>{isUz ? 'Reja:' : 'План:'} <strong className="text-slate-700 dark:text-slate-200">{(salesSummary.comparablePlan / 1000000).toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} mln</strong></span>
+              <span className={`font-bold ${salesSummary.planVariance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                {salesSummary.planVariance > 0 ? '+' : ''}{(salesSummary.planVariance / 1000000).toLocaleString('uz-UZ', { maximumFractionDigits: 1 })} mln
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 flex items-center justify-between">
-              <span>{isUz ? 'Faktik tushum farqi:' : 'Отклонение выручки:'}</span>
-              <span className={`font-bold ${salesSummary.planVariance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {salesSummary.planVariance > 0 ? '+' : ''}{(salesSummary.planVariance / 1000000).toFixed(1)}M so'm
-              </span>
-            </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs space-y-1.5">
-            <div className="flex justify-between">
-              <span className="text-slate-500">{isUz ? 'Oylik reja maqsad:' : 'Цель на месяц:'}</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {(salesSummary.fullPeriodPlan / 1000000).toFixed(0)}M so'm
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">{isUz ? 'Kutilayotgan umumiy:' : 'Ожидаемый итог:'}</span>
-              <span className="font-bold text-blue-600 dark:text-blue-400">
-                {(salesSummary.forecastFullPeriod / 1000000).toFixed(1)}M so'm
-              </span>
-            </div>
+          {/* Simple progress bar */}
+          <div className="mt-3.5 w-full bg-slate-100 dark:bg-dark-800 h-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                salesSummary.planAchievementPercent >= 100 ? 'bg-emerald-500' : 'bg-blue-500'
+              }`}
+              style={{ width: `${Math.min(100, salesSummary.planAchievementPercent)}%` }}
+            />
           </div>
         </div>
 
         {/* KPI 3: SUPPLY */}
-        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-xs relative">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Truck size={15} className="text-violet-500" />
               {isUz ? 'Ta\'minot va Xarid' : 'Снабжение и Закупки'}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
               supplySummary.planAchievementPercent >= 90
                 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                : supplySummary.planAchievementPercent >= 70
+                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
             }`}>
               {supplySummary.planAchievementPercent}%
             </span>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-black text-slate-900 dark:text-white">
-                {supplySummary.actualToDate.toLocaleString()}
-              </span>
-              <span className="text-xs text-slate-500 font-semibold">
-                / {supplySummary.comparablePlan.toLocaleString()} {supplySummary.unit}
+          <div className="mt-2">
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {supplySummary.actualToDate.toLocaleString()} <span className="text-sm font-semibold text-slate-500">{supplySummary.unit}</span>
+            </div>
+            <div className="mt-1.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>{isUz ? 'Reja:' : 'План:'} <strong className="text-slate-700 dark:text-slate-200">{supplySummary.comparablePlan.toLocaleString()} {supplySummary.unit}</strong></span>
+              <span className={`font-bold ${supplySummary.planVariance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                {supplySummary.planVariance > 0 ? '+' : ''}{supplySummary.planVariance.toLocaleString()} {supplySummary.unit}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 flex items-center justify-between">
-              <span>{isUz ? 'Qabul qilingan xomashyo:' : 'Принято сырья:'}</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {data.auditTrail.incomingActsCount} ta akt
-              </span>
-            </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs space-y-1.5">
-            <div className="flex justify-between">
-              <span className="text-slate-500">{isUz ? 'Oylik reja xarid:' : 'План закупок:'}</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {supplySummary.fullPeriodPlan.toLocaleString()} {supplySummary.unit}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">{isUz ? 'Kutilayotgan qabul:' : 'Прогноз приёмки:'}</span>
-              <span className="font-bold text-violet-600 dark:text-violet-400">
-                {supplySummary.forecastFullPeriod.toLocaleString()} {supplySummary.unit}
-              </span>
-            </div>
+          {/* Simple progress bar */}
+          <div className="mt-3.5 w-full bg-slate-100 dark:bg-dark-800 h-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                supplySummary.planAchievementPercent >= 90 ? 'bg-emerald-500' : supplySummary.planAchievementPercent >= 70 ? 'bg-amber-500' : 'bg-rose-500'
+              }`}
+              style={{ width: `${Math.min(100, supplySummary.planAchievementPercent)}%` }}
+            />
           </div>
         </div>
 
-        {/* KPI 4: FORECAST ACCURACY & CAPACITY */}
-        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
+        {/* KPI 4: CAPACITY & SCHEDULE */}
+        <div className="bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 shadow-xs relative">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Zap size={15} className="text-amber-500" />
-              {isUz ? 'Prognoz Aniqligi' : 'Точность прогноза'}
+              {isUz ? 'Zavod Quvvati' : 'Мощность завода'}
             </span>
-            <span className="px-2 py-0.5 rounded-full text-xs font-black bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
-              WAPE {data.forecastEvaluation.activeModel.wapePercent}%
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+              {isUz ? 'Kunlik me\'yor' : 'Дневная норма'}
             </span>
           </div>
 
-          <div className="space-y-1">
-            <div className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1" title={data.forecastEvaluation.activeModel.methodName}>
-              {data.forecastEvaluation.activeModel.methodName}
+          <div className="mt-2">
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
+              {data.calendar.dailyCapacityKg.toLocaleString()} <span className="text-sm font-semibold text-slate-500">kg/kun</span>
             </div>
-            <p className="text-[11px] text-slate-500 flex items-center justify-between">
-              <span>{isUz ? 'O\'rtacha xatolik (MAE):' : 'Средняя ошибка (MAE):'}</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                ±{data.forecastEvaluation.activeModel.mae.toLocaleString()} kg/kun
+            <div className="mt-1.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>{isUz ? 'O\'rtacha chiqarish:' : 'Среднесуточный выпуск:'} <strong className="text-slate-700 dark:text-slate-200">{Math.round(prodSummary.actualToDate / Math.max(1, data.calendar.elapsedWorkingDays)).toLocaleString()} kg/kun</strong></span>
+              <span className="font-semibold text-slate-600 dark:text-slate-300">
+                {data.calendar.elapsedWorkingDays} / {data.calendar.totalWorkingDays} {isUz ? 'kun' : 'дней'}
               </span>
-            </p>
+            </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-dark-800 text-xs space-y-1.5">
-            <div className="flex justify-between">
-              <span className="text-slate-500">{isUz ? 'Zavod quvvati:' : 'Мощность завода:'}</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {data.calendar.dailyCapacityKg.toLocaleString()} kg/kun
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">{isUz ? 'Qolgan ish kunlari:' : 'Осталось рабочих дней:'}</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                {data.calendar.remainingWorkingDays} kun
-              </span>
-            </div>
+          {/* Simple progress bar */}
+          <div className="mt-3.5 w-full bg-slate-100 dark:bg-dark-800 h-2 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full bg-amber-500 transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.round((data.calendar.elapsedWorkingDays / Math.max(1, data.calendar.totalWorkingDays)) * 100))}%` }}
+            />
           </div>
         </div>
       </div>
