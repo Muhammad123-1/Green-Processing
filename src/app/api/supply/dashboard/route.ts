@@ -4,6 +4,28 @@ import { getSession } from '@/app/actions/auth'
 import { getSupplyDashboardCache, setSupplyDashboardCache } from '@/lib/supplyDashboardCache'
 import { matchSyrye12Key, getLatestSyryeClosingBalances, toNum } from '@/lib/shopReport'
 import { matchNonSyryeGroupKey } from '@/lib/fifoSync'
+import { getProductName } from '@/lib/productTranslation'
+
+function getProductPriority(name: string = '', category: string = ''): number {
+  const n = name.toLowerCase()
+  const c = category.toLowerCase()
+
+  if (n.includes('айсберг') || n.includes('айзберг') || n.includes('aysberg')) return 1
+  if (n.includes('томат') || n.includes('помидор') || n.includes('pomidor')) return 2
+  if (n.includes('огурц') || n.includes('бодринг') || n.includes('bodring')) return 3
+  if (n.includes('лук') || n.includes('пиёз') || n.includes('piyoz')) return 4
+  if (n.includes('капуст') || n.includes('карам') || n.includes('karam')) return 5
+  if (n.includes('морков') || n.includes('сабзи') || n.includes('sabzi')) return 6
+  if (n.includes('лимон') && !n.includes('кислот')) return 7
+  if (n.includes('руккол') || n.includes('лолло') || n.includes('шпинат') || n.includes('укроп') || n.includes('петрушк') || n.includes('кинз') || n.includes('сельдерей')) return 8
+
+  if (c.includes('sabzavot') || c.includes('oziq') || c.includes('meva') || c.includes('xomashyo')) return 10
+  if (c.includes('qadoq') || c.includes('idish') || n.includes('короб') || n.includes('кароб') || n.includes('пакет') || n.includes('этикетк') || n.includes('яшик') || n.includes('стрич') || n.includes('падон')) return 50
+  if (c.includes('kimyo') || c.includes('dezinfeksiya') || n.includes('хлор') || n.includes('кислота') || n.includes('гипохлорит') || n.includes('бензоат') || n.includes('сорбат')) return 70
+  if (c.includes('gigiyena') || c.includes('xo\'jalik') || n.includes('перчатк') || n.includes('маска') || n.includes('шапка') || n.includes('бахил') || n.includes('бумага') || n.includes('салфетк') || n.includes('полотенц')) return 90
+
+  return 100
+}
 
 function round2(n: number): number {
   if (!Number.isFinite(n)) return 0
@@ -367,6 +389,9 @@ export async function GET(request: NextRequest) {
       return {
         id: product.id,
         name: product.name,
+        nameUz: getProductName(product.name, 'uz'),
+        nameRu: product.name,
+        nameEn: getProductName(product.name, 'en'),
         code: product.code,
         category: product.category,
         unit: product.unit || 'kg',
@@ -383,6 +408,14 @@ export async function GET(request: NextRequest) {
         primarySupplierId: matchedDbSupplier?.id || null,
         batchesCount: product.batches.length,
       }
+    })
+
+    // Sort so primary/core products appear first
+    inventoryStatus.sort((a, b) => {
+      const pA = getProductPriority(a.name, a.category || '')
+      const pB = getProductPriority(b.name, b.category || '')
+      if (pA !== pB) return pA - pB
+      return (b.totalArrivalKg || 0) - (a.totalArrivalKg || 0)
     })
 
     // 6. Fast Order Matched Arrivals Cache

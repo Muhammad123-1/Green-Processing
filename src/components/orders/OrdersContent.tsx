@@ -26,8 +26,7 @@ import {
   Link as LinkIcon,
   Phone,
   Info,
-  MessageSquare,
-  Settings
+  MessageSquare
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLanguage } from '@/components/providers/LanguageProvider'
@@ -35,6 +34,28 @@ import { useInfiniteTable, InfiniteTableFooter } from '@/components/common/Infin
 import SupplierDebtsTable from '@/components/accounting/SupplierDebtsTable'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { getProductName } from '@/lib/productTranslation'
+
+function getProductPriority(item: any): number {
+  const name = (item.name || '').toLowerCase()
+  const cat = (item.category || '').toLowerCase()
+
+  if (name.includes('айсберг') || name.includes('айзберг') || name.includes('aysberg')) return 1
+  if (name.includes('томат') || name.includes('помидор') || name.includes('pomidor')) return 2
+  if (name.includes('огурц') || name.includes('бодринг') || name.includes('bodring')) return 3
+  if (name.includes('лук') || name.includes('пиёз') || name.includes('piyoz')) return 4
+  if (name.includes('капуст') || name.includes('карам') || name.includes('karam')) return 5
+  if (name.includes('морков') || name.includes('сабзи') || name.includes('sabzi')) return 6
+  if (name.includes('лимон') && !name.includes('кислот')) return 7
+  if (name.includes('руккол') || name.includes('лолло') || name.includes('шпинат') || name.includes('укроп') || name.includes('петрушк') || name.includes('кинз') || name.includes('сельдерей')) return 8
+
+  if (cat.includes('sabzavot') || cat.includes('oziq') || cat.includes('meva') || cat.includes('xomashyo')) return 10
+  if (cat.includes('qadoq') || cat.includes('idish') || name.includes('короб') || name.includes('кароб') || name.includes('пакет') || name.includes('этикетк') || name.includes('яшик') || name.includes('стрич') || name.includes('падон')) return 50
+  if (cat.includes('kimyo') || cat.includes('dezinfeksiya') || name.includes('хлор') || name.includes('кислота') || name.includes('гипохлорит') || name.includes('бензоат') || name.includes('сорбат')) return 70
+  if (cat.includes('gigiyena') || cat.includes('xo\'jalik') || name.includes('перчатк') || name.includes('маска') || name.includes('шапка') || name.includes('бахил') || name.includes('бумага') || name.includes('салфетк') || name.includes('полотенц')) return 90
+
+  return 100
+}
 
 export default function OrdersContent() {
   const { lang, formatDual } = useLanguage()
@@ -137,11 +158,17 @@ export default function OrdersContent() {
 
       if (dashRes.ok) {
         const dashData = await dashRes.json()
+        const sortedInv = (dashData.inventory || []).sort((a: any, b: any) => {
+          const pA = getProductPriority(a)
+          const pB = getProductPriority(b)
+          if (pA !== pB) return pA - pB
+          return (b.totalArrivalKg || 0) - (a.totalArrivalKg || 0)
+        })
         setMetrics(dashData.metrics || {})
-        setInventory(dashData.inventory || [])
+        setInventory(sortedInv)
         setOrders(dashData.orders || [])
         setSuppliers(dashData.suppliers || [])
-        setProducts(dashData.inventory || [])
+        setProducts(sortedInv)
       } else {
         const error = await dashRes.json().catch(() => null)
         throw new Error(error?.error || "Supply dashboard ma'lumotlarini yuklab bo'lmadi")
@@ -166,11 +193,17 @@ export default function OrdersContent() {
         throw new Error(error?.error || "Supply dashboard ma'lumotlarini yangilab bo'lmadi")
       }
       const data = await res.json()
+      const sortedInv = (data.inventory || []).sort((a: any, b: any) => {
+        const pA = getProductPriority(a)
+        const pB = getProductPriority(b)
+        if (pA !== pB) return pA - pB
+        return (b.totalArrivalKg || 0) - (a.totalArrivalKg || 0)
+      })
       setMetrics(data.metrics || {})
-      setInventory(data.inventory || [])
+      setInventory(sortedInv)
       setOrders(data.orders || [])
       setSuppliers(data.suppliers || [])
-      setProducts(data.inventory || [])
+      setProducts(sortedInv)
       toast.success(formatDual("Ma'lumotlar yangilandi", "Данные обновлены", "Data refreshed"))
     } catch (error: any) {
       toast.error(error?.message || formatDual("Yangilashda xatolik", "Ошибка обновления", "Refresh error"))
@@ -364,10 +397,14 @@ export default function OrdersContent() {
 
   // Filtered Inventory
   const filteredInventory = useMemo(() => {
-    return inventory.filter(item => {
-      const matchesSearch = item.name?.toLowerCase().includes(stockSearch.toLowerCase()) ||
-        item.code?.toLowerCase().includes(stockSearch.toLowerCase()) ||
-        (item.primarySupplier && item.primarySupplier.toLowerCase().includes(stockSearch.toLowerCase()))
+    const q = stockSearch.toLowerCase().trim()
+    const filtered = inventory.filter(item => {
+      const uzName = (item.nameUz || getProductName(item.name, 'uz')).toLowerCase()
+      const matchesSearch = !q ||
+        item.name?.toLowerCase().includes(q) ||
+        uzName.includes(q) ||
+        item.code?.toLowerCase().includes(q) ||
+        (item.primarySupplier && item.primarySupplier.toLowerCase().includes(q))
 
       // Category filter
       let matchesCat = true
@@ -390,6 +427,14 @@ export default function OrdersContent() {
       if (stockFilter === 'YELLOW') return item.status === 'yellow'
       if (stockFilter === 'GREEN') return item.status === 'green'
       return true
+    })
+
+    // Sort so main/primary products appear first
+    return filtered.sort((a, b) => {
+      const pA = getProductPriority(a)
+      const pB = getProductPriority(b)
+      if (pA !== pB) return pA - pB
+      return (b.totalArrivalKg || 0) - (a.totalArrivalKg || 0)
     })
   }, [inventory, stockSearch, stockFilter, categoryFilter])
 
@@ -439,15 +484,6 @@ export default function OrdersContent() {
         </div>
 
         <div className="relative z-10 flex flex-wrap items-center gap-2.5">
-          <Link
-            href="/settings?tab=supply"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-dark-800 hover:bg-slate-200 dark:hover:bg-dark-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 transition-all font-semibold text-xs sm:text-sm active:scale-95 shadow-xs"
-            title={formatDual("Ta'minot xodimi ma'lumotlari va elektron imzosi", "Настройки сотрудника снабжения и подпись", "Supply Staff Profile & Signature")}
-          >
-            <Settings size={16} className="text-slate-400" />
-            <span>{formatDual("Sozlamalar & Imzo", "Настройки & Подпись", "Settings & Signature")}</span>
-          </Link>
-
           <button
             onClick={refreshData}
             disabled={refreshing}
@@ -635,20 +671,6 @@ export default function OrdersContent() {
             </span>
           </button>
         </div>
-
-        {/* Shortages Requisition Link - Subdued Subtle Accent */}
-        <Link
-          href="/supply/shortages"
-          className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-bold text-xs sm:text-sm transition-all ml-auto"
-        >
-          <AlertTriangle size={15} />
-          <span>{formatDual("Ombordan Qolmaganlar (Talabnomalar)", "Заявки со склада (Дефицит)", "Warehouse Shortages")}</span>
-          {metrics.outOfStockCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold">
-              {metrics.outOfStockCount}
-            </span>
-          )}
-        </Link>
       </div>
       {/* ========================================================================= */}
       {/* TAB 1: Real-time Sklad Qoldiqlari & Xarid Signallari */}
@@ -773,18 +795,17 @@ export default function OrdersContent() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-slate-900 dark:text-white text-sm">{item.name}</h4>
+                            <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                              {formatDual(item.nameUz || getProductName(item.name, 'uz'), item.name, item.nameEn || getProductName(item.name, 'en'))}
+                            </h4>
                           </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            {item.code && (
-                              <span className="text-[10px] font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-dark-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-dark-700">
+                          {item.code && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-dark-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-dark-700 whitespace-nowrap">
                                 {item.code}
                               </span>
-                            )}
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                              {item.category || formatDual('Xomashyo', 'Сырьё', 'Raw material')}
-                            </span>
-                          </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Status Badge */}
@@ -879,29 +900,30 @@ export default function OrdersContent() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 dark:bg-dark-800/90 border-b border-slate-200 dark:border-dark-750 text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                        <th className="py-4 px-4">{formatDual("Mahsulot / Xomashyo", "Товар / Сырье", "Product")}</th>
-                        <th className="py-4 px-4">{formatDual("Kategoriya", "Категория", "Category")}</th>
-                        <th className="py-4 px-4 text-center">{formatDual("Ombor Qoldig'i", "Остаток на складе", "Warehouse Stock")}</th>
-                        <th className="py-4 px-4 text-center">{formatDual("Minimal Norma", "Мин. остаток", "Min Stock")}</th>
-                        <th className="py-4 px-4 text-center">{formatDual("Holat (Svetofor)", "Статус", "Status")}</th>
-                        <th className="py-4 px-4 text-center">{formatDual("Xarid Ehtiyoji", "Потребность закупа", "Needed")}</th>
-                        <th className="py-4 px-4">{formatDual("Asosiy Ta'minotchi", "Основной поставщик", "Primary Supplier")}</th>
-                        <th className="py-4 px-4 text-right">{formatDual("Amal", "Действие", "Action")}</th>
+                        <th className="py-4 px-4 whitespace-nowrap">{formatDual("Mahsulot / Xomashyo", "Товар / Сырье", "Product")}</th>
+                        <th className="py-4 px-4 text-center whitespace-nowrap">{formatDual("Ombor Qoldig'i", "Остаток на складе", "Warehouse Stock")}</th>
+                        <th className="py-4 px-4 text-center whitespace-nowrap">{formatDual("Minimal Norma", "Мин. остаток", "Min Stock")}</th>
+                        <th className="py-4 px-4 text-center whitespace-nowrap">{formatDual("Holat (Svetofor)", "Статус", "Status")}</th>
+                        <th className="py-4 px-4 text-center whitespace-nowrap">{formatDual("Xarid Ehtiyoji", "Потребность закупа", "Needed")}</th>
+                        <th className="py-4 px-4 whitespace-nowrap">{formatDual("Asosiy Ta'minotchi", "Основной поставщик", "Primary Supplier")}</th>
+                        <th className="py-4 px-4 text-right whitespace-nowrap">{formatDual("Amal", "Действие", "Action")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-dark-750/70 text-sm">
                       {inventoryPagination.displayedItems.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-dark-800/40 transition-colors">
-                          <td className="py-4 px-4 font-semibold text-slate-900 dark:text-white">
-                            <div className="flex flex-wrap items-center gap-2.5">
+                          <td className="py-4 px-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                            <div className="flex items-center gap-2.5">
                               <div className={`w-2 h-2 rounded-full shrink-0 ${
                                 item.status === 'red' ? 'bg-rose-500' :
                                 item.status === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'
                               }`} />
                               <div>
-                                <span className="font-bold text-slate-900 dark:text-white block">{item.name}</span>
+                                <span className="font-bold text-slate-900 dark:text-white block whitespace-nowrap">
+                                  {formatDual(item.nameUz || getProductName(item.name, 'uz'), item.name, item.nameEn || getProductName(item.name, 'en'))}
+                                </span>
                                 {item.code && (
-                                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono whitespace-nowrap">
                                     {item.code}
                                   </span>
                                 )}
@@ -909,43 +931,37 @@ export default function OrdersContent() {
                             </div>
                           </td>
 
-                          <td className="py-4 px-4 text-slate-600 dark:text-slate-400 text-xs">
-                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700/80 font-medium">
-                              {item.category || formatDual('Xomashyo', 'Сырьё', 'Raw material')}
-                            </span>
-                          </td>
-
-                          <td className="py-4 px-4 text-center font-mono font-bold text-slate-900 dark:text-white">
-                            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-800 dark:text-slate-200">
+                          <td className="py-4 px-4 text-center font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-slate-800 dark:text-slate-200 whitespace-nowrap">
                               {item.totalQuantity.toLocaleString()} {item.unit}
                             </span>
                           </td>
 
-                          <td className="py-4 px-4 text-center font-mono text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                          <td className="py-4 px-4 text-center font-mono text-slate-600 dark:text-slate-400 text-xs font-semibold whitespace-nowrap">
                             {item.minStockLevel > 0 ? `${item.minStockLevel.toLocaleString()} ${item.unit}` : '-'}
                           </td>
 
-                          <td className="py-4 px-4 text-center">
+                          <td className="py-4 px-4 text-center whitespace-nowrap">
                             {item.status === 'red' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 whitespace-nowrap">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> {formatDual("Tugagan", "Критично", "Out")}
                               </span>
                             )}
                             {item.status === 'yellow' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 whitespace-nowrap">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {formatDual("Kamaygan", "Мало", "Low")}
                               </span>
                             )}
                             {item.status === 'green' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-dark-700 whitespace-nowrap">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {formatDual("Yetarli", "В норме", "Norm")}
                               </span>
                             )}
                           </td>
 
-                          <td className="py-4 px-4 text-center font-mono font-bold">
+                          <td className="py-4 px-4 text-center font-mono font-bold whitespace-nowrap">
                             {item.neededQuantity > 0 ? (
-                              <span className="text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1 rounded-lg text-xs font-mono font-bold">
+                              <span className="text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 px-2.5 py-1 rounded-lg text-xs font-mono font-bold whitespace-nowrap">
                                 +{item.neededQuantity.toLocaleString()} {item.unit}
                               </span>
                             ) : (
@@ -953,21 +969,21 @@ export default function OrdersContent() {
                             )}
                           </td>
 
-                          <td className="py-4 px-4 text-xs text-slate-700 dark:text-slate-300">
+                          <td className="py-4 px-4 text-xs text-slate-700 dark:text-slate-300 whitespace-nowrap">
                             {item.primarySupplier ? (
-                              <div className="flex items-center gap-1.5 truncate max-w-[180px] font-medium">
+                              <div className="flex items-center gap-1.5 truncate max-w-[180px] font-medium whitespace-nowrap">
                                 <Building2 size={13} className="text-slate-400 shrink-0" />
                                 <span className="truncate">{item.primarySupplier}</span>
                               </div>
                             ) : (
-                              <span className="text-slate-400 dark:text-slate-500 italic">{formatDual("Aniqlanmagan", "Не указан", "None")}</span>
+                              <span className="text-slate-400 dark:text-slate-500 italic whitespace-nowrap">{formatDual("Aniqlanmagan", "Не указан", "None")}</span>
                             )}
                           </td>
 
-                          <td className="py-4 px-4 text-right">
+                          <td className="py-4 px-4 text-right whitespace-nowrap">
                             <button
                               onClick={() => handleQuickOrder(item)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition-all active:scale-95"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               <ShoppingCart size={14} />
                               <span>{formatDual("Buyurtma Berish", "Заказать", "Order")}</span>
@@ -1246,12 +1262,9 @@ export default function OrdersContent() {
                           </td>
 
                           <td className="py-4 px-4">
-                            <span className="font-bold text-slate-900 dark:text-white block">{order.productName}</span>
-                            {order.productCategory && (
-                              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                                {order.productCategory}
-                              </span>
-                            )}
+                            <span className="font-bold text-slate-900 dark:text-white block whitespace-nowrap">
+                              {formatDual(getProductName(order.productName, 'uz'), order.productName, getProductName(order.productName, 'en'))}
+                            </span>
                             {order.warehouseNotes && (
                               <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5 max-w-[220px] truncate" title={order.warehouseNotes}>
                                 📦 {order.warehouseNotes}
@@ -1471,7 +1484,7 @@ export default function OrdersContent() {
                   <option value="">{formatDual("-- Mahsulotni tanlang --", "-- Выберите товар --", "-- Select product --")}</option>
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.category || 'Xomashyo'} - {p.unit || 'kg'})
+                      {formatDual(getProductName(p.name, 'uz'), p.name, getProductName(p.name, 'en'))} ({p.unit || 'kg'})
                     </option>
                   ))}
                 </select>
